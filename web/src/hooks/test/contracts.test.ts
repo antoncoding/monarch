@@ -3,7 +3,7 @@
  */
 
 import { renderHook } from '@testing-library/react';
-import { base, baseSepolia } from 'viem/chains';
+import { mainnet, baseSepolia } from 'viem/chains';
 import { useAccount } from 'wagmi';
 import { Environment, EnvironmentKeys } from '@/store/environment';
 import { generateContractHook } from '../contracts';
@@ -42,7 +42,7 @@ describe('contracts', () => {
 
     it.each([
       ['onUnsupportedNetwork', { id: 31337 }, Environment.localhost, undefined],
-      ['onUnsupportedNetwork', { id: base.id }, Environment.localhost, undefined],
+      ['onUnsupportedNetwork', { id: mainnet.id }, Environment.localhost, undefined],
       ['ready', undefined, Environment.localhost, '0xbaseSepolia'],
       ['ready', undefined, Environment.development, '0xbaseSepolia'],
       ['ready', undefined, Environment.staging, '0xbaseSepolia'],

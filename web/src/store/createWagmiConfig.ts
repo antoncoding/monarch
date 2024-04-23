@@ -1,7 +1,7 @@
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import { metaMaskWallet, rainbowWallet, coinbaseWallet } from '@rainbow-me/rainbowkit/wallets';
+import { metaMaskWallet, rainbowWallet, coinbaseWallet, rabbyWallet } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import { base, baseSepolia } from 'wagmi/chains';
+import { mainnet } from 'wagmi/chains';
 import { getChainsForEnvironment } from './supportedChains';
 
 export function createWagmiConfig(projectId: string) {
@@ -9,11 +9,11 @@ export function createWagmiConfig(projectId: string) {
     [
       {
         groupName: 'Recommended Wallet',
-        wallets: [coinbaseWallet],
+        wallets: [rabbyWallet, rainbowWallet],
       },
       {
         groupName: 'Other Wallets',
-        wallets: [rainbowWallet, metaMaskWallet],
+        wallets: [rainbowWallet, coinbaseWallet, metaMaskWallet],
       },
     ],
     {
@@ -26,8 +26,7 @@ export function createWagmiConfig(projectId: string) {
     ssr: true,
     chains: getChainsForEnvironment(),
     transports: {
-      [baseSepolia.id]: http(),
-      [base.id]: http(),
+      [mainnet.id]: http(),
     },
     connectors,
   });
