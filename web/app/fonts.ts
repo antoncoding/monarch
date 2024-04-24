@@ -1,8 +1,9 @@
-import { Roboto_Mono, Inter } from 'next/font/google';
+import { Inter, Zen_Kaku_Gothic_Antique } from 'next/font/google';
 
-export const roboto = Roboto_Mono({
+export const roboto = Zen_Kaku_Gothic_Antique({
   subsets: ['latin'],
   display: 'swap',
+  weight: '400',
   variable: '--font-roboto-mono',
 });
 

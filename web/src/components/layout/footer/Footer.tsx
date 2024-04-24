@@ -51,7 +51,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* <div className="font-robotoMono flex flex-col items-start justify-center gap-4 text-center text-xl font-medium text-white">
+          {/* <div className="font-roboto flex flex-col items-start justify-center gap-4 text-center text-xl font-medium text-white">
             EXPERIENCES
             <NavbarLink href="/buy-me-coffee">
               <span className="flex items-center gap-1 px-2">
