@@ -20,7 +20,7 @@ export function NavbarLink({
   return (
     <NextLink
       href={href}
-      className="font-roboto px-0 text-center text-base font-normal text-white no-underline"
+      className="font-inter px-0 text-center text-base font-normal text-white no-underline"
       target={target}
       aria-label={ariaLabel}
     >

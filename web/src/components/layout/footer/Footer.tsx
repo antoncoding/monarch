@@ -21,7 +21,7 @@ export default function Footer() {
               <NextLink
                 href="/"
                 passHref
-                className="text-center font-medium text-boat-footer-light-gray no-underline"
+                className="text-center text-boat-footer-light-gray no-underline"
               >
                 Github
               </NextLink>
@@ -32,7 +32,7 @@ export default function Footer() {
 
             {/* build with love  */}
             <div className="flex h-8 w-full md:w-1/3 items-center justify-center">
-              <p className="text-base font-normal leading-7 text-boat-footer-light-gray">
+              <p className="text-base leading-7 text-boat-footer-light-gray">
                 Build with 💙 on Morpho.
               </p>
             </div>
@@ -51,7 +51,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* <div className="font-roboto flex flex-col items-start justify-center gap-4 text-center text-xl font-medium text-white">
+          {/* <div className=" flex flex-col items-start justify-center gap-4 text-center text-xl font-medium text-white">
             EXPERIENCES
             <NavbarLink href="/buy-me-coffee">
               <span className="flex items-center gap-1 px-2">

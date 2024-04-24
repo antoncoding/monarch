@@ -4,11 +4,12 @@ export const roboto = Zen_Kaku_Gothic_Antique({
   subsets: ['latin'],
   display: 'swap',
   weight: '400',
-  variable: '--font-roboto-mono',
+  variable: '--font-roboto',
 });
 
 export const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+  weight: '200',
 });

@@ -3,7 +3,7 @@ import './global.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import OnchainProviders from '@/OnchainProviders';
 import { initAnalytics } from '@/utils/analytics';
-import { inter } from './fonts';
+import { inter, roboto } from './fonts';
 import type { Metadata } from 'next';
 
 export const viewport = {
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   },
 };
 
+
 // Stat analytics before the App renders,
 // so we can track page views and early events
 initAnalytics();
@@ -27,7 +28,7 @@ initAnalytics();
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.className}`}>
+    <html lang="en" className={`${roboto.variable} ${inter.variable}`}>
       <body className="flex flex-1 flex-col">
         <OnchainProviders>{children}</OnchainProviders>
       </body>
