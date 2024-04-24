@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import {
   Cross1Icon,
-  GitHubLogoIcon,
   HamburgerMenuIcon,
 } from '@radix-ui/react-icons';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
@@ -15,11 +14,11 @@ export default function NavbarMobile() {
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-300 mx-2 flex flex-col gap-4 rounded-[25px] bg-black bg-opacity-50 p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 mx-2 flex flex-col gap-4 rounded-[5px] bg-monarch-black p-2 backdrop-blur-2xl">
         <div
           className={[
             'flex flex-1 flex-grow items-center justify-between',
-            'rounded-[50px] border border-stone-300 bg-opacity-10 p-4 backdrop-blur-2xl',
+            'rounded-[5px] bg-monarch-soft-black p-4 backdrop-blur-2xl',
           ].join(' ')}
         >
           <div className="h-38 flex grow items-center justify-between gap-4">
@@ -37,13 +36,9 @@ export default function NavbarMobile() {
         <div>
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
-              <NavbarLink href="https://github.com/coinbase/build-onchain-apps" target="_blank">
-                <GitHubLogoIcon width="24" height="24" />
-              </NavbarLink>
+              <NavbarLink href="/browse">Supply</NavbarLink>
             </li>
-            <li className="flex">
-              <NavbarLink href="/#get-started">Get Started</NavbarLink>
-            </li>
+            
             <li className="flex">
               <NavigationMenu.Root className="relative flex flex-grow flex-col">
                 <NavigationMenu.Viewport className={clsx('flex flex-col justify-center')} />

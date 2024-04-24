@@ -9,14 +9,15 @@
   --component-highlights-item-width: calc(100vw - 100px);
   --developer-experience-code-window-background: var(--slate-12);
 
-  /* Palette */
-  --palette-bg-black: #0a0b0d;
-  --palette-bg-soft-black: #141519;
+  /* Palette - black */
+  --palette-bg-black: #16181a;
+  --palette-bg-soft-black: #202426;
   --palette-bg-white: #fff;
+  --palette-bg-hovered: #313537;
 
   /* Build Onchain Apps shared variables */
-  --boat-color-background: var(--palette-bg-black);
-  --boat-color-text: var(--palette-bg-white);
+  --color-background: var(--palette-bg-black);
+  --color-text: var(--palette-bg-white);
 
   /* Indicates that the element can be rendered using 
    * the operating system dark color scheme. 
@@ -46,17 +47,60 @@ html .font-inter {
 body {
   height: 100%;
   margin: 0;
-  background-color: var(--boat-color-background);
-  color: var(--boat-color-text);
+  background-color: var(--color-background);
+  color: var(--color-text);
   font-family: Inter, sans-serif;
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
+.bg-monarch-soft-black {
+  background-color: var(--palette-bg-soft-black);
+}
+
+.bg-monarch-black {
+  background-color: var(--palette-bg-black);
+}
+
 a {
   text-decoration: underline;
 }
+
+h1 {
+  color: var(--color-text);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.1;
+  padding-top: 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.table-header {
+  background-color: var(--palette-bg-soft-black);
+  font-size: 0.8em;
+  color: grey;
+}
+
+.table-header th {
+  padding: 1rem;
+  text-align: center;
+}
+
+.table-body {
+  background-color: var(--palette-bg-soft-black);
+}
+
+.table-body td {
+  padding: 1rem;
+  text-align: center;
+}
+
+.table-body tr:hover {
+  background-color: var(--palette-bg-hovered);
+}
+
+
 
 svg {
   display: block;

@@ -4,81 +4,80 @@
 import { useState, useEffect } from 'react';
 
 type MarketData =  {
-  items: {
+  id: string;
+  lltv: string;
+  uniqueKey: string;
+  irmAddress: string;
+  oracleAddress: string;
+  collateralPrice: string;
+  morphoBlue: {
     id: string;
-    lltv: string;
-    uniqueKey: string;
-    irmAddress: string;
-    oracleAddress: string;
-    collateralPrice: string;
-    morphoBlue: {
-      id: string;
-      address: string;
-      chain: {
-        id: number;
-        __typename: string;
-      };
+    address: string;
+    chain: {
+      id: number;
       __typename: string;
     };
-    oracleInfo: {
-      type: string;
-      __typename: string;
-    };
-    oracleFeed: {
-      baseFeedOneAddress: string;
-      baseFeedOneDescription: string | null;
-      baseFeedTwoAddress: string;
-      baseFeedTwoDescription: string | null;
-      quoteFeedOneAddress: string;
-      quoteFeedOneDescription: string | null;
-      quoteFeedTwoAddress: string;
-      quoteFeedTwoDescription: string | null;
-      __typename: string;
-    };
-    loanAsset: {
-      id: string;
-      address: string;
-      symbol: string;
-      name: string;
-      decimals: number;
-      priceUsd: number;
-      __typename: string;
-    };
-    collateralAsset: {
-      id: string;
-      address: string;
-      symbol: string;
-      name: string;
-      decimals: number;
-      priceUsd: number;
-      __typename: string;
-    };
-    state: {
-      borrowAssets: string;
-      supplyAssets: string;
-      borrowAssetsUsd: number;
-      supplyAssetsUsd: number;
-      borrowShares: string;
-      supplyShares: string;
-      liquidityAssets: string;
-      liquidityAssetsUsd: number;
-      collateralAssets: string;
-      utilization: number;
-      supplyApy: number;
-      borrowApy: number;
-      fee: number;
-      timestamp: number;
-      rateAtUTarget: number;
-      __typename: string;
-    };
-    warnings: {
-      type: string;
-      level: string;
-      __typename: string;
-    }[];
+    __typename: string;
+  };
+  oracleInfo: {
+    type: string;
+    __typename: string;
+  };
+  oracleFeed: {
+    baseFeedOneAddress: string;
+    baseFeedOneDescription: string | null;
+    baseFeedTwoAddress: string;
+    baseFeedTwoDescription: string | null;
+    quoteFeedOneAddress: string;
+    quoteFeedOneDescription: string | null;
+    quoteFeedTwoAddress: string;
+    quoteFeedTwoDescription: string | null;
+    __typename: string;
+  };
+  loanAsset: {
+    id: string;
+    address: string;
+    symbol: string;
+    name: string;
+    decimals: number;
+    priceUsd: number;
+    __typename: string;
+  };
+  collateralAsset: {
+    id: string;
+    address: string;
+    symbol: string;
+    name: string;
+    decimals: number;
+    priceUsd: number;
+    __typename: string;
+  };
+  state: {
+    borrowAssets: string;
+    supplyAssets: string;
+    borrowAssetsUsd: number;
+    supplyAssetsUsd: number;
+    borrowShares: string;
+    supplyShares: string;
+    liquidityAssets: string;
+    liquidityAssetsUsd: number;
+    collateralAssets: string;
+    utilization: number;
+    supplyApy: number;
+    borrowApy: number;
+    fee: number;
+    timestamp: number;
+    rateAtUTarget: number;
+    __typename: string;
+  };
+  warnings: {
+    type: string;
+    level: string;
     __typename: string;
   }[];
-};
+  __typename: string;
+}[];
+
 
 
 const query = `query getMarkets(
@@ -183,7 +182,7 @@ const query = `query getMarkets(
 const useMarkets = () => {
   
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<MarketData | null>(null);
+  const [data, setData] = useState<MarketData | []>([]);
   const [error, setError] = useState<unknown|null>(null);
 
   console.log('error', error)
@@ -197,10 +196,19 @@ const useMarkets = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query, variables: { first: 1000 }}),
+          body: JSON.stringify({ 
+            query, 
+            variables: { 
+              first: 1000
+            }}),
         });
         const result = await response.json();
-        setData(result.data.markets as MarketData);
+
+        const items = result.data.markets.items as MarketData;
+
+        const filtered = items.filter(market => market.lltv !== '0' && market.collateralAsset != undefined);
+
+        setData(filtered);
         setLoading(false);
       } catch (_error) {
         setError(_error);
