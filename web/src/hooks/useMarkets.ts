@@ -55,8 +55,8 @@ type MarketData =  {
   state: {
     borrowAssets: string;
     supplyAssets: string;
-    borrowAssetsUsd: number;
-    supplyAssetsUsd: number;
+    borrowAssetsUsd: string;
+    supplyAssetsUsd: string;
     borrowShares: string;
     supplyShares: string;
     liquidityAssets: string;
@@ -206,7 +206,7 @@ const useMarkets = () => {
 
         const items = result.data.markets.items as MarketData;
 
-        const filtered = items.filter(market => market.lltv !== '0' && market.collateralAsset != undefined);
+        const filtered = items.filter(market => market.collateralAsset != undefined);
 
         setData(filtered);
         setLoading(false);
