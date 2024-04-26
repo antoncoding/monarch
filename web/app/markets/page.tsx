@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 
-import { formatNumber } from '@/utils/balance';
+import { formatUSD, formatBalance } from '@/utils/balance';
 import { supportedTokens } from '@/utils/tokens';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
@@ -17,7 +17,12 @@ export default function HomePage() {
   const { loading, data } = useMarkets();
   const [filter, setFilter] = useState('');
 
-  console.log('data', data.find(m => m.uniqueKey === '0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc'))
+  console.log(
+    'data',
+    data.find(
+      (m) => m.uniqueKey === '0x698fe98247a40c5771537b5786b2f3f9d78eb487b4ce4d75533cd0e94d88a115',
+    ),
+  );
 
   // Add state for the checkbox
   const [hideDust, setHideDust] = useState(true);
@@ -29,13 +34,12 @@ export default function HomePage() {
 
   const [filteredData, setFilteredData] = useState(data);
 
-  
   // Update the filter effect to also filter based on the checkbox
   useEffect(() => {
     let newData = data;
     if (filter) {
       newData = newData.filter((item) =>
-        item.collateralAsset.symbol.toLowerCase().includes(filter.toLowerCase())
+        item.collateralAsset.symbol.toLowerCase().includes(filter.toLowerCase()),
       );
     }
     if (hideDust) {
@@ -47,61 +51,70 @@ export default function HomePage() {
     if (hideUnknown) {
       newData = newData
         // Filter out any items which's collateral are not in the supported tokens list
-        .filter((item) => allSupportedAddresses.find(address => address === item.collateralAsset.address.toLocaleLowerCase()))
+        .filter((item) =>
+          allSupportedAddresses.find(
+            (address) => address === item.collateralAsset.address.toLocaleLowerCase(),
+          ),
+        )
         // Filter out any items which's loan are not in the supported tokens list
-        .filter((item) => allSupportedAddresses.find(address => address === item.loanAsset.address.toLocaleLowerCase()));
+        .filter((item) =>
+          allSupportedAddresses.find(
+            (address) => address === item.loanAsset.address.toLocaleLowerCase(),
+          ),
+        );
     }
 
     switch (sortColumn) {
-      case 1: 
+      case 1:
         newData.sort((a, b) =>
-          a.loanAsset.name > b.loanAsset.name ? sortDirection : -sortDirection
+          a.loanAsset.name > b.loanAsset.name ? sortDirection : -sortDirection,
         );
-        break
+        break;
       case 2:
         newData.sort((a, b) =>
-          a.collateralAsset.name > b.collateralAsset.name ? sortDirection : -sortDirection
+          a.collateralAsset.name > b.collateralAsset.name ? sortDirection : -sortDirection,
         );
-        break
+        break;
       case 3:
         newData.sort((a, b) =>
-          a.state.supplyAssetsUsd > b.state.supplyAssetsUsd ? sortDirection : -sortDirection
+          a.state.supplyAssetsUsd > b.state.supplyAssetsUsd ? sortDirection : -sortDirection,
         );
-        break
+        break;
       case 4:
         newData.sort((a, b) =>
-          a.state.borrowAssetsUsd > b.state.borrowAssetsUsd ? sortDirection : -sortDirection
+          a.state.borrowAssetsUsd > b.state.borrowAssetsUsd ? sortDirection : -sortDirection,
         );
-        break
+        break;
       case 5:
         newData.sort((a, b) =>
-          a.state.supplyApy > b.state.supplyApy ? sortDirection : -sortDirection
+          a.state.supplyApy > b.state.supplyApy ? sortDirection : -sortDirection,
         );
-        break
+        break;
       case 6:
-        newData.sort((a, b) =>
-          a.lltv > b.lltv ? sortDirection : -sortDirection
-        );
-        break
-      
+        newData.sort((a, b) => (a.lltv > b.lltv ? sortDirection : -sortDirection));
+        break;
     }
     setFilteredData(newData);
   }, [data, filter, hideDust, sortColumn, sortDirection, hideUnknown]);
- 
-  const titleOnclick = useCallback((column: number) => {
-    setSortColumn(column);
-    if (column === sortColumn) setSortDirection(-sortDirection);
-  }, [sortColumn, sortDirection])
+
+  const titleOnclick = useCallback(
+    (column: number) => {
+      setSortColumn(column);
+      if (column === sortColumn) setSortDirection(-sortDirection);
+    },
+    [sortColumn, sortDirection],
+  );
 
   return (
-    <div className="flex flex-col justify-between font-roboto">
+    <div className="font-roboto flex flex-col justify-between">
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className='py-4 font-roboto'> Markets </h1>
+        <h1 className="font-roboto py-4"> Markets </h1>
 
-        <div className='flex justify-between'>
-          <p className='py-4'> View all Morpho Blue markets </p>
-          {/* <input
+        <div className="flex justify-between">
+          <p className="py-4"> View all Morpho Blue markets </p>
+          {
+            /* <input
             className="bg-opacity-20 p-2"
             type="text"
             placeholder="Search for an asset"
@@ -109,30 +122,25 @@ export default function HomePage() {
             onChange={(e) => setFilter(e.target.value)}
             style={{ textAlign: 'left', borderRadius: '5px' }}
           /> */
-          <div className="flex justify-end gap-2">
-            
-            <label className='flex items-center p-2 hover:bg-monarch-soft-black' >
-              <input
-                type="checkbox"
-                checked={hideDust}
-                onChange={(e) => setHideDust(e.target.checked)}
-              />
-              <p className='p-2'>
-              Hide dust
-              </p>
-            </label>
+            <div className="flex justify-end gap-2">
+              <label className="hover:bg-monarch-soft-black flex items-center p-2">
+                <input
+                  type="checkbox"
+                  checked={hideDust}
+                  onChange={(e) => setHideDust(e.target.checked)}
+                />
+                <p className="p-2">Hide dust</p>
+              </label>
 
-            <label className='flex items-center p-2 hover:bg-monarch-soft-black'>
-              <input
-                type="checkbox"
-                checked={hideUnknown}
-                onChange={(e) => setHideUnknown(e.target.checked)}
-              />
-              <p className='p-2'>
-                Hide unknown
-              </p>
-            </label>
-          </div>
+              <label className="hover:bg-monarch-soft-black flex items-center p-2">
+                <input
+                  type="checkbox"
+                  checked={hideUnknown}
+                  onChange={(e) => setHideUnknown(e.target.checked)}
+                />
+                <p className="p-2">Hide unknown</p>
+              </label>
+            </div>
           }
         </div>
         {loading ? (
@@ -144,14 +152,14 @@ export default function HomePage() {
             <table className="font-roboto w-full">
               <thead className="table-header">
                 <tr>
-                  <th > Id </th>
+                  <th> Id </th>
                   <th onClick={() => titleOnclick(1)}> Loan </th>
                   <th onClick={() => titleOnclick(2)}> Collateral </th>
                   <th onClick={() => titleOnclick(3)}> Total Supply </th>
                   <th onClick={() => titleOnclick(4)}> Total Borrow </th>
                   <th onClick={() => titleOnclick(5)}> APY(%) </th>
                   <th onClick={() => titleOnclick(6)}> LLTV </th>
-                  <th > Actions </th>
+                  <th> Actions </th>
                 </tr>
               </thead>
               <tbody className="table-body text-sm">
@@ -192,12 +200,36 @@ export default function HomePage() {
                         </div>
                       </td>
 
+                      {/* total supply */}
                       <td>
-                        ${formatNumber(Number(item.state.supplyAssetsUsd))}
+                        <p>${formatUSD(Number(item.state.supplyAssetsUsd)) + '   '} </p>
+                        <p style={{ opacity: '0.7' }}>
+                          {formatBalance(
+                            item.state.supplyAssets,
+                            item.loanAsset.decimals,
+                          ).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) +
+                            ' ' +
+                            item.loanAsset.symbol}
+                        </p>
                       </td>
 
+                      {/* total supply */}
                       <td>
-                        ${formatNumber(Number(item.state.borrowAssetsUsd))}
+                        <p>${formatUSD(Number(item.state.borrowAssetsUsd))} </p>
+                        <p style={{ opacity: '0.7' }}>
+                          {formatBalance(
+                            item.state.borrowAssets,
+                            item.loanAsset.decimals,
+                          ).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }) +
+                            ' ' +
+                            item.loanAsset.symbol}
+                        </p>
                       </td>
 
                       {/* <td> {item.loanAsset.address} </td> */}
@@ -210,8 +242,8 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          style={{ padding: '3px'}}
-                          className="items-center justify-between text-xs bg-monarch-orange opacity-60 hover:opacity-100 rounded-sm"
+                          style={{ padding: '3px' }}
+                          className="bg-monarch-orange items-center justify-between rounded-sm text-xs opacity-60 hover:opacity-100"
                         >
                           Supply
                         </button>

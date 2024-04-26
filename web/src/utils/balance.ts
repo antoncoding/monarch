@@ -20,7 +20,7 @@ export const toRawBalance = (value: number, decimals: number) => {
   return BigInt(value * 10 ** decimals);
 }
 
-export function formatNumber(num: number): string {
+export function formatUSD(num: number): string {
   if (Math.abs(num) >= 1_000_000_000) {
       return (num / 1_000_000_000).toFixed(2) + 'B';
   } else if (Math.abs(num) >= 1_000_000) {
