@@ -15,6 +15,8 @@
   --palette-bg-white: #fff;
   --palette-bg-hovered: #313537;
 
+  --palette-bg-orange: #f45f2d;
+
   /* Build Onchain Apps shared variables */
   --color-background: var(--palette-bg-black);
   --color-text: var(--palette-bg-white);
@@ -61,6 +63,10 @@ body {
 
 .bg-monarch-black {
   background-color: var(--palette-bg-black);
+}
+
+.bg-monarch-orange {
+  background-color: var(--palette-bg-orange);
 }
 
 a {

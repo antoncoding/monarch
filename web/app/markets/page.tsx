@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 
-import { formatBalance } from '@/utils/balance';
+import { formatNumber } from '@/utils/balance';
 import { supportedTokens } from '@/utils/tokens';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
@@ -16,6 +16,8 @@ const allSupportedAddresses = supportedTokens.map((token) => token.address.toLow
 export default function HomePage() {
   const { loading, data } = useMarkets();
   const [filter, setFilter] = useState('');
+
+  console.log('data', data.find(m => m.uniqueKey === '0xb323495f7e4148be5643a4ea4a8221eef163e4bccfdedc2a6f4696baacbc86cc'))
 
   // Add state for the checkbox
   const [hideDust, setHideDust] = useState(true);
@@ -152,7 +154,7 @@ export default function HomePage() {
                   <th > Actions </th>
                 </tr>
               </thead>
-              <tbody className="table-body">
+              <tbody className="table-body text-sm">
                 {filteredData.map((item, index) => {
                   const collatImg = supportedTokens.find(
                     (token) =>
@@ -191,24 +193,25 @@ export default function HomePage() {
                       </td>
 
                       <td>
-                        ${Number(item.state.supplyAssetsUsd).toFixed(4)}
+                        ${formatNumber(Number(item.state.supplyAssetsUsd))}
                       </td>
 
                       <td>
-                        ${Number(item.state.borrowAssetsUsd).toFixed(4)}
+                        ${formatNumber(Number(item.state.borrowAssetsUsd))}
                       </td>
 
                       {/* <td> {item.loanAsset.address} </td> */}
 
                       <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
 
-                      <td>{Number(item.lltv) / 1e18}</td>
+                      <td>{Number(item.lltv) / 1e16}%</td>
 
                       <td>
                         <button
                           type="button"
                           aria-label="Supply"
-                          className=" items-center justify-between self-stretch bg-opacity-20"
+                          style={{ padding: '3px'}}
+                          className="items-center justify-between text-xs bg-monarch-orange opacity-60 hover:opacity-100 rounded-sm"
                         >
                           Supply
                         </button>
