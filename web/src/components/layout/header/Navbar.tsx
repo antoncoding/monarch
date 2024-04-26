@@ -58,10 +58,7 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-8 md:flex">
             <li className="flex">
-              <NavbarLink href="/browse">Browse</NavbarLink>
-            </li>
-            <li className="flex">
-              <NavbarLink href="/browse">Supply</NavbarLink>
+              <NavbarLink href="/markets">Markets</NavbarLink>
             </li>
             <li className="flex">
               <NavigationMenu.Root className="relative">

@@ -95,7 +95,7 @@ export default function HomePage() {
     <div className="flex flex-col justify-between font-roboto">
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className='py-4 font-roboto'> Browse </h1>
+        <h1 className='py-4 font-roboto'> Markets </h1>
 
         <div className='flex justify-between'>
           <p className='py-4'> View all Morpho Blue markets </p>
@@ -168,13 +168,13 @@ export default function HomePage() {
 
                   return (
                     <tr key={index.toFixed()}>
-                      <td className="items-center text-center">{item.id.slice(0, 4)}</td>
+                      <td className="items-center text-center">{item.uniqueKey.slice(2, 8)}</td>
 
                       {/* loan */}
                       <td>
                         <div className="flex items-center justify-center gap-1">
                           {loanImg ? (
-                            <Image src={loanImg} alt="icon" width="20" height="20" />
+                            <Image src={loanImg} alt="icon" width="18" height="18" />
                           ) : null}
                           {item.loanAsset.symbol}
                         </div>
@@ -184,7 +184,7 @@ export default function HomePage() {
                       <td>
                         <div className="flex items-center justify-center  gap-1">
                           {collatImg ? (
-                            <Image src={collatImg} alt="icon" width="20" height="20" />
+                            <Image src={collatImg} alt="icon" width="18" height="18" />
                           ) : null}
                           <span>{collatToShow}</span>
                         </div>

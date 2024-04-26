@@ -36,7 +36,7 @@ export default function NavbarMobile() {
         <div>
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
-              <NavbarLink href="/browse">Supply</NavbarLink>
+              <NavbarLink href="/markets">Markets</NavbarLink>
             </li>
             
             <li className="flex">
