@@ -65,6 +65,11 @@ body {
   background-color: var(--palette-bg-black);
 }
 
+.bg-monarch-hovered {
+  background-color: var(--palette-bg-hovered);
+}
+
+
 .bg-monarch-orange {
   background-color: var(--palette-bg-orange);
 }

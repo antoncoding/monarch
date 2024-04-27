@@ -1,4 +1,4 @@
-type ERC20Token = {
+export type ERC20Token = {
   address: string;
   symbol: string;
   img: string | undefined;

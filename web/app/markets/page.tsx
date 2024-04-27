@@ -1,22 +1,34 @@
+/* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon, MixerHorizontalIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 
 import { formatUSD, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL } from '@/utils/external';
-import { supportedTokens } from '@/utils/tokens';
+import { supportedTokens, ERC20Token } from '@/utils/tokens';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
 
 /**
- * Use the page component to wrap the components
- * that you want to render on the page.
+ * Use the page component toLowerCase() wrap the components
+ * that you want toLowerCase() render on the page.
  */
 export default function HomePage() {
   const { loading, data } = useMarkets();
+
+  const [expandCollatOptions, setExpandCollatOptions] = useState(false);
+  const [expanedLoanOptions, setExpandedLoanOptions] = useState(false);
+
+  // Add state for the selected collateral and loan asset
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
+
+  // Add state for the unique collateral and loan assets, for users toLowerCase() set filters
+  const [uniqueCollaterals, setUniqueCollaterals] = useState<string[]>([]);
+  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<string[]>([]);
 
   // Add state for the checkbox
   const [hideDust, setHideDust] = useState(true);
@@ -28,7 +40,21 @@ export default function HomePage() {
 
   const [filteredData, setFilteredData] = useState(data);
 
-  // Update the filter effect to also filter based on the checkbox
+  // Update the unique collateral and loan assets when the data changes
+  useEffect(() => {
+    if (data) {
+      const collaterals = [...new Set(data.map((item) => item.collateralAsset.address.toLowerCase()))].filter(
+        (address) => allSupportedAddresses.includes(address.toLowerCase()),
+      );
+      const loanAssets = [...new Set(data.map((item) => item.loanAsset.address.toLowerCase()))].filter(
+        (address) => allSupportedAddresses.includes(address.toLowerCase()),
+      );
+      setUniqueCollaterals(collaterals);
+      setUniqueLoanAssets(loanAssets);
+    }
+  }, [data]);
+
+  // Update the filter effect toLowerCase() also filter based on the checkbox
   useEffect(() => {
     let newData = data;
 
@@ -52,6 +78,18 @@ export default function HomePage() {
             (address) => address === item.loanAsset.address.toLocaleLowerCase(),
           ),
         );
+    }
+
+    if (selectedCollaterals.length > 0) {
+      newData = newData.filter((item) =>
+        selectedCollaterals.includes(item.collateralAsset.address.toLowerCase()),
+      );
+    }
+
+    if (selectedLoanAssets.length > 0) {
+      newData = newData.filter((item) =>
+        selectedLoanAssets.includes(item.loanAsset.address.toLowerCase()),
+      );
     }
 
     switch (sortColumn) {
@@ -85,7 +123,7 @@ export default function HomePage() {
         break;
     }
     setFilteredData(newData);
-  }, [data, hideDust, sortColumn, sortDirection, hideUnknown]);
+  }, [data, hideDust, sortColumn, sortDirection, hideUnknown, selectedCollaterals, selectedLoanAssets]);
 
   const titleOnclick = useCallback(
     (column: number) => {
@@ -100,9 +138,32 @@ export default function HomePage() {
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <h1 className="font-roboto py-4"> Markets </h1>
+        <p className="py-4"> View all Markets </p>
 
         <div className="flex justify-between">
-          <p className="py-4"> View all Markets </p>
+          <div className='flex gap-1'>
+            {/* collateral filter */}
+            <button
+              type="button"
+              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-3"
+              onClick={() => {
+                setExpandedLoanOptions(!expanedLoanOptions);
+              }}
+            >
+              Filter Loan {selectedLoanAssets.length === 0 ? <MixerHorizontalIcon /> : <span className='rounded-xl bg-monarch-orange px-1'>{selectedLoanAssets.length} </span>}
+            </button>
+
+            <button
+              type="button"
+              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-3"
+              onClick={() => {
+                setExpandCollatOptions(!expandCollatOptions);
+              }}
+            >
+              Filter Collateral {selectedCollaterals.length === 0 ? <MixerHorizontalIcon /> : <span className='rounded-xl bg-monarch-orange px-1'>{selectedCollaterals.length} </span>}
+            </button>
+          </div>
+
           <div className="flex items-center justify-end gap-2">
             <label className="bg-monarch-soft-black my-1 flex items-center px-2 py-1 ">
               <input
@@ -123,6 +184,82 @@ export default function HomePage() {
             </label>
           </div>
         </div>
+
+        {/* loan asset filter section: all option as check box */}
+        {expanedLoanOptions && (
+          <>
+            <p className="opacity-80"> Loans </p>
+            <div className="flex gap-1 overflow-auto">
+              {uniqueLoanAssets.map((loanAsset) => {
+                const token = supportedTokens.find((t) => t.address.toLowerCase() === loanAsset) as ERC20Token;
+                if (!token) console.log(loanAsset)
+                return (
+                  <label
+                    key={`loan-${loanAsset}`}
+                    className="flex bg-monarch-soft-black items-center justify-center p-2 px-5 my-1 gap-1"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedLoanAssets.includes(token.address.toLowerCase())}
+                      onChange={() => {
+                        if (selectedLoanAssets.includes(token.address.toLowerCase())) {
+                          setSelectedLoanAssets(
+                            selectedLoanAssets.filter((c) => c !== token.address.toLowerCase()),
+                          );
+                        } else {
+                          setSelectedLoanAssets([
+                            ...selectedLoanAssets,
+                            token.address.toLowerCase(),
+                          ]);
+                        }
+                      }}
+                    />
+                    <p>{token?.symbol}</p>
+                    {token.img && <Image src={token.img} alt="icon" height="18"/>}
+                  </label>
+                );
+              })}
+            </div>
+          </>
+        )}
+        
+        {/* collateral filter section: all option as check box */}
+        {expandCollatOptions && (
+          <>
+            <p className="opacity-80"> Collaterals </p>
+            <div className="flex gap-1 overflow-auto">
+              {uniqueCollaterals.map((collateral) => {
+                const token = supportedTokens.find((t) => t.address.toLowerCase() === collateral) as ERC20Token;
+                return (
+                  <label
+                    key={`collat-${collateral}`}
+                    className="flex bg-monarch-soft-black items-center justify-center p-2 px-5 my-1 gap-1"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedCollaterals.includes(token.address.toLowerCase())}
+                      onChange={() => {
+                        if (selectedCollaterals.includes(token.address.toLowerCase())) {
+                          setSelectedCollaterals(
+                            selectedCollaterals.filter((c) => c !== token.address.toLowerCase()),
+                          );
+                        } else {
+                          setSelectedCollaterals([
+                            ...selectedCollaterals,
+                            token.address.toLowerCase(),
+                          ]);
+                        }
+                      }}
+                    />
+                    <p>{token?.symbol}</p>
+                    {token.img && <Image src={token.img} alt="icon" height="18"/>}
+                  </label>
+                );
+              })}
+            </div>
+          </>
+        )}
+
         {loading ? (
           <div> Loading Morpho Blue Markets... </div>
         ) : data == null ? (
