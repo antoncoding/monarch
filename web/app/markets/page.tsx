@@ -1,7 +1,7 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { ExternalLinkIcon, MixerHorizontalIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon, MixerHorizontalIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
@@ -43,12 +43,12 @@ export default function HomePage() {
   // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
     if (data) {
-      const collaterals = [...new Set(data.map((item) => item.collateralAsset.address.toLowerCase()))].filter(
-        (address) => allSupportedAddresses.includes(address.toLowerCase()),
-      );
-      const loanAssets = [...new Set(data.map((item) => item.loanAsset.address.toLowerCase()))].filter(
-        (address) => allSupportedAddresses.includes(address.toLowerCase()),
-      );
+      const collaterals = [
+        ...new Set(data.map((item) => item.collateralAsset.address.toLowerCase())),
+      ].filter((address) => allSupportedAddresses.includes(address.toLowerCase()));
+      const loanAssets = [
+        ...new Set(data.map((item) => item.loanAsset.address.toLowerCase())),
+      ].filter((address) => allSupportedAddresses.includes(address.toLowerCase()));
       setUniqueCollaterals(collaterals);
       setUniqueLoanAssets(loanAssets);
     }
@@ -123,7 +123,15 @@ export default function HomePage() {
         break;
     }
     setFilteredData(newData);
-  }, [data, hideDust, sortColumn, sortDirection, hideUnknown, selectedCollaterals, selectedLoanAssets]);
+  }, [
+    data,
+    hideDust,
+    sortColumn,
+    sortDirection,
+    hideUnknown,
+    selectedCollaterals,
+    selectedLoanAssets,
+  ]);
 
   const titleOnclick = useCallback(
     (column: number) => {
@@ -141,7 +149,7 @@ export default function HomePage() {
         <p className="py-4"> View all Markets </p>
 
         <div className="flex justify-between">
-          <div className='flex gap-1'>
+          <div className="flex gap-1">
             {/* collateral filter */}
             <button
               type="button"
@@ -150,7 +158,14 @@ export default function HomePage() {
                 setExpandedLoanOptions(!expanedLoanOptions);
               }}
             >
-              Filter Loan {selectedLoanAssets.length === 0 ? <MixerHorizontalIcon /> : <span className='rounded-xl bg-monarch-orange px-1'>{selectedLoanAssets.length} </span>}
+              Filter Loan{' '}
+              {selectedLoanAssets.length === 0 ? (
+                <MixerHorizontalIcon />
+              ) : (
+                <span className="bg-monarch-orange rounded-xl px-1">
+                  {selectedLoanAssets.length}{' '}
+                </span>
+              )}
             </button>
 
             <button
@@ -160,7 +175,14 @@ export default function HomePage() {
                 setExpandCollatOptions(!expandCollatOptions);
               }}
             >
-              Filter Collateral {selectedCollaterals.length === 0 ? <MixerHorizontalIcon /> : <span className='rounded-xl bg-monarch-orange px-1'>{selectedCollaterals.length} </span>}
+              Filter Collateral{' '}
+              {selectedCollaterals.length === 0 ? (
+                <MixerHorizontalIcon />
+              ) : (
+                <span className="bg-monarch-orange rounded-xl px-1">
+                  {selectedCollaterals.length}{' '}
+                </span>
+              )}
             </button>
           </div>
 
@@ -190,70 +212,95 @@ export default function HomePage() {
           <>
             <p className="opacity-80"> Loans </p>
             <div className="flex gap-1 overflow-auto">
+              <button
+                type="button"
+                className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                onClick={() => {
+                  setSelectedLoanAssets([]);
+                }}
+              >
+                Clear <TrashIcon />
+              </button>
               {uniqueLoanAssets.map((loanAsset) => {
-                const token = supportedTokens.find((t) => t.address.toLowerCase() === loanAsset) as ERC20Token;
-                if (!token) console.log(loanAsset)
+                const token = supportedTokens.find(
+                  (t) => t.address.toLowerCase() === loanAsset,
+                ) as ERC20Token;
+
+                // just in case
+                if (!token) return null;
+                const chosen = selectedLoanAssets.includes(token.address.toLowerCase());
+
                 return (
-                  <label
+                  <button
                     key={`loan-${loanAsset}`}
-                    className="flex bg-monarch-soft-black items-center justify-center p-2 px-5 my-1 gap-1"
+                    className={`flex ${
+                      chosen ? 'bg-monarch-hovered' : 'bg-monarch-soft-black'
+                    } my-1 items-center justify-center gap-1 p-2 px-5`}
+                    type="button"
+                    onClick={() => {
+                      if (selectedLoanAssets.includes(token.address.toLowerCase())) {
+                        setSelectedLoanAssets(
+                          selectedLoanAssets.filter((c) => c !== token.address.toLowerCase()),
+                        );
+                      } else {
+                        setSelectedLoanAssets([...selectedLoanAssets, token.address.toLowerCase()]);
+                      }
+                    }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedLoanAssets.includes(token.address.toLowerCase())}
-                      onChange={() => {
-                        if (selectedLoanAssets.includes(token.address.toLowerCase())) {
-                          setSelectedLoanAssets(
-                            selectedLoanAssets.filter((c) => c !== token.address.toLowerCase()),
-                          );
-                        } else {
-                          setSelectedLoanAssets([
-                            ...selectedLoanAssets,
-                            token.address.toLowerCase(),
-                          ]);
-                        }
-                      }}
-                    />
                     <p>{token?.symbol}</p>
-                    {token.img && <Image src={token.img} alt="icon" height="18"/>}
-                  </label>
+                    {token.img && <Image src={token.img} alt="icon" height="18" />}
+                  </button>
                 );
               })}
             </div>
           </>
         )}
-        
+
         {/* collateral filter section: all option as check box */}
         {expandCollatOptions && (
           <>
             <p className="opacity-80"> Collaterals </p>
             <div className="flex gap-1 overflow-auto">
+              <button
+                type="button"
+                className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                onClick={() => {
+                  setSelectedCollaterals([]);
+                }}
+              >
+                Clear <TrashIcon />
+              </button>
+
               {uniqueCollaterals.map((collateral) => {
-                const token = supportedTokens.find((t) => t.address.toLowerCase() === collateral) as ERC20Token;
+                const token = supportedTokens.find(
+                  (t) => t.address.toLowerCase() === collateral,
+                ) as ERC20Token;
+
+                const chosen = selectedCollaterals.includes(token.address.toLowerCase());
+
                 return (
-                  <label
-                    key={`collat-${collateral}`}
-                    className="flex bg-monarch-soft-black items-center justify-center p-2 px-5 my-1 gap-1"
+                  <button
+                    key={`loan-${collateral}`}
+                    className={`flex ${
+                      chosen ? 'bg-monarch-hovered' : 'bg-monarch-soft-black'
+                    } my-1 items-center justify-center gap-1 p-2 px-5`}
+                    type="button"
+                    onClick={() => {
+                      if (selectedCollaterals.includes(token.address.toLowerCase())) {
+                        setSelectedCollaterals(
+                          selectedCollaterals.filter((c) => c !== token.address.toLowerCase()),
+                        );
+                      } else {
+                        setSelectedCollaterals([
+                          ...selectedCollaterals,
+                          token.address.toLowerCase(),
+                        ]);
+                      }
+                    }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedCollaterals.includes(token.address.toLowerCase())}
-                      onChange={() => {
-                        if (selectedCollaterals.includes(token.address.toLowerCase())) {
-                          setSelectedCollaterals(
-                            selectedCollaterals.filter((c) => c !== token.address.toLowerCase()),
-                          );
-                        } else {
-                          setSelectedCollaterals([
-                            ...selectedCollaterals,
-                            token.address.toLowerCase(),
-                          ]);
-                        }
-                      }}
-                    />
                     <p>{token?.symbol}</p>
-                    {token.img && <Image src={token.img} alt="icon" height="18"/>}
-                  </label>
+                    {token.img && <Image src={token.img} alt="icon" height="18" />}
+                  </button>
                 );
               })}
             </div>
