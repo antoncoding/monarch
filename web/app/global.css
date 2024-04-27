@@ -109,6 +109,7 @@ h1 {
 
 .table-body tr:hover {
   background-color: var(--palette-bg-hovered);
+  border-left: 2px solid var(--palette-bg-orange);
 }
 
 

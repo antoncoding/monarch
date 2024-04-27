@@ -14,14 +14,11 @@ export default function Footer() {
         <div className="container mx-auto flex flex-col md:flex-row justify-between px-8">
           <div className="flex flex-col md:flex-row justify-between w-full">
             {/* logo and github */}
-            <div className="flex h-8 w-full md:w-1/3 items-center justify-center gap-4">
-              <NextLink href="/" passHref className="relative h-8 w-8" aria-label="Home page">
-                <Image src={logo} alt="logo" />
-              </NextLink>
+            <div className="flex h-8 w-full md:w-1/3 items-center justify-center gap-2">
               <NextLink
                 href="/"
                 passHref
-                className="text-center text-boat-footer-light-gray no-underline"
+                className="text-boat-footer-light-gray no-underline"
               >
                 Github
               </NextLink>
@@ -33,7 +30,7 @@ export default function Footer() {
             {/* build with love  */}
             <div className="flex h-8 w-full md:w-1/3 items-center justify-center">
               <p className="text-base leading-7 text-boat-footer-light-gray">
-                Build with 💙 on Morpho.
+                Build with 💙 on Morpho Blue
               </p>
             </div>
             

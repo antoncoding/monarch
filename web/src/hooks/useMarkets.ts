@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 
-type MarketData =  {
+export type Market =  {
   id: string;
   lltv: string;
   uniqueKey: string;
@@ -76,7 +76,9 @@ type MarketData =  {
     __typename: string;
   }[];
   __typename: string;
-}[];
+};
+
+
 
 
 
@@ -182,7 +184,7 @@ const query = `query getMarkets(
 const useMarkets = () => {
   
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<MarketData | []>([]);
+  const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown|null>(null);
 
   console.log('error', error)
@@ -204,7 +206,7 @@ const useMarkets = () => {
         });
         const result = await response.json();
 
-        const items = result.data.markets.items as MarketData;
+        const items = result.data.markets.items as Market[];
 
         const filtered = items.filter(market => market.collateralAsset != undefined);
 

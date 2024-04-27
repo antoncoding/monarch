@@ -1,14 +1,21 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { ExternalLinkIcon, MixerHorizontalIcon, TrashIcon } from '@radix-ui/react-icons';
+import {
+  ExternalLinkIcon,
+  DoubleArrowDownIcon,
+  TrashIcon,
+  DoubleArrowUpIcon,
+} from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
-import useMarkets from '@/hooks/useMarkets';
+import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { formatUSD, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL } from '@/utils/external';
 import { supportedTokens, ERC20Token } from '@/utils/tokens';
+
+import { SupplyModal } from './supplyModal';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
 
@@ -20,7 +27,7 @@ export default function HomePage() {
   const { loading, data } = useMarkets();
 
   const [expandCollatOptions, setExpandCollatOptions] = useState(false);
-  const [expanedLoanOptions, setExpandedLoanOptions] = useState(false);
+  const [expandLoanOptions, setExpandedLoanOptions] = useState(false);
 
   // Add state for the selected collateral and loan asset
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
@@ -31,12 +38,16 @@ export default function HomePage() {
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<string[]>([]);
 
   // Add state for the checkbox
-  const [hideDust, setHideDust] = useState(true);
+  const [hideDust, setHideDust] = useState(false);
   const [hideUnknown, setHideUnknown] = useState(true);
 
   // Add state for the sort column and direction
   const [sortColumn, setSortColumn] = useState(3);
   const [sortDirection, setSortDirection] = useState(-1);
+
+  // Control supply modal
+  const [showSupplyModal, setShowSupplyModal] = useState(false);
+  const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
 
   const [filteredData, setFilteredData] = useState(data);
 
@@ -148,21 +159,32 @@ export default function HomePage() {
         <h1 className="font-roboto py-4"> Markets </h1>
         <p className="py-4"> View all Markets </p>
 
+        {showSupplyModal && (
+          <SupplyModal
+            market={selectedMarket as Market}
+            onClose={() => setShowSupplyModal(false)}
+          />
+        )}
+
         <div className="flex justify-between">
           <div className="flex gap-1">
             {/* collateral filter */}
             <button
               type="button"
-              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-3"
+              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm p-3 hover:opacity-80"
               onClick={() => {
-                setExpandedLoanOptions(!expanedLoanOptions);
+                setExpandedLoanOptions(!expandLoanOptions);
               }}
             >
               Filter Loan{' '}
               {selectedLoanAssets.length === 0 ? (
-                <MixerHorizontalIcon />
+                expandLoanOptions ? (
+                  <DoubleArrowUpIcon />
+                ) : (
+                  <DoubleArrowDownIcon />
+                )
               ) : (
-                <span className="bg-monarch-orange rounded-xl px-1">
+                <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
                   {selectedLoanAssets.length}{' '}
                 </span>
               )}
@@ -170,16 +192,20 @@ export default function HomePage() {
 
             <button
               type="button"
-              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-3"
+              className="bg-monarch-soft-black hover:bg-monarch-hovered my-1 flex items-center justify-center gap-2 rounded-sm p-3"
               onClick={() => {
                 setExpandCollatOptions(!expandCollatOptions);
               }}
             >
               Filter Collateral{' '}
               {selectedCollaterals.length === 0 ? (
-                <MixerHorizontalIcon />
+                expandCollatOptions ? (
+                  <DoubleArrowUpIcon />
+                ) : (
+                  <DoubleArrowDownIcon />
+                )
               ) : (
-                <span className="bg-monarch-orange rounded-xl px-1">
+                <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
                   {selectedCollaterals.length}{' '}
                 </span>
               )}
@@ -208,9 +234,9 @@ export default function HomePage() {
         </div>
 
         {/* loan asset filter section: all option as check box */}
-        {expanedLoanOptions && (
+        {expandLoanOptions && (
           <>
-            <p className="opacity-80"> Loans </p>
+            <p className="text-sm opacity-80"> Choose loans </p>
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
@@ -259,7 +285,7 @@ export default function HomePage() {
         {/* collateral filter section: all option as check box */}
         {expandCollatOptions && (
           <>
-            <p className="opacity-80"> Collaterals </p>
+            <p className="text-sm opacity-80"> Choose collaterals </p>
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
@@ -308,11 +334,11 @@ export default function HomePage() {
         )}
 
         {loading ? (
-          <div> Loading Morpho Blue Markets... </div>
+          <div className="py-3 opacity-70"> Loading Morpho Blue Markets... </div>
         ) : data == null ? (
           <div> No data </div>
         ) : (
-          <div className="bg-monarch-soft-black">
+          <div className="bg-monarch-soft-black mt-4">
             <table className="font-roboto w-full">
               <thead className="table-header">
                 <tr>
@@ -335,7 +361,7 @@ export default function HomePage() {
                   </th>
                   <th className="hover:cursor-pointer" onClick={() => titleOnclick(5)}>
                     {' '}
-                    APY(%){' '}
+                    Supply APY(%){' '}
                   </th>
                   <th className="hover:cursor-pointer" onClick={() => titleOnclick(6)}>
                     {' '}
@@ -397,7 +423,7 @@ export default function HomePage() {
 
                       {/* collateral */}
                       <td>
-                        <div className="flex items-center justify-center  gap-1">
+                        <div className="flex items-center justify-center gap-1">
                           {collatImg ? (
                             <Image src={collatImg} alt="icon" width="18" height="18" />
                           ) : null}
@@ -415,9 +441,9 @@ export default function HomePage() {
                       </td>
 
                       {/* total supply */}
-                      <td>
+                      <td className="z-50">
                         <p>${formatUSD(Number(item.state.supplyAssetsUsd)) + '   '} </p>
-                        <p style={{ opacity: '0.7' }}>
+                        <p className="opacity-70">
                           {formatBalance(
                             item.state.supplyAssets,
                             item.loanAsset.decimals,
@@ -456,8 +482,11 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          style={{ padding: '3px' }}
-                          className="bg-monarch-orange items-center justify-between rounded-sm text-xs opacity-70 hover:opacity-100"
+                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs shadow-md"
+                          onClick={() => {
+                            setShowSupplyModal(true);
+                            setSelectedMarket(item);
+                          }}
                         >
                           Supply
                         </button>
