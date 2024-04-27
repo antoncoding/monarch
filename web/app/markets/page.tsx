@@ -6,7 +6,7 @@ import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 
 import { formatUSD, formatBalance } from '@/utils/balance';
-import { getMarketURL } from '@/utils/morpho';
+import { getMarketURL, getAssetURL } from '@/utils/external';
 import { supportedTokens } from '@/utils/tokens';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
@@ -17,18 +17,10 @@ const allSupportedAddresses = supportedTokens.map((token) => token.address.toLow
  */
 export default function HomePage() {
   const { loading, data } = useMarkets();
-  const [filter, setFilter] = useState('');
-
-  console.log(
-    'data',
-    data.find(
-      (m) => m.uniqueKey === '0x698fe98247a40c5771537b5786b2f3f9d78eb487b4ce4d75533cd0e94d88a115',
-    ),
-  );
 
   // Add state for the checkbox
   const [hideDust, setHideDust] = useState(true);
-  const [hideUnknown, setHideUnknown] = useState(false);
+  const [hideUnknown, setHideUnknown] = useState(true);
 
   // Add state for the sort column and direction
   const [sortColumn, setSortColumn] = useState(3);
@@ -39,11 +31,7 @@ export default function HomePage() {
   // Update the filter effect to also filter based on the checkbox
   useEffect(() => {
     let newData = data;
-    if (filter) {
-      newData = newData.filter((item) =>
-        item.collateralAsset.symbol.toLowerCase().includes(filter.toLowerCase()),
-      );
-    }
+
     if (hideDust) {
       newData = newData
         .filter((item) => Number(item.state.supplyAssetsUsd) > 1000)
@@ -97,7 +85,7 @@ export default function HomePage() {
         break;
     }
     setFilteredData(newData);
-  }, [data, filter, hideDust, sortColumn, sortDirection, hideUnknown]);
+  }, [data, hideDust, sortColumn, sortDirection, hideUnknown]);
 
   const titleOnclick = useCallback(
     (column: number) => {
@@ -114,36 +102,26 @@ export default function HomePage() {
         <h1 className="font-roboto py-4"> Markets </h1>
 
         <div className="flex justify-between">
-          <p className="py-4"> View all Morpho Blue markets </p>
-          {
-            /* <input
-            className="bg-opacity-20 p-2"
-            type="text"
-            placeholder="Search for an asset"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            style={{ textAlign: 'left', borderRadius: '5px' }}
-          /> */
-            <div className="flex justify-end gap-2 items-center">
-              <label className="bg-monarch-soft-black flex items-center px-2 py-1 my-1 ">
-                <input
-                  type="checkbox"
-                  checked={hideDust}
-                  onChange={(e) => setHideDust(e.target.checked)}
-                />
-                <p className="p-2">Hide dust</p>
-              </label>
+          <p className="py-4"> View all Markets </p>
+          <div className="flex items-center justify-end gap-2">
+            <label className="bg-monarch-soft-black my-1 flex items-center px-2 py-1 ">
+              <input
+                type="checkbox"
+                checked={hideDust}
+                onChange={(e) => setHideDust(e.target.checked)}
+              />
+              <p className="p-2">Hide dust</p>
+            </label>
 
-              <label className="bg-monarch-soft-black flex items-center px-2 py-1 my-1">
-                <input
-                  type="checkbox"
-                  checked={hideUnknown}
-                  onChange={(e) => setHideUnknown(e.target.checked)}
-                />
-                <p className="p-2">Hide unknown</p>
-              </label>
-            </div>
-          }
+            <label className="bg-monarch-soft-black my-1 flex items-center px-2 py-1">
+              <input
+                type="checkbox"
+                checked={hideUnknown}
+                onChange={(e) => setHideUnknown(e.target.checked)}
+              />
+              <p className="p-2">Hide unknown</p>
+            </label>
+          </div>
         </div>
         {loading ? (
           <div> Loading Morpho Blue Markets... </div>
@@ -202,12 +180,14 @@ export default function HomePage() {
                       <td>
                         <div className="flex justify-center">
                           <a
-                            className="flex items-center no-underline hover:underline gap-1 group"
+                            className="group flex items-center gap-1 no-underline hover:underline"
                             href={getMarketURL(item.uniqueKey)}
                             target="_blank"
                           >
                             <p>{item.uniqueKey.slice(2, 8)} </p>
-                            <p className='opacity-0 group-hover:opacity-100'><ExternalLinkIcon/></p>
+                            <p className="opacity-0 group-hover:opacity-100">
+                              <ExternalLinkIcon />
+                            </p>
                           </a>
                         </div>
                       </td>
@@ -218,7 +198,16 @@ export default function HomePage() {
                           {loanImg ? (
                             <Image src={loanImg} alt="icon" width="18" height="18" />
                           ) : null}
-                          {item.loanAsset.symbol}
+                          <a
+                            className="group flex items-center gap-1 no-underline hover:underline"
+                            href={getAssetURL(item.loanAsset.address)}
+                            target="_blank"
+                          >
+                            <p> {item.loanAsset.symbol} </p>
+                            <p className="opacity-0 group-hover:opacity-100">
+                              <ExternalLinkIcon />
+                            </p>
+                          </a>
                         </div>
                       </td>
 
@@ -228,7 +217,16 @@ export default function HomePage() {
                           {collatImg ? (
                             <Image src={collatImg} alt="icon" width="18" height="18" />
                           ) : null}
-                          <span>{collatToShow}</span>
+                          <a
+                            className="group flex items-center gap-1 no-underline hover:underline"
+                            href={getAssetURL(item.collateralAsset.address)}
+                            target="_blank"
+                          >
+                            <p> {collatToShow} </p>
+                            <p className="opacity-0 group-hover:opacity-100">
+                              <ExternalLinkIcon />
+                            </p>
+                          </a>
                         </div>
                       </td>
 
