@@ -1,10 +1,12 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 
 import { formatUSD, formatBalance } from '@/utils/balance';
+import { getMarketURL } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
@@ -122,8 +124,8 @@ export default function HomePage() {
             onChange={(e) => setFilter(e.target.value)}
             style={{ textAlign: 'left', borderRadius: '5px' }}
           /> */
-            <div className="flex justify-end gap-2">
-              <label className="hover:bg-monarch-soft-black flex items-center p-2">
+            <div className="flex justify-end gap-2 items-center">
+              <label className="bg-monarch-soft-black flex items-center px-2 py-1 my-1 ">
                 <input
                   type="checkbox"
                   checked={hideDust}
@@ -132,7 +134,7 @@ export default function HomePage() {
                 <p className="p-2">Hide dust</p>
               </label>
 
-              <label className="hover:bg-monarch-soft-black flex items-center p-2">
+              <label className="bg-monarch-soft-black flex items-center px-2 py-1 my-1">
                 <input
                   type="checkbox"
                   checked={hideUnknown}
@@ -144,7 +146,7 @@ export default function HomePage() {
           }
         </div>
         {loading ? (
-          <div> Loading... </div>
+          <div> Loading Morpho Blue Markets... </div>
         ) : data == null ? (
           <div> No data </div>
         ) : (
@@ -153,12 +155,30 @@ export default function HomePage() {
               <thead className="table-header">
                 <tr>
                   <th> Id </th>
-                  <th onClick={() => titleOnclick(1)}> Loan </th>
-                  <th onClick={() => titleOnclick(2)}> Collateral </th>
-                  <th onClick={() => titleOnclick(3)}> Total Supply </th>
-                  <th onClick={() => titleOnclick(4)}> Total Borrow </th>
-                  <th onClick={() => titleOnclick(5)}> APY(%) </th>
-                  <th onClick={() => titleOnclick(6)}> LLTV </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(1)}>
+                    {' '}
+                    Loan{' '}
+                  </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(2)}>
+                    {' '}
+                    Collateral{' '}
+                  </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(3)}>
+                    {' '}
+                    Total Supply{' '}
+                  </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(4)}>
+                    {' '}
+                    Total Borrow{' '}
+                  </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(5)}>
+                    {' '}
+                    APY(%){' '}
+                  </th>
+                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(6)}>
+                    {' '}
+                    LLTV{' '}
+                  </th>
                   <th> Actions </th>
                 </tr>
               </thead>
@@ -178,7 +198,19 @@ export default function HomePage() {
 
                   return (
                     <tr key={index.toFixed()}>
-                      <td className="items-center text-center">{item.uniqueKey.slice(2, 8)}</td>
+                      {/* id */}
+                      <td>
+                        <div className="flex justify-center">
+                          <a
+                            className="flex items-center no-underline hover:underline gap-1 group"
+                            href={getMarketURL(item.uniqueKey)}
+                            target="_blank"
+                          >
+                            <p>{item.uniqueKey.slice(2, 8)} </p>
+                            <p className='opacity-0 group-hover:opacity-100'><ExternalLinkIcon/></p>
+                          </a>
+                        </div>
+                      </td>
 
                       {/* loan */}
                       <td>
@@ -243,7 +275,7 @@ export default function HomePage() {
                           type="button"
                           aria-label="Supply"
                           style={{ padding: '3px' }}
-                          className="bg-monarch-orange items-center justify-between rounded-sm text-xs opacity-60 hover:opacity-100"
+                          className="bg-monarch-orange items-center justify-between rounded-sm text-xs opacity-70 hover:opacity-100"
                         >
                           Supply
                         </button>
