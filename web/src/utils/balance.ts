@@ -16,8 +16,8 @@ export const formatBalance = (value: bigint | string, decimals: number) => {
   return Number(value) / (10 ** decimals);
 }
 
-export const toRawBalance = (value: number, decimals: number) => {
-  return BigInt(value * 10 ** decimals);
+export const toRawBalance = (value: number | string, decimals: number) => {
+  return Number(value) * 10 ** decimals;
 }
 
 export function formatUSD(num: number): string {
