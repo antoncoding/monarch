@@ -1,7 +1,7 @@
 // Import the necessary hooks
 import { useMemo, useState } from 'react';
 
-import { Cross1Icon } from '@radix-ui/react-icons';
+import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { useAccount, useBalance } from 'wagmi';
@@ -9,7 +9,10 @@ import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
 import { formatBalance, toRawBalance } from '@/utils/balance';
+import { getExplorerURL } from '@/utils/external';
+import { MORPHO } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
+
 
 type SupplyModalProps = {
   market: Market;
@@ -34,9 +37,10 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     address: account,
   });
 
-  // get allowance to permit 2
+  // get allowance for morpho 
   const { allowance, approveInfinite } = useAllowance({ 
     user: account as `0x${string}`,
+    spender: MORPHO,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
   })
@@ -68,7 +72,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
         <p className="py-2 opacity-80">
           {' '}
-          You are adding {market.loanAsset.symbol} to the following market:{' '}
+          You are supplying {market.loanAsset.symbol} to the following market:{' '}
         </p>
 
         <div className="mb-2">
@@ -93,11 +97,25 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Oracle:</p>
-            <p className="font-roboto text-right">{market.oracleInfo.type}</p>
+            <a
+              className="group flex items-center gap-1 no-underline hover:underline"
+              href={getExplorerURL(market.oracleAddress)}
+              target="_blank"
+            >
+              <p className="font-roboto text-sm text-right">{market.oracleInfo.type}</p>
+              <ExternalLinkIcon />
+            </a>
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">IRM:</p>
-            <p className="font-roboto text-right">{market.irmAddress}</p>
+            <a
+              className="group flex items-center gap-1 no-underline hover:underline"
+              href={getExplorerURL(market.irmAddress)}
+              target="_blank"
+            >
+              <p className="font-roboto text-sm text-right">{market.irmAddress}</p>
+              <ExternalLinkIcon />
+            </a>
           </div>
         </div>
 
@@ -121,16 +139,13 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                 </div>
               </div>
             </div>
-            {/* <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Estimated Fee:</p>
-            <p className="font-roboto text-right"> - ETH</p>
-          </div> */}
+  
           </div>
         ) : (
           <AccountConnect />
         )}
 
-        <div className="mt-8 block py-4"> Supply amount </div>
+        <div className="mt-8 block py-4 opacity-80"> Supply amount </div>
 
         <div className="mb-1 flex items-start justify-between">
           <div className="relative flex-grow">
@@ -138,7 +153,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               type="number"
               value={inputSupplyAmount}
               onChange={(e) => {setInputSupplyAmount(e.target.value)}}
-              className="w-full rounded p-2 h-10"
+              className="w-full rounded p-2 h-10 focus:border-monarch-orange focus:outline-none"
             />
             <button
               type="button"
@@ -147,7 +162,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   formatBalance(tokenBalance?.value ?? '0', loanToken?.decimals ?? 18).toString()
                 )
               }
-              className="bg-monarch-soft-black hover:opacity-60 absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-white"
+              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-white hover:opacity-100 ease-in-out duration-300 hover:scale-105"
             >
               Max
             </button>
@@ -157,7 +172,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             disabled={!isConnected}
             type="button"
             onClick={() => void approveInfinite()}
-            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10"
+            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10 opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-105"
           >
             Approve
           </button> :
@@ -165,7 +180,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             disabled={!isConnected}
             type="button"
             onClick={() => ''}
-            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10"
+            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10 opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-105"
           >
             Supply
           </button>}

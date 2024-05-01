@@ -233,9 +233,9 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* loan asset filter section: all option as check box */}
+        {/* loan asset filter section: all option as buttons */}
         {expandLoanOptions && (
-          <>
+         <div className="transition-all duration-500 ease-in-out">
             <p className="text-sm opacity-80"> Choose loans </p>
             <div className="flex gap-1 overflow-auto">
               <button
@@ -279,12 +279,12 @@ export default function HomePage() {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
 
         {/* collateral filter section: all option as check box */}
         {expandCollatOptions && (
-          <>
+          <div className="transition-all duration-500 ease-in-out">
             <p className="text-sm opacity-80"> Choose collaterals </p>
             <div className="flex gap-1 overflow-auto">
               <button
@@ -330,7 +330,7 @@ export default function HomePage() {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
 
         {loading ? (
@@ -482,7 +482,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs shadow-md"
+                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs shadow-md opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-110"
                           onClick={() => {
                             setShowSupplyModal(true);
                             setSelectedMarket(item);

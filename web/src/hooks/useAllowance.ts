@@ -35,10 +35,7 @@ export function useAllowance({
   const publicClient = usePublicClient({ chainId: chainIdFromArgumentOrConnectedWallet });
 
   useEffect(() => {
-    console.log('useEffect called')
-
     async function fetchApproval() {
-      console.log('fetched fetch approval')
       
       if (!publicClient || !token || !user) {
         throw new Error('Public client not available or address not provided');
