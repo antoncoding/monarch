@@ -6,7 +6,7 @@ import { NavbarLink } from '@/components/layout/header/Navbar';
 
 export default function Footer() {
   return (
-    <footer className="flex flex-1 flex-col justify-end">
+    <footer className="flex flex-1 flex-col justify-end text-sm">
       <div className="flex flex-col justify-between gap-16 bg-boat-footer-dark-gray py-8">
         <div className="container mx-auto flex flex-col justify-between px-8 md:flex-row">
           <div className="flex w-full flex-col justify-between md:flex-row">
@@ -22,14 +22,14 @@ export default function Footer() {
 
             {/* build with love  */}
             <div className="flex h-8 w-full items-center justify-center md:w-1/3">
-              <p className="text-base leading-7 text-boat-footer-light-gray">
+              <p className="text-sm leading-7 text-boat-footer-light-gray ">
                 Build with 💙 on Morpho Blue
               </p>
             </div>
 
             {/* license link */}
             <div className="flex h-8 w-full items-center justify-center md:w-1/3">
-              <p className="text-base text-boat-footer-light-gray">
+              <p className="text-boat-footer-light-gray">
                 <NextLink
                   href="https://github.com/antoncoding/monarch/blob/main/LICENSE.md"
                   target="_blank"

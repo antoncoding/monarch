@@ -16,20 +16,20 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col justify-between">
+    <div className="flex h-screen flex-col">
       <div>
         <HomeHeader />
-        <main className="container mx-auto flex flex-col">
+        <main className="container flex flex-col">
           <section className="mb-12 flex flex-col items-center justify-center">
-            <div className="w-full md:w-3/5">
-              <h2 className="font-roboto mb-10 text-xl text-white md:text-2xl lg:text-3xl">
+            <div className="min-h-40 w-3/5">
+              <h2 className="font-roboto mb-10 px-4 text-2xl text-white sm:px-2 md:text-2xl lg:text-3xl">
                 Direct access to{' '}
                 <span
                   className={`transition-all duration-1000 ${
                     isMorphoBlue ? 'text-blue-500' : 'text-gray-500'
                   }`}
                 >
-                  {isMorphoBlue ? '{ Morpho Blue }' : 'the most decentralized lending protocol.'}
+                  {isMorphoBlue ? '{Morpho Blue}' : 'the most decentralized lending protocol.'}
                 </span>{' '}
               </h2>
             </div>

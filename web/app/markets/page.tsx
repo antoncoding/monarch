@@ -6,6 +6,8 @@ import {
   DoubleArrowDownIcon,
   TrashIcon,
   DoubleArrowUpIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
 } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
@@ -43,7 +45,7 @@ export default function HomePage() {
   const [hideUnknown, setHideUnknown] = useState(true);
 
   // Add state for the sort column and direction
-  const [sortColumn, setSortColumn] = useState(3);
+  const [sortColumn, setSortColumn] = useState(4);
   const [sortDirection, setSortDirection] = useState(-1);
 
   // Control supply modal
@@ -116,22 +118,22 @@ export default function HomePage() {
         );
         break;
       case 3:
+        newData.sort((a, b) => (a.lltv > b.lltv ? sortDirection : -sortDirection));
+        break;
+      case 4:
         newData.sort((a, b) =>
           a.state.supplyAssetsUsd > b.state.supplyAssetsUsd ? sortDirection : -sortDirection,
         );
         break;
-      case 4:
+      case 5:
         newData.sort((a, b) =>
           a.state.borrowAssetsUsd > b.state.borrowAssetsUsd ? sortDirection : -sortDirection,
         );
         break;
-      case 5:
+      case 6:
         newData.sort((a, b) =>
           a.state.supplyApy > b.state.supplyApy ? sortDirection : -sortDirection,
         );
-        break;
-      case 6:
-        newData.sort((a, b) => (a.lltv > b.lltv ? sortDirection : -sortDirection));
         break;
     }
     setFilteredData(newData);
@@ -344,29 +346,83 @@ export default function HomePage() {
               <thead className="table-header">
                 <tr>
                   <th> Id </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(1)}>
-                    {' '}
-                    Loan{' '}
+                  <th
+                    className={`${sortColumn === 1 ? 'text-white' : ''}`}
+                    onClick={() => titleOnclick(1)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div>Loan</div>
+                      {sortColumn === 1 && sortDirection === 1 ? (
+                        <ArrowDownIcon />
+                      ) : sortColumn === 1 && sortDirection === -1 ? (
+                        <ArrowUpIcon />
+                      ) : null}
+                    </div>
                   </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(2)}>
-                    {' '}
-                    Collateral{' '}
+                  <th
+                    className={`${sortColumn === 2 ? 'text-white' : ''} `}
+                    onClick={() => titleOnclick(2)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> Collateral </div>
+                      {sortColumn === 2 && sortDirection === 1 ? (
+                        <ArrowDownIcon />
+                      ) : sortColumn === 2 && sortDirection === -1 ? (
+                        <ArrowUpIcon />
+                      ) : null}
+                    </div>
                   </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(3)}>
-                    {' '}
-                    Total Supply{' '}
+                  <th
+                    className={`${sortColumn === 3 ? 'text-white' : ''}`}
+                    onClick={() => titleOnclick(3)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div>LLTV </div>
+                      {sortColumn === 3 && sortDirection === 1 ? (
+                        <ArrowDownIcon />
+                      ) : sortColumn === 3 && sortDirection === -1 ? (
+                        <ArrowUpIcon />
+                      ) : null}
+                    </div>
                   </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(4)}>
-                    {' '}
-                    Total Borrow{' '}
+                  <th
+                    className={`${sortColumn === 4 ? 'text-white' : ''}`}
+                    onClick={() => titleOnclick(4)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div>Total Supply </div>
+                      {sortColumn === 4 && sortDirection === 1 ? (
+                        <ArrowDownIcon />
+                      ) : sortColumn === 4 && sortDirection === -1 ? (
+                        <ArrowUpIcon />
+                      ) : null}
+                    </div>
                   </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(5)}>
-                    {' '}
-                    Supply APY(%){' '}
+                  <th
+                    className={`${sortColumn === 5 ? 'text-white' : ''}`}
+                    onClick={() => titleOnclick(5)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> Total Borrow </div>
+                      {sortColumn === 5 && sortDirection === 1 ? (
+                        <ArrowDownIcon className="mt-1" />
+                      ) : sortColumn === 5 && sortDirection === -1 ? (
+                        <ArrowUpIcon className="mt-1" />
+                      ) : null}
+                    </div>
                   </th>
-                  <th className="hover:cursor-pointer" onClick={() => titleOnclick(6)}>
-                    {' '}
-                    LLTV{' '}
+                  <th
+                    className={`${sortColumn === 6 ? 'text-white' : ''} `}
+                    onClick={() => titleOnclick(6)}
+                  >
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div>Supply APY(%)</div>
+                      {sortColumn === 6 && sortDirection === 1 ? (
+                        <ArrowDownIcon />
+                      ) : sortColumn === 6 && sortDirection === -1 ? (
+                        <ArrowUpIcon />
+                      ) : null}
+                    </div>
                   </th>
                   <th> Actions </th>
                 </tr>
@@ -441,6 +497,8 @@ export default function HomePage() {
                         </div>
                       </td>
 
+                      <td>{Number(item.lltv) / 1e16}%</td>
+
                       {/* total supply */}
                       <td className="z-50">
                         <p>${formatUSD(Number(item.state.supplyAssetsUsd)) + '   '} </p>
@@ -476,8 +534,6 @@ export default function HomePage() {
                       {/* <td> {item.loanAsset.address} </td> */}
 
                       <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
-
-                      <td>{Number(item.lltv) / 1e16}%</td>
 
                       <td>
                         <button
