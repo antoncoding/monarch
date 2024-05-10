@@ -228,7 +228,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   formatBalance(tokenBalance?.value ?? '0', loanToken?.decimals ?? 18).toString(),
                 )
               }
-              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-white duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-white duration-300 ease-in-out hover:scale-105 hover:opacity-100"
             >
               Max
             </button>
@@ -239,7 +239,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || approvePending}
               type="button"
               onClick={() => void approveInfinite()}
-              className="bg-monarch-orange ml-4 h-10 rounded p-2 text-white opacity-90 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Approve
             </button>
@@ -248,7 +248,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || supplyPending}
               type="button"
               onClick={() => void supply()}
-              className="bg-monarch-orange ml-4 h-10 rounded p-2 text-white opacity-90 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Supply
             </button>
