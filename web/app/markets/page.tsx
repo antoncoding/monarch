@@ -158,8 +158,7 @@ export default function HomePage() {
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className="font-roboto py-4"> Markets </h1>
-        <p className="py-4"> View all Markets </p>
+        <h1 className="font-roboto py-8"> Markets </h1>
 
         {showSupplyModal && (
           <SupplyModal
