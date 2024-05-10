@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ExternalLinkIcon,
-  DoubleArrowDownIcon,
+  ChevronDownIcon,
   TrashIcon,
-  DoubleArrowUpIcon,
   ArrowDownIcon,
   ArrowUpIcon,
+  ChevronUpIcon,
 } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
@@ -182,9 +182,9 @@ export default function HomePage() {
               Filter Loan{' '}
               {selectedLoanAssets.length === 0 ? (
                 expandLoanOptions ? (
-                  <DoubleArrowUpIcon />
+                  <ChevronUpIcon />
                 ) : (
-                  <DoubleArrowDownIcon />
+                  <ChevronDownIcon />
                 )
               ) : (
                 <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
@@ -203,9 +203,9 @@ export default function HomePage() {
               Filter Collateral{' '}
               {selectedCollaterals.length === 0 ? (
                 expandCollatOptions ? (
-                  <DoubleArrowUpIcon />
+                  <ChevronUpIcon />
                 ) : (
-                  <DoubleArrowDownIcon />
+                  <ChevronDownIcon />
                 )
               ) : (
                 <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
