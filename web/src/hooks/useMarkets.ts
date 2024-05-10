@@ -176,20 +176,19 @@ const query = `query getMarkets(
   }
 }`;
 
-
 type WhitelistType = {
   mainnet: {
     markets: {
-      label: string,
-      id: string,
-      loanToken: string,
-      collateralToken: string,
-      oracle: string,
-      irm: string,
-      lltv: string,
-    }[]
-  }
-}
+      label: string;
+      id: string;
+      loanToken: string;
+      collateralToken: string;
+      oracle: string;
+      irm: string;
+      lltv: string;
+    }[];
+  };
+};
 
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
@@ -223,7 +222,7 @@ const useMarkets = () => {
         ]);
         const result = await response.json();
 
-        const whitelist = await whitelistRes.json() as WhitelistType
+        const whitelist = (await whitelistRes.json()) as WhitelistType;
 
         const items = result.data.markets.items as Market[];
 
@@ -231,7 +230,7 @@ const useMarkets = () => {
 
         const filtered = items
           .filter((market) => market.collateralAsset != undefined)
-          .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey))
+          .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey));
 
         setData(filtered);
         setLoading(false);

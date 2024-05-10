@@ -5,7 +5,6 @@ import NextLink from 'next/link';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
 
-
 export function NavbarLink({
   href,
   children,
@@ -39,7 +38,7 @@ export function NavbarTitle() {
         className="font-roboto text-center text-xl font-medium text-white no-underline"
         aria-label="build-onchain-apps Github repository"
       >
-        Monarch
+        Monarch Lend
       </NextLink>
     </div>
   );
@@ -50,7 +49,7 @@ function Navbar() {
     <nav
       className={clsx(
         'flex flex-1 flex-grow items-center justify-between',
-        'rounded-[5px] bg-monarch-soft-black p-4 backdrop-blur-2xl',
+        'bg-monarch-soft-black rounded-[5px] p-4 backdrop-blur-2xl',
       )}
     >
       <div className="flex h-8 grow items-center justify-between gap-4">

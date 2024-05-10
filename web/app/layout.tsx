@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 // Stat analytics before the App renders,
 // so we can track page views and early events
 initAnalytics();

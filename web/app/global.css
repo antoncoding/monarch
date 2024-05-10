@@ -39,7 +39,7 @@ html {
 }
 
 html .font-roboto {
-  font-family: var(--font-roboto)
+  font-family: var(--font-roboto);
 }
 
 html .font-inter {
@@ -68,7 +68,6 @@ body {
 .bg-monarch-hovered {
   background-color: var(--palette-bg-hovered);
 }
-
 
 .bg-monarch-orange {
   background-color: var(--palette-bg-orange);
@@ -112,8 +111,6 @@ h1 {
   border-left: 2px solid var(--palette-bg-orange);
 }
 
-
-
 svg {
   display: block;
   overflow: visible;
@@ -128,7 +125,8 @@ code,
 kbd,
 samp,
 pre {
-  font-family: ui-monospace, 'Inter', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family: ui-monospace, 'Inter', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   font-feature-settings: normal;
   font-size: 14px;
   font-variation-settings: normal;

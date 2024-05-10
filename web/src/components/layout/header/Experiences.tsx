@@ -1,8 +1,3 @@
-
 export function Experiences() {
-  return (
-    <>
-
-    </>
-  );
+  return <></>;
 }

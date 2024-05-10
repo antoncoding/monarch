@@ -8,6 +8,7 @@ import {
   DoubleArrowUpIcon,
 } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
@@ -155,6 +156,7 @@ export default function HomePage() {
   return (
     <div className="font-roboto flex flex-col justify-between">
       <Header />
+      <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <h1 className="font-roboto py-4"> Markets </h1>
         <p className="py-4"> View all Markets </p>
@@ -235,7 +237,7 @@ export default function HomePage() {
 
         {/* loan asset filter section: all option as buttons */}
         {expandLoanOptions && (
-         <div className="transition-all duration-500 ease-in-out">
+          <div className="transition-all duration-500 ease-in-out">
             <p className="text-sm opacity-80"> Choose loans </p>
             <div className="flex gap-1 overflow-auto">
               <button
@@ -482,7 +484,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs shadow-md opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-110"
+                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs opacity-90 shadow-md duration-300 ease-in-out hover:scale-110 hover:opacity-100"
                           onClick={() => {
                             setShowSupplyModal(true);
                             setSelectedMarket(item);

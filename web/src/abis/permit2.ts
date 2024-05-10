@@ -1,4 +1,4 @@
-import { Abi } from "viem";
+import { Abi } from 'viem';
 
 export const abi = [
   {

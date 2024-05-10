@@ -2,7 +2,7 @@ import { generateMetadata } from '@/utils/generateMetadata';
 import HomePage from './home/HomePage';
 
 export const metadata = generateMetadata({
-  title: 'Monarch',
+  title: 'Monarch Lend',
   description: 'Permission-less access to morpho blue protocol',
   images: 'themes.png',
   pathname: '',

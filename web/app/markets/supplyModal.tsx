@@ -13,7 +13,6 @@ import { getExplorerURL } from '@/utils/external';
 import { MORPHO } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
 
-
 type SupplyModalProps = {
   market: Market;
   onClose: () => void;
@@ -37,16 +36,17 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     address: account,
   });
 
-  // get allowance for morpho 
-  const { allowance, approveInfinite } = useAllowance({ 
+  // get allowance for morpho
+  const { allowance, approveInfinite, approvePending } = useAllowance({
     user: account as `0x${string}`,
     spender: MORPHO,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
-  })
+  });
 
-  const supplyAmount = useMemo(() => toRawBalance(inputSupplyAmount, market.loanAsset.decimals), 
-    [inputSupplyAmount, market.loanAsset.decimals]
+  const supplyAmount = useMemo(
+    () => toRawBalance(inputSupplyAmount, market.loanAsset.decimals),
+    [inputSupplyAmount, market.loanAsset.decimals],
   );
 
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
@@ -102,7 +102,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.oracleAddress)}
               target="_blank"
             >
-              <p className="font-roboto text-sm text-right">{market.oracleInfo.type}</p>
+              <p className="font-roboto text-right text-sm">{market.oracleInfo.type}</p>
               <ExternalLinkIcon />
             </a>
           </div>
@@ -113,7 +113,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.irmAddress)}
               target="_blank"
             >
-              <p className="font-roboto text-sm text-right">{market.irmAddress}</p>
+              <p className="font-roboto text-right text-sm">{market.irmAddress}</p>
               <ExternalLinkIcon />
             </a>
           </div>
@@ -139,7 +139,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                 </div>
               </div>
             </div>
-  
           </div>
         ) : (
           <AccountConnect />
@@ -152,38 +151,43 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <input
               type="number"
               value={inputSupplyAmount}
-              onChange={(e) => {setInputSupplyAmount(e.target.value)}}
-              className="w-full rounded p-2 h-10 focus:border-monarch-orange focus:outline-none"
+              onChange={(e) => {
+                setInputSupplyAmount(e.target.value);
+              }}
+              className="focus:border-monarch-orange h-10 w-full rounded p-2 focus:outline-none"
             />
             <button
               type="button"
               onClick={() =>
                 setInputSupplyAmount(
-                  formatBalance(tokenBalance?.value ?? '0', loanToken?.decimals ?? 18).toString()
+                  formatBalance(tokenBalance?.value ?? '0', loanToken?.decimals ?? 18).toString(),
                 )
               }
-              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-white hover:opacity-100 ease-in-out duration-300 hover:scale-105"
+              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-white duration-300 ease-in-out hover:scale-105 hover:opacity-100"
             >
               Max
             </button>
           </div>
 
-          {needApproval ? <button
-            disabled={!isConnected}
-            type="button"
-            onClick={() => void approveInfinite()}
-            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10 opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-105"
-          >
-            Approve
-          </button> :
-          <button
-            disabled={!isConnected}
-            type="button"
-            onClick={() => ''}
-            className="bg-monarch-orange ml-4 rounded p-2 text-white h-10 opacity-90 hover:opacity-100 ease-in-out duration-300 hover:scale-105"
-          >
-            Supply
-          </button>}
+          {needApproval ? (
+            <button
+              disabled={!isConnected || approvePending}
+              type="button"
+              onClick={() => void approveInfinite()}
+              className="bg-monarch-orange ml-4 h-10 rounded p-2 text-white opacity-90 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+            >
+              Approve
+            </button>
+          ) : (
+            <button
+              disabled={!isConnected}
+              type="button"
+              onClick={() => ''}
+              className="bg-monarch-orange ml-4 h-10 rounded p-2 text-white opacity-90 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+            >
+              Supply
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
-  Cross1Icon,
-  HamburgerMenuIcon,
-} from '@radix-ui/react-icons';
+import { Cross1Icon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import AccountConnect from './AccountConnect';
@@ -14,11 +11,11 @@ export default function NavbarMobile() {
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 mx-2 flex flex-col gap-4 rounded-[5px] bg-monarch-black p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 bg-monarch-black mx-2 flex flex-col gap-4 rounded-[5px] p-2 backdrop-blur-2xl">
         <div
           className={[
             'flex flex-1 flex-grow items-center justify-between',
-            'rounded-[5px] bg-monarch-soft-black p-4 backdrop-blur-2xl',
+            'bg-monarch-soft-black rounded-[5px] p-4 backdrop-blur-2xl',
           ].join(' ')}
         >
           <div className="h-38 flex grow items-center justify-between gap-4">
@@ -38,7 +35,7 @@ export default function NavbarMobile() {
             <li className="flex">
               <NavbarLink href="/markets">Markets</NavbarLink>
             </li>
-            
+
             <li className="flex">
               <NavigationMenu.Root className="relative flex flex-grow flex-col">
                 <NavigationMenu.Viewport className={clsx('flex flex-col justify-center')} />

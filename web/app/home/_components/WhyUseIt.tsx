@@ -1,4 +1,3 @@
-
 export default function HomeMain() {
-  return (<div/>);
+  return <div />;
 }
