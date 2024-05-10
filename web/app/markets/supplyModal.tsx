@@ -3,10 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { toast } from 'react-hot-toast'
+import { toast } from 'react-hot-toast';
 import { Address, formatUnits } from 'viem';
 import { useAccount, useBalance, useWriteContract } from 'wagmi';
-import morphoAbi from '@/abis/morpho'
+import morphoAbi from '@/abis/morpho';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
@@ -57,7 +57,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   const {
     writeContract,
-    data: hash,
+    // data: hash,
     error: supplyError,
     isPending: supplyPending,
     isSuccess: supplySuccess,
@@ -66,30 +66,30 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const supply = useCallback(async () => {
     if (!account) {
       toast.error('Please connect your wallet');
-      return
-    };
+      return;
+    }
 
     writeContract({
       account,
       address: MORPHO,
       abi: morphoAbi,
       functionName: 'supply',
-      args: [{
+      args: [
+        {
           loanToken: market.loanAsset.address as Address,
           collateralToken: market.collateralAsset.address as Address,
           oracle: market.oracleAddress as Address,
           irm: market.irmAddress as Address,
-          lltv: BigInt(market.lltv)
-      }, 
-      BigInt(supplyAmount.toString()), // todo: more precise way?
-      BigInt(0),
-      account,
-      "0x"
-    ],
+          lltv: BigInt(market.lltv),
+        },
+        BigInt(supplyAmount.toString()), // todo: more precise way?
+        BigInt(0),
+        account,
+        '0x',
+      ],
     });
   }, [account, market, supplyAmount, writeContract]);
 
-  
   useEffect(() => {
     if (supplyPending) {
       const pendingId = toast.loading('Tx Pending');
@@ -111,8 +111,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       }
     }
   }, [supplySuccess, supplyError, pendingToastId]);
-
-  console.log('supply tx', hash)
 
   return (
     <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
