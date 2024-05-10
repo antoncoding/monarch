@@ -15,7 +15,7 @@ const defaultUrl = deployUrl
   : `http://localhost:${process.env.PORT ?? 3000}`;
 
 export const generateMetadata = ({
-  title = 'Monarch Lend',
+  title = 'Monarch',
   description = 'Permission-less access to morpho blue protocol',
   frame = {},
   images,

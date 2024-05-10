@@ -38,7 +38,7 @@ export function NavbarTitle() {
         className="font-roboto text-center text-xl font-medium text-white no-underline"
         aria-label="build-onchain-apps Github repository"
       >
-        Monarch Lend
+        Monarch
       </NextLink>
     </div>
   );

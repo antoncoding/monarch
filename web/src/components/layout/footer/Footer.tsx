@@ -19,7 +19,7 @@ export default function Footer() {
                 Github
               </NextLink>
               <NavbarLink href="https://github.com/antoncoding/monarch" target="_blank">
-                <GitHubLogoIcon width="24" height="24" aria-label="Monarch Lend" />
+                <GitHubLogoIcon width="24" height="24" aria-label="Monarch" />
               </NavbarLink>
             </div>
 
