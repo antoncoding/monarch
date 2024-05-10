@@ -137,3 +137,22 @@ pre {
   position: relative;
   z-index: 0;
 }
+
+@keyframes textSwap {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  60%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.text-swap {
+  animation: textSwap 6s infinite;
+}
+
+.text-blue {
+  color: blue;
+}

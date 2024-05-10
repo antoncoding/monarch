@@ -11,11 +11,11 @@ export default function NavbarMobile() {
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 bg-monarch-black mx-2 flex flex-col gap-4 rounded-[5px] p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 bg-monarch-black flex flex-col gap-4 rounded-sm p-2 backdrop-blur-2xl">
         <div
           className={[
             'flex flex-1 flex-grow items-center justify-between',
-            'bg-monarch-soft-black rounded-[5px] p-4 backdrop-blur-2xl',
+            'bg-monarch-soft-black rounded-sm p-4 backdrop-blur-2xl',
           ].join(' ')}
         >
           <div className="h-38 flex grow items-center justify-between gap-4">
@@ -54,7 +54,7 @@ export default function NavbarMobile() {
     <nav
       className={[
         'flex flex-1 flex-grow items-center justify-between',
-        'rounded-[50px] border border-stone-300 bg-white bg-opacity-10 p-4 backdrop-blur-2xl',
+        'rounded-sm border border-stone-200 bg-white bg-opacity-10 p-2 backdrop-blur-2xl',
         'mx-4',
       ].join(' ')}
     >

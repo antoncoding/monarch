@@ -484,7 +484,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          className="bg-monarch-orange items-center justify-between rounded-sm p-1 text-xs opacity-90 shadow-md duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+                          className="items-center justify-between rounded-sm p-2 text-xs shadow-md duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
                           onClick={() => {
                             setShowSupplyModal(true);
                             setSelectedMarket(item);
