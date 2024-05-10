@@ -1,10 +1,12 @@
 // Import the necessary hooks
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { formatUnits } from 'viem';
-import { useAccount, useBalance } from 'wagmi';
+import { toast } from 'react-hot-toast'
+import { Address, formatUnits } from 'viem';
+import { useAccount, useBalance, useWriteContract } from 'wagmi';
+import morphoAbi from '@/abis/morpho'
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
@@ -49,7 +51,68 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     [inputSupplyAmount, market.loanAsset.decimals],
   );
 
+  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
+
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
+
+  const {
+    writeContract,
+    data: hash,
+    error: supplyError,
+    isPending: supplyPending,
+    isSuccess: supplySuccess,
+  } = useWriteContract();
+
+  const supply = useCallback(async () => {
+    if (!account) {
+      toast.error('Please connect your wallet');
+      return
+    };
+
+    writeContract({
+      account,
+      address: MORPHO,
+      abi: morphoAbi,
+      functionName: 'supply',
+      args: [{
+          loanToken: market.loanAsset.address as Address,
+          collateralToken: market.collateralAsset.address as Address,
+          oracle: market.oracleAddress as Address,
+          irm: market.irmAddress as Address,
+          lltv: BigInt(market.lltv)
+      }, 
+      BigInt(supplyAmount.toString()), // todo: more precise way?
+      BigInt(0),
+      account,
+      "0x"
+    ],
+    });
+  }, [account, market, supplyAmount, writeContract]);
+
+  
+  useEffect(() => {
+    if (supplyPending) {
+      const pendingId = toast.loading('Tx Pending');
+      setPendingToastId(pendingId);
+    }
+  }, [supplyPending]);
+
+  useEffect(() => {
+    if (supplySuccess) {
+      toast.success('Asset Supplied');
+      if (pendingToastId) {
+        toast.dismiss(pendingToastId);
+      }
+    }
+    if (supplyError) {
+      toast.error('Tx Error');
+      if (pendingToastId) {
+        toast.dismiss(pendingToastId);
+      }
+    }
+  }, [supplySuccess, supplyError, pendingToastId]);
+
+  console.log('supply tx', hash)
 
   return (
     <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
@@ -141,7 +204,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </div>
           </div>
         ) : (
-          <AccountConnect />
+          <div className="flex justify-center">
+            <div className="items-center justify-center pt-4">
+              <AccountConnect />
+            </div>
+          </div>
         )}
 
         <div className="mt-8 block py-4 opacity-80"> Supply amount </div>
@@ -180,9 +247,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </button>
           ) : (
             <button
-              disabled={!isConnected}
+              disabled={!isConnected || supplyPending}
               type="button"
-              onClick={() => ''}
+              onClick={() => void supply()}
               className="bg-monarch-orange ml-4 h-10 rounded p-2 text-white opacity-90 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
             >
               Supply
