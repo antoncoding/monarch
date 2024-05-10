@@ -21,6 +21,7 @@ if (!projectId) {
 const wagmiConfig = createWagmiConfig(projectId);
 
 /**
+ * Monarch
  * TODO Docs ~~~
  */
 function OnchainProviders({ children }: Props) {

@@ -26,6 +26,8 @@ module.exports = {
     // We utilize class properties
     'react/state-in-constructor': 'off',
 
+    "import/no-extraneous-dependencies": "off",
+
     // Dont use prop types since were using TypeScript
     'react/default-props-match-prop-types': 'off',
     'react/forbid-foreign-prop-types': 'off',

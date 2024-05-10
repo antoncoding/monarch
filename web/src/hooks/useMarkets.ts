@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-
 import { useState, useEffect } from 'react';
 
-export type Market =  {
+export type Market = {
   id: string;
   lltv: string;
   uniqueKey: string;
@@ -77,10 +76,6 @@ export type Market =  {
   }[];
   __typename: string;
 };
-
-
-
-
 
 const query = `query getMarkets(
   $first: Int, 
@@ -179,36 +174,64 @@ const query = `query getMarkets(
     }  
     __typename
   }
-}`
+}`;
+
+
+type WhitelistType = {
+  mainnet: {
+    markets: {
+      label: string,
+      id: string,
+      loanToken: string,
+      collateralToken: string,
+      oracle: string,
+      irm: string,
+      lltv: string,
+    }[]
+  }
+}
 
 const useMarkets = () => {
-  
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
-  const [error, setError] = useState<unknown|null>(null);
+  const [error, setError] = useState<unknown | null>(null);
 
-  console.log('error', error)
+  console.log('data', data);
+
+  console.log('error', error);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://blue-api.morpho.org/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            query, 
-            variables: { 
-              first: 1000
-            }}),
-        });
+        const [response, whitelistRes] = await Promise.all([
+          fetch('https://blue-api.morpho.org/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              query,
+              variables: {
+                first: 1000,
+              },
+            }),
+          }),
+          fetch('https://blue-services.morpho.org/whitelisting', {
+            method: 'GET',
+          }),
+        ]);
         const result = await response.json();
+
+        const whitelist = await whitelistRes.json() as WhitelistType
 
         const items = result.data.markets.items as Market[];
 
-        const filtered = items.filter(market => market.collateralAsset != undefined);
+        const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) => market.id);
+
+        const filtered = items
+          .filter((market) => market.collateralAsset != undefined)
+          .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey))
 
         setData(filtered);
         setLoading(false);
@@ -218,9 +241,7 @@ const useMarkets = () => {
       }
     };
 
-    
     fetchData().catch(console.error);
-    
   }, []);
 
   return { loading, data, error };
