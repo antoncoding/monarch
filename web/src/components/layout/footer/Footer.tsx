@@ -1,11 +1,8 @@
 'use client';
 
 import { GitHubLogoIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import NextLink from 'next/link';
 import { NavbarLink } from '@/components/layout/header/Navbar';
-
-import logo from '../../imgs/logo.png';
 
 export default function Footer() {
   return (
