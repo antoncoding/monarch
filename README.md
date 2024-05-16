@@ -1,19 +1,30 @@
-# Build Onchain Apps Toolkit
+<div align="center">
+  <h1 > Monarch </h1>
+  <img height=80 src="./imgs/logo.png"/>
+  <h5 align="center"> Easy access to Morpho Blue.</h5>
+</div>
 
-This project has two main folders:
+![Monarch UI Screenshot](./imgs/Screenshot-1.png)
 
-```bash
-.
-├── contracts
-│   ├── src
-│   ├── broadcast
-│   ├── script
-│   └── test
-└── web
-    ├── app
-    └── src
+## Overview
+
+Monarch is an unofficial user interface designed to facilitate access to [Morpho Blue](https://github.com/morpho-org/morpho-blue) markets. It provides a streamlined way to supply to any markets created on the Morpho Blue protocol, without the need for MetaMorpho vaults.
+
+## Local Setup
+
+Follow these steps to run the Monarch UI on your local machine:
+
+```shell
+# Clone the repository
+git clone git@github.com:antoncoding/monarch.git
+
+# Navigate into the 'web' directory of the 'monarch' repository
+cd monarch/web
+
+# Install dependencies
+yarn
+
+# Start the development server
+yarn dev
 ```
 
-[contracts](/contracts/README.md) folder contains all the solidity code
-
-[web](/web/README.md) folder contains all the frontend code
