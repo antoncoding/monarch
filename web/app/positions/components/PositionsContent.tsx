@@ -1,28 +1,21 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
-import { useCallback, useEffect, useState } from 'react';
-import {
-  ExternalLinkIcon,
-} from '@radix-ui/react-icons';
+
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
-import useUserPositions, { MarketPosition } from '@/hooks/useUserPositions';
+import useUserPositions from '@/hooks/useUserPositions';
 
-import { formatUSD, formatBalance } from '@/utils/balance';
-import { getMarketURL, getAssetURL } from '@/utils/external';
-import { supportedTokens, ERC20Token } from '@/utils/tokens';
-
-const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
-
+import { formatReadable, formatBalance } from '@/utils/balance';
+import { getMarketURL } from '@/utils/external';
+import { supportedTokens } from '@/utils/tokens';
 
 export default function Positions() {
-
-  const { account } = useParams<{account: string}>();
+  const { account } = useParams<{ account: string }>();
 
   const { loading, data: marketPositions } = useUserPositions(account);
-
 
   return (
     <div className="font-roboto flex flex-col justify-between">
@@ -31,11 +24,17 @@ export default function Positions() {
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <h1 className="font-roboto py-8"> Positions </h1>
 
-
         {loading ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
         ) : marketPositions == null ? (
-          <div> No supplied assets </div>
+          <div className="w-full items-center rounded-md p-12 text-center text-gray-500">
+            No opened positions, goes to the{' '}
+            <a href="/markets" className="text-orange-500 no-underline">
+              {' '}
+              Markets{' '}
+            </a>{' '}
+            to open a new position.
+          </div>
         ) : (
           <div className="bg-monarch-soft-black mt-4">
             <table className="font-roboto w-full">
@@ -44,7 +43,7 @@ export default function Positions() {
                   <th> Market ID </th>
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Supplied </div>
+                      <div> Supplied Asset </div>
                     </div>
                   </th>
                   <th>
@@ -54,10 +53,20 @@ export default function Positions() {
                   </th>
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div>Amount Borrowed </div>
+                      <div> LLTV </div>
                     </div>
                   </th>
-                  
+                  <th>
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> Daily APY </div>
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> % of Market </div>
+                    </div>
+                  </th>
+
                   <th> Actions </th>
                 </tr>
               </thead>
@@ -65,11 +74,14 @@ export default function Positions() {
                 {marketPositions.map((position, index) => {
                   const collatImg = supportedTokens.find(
                     (token) =>
-                      token.address.toLowerCase() === position.market.collateralAsset.address.toLowerCase(),
+                      token.address.toLowerCase() ===
+                      position.market.collateralAsset.address.toLowerCase(),
                   )?.img;
-                  
+
                   const loanImg = supportedTokens.find(
-                    (token) => token.address.toLowerCase() === position.market.loanAsset.address.toLowerCase(),
+                    (token) =>
+                      token.address.toLowerCase() ===
+                      position.market.loanAsset.address.toLowerCase(),
                   )?.img;
 
                   return (
@@ -92,35 +104,67 @@ export default function Positions() {
 
                       {/* supply */}
                       <td>
-                        <div className="flex items-center justify-center gap-1">
-                            <p> {formatBalance(position.supplyAssets, position.market.loanAsset.decimals)} </p>
+                        <div>
+                          <div className="flex items-center justify-center gap-1">
+                            <p>
+                              {formatReadable(
+                                formatBalance(
+                                  position.supplyAssets,
+                                  position.market.loanAsset.decimals,
+                                ),
+                              )}{' '}
+                            </p>
                             <p> {position.market.loanAsset.symbol} </p>
-                          {loanImg ? (
-                            <Image src={loanImg} alt="icon" width="18" height="18" />
-                          ) : null}
-                            
+                            {loanImg ? (
+                              <Image src={loanImg} alt="icon" width="18" height="18" />
+                            ) : null}
+                          </div>
+                          {/* percentage */}
+                          {/* <div>
+                            <p className='opacity-70'>
+                              {formatReadable(
+                                (Number(position.supplyAssets) / Number(position.market.state.supplyAssets)) * 100,
+                              )}{' '}
+                              %
+                            </p>
+                          </div> */}
                         </div>
                       </td>
 
                       {/* collateral */}
                       <td>
                         <div className="flex items-center justify-center gap-1">
+                          <div> {position.market.collateralAsset.symbol} </div>
                           {collatImg ? (
                             <Image src={collatImg} alt="icon" width="18" height="18" />
                           ) : null}
-                            <p> {} </p>
-                            <p className="opacity-0 group-hover:opacity-100">
-                              <ExternalLinkIcon />
-                            </p>
+                          <p> {} </p>
                         </div>
                       </td>
 
-                      {/* total supply */}
-                      <td className="z-50">
-                        Test
+                      <td>
+                        <div className="flex items-center justify-center gap-1">
+                          <p> {formatBalance(position.market.lltv, 16)} % </p>
+                        </div>
                       </td>
 
-                      
+                      {/* APYs */}
+                      <td className="z-50">
+                        {formatReadable(position.market.dailyApys.netSupplyApy * 100)}
+                        {/* <p>{formatReadable(position.market.weeklyApys.netSupplyApy * 100)}</p> */}
+                      </td>
+
+                      {/* percentage */}
+                      <td>
+                        <p className="opacity-70">
+                          {formatReadable(
+                            (Number(position.supplyAssets) /
+                              Number(position.market.state.supplyAssets)) *
+                              100,
+                          )}%
+                        </p>
+                      </td>
+
                       <td>
                         <button
                           type="button"

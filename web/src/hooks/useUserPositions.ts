@@ -1,29 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
+import { MarketPosition, WhitelistMarketResponse } from '@/utils/types';
 
-export type MarketPosition = {
-  supplyShares: string
-  supplyAssets: string
-  supplyAssetsUsd: number
-  borrowShares: string
-  borrowAssets: string
-  borrowAssetsUsd: number
-  market: {
-    id: string
-    uniqueKey: string
-    loanAsset: {
-      address: string
-      symbol: string
-      decimals: number
-    }
-    collateralAsset: {
-      address: string
-      symbol: string
-      decimals: number
-    }
-  }
-};
 
 const query = `query getUserMarketPositions(
   $address: String!
@@ -39,6 +18,16 @@ const query = `query getUserMarketPositions(
       market {
         id
         uniqueKey
+        lltv
+        dailyApys {
+          netSupplyApy
+        }
+        weeklyApys {
+          netSupplyApy
+        }
+        monthlyApys {
+          netSupplyApy
+        }
         loanAsset {
           address
           symbol
@@ -49,11 +38,14 @@ const query = `query getUserMarketPositions(
           symbol
           decimals
         }
+        state {
+          liquidityAssets
+          supplyAssets
+        }
       }
     }
   }
 }`;
-
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -68,7 +60,8 @@ const useUserPositions = (user: string | undefined) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://blue-api.morpho.org/graphql', {
+        const [response, whitelistRes] = await Promise.all([
+          fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -79,14 +72,19 @@ const useUserPositions = (user: string | undefined) => {
                 address: user,
               },
             }),
-          })
-        
-          const result = await response.json();
+          }),
+          fetch('https://blue-services.morpho.org/whitelisting', {
+            method: 'GET',
+          }),
+        ]);
 
-        
-        const items = result.data.userByAddress.marketPositions as MarketPosition[];
+        const result = await response.json();
+        const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
-        setData(items);
+        const allPositions = result.data.userByAddress.marketPositions as MarketPosition[]
+        const filtered = allPositions.filter((position: MarketPosition) => whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey))
+
+        setData(filtered);
         setLoading(false);
       } catch (_error) {
         setError(_error);

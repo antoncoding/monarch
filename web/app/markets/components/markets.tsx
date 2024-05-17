@@ -14,7 +14,7 @@ import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
-import { formatUSD, formatBalance } from '@/utils/balance';
+import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL } from '@/utils/external';
 import { generateMetadata } from '@/utils/generateMetadata';
 import { supportedTokens, ERC20Token } from '@/utils/tokens';
@@ -509,7 +509,7 @@ export default function HomePage() {
 
                       {/* total supply */}
                       <td className="z-50">
-                        <p>${formatUSD(Number(item.state.supplyAssetsUsd)) + '   '} </p>
+                        <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
                         <p className="opacity-70">
                           {formatBalance(
                             item.state.supplyAssets,
@@ -525,7 +525,7 @@ export default function HomePage() {
 
                       {/* total supply */}
                       <td>
-                        <p>${formatUSD(Number(item.state.borrowAssetsUsd))} </p>
+                        <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
                         <p style={{ opacity: '0.7' }}>
                           {formatBalance(
                             item.state.borrowAssets,
