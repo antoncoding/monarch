@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
@@ -28,7 +29,7 @@ export default function Positions() {
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className="font-roboto py-8"> Positions </h1>
+        <h1 className="font-roboto py-4 text-2xl"> Supplied Markets </h1>
 
         {showModal && selectedPosition && 
           <AdjustModal position={selectedPosition} onClose={
@@ -41,8 +42,8 @@ export default function Positions() {
 
         {loading ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
-        ) : marketPositions == null ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-gray-500">
+        ) : marketPositions.length === 0 ? (
+          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
             No opened positions, goes to the{' '}
             <a href="/markets" className="text-orange-500 no-underline">
               {' '}
@@ -204,6 +205,17 @@ export default function Positions() {
             </table>
           </div>
         )}
+
+        <div className="flex justify-center pt-14">
+          <Link href="/markets">
+            <button
+              type="button"
+              className="bg-monarch-orange font-roboto rounded-sm p-3 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            >
+              View All Markets
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );

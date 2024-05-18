@@ -135,7 +135,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">{market.id}</p>
+            <p className="font-roboto text-right">{market.uniqueKey.slice(2, 8)} ... {market.uniqueKey.slice(market.uniqueKey.length -6)}</p>
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Collateral Token:</p>

@@ -39,7 +39,7 @@ export default function HomePage() {
           <Link href="/markets">
             <button
               type="button"
-              className="bg-monarch-orange font-roboto rounded-sm p-4 px-10 hover:opacity-80"
+              className="bg-monarch-orange font-roboto rounded-sm p-4 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               Start
             </button>

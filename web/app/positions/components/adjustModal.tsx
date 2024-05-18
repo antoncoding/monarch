@@ -14,12 +14,12 @@ import { MORPHO } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 
-type SupplyModalProps = {
+type ModalProps = {
   position: MarketPosition;
   onClose: () => void;
 };
 
-export function AdjustModal({ position, onClose }: SupplyModalProps): JSX.Element {
+export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
   // Add state for the supply amount
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -126,12 +126,26 @@ export function AdjustModal({ position, onClose }: SupplyModalProps): JSX.Elemen
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">{position.market.id}</p>
+            <p className="font-roboto text-right">{position.market.uniqueKey.slice(2, 8)} ... { position.market.uniqueKey.slice(position.market.uniqueKey.length -6) }</p>
           </div>
           
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Supplied Amount:</p>
-            <p className="font-roboto text-right text-sm">{formatBalance(position.supplyAssets, position.market.loanAsset.decimals)}</p>            
+
+            <div className="flex items-center justify-center gap-2">
+                <p className="font-roboto text-right">
+                  {formatBalance(
+                    position.supplyAssets,
+                    position.market.loanAsset.decimals,
+                  )}
+                </p>
+                <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
+                <div>
+                  {loanToken?.img && (
+                    <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
+                  )}{' '}
+                </div>
+              </div>
           </div>
         </div>
 

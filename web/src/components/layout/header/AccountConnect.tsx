@@ -22,7 +22,7 @@ function AccountConnect() {
 
         return (
           <div
-            className="flex flex-grow"
+            className="flex flex-grow transition-all duration-300 ease-in-out opacity-80 hover:opacity-100"
             {...(!ready && {
               'aria-hidden': true,
               style: {
@@ -38,7 +38,7 @@ function AccountConnect() {
                   <button
                     onClick={openConnectModal}
                     type="button"
-                    className="inline-flex h-10 flex-grow items-center justify-center gap-2 rounded-3xl bg-white px-4 py-2"
+                    className="inline-flex h-10 flex-grow items-center justify-center gap-2 rounded-2xl bg-white px-4 py-2"
                   >
                     <div className="text-sm font-medium leading-normal text-black">Connect</div>
                   </button>

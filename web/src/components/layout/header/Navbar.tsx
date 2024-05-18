@@ -35,7 +35,7 @@ export function NavbarTitle() {
       <NextLink
         href="/"
         passHref
-        className="font-roboto text-center text-xl font-medium text-white no-underline"
+        className="font-roboto text-center text-lg font-medium text-white no-underline"
         aria-label="build-onchain-apps Github repository"
       >
         Monarch
@@ -57,7 +57,10 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-8 md:flex">
             <li className="flex">
-              <NavbarLink href="/markets">Markets</NavbarLink>
+              <NavbarLink href="/positions"> <p className='text-base opacity-80 hover:opacity-100'> Portfolio </p> </NavbarLink>
+            </li>
+            <li className="flex">
+              <NavbarLink href="/markets"> <p className='text-base opacity-80 hover:opacity-100'> Markets </p> </NavbarLink>
             </li>
             <li className="flex">
               <NavigationMenu.Root className="relative">

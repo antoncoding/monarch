@@ -1,6 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
+import PositionEntry from './PositionEntry';
 
-import Content from '../components/PositionsContent';
 
 export const metadata = generateMetadata({
   title: 'Positions',
@@ -9,7 +9,6 @@ export const metadata = generateMetadata({
   pathname: '',
 });
 
-export default function MarketPage() {
-  return <Content />;
+export default function LogIn() {
+  return (<PositionEntry />)
 }
-
