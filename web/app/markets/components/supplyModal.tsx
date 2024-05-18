@@ -7,10 +7,11 @@ import { toast } from 'react-hot-toast';
 import { Address, formatUnits } from 'viem';
 import { useAccount, useBalance, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
+import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
-import { formatBalance, toRawBalance } from '@/utils/balance';
+import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { MORPHO } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
@@ -22,7 +23,7 @@ type SupplyModalProps = {
 
 export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element {
   // Add state for the supply amount
-  const [inputSupplyAmount, setInputSupplyAmount] = useState('0');
+  const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
 
   const { address: account, isConnected } = useAccount();
 
@@ -45,11 +46,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
   });
-
-  const supplyAmount = useMemo(
-    () => toRawBalance(inputSupplyAmount, market.loanAsset.decimals),
-    [inputSupplyAmount, market.loanAsset.decimals],
-  );
 
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();
 
@@ -82,7 +78,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           irm: market.irmAddress as Address,
           lltv: BigInt(market.lltv),
         },
-        BigInt(supplyAmount.toString()), // todo: more precise way?
+        supplyAmount,
         BigInt(0),
         account,
         '0x',
@@ -213,25 +209,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
         <div className="mb-1 flex items-start justify-between">
           <div className="relative flex-grow">
-            <input
-              type="number"
-              value={inputSupplyAmount}
-              onChange={(e) => {
-                setInputSupplyAmount(e.target.value);
-              }}
-              className="focus:border-monarch-orange h-10 w-full rounded p-2 focus:outline-none"
+            <Input 
+              decimals={market.loanAsset.decimals}
+              max={tokenBalance?.value? tokenBalance.value : BigInt(0)}
+              setValue={setSupplyAmount}
             />
-            <button
-              type="button"
-              onClick={() =>
-                setInputSupplyAmount(
-                  formatBalance(tokenBalance?.value ?? '0', loanToken?.decimals ?? 18).toString(),
-                )
-              }
-              className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-white duration-300 ease-in-out hover:scale-105 hover:opacity-100"
-            >
-              Max
-            </button>
           </div>
 
           {needApproval ? (

@@ -9,6 +9,8 @@ export type MarketPosition = {
     id: string;
     uniqueKey: string;
     lltv: string;
+    oracleAddress: string;
+    irmAddress: string;
     dailyApys: {
       netSupplyApy: number;
     };

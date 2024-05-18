@@ -19,6 +19,8 @@ const query = `query getUserMarketPositions(
         id
         uniqueKey
         lltv
+        oracleAddress
+        irmAddress
         dailyApys {
           netSupplyApy
         }
