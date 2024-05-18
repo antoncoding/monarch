@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Address} from 'viem';
+import { Address } from 'viem';
 import { useAccount, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
@@ -46,12 +46,12 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
       return;
     }
 
-    console.log('withdrawAmount', withdrawAmount)
-    console.log('position', position.supplyAssets)
+    console.log('withdrawAmount', withdrawAmount);
+    console.log('position', position.supplyAssets);
 
-    const isMax =  withdrawAmount.toString() ===  position.supplyAssets;
+    const isMax = withdrawAmount.toString() === position.supplyAssets;
 
-    console.log('isMax', isMax)
+    console.log('isMax', isMax);
 
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
     const sharesToWithdraw = isMax ? position.supplyShares : '0';
@@ -75,7 +75,14 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
         account, // receiver
       ],
     });
-  }, [account, position.market, withdrawAmount, writeContract, position.supplyAssets, position.supplyShares]);
+  }, [
+    account,
+    position.market,
+    withdrawAmount,
+    writeContract,
+    position.supplyAssets,
+    position.supplyShares,
+  ]);
 
   useEffect(() => {
     if (supplyPending) {
@@ -126,42 +133,40 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">{position.market.uniqueKey.slice(2, 8)} ... { position.market.uniqueKey.slice(position.market.uniqueKey.length -6) }</p>
+            <p className="font-roboto text-right">
+              {position.market.uniqueKey.slice(2, 8)} ...{' '}
+              {position.market.uniqueKey.slice(position.market.uniqueKey.length - 6)}
+            </p>
           </div>
-          
+
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Supplied Amount:</p>
 
             <div className="flex items-center justify-center gap-2">
-                <p className="font-roboto text-right">
-                  {formatBalance(
-                    position.supplyAssets,
-                    position.market.loanAsset.decimals,
-                  )}
-                </p>
-                <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
-                <div>
-                  {loanToken?.img && (
-                    <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
-                  )}{' '}
-                </div>
+              <p className="font-roboto text-right">
+                {formatBalance(position.supplyAssets, position.market.loanAsset.decimals)}
+              </p>
+              <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
+              <div>
+                {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
               </div>
+            </div>
           </div>
         </div>
 
-        {!isConnected &&
+        {!isConnected && (
           <div className="flex justify-center">
             <div className="items-center justify-center pt-4">
               <AccountConnect />
             </div>
           </div>
-        }
+        )}
 
         <div className="mt-8 block py-4 opacity-80"> Withdraw amount </div>
 
         <div className="mb-1 flex items-start justify-between">
           <div className="relative flex-grow">
-            <Input 
+            <Input
               decimals={position.market.loanAsset.decimals}
               max={BigInt(position.supplyAssets)}
               setValue={setWithdrawAmount}
@@ -169,15 +174,14 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
             />
           </div>
 
-          
-            <button
-              disabled={!isConnected || supplyPending || inputError !== null}
-              type="button"
-              onClick={() => void supply()}
-              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
-            >
-              Withdraw
-            </button>
+          <button
+            disabled={!isConnected || supplyPending || inputError !== null}
+            type="button"
+            onClick={() => void supply()}
+            className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+          >
+            Withdraw
+          </button>
         </div>
       </div>
     </div>

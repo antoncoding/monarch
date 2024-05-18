@@ -31,19 +31,20 @@ export default function Positions() {
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <h1 className="font-roboto py-4 text-2xl"> Supplied Markets </h1>
 
-        {showModal && selectedPosition && 
-          <AdjustModal position={selectedPosition} onClose={
-            () => {
-              setShowModal(false)
-              setSelectedPosition(null)
-            }
-          } 
-        />}
+        {showModal && selectedPosition && (
+          <AdjustModal
+            position={selectedPosition}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedPosition(null);
+            }}
+          />
+        )}
 
         {loading ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
         ) : marketPositions.length === 0 ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
+          <div className="text-secondary w-full items-center rounded-md p-12 text-center">
             No opened positions, goes to the{' '}
             <a href="/markets" className="text-orange-500 no-underline">
               {' '}

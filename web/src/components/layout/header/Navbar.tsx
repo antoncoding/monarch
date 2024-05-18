@@ -57,10 +57,16 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-8 md:flex">
             <li className="flex">
-              <NavbarLink href="/positions"> <p className='text-base opacity-80 hover:opacity-100'> Portfolio </p> </NavbarLink>
+              <NavbarLink href="/positions">
+                {' '}
+                <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+              </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href="/markets"> <p className='text-base opacity-80 hover:opacity-100'> Markets </p> </NavbarLink>
+              <NavbarLink href="/markets">
+                {' '}
+                <p className="text-base opacity-80 hover:opacity-100"> Markets </p>{' '}
+              </NavbarLink>
             </li>
             <li className="flex">
               <NavigationMenu.Root className="relative">

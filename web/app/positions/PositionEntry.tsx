@@ -29,10 +29,10 @@ export default function PositionEntry() {
           {/* {show connect button or input} */}
           {address ? (
             <Link href={`/positions/${address}`} className="no-underline">
-              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:opacity-100 hover:scale-110">
+              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-110 hover:opacity-100">
                 <button
                   type="button"
-                  className="text-roboto bg-monarch-soft-black rounded-sm p-4 px-10 w-80 "
+                  className="text-roboto bg-monarch-soft-black w-80 rounded-sm p-4 px-10 "
                 >
                   View Account {address.slice(0, 8)}
                 </button>
@@ -59,20 +59,20 @@ export default function PositionEntry() {
         <div className="flex justify-center">
           <div className="font-roboto flex opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
             <input
-              className="bg-monarch-soft-black p-4 w-80 focus:opacity-100"
+              className="bg-monarch-soft-black w-80 p-4 focus:opacity-100"
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
-              placeholder='0x...'
+              placeholder="0x..."
             />
 
             <button
               // disabled={!isConnected || approvePending}
               type="button"
               onClick={() => {
-                if (isAddress(inputAddress.toLowerCase(), {strict: false})) {
+                if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
                   window.location.href = `/positions/${inputAddress}`;
                 } else {
-                  console.log('inputAddress', inputAddress)
+                  console.log('inputAddress', inputAddress);
                   toast.error('Invalid address');
                 }
               }}

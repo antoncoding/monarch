@@ -135,7 +135,10 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">{market.uniqueKey.slice(2, 8)} ... {market.uniqueKey.slice(market.uniqueKey.length -6)}</p>
+            <p className="font-roboto text-right">
+              {market.uniqueKey.slice(2, 8)} ...{' '}
+              {market.uniqueKey.slice(market.uniqueKey.length - 6)}
+            </p>
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Collateral Token:</p>
@@ -209,9 +212,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
         <div className="mb-1 flex items-start justify-between">
           <div className="relative flex-grow">
-            <Input 
+            <Input
               decimals={market.loanAsset.decimals}
-              max={tokenBalance?.value? tokenBalance.value : BigInt(0)}
+              max={tokenBalance?.value ? tokenBalance.value : BigInt(0)}
               setValue={setSupplyAmount}
             />
           </div>

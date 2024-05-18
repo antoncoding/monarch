@@ -12,4 +12,3 @@ export const metadata = generateMetadata({
 export default function MarketPage() {
   return <Content />;
 }
-

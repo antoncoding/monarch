@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { MarketPosition, WhitelistMarketResponse } from '@/utils/types';
 
-
 const query = `query getUserMarketPositions(
   $address: String!
 ) {
@@ -83,8 +82,10 @@ const useUserPositions = (user: string | undefined) => {
         const result = await response.json();
         const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
-        const allPositions = result.data.userByAddress.marketPositions as MarketPosition[]
-        const filtered = allPositions.filter((position: MarketPosition) => whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey))
+        const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
+        const filtered = allPositions.filter((position: MarketPosition) =>
+          whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey),
+        );
 
         setData(filtered);
         setLoading(false);

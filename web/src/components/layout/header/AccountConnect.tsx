@@ -22,7 +22,7 @@ function AccountConnect() {
 
         return (
           <div
-            className="flex flex-grow transition-all duration-300 ease-in-out opacity-80 hover:opacity-100"
+            className="flex flex-grow opacity-80 transition-all duration-300 ease-in-out hover:opacity-100"
             {...(!ready && {
               'aria-hidden': true,
               style: {

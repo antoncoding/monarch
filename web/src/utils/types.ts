@@ -37,7 +37,6 @@ export type MarketPosition = {
   };
 };
 
-
 export type WhitelistMarketResponse = {
   mainnet: {
     markets: {

@@ -177,7 +177,6 @@ const query = `query getMarkets(
   }
 }`;
 
-
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);

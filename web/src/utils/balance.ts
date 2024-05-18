@@ -14,9 +14,9 @@ export const getAccountBalance = (data?: WagmiFetchBalanceResult) => {
 
 /**
  * Same as formatUnit, but output number instead of bigint, not accurate
- * @param value 
- * @param decimals 
- * @returns 
+ * @param value
+ * @param decimals
+ * @returns
  */
 export const formatBalance = (value: bigint | string, decimals: number) => {
   return Number(value) / 10 ** decimals;
