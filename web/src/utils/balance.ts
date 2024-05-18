@@ -12,15 +12,17 @@ export const getAccountBalance = (data?: WagmiFetchBalanceResult) => {
   return `${data?.formatted.slice(0, 5)} ${data?.symbol}`;
 };
 
+/**
+ * Same as formatUnit, but output number instead of bigint, not accurate
+ * @param value
+ * @param decimals
+ * @returns
+ */
 export const formatBalance = (value: bigint | string, decimals: number) => {
   return Number(value) / 10 ** decimals;
 };
 
-export const toRawBalance = (value: number | string, decimals: number) => {
-  return Number(value) * 10 ** decimals;
-};
-
-export function formatUSD(num: number): string {
+export function formatReadable(num: number): string {
   if (Math.abs(num) >= 1_000_000_000) {
     return (num / 1_000_000_000).toFixed(2) + 'B';
   } else if (Math.abs(num) >= 1_000_000) {

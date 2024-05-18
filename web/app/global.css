@@ -20,6 +20,7 @@
   /* Build Onchain Apps shared variables */
   --color-background: var(--palette-bg-black);
   --color-text: var(--palette-bg-white);
+  --color-text-secondary: #8e8e8e;
 
   /* Indicates that the element can be rendered using 
    * the operating system dark color scheme. 
@@ -155,4 +156,8 @@ pre {
 
 .text-blue {
   color: blue;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
 }

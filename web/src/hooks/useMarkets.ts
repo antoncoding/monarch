@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
+import { WhitelistMarketResponse } from '@/utils/types';
 
 export type Market = {
   id: string;
@@ -176,20 +177,6 @@ const query = `query getMarkets(
   }
 }`;
 
-type WhitelistType = {
-  mainnet: {
-    markets: {
-      label: string;
-      id: string;
-      loanToken: string;
-      collateralToken: string;
-      oracle: string;
-      irm: string;
-      lltv: string;
-    }[];
-  };
-};
-
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
@@ -222,7 +209,7 @@ const useMarkets = () => {
         ]);
         const result = await response.json();
 
-        const whitelist = (await whitelistRes.json()) as WhitelistType;
+        const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
         const items = result.data.markets.items as Market[];
 
