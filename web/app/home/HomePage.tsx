@@ -22,7 +22,7 @@ export default function HomePage() {
         <main className="container flex flex-col">
           <section className="mb-12 flex flex-col items-center justify-center">
             <div className="min-h-40 w-3/5">
-              <h2 className="font-roboto mb-10 px-4 text-2xl text-white sm:px-2 md:text-2xl lg:text-3xl">
+              <h2 className="font-roboto text-primary mb-10 px-4 text-2xl sm:px-2 md:text-2xl lg:text-3xl">
                 Direct access to{' '}
                 <span
                   className={`transition-all duration-1000 ${

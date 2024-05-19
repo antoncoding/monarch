@@ -182,7 +182,7 @@ export default function HomePage() {
             {/* collateral filter */}
             <button
               type="button"
-              className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm p-3 hover:opacity-80"
+              className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm p-3 hover:opacity-80"
               onClick={() => {
                 setExpandedLoanOptions(!expandLoanOptions);
               }}
@@ -203,7 +203,7 @@ export default function HomePage() {
 
             <button
               type="button"
-              className="bg-monarch-soft-black hover:bg-monarch-hovered my-1 flex items-center justify-center gap-2 rounded-sm p-3"
+              className="bg-secondary hover:bg-hovered my-1 flex items-center justify-center gap-2 rounded-sm p-3"
               onClick={() => {
                 setExpandCollatOptions(!expandCollatOptions);
               }}
@@ -223,8 +223,8 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
-            <label className="bg-monarch-soft-black my-1 flex items-center px-2 py-1 ">
+          <div className="flex items-center justify-end gap-2 rounded-sm">
+            <label className="bg-secondary my-1 flex items-center px-2 py-1">
               <input
                 type="checkbox"
                 checked={hideDust}
@@ -233,7 +233,7 @@ export default function HomePage() {
               <p className="p-2">Hide dust</p>
             </label>
 
-            <label className="bg-monarch-soft-black my-1 flex items-center px-2 py-1">
+            <label className="bg-secondary my-1 flex items-center rounded-sm px-2 py-1">
               <input
                 type="checkbox"
                 checked={hideUnknown}
@@ -251,7 +251,7 @@ export default function HomePage() {
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
-                className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
                 onClick={() => {
                   setSelectedLoanAssets([]);
                 }}
@@ -271,8 +271,8 @@ export default function HomePage() {
                   <button
                     key={`loan-${loanAsset}`}
                     className={`flex ${
-                      chosen ? 'bg-monarch-hovered' : 'bg-monarch-soft-black'
-                    } my-1 items-center justify-center gap-1 p-2 px-5`}
+                      chosen ? 'bg-hovered' : 'bg-secondary'
+                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
                     type="button"
                     onClick={() => {
                       if (selectedLoanAssets.includes(token.address.toLowerCase())) {
@@ -300,7 +300,7 @@ export default function HomePage() {
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
-                className="bg-monarch-soft-black my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
                 onClick={() => {
                   setSelectedCollaterals([]);
                 }}
@@ -319,8 +319,8 @@ export default function HomePage() {
                   <button
                     key={`loan-${collateral}`}
                     className={`flex ${
-                      chosen ? 'bg-monarch-hovered' : 'bg-monarch-soft-black'
-                    } my-1 items-center justify-center gap-1 p-2 px-5`}
+                      chosen ? 'bg-hovered' : 'bg-secondary'
+                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
                     type="button"
                     onClick={() => {
                       if (selectedCollaterals.includes(token.address.toLowerCase())) {
@@ -349,13 +349,13 @@ export default function HomePage() {
         ) : data == null ? (
           <div> No data </div>
         ) : (
-          <div className="bg-monarch-soft-black mt-4">
+          <div className="bg-secondary mt-4">
             <table className="font-roboto w-full">
               <thead className="table-header">
                 <tr>
                   <th> Id </th>
                   <th
-                    className={`${sortColumn === 1 ? 'text-white' : ''}`}
+                    className={`${sortColumn === 1 ? 'text-primary' : ''}`}
                     onClick={() => titleOnclick(1)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -368,7 +368,7 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th
-                    className={`${sortColumn === 2 ? 'text-white' : ''} `}
+                    className={`${sortColumn === 2 ? 'text-primary' : ''} `}
                     onClick={() => titleOnclick(2)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -381,7 +381,7 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th
-                    className={`${sortColumn === 3 ? 'text-white' : ''}`}
+                    className={`${sortColumn === 3 ? 'text-primary' : ''}`}
                     onClick={() => titleOnclick(3)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -394,7 +394,7 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th
-                    className={`${sortColumn === 4 ? 'text-white' : ''}`}
+                    className={`${sortColumn === 4 ? 'text-primary' : ''}`}
                     onClick={() => titleOnclick(4)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -407,7 +407,7 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th
-                    className={`${sortColumn === 5 ? 'text-white' : ''}`}
+                    className={`${sortColumn === 5 ? 'text-primary' : ''}`}
                     onClick={() => titleOnclick(5)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -420,7 +420,7 @@ export default function HomePage() {
                     </div>
                   </th>
                   <th
-                    className={`${sortColumn === 6 ? 'text-white' : ''} `}
+                    className={`${sortColumn === 6 ? 'text-primary' : ''} `}
                     onClick={() => titleOnclick(6)}
                   >
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -547,7 +547,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          className="items-center justify-between rounded-sm p-2 text-xs shadow-md duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                          className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
                           onClick={() => {
                             setShowSupplyModal(true);
                             setSelectedMarket(item);

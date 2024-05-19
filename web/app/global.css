@@ -9,22 +9,41 @@
   --component-highlights-item-width: calc(100vw - 100px);
   --developer-experience-code-window-background: var(--slate-12);
 
-  /* Palette - black */
-  --palette-bg-black: #16181a;
-  --palette-bg-soft-black: #202426;
-  --palette-bg-white: #fff;
-  --palette-bg-hovered: #313537;
+  --palette-orange: #f45f2d;
 
-  --palette-bg-orange: #f45f2d;
+  /* light theme variables */
+  --palette-bg-hovered: #f8f9fb;
+  --palette-white: #f0f2f7;
+  --palette-grey-secondary: #e9e9e9;
 
-  /* Build Onchain Apps shared variables */
-  --color-background: var(--palette-bg-black);
-  --color-text: var(--palette-bg-white);
+  /* definitions */
+  --color-background: var(--palette-white);
+  --color-background-secondary: #fff;
+  --color-background-hovered: var(--palette-bg-hovered);
+  --color-text: #16181a;
   --color-text-secondary: #8e8e8e;
 
-  /* Indicates that the element can be rendered using 
-   * the operating system dark color scheme. 
-   * https://developer.mozilla.org/en-US/docs/Web/CSS/color-scheme */
+  color-scheme: light;
+}
+
+/* dark theme variables */
+.dark {
+  --quick-nav-display: none;
+
+  /* Palette - black */
+  --palette-orange: #f45f2d;
+  --palette-bg-black: #16181a;
+  --palette-bg-black-secondary: #202426;
+  --palette-bg-hovered: #313537;
+
+  /* definitions */
+  --color-background: var(--palette-bg-black);
+  --color-background-secondary: var(--palette-bg-black-secondary);
+  --color-background-hovered: var(--palette-bg-hovered);
+
+  --color-text: #fff;
+  --color-text-secondary: #8e8e8e;
+
   color-scheme: dark;
 }
 
@@ -58,20 +77,20 @@ body {
   text-size-adjust: 100%;
 }
 
-.bg-monarch-soft-black {
-  background-color: var(--palette-bg-soft-black);
+.bg-secondary {
+  background-color: var(--color-background-secondary);
 }
 
-.bg-monarch-black {
-  background-color: var(--palette-bg-black);
+.bg-primary {
+  background-color: var(--color-background);
 }
 
-.bg-monarch-hovered {
-  background-color: var(--palette-bg-hovered);
+.bg-hovered {
+  background-color: var(--color-background-hovered);
 }
 
 .bg-monarch-orange {
-  background-color: var(--palette-bg-orange);
+  background-color: var(--palette-orange);
 }
 
 a {
@@ -88,7 +107,7 @@ h1 {
 }
 
 .table-header {
-  background-color: var(--palette-bg-soft-black);
+  background-color: var(--color-background-secondary);
   font-size: 0.8em;
   color: grey;
 }
@@ -99,7 +118,7 @@ h1 {
 }
 
 .table-body {
-  background-color: var(--palette-bg-soft-black);
+  background-color: var(--color-background-secondary);
 }
 
 .table-body td {
@@ -109,7 +128,7 @@ h1 {
 
 .table-body tr:hover {
   background-color: var(--palette-bg-hovered);
-  border-left: 2px solid var(--palette-bg-orange);
+  border-left: 2px solid var(--palette-orange);
 }
 
 svg {
@@ -156,6 +175,10 @@ pre {
 
 .text-blue {
   color: blue;
+}
+
+.text-primary {
+  color: var(--color-text);
 }
 
 .text-secondary {

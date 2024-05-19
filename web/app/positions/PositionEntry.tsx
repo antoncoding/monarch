@@ -29,10 +29,10 @@ export default function PositionEntry() {
           {/* {show connect button or input} */}
           {address ? (
             <Link href={`/positions/${address}`} className="no-underline">
-              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-110 hover:opacity-100">
+              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
-                  className="text-roboto bg-monarch-soft-black w-80 rounded-sm p-4 px-10 "
+                  className="text-roboto bg-secondary w-80 rounded-sm p-4 px-10 "
                 >
                   View Account {address.slice(0, 8)}
                 </button>
@@ -59,7 +59,7 @@ export default function PositionEntry() {
         <div className="flex justify-center">
           <div className="font-roboto flex opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
             <input
-              className="bg-monarch-soft-black w-80 p-4 focus:opacity-100"
+              className="bg-secondary w-80 p-4 focus:opacity-100"
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
               placeholder="0x..."
