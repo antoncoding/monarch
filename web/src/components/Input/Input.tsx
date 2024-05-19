@@ -51,7 +51,7 @@ export default function Input({ decimals, max, setValue, setError }: InputProps)
       <button
         type="button"
         onClick={handleMax}
-        className="bg-secondary absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+        className="bg-secondary text-secondary absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm duration-300 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Max
       </button>

@@ -116,7 +116,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       >
         <button
           type="button"
-          className="bg-primary absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
+          className="bg-primary text-primary absolute right-2 top-2 rounded-full p-1 hover:cursor-pointer"
           onClick={onClose}
         >
           <Cross1Icon />{' '}
@@ -224,7 +224,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || approvePending}
               type="button"
               onClick={() => void approveInfinite()}
-              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Approve
             </button>
@@ -233,7 +233,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || supplyPending}
               type="button"
               onClick={() => void supply()}
-              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Supply
             </button>

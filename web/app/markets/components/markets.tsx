@@ -233,7 +233,7 @@ export default function HomePage() {
               <p className="p-2">Hide dust</p>
             </label>
 
-            <label className="bg-secondary my-1 flex items-center px-2 py-1 rounded-sm">
+            <label className="bg-secondary my-1 flex items-center rounded-sm px-2 py-1">
               <input
                 type="checkbox"
                 checked={hideUnknown}
@@ -272,7 +272,7 @@ export default function HomePage() {
                     key={`loan-${loanAsset}`}
                     className={`flex ${
                       chosen ? 'bg-hovered' : 'bg-secondary'
-                    } my-1 items-center justify-center gap-1 p-2 px-5 rounded-sm`}
+                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
                     type="button"
                     onClick={() => {
                       if (selectedLoanAssets.includes(token.address.toLowerCase())) {
@@ -320,7 +320,7 @@ export default function HomePage() {
                     key={`loan-${collateral}`}
                     className={`flex ${
                       chosen ? 'bg-hovered' : 'bg-secondary'
-                    } my-1 items-center justify-center gap-1 p-2 px-5 rounded-sm`}
+                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
                     type="button"
                     onClick={() => {
                       if (selectedCollaterals.includes(token.address.toLowerCase())) {
@@ -547,7 +547,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           aria-label="Supply"
-                          className="items-center bg-hovered justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                          className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
                           onClick={() => {
                             setShowSupplyModal(true);
                             setSelectedMarket(item);

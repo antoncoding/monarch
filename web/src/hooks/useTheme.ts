@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 
 export const useTheme = () => {
-
   const [theme, setTheme] = useState('dark'); // default theme
 
   // Function to toggle theme

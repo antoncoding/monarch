@@ -179,7 +179,7 @@ export default function Positions() {
                           <button
                             type="button"
                             aria-label="Supply"
-                            className="items-center justify-between rounded-sm p-2 text-xs bg-hovered duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                            className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
                             onClick={() => {
                               setShowModal(true);
                               setSelectedPosition(position);
