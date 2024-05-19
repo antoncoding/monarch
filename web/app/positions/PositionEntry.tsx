@@ -29,7 +29,7 @@ export default function PositionEntry() {
           {/* {show connect button or input} */}
           {address ? (
             <Link href={`/positions/${address}`} className="no-underline">
-              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-110 hover:opacity-100">
+              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
                   className="text-roboto bg-monarch-soft-black w-80 rounded-sm p-4 px-10 "
