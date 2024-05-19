@@ -2,6 +2,8 @@ import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
+import { FaRegMoon, FaSun } from 'react-icons/fa';
+import { useTheme } from '@/hooks/useTheme';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
 
@@ -19,7 +21,7 @@ export function NavbarLink({
   return (
     <NextLink
       href={href}
-      className="font-inter px-0 text-center text-base font-normal text-primary no-underline"
+      className="font-inter text-primary px-0 text-center text-base font-normal no-underline"
       target={target}
       aria-label={ariaLabel}
     >
@@ -35,7 +37,7 @@ export function NavbarTitle() {
       <NextLink
         href="/"
         passHref
-        className="font-roboto text-center text-lg font-medium text-primary no-underline"
+        className="font-roboto text-primary text-center text-lg font-medium no-underline"
         aria-label="build-onchain-apps Github repository"
       >
         Monarch
@@ -45,6 +47,8 @@ export function NavbarTitle() {
 }
 
 function Navbar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <nav
       className={clsx(
@@ -80,6 +84,24 @@ function Navbar() {
             </li>
           </ul>
           <AccountConnect />
+
+          {theme === 'dark' ? (
+            <FaSun
+              onClick={() => {
+                document.documentElement.classList.remove('dark');
+                toggleTheme();
+              }}
+              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
+            />
+          ) : (
+            <FaRegMoon
+              onClick={() => {
+                document.documentElement.classList.add('dark');
+                toggleTheme();
+              }}
+              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
+            />
+          )}
         </div>
       </div>
     </nav>

@@ -33,12 +33,12 @@
   /* Palette - black */
   --palette-orange: #f45f2d;
   --palette-bg-black: #16181a;
-  --color-background-secondary: #202426;
+  --palette-bg-black-secondary: #202426;
   --palette-bg-hovered: #313537;
 
   /* definitions */
   --color-background: var(--palette-bg-black);
-  --color-background-secondary: var(--color-background-secondary);
+  --color-background-secondary: var(--palette-bg-black-secondary);
   --color-background-hovered: var(--palette-bg-hovered);
 
   --color-text: #fff;
