@@ -84,7 +84,8 @@ const useUserPositions = (user: string | undefined) => {
 
         const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
         const filtered = allPositions.filter((position: MarketPosition) =>
-          whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey),
+          whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
+          position.supplyShares.toString() !== '0'
         );
 
         setData(filtered);
