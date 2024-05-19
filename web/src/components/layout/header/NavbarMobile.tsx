@@ -11,11 +11,11 @@ export default function NavbarMobile() {
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 bg-monarch-black flex flex-col gap-4 rounded-sm p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 bg-primary flex flex-col gap-4 rounded-sm p-2 backdrop-blur-2xl">
         <div
           className={[
             'flex flex-1 flex-grow items-center justify-between',
-            'bg-monarch-soft-black rounded-sm p-4 backdrop-blur-2xl',
+            'bg-secondary rounded-sm p-4 backdrop-blur-2xl',
           ].join(' ')}
         >
           <div className="h-38 flex grow items-center justify-between gap-4">

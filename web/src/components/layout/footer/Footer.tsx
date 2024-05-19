@@ -7,7 +7,7 @@ import { NavbarLink } from '@/components/layout/header/Navbar';
 export default function Footer() {
   return (
     <footer className="flex flex-1 flex-col justify-end text-sm">
-      <div className="flex flex-col justify-between gap-16 bg-boat-footer-dark-gray py-8">
+      <div className="flex flex-col justify-between gap-16 bg-secondary py-8">
         <div className="container mx-auto flex flex-col justify-between px-8 md:flex-row">
           <div className="flex w-full flex-col justify-between md:flex-row">
             {/* logo and github */}

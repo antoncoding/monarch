@@ -53,7 +53,7 @@ export default function Positions() {
             to open a new position.
           </div>
         ) : (
-          <div className="bg-monarch-soft-black mt-4">
+          <div className="bg-secondary mt-4">
             <table className="font-roboto w-full">
               <thead className="table-header">
                 <tr>
@@ -179,7 +179,7 @@ export default function Positions() {
                           <button
                             type="button"
                             aria-label="Supply"
-                            className="items-center justify-between rounded-sm p-2 text-xs shadow-md duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                            className="items-center justify-between rounded-sm p-2 text-xs bg-hovered duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
                             onClick={() => {
                               setShowModal(true);
                               setSelectedPosition(position);
@@ -192,7 +192,7 @@ export default function Positions() {
 
                       {/* {expandedRowId === position.market.uniqueKey && (
                         <tr>
-                           <td className="collaps-viewer bg-monarch-hovered" colSpan={7}>
+                           <td className="collaps-viewer bg-hovered" colSpan={7}>
                             <div className="flex w-full p-12 text-center">
                               HOLA
                             </div>

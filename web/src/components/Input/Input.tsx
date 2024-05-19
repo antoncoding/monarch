@@ -46,12 +46,12 @@ export default function Input({ decimals, max, setValue, setError }: InputProps)
         type="number"
         value={inputAmount}
         onChange={onInputChange}
-        className="focus:border-monarch-orange h-10 w-full rounded p-2 focus:outline-none"
+        className="bg-hovered focus:border-monarch-orange h-10 w-full rounded p-2 focus:outline-none"
       />
       <button
         type="button"
         onClick={handleMax}
-        className="bg-monarch-soft-black absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-white duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+        className="bg-secondary absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary duration-300 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Max
       </button>

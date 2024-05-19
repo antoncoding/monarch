@@ -112,11 +112,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
       <div
         style={{ width: '600px' }}
-        className="bg-monarch-soft-black relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
+        className="bg-secondary relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
-          className="bg-monarch-black absolute right-2 top-2 rounded-full p-1 text-white hover:cursor-pointer"
+          className="bg-primary absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
           onClick={onClose}
         >
           <Cross1Icon />{' '}
@@ -224,7 +224,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || approvePending}
               type="button"
               onClick={() => void approveInfinite()}
-              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Approve
             </button>
@@ -233,7 +233,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || supplyPending}
               type="button"
               onClick={() => void supply()}
-              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Supply
             </button>
