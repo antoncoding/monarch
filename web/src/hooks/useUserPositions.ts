@@ -88,8 +88,6 @@ const useUserPositions = (user: string | undefined) => {
           position.supplyShares.toString() !== '0'
         );
 
-        console.log('filtered', filtered)
-
         setData(filtered);
         setLoading(false);
       } catch (_error) {
