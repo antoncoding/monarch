@@ -14,7 +14,7 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { supportedTokens } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
-import { AdjustModal } from './adjustModal';
+import { WithdrawModal } from './withdrawModal';
 
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -32,7 +32,7 @@ export default function Positions() {
         <h1 className="font-roboto py-4 text-2xl"> Supplied Markets </h1>
 
         {showModal && selectedPosition && (
-          <AdjustModal
+          <WithdrawModal
             position={selectedPosition}
             onClose={() => {
               setShowModal(false);
@@ -75,7 +75,7 @@ export default function Positions() {
                   </th>
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Daily APY </div>
+                      <div> APY </div>
                     </div>
                   </th>
                   <th>

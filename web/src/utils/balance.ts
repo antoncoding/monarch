@@ -33,3 +33,7 @@ export function formatReadable(num: number): string {
     return num.toFixed(2);
   }
 }
+
+export function min(a: bigint, b: bigint): bigint {
+  return a < b ? a : b;
+}

@@ -9,7 +9,7 @@ import { useAccount, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
-import { formatBalance } from '@/utils/balance';
+import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
@@ -19,7 +19,7 @@ type ModalProps = {
   onClose: () => void;
 };
 
-export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
+export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   // Add state for the supply amount
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -138,13 +138,33 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
               {position.market.uniqueKey.slice(position.market.uniqueKey.length - 6)}
             </p>
           </div>
+          <div className="my-2 flex items-start justify-between">
+            <p className="font-inter text-sm opacity-50">Available Liquidity:</p>
+
+            <div className="flex items-center justify-center gap-2">
+              <p className="font-roboto text-right">
+                {formatReadable(
+                  formatBalance(
+                    position.market.state.liquidityAssets,
+                    position.market.loanAsset.decimals,
+                  ),
+                )}
+              </p>
+              <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
+              <div>
+                {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
+              </div>
+            </div>
+          </div>
 
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Supplied Amount:</p>
 
             <div className="flex items-center justify-center gap-2">
               <p className="font-roboto text-right">
-                {formatBalance(position.supplyAssets, position.market.loanAsset.decimals)}
+                {formatReadable(
+                  formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+                )}
               </p>
               <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
               <div>
@@ -168,17 +188,23 @@ export function AdjustModal({ position, onClose }: ModalProps): JSX.Element {
           <div className="relative flex-grow">
             <Input
               decimals={position.market.loanAsset.decimals}
-              max={BigInt(position.supplyAssets)}
+              max={min(
+                BigInt(position.supplyAssets),
+                BigInt(position.market.state.liquidityAssets),
+              )}
               setValue={setWithdrawAmount}
               setError={setInputError}
+              exceedMaxErrMessage="Insufficient Liquidity"
             />
+            {/* input error */}
+            {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
           </div>
 
           <button
             disabled={!isConnected || supplyPending || inputError !== null}
             type="button"
             onClick={() => void supply()}
-            className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+            className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
           >
             Withdraw
           </button>

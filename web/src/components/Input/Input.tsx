@@ -8,9 +8,16 @@ type InputProps = {
   max: bigint;
   setValue: React.Dispatch<React.SetStateAction<bigint>>;
   setError?: React.Dispatch<React.SetStateAction<string | null>>;
+  exceedMaxErrMessage?: string;
 };
 
-export default function Input({ decimals, max, setValue, setError }: InputProps): JSX.Element {
+export default function Input({
+  decimals,
+  max,
+  setValue,
+  setError,
+  exceedMaxErrMessage,
+}: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>('0');
 
@@ -22,7 +29,14 @@ export default function Input({ decimals, max, setValue, setError }: InputProps)
 
       try {
         const inputBigInt = parseUnits(inputText, decimals);
+
+        if (inputBigInt > max) {
+          if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
+          return;
+        }
+
         setValue(inputBigInt);
+        if (setError) setError(null);
 
         // eslint-disable-next-line @typescript-eslint/no-shadow
       } catch (e) {
@@ -30,7 +44,7 @@ export default function Input({ decimals, max, setValue, setError }: InputProps)
         console.log('e', e);
       }
     },
-    [decimals, setError, setInputAmount, setValue],
+    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage],
   );
 
   // if max is clicked, set the input to the max value
@@ -51,7 +65,7 @@ export default function Input({ decimals, max, setValue, setError }: InputProps)
       <button
         type="button"
         onClick={handleMax}
-        className="bg-secondary text-secondary absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+        className="bg-secondary text-secondary absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Max
       </button>

@@ -24,6 +24,7 @@ type SupplyModalProps = {
 export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element {
   // Add state for the supply amount
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
+  const [inputError, setInputError] = useState<string | null>(null);
 
   const { address: account, isConnected } = useAccount();
 
@@ -216,24 +217,27 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               decimals={market.loanAsset.decimals}
               max={tokenBalance?.value ? tokenBalance.value : BigInt(0)}
               setValue={setSupplyAmount}
+              setError={setInputError}
+              exceedMaxErrMessage="Insufficient Balance"
             />
+            {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
           </div>
 
           {needApproval ? (
             <button
-              disabled={!isConnected || approvePending}
+              disabled={!isConnected || approvePending || inputError !== null}
               type="button"
               onClick={() => void approveInfinite()}
-              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
             >
               Approve
             </button>
           ) : (
             <button
-              disabled={!isConnected || supplyPending}
+              disabled={!isConnected || supplyPending || inputError !== null}
               type="button"
               onClick={() => void supply()}
-              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
             >
               Supply
             </button>
