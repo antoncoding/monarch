@@ -3,6 +3,21 @@
 import { useState, useEffect } from 'react';
 import { WhitelistMarketResponse } from '@/utils/types';
 
+export type Reward = {
+  id: string;
+  net_reward_apr: null | string;
+  reward_token_rates: {
+    token: {
+      address: string;
+      symbol: string;
+    };
+    supply_rate: {
+      token_amount_per1000_market_token: string; // with decimals
+      token_amount_per1000_usd: string; // with decimals
+    };
+  }[];
+};
+
 export type Market = {
   id: string;
   lltv: string;
@@ -15,9 +30,7 @@ export type Market = {
     address: string;
     chain: {
       id: number;
-      __typename: string;
     };
-    __typename: string;
   };
   oracleInfo: {
     type: string;
@@ -76,6 +89,8 @@ export type Market = {
     __typename: string;
   }[];
   __typename: string;
+
+  rewardPer1000USD?: string;
 };
 
 const query = `query getMarkets(
@@ -215,11 +230,63 @@ const useMarkets = () => {
 
         const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) => market.id);
 
+        // batch fetch rewards https://rewards.morpho.org/rates/markets?ids=
+        // each with 10 ids, otherwise the server breaks!
+
+        // Split the array into chunks of 10
+        const chunkSize = 10;
+        const chunks = Array(Math.ceil(allWhitelistedMarketAddr.length / chunkSize))
+          .fill([])
+          .map((_, index) => {
+            return allWhitelistedMarketAddr.slice(index * chunkSize, (index + 1) * chunkSize);
+          });
+
+        // Make a request for each chunk and concatenate the results
+        const rewards = (
+          await Promise.all(
+            chunks.map(async (chunk) => {
+              const rewardsRes = await fetch(
+                `https://rewards.morpho.org/rates/markets?ids=${chunk.join(',')}`,
+                {
+                  method: 'GET',
+                },
+              );
+              return (await rewardsRes.json()) as { markets: Reward[] };
+            }),
+          )
+        ).reduce(
+          (acc, res) => {
+            return {
+              markets: [...acc.markets, ...res.markets],
+            };
+          },
+          { markets: [] as Reward[] },
+        );
+
+        // const rewardsRes = await fetch(
+        //   `https://rewards.morpho.org/rates/markets?ids=${allWhitelistedMarketAddr.join(',')}`,
+        //   {
+        //     method: 'GET',
+        //   },
+        // );
+        // const rewards = await rewardsRes.json() as {markets: Reward[]};
+
         const filtered = items
           .filter((market) => market.collateralAsset != undefined)
           .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey));
 
-        setData(filtered);
+        const final = filtered.map((market) => {
+          const reward = rewards.markets.find((r) => r.id === market.uniqueKey);
+          const rewardPer1000USD =
+            reward?.reward_token_rates.find((r) => r.token.symbol === 'MORPHO')?.supply_rate
+              .token_amount_per1000_usd ?? undefined;
+          return {
+            ...market,
+            rewardPer1000USD,
+          };
+        });
+
+        setData(final);
         setLoading(false);
       } catch (_error) {
         setError(_error);
