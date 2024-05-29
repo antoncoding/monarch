@@ -5,6 +5,13 @@ export type ERC20Token = {
   decimals: number;
 };
 
+export const MORPHO: ERC20Token = {
+  address: '0x9994E35Db50125E0DF82e4c2dde62496CE330999',
+  symbol: 'MORPHO',
+  img: require('../imgs/tokens/morpho.svg') as string,
+  decimals: 18,
+};
+
 const USDC: ERC20Token = {
   address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
   symbol: 'USDC',
@@ -206,6 +213,7 @@ const supportedTokens: ERC20Token[] = [
   rETH,
   ezETH,
   stEUR,
+  MORPHO,
 ];
 
 export { supportedTokens };

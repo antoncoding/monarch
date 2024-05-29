@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
+import { formatBalance } from '@/utils/balance';
+import { MORPHO } from '@/utils/tokens';
 import { WhitelistMarketResponse } from '@/utils/types';
 
 export type Reward = {
@@ -34,7 +36,6 @@ export type Market = {
   };
   oracleInfo: {
     type: string;
-    __typename: string;
   };
   oracleFeed: {
     baseFeedOneAddress: string;
@@ -54,7 +55,6 @@ export type Market = {
     name: string;
     decimals: number;
     priceUsd: number;
-    __typename: string;
   };
   collateralAsset: {
     id: string;
@@ -63,7 +63,6 @@ export type Market = {
     name: string;
     decimals: number;
     priceUsd: number;
-    __typename: string;
   };
   state: {
     borrowAssets: string;
@@ -81,14 +80,22 @@ export type Market = {
     fee: number;
     timestamp: number;
     rateAtUTarget: number;
-    __typename: string;
+    rewards: {
+      yearlySupplyTokens: string;
+      asset: {
+        address: string;
+        priceUsd: string | null;
+        spotPriceEth: string | null;
+      };
+      amountPerSuppliedToken: string;
+      amountPerBorrowedToken: string;
+    }[];
   };
   warnings: {
     type: string;
     level: string;
     __typename: string;
   }[];
-  __typename: string;
 
   rewardPer1000USD?: string;
 };
@@ -172,6 +179,17 @@ const query = `query getMarkets(
         fee
         timestamp
         rateAtUTarget
+        rewards {
+          supplyApy
+          yearlySupplyTokens
+          asset {
+            address
+            priceUsd
+            spotPriceEth
+          }
+          amountPerSuppliedToken
+          amountPerBorrowedToken
+        }
         __typename
       }
       warnings {
@@ -233,53 +251,25 @@ const useMarkets = () => {
         // batch fetch rewards https://rewards.morpho.org/rates/markets?ids=
         // each with 10 ids, otherwise the server breaks!
 
-        // Split the array into chunks of 10
-        const chunkSize = 10;
-        const chunks = Array(Math.ceil(allWhitelistedMarketAddr.length / chunkSize))
-          .fill([])
-          .map((_, index) => {
-            return allWhitelistedMarketAddr.slice(index * chunkSize, (index + 1) * chunkSize);
-          });
-
-        // Make a request for each chunk and concatenate the results
-        const rewards = (
-          await Promise.all(
-            chunks.map(async (chunk) => {
-              const rewardsRes = await fetch(
-                `https://rewards.morpho.org/rates/markets?ids=${chunk.join(',')}`,
-                {
-                  method: 'GET',
-                },
-              );
-              return (await rewardsRes.json()) as { markets: Reward[] };
-            }),
-          )
-        ).reduce(
-          (acc, res) => {
-            return {
-              markets: [...acc.markets, ...res.markets],
-            };
-          },
-          { markets: [] as Reward[] },
-        );
-
-        // const rewardsRes = await fetch(
-        //   `https://rewards.morpho.org/rates/markets?ids=${allWhitelistedMarketAddr.join(',')}`,
-        //   {
-        //     method: 'GET',
-        //   },
-        // );
-        // const rewards = await rewardsRes.json() as {markets: Reward[]};
-
         const filtered = items
           .filter((market) => market.collateralAsset != undefined)
           .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey));
 
         const final = filtered.map((market) => {
-          const reward = rewards.markets.find((r) => r.id === market.uniqueKey);
-          const rewardPer1000USD =
-            reward?.reward_token_rates.find((r) => r.token.symbol === 'MORPHO')?.supply_rate
-              .token_amount_per1000_usd ?? undefined;
+          const entry = market.state.rewards.find(
+            (reward) => reward.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
+          );
+
+          if (!entry) {
+            return { ...market, rewardPer1000USD: undefined };
+          }
+
+          const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
+          const rewardPer1000USD = (
+            (formatBalance(entry.yearlySupplyTokens, MORPHO.decimals) / supplyAssetUSD) *
+            1000
+          ).toString();
+
           return {
             ...market,
             rewardPer1000USD,
