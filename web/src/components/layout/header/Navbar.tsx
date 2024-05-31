@@ -3,10 +3,10 @@ import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
+import { useAccount } from 'wagmi';
 import { useTheme } from '@/hooks/useTheme';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
-import { useAccount } from 'wagmi';
 
 export function NavbarLink({
   href,
