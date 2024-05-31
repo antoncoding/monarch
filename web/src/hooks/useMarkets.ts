@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+'use client';
 
 import { useState, useEffect } from 'react';
 import { formatBalance } from '@/utils/balance';
@@ -214,10 +215,6 @@ const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
-
-  console.log('data', data);
-
-  console.log('error', error);
 
   useEffect(() => {
     const fetchData = async () => {

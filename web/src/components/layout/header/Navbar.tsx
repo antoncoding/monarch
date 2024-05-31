@@ -1,3 +1,5 @@
+'use client';
+
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import Image from 'next/image';

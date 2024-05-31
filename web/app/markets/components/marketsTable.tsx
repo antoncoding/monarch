@@ -1,4 +1,10 @@
-import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ExternalLinkIcon,
+  StarFilledIcon,
+  StarIcon,
+} from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -14,20 +20,27 @@ type MarketsTableProps = {
   markets: Market[];
   setShowSupplyModal: (show: boolean) => void;
   setSelectedMarket: (market: Market) => void;
+  staredIds: string[];
+  unstarMarket: (id: string) => void;
+  starMarket: (id: string) => void;
 };
 
 function MarketsTable({
+  staredIds,
   sortColumn,
   titleOnclick,
   sortDirection,
   markets,
   setShowSupplyModal,
   setSelectedMarket,
+  starMarket,
+  unstarMarket,
 }: MarketsTableProps) {
   return (
     <table className="font-roboto w-full">
       <thead className="table-header">
         <tr>
+          <th> {} </th>
           <th> Id </th>
           <th
             className={`${sortColumn === 1 ? 'text-primary' : ''}`}
@@ -124,139 +137,158 @@ function MarketsTable({
         </tr>
       </thead>
       <tbody className="table-body text-sm">
-        {markets.map((item, index) => {
-          const collatImg = supportedTokens.find(
-            (token) => token.address.toLowerCase() === item.collateralAsset.address.toLowerCase(),
-          )?.img;
-          const loanImg = supportedTokens.find(
-            (token) => token.address.toLowerCase() === item.loanAsset.address.toLowerCase(),
-          )?.img;
+        {markets
+          .sort((a, b) => {
+            const aStared = staredIds.includes(a.uniqueKey);
+            const bStared = staredIds.includes(b.uniqueKey);
+            // sort by stared first
+            if (aStared && !bStared) return -1;
+            if (!aStared && bStared) return 1;
+            return 0;
+          })
+          .map((item, index) => {
+            const collatImg = supportedTokens.find(
+              (token) => token.address.toLowerCase() === item.collateralAsset.address.toLowerCase(),
+            )?.img;
+            const loanImg = supportedTokens.find(
+              (token) => token.address.toLowerCase() === item.loanAsset.address.toLowerCase(),
+            )?.img;
 
-          const collatToShow = item.collateralAsset.symbol
-            .slice(0, 6)
-            .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
+            const collatToShow = item.collateralAsset.symbol
+              .slice(0, 6)
+              .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
 
-          return (
-            <tr key={index.toFixed()}>
-              {/* id */}
-              <td>
-                <div className="flex justify-center">
-                  <a
-                    className="group flex items-center gap-1 no-underline hover:underline"
-                    href={getMarketURL(item.uniqueKey)}
-                    target="_blank"
+            let reward = item.rewardPer1000USD
+              ? formatReadable(Number(item.rewardPer1000USD))
+              : undefined;
+            reward = reward === '0.00' ? undefined : reward;
+
+            const isStared = staredIds.includes(item.uniqueKey);
+
+            return (
+              <tr key={index.toFixed()}>
+                <td>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isStared) {
+                        unstarMarket(item.uniqueKey);
+                      } else {
+                        starMarket(item.uniqueKey);
+                      }
+                    }}
                   >
-                    <p>{item.uniqueKey.slice(2, 8)} </p>
-                    <p className="opacity-0 group-hover:opacity-100">
-                      <ExternalLinkIcon />
+                    <p className="text-2xl text-monarch-primary opacity-50 group-hover:opacity-100">
+                      {isStared ? <StarFilledIcon fontSize={50} /> : <StarIcon />}
                     </p>
-                  </a>
-                </div>
-              </td>
+                  </button>
+                </td>
+                {/* id */}
+                <td>
+                  <div className="flex items-center justify-center gap-1">
+                    <a
+                      className="group flex items-center gap-1 no-underline hover:underline"
+                      href={getMarketURL(item.uniqueKey)}
+                      target="_blank"
+                    >
+                      <p>{item.uniqueKey.slice(2, 8)} </p>
+                      <p className="opacity-0 group-hover:opacity-100">
+                        <ExternalLinkIcon />
+                      </p>
+                    </a>
+                  </div>
+                </td>
 
-              {/* loan */}
-              <td>
-                <div className="flex items-center justify-center gap-1">
-                  {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
-                  <a
-                    className="group flex items-center gap-1 no-underline hover:underline"
-                    href={getAssetURL(item.loanAsset.address)}
-                    target="_blank"
-                  >
-                    <p> {item.loanAsset.symbol} </p>
-                    <p className="opacity-0 group-hover:opacity-100">
-                      <ExternalLinkIcon />
-                    </p>
-                  </a>
-                </div>
-              </td>
+                {/* loan */}
+                <td>
+                  <div className="flex items-center justify-center gap-1">
+                    {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
+                    <a
+                      className="group flex items-center gap-1 no-underline hover:underline"
+                      href={getAssetURL(item.loanAsset.address)}
+                      target="_blank"
+                    >
+                      <p> {item.loanAsset.symbol} </p>
+                      <p className="opacity-0 group-hover:opacity-100">
+                        <ExternalLinkIcon />
+                      </p>
+                    </a>
+                  </div>
+                </td>
 
-              {/* collateral */}
-              <td>
-                <div className="flex items-center justify-center gap-1">
-                  {collatImg ? <Image src={collatImg} alt="icon" width="18" height="18" /> : null}
-                  <a
-                    className="group flex items-center gap-1 no-underline hover:underline"
-                    href={getAssetURL(item.collateralAsset.address)}
-                    target="_blank"
-                  >
-                    <p> {collatToShow} </p>
-                    <p className="opacity-0 group-hover:opacity-100">
-                      <ExternalLinkIcon />
-                    </p>
-                  </a>
-                </div>
-              </td>
+                {/* collateral */}
+                <td>
+                  <div className="flex items-center justify-center gap-1">
+                    {collatImg ? <Image src={collatImg} alt="icon" width="18" height="18" /> : null}
+                    <a
+                      className="group flex items-center gap-1 no-underline hover:underline"
+                      href={getAssetURL(item.collateralAsset.address)}
+                      target="_blank"
+                    >
+                      <p> {collatToShow} </p>
+                      <p className="opacity-0 group-hover:opacity-100">
+                        <ExternalLinkIcon />
+                      </p>
+                    </a>
+                  </div>
+                </td>
 
-              {/* lltv */}
-              <td>{Number(item.lltv) / 1e16}%</td>
+                {/* lltv */}
+                <td>{Number(item.lltv) / 1e16}%</td>
 
-              {/* rewards */}
-              <td>
-                <div className="flex items-center justify-center gap-1">
-                  {' '}
-                  <p>
+                {/* rewards */}
+                <td>
+                  <div className="flex items-center justify-center gap-1">
                     {' '}
-                    {item.rewardPer1000USD ? formatReadable(Number(item.rewardPer1000USD)) : '-'}
+                    <p> {reward ? reward : '-'}</p>
+                    {reward && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
+                  </div>
+                </td>
+
+                {/* total supply */}
+                <td className="z-50">
+                  <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
+                  <p className="opacity-70">
+                    {formatReadable(
+                      formatBalance(item.state.supplyAssets, item.loanAsset.decimals),
+                    ) +
+                      ' ' +
+                      item.loanAsset.symbol}
                   </p>
-                  {item.rewardPer1000USD && (
-                    <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
-                  )}
-                </div>
-              </td>
+                </td>
 
-              {/* total supply */}
-              <td className="z-50">
-                <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
-                <p className="opacity-70">
-                  {formatBalance(item.state.supplyAssets, item.loanAsset.decimals).toLocaleString(
-                    'en-US',
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  ) +
-                    ' ' +
-                    item.loanAsset.symbol}
-                </p>
-              </td>
+                {/* total borrow */}
+                <td>
+                  <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
+                  <p style={{ opacity: '0.7' }}>
+                    {formatReadable(
+                      formatBalance(item.state.borrowAssets, item.loanAsset.decimals),
+                    ) +
+                      ' ' +
+                      item.loanAsset.symbol}
+                  </p>
+                </td>
 
-              {/* total borrow */}
-              <td>
-                <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
-                <p style={{ opacity: '0.7' }}>
-                  {formatBalance(item.state.borrowAssets, item.loanAsset.decimals).toLocaleString(
-                    'en-US',
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    },
-                  ) +
-                    ' ' +
-                    item.loanAsset.symbol}
-                </p>
-              </td>
+                {/* <td> {item.loanAsset.address} </td> */}
 
-              {/* <td> {item.loanAsset.address} </td> */}
+                <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
 
-              <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
-
-              <td>
-                <button
-                  type="button"
-                  aria-label="Supply"
-                  className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
-                  onClick={() => {
-                    setShowSupplyModal(true);
-                    setSelectedMarket(item);
-                  }}
-                >
-                  Supply
-                </button>
-              </td>
-            </tr>
-          );
-        })}
+                <td>
+                  <button
+                    type="button"
+                    aria-label="Supply"
+                    className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                    onClick={() => {
+                      setShowSupplyModal(true);
+                      setSelectedMarket(item);
+                    }}
+                  >
+                    Supply
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
       </tbody>
     </table>
   );

@@ -7014,6 +7014,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cookie@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "cookie@npm:0.3.1"
+  checksum: 10c0/0d73c4d605b234c4d04de335aefa4988157f03265845f4a89ea311e3ba1ce73ab42b52d33652ed1c9671342eb77742a58f61753f3e90f31711284fb6031b2962
+  languageName: node
+  linkType: hard
+
 "copy-to-clipboard@npm:^3.3.1":
   version: 3.3.3
   resolution: "copy-to-clipboard@npm:3.3.3"
@@ -11524,6 +11531,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"local-storage-fallback@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "local-storage-fallback@npm:4.1.2"
+  dependencies:
+    cookie: "npm:^0.3.1"
+  checksum: 10c0/1344205aad5a00be22e87ddd65e393070b46f139db2d8c046c68c5eb5d03f6c86a9259f62d27c39230218018dfcf6982321d0cb7e42775611b0bbe97d883093f
+  languageName: node
+  linkType: hard
+
 "locate-path@npm:^5.0.0":
   version: 5.0.0
   resolution: "locate-path@npm:5.0.0"
@@ -12384,6 +12400,7 @@ __metadata:
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     jest-extended: "npm:^4.0.2"
+    local-storage-fallback: "npm:^4.1.2"
     net: "npm:^1.0.2"
     next: "npm:13.5.6"
     next-pwa: "npm:5.6.0"
