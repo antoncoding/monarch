@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+'use client';
 
 import { useState, useEffect } from 'react';
 import { formatBalance } from '@/utils/balance';
@@ -214,16 +215,6 @@ const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
-
-  console.log('data', data);
-
-  console.log(
-    'feed',
-    data.find(
-      (market) =>
-        market.uniqueKey === '0xbd33e0ae076c82cfd0fa8d759ea83a296190f9f98d9f79b74a0eb4a294d8bf42',
-    ),
-  );
 
   useEffect(() => {
     const fetchData = async () => {
