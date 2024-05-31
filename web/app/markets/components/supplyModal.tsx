@@ -5,7 +5,7 @@ import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Address, formatUnits } from 'viem';
-import { useAccount, useBalance, useWriteContract } from 'wagmi';
+import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -52,13 +52,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
 
-  const {
-    writeContract,
-    // data: hash,
-    error: supplyError,
-    isPending: supplyPending,
-    isSuccess: supplySuccess,
-  } = useWriteContract();
+  const { writeContract, data: hash, error: supplyError } = useWriteContract();
+
+  const { isLoading: supplyPending, isSuccess: supplySuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const supply = useCallback(async () => {
     if (!account) {

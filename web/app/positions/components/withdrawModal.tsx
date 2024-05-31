@@ -5,7 +5,7 @@ import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Address } from 'viem';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -33,12 +33,15 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();
 
   const {
+    data: hash,
     writeContract,
     // data: hash,
     error: supplyError,
-    isPending: supplyPending,
-    isSuccess: supplySuccess,
   } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
 
   const supply = useCallback(async () => {
     if (!account) {
@@ -85,15 +88,15 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   ]);
 
   useEffect(() => {
-    if (supplyPending) {
+    if (isConfirming) {
       const pendingId = toast.loading('Tx Pending');
       setPendingToastId(pendingId);
     }
-  }, [supplyPending]);
+  }, [isConfirming]);
 
   useEffect(() => {
-    if (supplySuccess) {
-      toast.success('Asset Supplied');
+    if (isConfirmed) {
+      toast.success('Asset Withdrawn!');
       if (pendingToastId) {
         toast.dismiss(pendingToastId);
       }
@@ -104,7 +107,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
         toast.dismiss(pendingToastId);
       }
     }
-  }, [supplySuccess, supplyError, pendingToastId]);
+  }, [isConfirmed, supplyError, pendingToastId]);
 
   return (
     <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
@@ -201,7 +204,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
           </div>
 
           <button
-            disabled={!isConnected || supplyPending || inputError !== null}
+            disabled={!isConnected || isConfirming || inputError !== null}
             type="button"
             onClick={() => void supply()}
             className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
