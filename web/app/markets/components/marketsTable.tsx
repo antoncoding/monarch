@@ -136,6 +136,11 @@ function MarketsTable({
             .slice(0, 6)
             .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
 
+          let reward = item.rewardPer1000USD
+            ? formatReadable(Number(item.rewardPer1000USD))
+            : undefined;
+          reward = reward === '0.00' ? undefined : reward;
+
           return (
             <tr key={index.toFixed()}>
               {/* id */}
@@ -195,13 +200,8 @@ function MarketsTable({
               <td>
                 <div className="flex items-center justify-center gap-1">
                   {' '}
-                  <p>
-                    {' '}
-                    {item.rewardPer1000USD ? formatReadable(Number(item.rewardPer1000USD)) : '-'}
-                  </p>
-                  {item.rewardPer1000USD && (
-                    <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
-                  )}
+                  <p> {reward ? reward : '-'}</p>
+                  {reward && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
                 </div>
               </td>
 

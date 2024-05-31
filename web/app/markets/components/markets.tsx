@@ -2,6 +2,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { ChevronDownIcon, TrashIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import storage from 'local-storage-fallback';
 import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
@@ -14,6 +15,11 @@ import MarketsTable from './marketsTable';
 import { SupplyModal } from './supplyModal';
 
 const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
+
+const defaultSortColumn = Number(storage.getItem('marketsSortColumn') ?? '5');
+const defaultSortDirection = Number(storage.getItem('marketsSortDirection') ?? '-1');
+const defaultHideDust = storage.getItem('marketsHideDust') === 'true';
+const defaultHideUnknown = storage.getItem('marketsHideUnknown') === 'true';
 
 export const metadata = generateMetadata({
   title: 'Markets',
@@ -41,12 +47,12 @@ export default function HomePage() {
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<string[]>([]);
 
   // Add state for the checkbox
-  const [hideDust, setHideDust] = useState(true);
-  const [hideUnknown, setHideUnknown] = useState(true);
+  const [hideDust, setHideDust] = useState(defaultHideDust);
+  const [hideUnknown, setHideUnknown] = useState(defaultHideUnknown);
 
   // Add state for the sort column and direction
-  const [sortColumn, setSortColumn] = useState(5);
-  const [sortDirection, setSortDirection] = useState(-1);
+  const [sortColumn, setSortColumn] = useState(defaultSortColumn);
+  const [sortDirection, setSortDirection] = useState(defaultSortDirection);
 
   // Control supply modal
   const [showSupplyModal, setShowSupplyModal] = useState(false);
@@ -157,7 +163,12 @@ export default function HomePage() {
   const titleOnclick = useCallback(
     (column: number) => {
       setSortColumn(column);
-      if (column === sortColumn) setSortDirection(-sortDirection);
+      storage.setItem('marketsSortColumn', column.toString());
+
+      if (column === sortColumn) {
+        setSortDirection(-sortDirection);
+        storage.setItem('marketsSortDirection', (-sortDirection).toString());
+      }
     },
     [sortColumn, sortDirection],
   );
@@ -227,7 +238,10 @@ export default function HomePage() {
               <input
                 type="checkbox"
                 checked={hideDust}
-                onChange={(e) => setHideDust(e.target.checked)}
+                onChange={(e) => {
+                  setHideDust(e.target.checked);
+                  storage.setItem('marketsHideDust', e.target.checked.toString());
+                }}
               />
               <p className="p-2">Hide dust</p>
             </label>
@@ -236,7 +250,10 @@ export default function HomePage() {
               <input
                 type="checkbox"
                 checked={hideUnknown}
-                onChange={(e) => setHideUnknown(e.target.checked)}
+                onChange={(e) => {
+                  setHideUnknown(e.target.checked);
+                  storage.setItem('marketsHideUnknown', e.target.checked.toString());
+                }}
               />
               <p className="p-2">Hide unknown</p>
             </label>

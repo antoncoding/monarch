@@ -217,7 +217,13 @@ const useMarkets = () => {
 
   console.log('data', data);
 
-  console.log('error', error);
+  console.log(
+    'feed',
+    data.find(
+      (market) =>
+        market.uniqueKey === '0xbd33e0ae076c82cfd0fa8d759ea83a296190f9f98d9f79b74a0eb4a294d8bf42',
+    ),
+  );
 
   useEffect(() => {
     const fetchData = async () => {
