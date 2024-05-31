@@ -217,6 +217,16 @@ export default function Positions() {
             </button>
           </Link>
         </div>
+        <div className="flex justify-center pt-8">
+          <Link href="/positions">
+            <button
+              type="button"
+              className="bg-secondary font-roboto rounded-sm p-3 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            >
+              Search Address
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );

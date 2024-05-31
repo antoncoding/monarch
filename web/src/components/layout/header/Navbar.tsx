@@ -6,6 +6,7 @@ import { FaRegMoon, FaSun } from 'react-icons/fa';
 import { useTheme } from '@/hooks/useTheme';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { useAccount } from 'wagmi';
 
 export function NavbarLink({
   href,
@@ -49,6 +50,8 @@ export function NavbarTitle() {
 function Navbar() {
   const { theme, toggleTheme } = useTheme();
 
+  const { address } = useAccount();
+
   return (
     <nav
       className={clsx(
@@ -61,10 +64,17 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-8 md:flex">
             <li className="flex">
-              <NavbarLink href="/positions">
-                {' '}
-                <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
-              </NavbarLink>
+              {address ? (
+                <NavbarLink href={`/positions/${address}`}>
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+                </NavbarLink>
+              ) : (
+                <NavbarLink href="/positions">
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+                </NavbarLink>
+              )}
             </li>
             <li className="flex">
               <NavbarLink href="/markets">
