@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Footer from '@/components/layout/footer/Footer';
+import backgroundImage from '@/imgs/bg/bg.png';
 import HomeHeader from './_components/HomeHeader';
 
 export default function HomePage() {
@@ -17,10 +18,10 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div>
+      <div className="flex flex-col items-center justify-center">
         <HomeHeader />
-        <main className="container flex flex-col">
-          <section className="mb-12 flex flex-col items-center justify-center">
+        <main className="container mt-48 flex flex-col">
+          <section className="flex flex-col items-center justify-center">
             <div className="min-h-40 w-3/5">
               <h2 className="font-roboto text-primary mb-10 px-4 text-2xl sm:px-2 md:text-2xl lg:text-3xl">
                 Direct access to{' '}
@@ -35,11 +36,19 @@ export default function HomePage() {
             </div>
           </section>
         </main>
-        <div className="flex justify-center">
+        <div
+          className="flex h-3/4 w-4/5 items-center justify-center pt-4 opacity-80"
+          style={{
+            backgroundImage: `url(${backgroundImage.src})`,
+            backgroundPosition: 'right',
+            backgroundSize: 'original',
+            backgroundRepeat: 'no-repeat',
+          }}
+        >
           <Link href="/markets">
             <button
               type="button"
-              className="bg-monarch-orange font-roboto rounded-sm p-4 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="bg-monarch-orange font-roboto rounded-sm p-4 px-10 opacity-100 transition-all duration-200 ease-in-out hover:scale-105"
             >
               Start
             </button>

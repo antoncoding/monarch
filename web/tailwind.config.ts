@@ -28,7 +28,7 @@ const config: Config = {
       },
       colors: {
         'monarch-primary': '#f45f2d',
-        'boat-footer-light-gray': '#8a919e',
+        'footer-light-gray': '#8a919e',
         'boat-color-gray-900': '#191918',
       },
     },

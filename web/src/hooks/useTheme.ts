@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import storage from 'local-storage-fallback';
+import * as storageKeys from '@/utils/storageKeys';
 
 export const useTheme = () => {
   const [theme, setTheme] = useState('dark'); // default theme
@@ -6,13 +8,13 @@ export const useTheme = () => {
   // Function to toggle theme
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
-    localStorage.setItem('theme', newTheme);
+    storage.setItem(storageKeys.ThemeKey, newTheme);
     setTheme(newTheme);
   };
 
   useEffect(() => {
     // Check local storage and then system preference
-    const localTheme = localStorage.getItem('theme');
+    const localTheme = storage.getItem(storageKeys.ThemeKey);
     if (localTheme) {
       setTheme(localTheme);
       if (localTheme === 'dark') {

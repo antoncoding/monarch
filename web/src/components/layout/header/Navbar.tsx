@@ -61,7 +61,7 @@ function Navbar() {
         'bg-secondary rounded-[5px] p-4 backdrop-blur-2xl',
       )}
     >
-      <div className="flex h-8 grow items-center justify-between gap-4">
+      <div className="flex h-8 grow items-center justify-between gap-2">
         <NavbarTitle />
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-8 md:flex">

@@ -1,11 +1,7 @@
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ExternalLinkIcon,
-  StarFilledIcon,
-  StarIcon,
-} from '@radix-ui/react-icons';
+import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+
 import Image from 'next/image';
+import { GoStarFill, GoStar } from 'react-icons/go';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL } from '@/utils/external';
@@ -178,8 +174,8 @@ function MarketsTable({
                       }
                     }}
                   >
-                    <p className="text-2xl text-monarch-primary opacity-50 group-hover:opacity-100">
-                      {isStared ? <StarFilledIcon fontSize={50} /> : <StarIcon />}
+                    <p className="text-lg text-orange-500 group-hover:opacity-100">
+                      {isStared ? <GoStarFill /> : <GoStar />}
                     </p>
                   </button>
                 </td>
