@@ -16,6 +16,8 @@ import { supportedTokens } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 import { WithdrawModal } from './withdrawModal';
 
+const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
+
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
@@ -71,6 +73,11 @@ export default function Positions() {
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
                       <div> LLTV </div>
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> Yearly Reward </div>
                     </div>
                   </th>
                   <th>
@@ -154,6 +161,16 @@ export default function Positions() {
                         <td>
                           <div className="flex items-center justify-center gap-1">
                             <p> {formatBalance(position.market.lltv, 16)} % </p>
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className="flex items-center justify-center gap-1">
+                            {position.rewardPerYear && <p> {position.rewardPerYear} </p>}
+                            {position.rewardPerYear && (
+                              <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
+                            )}
+                            {!position.rewardPerYear && <p> - </p>}
                           </div>
                         </td>
 

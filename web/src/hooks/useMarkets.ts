@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { formatBalance } from '@/utils/balance';
+import { getRewardPer1000USD } from '@/utils/morpho';
 import { MORPHO } from '@/utils/tokens';
 import { WhitelistMarketResponse } from '@/utils/types';
 
@@ -181,7 +181,6 @@ const query = `query getMarkets(
         timestamp
         rateAtUTarget
         rewards {
-          supplyApy
           yearlySupplyTokens
           asset {
             address
@@ -262,10 +261,7 @@ const useMarkets = () => {
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
-          const rewardPer1000USD = (
-            (formatBalance(entry.yearlySupplyTokens, MORPHO.decimals) / supplyAssetUSD) *
-            1000
-          ).toString();
+          const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
 
           return {
             ...market,

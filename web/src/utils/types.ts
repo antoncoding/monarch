@@ -33,8 +33,18 @@ export type MarketPosition = {
     state: {
       liquidityAssets: string;
       supplyAssets: string;
+      supplyAssetsUsd: number;
+      rewards: {
+        yearlySupplyTokens: string;
+        asset: {
+          address: string;
+          priceUsd: string | null;
+          spotPriceEth: string | null;
+        };
+      }[];
     };
   };
+  rewardPerYear: string | null;
 };
 
 export type WhitelistMarketResponse = {
