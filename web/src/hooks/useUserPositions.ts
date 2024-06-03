@@ -89,12 +89,14 @@ const useUserPositions = (user: string | undefined) => {
         const result = await response.json();
         const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
+        console.log('whitelist', whitelist)
+
         const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
         const filtered = allPositions
           .filter(
             (position: MarketPosition) =>
-              whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
               position.supplyShares.toString() !== '0',
+              // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
           )
           .map((position) => {
             const rewardInfo = position.market.state.rewards.find(

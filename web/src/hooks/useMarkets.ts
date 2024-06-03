@@ -4,7 +4,13 @@
 import { useState, useEffect } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { MORPHO } from '@/utils/tokens';
-import { WhitelistMarketResponse } from '@/utils/types';
+import {
+  OracleFeedsInfo,
+  WhitelistMarketResponse,
+  MarketWarning,
+  WarningWithDetail,
+} from '@/utils/types';
+import { filterWarningTypes } from '@/utils/warnings';
 
 export type Reward = {
   id: string;
@@ -38,17 +44,7 @@ export type Market = {
   oracleInfo: {
     type: string;
   };
-  oracleFeed: {
-    baseFeedOneAddress: string;
-    baseFeedOneDescription: string | null;
-    baseFeedTwoAddress: string;
-    baseFeedTwoDescription: string | null;
-    quoteFeedOneAddress: string;
-    quoteFeedOneDescription: string | null;
-    quoteFeedTwoAddress: string;
-    quoteFeedTwoDescription: string | null;
-    __typename: string;
-  };
+  oracleFeed?: OracleFeedsInfo;
   loanAsset: {
     id: string;
     address: string;
@@ -75,6 +71,7 @@ export type Market = {
     liquidityAssets: string;
     liquidityAssetsUsd: number;
     collateralAssets: string;
+    collateralAssetsUsd: number | null;
     utilization: number;
     supplyApy: number;
     borrowApy: number;
@@ -92,13 +89,12 @@ export type Market = {
       amountPerBorrowedToken: string;
     }[];
   };
-  warnings: {
-    type: string;
-    level: string;
-    __typename: string;
-  }[];
+  warnings: MarketWarning[];
 
+  // appended by us
   rewardPer1000USD?: string;
+  oracleWarnings: WarningWithDetail[];
+  marketWarnings: WarningWithDetail[];
 };
 
 const query = `query getMarkets(
@@ -144,6 +140,12 @@ const query = `query getMarkets(
         quoteFeedOneDescription
         quoteFeedTwoAddress
         quoteFeedTwoDescription
+        baseVault
+        baseVaultDescription
+        baseVaultVendor
+        quoteVault
+        quoteVaultDescription
+        quoteVaultVendor
         __typename
       }
       loanAsset {
@@ -174,6 +176,7 @@ const query = `query getMarkets(
         liquidityAssets
         liquidityAssetsUsd
         collateralAssets
+        collateralAssetsUsd
         utilization
         supplyApy
         borrowApy
@@ -215,6 +218,8 @@ const useMarkets = () => {
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
+  console.log('data', data);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -242,22 +247,34 @@ const useMarkets = () => {
 
         const items = result.data.markets.items as Market[];
 
-        const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) => market.id);
+        const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) =>
+          market.id.toLowerCase(),
+        );
 
         // batch fetch rewards https://rewards.morpho.org/rates/markets?ids=
         // each with 10 ids, otherwise the server breaks!
 
         const filtered = items
           .filter((market) => market.collateralAsset != undefined)
-          .filter((market) => allWhitelistedMarketAddr.includes(market.uniqueKey));
+          .filter(
+            (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
+            // allWhitelistedMarketAddr.includes(market.uniqueKey)
+          );
+
+        console.log('allWhitelistedMarketAddr', allWhitelistedMarketAddr);
+
+        // console.log('filtered', filtered)
 
         const final = filtered.map((market) => {
           const entry = market.state.rewards.find(
             (reward) => reward.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
           );
 
+          const oracleWarnings = filterWarningTypes('oracle', market.warnings);
+          const marketWarnings = filterWarningTypes('general', market.warnings);
+
           if (!entry) {
-            return { ...market, rewardPer1000USD: undefined };
+            return { ...market, rewardPer1000USD: undefined, oracleWarnings, marketWarnings };
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
@@ -266,8 +283,12 @@ const useMarkets = () => {
           return {
             ...market,
             rewardPer1000USD,
+            oracleWarnings,
+            marketWarnings,
           };
         });
+
+        console.log('final', final);
 
         setData(final);
         setLoading(false);

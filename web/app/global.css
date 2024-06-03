@@ -131,6 +131,11 @@ h1 {
   border-left: 2px solid var(--palette-orange);
 }
 
+.table-body-focused {
+  background-color: var(--palette-bg-hovered);
+  border-left: 2px solid var(--palette-orange);
+}
+
 svg {
   display: block;
   overflow: visible;
