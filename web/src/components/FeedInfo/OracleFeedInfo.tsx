@@ -15,7 +15,7 @@ export function OracleFeedInfo({ address, title }: { address: string; title: str
         target="_blank"
       >
         {title ? (
-          <p className="text-right font-zen text-sm"> {title} </p>
+          <p className="text-right font-zen text-xs"> {title} </p>
         ) : (
           <p className="text-right font-zen text-sm"> {getSlicedAddress(address as Address)} </p>
         )}
@@ -24,6 +24,6 @@ export function OracleFeedInfo({ address, title }: { address: string; title: str
     );
 
   return (
-    <p className="text-right font-zen text-sm text-red-500 hover:no-underline"> Hardcoded 1 </p>
+    <p className="text-right font-zen text-sm text-yellow-500 hover:no-underline"> Hardcoded 1 </p>
   );
 }

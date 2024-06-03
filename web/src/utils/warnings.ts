@@ -40,7 +40,7 @@ const morphoOfficialWarnings = [
   {
     code: 'unrecognized_oracle_feed',
     level: 'alert',
-    description: 'The feed for the oracle is not recognized',
+    description: 'The oracle feed is not recognized',
     category: 'oracle',
   },
   {
@@ -49,13 +49,19 @@ const morphoOfficialWarnings = [
     description: 'This market is not whitelisted by Morpho team',
     category: 'general',
   },
+  {
+    code: 'low_liquidity',
+    level: 'warning',
+    description: 'This market has low liquidity, you may not be able to withdraw once supplied',
+    category: 'general',
+  },
 ];
 
-export const getOracleWarnings = (warnings: MarketWarning[]) => {
+export const filterWarningTypes = (category: string, warnings: MarketWarning[]) => {
   const result = [];
   for (const warning of warnings) {
     const foundWarning = morphoOfficialWarnings.find((w) => w.code === warning.type);
-    if (foundWarning && foundWarning.category === 'oracle') {
+    if (foundWarning && foundWarning.category === category) {
       result.push(foundWarning);
     }
   }

@@ -5,8 +5,8 @@ import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-ic
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { zeroAddress } from 'viem';
-import { Info } from '@/components/Info/info';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
+import { Info } from '@/components/Info/info';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
@@ -309,7 +309,7 @@ function MarketsTable({
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
                     <td className="collaps-viewer bg-hovered" colSpan={10}>
-                      <div className="mx-10 flex gap-2">
+                      <div className="m-4 flex gap-2">
                         {/* Oracle info */}
                         <div className="m-4 lg:w-1/3">
                           {/* warnings */}
@@ -330,7 +330,7 @@ function MarketsTable({
                           {item.oracleFeed && (
                             <>
                               <div className="mb-1 flex items-start justify-between">
-                                <p className="font-inter text-xs opacity-80">Base feed 1</p>
+                                <p className="font-inter text-xs opacity-80">Base feed</p>
 
                                 <OracleFeedInfo
                                   address={item.oracleFeed.baseFeedOneAddress}
@@ -368,9 +368,35 @@ function MarketsTable({
                               )}
                             </>
                           )}
+                        </div>
+
+                        {/* market info */}
+                        <div className="m-4 lg:w-1/3">
+                          <div className="mb-1 flex items-start justify-between text-base font-bold">
+                            <p className="mb-2 font-zen">Market State</p>
+                          </div>
+                          <div className="mb-1 flex items-start justify-between">
+                            <p className="font-inter text-sm opacity-80">Available Liquidity</p>
+                            <p className="text-right font-zen text-sm">
+                              {formatReadable(Number(item.state.liquidityAssetsUsd))}
+                            </p>
+                          </div>
+                          <div className="mb-1 flex items-start justify-between">
+                            <p className="font-inter text-sm opacity-80">Utilization Rate</p>
+                            <p className="text-right font-zen text-sm">
+                              {formatReadable(Number(item.state.utilization * 100))}%
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* warnings */}
+                        <div className="m-4 mr-0 lg:w-1/3">
+                          <div className="mb-1 flex items-start justify-between text-base font-bold">
+                            <p className="mb-2 font-zen">Warnings</p>
+                          </div>
 
                           <div className="w-full gap-2 ">
-                            {item.oracleWarnings?.map((warning) => {
+                            {item.marketWarnings.concat(item.oracleWarnings)?.map((warning) => {
                               return (
                                 <Info
                                   key={warning.code}
@@ -381,22 +407,16 @@ function MarketsTable({
                               );
                             })}
                           </div>
-                        </div>
-
-                        {/* warnings */}
-                        <div className="m-4 lg:w-1/3">
-                          <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="mb-2 font-zen">Warnings</p>
-                          </div>
-                          {item.warnings.map((warning) => (
-                            <div
-                              key={index.toFixed()}
-                              className="mb-1 flex items-start justify-between"
-                            >
-                              <p className="font-inter text-sm opacity-80">{warning.type}</p>
-                              <p className="text-right font-zen text-sm">{warning.level}</p>
-                            </div>
-                          ))}
+                          {
+                            // if no warning
+                            item.marketWarnings.length === 0 &&
+                              item.oracleWarnings.length === 0 && (
+                                <Info
+                                  description="No warning flagged for this market!"
+                                  level="success"
+                                />
+                              )
+                          }
                         </div>
                       </div>
                     </td>

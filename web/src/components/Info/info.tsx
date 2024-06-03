@@ -44,7 +44,7 @@ export function Info({
     case 'warning':
       content = (
         <div className="flex items-center rounded-sm bg-yellow-200 p-4 text-yellow-700 opacity-80">
-          <IoWarning className="mr-2" size={18} />
+          <IoWarning className="m-2" size={18} />
           <div>
             <h2 className="font-bold">{title}</h2>
             <p>{description}</p>
