@@ -1,10 +1,10 @@
 import { Inter, Zen_Kaku_Gothic_Antique } from 'next/font/google';
 
-export const roboto = Zen_Kaku_Gothic_Antique({
+export const zen = Zen_Kaku_Gothic_Antique({
   subsets: ['latin'],
   display: 'swap',
   weight: '400',
-  variable: '--font-roboto',
+  variable: '--font-zen',
 });
 
 export const inter = Inter({

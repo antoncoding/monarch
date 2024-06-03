@@ -24,7 +24,7 @@ export function NavbarLink({
   return (
     <NextLink
       href={href}
-      className="font-inter text-primary px-0 text-center text-base font-normal no-underline"
+      className="text-primary px-0 text-center font-inter text-base font-normal no-underline"
       target={target}
       aria-label={ariaLabel}
     >
@@ -40,7 +40,7 @@ export function NavbarTitle() {
       <NextLink
         href="/"
         passHref
-        className="font-roboto text-primary text-center text-lg font-medium no-underline"
+        className="text-primary text-center font-zen text-lg font-medium no-underline"
         aria-label="build-onchain-apps Github repository"
       >
         Monarch

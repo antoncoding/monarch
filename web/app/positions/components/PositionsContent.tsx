@@ -27,11 +27,11 @@ export default function Positions() {
   const { loading, data: marketPositions } = useUserPositions(account);
 
   return (
-    <div className="font-roboto flex flex-col justify-between">
+    <div className="flex flex-col justify-between font-zen">
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className="font-roboto py-4 text-2xl"> Supplied Markets </h1>
+        <h1 className="py-4 font-zen text-2xl"> Supplied Markets </h1>
 
         {showModal && selectedPosition && (
           <WithdrawModal
@@ -56,7 +56,7 @@ export default function Positions() {
           </div>
         ) : (
           <div className="bg-secondary mt-4">
-            <table className="font-roboto w-full">
+            <table className="w-full font-zen">
               <thead className="table-header">
                 <tr>
                   <th> Market ID </th>
@@ -228,7 +228,7 @@ export default function Positions() {
           <Link href="/markets">
             <button
               type="button"
-              className="bg-monarch-orange font-roboto rounded-sm p-3 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="bg-monarch-orange rounded-sm p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               View All Markets
             </button>
@@ -238,7 +238,7 @@ export default function Positions() {
           <Link href="/positions">
             <button
               type="button"
-              className="bg-secondary font-roboto rounded-sm p-3 px-10 opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="bg-secondary rounded-sm p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               Search Address
             </button>

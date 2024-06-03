@@ -31,6 +31,10 @@ const config: Config = {
         'footer-light-gray': '#8a919e',
         'boat-color-gray-900': '#191918',
       },
+      fontFamily: {
+        inter: ['var(--font-inter)'],
+        zen: ['var(--font-zen)'],
+      },
     },
   },
   plugins: [],

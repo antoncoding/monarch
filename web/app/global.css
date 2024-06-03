@@ -58,8 +58,8 @@ html {
   scroll-behavior: smooth;
 }
 
-html .font-roboto {
-  font-family: var(--font-roboto);
+html .font-zen {
+  font-family: var(--font-zen);
 }
 
 html .font-inter {

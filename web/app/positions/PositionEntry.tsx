@@ -16,7 +16,7 @@ export default function PositionEntry() {
   const [inputAddress, setInputAddress] = useState<string>('');
 
   return (
-    <div className="font-roboto flex flex-col justify-between">
+    <div className="flex flex-col justify-between font-zen">
       <Header />
       <Toaster />
       <div className="container items-center justify-center gap-8" style={{ padding: '0 5%' }}>
@@ -29,7 +29,7 @@ export default function PositionEntry() {
           {/* {show connect button or input} */}
           {address ? (
             <Link href={`/positions/${address}`} className="no-underline">
-              <div className="font-roboto flex opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
+              <div className="flex font-zen opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
                   className="text-roboto bg-secondary w-80 rounded-sm p-4 px-10 "
@@ -57,7 +57,7 @@ export default function PositionEntry() {
 
         {/* Search Bar */}
         <div className="flex justify-center">
-          <div className="font-roboto flex opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
+          <div className="flex font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
             <input
               className="bg-secondary w-80 p-4 focus:opacity-100"
               value={inputAddress}

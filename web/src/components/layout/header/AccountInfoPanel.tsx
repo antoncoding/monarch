@@ -21,10 +21,10 @@ export function AccountInfoPanel() {
       <div className="mb-4 inline-flex items-center justify-start gap-2 text-sm">
         <Avatar address={address} />
         <div className="inline-flex flex-col items-start justify-center gap-1">
-          <div className="font-inter text-primary w-32 text-sm font-medium">
+          <div className="text-primary w-32 font-inter text-sm font-medium">
             <Name address={address} />
           </div>
-          <span className="font-inter w-32 text-xs font-medium text-zinc-400">
+          <span className="w-32 font-inter text-xs font-medium text-zinc-400">
             {getSlicedAddress(address)}
           </span>
         </div>
@@ -39,7 +39,7 @@ export function AccountInfoPanel() {
         className="my-4 inline-flex items-center justify-between self-stretch"
         onClick={handleDisconnectWallet}
       >
-        <span className="font-inter text-primary w-32 text-left text-sm font-medium">Log out</span>
+        <span className="text-primary w-32 text-left font-inter text-sm font-medium">Log out</span>
         <ExitIcon className="relative h-4 w-4" />
       </button>
     </>

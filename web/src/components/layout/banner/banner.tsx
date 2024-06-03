@@ -50,7 +50,7 @@ export default function Banner({ pageName, pageUrl, wip }: BannerProps) {
         <NextLink
           href={`/${pageUrl}#guide`}
           className={clsx(
-            'font-inter w-full rounded-3xl bg-white px-4 py-2',
+            'w-full rounded-3xl bg-white px-4 py-2 font-inter',
             'text-center text-sm font-medium leading-normal text-black no-underline',
           )}
         >

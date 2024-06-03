@@ -33,7 +33,7 @@ function MarketsTable({
   unstarMarket,
 }: MarketsTableProps) {
   return (
-    <table className="font-roboto w-full">
+    <table className="w-full font-zen">
       <thead className="table-header">
         <tr>
           <th> {} </th>

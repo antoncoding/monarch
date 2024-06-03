@@ -198,11 +198,11 @@ export default function HomePage() {
   );
 
   return (
-    <div className="font-roboto flex flex-col justify-between">
+    <div className="flex flex-col justify-between font-zen">
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className="font-roboto py-8"> Markets </h1>
+        <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && (
           <SupplyModal

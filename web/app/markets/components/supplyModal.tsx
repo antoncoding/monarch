@@ -108,7 +108,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   }, [supplySuccess, supplyError, pendingToastId]);
 
   return (
-    <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
         className="bg-secondary relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
@@ -134,7 +134,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">
+            <p className="text-right font-zen">
               {market.uniqueKey.slice(2, 8)} ...{' '}
               {market.uniqueKey.slice(market.uniqueKey.length - 6)}
             </p>
@@ -142,7 +142,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Collateral Token:</p>
             <div className="flex items-center justify-center gap-2">
-              <p className="font-roboto text-right">{market.collateralAsset.symbol} </p>
+              <p className="text-right font-zen">{market.collateralAsset.symbol} </p>
               <div>
                 {collateralToken?.img && (
                   <Image src={collateralToken.img} height={16} alt={collateralToken.symbol} />
@@ -152,7 +152,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">LLTV:</p>
-            <p className="font-roboto text-right">{formatUnits(BigInt(market.lltv), 16)} %</p>
+            <p className="text-right font-zen">{formatUnits(BigInt(market.lltv), 16)} %</p>
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Oracle:</p>
@@ -161,7 +161,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.oracleAddress)}
               target="_blank"
             >
-              <p className="font-roboto text-right text-sm">{market.oracleInfo.type}</p>
+              <p className="text-right font-zen text-sm">{market.oracleInfo.type}</p>
               <ExternalLinkIcon />
             </a>
           </div>
@@ -172,7 +172,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.irmAddress)}
               target="_blank"
             >
-              <p className="font-roboto text-right text-sm">{market.irmAddress}</p>
+              <p className="text-right font-zen text-sm">{market.irmAddress}</p>
               <ExternalLinkIcon />
             </a>
           </div>
@@ -183,14 +183,14 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <div className="mb-1 flex items-start justify-between">
               <p className="font-inter text-sm opacity-50">My Balance:</p>
               <div className="flex items-center justify-center gap-2">
-                <p className="font-roboto text-right">
+                <p className="text-right font-zen">
                   {' '}
                   {formatBalance(
                     tokenBalance?.value ? tokenBalance.value : '0',
                     market.loanAsset.decimals,
                   )}{' '}
                 </p>
-                <p className="font-roboto text-right">{market.loanAsset.symbol} </p>
+                <p className="text-right font-zen">{market.loanAsset.symbol} </p>
                 <div>
                   {loanToken?.img && (
                     <Image src={loanToken.img} height={16} alt={loanToken.symbol} />

@@ -23,7 +23,7 @@ export default function HomePage() {
         <main className="container mt-48 flex flex-col">
           <section className="flex flex-col items-center justify-center">
             <div className="min-h-40 w-3/5">
-              <h2 className="font-roboto text-primary mb-10 px-4 text-2xl sm:px-2 md:text-2xl lg:text-3xl">
+              <h2 className="text-primary mb-10 px-4 font-zen text-2xl sm:px-2 md:text-2xl lg:text-3xl">
                 Direct access to{' '}
                 <span
                   className={`transition-all duration-1000 ${
@@ -48,7 +48,7 @@ export default function HomePage() {
           <Link href="/markets">
             <button
               type="button"
-              className="bg-monarch-orange font-roboto rounded-sm p-4 px-10 opacity-100 transition-all duration-200 ease-in-out hover:scale-105"
+              className="bg-monarch-orange rounded-sm p-4 px-10 font-zen opacity-100 transition-all duration-200 ease-in-out hover:scale-105"
             >
               Start
             </button>

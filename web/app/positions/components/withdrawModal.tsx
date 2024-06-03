@@ -110,7 +110,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   }, [isConfirmed, supplyError, pendingToastId]);
 
   return (
-    <div className="font-roboto fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
         className="bg-secondary relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
@@ -136,7 +136,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="font-roboto text-right">
+            <p className="text-right font-zen">
               {position.market.uniqueKey.slice(2, 8)} ...{' '}
               {position.market.uniqueKey.slice(position.market.uniqueKey.length - 6)}
             </p>
@@ -145,7 +145,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             <p className="font-inter text-sm opacity-50">Available Liquidity:</p>
 
             <div className="flex items-center justify-center gap-2">
-              <p className="font-roboto text-right">
+              <p className="text-right font-zen">
                 {formatReadable(
                   formatBalance(
                     position.market.state.liquidityAssets,
@@ -153,7 +153,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
                   ),
                 )}
               </p>
-              <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
+              <p className="text-right font-zen">{position.market.loanAsset.symbol} </p>
               <div>
                 {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
               </div>
@@ -164,12 +164,12 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             <p className="font-inter text-sm opacity-50">Supplied Amount:</p>
 
             <div className="flex items-center justify-center gap-2">
-              <p className="font-roboto text-right">
+              <p className="text-right font-zen">
                 {formatReadable(
                   formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
                 )}
               </p>
-              <p className="font-roboto text-right">{position.market.loanAsset.symbol} </p>
+              <p className="text-right font-zen">{position.market.loanAsset.symbol} </p>
               <div>
                 {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
               </div>
