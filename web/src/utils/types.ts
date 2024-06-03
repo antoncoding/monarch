@@ -60,3 +60,21 @@ export type WhitelistMarketResponse = {
     }[];
   };
 };
+
+export type OracleFeedsInfo = {
+  baseFeedOneAddress: string;
+  baseFeedOneDescription: string | null;
+  baseFeedTwoAddress: string;
+  baseFeedTwoDescription: string | null;
+  quoteFeedOneAddress: string;
+  quoteFeedOneDescription: string | null;
+  quoteFeedTwoAddress: string;
+  quoteFeedTwoDescription: string | null;
+  baseVault: string;
+  baseVaultDescription: string | null;
+  baseVaultVendor: string | null;
+  quoteVault: string;
+  quoteVaultDescription: string | null;
+  quoteVaultVendor: string | null;
+  __typename: string;
+};

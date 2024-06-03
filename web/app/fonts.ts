@@ -1,14 +1,16 @@
-import { Inter, Zen_Kaku_Gothic_Antique } from 'next/font/google';
+import localFont from 'next/font/local';
 
-export const zen = Zen_Kaku_Gothic_Antique({
-  subsets: ['latin'],
+export const zen = localFont({
+  src: '../src/fonts/Zen_Kaku_Gothic_New/ZenKakuGothicNew-Regular.ttf',
+  // subsets: ['latin'],
   display: 'swap',
   weight: '400',
   variable: '--font-zen',
 });
 
-export const inter = Inter({
-  subsets: ['latin'],
+export const inter = localFont({
+  src: '../src/fonts/Inter/static/Inter-Light.ttf',
+  // subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
   weight: '200',

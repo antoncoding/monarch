@@ -21,3 +21,12 @@ export const getUserRewardPerYear = (
     marketSupplyAssetUSD
   ).toFixed(2);
 };
+
+export const getIRMTitle = (address: string) => {
+  switch (address.toLowerCase()) {
+    case '0x870ac11d48b15db9a138cf899d20f13f79ba00bc':
+      return 'Adaptive Curve';
+    default:
+      return 'Unknown IRM';
+  }
+};

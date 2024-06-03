@@ -1,10 +1,14 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
+import { useState } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { zeroAddress } from 'viem';
+import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getMarketURL, getAssetURL } from '@/utils/external';
+import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
 import { supportedTokens } from '@/utils/tokens';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
@@ -32,8 +36,10 @@ function MarketsTable({
   starMarket,
   unstarMarket,
 }: MarketsTableProps) {
+  const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
   return (
-    <table className="w-full font-zen">
+    <table className="font-zen w-full">
       <thead className="table-header">
         <tr>
           <th> {} </th>
@@ -162,127 +168,228 @@ function MarketsTable({
             const isStared = staredIds.includes(item.uniqueKey);
 
             return (
-              <tr key={index.toFixed()}>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (isStared) {
-                        unstarMarket(item.uniqueKey);
-                      } else {
-                        starMarket(item.uniqueKey);
-                      }
-                    }}
-                  >
-                    <p className="text-lg text-orange-500 group-hover:opacity-100">
-                      {isStared ? <GoStarFill /> : <GoStar />}
+              <>
+                <tr
+                  key={index.toFixed()}
+                  onClick={() => {
+                    setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey);
+                  }}
+                  className={`${
+                    item.uniqueKey === expandedRowId
+                      ? 'table-body-focused'
+                      : 'hover:cursor-pointer '
+                  }'`}
+                >
+                  <td>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isStared) {
+                          unstarMarket(item.uniqueKey);
+                        } else {
+                          starMarket(item.uniqueKey);
+                        }
+                      }}
+                    >
+                      <p className="text-lg text-orange-500 group-hover:opacity-100">
+                        {isStared ? <GoStarFill /> : <GoStar />}
+                      </p>
+                    </button>
+                  </td>
+                  {/* id */}
+                  <td>
+                    <div className="flex items-center justify-center gap-1">
+                      <a
+                        className="group flex items-center gap-1 no-underline hover:underline"
+                        href={getMarketURL(item.uniqueKey)}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p>{item.uniqueKey.slice(2, 8)} </p>
+                        <p className="opacity-0 group-hover:opacity-100">
+                          <ExternalLinkIcon />
+                        </p>
+                      </a>
+                    </div>
+                  </td>
+
+                  {/* loan */}
+                  <td>
+                    <div className="flex items-center justify-center gap-1">
+                      {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
+                      <a
+                        className="group flex items-center gap-1 no-underline hover:underline"
+                        href={getAssetURL(item.loanAsset.address)}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p> {item.loanAsset.symbol} </p>
+                        <p className="opacity-0 group-hover:opacity-100">
+                          <ExternalLinkIcon />
+                        </p>
+                      </a>
+                    </div>
+                  </td>
+
+                  {/* collateral */}
+                  <td>
+                    <div className="flex items-center justify-center gap-1">
+                      {collatImg ? (
+                        <Image src={collatImg} alt="icon" width="18" height="18" />
+                      ) : null}
+                      <a
+                        className="group flex items-center gap-1 no-underline hover:underline"
+                        href={getAssetURL(item.collateralAsset.address)}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <p> {collatToShow} </p>
+                        <p className="opacity-0 group-hover:opacity-100">
+                          <ExternalLinkIcon />
+                        </p>
+                      </a>
+                    </div>
+                  </td>
+
+                  {/* lltv */}
+                  <td>{Number(item.lltv) / 1e16}%</td>
+
+                  {/* rewards */}
+                  <td>
+                    <div className="flex items-center justify-center gap-1">
+                      {' '}
+                      <p> {reward ? reward : '-'}</p>
+                      {reward && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
+                    </div>
+                  </td>
+
+                  {/* total supply */}
+                  <td className="z-50">
+                    <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
+                    <p className="opacity-70">
+                      {formatReadable(
+                        formatBalance(item.state.supplyAssets, item.loanAsset.decimals),
+                      ) +
+                        ' ' +
+                        item.loanAsset.symbol}
                     </p>
-                  </button>
-                </td>
-                {/* id */}
-                <td>
-                  <div className="flex items-center justify-center gap-1">
-                    <a
-                      className="group flex items-center gap-1 no-underline hover:underline"
-                      href={getMarketURL(item.uniqueKey)}
-                      target="_blank"
+                  </td>
+
+                  {/* total borrow */}
+                  <td>
+                    <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
+                    <p style={{ opacity: '0.7' }}>
+                      {formatReadable(
+                        formatBalance(item.state.borrowAssets, item.loanAsset.decimals),
+                      ) +
+                        ' ' +
+                        item.loanAsset.symbol}
+                    </p>
+                  </td>
+
+                  {/* <td> {item.loanAsset.address} </td> */}
+
+                  <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
+
+                  <td>
+                    <button
+                      type="button"
+                      aria-label="Supply"
+                      className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowSupplyModal(true);
+                        setSelectedMarket(item);
+                      }}
                     >
-                      <p>{item.uniqueKey.slice(2, 8)} </p>
-                      <p className="opacity-0 group-hover:opacity-100">
-                        <ExternalLinkIcon />
-                      </p>
-                    </a>
-                  </div>
-                </td>
+                      Supply
+                    </button>
+                  </td>
+                </tr>
+                {expandedRowId === item.uniqueKey && (
+                  <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
+                    <td className="collaps-viewer bg-hovered" colSpan={10}>
+                      <div className="mx-10 flex gap-2">
+                        {/* basic info */}
+                        <div className="m-4 lg:w-1/3">
+                          <div className="mb-1 flex items-start justify-between text-base font-bold">
+                            <p className="font-zen mb-2">Basic Info</p>
+                          </div>
+                          <div className="mb-1 flex items-start justify-between">
+                            <p className="font-inter text-sm opacity-80">Oracle:</p>
+                            <a
+                              className="group flex items-center gap-1 no-underline hover:underline"
+                              href={getExplorerURL(item.oracleAddress)}
+                              target="_blank"
+                            >
+                              <p className="font-zen text-right text-sm">{item.oracleInfo.type}</p>
+                              <ExternalLinkIcon />
+                            </a>
+                          </div>
+                          {item.oracleFeed && (
+                            <>
+                              <div className="mb-1 flex items-start justify-between">
+                                <p className="font-inter text-xs opacity-80">Base feed 1</p>
 
-                {/* loan */}
-                <td>
-                  <div className="flex items-center justify-center gap-1">
-                    {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
-                    <a
-                      className="group flex items-center gap-1 no-underline hover:underline"
-                      href={getAssetURL(item.loanAsset.address)}
-                      target="_blank"
-                    >
-                      <p> {item.loanAsset.symbol} </p>
-                      <p className="opacity-0 group-hover:opacity-100">
-                        <ExternalLinkIcon />
-                      </p>
-                    </a>
-                  </div>
-                </td>
+                                <OracleFeedInfo
+                                  address={item.oracleFeed.baseFeedOneAddress}
+                                  title={item.oracleFeed.baseFeedOneDescription}
+                                />
+                              </div>
+                              {/* only shows base feed 2 if non-zero */}
+                              {item.oracleFeed.baseFeedTwoAddress !== zeroAddress && (
+                                <div className="mb-1 flex items-start justify-between">
+                                  <p className="font-inter text-xs opacity-80">Base feed 2</p>
+                                  <OracleFeedInfo
+                                    address={item.oracleFeed.baseFeedTwoAddress}
+                                    title={item.oracleFeed.baseFeedTwoDescription}
+                                  />
+                                </div>
+                              )}
 
-                {/* collateral */}
-                <td>
-                  <div className="flex items-center justify-center gap-1">
-                    {collatImg ? <Image src={collatImg} alt="icon" width="18" height="18" /> : null}
-                    <a
-                      className="group flex items-center gap-1 no-underline hover:underline"
-                      href={getAssetURL(item.collateralAsset.address)}
-                      target="_blank"
-                    >
-                      <p> {collatToShow} </p>
-                      <p className="opacity-0 group-hover:opacity-100">
-                        <ExternalLinkIcon />
-                      </p>
-                    </a>
-                  </div>
-                </td>
+                              <div className="mb-1 flex items-start justify-between">
+                                <p className="font-inter text-xs opacity-80">Quote feed 1</p>
+                                <OracleFeedInfo
+                                  address={item.oracleFeed.quoteFeedOneAddress}
+                                  title={item.oracleFeed.quoteFeedOneDescription}
+                                />
+                              </div>
 
-                {/* lltv */}
-                <td>{Number(item.lltv) / 1e16}%</td>
+                              {/* only shows quote feed 2 if non-zero */}
+                              {item.oracleFeed.quoteFeedTwoAddress !== zeroAddress && (
+                                <div className="mb-1 flex items-start justify-between">
+                                  <p className="font-inter text-xs opacity-80">Quote feed 2</p>
+                                  <OracleFeedInfo
+                                    address={item.oracleFeed.quoteFeedTwoAddress}
+                                    title={item.oracleFeed.quoteFeedTwoDescription}
+                                  />
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
 
-                {/* rewards */}
-                <td>
-                  <div className="flex items-center justify-center gap-1">
-                    {' '}
-                    <p> {reward ? reward : '-'}</p>
-                    {reward && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
-                  </div>
-                </td>
-
-                {/* total supply */}
-                <td className="z-50">
-                  <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
-                  <p className="opacity-70">
-                    {formatReadable(
-                      formatBalance(item.state.supplyAssets, item.loanAsset.decimals),
-                    ) +
-                      ' ' +
-                      item.loanAsset.symbol}
-                  </p>
-                </td>
-
-                {/* total borrow */}
-                <td>
-                  <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
-                  <p style={{ opacity: '0.7' }}>
-                    {formatReadable(
-                      formatBalance(item.state.borrowAssets, item.loanAsset.decimals),
-                    ) +
-                      ' ' +
-                      item.loanAsset.symbol}
-                  </p>
-                </td>
-
-                {/* <td> {item.loanAsset.address} </td> */}
-
-                <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
-
-                <td>
-                  <button
-                    type="button"
-                    aria-label="Supply"
-                    className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
-                    onClick={() => {
-                      setShowSupplyModal(true);
-                      setSelectedMarket(item);
-                    }}
-                  >
-                    Supply
-                  </button>
-                </td>
-              </tr>
+                        {/* warnings */}
+                        <div className="m-4 lg:w-1/3">
+                          <div className="mb-1 flex items-start justify-between text-base font-bold">
+                            <p className="font-zen mb-2">Warnings</p>
+                          </div>
+                          {item.warnings.map((warning) => (
+                            <div
+                              key={index.toFixed()}
+                              className="mb-1 flex items-start justify-between"
+                            >
+                              <p className="font-inter text-sm opacity-80">{warning.type}</p>
+                              <p className="font-zen text-right text-sm">{warning.level}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             );
           })}
       </tbody>

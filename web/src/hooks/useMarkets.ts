@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { MORPHO } from '@/utils/tokens';
-import { WhitelistMarketResponse } from '@/utils/types';
+import { OracleFeedsInfo, WhitelistMarketResponse } from '@/utils/types';
 
 export type Reward = {
   id: string;
@@ -38,17 +38,7 @@ export type Market = {
   oracleInfo: {
     type: string;
   };
-  oracleFeed: {
-    baseFeedOneAddress: string;
-    baseFeedOneDescription: string | null;
-    baseFeedTwoAddress: string;
-    baseFeedTwoDescription: string | null;
-    quoteFeedOneAddress: string;
-    quoteFeedOneDescription: string | null;
-    quoteFeedTwoAddress: string;
-    quoteFeedTwoDescription: string | null;
-    __typename: string;
-  };
+  oracleFeed?: OracleFeedsInfo;
   loanAsset: {
     id: string;
     address: string;
@@ -144,6 +134,12 @@ const query = `query getMarkets(
         quoteFeedOneDescription
         quoteFeedTwoAddress
         quoteFeedTwoDescription
+        baseVault
+        baseVaultDescription
+        baseVaultVendor
+        quoteVault
+        quoteVaultDescription
+        quoteVaultVendor
         __typename
       }
       loanAsset {

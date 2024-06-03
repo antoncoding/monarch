@@ -13,7 +13,7 @@ import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
-import { MORPHO } from '@/utils/morpho';
+import { MORPHO, getIRMTitle } from '@/utils/morpho';
 import { supportedTokens } from '@/utils/tokens';
 
 type SupplyModalProps = {
@@ -172,7 +172,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.irmAddress)}
               target="_blank"
             >
-              <p className="text-right font-zen text-sm">{market.irmAddress}</p>
+              <p className="text-right font-zen text-sm">{getIRMTitle(market.irmAddress)}</p>
               <ExternalLinkIcon />
             </a>
           </div>
