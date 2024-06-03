@@ -89,6 +89,8 @@ const useUserPositions = (user: string | undefined) => {
         const result = await response.json();
         const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
+        console.log('whitelist', whitelist)
+
         const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
         const filtered = allPositions
           .filter(
