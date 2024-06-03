@@ -4,7 +4,13 @@
 import { useState, useEffect } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { MORPHO } from '@/utils/tokens';
-import { OracleFeedsInfo, WhitelistMarketResponse } from '@/utils/types';
+import {
+  OracleFeedsInfo,
+  WhitelistMarketResponse,
+  MarketWarning,
+  WarningWithDetail,
+} from '@/utils/types';
+import { getOracleWarnings } from '@/utils/warnings';
 
 export type Reward = {
   id: string;
@@ -82,13 +88,11 @@ export type Market = {
       amountPerBorrowedToken: string;
     }[];
   };
-  warnings: {
-    type: string;
-    level: string;
-    __typename: string;
-  }[];
+  warnings: MarketWarning[];
 
+  // appended by us
   rewardPer1000USD?: string;
+  oracleWarnings: WarningWithDetail[];
 };
 
 const query = `query getMarkets(
@@ -252,8 +256,10 @@ const useMarkets = () => {
             (reward) => reward.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
           );
 
+          const oracleWarnings = getOracleWarnings(market.warnings);
+
           if (!entry) {
-            return { ...market, rewardPer1000USD: undefined };
+            return { ...market, rewardPer1000USD: undefined, oracleWarnings };
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
@@ -262,6 +268,7 @@ const useMarkets = () => {
           return {
             ...market,
             rewardPer1000USD,
+            oracleWarnings,
           };
         });
 

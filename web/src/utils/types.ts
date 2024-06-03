@@ -78,3 +78,16 @@ export type OracleFeedsInfo = {
   quoteVaultVendor: string | null;
   __typename: string;
 };
+
+export type MarketWarning = {
+  type: string;
+  level: string;
+  __typename: string;
+};
+
+export type WarningWithDetail = {
+  code: string;
+  description: string;
+  category: string;
+  level: string;
+};

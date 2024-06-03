@@ -15,15 +15,15 @@ export function OracleFeedInfo({ address, title }: { address: string; title: str
         target="_blank"
       >
         {title ? (
-          <p className="font-zen text-right text-sm"> {title} </p>
+          <p className="text-right font-zen text-sm"> {title} </p>
         ) : (
-          <p className="font-zen text-right text-sm"> {getSlicedAddress(address as Address)} </p>
+          <p className="text-right font-zen text-sm"> {getSlicedAddress(address as Address)} </p>
         )}
         <ExternalLinkIcon />
       </Link>
     );
 
   return (
-    <p className="font-zen text-right text-sm text-red-500 hover:no-underline"> Hardcoded 1 </p>
+    <p className="text-right font-zen text-sm text-red-500 hover:no-underline"> Hardcoded 1 </p>
   );
 }

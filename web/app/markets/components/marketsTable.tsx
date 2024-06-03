@@ -5,6 +5,7 @@ import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-ic
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { zeroAddress } from 'viem';
+import { Info } from '@/components/Info/info';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -39,7 +40,7 @@ function MarketsTable({
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   return (
-    <table className="font-zen w-full">
+    <table className="w-full font-zen">
       <thead className="table-header">
         <tr>
           <th> {} </th>
@@ -174,10 +175,8 @@ function MarketsTable({
                   onClick={() => {
                     setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey);
                   }}
-                  className={`${
-                    item.uniqueKey === expandedRowId
-                      ? 'table-body-focused'
-                      : 'hover:cursor-pointer '
+                  className={`hover:cursor-pointer ${
+                    item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
                   }'`}
                 >
                   <td>
@@ -311,10 +310,11 @@ function MarketsTable({
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
                     <td className="collaps-viewer bg-hovered" colSpan={10}>
                       <div className="mx-10 flex gap-2">
-                        {/* basic info */}
+                        {/* Oracle info */}
                         <div className="m-4 lg:w-1/3">
+                          {/* warnings */}
                           <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="font-zen mb-2">Basic Info</p>
+                            <p className="mb-2 font-zen">Oracle Info</p>
                           </div>
                           <div className="mb-1 flex items-start justify-between">
                             <p className="font-inter text-sm opacity-80">Oracle:</p>
@@ -323,7 +323,7 @@ function MarketsTable({
                               href={getExplorerURL(item.oracleAddress)}
                               target="_blank"
                             >
-                              <p className="font-zen text-right text-sm">{item.oracleInfo.type}</p>
+                              <p className="text-right font-zen text-sm">{item.oracleInfo.type}</p>
                               <ExternalLinkIcon />
                             </a>
                           </div>
@@ -368,12 +368,25 @@ function MarketsTable({
                               )}
                             </>
                           )}
+
+                          <div className="w-full gap-2 ">
+                            {item.oracleWarnings?.map((warning) => {
+                              return (
+                                <Info
+                                  key={warning.code}
+                                  description={warning.description}
+                                  level={warning.level}
+                                  title={' '}
+                                />
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {/* warnings */}
                         <div className="m-4 lg:w-1/3">
                           <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="font-zen mb-2">Warnings</p>
+                            <p className="mb-2 font-zen">Warnings</p>
                           </div>
                           {item.warnings.map((warning) => (
                             <div
@@ -381,7 +394,7 @@ function MarketsTable({
                               className="mb-1 flex items-start justify-between"
                             >
                               <p className="font-inter text-sm opacity-80">{warning.type}</p>
-                              <p className="font-zen text-right text-sm">{warning.level}</p>
+                              <p className="text-right font-zen text-sm">{warning.level}</p>
                             </div>
                           ))}
                         </div>
