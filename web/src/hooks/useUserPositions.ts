@@ -93,8 +93,8 @@ const useUserPositions = (user: string | undefined) => {
         const filtered = allPositions
           .filter(
             (position: MarketPosition) =>
-              whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
               position.supplyShares.toString() !== '0',
+              // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
           )
           .map((position) => {
             const rewardInfo = position.market.state.rewards.find(
