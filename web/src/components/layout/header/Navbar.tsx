@@ -85,6 +85,19 @@ function Navbar() {
               </NavbarLink>
             </li>
             <li className="flex">
+              {address ? (
+                <NavbarLink href={`/rewards/${address}`}>
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+                </NavbarLink>
+              ) : (
+                <NavbarLink href="/rewards">
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+                </NavbarLink>
+              )}
+            </li>
+            <li className="flex">
               <NavigationMenu.Root className="relative">
                 <NavigationMenu.Viewport
                   className={clsx(

@@ -44,7 +44,8 @@ export type MarketPosition = {
       }[];
     };
   };
-  rewardPerYear: string | null;
+  morphoClaimable: string | null;
+  morphoClaimableNext: string | null;
 };
 
 export type WhitelistMarketResponse = {
