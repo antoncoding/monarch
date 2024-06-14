@@ -48,6 +48,40 @@ export default function Positions() {
     }
   }, [claimError, claimingSucceed, pendingToastId]);
 
+  // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
+  const allRewardTokens = useMemo(
+    () =>
+      rewards.reduce(
+        (
+          entries: { token: string; claimed: bigint; claimable: bigint; pending: bigint }[],
+          reward,
+        ) => {
+          const idx = entries.findIndex((e) => e.token === reward.program.asset.address);
+          if (idx === -1) {
+            return [
+              ...entries,
+              {
+                token: reward.program.asset.address,
+                claimed: BigInt(reward.for_supply?.claimed ?? '0'),
+                claimable: BigInt(reward.for_supply?.claimable_now ?? '0'),
+                pending: BigInt(reward.for_supply?.claimable_next ?? '0'),
+              },
+            ];
+          } else {
+            // update existing entry
+            entries[idx].claimed += BigInt(reward.for_supply?.claimed ?? '0');
+            entries[idx].claimable += BigInt(reward.for_supply?.claimable_now ?? '0');
+            entries[idx].pending += BigInt(reward.for_supply?.claimable_next ?? '0');
+            return entries;
+          }
+        },
+        [],
+      ),
+    [rewards],
+  );
+
+  console.log('allRewardTokens', allRewardTokens);
+
   const marketsWithRewards = useMemo(
     () =>
       markets.filter((market) =>
@@ -61,197 +95,267 @@ export default function Positions() {
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        {distributions.map((distribution) => {
+        {allRewardTokens.map((tokenReward) => {
           const matchedToken = supportedTokens.find(
-            (t) => t.address.toLowerCase() === distribution.asset.address.toLowerCase(),
+            (t) => t.address.toLowerCase() === tokenReward.token.toLowerCase(),
+          );
+          const distribution = distributions.find(
+            (d) => d.asset.address.toLowerCase() === tokenReward.token.toLowerCase(),
           );
           if (!matchedToken) return null;
           return (
-            <div key={`table-${distribution.asset.id}`}>
-              {/* title and claim button */}
-              <div
-                className="flex items-center justify-between"
-                key={`dis-${distribution.asset.address}`}
-              >
-                <div className="flex items-center justify-center gap-2 p-2">
-                  <h1 className="py-2 font-zen text-xl"> {matchedToken.symbol} Rewards </h1>
-                  {matchedToken.img && (
-                    <Image src={matchedToken.img} alt="icon" width="20" height="20" />
-                  )}
+            <div className="flex flex-col gap-2 p-2" key={`div-${tokenReward.token}`}>
+              <div key={`table-${tokenReward.token}`}>
+                {/* title and claim button */}
+                <div className="flex items-center justify-between" key={`dis-${tokenReward.token}`}>
+                  <div className="flex items-center justify-center gap-2 p-2">
+                    <h1 className="py-2 font-zen text-xl"> {matchedToken.symbol} Rewards </h1>
+                    {matchedToken.img && (
+                      <Image src={matchedToken.img} alt="icon" width="20" height="20" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                    disabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
+                    onClick={() => {
+                      if (!account) {
+                        toast.error('Connect wallet');
+                        return;
+                      }
+                      if (!distribution) {
+                        toast.error('No claim data');
+                        return;
+                      }
+                      sendTransaction({
+                        account: account as Address,
+                        to: distribution.distributor.address as Address,
+                        data: distribution.tx_data as `0x${string}`,
+                      });
+                      // toast('Coming soon 🚀')
+                    }}
+                  >
+                    Claim
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-                  onClick={() => {
-                    if (!account) {
-                      toast.error('Connect wallet');
-                      return;
-                    }
-                    sendTransaction({
-                      account: account as Address,
-                      to: distribution.distributor.address as Address,
-                      data: distribution.tx_data as `0x${string}`,
-                    });
-                    // toast('Coming soon 🚀')
-                  }}
-                >
-                  Claim
-                </button>
-              </div>
 
-              <div className="bg-secondary mb-6 mt-2">
-                <table className="w-full font-zen">
-                  <thead className="table-header">
-                    <tr>
-                      <th> Market ID </th>
-                      <th>
-                        <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                          <div> Loan Asset </div>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                          <div> Collateral </div>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                          <div> LLTV </div>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                          <div> Claimable Reward </div>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                          <div> Pending Reward </div>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="table-body text-sm">
-                    {marketsWithRewards
-                      .filter((m) => {
-                        return rewards.find(
-                          (r) => r.program.market_id.toLowerCase() === m.uniqueKey.toLowerCase(),
-                        );
-                      })
-                      .map((market, index) => {
-                        const collatImg = supportedTokens.find(
-                          (token) =>
-                            token.address.toLowerCase() ===
-                            market.collateralAsset.address.toLowerCase(),
-                        )?.img;
+                <div className="my-4 flex gap-4">
+                  {/* box 1, claimable */}
+                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                    <p className="text-sm"> Total Claimable </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <p className="text-base">
+                        {' '}
+                        {formatReadable(
+                          formatBalance(tokenReward.claimable, matchedToken.decimals),
+                        )}{' '}
+                      </p>
+                      {matchedToken.img && (
+                        <Image src={matchedToken.img} alt="icon" width="15" height="15" />
+                      )}
+                    </div>
+                  </div>
 
-                        const loanImg = supportedTokens.find(
-                          (token) =>
-                            token.address.toLowerCase() === market.loanAsset.address.toLowerCase(),
-                        )?.img;
+                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                    <p className="text-sm"> Total Pending </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <p className="text-base">
+                        {' '}
+                        {formatReadable(
+                          formatBalance(tokenReward.pending, matchedToken.decimals),
+                        )}{' '}
+                      </p>
+                      {matchedToken.img && (
+                        <Image src={matchedToken.img} alt="icon" width="15" height="15" />
+                      )}
+                    </div>
+                  </div>
 
-                        const matchingRewards = rewards.filter((reward) => {
+                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                    <p className="text-sm"> Total Claimed </p>
+                    <div className="flex items-center justify-center gap-2">
+                      <p className="text-base">
+                        {' '}
+                        {formatReadable(
+                          formatBalance(tokenReward.claimed, matchedToken.decimals),
+                        )}{' '}
+                      </p>
+                      {matchedToken.img && (
+                        <Image src={matchedToken.img} alt="icon" width="15" height="15" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-secondary mb-6 mt-2">
+                  <table className="w-full font-zen">
+                    <thead className="table-header">
+                      <tr>
+                        <th> Market ID </th>
+                        <th>
+                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                            <div> Loan Asset </div>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                            <div> Collateral </div>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                            <div> LLTV </div>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                            <div> Claimable Reward </div>
+                          </div>
+                        </th>
+                        <th>
+                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                            <div> Pending Reward </div>
+                          </div>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="table-body text-sm">
+                      {/* aggregate rewards by market */}
+                      {marketsWithRewards
+                        .filter((m) =>
+                          rewards.find(
+                            (r) =>
+                              r.program.market_id.toLowerCase() === m.uniqueKey.toLowerCase() &&
+                              r.program.asset.address.toLowerCase() ===
+                                tokenReward.token.toLowerCase(),
+                          ),
+                        )
+                        .map((market, index) => {
+                          const collatImg = supportedTokens.find(
+                            (token) =>
+                              token.address.toLowerCase() ===
+                              market.collateralAsset.address.toLowerCase(),
+                          )?.img;
+
+                          const loanImg = supportedTokens.find(
+                            (token) =>
+                              token.address.toLowerCase() ===
+                              market.loanAsset.address.toLowerCase(),
+                          )?.img;
+
+                          const tokenRewardsForMarket = rewards.filter((reward) => {
+                            return (
+                              reward.program.market_id === market.uniqueKey &&
+                              reward.program.asset.address.toLowerCase() ===
+                                tokenReward.token.toLowerCase()
+                            );
+                          });
+
+                          const hasRewards = tokenRewardsForMarket.length !== 0;
+
+                          const claimable = tokenRewardsForMarket.reduce((a: bigint, b) => {
+                            return a + BigInt(b.for_supply?.claimable_now ?? '0');
+                          }, BigInt(0));
+                          const pending = tokenRewardsForMarket.reduce((a: bigint, b) => {
+                            return a + BigInt(b.for_supply?.claimable_next ?? '0');
+                          }, BigInt(0));
+
                           return (
-                            reward.program.market_id === market.uniqueKey &&
-                            reward.program.asset.address.toLowerCase() ===
-                              distribution.asset.address.toLowerCase()
-                          );
-                        });
-
-                        const hasRewards = matchingRewards.length !== 0;
-
-                        const claimble = matchingRewards.reduce((a: bigint, b) => {
-                          return a + BigInt(b.for_supply?.claimable_now ?? '0');
-                        }, BigInt(0));
-                        const pending = matchingRewards.reduce((a: bigint, b) => {
-                          return a + BigInt(b.for_supply?.claimable_next ?? '0');
-                        }, BigInt(0));
-
-                        return (
-                          <tr key={index.toFixed()}>
-                            {/* id */}
-                            <td>
-                              <div className="flex justify-center">
-                                <a
-                                  className="group flex items-center gap-1 no-underline hover:underline"
-                                  href={getMarketURL(market.uniqueKey)}
-                                  target="_blank"
-                                >
-                                  <p>{market.uniqueKey.slice(2, 8)} </p>
-                                  <p className="opacity-0 group-hover:opacity-100">
-                                    <ExternalLinkIcon />
-                                  </p>
-                                </a>
-                              </div>
-                            </td>
-
-                            {/* supply */}
-                            <td>
-                              <div>
-                                <div className="flex items-center justify-center gap-1">
-                                  <p> {market.loanAsset.symbol} </p>
-                                  {loanImg ? (
-                                    <Image src={loanImg} alt="icon" width="18" height="18" />
-                                  ) : null}
+                            <tr key={index.toFixed()}>
+                              {/* id */}
+                              <td>
+                                <div className="flex justify-center">
+                                  <a
+                                    className="group flex items-center gap-1 no-underline hover:underline"
+                                    href={getMarketURL(market.uniqueKey)}
+                                    target="_blank"
+                                  >
+                                    <p>{market.uniqueKey.slice(2, 8)} </p>
+                                    <p className="opacity-0 group-hover:opacity-100">
+                                      <ExternalLinkIcon />
+                                    </p>
+                                  </a>
                                 </div>
-                              </div>
-                            </td>
+                              </td>
 
-                            {/* collateral */}
-                            <td>
-                              <div className="flex items-center justify-center gap-1">
-                                <div> {market.collateralAsset.symbol} </div>
-                                {collatImg ? (
-                                  <Image src={collatImg} alt="icon" width="18" height="18" />
-                                ) : null}
-                                <p> {} </p>
-                              </div>
-                            </td>
+                              {/* supply */}
+                              <td>
+                                <div>
+                                  <div className="flex items-center justify-center gap-1">
+                                    <p> {market.loanAsset.symbol} </p>
+                                    {loanImg ? (
+                                      <Image src={loanImg} alt="icon" width="18" height="18" />
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </td>
 
-                            <td>
-                              <div className="flex items-center justify-center gap-1">
-                                <p> {formatBalance(market.lltv, 16)} % </p>
-                              </div>
-                            </td>
+                              {/* collateral */}
+                              <td>
+                                <div className="flex items-center justify-center gap-1">
+                                  <div> {market.collateralAsset.symbol} </div>
+                                  {collatImg ? (
+                                    <Image src={collatImg} alt="icon" width="18" height="18" />
+                                  ) : null}
+                                  <p> {} </p>
+                                </div>
+                              </td>
 
-                            <td>
-                              <div className="flex items-center justify-center gap-1">
-                                {hasRewards && (
-                                  <p>
-                                    {' '}
-                                    {formatReadable(
-                                      formatBalance(claimble, matchedToken.decimals),
-                                    )}{' '}
-                                  </p>
-                                )}
-                                {hasRewards && matchedToken.img && (
-                                  <Image src={matchedToken.img} alt="icon" width="18" height="18" />
-                                )}
-                                {!hasRewards && <p> - </p>}
-                              </div>
-                            </td>
+                              <td>
+                                <div className="flex items-center justify-center gap-1">
+                                  <p> {formatBalance(market.lltv, 16)} % </p>
+                                </div>
+                              </td>
 
-                            <td>
-                              <div className="flex items-center justify-center gap-1">
-                                {hasRewards && (
-                                  <p>
-                                    {' '}
-                                    {formatReadable(
-                                      formatBalance(pending, matchedToken.decimals),
-                                    )}{' '}
-                                  </p>
-                                )}
-                                {hasRewards && matchedToken.img && (
-                                  <Image src={matchedToken.img} alt="icon" width="18" height="18" />
-                                )}
-                                {!hasRewards && <p> - </p>}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+                              <td>
+                                <div className="flex items-center justify-center gap-1">
+                                  {hasRewards && (
+                                    <p>
+                                      {' '}
+                                      {formatReadable(
+                                        formatBalance(claimable, matchedToken.decimals),
+                                      )}{' '}
+                                    </p>
+                                  )}
+                                  {hasRewards && matchedToken.img && (
+                                    <Image
+                                      src={matchedToken.img}
+                                      alt="icon"
+                                      width="18"
+                                      height="18"
+                                    />
+                                  )}
+                                  {!hasRewards && <p> - </p>}
+                                </div>
+                              </td>
+
+                              <td>
+                                <div className="flex items-center justify-center gap-1">
+                                  {hasRewards && (
+                                    <p>
+                                      {' '}
+                                      {formatReadable(
+                                        formatBalance(pending, matchedToken.decimals),
+                                      )}{' '}
+                                    </p>
+                                  )}
+                                  {hasRewards && matchedToken.img && (
+                                    <Image
+                                      src={matchedToken.img}
+                                      alt="icon"
+                                      width="18"
+                                      height="18"
+                                    />
+                                  )}
+                                  {!hasRewards && <p> - </p>}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           );
