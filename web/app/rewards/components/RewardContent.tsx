@@ -1,11 +1,13 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
+import { Address } from 'viem';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
@@ -15,10 +17,36 @@ import { getMarketURL } from '@/utils/external';
 import { supportedTokens } from '@/utils/tokens';
 
 export default function Positions() {
+  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
+
   const { account } = useParams<{ account: string }>();
 
   const { loading, data: markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
+
+  const { data: hash, sendTransaction, error: claimError } = useSendTransaction();
+
+  const { isLoading: icClaiming, isSuccess: claimingSucceed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  useEffect(() => {
+    if (icClaiming) {
+      const pendingId = toast.loading('Tx Pending');
+      setPendingToastId(pendingId);
+    }
+  }, [icClaiming]);
+
+  useEffect(() => {
+    if (claimError) {
+      toast.error('Error claiming rewards');
+      if (pendingToastId) toast.dismiss(pendingToastId);
+    }
+    if (claimingSucceed) {
+      toast.success('Rewards claimed');
+      if (pendingToastId) toast.dismiss(pendingToastId);
+    }
+  }, [claimError, claimingSucceed, pendingToastId]);
 
   const marketsWithRewards = useMemo(
     () =>
@@ -54,7 +82,18 @@ export default function Positions() {
                 <button
                   type="button"
                   className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-                  onClick={() => toast('Coming soon 🚀')}
+                  onClick={() => {
+                    if (!account) {
+                      toast.error('Connect wallet');
+                      return;
+                    }
+                    sendTransaction({
+                      account: account as Address,
+                      to: distribution.distributor.address as Address,
+                      data: distribution.tx_data as `0x${string}`,
+                    });
+                    // toast('Coming soon 🚀')
+                  }}
                 >
                   Claim
                 </button>
