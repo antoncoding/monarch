@@ -13,7 +13,7 @@ import useUserPositions from '@/hooks/useUserPositions';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
-import { supportedTokens } from '@/utils/tokens';
+import { MORPHO, supportedTokens } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 import { WithdrawModal } from './withdrawModal';
 
@@ -33,7 +33,18 @@ export default function Positions() {
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <h1 className="py-4 font-zen text-2xl"> Supplied Markets </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="py-4 font-zen text-2xl"> Supplied Markets </h1>
+
+          <Link href={`/rewards/${account}`}>
+            <button
+              type="button"
+              className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            >
+              View All Rewards
+            </button>
+          </Link>
+        </div>
 
         {showModal && selectedPosition && (
           <WithdrawModal
@@ -116,15 +127,18 @@ export default function Positions() {
                   )?.img;
 
                   const matchingRewards = rewards.filter((info) => {
-                    return info.program.market_id === position.market.uniqueKey;
+                    return (
+                      info.program.market_id === position.market.uniqueKey &&
+                      info.program.asset.address.toLowerCase() === MORPHO.address.toLowerCase()
+                    );
                   });
 
                   const hasRewards = matchingRewards.length !== 0;
 
-                  const claimble = matchingRewards.reduce((a: bigint, b) => {
+                  const claimableMorpho = matchingRewards.reduce((a: bigint, b) => {
                     return a + BigInt(b.for_supply?.claimable_now ?? '0');
                   }, BigInt(0));
-                  const pending = matchingRewards.reduce((a: bigint, b) => {
+                  const pendingMorpho = matchingRewards.reduce((a: bigint, b) => {
                     return a + BigInt(b.for_supply?.claimable_next ?? '0');
                   }, BigInt(0));
 
@@ -186,7 +200,9 @@ export default function Positions() {
 
                         <td>
                           <div className="flex items-center justify-center gap-1">
-                            {hasRewards && <p> {formatReadable(formatBalance(claimble, 18))} </p>}
+                            {hasRewards && (
+                              <p> {formatReadable(formatBalance(claimableMorpho, 18))} </p>
+                            )}
                             {hasRewards && (
                               <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
                             )}
@@ -196,7 +212,9 @@ export default function Positions() {
 
                         <td>
                           <div className="flex items-center justify-center gap-1">
-                            {hasRewards && <p> {formatReadable(formatBalance(pending, 18))} </p>}
+                            {hasRewards && (
+                              <p> {formatReadable(formatBalance(pendingMorpho, 18))} </p>
+                            )}
                             {hasRewards && (
                               <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
                             )}

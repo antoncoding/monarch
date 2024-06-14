@@ -187,6 +187,13 @@ const stEUR: ERC20Token = {
   decimals: 18,
 };
 
+const CRV: ERC20Token = {
+  address: '0xD533a949740bb3306d119CC777fa900bA034cd52',
+  symbol: 'CRV',
+  img: require('../imgs/tokens/crv.webp') as string,
+  decimals: 18,
+};
+
 const supportedTokens: ERC20Token[] = [
   USDC,
   USDT,
@@ -214,6 +221,7 @@ const supportedTokens: ERC20Token[] = [
   ezETH,
   stEUR,
   MORPHO,
+  CRV,
 ];
 
 export { supportedTokens };
