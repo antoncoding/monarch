@@ -4,7 +4,6 @@
 import { useMemo } from 'react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';

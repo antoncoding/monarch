@@ -44,8 +44,6 @@ export type MarketPosition = {
       }[];
     };
   };
-  morphoClaimable: string | null;
-  morphoClaimableNext: string | null;
 };
 
 export type WhitelistMarketResponse = {
