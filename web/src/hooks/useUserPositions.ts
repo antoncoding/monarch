@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
-import { getUserRewardPerYear } from '@/utils/morpho';
-import { MORPHO } from '@/utils/tokens';
 import { MarketPosition, WhitelistMarketResponse } from '@/utils/types';
 
 const query = `query getUserMarketPositions(
@@ -89,31 +87,13 @@ const useUserPositions = (user: string | undefined) => {
         const result = await response.json();
         const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
-        console.log('whitelist', whitelist)
+        console.log('whitelist', whitelist);
 
         const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
-        const filtered = allPositions
-          .filter(
-            (position: MarketPosition) =>
-              position.supplyShares.toString() !== '0',
-              // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
-          )
-          .map((position) => {
-            const rewardInfo = position.market.state.rewards.find(
-              (r) => r.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
-            );
-
-            return {
-              ...position,
-              rewardPerYear: rewardInfo
-                ? getUserRewardPerYear(
-                    rewardInfo.yearlySupplyTokens,
-                    position.market.state.supplyAssetsUsd,
-                    position.supplyAssetsUsd,
-                  )
-                : null,
-            };
-          });
+        const filtered = allPositions.filter(
+          (position: MarketPosition) => position.supplyShares.toString() !== '0',
+          // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
+        );
 
         setData(filtered);
         setLoading(false);

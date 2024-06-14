@@ -44,7 +44,6 @@ export type MarketPosition = {
       }[];
     };
   };
-  rewardPerYear: string | null;
 };
 
 export type WhitelistMarketResponse = {

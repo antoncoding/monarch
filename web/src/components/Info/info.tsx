@@ -1,6 +1,6 @@
 import { FaRegLightbulb } from 'react-icons/fa';
 import { GrStatusGood } from 'react-icons/gr';
-import { MdWarning } from "react-icons/md";
+import { MdWarning } from 'react-icons/md';
 import { MdError } from 'react-icons/md';
 
 /**

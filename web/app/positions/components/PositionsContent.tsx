@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
+import useUserRewards from '@/hooks/useRewards';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -25,6 +26,7 @@ export default function Positions() {
   const { account } = useParams<{ account: string }>();
 
   const { loading, data: marketPositions } = useUserPositions(account);
+  const { rewards, loading: loadingRewards } = useUserRewards(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -43,7 +45,7 @@ export default function Positions() {
           />
         )}
 
-        {loading ? (
+        {loading || loadingRewards ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
         ) : marketPositions.length === 0 ? (
           <div className="text-secondary w-full items-center rounded-md p-12 text-center">
@@ -77,7 +79,12 @@ export default function Positions() {
                   </th>
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Yearly Reward </div>
+                      <div> Claimable Reward </div>
+                    </div>
+                  </th>
+                  <th>
+                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                      <div> Pending Reward </div>
                     </div>
                   </th>
                   <th>
@@ -107,6 +114,19 @@ export default function Positions() {
                       token.address.toLowerCase() ===
                       position.market.loanAsset.address.toLowerCase(),
                   )?.img;
+
+                  const matchingRewards = rewards.filter((info) => {
+                    return info.program.market_id === position.market.uniqueKey;
+                  });
+
+                  const hasRewards = matchingRewards.length !== 0;
+
+                  const claimble = matchingRewards.reduce((a: bigint, b) => {
+                    return a + BigInt(b.for_supply?.claimable_now ?? '0');
+                  }, BigInt(0));
+                  const pending = matchingRewards.reduce((a: bigint, b) => {
+                    return a + BigInt(b.for_supply?.claimable_next ?? '0');
+                  }, BigInt(0));
 
                   return (
                     <>
@@ -166,11 +186,21 @@ export default function Positions() {
 
                         <td>
                           <div className="flex items-center justify-center gap-1">
-                            {position.rewardPerYear && <p> {position.rewardPerYear} </p>}
-                            {position.rewardPerYear && (
+                            {hasRewards && <p> {formatReadable(formatBalance(claimble, 18))} </p>}
+                            {hasRewards && (
                               <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
                             )}
-                            {!position.rewardPerYear && <p> - </p>}
+                            {!hasRewards && <p> - </p>}
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className="flex items-center justify-center gap-1">
+                            {hasRewards && <p> {formatReadable(formatBalance(pending, 18))} </p>}
+                            {hasRewards && (
+                              <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
+                            )}
+                            {!hasRewards && <p> - </p>}
                           </div>
                         </td>
 
