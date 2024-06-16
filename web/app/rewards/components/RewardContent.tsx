@@ -80,8 +80,6 @@ export default function Positions() {
     [rewards],
   );
 
-  console.log('allRewardTokens', allRewardTokens);
-
   const marketsWithRewards = useMemo(
     () =>
       markets.filter((market) =>
@@ -116,7 +114,7 @@ export default function Positions() {
                   </div>
                   <button
                     type="button"
-                    className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                    className="flex justify-center gap-2 bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
                     disabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
                     onClick={() => {
                       if (!account) {
@@ -135,7 +133,9 @@ export default function Positions() {
                       // toast('Coming soon 🚀')
                     }}
                   >
-                    Claim
+                    Claim {matchedToken.img && (
+                      <Image src={matchedToken.img} alt="icon" width="20" height="20" />
+                    )}
                   </button>
                 </div>
 

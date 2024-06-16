@@ -119,6 +119,7 @@ h1 {
 
 .table-body {
   background-color: var(--color-background-secondary);
+  border-left: 2px solid var(--color-background-secondary);
 }
 
 .table-body td {
