@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Address } from 'abitype';
 import { toast } from 'react-hot-toast';
-import { erc20Abi, maxUint256 } from 'viem';
+import { encodeFunctionData, erc20Abi, maxUint256 } from 'viem';
 import { Chain } from 'viem/chains';
-import { useAccount, usePublicClient, useWriteContract } from 'wagmi';
+import { useAccount, usePublicClient, useSendTransaction } from 'wagmi';
 
 type Props = {
   token: Address;
   chainId?: Chain['id'];
   user: Address | undefined;
-  spender?: Address;
+  spender: Address;
   refetchInterval?: number;
 };
 
@@ -22,7 +22,7 @@ type Props = {
  */
 export function useAllowance({
   user,
-  spender = '0x000000000022d473030f116ddee9f6b43ac78ba3', // default to Permit2
+  spender,
   chainId = 1,
   token,
   refetchInterval = 10000,
@@ -66,24 +66,27 @@ export function useAllowance({
   }, [user, spender, chainId, token, publicClient, refetchInterval]);
 
   const {
-    writeContract,
+    sendTransaction,
     data: dataHash,
     error: checkInError,
     isPending: approvePending,
     isSuccess: approveSuccess,
-  } = useWriteContract();
-
-  const approveInfinite = useCallback(async () => {
+  } = useSendTransaction();
+  
+  const approveInfinite = useCallback(async() => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
-    writeContract({
+    // some weird bug with writeContract, update to use useSendTransaction
+    sendTransaction({
       account: user,
-      address: token,
-      abi: erc20Abi,
-      functionName: 'approve',
-      args: [spender, maxUint256],
-    });
-  }, [user, spender, token, writeContract]);
+      to: token,
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [spender, maxUint256],
+      }),
+      })
+  }, [user, spender, token, sendTransaction]);
 
   useEffect(() => {
     if (approvePending) {
