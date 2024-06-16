@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';
-import { MORPHO } from '@/utils/tokens';
 
 type DistributionResponseType = {
   user: Address;
@@ -98,20 +97,8 @@ const useUserRewards = (user: string | undefined) => {
         const newRewards = (await totalRewardsRes.json()).data as RewardResponseType[];
         const newDistributions = (await distributionRes.json()).data as DistributionResponseType[];
 
-        console.log('newRewards', newRewards);
-
-        const finalRewards = newRewards.filter(
-          (reward) => reward.program.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
-        );
-        const finalDistributions = newDistributions.filter(
-          (distribution) =>
-            distribution.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
-        );
-
-        console.log('finalRewards', finalRewards);
-
-        setRewards(finalRewards);
-        setDistributions(finalDistributions);
+        setRewards(newRewards);
+        setDistributions(newDistributions);
 
         setLoading(false);
       } catch (_error) {
