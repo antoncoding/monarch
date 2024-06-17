@@ -194,34 +194,71 @@ const CRV: ERC20Token = {
   decimals: 18,
 };
 
+const LINK: ERC20Token = {
+  address: '0x514910771AF9Ca656af840dff83E8264EcF986CA',
+  symbol: 'LINK',
+  img: require('../imgs/tokens/link.png') as string,
+  decimals: 18,
+};
+
+const usyc: ERC20Token = {
+  address: '0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b',
+  symbol: 'USYC',
+  img: require('../imgs/tokens/usyc.png') as string,
+  decimals: 18,
+};
+
+const pufETH: ERC20Token = {
+  address: '0xD9A442856C234a39a81a089C06451EBAa4306a72',
+  symbol: 'pufETH',
+  img: require('../imgs/tokens/pufETH.webp') as string,
+  decimals: 18,
+}
+
+const rswETH: ERC20Token = {
+  address: '0xFAe103DC9cf190eD75350761e95403b7b8aFa6c0',
+  symbol: 'rswETH',
+  img: require('../imgs/tokens/rsweth.webp') as string,
+  decimals: 18,
+}
+
 const supportedTokens: ERC20Token[] = [
+  // stables
   USDC,
   USDT,
   USDA,
+  usyc,
   PYUSD,
   crvUSD,
   frax,
+  DAI,
+  sDAI,
+  // EURs
   EURe,
+  stEUR,
+  // synthetics stable
   USDe,
   sUSDe,
+  // ETH, staked, restaked
   WETH,
-  sDAI,
   wstETH,
-  DAI,
+  rETH,
   gtWETH,
-  XPC,
+  ezETH,
   osETH,
-  WBTC,
+  pufETH,
   rsETH,
-  MKR,
   weETH,
   apxETH,
+  rswETH,
+  // tokens
+  XPC,
+  WBTC,
+  MKR,
   LDO,
-  rETH,
-  ezETH,
-  stEUR,
   MORPHO,
   CRV,
+  LINK,
 ];
 
 export { supportedTokens };
