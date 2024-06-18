@@ -27,7 +27,6 @@ module.exports = {
     'react/state-in-constructor': 'off',
 
     "import/no-extraneous-dependencies": "off",
-
     // Dont use prop types since were using TypeScript
     'react/default-props-match-prop-types': 'off',
     'react/forbid-foreign-prop-types': 'off',
@@ -88,7 +87,7 @@ module.exports = {
     '@typescript-eslint/no-misused-new': 'error',
     '@typescript-eslint/no-this-alias': 'error',
     '@typescript-eslint/no-unnecessary-qualifier': 'error',
-    '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+    '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     '@typescript-eslint/no-unnecessary-type-constraint': 'error',
     '@typescript-eslint/prefer-for-of': 'error',
     '@typescript-eslint/prefer-literal-enum-member': 'error',
