@@ -1,7 +1,9 @@
 import './global.css';
 
+import { NextUIProvider } from '@nextui-org/system';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import OnchainProviders from '@/OnchainProviders';
+
 import { initAnalytics } from '@/utils/analytics';
 import { inter, zen } from './fonts';
 import type { Metadata } from 'next';
@@ -27,8 +29,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="flex flex-1 flex-col">
-        <OnchainProviders>{children}</OnchainProviders>
+      <body className="flex flex-col">
+        <NextUIProvider>
+          <OnchainProviders>{children}</OnchainProviders>
+        </NextUIProvider>
       </body>
       <GoogleAnalytics />
     </html>

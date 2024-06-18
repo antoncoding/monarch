@@ -1,7 +1,16 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import type { Config } from 'tailwindcss';
+const {nextui} = require("@nextui-org/theme");
 
 const config: Config = {
-  content: ['./app/**/*.{js,ts,jsx,tsx,mdx}', './src/components/**/*.{js,ts,jsx,tsx,mdx}'],
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}', 
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    "./node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}",
+
+  ],
   theme: {
     container: {
       center: true,
@@ -27,6 +36,7 @@ const config: Config = {
         '2mint': '420px 1fr',
       },
       colors: {
+        'primary': '#f45f2d',
         'monarch-primary': '#f45f2d',
         'footer-light-gray': '#8a919e',
         'boat-color-gray-900': '#191918',
@@ -37,7 +47,8 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  darkMode: "class",
+  plugins: [nextui()],
 };
 
 export default config;

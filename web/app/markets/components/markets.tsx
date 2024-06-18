@@ -1,10 +1,12 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { Checkbox, Tooltip } from '@nextui-org/react';
 import { ChevronDownIcon, TrashIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import storage from 'local-storage-fallback';
 import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
+import { BsQuestionCircle } from 'react-icons/bs';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
@@ -198,10 +200,10 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col justify-between font-zen">
+    <div className="flex flex-col justify-between font-zen pb-4">
       <Header />
       <Toaster />
-      <div className="container gap-8" style={{ padding: '0 5%' }}>
+      <div className="container gap-8 h-full" style={{ padding: '0 5%' }}>
         <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && (
@@ -216,7 +218,7 @@ export default function HomePage() {
             {/* collateral filter */}
             <button
               type="button"
-              className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm p-3 hover:opacity-80"
+              className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary p-3 hover:opacity-80"
               onClick={() => {
                 setExpandedLoanOptions(!expandLoanOptions);
               }}
@@ -237,7 +239,7 @@ export default function HomePage() {
 
             <button
               type="button"
-              className="bg-secondary hover:bg-hovered my-1 flex items-center justify-center gap-2 rounded-sm p-3"
+              className="hover:bg-hovered my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary p-3"
               onClick={() => {
                 setExpandCollatOptions(!expandCollatOptions);
               }}
@@ -257,30 +259,48 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="flex items-center justify-end gap-2 rounded-sm">
-            <label className="bg-secondary my-1 flex items-center px-2 py-1">
-              <input
-                type="checkbox"
-                checked={hideDust}
-                onChange={(e) => {
-                  setHideDust(e.target.checked);
-                  storage.setItem(keys.MarketsHideDustKey, e.target.checked.toString());
-                }}
-              />
-              <p className="p-2">Hide dust</p>
-            </label>
+          <div className="flex items-center justify-end rounded-sm">
+            <Checkbox
+              classNames={{
+                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm p-3 m-1',
+              }}
+              isSelected={hideDust}
+              onValueChange={(checked: boolean) => {
+                setHideDust(checked);
+                storage.setItem(keys.MarketsHideDustKey, checked.toString());
+              }}
+              size="sm"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-base text-default-500"> Hide Dust </span>
+                <Tooltip content="Hide markets with lower than $1000 supplied">
+                  <div>
+                    <BsQuestionCircle className="text-default-500" />
+                  </div>
+                </Tooltip>
+              </div>
+            </Checkbox>
 
-            <label className="bg-secondary my-1 flex items-center rounded-sm px-2 py-1">
-              <input
-                type="checkbox"
-                checked={hideUnknown}
-                onChange={(e) => {
-                  setHideUnknown(e.target.checked);
-                  storage.setItem(keys.MarketsHideUnknownKey, e.target.checked.toString());
-                }}
-              />
-              <p className="p-2">Hide unknown</p>
-            </label>
+            <Checkbox
+              classNames={{
+                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm m-1 p-3',
+              }}
+              isSelected={hideUnknown}
+              onValueChange={(checked: boolean) => {
+                setHideUnknown(checked);
+                storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
+              }}
+              size="sm"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-base text-default-500"> Hide Unknown </span>
+                <Tooltip content="Hide markets with unknown assets">
+                  <div>
+                    <BsQuestionCircle className="text-default-500" />
+                  </div>
+                </Tooltip>
+              </div>
+            </Checkbox>
           </div>
         </div>
 
@@ -291,7 +311,7 @@ export default function HomePage() {
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
-                className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary px-2 py-2"
                 onClick={() => {
                   setSelectedLoanAssets([]);
                 }}
@@ -340,7 +360,7 @@ export default function HomePage() {
             <div className="flex gap-1 overflow-auto">
               <button
                 type="button"
-                className="bg-secondary my-1 flex items-center justify-center gap-2 rounded-sm px-2 py-2"
+                className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary px-2 py-2"
                 onClick={() => {
                   setSelectedCollaterals([]);
                 }}
@@ -389,7 +409,7 @@ export default function HomePage() {
         ) : data == null ? (
           <div> No data </div>
         ) : (
-          <div className="bg-secondary mt-4">
+          <div className="mt-4 bg-secondary">
             <MarketsTable
               markets={filteredData}
               titleOnclick={titleOnclick}
