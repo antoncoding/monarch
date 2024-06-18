@@ -213,14 +213,14 @@ const pufETH: ERC20Token = {
   symbol: 'pufETH',
   img: require('../imgs/tokens/pufETH.webp') as string,
   decimals: 18,
-}
+};
 
 const rswETH: ERC20Token = {
   address: '0xFAe103DC9cf190eD75350761e95403b7b8aFa6c0',
   symbol: 'rswETH',
   img: require('../imgs/tokens/rsweth.webp') as string,
   decimals: 18,
-}
+};
 
 const supportedTokens: ERC20Token[] = [
   // stables

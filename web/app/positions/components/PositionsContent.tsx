@@ -39,7 +39,7 @@ export default function Positions() {
           <Link href={`/rewards/${account}`}>
             <button
               type="button"
-              className="bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               View All Rewards
             </button>
@@ -59,7 +59,7 @@ export default function Positions() {
         {loading || loadingRewards ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
         ) : marketPositions.length === 0 ? (
-          <div className="text-secondary w-full items-center rounded-md p-12 text-center">
+          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
             No opened positions, goes to the{' '}
             <a href="/markets" className="text-orange-500 no-underline">
               {' '}
@@ -68,7 +68,7 @@ export default function Positions() {
             to open a new position.
           </div>
         ) : (
-          <div className="bg-secondary mt-4">
+          <div className="mt-4 bg-secondary">
             <table className="w-full font-zen">
               <thead className="table-header">
                 <tr>
@@ -286,7 +286,7 @@ export default function Positions() {
           <Link href="/positions">
             <button
               type="button"
-              className="bg-secondary rounded-sm p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="rounded-sm bg-secondary p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               Search Address
             </button>

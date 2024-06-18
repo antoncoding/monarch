@@ -218,8 +218,6 @@ const useMarkets = () => {
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
-  console.log('data', data);
-
   useEffect(() => {
     const fetchData = async () => {
       try {

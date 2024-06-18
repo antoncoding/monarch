@@ -72,8 +72,8 @@ export function useAllowance({
     isPending: approvePending,
     isSuccess: approveSuccess,
   } = useSendTransaction();
-  
-  const approveInfinite = useCallback(async() => {
+
+  const approveInfinite = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
     // some weird bug with writeContract, update to use useSendTransaction
@@ -85,7 +85,7 @@ export function useAllowance({
         functionName: 'approve',
         args: [spender, maxUint256],
       }),
-      })
+    });
   }, [user, spender, token, sendTransaction]);
 
   useEffect(() => {

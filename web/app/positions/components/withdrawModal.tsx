@@ -113,11 +113,11 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
-        className="bg-secondary relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
+        className="relative z-50 rounded-sm bg-secondary p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
-          className="bg-primary text-primary absolute right-2 top-2 rounded-full p-1 hover:cursor-pointer"
+          className="absolute right-2 top-2 rounded-full bg-primary p-1 text-primary hover:cursor-pointer"
           onClick={onClose}
         >
           <Cross1Icon />{' '}
@@ -207,7 +207,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             disabled={!isConnected || isConfirming || inputError !== null}
             type="button"
             onClick={() => void supply()}
-            className="bg-monarch-orange text-primary ml-2 h-10 rounded p-2 text-sm opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+            className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
           >
             Withdraw
           </button>

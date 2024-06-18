@@ -21,7 +21,7 @@ export function AccountInfoPanel() {
       <div className="mb-4 inline-flex items-center justify-start gap-2 text-sm">
         <Avatar address={address} />
         <div className="inline-flex flex-col items-start justify-center gap-1">
-          <div className="text-primary w-32 font-inter text-sm font-medium">
+          <div className="w-32 font-inter text-sm font-medium text-primary">
             <Name address={address} />
           </div>
           <span className="w-32 font-inter text-xs font-medium text-zinc-400">
@@ -32,14 +32,14 @@ export function AccountInfoPanel() {
           <ExternalLinkIcon className="relative h-4 w-4" />
         </Link>
       </div>
-      <hr className="text-primary h-px self-stretch border-transparent bg-opacity-20" />
+      <hr className="h-px self-stretch border-transparent bg-opacity-20 text-primary" />
       <button
         type="button"
         aria-label="Disconnect"
         className="my-4 inline-flex items-center justify-between self-stretch"
         onClick={handleDisconnectWallet}
       >
-        <span className="text-primary w-32 text-left font-inter text-sm font-medium">Log out</span>
+        <span className="w-32 text-left font-inter text-sm font-medium text-primary">Log out</span>
         <ExitIcon className="relative h-4 w-4" />
       </button>
     </>

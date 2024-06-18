@@ -72,8 +72,6 @@ const useUserRewards = (user: string | undefined) => {
   const [distributions, setDistributions] = useState<DistributionResponseType[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
-  console.log('distributions', distributions);
-
   useEffect(() => {
     const fetchData = async () => {
       try {

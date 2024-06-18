@@ -34,7 +34,8 @@ const morphoOfficialWarnings = [
   {
     code: 'incorrect_collateral_exchange_rate',
     level: 'warning',
-    description: 'The market is using the exchange rate from a token different from the collateral one.',
+    description:
+      'The market is using the exchange rate from a token different from the collateral one.',
     category: 'general',
   },
   {
@@ -76,7 +77,8 @@ const morphoOfficialWarnings = [
   {
     code: 'unsafe_vault_as_collateral_asset',
     level: 'alert',
-    description: 'Market is using a MetaMorpho vault as collateral asset which has at least one minor (yellow) warning',
+    description:
+      'Market is using a MetaMorpho vault as collateral asset which has at least one minor (yellow) warning',
     category: 'general',
   },
   {
@@ -84,7 +86,7 @@ const morphoOfficialWarnings = [
     level: 'alert',
     description: 'The market is using oracle feeds which do not match with each other.',
     category: 'oracle',
-  }
+  },
 ];
 
 export const filterWarningTypes = (category: string, warnings: MarketWarning[]) => {

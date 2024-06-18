@@ -24,7 +24,7 @@ export function NavbarLink({
   return (
     <NextLink
       href={href}
-      className="text-primary px-0 text-center font-inter text-base font-normal no-underline"
+      className="px-0 text-center font-inter text-base font-normal text-primary no-underline"
       target={target}
       aria-label={ariaLabel}
     >
@@ -40,7 +40,7 @@ export function NavbarTitle() {
       <NextLink
         href="/"
         passHref
-        className="text-primary text-center font-zen text-lg font-medium no-underline"
+        className="text-center font-zen text-lg font-medium text-primary no-underline"
         aria-label="build-onchain-apps Github repository"
       >
         Monarch
@@ -58,7 +58,7 @@ function Navbar() {
     <nav
       className={clsx(
         'flex flex-1 flex-grow items-center justify-between',
-        'bg-secondary rounded-[5px] p-4 backdrop-blur-2xl',
+        'rounded-[5px] bg-secondary p-4 backdrop-blur-2xl',
       )}
     >
       <div className="flex h-8 grow items-center justify-between gap-2">

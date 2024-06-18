@@ -1,8 +1,7 @@
 /* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Checkbox, Tooltip } from '@nextui-org/react';
-import { ChevronDownIcon, TrashIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { Checkbox, Select, SelectItem, SelectSection, Tooltip } from '@nextui-org/react';
 import storage from 'local-storage-fallback';
 import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
@@ -42,12 +41,9 @@ export const metadata = generateMetadata({
 export default function HomePage() {
   const { loading, data } = useMarkets();
 
-  const [expandCollatOptions, setExpandCollatOptions] = useState(false);
-  const [expandLoanOptions, setExpandedLoanOptions] = useState(false);
-
   // Add state for the selected collateral and loan asset
-  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
+  const [selectedCollaterals, setSelectedCollaterals] = useState<Set<string>>(new Set<string>());
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<Set<string>>(new Set<string>());
 
   // Add state for the unique collateral and loan assets, for users toLowerCase() set filters
   const [uniqueCollaterals, setUniqueCollaterals] = useState<string[]>([]);
@@ -125,15 +121,15 @@ export default function HomePage() {
         );
     }
 
-    if (selectedCollaterals.length > 0) {
+    if (selectedCollaterals.size > 0) {
       newData = newData.filter((item) =>
-        selectedCollaterals.includes(item.collateralAsset.address.toLowerCase()),
+        selectedCollaterals.has(item.collateralAsset.address.toLowerCase()),
       );
     }
 
-    if (selectedLoanAssets.length > 0) {
+    if (selectedLoanAssets.size > 0) {
       newData = newData.filter((item) =>
-        selectedLoanAssets.includes(item.loanAsset.address.toLowerCase()),
+        selectedLoanAssets.has(item.loanAsset.address.toLowerCase()),
       );
     }
 
@@ -200,10 +196,10 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col justify-between font-zen pb-4">
+    <div className="flex flex-col justify-between pb-4 font-zen">
       <Header />
       <Toaster />
-      <div className="container gap-8 h-full" style={{ padding: '0 5%' }}>
+      <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
         <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && (
@@ -214,51 +210,112 @@ export default function HomePage() {
         )}
 
         <div className="flex justify-between">
-          <div className="flex gap-1">
-            {/* collateral filter */}
-            <button
-              type="button"
-              className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary p-3 hover:opacity-80"
-              onClick={() => {
-                setExpandedLoanOptions(!expandLoanOptions);
+          {/* left section: asset filters */}
+          <div className="flex gap-2">
+            <Select
+              label="Loan Asset"
+              selectionMode="multiple"
+              placeholder="All loan asset"
+              selectedKeys={selectedLoanAssets}
+              onChange={(e) => {
+                if (!e.target.value) setSelectedLoanAssets(new Set());
+                else setSelectedLoanAssets(new Set((e.target.value as string).split(',')));
+              }}
+              classNames={{
+                trigger: 'bg-secondary rounded-sm min-w-48',
+                popoverContent: 'bg-secondary rounded-sm',
+              }}
+              // className='w-48 rounded-sm'
+              isLoading={loading}
+              renderValue={(items) => {
+                return (
+                  <div className="flex-scroll flex gap-1">
+                    {(items as { key: string }[]).map((item) => {
+                      const token = supportedTokens.find(
+                        (t) => t.address.toLowerCase() === item.key,
+                      ) as ERC20Token;
+                      if (!token) return null;
+                      return token.img ? (
+                        <Image src={token.img} alt="icon" height="18" />
+                      ) : (
+                        token.symbol
+                      );
+                    })}
+                  </div>
+                );
               }}
             >
-              Loans{' '}
-              {selectedLoanAssets.length === 0 ? (
-                expandLoanOptions ? (
-                  <ChevronUpIcon />
-                ) : (
-                  <ChevronDownIcon />
-                )
-              ) : (
-                <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
-                  {selectedLoanAssets.length}{' '}
-                </span>
-              )}
-            </button>
+              <SelectSection title="Choose loan assets">
+                {uniqueLoanAssets.map((asset) => {
+                  const token = supportedTokens.find(
+                    (t) => t.address.toLowerCase() === asset,
+                  ) as ERC20Token;
 
-            <button
-              type="button"
-              className="hover:bg-hovered my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary p-3"
-              onClick={() => {
-                setExpandCollatOptions(!expandCollatOptions);
+                  return (
+                    <SelectItem key={asset}>
+                      <div className="flex items-center justify-between">
+                        <p>{token?.symbol}</p>
+                        {token.img && <Image src={token.img} alt="icon" height="18" />}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectSection>
+            </Select>
+
+            {/* collateral  */}
+            <Select
+              label="Collateral Asset"
+              selectionMode="multiple"
+              placeholder="All collateral asset"
+              selectedKeys={selectedCollaterals}
+              onChange={(e) => {
+                if (!e.target.value) setSelectedCollaterals(new Set());
+                else setSelectedCollaterals(new Set((e.target.value as string).split(',')));
+              }}
+              classNames={{
+                trigger: 'bg-secondary rounded-sm min-w-48',
+                popoverContent: 'bg-secondary rounded-sm',
+              }}
+              isLoading={loading}
+              renderValue={(items) => {
+                return (
+                  <div className="flex flex-grow gap-1 ">
+                    {(items as { key: string }[]).map((item) => {
+                      const token = supportedTokens.find(
+                        (t) => t.address.toLowerCase() === item.key,
+                      ) as ERC20Token;
+                      if (!token) return null;
+                      return token.img ? (
+                        <Image src={token.img} alt="icon" height="18" />
+                      ) : (
+                        token.symbol
+                      );
+                    })}
+                  </div>
+                );
               }}
             >
-              Collaterals{' '}
-              {selectedCollaterals.length === 0 ? (
-                expandCollatOptions ? (
-                  <ChevronUpIcon />
-                ) : (
-                  <ChevronDownIcon />
-                )
-              ) : (
-                <span className="bg-monarch-orange rounded-xl px-2 py-1 text-xs">
-                  {selectedCollaterals.length}{' '}
-                </span>
-              )}
-            </button>
+              <SelectSection title="Choose collateral assets">
+                {uniqueCollaterals.map((asset) => {
+                  const token = supportedTokens.find(
+                    (t) => t.address.toLowerCase() === asset,
+                  ) as ERC20Token;
+
+                  return (
+                    <SelectItem key={asset}>
+                      <div className="flex items-center justify-between">
+                        <p>{token?.symbol}</p>
+                        {token.img && <Image src={token.img} alt="icon" height="18" />}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectSection>
+            </Select>
           </div>
 
+          {/* right section: checkbox */}
           <div className="flex items-center justify-end rounded-sm">
             <Checkbox
               classNames={{
@@ -303,106 +360,6 @@ export default function HomePage() {
             </Checkbox>
           </div>
         </div>
-
-        {/* loan asset filter section: all option as buttons */}
-        {expandLoanOptions && (
-          <div className="transition-all duration-500 ease-in-out">
-            <p className="text-sm opacity-80"> Filter loans </p>
-            <div className="flex gap-1 overflow-auto">
-              <button
-                type="button"
-                className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary px-2 py-2"
-                onClick={() => {
-                  setSelectedLoanAssets([]);
-                }}
-              >
-                Clear <TrashIcon />
-              </button>
-              {uniqueLoanAssets.map((loanAsset) => {
-                const token = supportedTokens.find(
-                  (t) => t.address.toLowerCase() === loanAsset,
-                ) as ERC20Token;
-
-                // just in case
-                if (!token) return null;
-                const chosen = selectedLoanAssets.includes(token.address.toLowerCase());
-
-                return (
-                  <button
-                    key={`loan-${loanAsset}`}
-                    className={`flex ${
-                      chosen ? 'bg-hovered' : 'bg-secondary'
-                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
-                    type="button"
-                    onClick={() => {
-                      if (selectedLoanAssets.includes(token.address.toLowerCase())) {
-                        setSelectedLoanAssets(
-                          selectedLoanAssets.filter((c) => c !== token.address.toLowerCase()),
-                        );
-                      } else {
-                        setSelectedLoanAssets([...selectedLoanAssets, token.address.toLowerCase()]);
-                      }
-                    }}
-                  >
-                    <p>{token?.symbol}</p>
-                    {token.img && <Image src={token.img} alt="icon" height="18" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* collateral filter section: all option as check box */}
-        {expandCollatOptions && (
-          <div className="transition-all duration-500 ease-in-out">
-            <p className="text-sm opacity-80"> Filter collaterals </p>
-            <div className="flex gap-1 overflow-auto">
-              <button
-                type="button"
-                className="my-1 flex items-center justify-center gap-2 rounded-sm bg-secondary px-2 py-2"
-                onClick={() => {
-                  setSelectedCollaterals([]);
-                }}
-              >
-                Clear <TrashIcon />
-              </button>
-
-              {uniqueCollaterals.map((collateral) => {
-                const token = supportedTokens.find(
-                  (t) => t.address.toLowerCase() === collateral,
-                ) as ERC20Token;
-
-                const chosen = selectedCollaterals.includes(token.address.toLowerCase());
-
-                return (
-                  <button
-                    key={`loan-${collateral}`}
-                    className={`flex ${
-                      chosen ? 'bg-hovered' : 'bg-secondary'
-                    } my-1 items-center justify-center gap-1 rounded-sm p-2 px-5`}
-                    type="button"
-                    onClick={() => {
-                      if (selectedCollaterals.includes(token.address.toLowerCase())) {
-                        setSelectedCollaterals(
-                          selectedCollaterals.filter((c) => c !== token.address.toLowerCase()),
-                        );
-                      } else {
-                        setSelectedCollaterals([
-                          ...selectedCollaterals,
-                          token.address.toLowerCase(),
-                        ]);
-                      }
-                    }}
-                  >
-                    <p>{token?.symbol}</p>
-                    {token.img && <Image src={token.img} alt="icon" height="18" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {loading ? (
           <div className="py-3 opacity-70"> Loading Morpho Blue Markets... </div>

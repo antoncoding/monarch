@@ -114,7 +114,7 @@ export default function Positions() {
                   </div>
                   <button
                     type="button"
-                    className="flex justify-center gap-2 bg-secondary rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                    className="flex justify-center gap-2 rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
                     disabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
                     onClick={() => {
                       if (!account) {
@@ -133,7 +133,8 @@ export default function Positions() {
                       // toast('Coming soon 🚀')
                     }}
                   >
-                    Claim {matchedToken.img && (
+                    Claim{' '}
+                    {matchedToken.img && (
                       <Image src={matchedToken.img} alt="icon" width="20" height="20" />
                     )}
                   </button>
@@ -141,7 +142,7 @@ export default function Positions() {
 
                 <div className="my-4 flex gap-4">
                   {/* box 1, claimable */}
-                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                  <div className="flex flex-col gap-2 rounded-sm bg-secondary p-4 px-8">
                     <p className="text-sm"> Total Claimable </p>
                     <div className="flex items-center justify-center gap-2">
                       <p className="text-base">
@@ -156,7 +157,7 @@ export default function Positions() {
                     </div>
                   </div>
 
-                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                  <div className="flex flex-col gap-2 rounded-sm bg-secondary p-4 px-8">
                     <p className="text-sm"> Total Pending </p>
                     <div className="flex items-center justify-center gap-2">
                       <p className="text-base">
@@ -171,7 +172,7 @@ export default function Positions() {
                     </div>
                   </div>
 
-                  <div className="bg-secondary flex flex-col gap-2 rounded-sm p-4 px-8">
+                  <div className="flex flex-col gap-2 rounded-sm bg-secondary p-4 px-8">
                     <p className="text-sm"> Total Claimed </p>
                     <div className="flex items-center justify-center gap-2">
                       <p className="text-base">
@@ -187,7 +188,7 @@ export default function Positions() {
                   </div>
                 </div>
 
-                <div className="bg-secondary mb-6 mt-2">
+                <div className="mb-6 mt-2 bg-secondary">
                   <table className="w-full font-zen">
                     <thead className="table-header">
                       <tr>
@@ -364,7 +365,7 @@ export default function Positions() {
         {loading || loadingRewards ? (
           <div className="py-3 opacity-70"> Loading Rewards... </div>
         ) : markets.length === 0 ? (
-          <div className="text-secondary w-full items-center rounded-md p-12 text-center">
+          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
             No rewards{' '}
           </div>
         ) : (

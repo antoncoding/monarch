@@ -21,7 +21,7 @@ export default function PositionEntry() {
       <Toaster />
       <div className="container items-center justify-center gap-8" style={{ padding: '0 5%' }}>
         <div className="flex justify-center py-14">
-          <div className="text-secondary w-full items-center rounded-md p-12 text-center text-lg">
+          <div className="w-full items-center rounded-md p-12 text-center text-lg text-secondary">
             Connect wallet or search an account to view positions.
           </div>
         </div>
@@ -32,7 +32,7 @@ export default function PositionEntry() {
               <div className="flex font-zen opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
-                  className="text-roboto bg-secondary w-80 rounded-sm p-4 px-10 "
+                  className="text-roboto w-80 rounded-sm bg-secondary p-4 px-10 "
                 >
                   View Account {address.slice(0, 8)}
                 </button>
@@ -51,15 +51,15 @@ export default function PositionEntry() {
 
         {/* Divider */}
         <div className="flex items-center justify-center gap-8 p-8 pb-6 opacity-50">
-          <div className="text-secondary w-1/6 border-t" /> or
-          <div className="text-secondary w-1/6 border-t" />
+          <div className="w-1/6 border-t text-secondary" /> or
+          <div className="w-1/6 border-t text-secondary" />
         </div>
 
         {/* Search Bar */}
         <div className="flex justify-center">
           <div className="flex font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
             <input
-              className="bg-secondary w-80 p-4 focus:opacity-100"
+              className="w-80 bg-secondary p-4 focus:opacity-100"
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
               placeholder="0x..."
