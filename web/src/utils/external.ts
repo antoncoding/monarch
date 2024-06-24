@@ -1,5 +1,6 @@
-export const getMarketURL = (id: string): string => {
-  return `https://app.morpho.org/market?id=${id}`;
+export const getMarketURL = (id: string, chainId: number): string => {
+  const chain = chainId === 1 ? 'mainnet' : 'base';
+  return `https://app.morpho.org/market?id=${id}&network=${chain}`;
 };
 
 export const getAssetURL = (address: string): string => {

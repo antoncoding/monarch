@@ -141,7 +141,7 @@ export default function Positions() {
                           <div className="flex justify-center">
                             <a
                               className="group flex items-center gap-1 no-underline hover:underline"
-                              href={getMarketURL(position.market.uniqueKey)}
+                              href={getMarketURL(position.market.uniqueKey, position.market.morphoBlue.chain.id)}
                               target="_blank"
                             >
                               <p>{position.market.uniqueKey.slice(2, 8)} </p>

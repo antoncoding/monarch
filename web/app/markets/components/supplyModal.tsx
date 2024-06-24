@@ -5,7 +5,7 @@ import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Address, formatUnits } from 'viem';
-import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useBalance, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -26,14 +26,17 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
 
-  const { address: account, isConnected } = useAccount();
+  const { address: account, isConnected, chainId } = useAccount();
 
   const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
   const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
+  const { switchChain } = useSwitchChain()
+
   const { data: tokenBalance } = useBalance({
     token: market.loanAsset.address as `0x${string}`,
     address: account,
+    chainId: market.morphoBlue.chain.id,
   });
 
   // get allowance for morpho
@@ -42,13 +45,16 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     spender: MORPHO,
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
+    chainId: market.morphoBlue.chain.id
   });
 
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();
 
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
 
-  const { writeContract, data: hash, error: supplyError } = useWriteContract();
+  const needSwitchChain = useMemo(() => chainId !== market.morphoBlue.chain.id, [chainId, market.morphoBlue.chain.id])
+
+  const { writeContract, data: hash, error: supplyError } = useWriteContract()
 
   const { isLoading: supplyPending, isSuccess: supplySuccess } = useWaitForTransactionReceipt({
     hash,
@@ -58,6 +64,10 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     if (!account) {
       toast.error('Please connect your wallet');
       return;
+    }
+
+    if (chainId !== market.morphoBlue.chain.id) {
+      switchChain({chainId: market.morphoBlue.chain.id})
     }
 
     writeContract({
@@ -78,8 +88,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         account,
         '0x',
       ],
+      chainId: market.morphoBlue.chain.id,
     });
-  }, [account, market, supplyAmount, writeContract]);
+  }, [account, market, supplyAmount, writeContract, switchChain, chainId]);
 
   useEffect(() => {
     if (supplyPending) {
@@ -217,7 +228,16 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
           </div>
 
-          {needApproval ? (
+          {
+          needSwitchChain ? (
+            <button
+              type="button"
+              onClick={() => void switchChain({chainId: market.morphoBlue.chain.id})}
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+            >
+              Switch Chain
+            </button>
+          ) : needApproval ? (
             <button
               disabled={!isConnected || approvePending || inputError !== null}
               type="button"

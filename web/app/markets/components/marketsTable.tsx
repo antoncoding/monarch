@@ -1,4 +1,3 @@
- 
 import { useState } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 
@@ -10,6 +9,7 @@ import { Info } from '@/components/Info/info';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
+import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
@@ -150,7 +150,8 @@ function MarketsTable({
             return 0;
           })
           .map((item, index) => {
-            const collatImg = findToken(item.collateralAsset.address, item.morphoBlue.chain.id)?.img
+            const collatImg = findToken(item.collateralAsset.address, item.morphoBlue.chain.id)
+              ?.img;
             const loanImg = findToken(item.loanAsset.address, item.morphoBlue.chain.id)?.img;
 
             const collatToShow = item.collateralAsset.symbol
@@ -163,6 +164,8 @@ function MarketsTable({
             reward = reward === '0.00' ? undefined : reward;
 
             const isStared = staredIds.includes(item.uniqueKey);
+
+            const chainImg = getNetworkImg(item.morphoBlue.chain.id);
 
             return (
               <>
@@ -195,9 +198,12 @@ function MarketsTable({
                   {/* id */}
                   <td>
                     <div className="flex items-center justify-center gap-1">
+                      <p>
+                        {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
+                      </p>
                       <a
                         className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getMarketURL(item.uniqueKey)}
+                        href={getMarketURL(item.uniqueKey, item.morphoBlue.chain.id)}
                         target="_blank"
                         onClick={(e) => e.stopPropagation()}
                       >

@@ -85,6 +85,7 @@ export function useAllowance({
         functionName: 'approve',
         args: [spender, maxUint256],
       }),
+      chainId: chainIdFromArgumentOrConnectedWallet,
     });
   }, [user, spender, token, sendTransaction]);
 

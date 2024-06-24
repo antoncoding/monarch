@@ -3,13 +3,9 @@
 
 import { useState, useEffect } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
+import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
-import {
-  OracleFeedsInfo,
-  MarketWarning,
-  WarningWithDetail,
-  TokenInfo,
-} from '@/utils/types';
+import { OracleFeedsInfo, MarketWarning, WarningWithDetail, TokenInfo } from '@/utils/types';
 import { filterWarningTypes } from '@/utils/warnings';
 
 export type Reward = {
@@ -208,7 +204,7 @@ const useMarkets = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [response, /*whitelistRes*/] = await Promise.all([
+        const [response /*whitelistRes*/] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
             headers: {
@@ -242,8 +238,8 @@ const useMarkets = () => {
           .filter((market) => market.collateralAsset != undefined)
           .filter(
             (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
-            // allWhitelistedMarketAddr.includes(market.uniqueKey)
-          );
+          )
+          .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
         // console.log('filtered', filtered)
 

@@ -1,11 +1,11 @@
 // Import the necessary hooks
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Address } from 'viem';
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -24,7 +24,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
 
-  const { address: account, isConnected } = useAccount();
+  const { address: account, isConnected, chainId } = useAccount();
 
   const loanToken = findToken(
     position.market.loanAsset.address,
@@ -32,6 +32,13 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
   );
 
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();
+
+  const needSwitchChain = useMemo(
+    () => chainId !== position.market.morphoBlue.chain.id,
+    [chainId, position.market.morphoBlue.chain.id],
+  );
+
+  const { switchChain } = useSwitchChain();
 
   const {
     data: hash,
@@ -44,7 +51,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     hash,
   });
 
-  const supply = useCallback(async () => {
+  const withdraw = useCallback(async () => {
     if (!account) {
       toast.error('Please connect your wallet');
       return;
@@ -54,8 +61,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     console.log('position', position.supplyAssets);
 
     const isMax = withdrawAmount.toString() === position.supplyAssets;
-
-    console.log('isMax', isMax);
 
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
     const sharesToWithdraw = isMax ? position.supplyShares : '0';
@@ -78,6 +83,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
         account, // onBehalf
         account, // receiver
       ],
+      chainId: position.market.morphoBlue.chain.id,
     });
   }, [
     account,
@@ -203,15 +209,24 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             {/* input error */}
             {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
           </div>
-
+          {needSwitchChain ? (
+          <button
+            type="button"
+            onClick={() => switchChain({chainId: position.market.morphoBlue.chain.id})}
+            className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+          >
+            Switch Chain
+          </button>
+          ) : (
           <button
             disabled={!isConnected || isConfirming || inputError !== null}
             type="button"
-            onClick={() => void supply()}
+            onClick={() => void withdraw()}
             className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
           >
             Withdraw
           </button>
+          )}
         </div>
       </div>
     </div>

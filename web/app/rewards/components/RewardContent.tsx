@@ -22,7 +22,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
 
-  const { loading, data: markets } = useMarkets();
+const { loading, data: markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
   const { data: hash, sendTransaction, error: claimError } = useSendTransaction();
@@ -258,7 +258,7 @@ export default function Positions() {
                                 <div className="flex justify-center">
                                   <a
                                     className="group flex items-center gap-1 no-underline hover:underline"
-                                    href={getMarketURL(market.uniqueKey)}
+                                    href={getMarketURL(market.uniqueKey, market.morphoBlue.chain.id)}
                                     target="_blank"
                                   >
                                     <p>{market.uniqueKey.slice(2, 8)} </p>

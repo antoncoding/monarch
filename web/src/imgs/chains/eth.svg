@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: CorelDRAW 2019 (64-Bit) -->
+
+<svg
+   xml:space="preserve"
+   width="2000"
+   height="2000"
+   version="1.1"
+   shape-rendering="geometricPrecision"
+   text-rendering="geometricPrecision"
+   image-rendering="optimizeQuality"
+   fill-rule="evenodd"
+   clip-rule="evenodd"
+   viewBox="0 0 2000 2000"
+   id="svg19"
+   sodipodi:docname="eth.svg"
+   inkscape:version="1.2 (dc2aeda, 2022-05-15)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs23" /><sodipodi:namedview
+   id="namedview21"
+   pagecolor="#505050"
+   bordercolor="#ffffff"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="1"
+   inkscape:deskcolor="#505050"
+   showgrid="false"
+   inkscape:zoom="0.18475172"
+   inkscape:cx="884.97146"
+   inkscape:cy="909.32847"
+   inkscape:window-width="1440"
+   inkscape:window-height="900"
+   inkscape:window-x="0"
+   inkscape:window-y="0"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="layer1" />
+ <g
+   inkscape:groupmode="layer"
+   id="layer1"
+   inkscape:label="BG"><circle
+     style="fill:#ffffff;stroke:none;fill-opacity:1"
+     id="path246"
+     cx="1000"
+     cy="1000"
+     r="1000" /></g><g
+   id="Layer_x0020_1"
+   inkscape:label="Layer 1"
+   inkscape:groupmode="layer">
+  <metadata
+   id="CorelCorpID_0Corel-Layer" />
+  <g
+   id="_1421394342400"
+   transform="matrix(0.93942288,0,0,0.93942288,631.57244,400)">
+   <g
+   id="g15">
+    <polygon
+   fill="#343434"
+   fill-rule="nonzero"
+   points="383.5,29.11 383.5,873.74 392.07,882.29 784.13,650.54 392.07,0 "
+   id="polygon3" />
+    <polygon
+   fill="#8c8c8c"
+   fill-rule="nonzero"
+   points="392.07,472.33 392.07,0 0,650.54 392.07,882.29 "
+   id="polygon5" />
+    <polygon
+   fill="#3c3c3b"
+   fill-rule="nonzero"
+   points="387.24,962.41 387.24,1263.28 392.07,1277.38 784.37,724.89 392.07,956.52 "
+   id="polygon7" />
+    <polygon
+   fill="#8c8c8c"
+   fill-rule="nonzero"
+   points="392.07,956.52 0,724.89 392.07,1277.38 "
+   id="polygon9" />
+    <polygon
+   fill="#141414"
+   fill-rule="nonzero"
+   points="784.13,650.54 392.07,472.33 392.07,882.29 "
+   id="polygon11" />
+    <polygon
+   fill="#393939"
+   fill-rule="nonzero"
+   points="392.07,882.29 392.07,472.33 0,650.54 "
+   id="polygon13" />
+   </g>
+  </g>
+ </g>
+</svg>
