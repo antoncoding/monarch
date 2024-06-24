@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { MarketPosition, WhitelistMarketResponse } from '@/utils/types';
+import { SupportedNetworks } from '@/utils/networks';
 
 const query = `query getUserMarketPositions(
   $address: String!
+  $chainId: Int
 ) {
-  userByAddress(address: $address) {
+  userByAddress(address: $address, chainId: $chainId) {
     marketPositions {
       supplyShares
       supplyAssets
@@ -73,7 +75,7 @@ const useUserPositions = (user: string | undefined) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [response, whitelistRes] = await Promise.all([
+        const [responseMainnet, responseBase] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
             headers: {
@@ -83,22 +85,33 @@ const useUserPositions = (user: string | undefined) => {
               query,
               variables: {
                 address: user,
+                chainId: SupportedNetworks.Mainnet
               },
             }),
           }),
-          fetch('https://blue-services.morpho.org/whitelisting', {
-            method: 'GET',
+          fetch('https://blue-api.morpho.org/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              query,
+              variables: {
+                address: user,
+                chainId: SupportedNetworks.Base
+              },
+            }),
           }),
         ]);
 
-        const result = await response.json();
+        const result1 = await responseMainnet.json();
+        const result2 = await responseBase.json();
 
-        console.log('result', result)
+        console.log('result2', result2)
 
-        const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
-        console.log('whitelist', whitelist);
-
-        const allPositions = result.data.userByAddress.marketPositions as MarketPosition[];
+        const allPositions = (result1.data.userByAddress.marketPositions as MarketPosition[]).concat(
+          result2.data.userByAddress.marketPositions as MarketPosition[]
+        );
         const filtered = allPositions.filter(
           (position: MarketPosition) => position.supplyShares.toString() !== '0',
           // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
