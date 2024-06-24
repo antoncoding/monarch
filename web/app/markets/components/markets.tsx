@@ -10,6 +10,7 @@ import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { generateMetadata } from '@/utils/generateMetadata';
+import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import {
   supportedTokens,
@@ -48,6 +49,9 @@ export default function HomePage() {
   // token keys, aggregated with | for each "ERC20Token" object
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
   const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
+
+  // single choice: null for all networks
+  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(null);
 
   const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<ERC20Token[]>([]);
@@ -89,9 +93,8 @@ export default function HomePage() {
     if (data) {
       // filter ERC20Token objects that exist in markets list
       const collaterals = supportedTokens.filter((token) => {
-        const networks = token.networks;
         return data.find((market) =>
-          networks.find(
+          token.networks.find(
             (network) =>
               network.address.toLowerCase() === market.collateralAsset.address.toLowerCase() &&
               network.chain.id === market.morphoBlue.chain.id,
@@ -100,9 +103,8 @@ export default function HomePage() {
       });
 
       const loanAssets = supportedTokens.filter((token) => {
-        const networks = token.networks;
         return data.find((market) =>
-          networks.find(
+          token.networks.find(
             (network) =>
               network.address.toLowerCase() === market.loanAsset.address.toLowerCase() &&
               network.chain.id === market.morphoBlue.chain.id,
@@ -117,6 +119,10 @@ export default function HomePage() {
   // Update the filter effect toLowerCase() also filter based on the checkbox
   useEffect(() => {
     let newData = [...data];
+
+    if (selectedNetwork !== null) {
+      newData = newData.filter((item) => item.morphoBlue.chain.id === selectedNetwork);
+    }
 
     if (hideDust) {
       newData = newData
@@ -199,6 +205,7 @@ export default function HomePage() {
     hideUnknown,
     selectedCollaterals,
     selectedLoanAssets,
+    selectedNetwork,
   ]);
 
   const titleOnclick = useCallback(
@@ -231,6 +238,51 @@ export default function HomePage() {
         <div className="flex justify-between">
           {/* left section: asset filters */}
           <div className="flex gap-2">
+            {/* network filter */}
+            <Select
+              label="Network"
+              selectionMode="single"
+              placeholder="All networks"
+              onChange={(e) => {
+                if (!e.target.value) setSelectedNetwork(null);
+                const newId = Number(e.target.value);
+                if (newId && isSupportedChain(newId)) {
+                  setSelectedNetwork(newId);
+                }
+              }}
+              classNames={{
+                trigger: 'bg-secondary rounded-sm min-w-32',
+                popoverContent: 'bg-secondary rounded-sm',
+              }}
+              items={networks}
+              renderValue={(items) => {
+                return (
+                  <div className="flex-scroll flex gap-1">
+                    {items.map((item) => {
+                      const networkImg = getNetworkImg(Number(item.key));
+                      return networkImg ? (
+                        <Image src={networkImg} alt="icon" height="18" />
+                      ) : (
+                        item.textValue
+                      );
+                    })}
+                  </div>
+                );
+              }}
+            >
+              {networks.map((network) => {
+                // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
+                return (
+                  <SelectItem key={network.network} textValue={network.name}>
+                    <div className="flex items-center justify-between">
+                      <p>{network.name}</p>
+                      <Image className="ml-auto" src={network.logo} alt="icon" height="18" />
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </Select>
+
             <Select
               label="Loan Asset"
               selectionMode="multiple"

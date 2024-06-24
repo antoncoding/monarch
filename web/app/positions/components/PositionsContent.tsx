@@ -13,6 +13,7 @@ import useUserPositions from '@/hooks/useUserPositions';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
+import { getNetworkImg } from '@/utils/networks';
 import { MORPHOTokenAddress, findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 import { WithdrawModal } from './withdrawModal';
@@ -72,6 +73,7 @@ export default function Positions() {
             <table className="w-full font-zen">
               <thead className="table-header">
                 <tr>
+                  <th> Network </th>
                   <th> Market ID </th>
                   <th>
                     <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
@@ -114,8 +116,16 @@ export default function Positions() {
               </thead>
               <tbody className="table-body text-sm">
                 {marketPositions.map((position, index) => {
-                  const collatImg = findToken(position.market.collateralAsset.address, position.market.morphoBlue.chain.id)?.img
-                  const loanImg = findToken(position.market.loanAsset.address, position.market.morphoBlue.chain.id)?.img;
+                  const collatImg = findToken(
+                    position.market.collateralAsset.address,
+                    position.market.morphoBlue.chain.id,
+                  )?.img;
+                  const loanImg = findToken(
+                    position.market.loanAsset.address,
+                    position.market.morphoBlue.chain.id,
+                  )?.img;
+
+                  const networkImg = getNetworkImg(position.market.morphoBlue.chain.id);
 
                   const matchingRewards = rewards.filter((info) => {
                     return (
@@ -136,12 +146,24 @@ export default function Positions() {
                   return (
                     <>
                       <tr key={index.toFixed()}>
+                        {/* network */}
+                        <td>
+                          <div className="flex justify-center">
+                            {networkImg ? (
+                              <Image src={networkImg} alt="icon" width="18" height="18" />
+                            ) : null}
+                          </div>
+                        </td>
+
                         {/* id */}
                         <td>
                           <div className="flex justify-center font-monospace text-xs">
                             <a
                               className="group flex items-center gap-1 no-underline hover:underline"
-                              href={getMarketURL(position.market.uniqueKey, position.market.morphoBlue.chain.id)}
+                              href={getMarketURL(
+                                position.market.uniqueKey,
+                                position.market.morphoBlue.chain.id,
+                              )}
                               target="_blank"
                             >
                               <p>{position.market.uniqueKey.slice(2, 8)} </p>

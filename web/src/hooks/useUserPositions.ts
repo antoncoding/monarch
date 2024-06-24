@@ -85,7 +85,7 @@ const useUserPositions = (user: string | undefined) => {
               query,
               variables: {
                 address: user,
-                chainId: SupportedNetworks.Mainnet
+                chainId: SupportedNetworks.Mainnet,
               },
             }),
           }),
@@ -98,7 +98,7 @@ const useUserPositions = (user: string | undefined) => {
               query,
               variables: {
                 address: user,
-                chainId: SupportedNetworks.Base
+                chainId: SupportedNetworks.Base,
               },
             }),
           }),
@@ -107,11 +107,11 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
-        console.log('result2', result2)
+        console.log('result2', result2);
 
-        const allPositions = (result1.data.userByAddress.marketPositions as MarketPosition[]).concat(
-          result2.data.userByAddress.marketPositions as MarketPosition[]
-        );
+        const allPositions = (
+          result1.data.userByAddress.marketPositions as MarketPosition[]
+        ).concat(result2.data.userByAddress.marketPositions as MarketPosition[]);
         const filtered = allPositions.filter(
           (position: MarketPosition) => position.supplyShares.toString() !== '0',
           // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&

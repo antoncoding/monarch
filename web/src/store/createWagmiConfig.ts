@@ -9,10 +9,10 @@ import { createConfig, http } from 'wagmi';
 import { base, mainnet } from 'wagmi/chains';
 import { getChainsForEnvironment } from './supportedChains';
 
-const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY
+const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
-const rpcMainnet = `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
-const rpcBase = `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`
+const rpcMainnet = `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`;
+const rpcBase = `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 
 export function createWagmiConfig(projectId: string) {
   const connectors = connectorsForWallets(

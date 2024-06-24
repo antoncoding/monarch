@@ -7,7 +7,7 @@ export type ERC20Token = {
   networks: { chain: Chain; address: string }[];
 };
 
-const MORPHOTokenAddress = '0x9994E35Db50125E0DF82e4c2dde62496CE330999'
+const MORPHOTokenAddress = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
 
 const supportedTokens = [
   {
@@ -256,4 +256,11 @@ const findTokenWithKey = (key: string) => {
   });
 };
 
-export { supportedTokens, isWhitelisted, MORPHOTokenAddress, findTokenWithKey, findToken, infoToKey };
+export {
+  supportedTokens,
+  isWhitelisted,
+  MORPHOTokenAddress,
+  findTokenWithKey,
+  findToken,
+  infoToKey,
+};

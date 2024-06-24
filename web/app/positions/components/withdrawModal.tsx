@@ -206,22 +206,22 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
           </div>
           {needSwitchChain ? (
-          <button
-            type="button"
-            onClick={() => switchChain({chainId: position.market.morphoBlue.chain.id})}
-            className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
-          >
-            Switch Chain
-          </button>
+            <button
+              type="button"
+              onClick={() => switchChain({ chainId: position.market.morphoBlue.chain.id })}
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+            >
+              Switch Chain
+            </button>
           ) : (
-          <button
-            disabled={!isConnected || isConfirming || inputError !== null}
-            type="button"
-            onClick={() => void withdraw()}
-            className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
-          >
-            Withdraw
-          </button>
+            <button
+              disabled={!isConnected || isConfirming || inputError !== null}
+              type="button"
+              onClick={() => void withdraw()}
+              className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+            >
+              Withdraw
+            </button>
           )}
         </div>
       </div>

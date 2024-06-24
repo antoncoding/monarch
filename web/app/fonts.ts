@@ -16,10 +16,9 @@ export const inter = localFont({
   weight: '200',
 });
 
-
 export const monospace = localFont({
   src: '../src/fonts/KodeMono/KodeMono-VariableFont_wght.ttf',
   display: 'swap',
   variable: '--font-monospace',
   // weight: '200',
-})
+});
