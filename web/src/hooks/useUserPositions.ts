@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
-import { MarketPosition, WhitelistMarketResponse } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
+import { MarketPosition } from '@/utils/types';
 
 const query = `query getUserMarketPositions(
   $address: String!
