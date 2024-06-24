@@ -73,7 +73,6 @@ const useUserRewards = (user: string | undefined) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log('cool');
         setLoading(true);
         const [totalRewardsRes, distributionRes] = await Promise.all([
           fetch(`https://rewards.morpho.org/v1/users/${user}/rewards`, {

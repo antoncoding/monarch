@@ -107,11 +107,14 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
+        console.log('result1', result1);
         console.log('result2', result2);
 
         const allPositions = (
-          result1.data.userByAddress.marketPositions as MarketPosition[]
-        ).concat(result2.data.userByAddress.marketPositions as MarketPosition[]);
+          result1.data ? (result1.data.userByAddress.marketPositions as MarketPosition[]) : []
+        ).concat(
+          result2.data ? (result2.data.userByAddress.marketPositions as MarketPosition[]) : [],
+        );
         const filtered = allPositions.filter(
           (position: MarketPosition) => position.supplyShares.toString() !== '0',
           // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
