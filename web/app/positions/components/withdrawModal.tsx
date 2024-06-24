@@ -57,9 +57,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
       return;
     }
 
-    console.log('withdrawAmount', withdrawAmount);
-    console.log('position', position.supplyAssets);
-
     const isMax = withdrawAmount.toString() === position.supplyAssets;
 
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
@@ -143,9 +140,8 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="text-right font-zen">
-              {position.market.uniqueKey.slice(2, 8)} ...{' '}
-              {position.market.uniqueKey.slice(position.market.uniqueKey.length - 6)}
+            <p className="text-right font-monospace text-sm">
+              {position.market.uniqueKey.slice(2, 8)}
             </p>
           </div>
           <div className="my-2 flex items-start justify-between">

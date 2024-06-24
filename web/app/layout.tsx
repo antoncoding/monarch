@@ -5,7 +5,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
-import { inter, zen } from './fonts';
+import { inter, zen, monospace } from './fonts';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ initAnalytics();
  */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${zen.variable} ${inter.variable}`}>
+    <html lang="en" className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

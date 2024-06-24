@@ -138,7 +138,7 @@ export default function Positions() {
                       <tr key={index.toFixed()}>
                         {/* id */}
                         <td>
-                          <div className="flex justify-center">
+                          <div className="flex justify-center font-monospace text-xs">
                             <a
                               className="group flex items-center gap-1 no-underline hover:underline"
                               href={getMarketURL(position.market.uniqueKey, position.market.morphoBlue.chain.id)}

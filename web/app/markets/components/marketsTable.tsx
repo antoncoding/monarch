@@ -197,7 +197,7 @@ function MarketsTable({
                   </td>
                   {/* id */}
                   <td>
-                    <div className="flex items-center justify-center gap-1">
+                    <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                       <p>
                         {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
                       </p>

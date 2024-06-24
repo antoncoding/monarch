@@ -43,6 +43,7 @@ const config: Config = {
       fontFamily: {
         inter: ['var(--font-inter)'],
         zen: ['var(--font-zen)'],
+        monospace: ['var(--font-monospace)'],
       },
     },
   },

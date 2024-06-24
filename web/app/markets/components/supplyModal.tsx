@@ -133,7 +133,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
         </div>
 
-        <p className="py-2 opacity-80">
+        <p className="py-4 opacity-80">
           {' '}
           You are supplying {market.loanAsset.symbol} to the following market:{' '}
         </p>
@@ -141,9 +141,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="text-right font-zen">
-              {market.uniqueKey.slice(2, 8)} ...{' '}
-              {market.uniqueKey.slice(market.uniqueKey.length - 6)}
+            <p className="text-right font-monospace text-sm">
+              {market.uniqueKey.slice(2, 8)}
             </p>
           </div>
           <div className="mb-1 flex items-start justify-between">
