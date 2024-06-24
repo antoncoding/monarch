@@ -3,12 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
-import { MORPHO } from '@/utils/tokens';
+import { MORPHOTokenAddress } from '@/utils/tokens';
 import {
   OracleFeedsInfo,
-  WhitelistMarketResponse,
   MarketWarning,
   WarningWithDetail,
+  TokenInfo,
 } from '@/utils/types';
 import { filterWarningTypes } from '@/utils/warnings';
 
@@ -45,22 +45,8 @@ export type Market = {
     type: string;
   };
   oracleFeed?: OracleFeedsInfo;
-  loanAsset: {
-    id: string;
-    address: string;
-    symbol: string;
-    name: string;
-    decimals: number;
-    priceUsd: number;
-  };
-  collateralAsset: {
-    id: string;
-    address: string;
-    symbol: string;
-    name: string;
-    decimals: number;
-    priceUsd: number;
-  };
+  loanAsset: TokenInfo;
+  collateralAsset: TokenInfo;
   state: {
     borrowAssets: string;
     supplyAssets: string;
@@ -222,7 +208,7 @@ const useMarkets = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [response, whitelistRes] = await Promise.all([
+        const [response, /*whitelistRes*/] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
             headers: {
@@ -235,19 +221,19 @@ const useMarkets = () => {
               },
             }),
           }),
-          fetch('https://blue-services.morpho.org/whitelisting', {
-            method: 'GET',
-          }),
+          // fetch('https://blue-services.morpho.org/whitelisting', {
+          //   method: 'GET',
+          // }),
         ]);
         const result = await response.json();
 
-        const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
+        // const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
 
         const items = result.data.markets.items as Market[];
 
-        const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) =>
-          market.id.toLowerCase(),
-        );
+        // const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) =>
+        //   market.id.toLowerCase(),
+        // );
 
         // batch fetch rewards https://rewards.morpho.org/rates/markets?ids=
         // each with 10 ids, otherwise the server breaks!
@@ -259,13 +245,11 @@ const useMarkets = () => {
             // allWhitelistedMarketAddr.includes(market.uniqueKey)
           );
 
-        console.log('allWhitelistedMarketAddr', allWhitelistedMarketAddr);
-
         // console.log('filtered', filtered)
 
         const final = filtered.map((market) => {
           const entry = market.state.rewards.find(
-            (reward) => reward.asset.address.toLowerCase() === MORPHO.address.toLowerCase(),
+            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
           );
 
           const oracleWarnings = filterWarningTypes('oracle', market.warnings);
@@ -285,8 +269,6 @@ const useMarkets = () => {
             marketWarnings,
           };
         });
-
-        console.log('final', final);
 
         setData(final);
         setLoading(false);

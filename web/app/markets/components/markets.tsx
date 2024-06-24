@@ -11,12 +11,16 @@ import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { generateMetadata } from '@/utils/generateMetadata';
 import * as keys from '@/utils/storageKeys';
-import { supportedTokens, ERC20Token } from '@/utils/tokens';
+import {
+  supportedTokens,
+  ERC20Token,
+  isWhitelisted,
+  findTokenWithKey,
+  infoToKey,
+} from '@/utils/tokens';
 
 import MarketsTable from './marketsTable';
 import { SupplyModal } from './supplyModal';
-
-const allSupportedAddresses = supportedTokens.map((token) => token.address.toLowerCase());
 
 const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? '5');
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
@@ -41,13 +45,12 @@ export const metadata = generateMetadata({
 export default function HomePage() {
   const { loading, data } = useMarkets();
 
-  // Add state for the selected collateral and loan asset
-  const [selectedCollaterals, setSelectedCollaterals] = useState<Set<string>>(new Set<string>());
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<Set<string>>(new Set<string>());
+  // token keys, aggregated with | for each "ERC20Token" object
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
 
-  // Add state for the unique collateral and loan assets, for users toLowerCase() set filters
-  const [uniqueCollaterals, setUniqueCollaterals] = useState<string[]>([]);
-  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<string[]>([]);
+  const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
+  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<ERC20Token[]>([]);
 
   // Add state for the checkbox
   const [hideDust, setHideDust] = useState(defaultHideDust);
@@ -84,12 +87,28 @@ export default function HomePage() {
   // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
     if (data) {
-      const collaterals = [
-        ...new Set(data.map((item) => item.collateralAsset.address.toLowerCase())),
-      ].filter((address) => allSupportedAddresses.includes(address.toLowerCase()));
-      const loanAssets = [
-        ...new Set(data.map((item) => item.loanAsset.address.toLowerCase())),
-      ].filter((address) => allSupportedAddresses.includes(address.toLowerCase()));
+      // filter ERC20Token objects that exist in markets list
+      const collaterals = supportedTokens.filter((token) => {
+        const networks = token.networks;
+        return data.find((market) =>
+          networks.find(
+            (network) =>
+              network.address.toLowerCase() === market.collateralAsset.address.toLowerCase() &&
+              network.chain.id === market.morphoBlue.chain.id,
+          ),
+        );
+      });
+
+      const loanAssets = supportedTokens.filter((token) => {
+        const networks = token.networks;
+        return data.find((market) =>
+          networks.find(
+            (network) =>
+              network.address.toLowerCase() === market.loanAsset.address.toLowerCase() &&
+              network.chain.id === market.morphoBlue.chain.id,
+          ),
+        );
+      });
       setUniqueCollaterals(collaterals);
       setUniqueLoanAssets(loanAssets);
     }
@@ -108,28 +127,28 @@ export default function HomePage() {
     if (hideUnknown) {
       newData = newData
         // Filter out any items which's collateral are not in the supported tokens list
-        .filter((item) =>
-          allSupportedAddresses.find(
-            (address) => address === item.collateralAsset.address.toLocaleLowerCase(),
-          ),
-        )
         // Filter out any items which's loan are not in the supported tokens list
-        .filter((item) =>
-          allSupportedAddresses.find(
-            (address) => address === item.loanAsset.address.toLocaleLowerCase(),
-          ),
-        );
+        .filter((item) => isWhitelisted(item.collateralAsset.address, item.morphoBlue.chain.id))
+        .filter((item) => isWhitelisted(item.loanAsset.address, item.morphoBlue.chain.id));
     }
 
-    if (selectedCollaterals.size > 0) {
+    if (selectedCollaterals.length > 0) {
       newData = newData.filter((item) =>
-        selectedCollaterals.has(item.collateralAsset.address.toLowerCase()),
+        selectedCollaterals.find((combinedKey) =>
+          combinedKey
+            .split('|')
+            .includes(`${item.collateralAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
+        ),
       );
     }
 
-    if (selectedLoanAssets.size > 0) {
+    if (selectedLoanAssets.length > 0) {
       newData = newData.filter((item) =>
-        selectedLoanAssets.has(item.loanAsset.address.toLowerCase()),
+        selectedLoanAssets.find((combinedKey) =>
+          combinedKey
+            .split('|')
+            .includes(`${item.loanAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
+        ),
       );
     }
 
@@ -218,27 +237,25 @@ export default function HomePage() {
               placeholder="All loan asset"
               selectedKeys={selectedLoanAssets}
               onChange={(e) => {
-                if (!e.target.value) setSelectedLoanAssets(new Set());
-                else setSelectedLoanAssets(new Set((e.target.value as string).split(',')));
+                if (!e.target.value) setSelectedLoanAssets([]);
+                else setSelectedLoanAssets((e.target.value as string).split(','));
               }}
               classNames={{
                 trigger: 'bg-secondary rounded-sm min-w-48',
                 popoverContent: 'bg-secondary rounded-sm',
               }}
+              items={uniqueLoanAssets}
               // className='w-48 rounded-sm'
               isLoading={loading}
               renderValue={(items) => {
                 return (
                   <div className="flex-scroll flex gap-1">
-                    {(items as { key: string }[]).map((item) => {
-                      const token = supportedTokens.find(
-                        (t) => t.address.toLowerCase() === item.key,
-                      ) as ERC20Token;
-                      if (!token) return null;
-                      return token.img ? (
+                    {items.map((item) => {
+                      const token = findTokenWithKey(item.key as string);
+                      return token?.img ? (
                         <Image src={token.img} alt="icon" height="18" />
                       ) : (
-                        token.symbol
+                        item.textValue
                       );
                     })}
                   </div>
@@ -246,13 +263,11 @@ export default function HomePage() {
               }}
             >
               <SelectSection title="Choose loan assets">
-                {uniqueLoanAssets.map((asset) => {
-                  const token = supportedTokens.find(
-                    (t) => t.address.toLowerCase() === asset,
-                  ) as ERC20Token;
-
+                {uniqueLoanAssets.map((token) => {
+                  // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
+                  const key = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
                   return (
-                    <SelectItem key={asset}>
+                    <SelectItem key={key} textValue={token.symbol}>
                       <div className="flex items-center justify-between">
                         <p>{token?.symbol}</p>
                         {token.img && <Image src={token.img} alt="icon" height="18" />}
@@ -270,26 +285,24 @@ export default function HomePage() {
               placeholder="All collateral asset"
               selectedKeys={selectedCollaterals}
               onChange={(e) => {
-                if (!e.target.value) setSelectedCollaterals(new Set());
-                else setSelectedCollaterals(new Set((e.target.value as string).split(',')));
+                if (!e.target.value) setSelectedCollaterals([]);
+                else setSelectedCollaterals((e.target.value as string).split(','));
               }}
               classNames={{
                 trigger: 'bg-secondary rounded-sm min-w-48',
                 popoverContent: 'bg-secondary rounded-sm',
               }}
+              items={uniqueCollaterals}
               isLoading={loading}
               renderValue={(items) => {
                 return (
-                  <div className="flex flex-grow gap-1 ">
-                    {(items as { key: string }[]).map((item) => {
-                      const token = supportedTokens.find(
-                        (t) => t.address.toLowerCase() === item.key,
-                      ) as ERC20Token;
-                      if (!token) return null;
-                      return token.img ? (
+                  <div className="flex-scroll flex gap-1">
+                    {items.map((item) => {
+                      const token = findTokenWithKey(item.key as string);
+                      return token?.img ? (
                         <Image src={token.img} alt="icon" height="18" />
                       ) : (
-                        token.symbol
+                        item.textValue
                       );
                     })}
                   </div>
@@ -297,13 +310,11 @@ export default function HomePage() {
               }}
             >
               <SelectSection title="Choose collateral assets">
-                {uniqueCollaterals.map((asset) => {
-                  const token = supportedTokens.find(
-                    (t) => t.address.toLowerCase() === asset,
-                  ) as ERC20Token;
-
+                {uniqueCollaterals.map((token) => {
+                  // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
+                  const key = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
                   return (
-                    <SelectItem key={asset}>
+                    <SelectItem key={key} textValue={token.symbol}>
                       <div className="flex items-center justify-between">
                         <p>{token?.symbol}</p>
                         {token.img && <Image src={token.img} alt="icon" height="18" />}
@@ -329,7 +340,7 @@ export default function HomePage() {
               size="sm"
             >
               <div className="flex items-center justify-center gap-2">
-                <span className="text-base text-default-500"> Hide Dust </span>
+                <span className="text-sm text-default-500"> Hide Dust </span>
                 <Tooltip content="Hide markets with lower than $1000 supplied">
                   <div>
                     <BsQuestionCircle className="text-default-500" />
@@ -350,7 +361,7 @@ export default function HomePage() {
               size="sm"
             >
               <div className="flex items-center justify-center gap-2">
-                <span className="text-base text-default-500"> Hide Unknown </span>
+                <span className="text-sm text-default-500"> Hide Unknown </span>
                 <Tooltip content="Hide markets with unknown assets">
                   <div>
                     <BsQuestionCircle className="text-default-500" />

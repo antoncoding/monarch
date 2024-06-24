@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';

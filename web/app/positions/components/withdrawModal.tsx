@@ -11,7 +11,7 @@ import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
-import { supportedTokens } from '@/utils/tokens';
+import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 
 type ModalProps = {
@@ -26,8 +26,9 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   const { address: account, isConnected } = useAccount();
 
-  const loanToken = supportedTokens.find(
-    (token) => token.address.toLowerCase() === position.market.loanAsset.address.toLowerCase(),
+  const loanToken = findToken(
+    position.market.loanAsset.address,
+    position.market.morphoBlue.chain.id,
   );
 
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();

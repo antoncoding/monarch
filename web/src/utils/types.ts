@@ -11,6 +11,13 @@ export type MarketPosition = {
     lltv: string;
     oracleAddress: string;
     irmAddress: string;
+    morphoBlue: {
+      id: string;
+      address: string;
+      chain: {
+        id: number;
+      };
+    };
     dailyApys: {
       netSupplyApy: number;
     };
@@ -89,4 +96,13 @@ export type WarningWithDetail = {
   description: string;
   category: string;
   level: string;
+};
+
+export type TokenInfo = {
+  id: string;
+  address: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  priceUsd: number;
 };

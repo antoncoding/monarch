@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Address } from 'viem';
+import { mainnet } from 'viem/chains';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
@@ -14,7 +15,7 @@ import useUserRewards from '@/hooks/useRewards';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
-import { supportedTokens } from '@/utils/tokens';
+import { findToken } from '@/utils/tokens';
 
 export default function Positions() {
   const [pendingToastId, setPendingToastId] = useState<string | undefined>();
@@ -94,9 +95,7 @@ export default function Positions() {
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         {allRewardTokens.map((tokenReward) => {
-          const matchedToken = supportedTokens.find(
-            (t) => t.address.toLowerCase() === tokenReward.token.toLowerCase(),
-          );
+          const matchedToken = findToken(tokenReward.token, mainnet.id);
           const distribution = distributions.find(
             (d) => d.asset.address.toLowerCase() === tokenReward.token.toLowerCase(),
           );
@@ -232,17 +231,8 @@ export default function Positions() {
                           ),
                         )
                         .map((market, index) => {
-                          const collatImg = supportedTokens.find(
-                            (token) =>
-                              token.address.toLowerCase() ===
-                              market.collateralAsset.address.toLowerCase(),
-                          )?.img;
-
-                          const loanImg = supportedTokens.find(
-                            (token) =>
-                              token.address.toLowerCase() ===
-                              market.loanAsset.address.toLowerCase(),
-                          )?.img;
+                          const collatImg = findToken(market.collateralAsset.address, market.morphoBlue.chain.id)?.img
+                          const loanImg = findToken(market.loanAsset.address, market.morphoBlue.chain.id)?.img
 
                           const tokenRewardsForMarket = rewards.filter((reward) => {
                             return (

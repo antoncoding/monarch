@@ -14,7 +14,7 @@ import { Market } from '@/hooks/useMarkets';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { MORPHO, getIRMTitle } from '@/utils/morpho';
-import { supportedTokens } from '@/utils/tokens';
+import { findToken } from '@/utils/tokens';
 
 type SupplyModalProps = {
   market: Market;
@@ -28,12 +28,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   const { address: account, isConnected } = useAccount();
 
-  const collateralToken = supportedTokens.find(
-    (token) => token.address.toLowerCase() === market.collateralAsset.address.toLowerCase(),
-  );
-  const loanToken = supportedTokens.find(
-    (token) => token.address.toLowerCase() === market.loanAsset.address.toLowerCase(),
-  );
+  const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
+  const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
   const { data: tokenBalance } = useBalance({
     token: market.loanAsset.address as `0x${string}`,

@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
+ 
 import { useState } from 'react';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 
@@ -10,7 +10,7 @@ import { Info } from '@/components/Info/info';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
-import { supportedTokens } from '@/utils/tokens';
+import { findToken } from '@/utils/tokens';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
@@ -150,12 +150,8 @@ function MarketsTable({
             return 0;
           })
           .map((item, index) => {
-            const collatImg = supportedTokens.find(
-              (token) => token.address.toLowerCase() === item.collateralAsset.address.toLowerCase(),
-            )?.img;
-            const loanImg = supportedTokens.find(
-              (token) => token.address.toLowerCase() === item.loanAsset.address.toLowerCase(),
-            )?.img;
+            const collatImg = findToken(item.collateralAsset.address, item.morphoBlue.chain.id)?.img
+            const loanImg = findToken(item.loanAsset.address, item.morphoBlue.chain.id)?.img;
 
             const collatToShow = item.collateralAsset.symbol
               .slice(0, 6)

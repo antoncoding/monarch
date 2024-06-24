@@ -13,7 +13,7 @@ import useUserPositions from '@/hooks/useUserPositions';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
-import { MORPHO, supportedTokens } from '@/utils/tokens';
+import { MORPHOTokenAddress, findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 import { WithdrawModal } from './withdrawModal';
 
@@ -114,22 +114,13 @@ export default function Positions() {
               </thead>
               <tbody className="table-body text-sm">
                 {marketPositions.map((position, index) => {
-                  const collatImg = supportedTokens.find(
-                    (token) =>
-                      token.address.toLowerCase() ===
-                      position.market.collateralAsset.address.toLowerCase(),
-                  )?.img;
-
-                  const loanImg = supportedTokens.find(
-                    (token) =>
-                      token.address.toLowerCase() ===
-                      position.market.loanAsset.address.toLowerCase(),
-                  )?.img;
+                  const collatImg = findToken(position.market.collateralAsset.address, position.market.morphoBlue.chain.id)?.img
+                  const loanImg = findToken(position.market.loanAsset.address, position.market.morphoBlue.chain.id)?.img;
 
                   const matchingRewards = rewards.filter((info) => {
                     return (
                       info.program.market_id === position.market.uniqueKey &&
-                      info.program.asset.address.toLowerCase() === MORPHO.address.toLowerCase()
+                      info.program.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase()
                     );
                   });
 

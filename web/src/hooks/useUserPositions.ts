@@ -20,6 +20,13 @@ const query = `query getUserMarketPositions(
         lltv
         oracleAddress
         irmAddress
+        morphoBlue {
+          id
+          address
+          chain {
+            id
+          }
+        }
         dailyApys {
           netSupplyApy
         }
