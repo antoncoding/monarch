@@ -2,12 +2,15 @@ import { useCallback, useState } from 'react';
 import { Cross1Icon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
+import { useAccount } from 'wagmi';
 import AccountConnect from './AccountConnect';
 import { NavbarLink, NavbarTitle } from './Navbar';
 
 export default function NavbarMobile() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const toggleMobileMenuOpen = useCallback(() => setMobileMenuOpen((open) => !open), []);
+
+  const { address } = useAccount();
 
   if (isMobileMenuOpen) {
     return (
@@ -18,7 +21,7 @@ export default function NavbarMobile() {
             'rounded-sm bg-secondary p-4 backdrop-blur-2xl',
           ].join(' ')}
         >
-          <div className="h-38 flex grow items-center justify-between gap-4">
+          <div className="flex grow items-center justify-between gap-4">
             <NavbarTitle />
             <button
               type="button"
@@ -34,6 +37,33 @@ export default function NavbarMobile() {
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
               <NavbarLink href="/markets">Markets</NavbarLink>
+            </li>
+
+            <li className="flex">
+              {address ? (
+                <NavbarLink href={`/positions/${address}`}>
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+                </NavbarLink>
+              ) : (
+                <NavbarLink href="/positions">
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+                </NavbarLink>
+              )}
+            </li>
+            <li className="flex">
+              {address ? (
+                <NavbarLink href={`/rewards/${address}`}>
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+                </NavbarLink>
+              ) : (
+                <NavbarLink href="/rewards">
+                  {' '}
+                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+                </NavbarLink>
+              )}
             </li>
 
             <li className="flex">

@@ -27,6 +27,7 @@
     "@nextui-org/input": "^2.2.2",
     "@nextui-org/react": "^2.4.2",
     "@nextui-org/system": "^2.2.2",
+    "@nextui-org/table": "^2.0.36",
     "@nextui-org/theme": "^2.2.6",
     "@nextui-org/tooltip": "^2.0.36",
     "@privy-io/react-auth": "^1.56.2",

@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,52 +70,43 @@ export default function Positions() {
             to open a new position.
           </div>
         ) : (
-          <div className="mt-4 bg-secondary">
-            <table className="w-full font-zen">
-              <thead className="table-header">
-                <tr>
-                  <th> Network </th>
-                  <th> Market ID </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Supplied Asset </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Collateral </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> LLTV </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Claimable Reward </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Pending Reward </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> APY </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> % of Market </div>
-                    </div>
-                  </th>
+          <div className="mt-4">
+            <Table
+              classNames={{
+                th: 'bg-secondary',
+                wrapper: 'rounded-none shadow-none bg-secondary',
+              }}
+            >
+              <TableHeader className="table-header">
+                <TableColumn> Network </TableColumn>
+                <TableColumn> Market ID </TableColumn>
+                <TableColumn>
+                  <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                    <div> Supplied Asset </div>
+                  </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Collateral </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> LLTV </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Claimable Reward </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Pending Reward </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> APY </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> % of Market </div>
+                </TableColumn>
 
-                  <th> Actions </th>
-                </tr>
-              </thead>
-              <tbody className="table-body text-sm">
+                <TableColumn> Actions </TableColumn>
+              </TableHeader>
+              <TableBody>
                 {marketPositions.map((position, index) => {
                   const collatImg = findToken(
                     position.market.collateralAsset.address,
@@ -144,19 +136,19 @@ export default function Positions() {
                   }, BigInt(0));
 
                   return (
-                    <tr key={index.toFixed()}>
+                    <TableRow key={index.toFixed()}>
                       {/* network */}
-                      <td>
+                      <TableCell>
                         <div className="flex justify-center">
                           {networkImg ? (
                             <Image src={networkImg} alt="icon" width="18" height="18" />
                           ) : null}
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* id */}
-                      <td>
-                        <div className="font-monospace flex justify-center text-xs">
+                      <TableCell>
+                        <div className="flex justify-center font-monospace text-xs">
                           <a
                             className="group flex items-center gap-1 no-underline hover:underline"
                             href={getMarketURL(
@@ -171,10 +163,10 @@ export default function Positions() {
                             </p>
                           </a>
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* supply */}
-                      <td>
+                      <TableCell>
                         <div>
                           <div className="flex items-center justify-center gap-1">
                             <p>
@@ -191,10 +183,10 @@ export default function Positions() {
                             ) : null}
                           </div>
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* collateral */}
-                      <td>
+                      <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           <div> {position.market.collateralAsset.symbol} </div>
                           {collatImg ? (
@@ -202,15 +194,15 @@ export default function Positions() {
                           ) : null}
                           <p> {} </p>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
+                      <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           <p> {formatBalance(position.market.lltv, 16)} % </p>
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
+                      <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           {hasRewards && (
                             <p> {formatReadable(formatBalance(claimableMorpho, 18))} </p>
@@ -220,9 +212,9 @@ export default function Positions() {
                           )}
                           {!hasRewards && <p> - </p>}
                         </div>
-                      </td>
+                      </TableCell>
 
-                      <td>
+                      <TableCell>
                         <div className="flex items-center justify-center gap-1">
                           {hasRewards && (
                             <p> {formatReadable(formatBalance(pendingMorpho, 18))} </p>
@@ -232,16 +224,16 @@ export default function Positions() {
                           )}
                           {!hasRewards && <p> - </p>}
                         </div>
-                      </td>
+                      </TableCell>
 
                       {/* APYs */}
-                      <td className="z-50">
+                      <TableCell className="z-50">
                         {formatReadable(position.market.dailyApys.netSupplyApy * 100)}
                         {/* <p>{formatReadable(position.market.weeklyApys.netSupplyApy * 100)}</p> */}
-                      </td>
+                      </TableCell>
 
                       {/* percentage */}
-                      <td>
+                      <TableCell>
                         <p className="opacity-70">
                           {formatReadable(
                             (Number(position.supplyAssets) /
@@ -250,9 +242,9 @@ export default function Positions() {
                           )}
                           %
                         </p>
-                      </td>
+                      </TableCell>
 
-                      <td>
+                      <TableCell>
                         <button
                           type="button"
                           aria-label="Supply"
@@ -264,12 +256,12 @@ export default function Positions() {
                         >
                           Withdraw
                         </button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
 

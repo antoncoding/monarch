@@ -4093,7 +4093,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nextui-org/table@npm:2.0.36":
+"@nextui-org/table@npm:2.0.36, @nextui-org/table@npm:^2.0.36":
   version: 2.0.36
   resolution: "@nextui-org/table@npm:2.0.36"
   dependencies:
@@ -14956,6 +14956,7 @@ __metadata:
     "@nextui-org/input": "npm:^2.2.2"
     "@nextui-org/react": "npm:^2.4.2"
     "@nextui-org/system": "npm:^2.2.2"
+    "@nextui-org/table": "npm:^2.0.36"
     "@nextui-org/theme": "npm:^2.2.6"
     "@nextui-org/tooltip": "npm:^2.0.36"
     "@privy-io/react-auth": "npm:^1.56.2"
