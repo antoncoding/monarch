@@ -57,7 +57,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
       return;
     }
 
-    const isMax = withdrawAmount.toString() === position.supplyAssets;
+    const isMax = withdrawAmount.toString() === position.supplyAssets.toString();
 
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
     const sharesToWithdraw = isMax ? position.supplyShares : '0';
