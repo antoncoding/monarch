@@ -40,7 +40,7 @@ function MarketsTable({
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
   return (
-    <table className="w-full font-zen">
+    <table className="responsive w-full font-zen">
       <thead className="table-header">
         <tr>
           <th> {} </th>
@@ -178,7 +178,7 @@ function MarketsTable({
                     item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
                   }'`}
                 >
-                  <td>
+                  <td data-label="" className="z-50">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -196,7 +196,7 @@ function MarketsTable({
                     </button>
                   </td>
                   {/* id */}
-                  <td>
+                  <td data-label="ID" className="z-50">
                     <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                       <p>
                         {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
@@ -216,7 +216,7 @@ function MarketsTable({
                   </td>
 
                   {/* loan */}
-                  <td>
+                  <td data-label="Loan" className="z-50">
                     <div className="flex items-center justify-center gap-1">
                       {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
                       <a
@@ -234,7 +234,7 @@ function MarketsTable({
                   </td>
 
                   {/* collateral */}
-                  <td>
+                  <td data-label="Collateral" className="z-50">
                     <div className="flex items-center justify-center gap-1">
                       {collatImg ? (
                         <Image src={collatImg} alt="icon" width="18" height="18" />
@@ -254,10 +254,12 @@ function MarketsTable({
                   </td>
 
                   {/* lltv */}
-                  <td>{Number(item.lltv) / 1e16}%</td>
+                  <td data-label="LLTV" className="z-50">
+                    {Number(item.lltv) / 1e16}%
+                  </td>
 
                   {/* rewards */}
-                  <td>
+                  <td data-label="Reward" className="z-50">
                     <div className="flex items-center justify-center gap-1">
                       {' '}
                       <p> {reward ? reward : '-'}</p>
@@ -266,7 +268,7 @@ function MarketsTable({
                   </td>
 
                   {/* total supply */}
-                  <td className="z-50">
+                  <td data-label="Total Supply" className="z-50">
                     <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
                     <p className="opacity-70">
                       {formatReadable(
@@ -278,7 +280,7 @@ function MarketsTable({
                   </td>
 
                   {/* total borrow */}
-                  <td>
+                  <td data-label="Total Borrow">
                     <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
                     <p style={{ opacity: '0.7' }}>
                       {formatReadable(
@@ -291,7 +293,7 @@ function MarketsTable({
 
                   {/* <td> {item.loanAsset.address} </td> */}
 
-                  <td>{(item.state.supplyApy * 100).toFixed(3)}</td>
+                  <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
 
                   <td>
                     <button
@@ -311,7 +313,7 @@ function MarketsTable({
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
                     <td className="collaps-viewer bg-hovered" colSpan={10}>
-                      <div className="m-4 flex gap-2">
+                      <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
                         {/* Oracle info */}
                         <div className="m-4 lg:w-1/3">
                           {/* warnings */}

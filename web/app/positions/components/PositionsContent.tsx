@@ -1,7 +1,7 @@
-/* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 
 import { useState } from 'react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -69,52 +69,43 @@ export default function Positions() {
             to open a new position.
           </div>
         ) : (
-          <div className="mt-4 bg-secondary">
-            <table className="w-full font-zen">
-              <thead className="table-header">
-                <tr>
-                  <th> Network </th>
-                  <th> Market ID </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Supplied Asset </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Collateral </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> LLTV </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Claimable Reward </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> Pending Reward </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> APY </div>
-                    </div>
-                  </th>
-                  <th>
-                    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                      <div> % of Market </div>
-                    </div>
-                  </th>
+          <div className="mt-4">
+            <Table
+              classNames={{
+                th: 'bg-secondary',
+                wrapper: 'rounded-none shadow-none bg-secondary',
+              }}
+            >
+              <TableHeader className="table-header">
+                <TableColumn> Network </TableColumn>
+                <TableColumn> Market ID </TableColumn>
+                <TableColumn>
+                  <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+                    <div> Supplied Asset </div>
+                  </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Collateral </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> LLTV </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Claimable Reward </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> Pending Reward </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> APY </div>
+                </TableColumn>
+                <TableColumn>
+                  <div> % of Market </div>
+                </TableColumn>
 
-                  <th> Actions </th>
-                </tr>
-              </thead>
-              <tbody className="table-body text-sm">
+                <TableColumn> Actions </TableColumn>
+              </TableHeader>
+              <TableBody>
                 {marketPositions.map((position, index) => {
                   const collatImg = findToken(
                     position.market.collateralAsset.address,
@@ -144,144 +135,132 @@ export default function Positions() {
                   }, BigInt(0));
 
                   return (
-                    <>
-                      <tr key={index.toFixed()}>
-                        {/* network */}
-                        <td>
-                          <div className="flex justify-center">
-                            {networkImg ? (
-                              <Image src={networkImg} alt="icon" width="18" height="18" />
-                            ) : null}
-                          </div>
-                        </td>
+                    <TableRow key={index.toFixed()}>
+                      {/* network */}
+                      <TableCell>
+                        <div className="flex justify-center">
+                          {networkImg ? (
+                            <Image src={networkImg} alt="icon" width="18" height="18" />
+                          ) : null}
+                        </div>
+                      </TableCell>
 
-                        {/* id */}
-                        <td>
-                          <div className="flex justify-center font-monospace text-xs">
-                            <a
-                              className="group flex items-center gap-1 no-underline hover:underline"
-                              href={getMarketURL(
-                                position.market.uniqueKey,
-                                position.market.morphoBlue.chain.id,
-                              )}
-                              target="_blank"
-                            >
-                              <p>{position.market.uniqueKey.slice(2, 8)} </p>
-                              <p className="opacity-0 group-hover:opacity-100">
-                                <ExternalLinkIcon />
-                              </p>
-                            </a>
-                          </div>
-                        </td>
-
-                        {/* supply */}
-                        <td>
-                          <div>
-                            <div className="flex items-center justify-center gap-1">
-                              <p>
-                                {formatReadable(
-                                  formatBalance(
-                                    position.supplyAssets,
-                                    position.market.loanAsset.decimals,
-                                  ),
-                                )}{' '}
-                              </p>
-                              <p> {position.market.loanAsset.symbol} </p>
-                              {loanImg ? (
-                                <Image src={loanImg} alt="icon" width="18" height="18" />
-                              ) : null}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* collateral */}
-                        <td>
-                          <div className="flex items-center justify-center gap-1">
-                            <div> {position.market.collateralAsset.symbol} </div>
-                            {collatImg ? (
-                              <Image src={collatImg} alt="icon" width="18" height="18" />
-                            ) : null}
-                            <p> {} </p>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="flex items-center justify-center gap-1">
-                            <p> {formatBalance(position.market.lltv, 16)} % </p>
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="flex items-center justify-center gap-1">
-                            {hasRewards && (
-                              <p> {formatReadable(formatBalance(claimableMorpho, 18))} </p>
+                      {/* id */}
+                      <TableCell>
+                        <div className="flex justify-center font-monospace text-xs">
+                          <a
+                            className="group flex items-center gap-1 no-underline hover:underline"
+                            href={getMarketURL(
+                              position.market.uniqueKey,
+                              position.market.morphoBlue.chain.id,
                             )}
-                            {hasRewards && (
-                              <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
-                            )}
-                            {!hasRewards && <p> - </p>}
-                          </div>
-                        </td>
-
-                        <td>
-                          <div className="flex items-center justify-center gap-1">
-                            {hasRewards && (
-                              <p> {formatReadable(formatBalance(pendingMorpho, 18))} </p>
-                            )}
-                            {hasRewards && (
-                              <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
-                            )}
-                            {!hasRewards && <p> - </p>}
-                          </div>
-                        </td>
-
-                        {/* APYs */}
-                        <td className="z-50">
-                          {formatReadable(position.market.dailyApys.netSupplyApy * 100)}
-                          {/* <p>{formatReadable(position.market.weeklyApys.netSupplyApy * 100)}</p> */}
-                        </td>
-
-                        {/* percentage */}
-                        <td>
-                          <p className="opacity-70">
-                            {formatReadable(
-                              (Number(position.supplyAssets) /
-                                Number(position.market.state.supplyAssets)) *
-                                100,
-                            )}
-                            %
-                          </p>
-                        </td>
-
-                        <td>
-                          <button
-                            type="button"
-                            aria-label="Supply"
-                            className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
-                            onClick={() => {
-                              setShowModal(true);
-                              setSelectedPosition(position);
-                            }}
+                            target="_blank"
                           >
-                            Withdraw
-                          </button>
-                        </td>
-                      </tr>
+                            <p>{position.market.uniqueKey.slice(2, 8)} </p>
+                            <p className="opacity-0 group-hover:opacity-100">
+                              <ExternalLinkIcon />
+                            </p>
+                          </a>
+                        </div>
+                      </TableCell>
 
-                      {/* {expandedRowId === position.market.uniqueKey && (
-                        <tr>
-                           <td className="collaps-viewer bg-hovered" colSpan={7}>
-                            <div className="flex w-full p-12 text-center">
-                              HOLA
-                            </div>
-                          </td>
-                        </tr>
-                      )} */}
-                    </>
+                      {/* supply */}
+                      <TableCell>
+                        <div>
+                          <div className="flex items-center justify-center gap-1">
+                            <p>
+                              {formatReadable(
+                                formatBalance(
+                                  position.supplyAssets,
+                                  position.market.loanAsset.decimals,
+                                ),
+                              )}{' '}
+                            </p>
+                            <p> {position.market.loanAsset.symbol} </p>
+                            {loanImg ? (
+                              <Image src={loanImg} alt="icon" width="18" height="18" />
+                            ) : null}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* collateral */}
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <div> {position.market.collateralAsset.symbol} </div>
+                          {collatImg ? (
+                            <Image src={collatImg} alt="icon" width="18" height="18" />
+                          ) : null}
+                          <p> {} </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <p> {formatBalance(position.market.lltv, 16)} % </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {hasRewards && (
+                            <p> {formatReadable(formatBalance(claimableMorpho, 18))} </p>
+                          )}
+                          {hasRewards && (
+                            <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
+                          )}
+                          {!hasRewards && <p> - </p>}
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {hasRewards && (
+                            <p> {formatReadable(formatBalance(pendingMorpho, 18))} </p>
+                          )}
+                          {hasRewards && (
+                            <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />
+                          )}
+                          {!hasRewards && <p> - </p>}
+                        </div>
+                      </TableCell>
+
+                      {/* APYs */}
+                      <TableCell className="z-50">
+                        {formatReadable(position.market.dailyApys.netSupplyApy * 100)}
+                        {/* <p>{formatReadable(position.market.weeklyApys.netSupplyApy * 100)}</p> */}
+                      </TableCell>
+
+                      {/* percentage */}
+                      <TableCell>
+                        <p className="opacity-70">
+                          {formatReadable(
+                            (Number(position.supplyAssets) /
+                              Number(position.market.state.supplyAssets)) *
+                              100,
+                          )}
+                          %
+                        </p>
+                      </TableCell>
+
+                      <TableCell>
+                        <button
+                          type="button"
+                          aria-label="Supply"
+                          className="bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out hover:scale-110  hover:bg-orange-500 "
+                          onClick={() => {
+                            setShowModal(true);
+                            setSelectedPosition(position);
+                          }}
+                        >
+                          Withdraw
+                        </button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
 

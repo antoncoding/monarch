@@ -39,7 +39,7 @@ module.exports = {
 
     // Performance: Avoid unnecessary renders
     'react-perf/jsx-no-new-array-as-prop': 'warn',
-    'react-perf/jsx-no-new-function-as-prop': 'warn',
+    'react-perf/jsx-no-new-function-as-prop': 'off',
 
     // We prefer function declarations
     'react/function-component-definition': [

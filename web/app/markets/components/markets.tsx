@@ -1,4 +1,3 @@
-/* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Checkbox, Select, SelectItem, SelectSection, Tooltip } from '@nextui-org/react';
@@ -222,7 +221,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="flex flex-col justify-between pb-4 font-zen">
+    <div className="flex w-full flex-col justify-between font-zen">
       <Header />
       <Toaster />
       <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
@@ -235,9 +234,9 @@ export default function HomePage() {
           />
         )}
 
-        <div className="flex justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 lg:flex-row">
             {/* network filter */}
             <Select
               label="Network"
@@ -379,10 +378,10 @@ export default function HomePage() {
           </div>
 
           {/* right section: checkbox */}
-          <div className="flex items-center justify-end rounded-sm">
+          <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
             <Checkbox
               classNames={{
-                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm p-3 m-1',
+                base: 'bg-secondary items-center cursor-pointer rounded-sm p-3',
               }}
               isSelected={hideDust}
               onValueChange={(checked: boolean) => {
@@ -429,7 +428,7 @@ export default function HomePage() {
         ) : data == null ? (
           <div> No data </div>
         ) : (
-          <div className="mt-4 bg-secondary">
+          <div className="max-w-screen mt-4 overflow-auto bg-secondary">
             <MarketsTable
               markets={filteredData}
               titleOnclick={titleOnclick}

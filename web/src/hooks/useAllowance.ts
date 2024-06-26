@@ -87,7 +87,7 @@ export function useAllowance({
       }),
       chainId: chainIdFromArgumentOrConnectedWallet,
     });
-  }, [user, spender, token, sendTransaction]);
+  }, [user, spender, token, sendTransaction, chainIdFromArgumentOrConnectedWallet]);
 
   useEffect(() => {
     if (approvePending) {
