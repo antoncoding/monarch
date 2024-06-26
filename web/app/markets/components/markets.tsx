@@ -235,7 +235,7 @@ export default function HomePage() {
           />
         )}
 
-        <div className="flex flex-col lg:flex-row lg:justify-between">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
             {/* network filter */}
@@ -379,10 +379,10 @@ export default function HomePage() {
           </div>
 
           {/* right section: checkbox */}
-          <div className="flex items-center justify-end rounded-sm">
+          <div className="flex items-center justify-start lg:justify-end rounded-sm my-2 p-2">
             <Checkbox
               classNames={{
-                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm p-3 m-1',
+                base: 'bg-secondary items-center cursor-pointer rounded-sm p-3',
               }}
               isSelected={hideDust}
               onValueChange={(checked: boolean) => {
