@@ -313,7 +313,7 @@ function MarketsTable({
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
                     <td className="collaps-viewer bg-hovered" colSpan={10}>
-                      <div className="lg:max-w-screen m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm  lg:flex-row">
+                      <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
                         {/* Oracle info */}
                         <div className="m-4 lg:w-1/3">
                           {/* warnings */}
