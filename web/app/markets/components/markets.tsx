@@ -1,4 +1,3 @@
-/* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { Checkbox, Select, SelectItem, SelectSection, Tooltip } from '@nextui-org/react';
@@ -235,7 +234,7 @@ export default function HomePage() {
           />
         )}
 
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
             {/* network filter */}
@@ -379,7 +378,7 @@ export default function HomePage() {
           </div>
 
           {/* right section: checkbox */}
-          <div className="flex items-center justify-start lg:justify-end rounded-sm my-2 p-2">
+          <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
             <Checkbox
               classNames={{
                 base: 'bg-secondary items-center cursor-pointer rounded-sm p-3',

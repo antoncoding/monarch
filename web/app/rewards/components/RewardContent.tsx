@@ -1,7 +1,7 @@
-/* eslint-disable react-perf/jsx-no-new-function-as-prop */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -188,39 +188,21 @@ export default function Positions() {
                 </div>
 
                 <div className="mb-6 mt-2 bg-secondary">
-                  <table className="w-full font-zen">
-                    <thead className="table-header">
-                      <tr>
-                        <th> Market ID </th>
-                        <th>
-                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                            <div> Loan Asset </div>
-                          </div>
-                        </th>
-                        <th>
-                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                            <div> Collateral </div>
-                          </div>
-                        </th>
-                        <th>
-                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                            <div> LLTV </div>
-                          </div>
-                        </th>
-                        <th>
-                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                            <div> Claimable Reward </div>
-                          </div>
-                        </th>
-                        <th>
-                          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-                            <div> Pending Reward </div>
-                          </div>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="table-body text-sm">
-                      {/* aggregate rewards by market */}
+                  <Table
+                    classNames={{
+                      th: 'bg-secondary',
+                      wrapper: 'rounded-none shadow-none bg-secondary',
+                    }}
+                  >
+                    <TableHeader className="table-header">
+                      <TableColumn> Market ID </TableColumn>
+                      <TableColumn> Loan Asset </TableColumn>
+                      <TableColumn> Collateral </TableColumn>
+                      <TableColumn> LLTV </TableColumn>
+                      <TableColumn> Claimable Reward </TableColumn>
+                      <TableColumn> Pending Reward </TableColumn>
+                    </TableHeader>
+                    <TableBody>
                       {marketsWithRewards
                         .filter((m) =>
                           rewards.find(
@@ -258,9 +240,9 @@ export default function Positions() {
                           }, BigInt(0));
 
                           return (
-                            <tr key={index.toFixed()}>
+                            <TableRow key={index.toFixed()}>
                               {/* id */}
-                              <td>
+                              <TableCell>
                                 <div className="flex justify-center">
                                   <a
                                     className="group flex items-center gap-1 no-underline hover:underline"
@@ -276,10 +258,10 @@ export default function Positions() {
                                     </p>
                                   </a>
                                 </div>
-                              </td>
+                              </TableCell>
 
                               {/* supply */}
-                              <td>
+                              <TableCell>
                                 <div>
                                   <div className="flex items-center justify-center gap-1">
                                     <p> {market.loanAsset.symbol} </p>
@@ -288,10 +270,10 @@ export default function Positions() {
                                     ) : null}
                                   </div>
                                 </div>
-                              </td>
+                              </TableCell>
 
                               {/* collateral */}
-                              <td>
+                              <TableCell>
                                 <div className="flex items-center justify-center gap-1">
                                   <div> {market.collateralAsset.symbol} </div>
                                   {collatImg ? (
@@ -299,15 +281,15 @@ export default function Positions() {
                                   ) : null}
                                   <p> {} </p>
                                 </div>
-                              </td>
+                              </TableCell>
 
-                              <td>
+                              <TableCell>
                                 <div className="flex items-center justify-center gap-1">
                                   <p> {formatBalance(market.lltv, 16)} % </p>
                                 </div>
-                              </td>
+                              </TableCell>
 
-                              <td>
+                              <TableCell>
                                 <div className="flex items-center justify-center gap-1">
                                   {hasRewards && (
                                     <p>
@@ -327,9 +309,9 @@ export default function Positions() {
                                   )}
                                   {!hasRewards && <p> - </p>}
                                 </div>
-                              </td>
+                              </TableCell>
 
-                              <td>
+                              <TableCell>
                                 <div className="flex items-center justify-center gap-1">
                                   {hasRewards && (
                                     <p>
@@ -349,12 +331,12 @@ export default function Positions() {
                                   )}
                                   {!hasRewards && <p> - </p>}
                                 </div>
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           );
                         })}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
