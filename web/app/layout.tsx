@@ -1,11 +1,11 @@
 import './global.css';
 
-import { NextUIProvider } from '@nextui-org/system';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
 import { inter, zen, monospace } from './fonts';
+import { Providers } from './providers';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -30,9 +30,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        <NextUIProvider>
+        <Providers>
           <OnchainProviders>{children}</OnchainProviders>
-        </NextUIProvider>
+        </Providers>
       </body>
       <GoogleAnalytics />
     </html>

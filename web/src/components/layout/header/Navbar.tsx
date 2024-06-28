@@ -4,9 +4,9 @@ import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
+import { useTheme } from 'next-themes';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
-import { useTheme } from '@/hooks/useTheme';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
 
@@ -50,7 +50,9 @@ export function NavbarTitle() {
 }
 
 function Navbar() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+
+  console.log('theme', theme);
 
   const { address } = useAccount();
 
@@ -113,16 +115,14 @@ function Navbar() {
           {theme === 'dark' ? (
             <FaSun
               onClick={() => {
-                document.documentElement.classList.remove('dark');
-                toggleTheme();
+                setTheme('light');
               }}
               className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
             />
           ) : (
             <FaRegMoon
               onClick={() => {
-                document.documentElement.classList.add('dark');
-                toggleTheme();
+                setTheme('dark');
               }}
               className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
             />
