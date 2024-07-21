@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Address } from 'viem';
-import { mainnet } from 'viem/chains';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
