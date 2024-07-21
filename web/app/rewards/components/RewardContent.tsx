@@ -49,12 +49,20 @@ export default function Positions() {
     }
   }, [claimError, claimingSucceed, pendingToastId]);
 
+  console.log('rewards', rewards);
+
   // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
   const allRewardTokens = useMemo(
     () =>
       rewards.reduce(
         (
-          entries: { token: string; claimed: bigint; claimable: bigint; pending: bigint }[],
+          entries: {
+            token: string;
+            claimed: bigint;
+            claimable: bigint;
+            pending: bigint;
+            chainId: number;
+          }[],
           reward,
         ) => {
           const idx = entries.findIndex((e) => e.token === reward.program.asset.address);
@@ -66,6 +74,7 @@ export default function Positions() {
                 claimed: BigInt(reward.for_supply?.claimed ?? '0'),
                 claimable: BigInt(reward.for_supply?.claimable_now ?? '0'),
                 pending: BigInt(reward.for_supply?.claimable_next ?? '0'),
+                chainId: reward.program.chain_id,
               },
             ];
           } else {
@@ -95,7 +104,7 @@ export default function Positions() {
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         {allRewardTokens.map((tokenReward) => {
-          const matchedToken = findToken(tokenReward.token, mainnet.id);
+          const matchedToken = findToken(tokenReward.token, tokenReward.chainId);
           const distribution = distributions.find(
             (d) => d.asset.address.toLowerCase() === tokenReward.token.toLowerCase(),
           );

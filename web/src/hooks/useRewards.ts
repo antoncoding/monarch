@@ -18,7 +18,7 @@ type DistributionResponseType = {
   tx_data: string;
 };
 
-type RewardResponseType = {
+export type RewardResponseType = {
   user: string;
   type: string;
   program: {

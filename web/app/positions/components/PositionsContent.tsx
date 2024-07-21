@@ -9,10 +9,8 @@ import useUserRewards from '@/hooks/useRewards';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
-import { WithdrawModal } from './withdrawModal';
 import { SuppliedMarketsTable } from './SuppliedMarketsTable';
-
-const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
+import { WithdrawModal } from './withdrawModal';
 
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -70,7 +68,7 @@ export default function Positions() {
               rewards={rewards}
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
-              />
+            />
           </div>
         )}
 
