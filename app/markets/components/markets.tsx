@@ -1,13 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Checkbox, Tooltip } from '@nextui-org/react';
 import storage from 'local-storage-fallback';
 import { Toaster } from 'react-hot-toast';
-import { BsQuestionCircle } from 'react-icons/bs';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
-import { generateMetadata } from '@/utils/generateMetadata';
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import {
@@ -17,11 +14,13 @@ import {
 } from '@/utils/tokens';
 
 import AssetFilter from './AssetFilter';
+import CheckFilter from './CheckFilter';
+import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
 
-const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? '5');
+const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString());
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 const defaultHideDust = storage.getItem(keys.MarketsHideDustKey) === 'true';
 const defaultHideUnknown = storage.getItem(keys.MarketsHideUnknownKey) === 'true';
@@ -30,12 +29,25 @@ const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
 ) as string[];
 
-export const metadata = generateMetadata({
-  title: 'Markets',
-  description: 'Permission-less access to morpho blue protocol',
-  images: 'themes.png',
-  pathname: '',
-});
+const sortProperties = {
+  [SortColumn.LoanAsset]: 'loanAsset.name',
+  [SortColumn.CollateralAsset]: 'collateralAsset.name',
+  [SortColumn.LLTV]: 'lltv',
+  [SortColumn.Reward]: (item: Market) => Number(item.rewardPer1000USD ?? '0'),
+  [SortColumn.Supply]: 'state.supplyAssetsUsd',
+  [SortColumn.Borrow]: 'state.borrowAssetsUsd',
+  [SortColumn.SupplyAPY]: 'state.supplyApy',
+};
+
+const getNestedProperty = (obj: Market, path: string | ((item: Market) => number)) => {
+  if (typeof path === 'function') {
+    return path(obj);
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
+};
+
 
 /**
  * Use the page component toLowerCase() wrap the components
@@ -59,7 +71,7 @@ export default function HomePage() {
   const [hideUnknown, setHideUnknown] = useState(defaultHideUnknown);
 
   // Add state for the sort column and direction
-  const [sortColumn, setSortColumn] = useState(defaultSortColumn);
+  const [sortColumn, setSortColumn] = useState<SortColumn>(defaultSortColumn);
   const [sortDirection, setSortDirection] = useState(defaultSortDirection);
 
   // Control supply modal
@@ -156,43 +168,16 @@ export default function HomePage() {
       );
     }
 
-    switch (sortColumn) {
-      case 1:
-        newData.sort((a, b) =>
-          a.loanAsset.name > b.loanAsset.name ? sortDirection : -sortDirection,
-        );
-        break;
-      case 2:
-        newData.sort((a, b) =>
-          a.collateralAsset.name > b.collateralAsset.name ? sortDirection : -sortDirection,
-        );
-        break;
-      case 3:
-        newData.sort((a, b) => (a.lltv > b.lltv ? sortDirection : -sortDirection));
-        break;
-      case 4:
-        newData.sort((a, b) =>
-          Number(a.rewardPer1000USD ?? '0') > Number(b.rewardPer1000USD ?? '0')
-            ? sortDirection
-            : -sortDirection,
-        );
-        break;
-      case 5:
-        newData.sort((a, b) =>
-          a.state.supplyAssetsUsd > b.state.supplyAssetsUsd ? sortDirection : -sortDirection,
-        );
-        break;
-      case 6:
-        newData.sort((a, b) =>
-          a.state.borrowAssetsUsd > b.state.borrowAssetsUsd ? sortDirection : -sortDirection,
-        );
-        break;
-      case 7:
-        newData.sort((a, b) =>
-          a.state.supplyApy > b.state.supplyApy ? sortDirection : -sortDirection,
-        );
-        break;
-    }
+    newData.sort((a, b) => {
+
+      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
+      const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
+      
+      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
+      const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
+  
+      return propertyA > propertyB ? sortDirection : -sortDirection;
+    });
 
     setFilteredData(newData);
   }, [
@@ -262,47 +247,25 @@ export default function HomePage() {
 
           {/* right section: checkbox */}
           <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
-            <Checkbox
-              classNames={{
-                base: 'bg-secondary items-center cursor-pointer rounded-sm p-3',
-              }}
-              isSelected={hideDust}
-              onValueChange={(checked: boolean) => {
+            <CheckFilter
+              checked={hideDust}
+              onChange={(checked: boolean) => {
                 setHideDust(checked);
                 storage.setItem(keys.MarketsHideDustKey, checked.toString());
               }}
-              size="sm"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-default-500"> Hide Dust </span>
-                <Tooltip content="Hide markets with lower than $1000 supplied">
-                  <div>
-                    <BsQuestionCircle className="text-default-500" />
-                  </div>
-                </Tooltip>
-              </div>
-            </Checkbox>
+              label='Hide Dust'
+              tooltip='Hide markets with lower than $1000 supplied'
+            />
 
-            <Checkbox
-              classNames={{
-                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm m-1 p-3',
-              }}
-              isSelected={hideUnknown}
-              onValueChange={(checked: boolean) => {
+            <CheckFilter
+              checked={hideUnknown}
+              onChange={(checked: boolean) => {
                 setHideUnknown(checked);
                 storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
               }}
-              size="sm"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-default-500"> Hide Unknown </span>
-                <Tooltip content="Hide markets with unknown assets">
-                  <div>
-                    <BsQuestionCircle className="text-default-500" />
-                  </div>
-                </Tooltip>
-              </div>
-            </Checkbox>
+              label='Hide Unknown'
+              tooltip='Hide markets with unknown assets'
+            />
           </div>
         </div>
 
