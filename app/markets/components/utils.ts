@@ -22,6 +22,14 @@ export const getNestedProperty = (obj: Market, path: string | ((item: Market) =>
   return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
 };
 
+const isSelectedAsset = (market: Market, selectedAssetKeys: string[], type: 'collateral' | 'loan') => {
+  return selectedAssetKeys.find((combinedKey) =>
+    combinedKey
+      .split('|')
+      .includes(`${(type === 'collateral' ? market.collateralAsset : market.loanAsset).address.toLowerCase()}-${market.morphoBlue.chain.id}`),
+  );
+}
+
 export function applyFilterAndSort(
   markets: Market[], 
   sortColumn: SortColumn, 
@@ -53,23 +61,11 @@ export function applyFilterAndSort(
   }
 
   if (selectedCollaterals.length > 0) {
-    newData = newData.filter((item) =>
-      selectedCollaterals.find((combinedKey) =>
-        combinedKey
-          .split('|')
-          .includes(`${item.collateralAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
-      ),
-    );
+    newData = newData.filter((item) => isSelectedAsset(item, selectedCollaterals, 'collateral'));
   }
 
   if (selectedLoanAssets.length > 0) {
-    newData = newData.filter((item) =>
-      selectedLoanAssets.find((combinedKey) =>
-        combinedKey
-          .split('|')
-          .includes(`${item.loanAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
-      ),
-    );
+    newData = newData.filter((item) => isSelectedAsset(item, selectedLoanAssets, 'loan'));
   }
 
   newData.sort((a, b) => {
