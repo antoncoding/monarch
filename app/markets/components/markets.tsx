@@ -5,7 +5,6 @@ import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
-import { generateMetadata } from '@/utils/generateMetadata';
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import {
@@ -19,6 +18,7 @@ import CheckFilter from './CheckFilter';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
+import { SortColumn } from './constants';
 
 const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? '5');
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
@@ -29,12 +29,24 @@ const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
 ) as string[];
 
-export const metadata = generateMetadata({
-  title: 'Markets',
-  description: 'Permission-less access to morpho blue protocol',
-  images: 'themes.png',
-  pathname: '',
-});
+const sortProperties = {
+  [SortColumn.LoanAsset]: 'loanAsset.name',
+  [SortColumn.CollateralAsset]: 'collateralAsset.name',
+  [SortColumn.LLTV]: 'lltv',
+  [SortColumn.Reward]: (item: any) => Number(item.rewardPer1000USD ?? '0'),
+  [SortColumn.Supply]: 'state.supplyAssetsUsd',
+  [SortColumn.Borrow]: 'state.borrowAssetsUsd',
+  [SortColumn.SupplyAPY]: 'state.supplyApy',
+};
+
+const getNestedProperty = (obj: any, path: string | ((item: any) => number)) => {
+  if (typeof path === 'function') {
+    return path(obj);
+  }
+
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
 
 /**
  * Use the page component toLowerCase() wrap the components
@@ -58,7 +70,7 @@ export default function HomePage() {
   const [hideUnknown, setHideUnknown] = useState(defaultHideUnknown);
 
   // Add state for the sort column and direction
-  const [sortColumn, setSortColumn] = useState(defaultSortColumn);
+  const [sortColumn, setSortColumn] = useState<SortColumn>(defaultSortColumn);
   const [sortDirection, setSortDirection] = useState(defaultSortDirection);
 
   // Control supply modal
@@ -155,43 +167,12 @@ export default function HomePage() {
       );
     }
 
-    switch (sortColumn) {
-      case 1:
-        newData.sort((a, b) =>
-          a.loanAsset.name > b.loanAsset.name ? sortDirection : -sortDirection,
-        );
-        break;
-      case 2:
-        newData.sort((a, b) =>
-          a.collateralAsset.name > b.collateralAsset.name ? sortDirection : -sortDirection,
-        );
-        break;
-      case 3:
-        newData.sort((a, b) => (a.lltv > b.lltv ? sortDirection : -sortDirection));
-        break;
-      case 4:
-        newData.sort((a, b) =>
-          Number(a.rewardPer1000USD ?? '0') > Number(b.rewardPer1000USD ?? '0')
-            ? sortDirection
-            : -sortDirection,
-        );
-        break;
-      case 5:
-        newData.sort((a, b) =>
-          a.state.supplyAssetsUsd > b.state.supplyAssetsUsd ? sortDirection : -sortDirection,
-        );
-        break;
-      case 6:
-        newData.sort((a, b) =>
-          a.state.borrowAssetsUsd > b.state.borrowAssetsUsd ? sortDirection : -sortDirection,
-        );
-        break;
-      case 7:
-        newData.sort((a, b) =>
-          a.state.supplyApy > b.state.supplyApy ? sortDirection : -sortDirection,
-        );
-        break;
-    }
+    newData.sort((a, b) => {
+      const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
+      const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
+  
+      return propertyA > propertyB ? sortDirection : -sortDirection;
+    });
 
     setFilteredData(newData);
   }, [

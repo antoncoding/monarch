@@ -13,6 +13,7 @@ import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
+import { SortColumn } from './constants';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
@@ -27,6 +28,37 @@ type MarketsTableProps = {
   unstarMarket: (id: string) => void;
   starMarket: (id: string) => void;
 };
+
+type SortableHeaderProps = {
+  label: string;
+  sortColumn: SortColumn;
+  targetColumn: SortColumn;
+  titleOnclick: (column: number) => void;
+  sortDirection: number;
+};
+
+
+function SortableHeader({
+  label,
+  sortColumn,
+  titleOnclick,
+  sortDirection,
+  targetColumn,
+}: SortableHeaderProps) {
+  return (<th
+    className={`${sortColumn === targetColumn ? 'text-primary' : ''}`}
+    onClick={() => titleOnclick(targetColumn)}
+  >
+    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+      <div>{label}</div>
+      {sortColumn === targetColumn && sortDirection === 1 ? (
+        <ArrowDownIcon />
+      ) : sortColumn === targetColumn && sortDirection === -1 ? (
+        <ArrowUpIcon />
+      ) : null}
+    </div>
+  </th>)
+}
 
 function MarketsTable({
   staredIds,
@@ -47,97 +79,55 @@ function MarketsTable({
         <tr>
           <th> {} </th>
           <th> Id </th>
-          <th
-            className={`${sortColumn === 1 ? 'text-primary' : ''}`}
-            onClick={() => titleOnclick(1)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div>Loan</div>
-              {sortColumn === 1 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 1 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 2 ? 'text-primary' : ''} `}
-            onClick={() => titleOnclick(2)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div> Collateral </div>
-              {sortColumn === 2 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 2 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 3 ? 'text-primary' : ''}`}
-            onClick={() => titleOnclick(3)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div>LLTV </div>
-              {sortColumn === 3 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 3 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 4 ? 'text-primary' : ''}`}
-            onClick={() => titleOnclick(4)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div>Rewards </div>
-              {sortColumn === 4 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 4 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 5 ? 'text-primary' : ''}`}
-            onClick={() => titleOnclick(5)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div>Total Supply </div>
-              {sortColumn === 5 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 5 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 6 ? 'text-primary' : ''}`}
-            onClick={() => titleOnclick(6)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div> Total Borrow </div>
-              {sortColumn === 6 && sortDirection === 1 ? (
-                <ArrowDownIcon className="mt-1" />
-              ) : sortColumn === 6 && sortDirection === -1 ? (
-                <ArrowUpIcon className="mt-1" />
-              ) : null}
-            </div>
-          </th>
-          <th
-            className={`${sortColumn === 7 ? 'text-primary' : ''} `}
-            onClick={() => titleOnclick(7)}
-          >
-            <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-              <div>Supply APY(%)</div>
-              {sortColumn === 7 && sortDirection === 1 ? (
-                <ArrowDownIcon />
-              ) : sortColumn === 7 && sortDirection === -1 ? (
-                <ArrowUpIcon />
-              ) : null}
-            </div>
-          </th>
+          <SortableHeader
+            label="Loan"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.LoanAsset}
+          />
+          <SortableHeader
+            label="Collateral"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.CollateralAsset}
+          />
+          <SortableHeader
+            label="LLTV"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.LLTV}
+          />
+          <SortableHeader
+            label="Rewards"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.Reward}
+          />
+          <SortableHeader
+            label="Total Supply"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.Supply}
+            />
+          <SortableHeader
+            label="Total Borrow"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.Borrow}
+          />
+          <SortableHeader
+            label="APY"
+            sortColumn={sortColumn}
+            titleOnclick={titleOnclick}
+            sortDirection={sortDirection}
+            targetColumn={SortColumn.SupplyAPY}
+          />
           <th >
             <Tooltip content="Risks associated with Asset, Oracle and others">
               Risk

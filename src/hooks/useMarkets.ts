@@ -263,7 +263,6 @@ const useMarkets = () => {
           );
 
           const warningsWithDetail = getMarketWarningsWithDetail(market);
-          console.log('warningsWithDetail', warningsWithDetail)
 
           if (!entry) {
             return { ...market, rewardPer1000USD: undefined, warningsWithDetail };
