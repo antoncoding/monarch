@@ -94,9 +94,16 @@ export type MarketWarning = {
 export type WarningWithDetail = {
   code: string;
   description: string;
-  category: string;
+  category: WarningCategory;
   level: string;
 };
+
+export enum WarningCategory {
+  asset = 'asset',
+  oracle = 'oracle',
+  debt = 'debt',
+  general = 'general',
+}
 
 export type TokenInfo = {
   id: string;

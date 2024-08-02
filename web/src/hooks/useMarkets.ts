@@ -6,7 +6,7 @@ import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
 import { OracleFeedsInfo, MarketWarning, WarningWithDetail, TokenInfo } from '@/utils/types';
-import { filterWarningTypes } from '@/utils/warnings';
+import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 export type Reward = {
   id: string;
@@ -72,11 +72,19 @@ export type Market = {
     }[];
   };
   warnings: MarketWarning[];
+  badDebt?: {
+    underlying: number;
+    usd: number;
+  };
+  realizedBadDebt?: {
+    underlying: number;
+    usd: number;
+  };
 
   // appended by us
   rewardPer1000USD?: string;
-  oracleWarnings: WarningWithDetail[];
-  marketWarnings: WarningWithDetail[];
+  warningsWithDetail: WarningWithDetail[];
+  
 };
 
 const query = `query getMarkets(
@@ -128,7 +136,6 @@ const query = `query getMarkets(
         quoteVault
         quoteVaultDescription
         quoteVaultVendor
-        __typename
       }
       loanAsset {
         id
@@ -182,7 +189,14 @@ const query = `query getMarkets(
         level
         __typename
       }
-      __typename
+      badDebt {
+        underlying
+        usd
+      }
+      realizedBadDebt {
+        underlying
+        usd
+      }
     }
     pageInfo {
       countTotal
@@ -248,11 +262,11 @@ const useMarkets = () => {
             (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
           );
 
-          const oracleWarnings = filterWarningTypes('oracle', market.warnings);
-          const marketWarnings = filterWarningTypes('general', market.warnings);
+          const warningsWithDetail = getMarketWarningsWithDetail(market);
+          console.log('warningsWithDetail', warningsWithDetail)
 
           if (!entry) {
-            return { ...market, rewardPer1000USD: undefined, oracleWarnings, marketWarnings };
+            return { ...market, rewardPer1000USD: undefined, warningsWithDetail };
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
@@ -261,8 +275,7 @@ const useMarkets = () => {
           return {
             ...market,
             rewardPer1000USD,
-            oracleWarnings,
-            marketWarnings,
+            warningsWithDetail
           };
         });
 

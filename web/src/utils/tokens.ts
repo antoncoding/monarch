@@ -222,6 +222,18 @@ const supportedTokens = [
     decimals: 18,
     networks: [{ chain: mainnet, address: '0xFAe103DC9cf190eD75350761e95403b7b8aFa6c0' }],
   },
+  {
+    symbol: 'UNI',
+    img: require('../imgs/tokens/uni.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' }],
+  },
+  {
+    symbol: 'AERO',
+    img: require('../imgs/tokens/AERO.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x940181a94A35A4569E4529A3CDfB74e38FD98631' }],
+  }
 ];
 
 const isWhitelisted = (address: string, chainId: number) => {

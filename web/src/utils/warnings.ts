@@ -1,101 +1,131 @@
-import { MarketWarning } from './types';
+import { Market } from '@/hooks/useMarkets';
+import { WarningCategory, WarningWithDetail } from './types';
 
-const morphoOfficialWarnings = [
+const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'hardcoded_oracle',
     level: 'warning',
     description: 'This market uses a hardcoded oracle value',
-    category: 'oracle',
+    category: WarningCategory.oracle
   },
   {
     code: 'hardcoded_oracle_feed',
     level: 'warning',
     description: 'This market is using a hardcoded value in its oracle.	',
-    category: 'oracle',
+    category: WarningCategory.oracle
   },
   {
     code: 'unrecognized_oracle',
     level: 'alert',
     description: 'The oracle is not recognized',
-    category: 'oracle',
+    category: WarningCategory.oracle
   },
   {
     code: 'unrecognized_oracle_feed',
     level: 'alert',
     description: 'This market oracle has feed(s) that are not part of our recognized feeds list.',
-    category: 'oracle',
+    category: WarningCategory.oracle
   },
   {
     code: 'incorrect_loan_exchange_rate',
     level: 'warning',
     description: 'The market is using the exchange rate from a token different from the loan one.	',
-    category: 'general',
+    category: WarningCategory.oracle
   },
   {
     code: 'incorrect_collateral_exchange_rate',
     level: 'warning',
     description:
       'The market is using the exchange rate from a token different from the collateral one.',
-    category: 'general',
-  },
-  {
-    code: 'unrecognized_collateral_asset',
-    level: 'alert',
-    description: 'The collateral asset is not recognized',
-    category: 'asset',
-  },
-  {
-    code: 'unrecognized_loan_asset',
-    level: 'alert',
-    description: 'The loan asset is not recognized',
-    category: 'asset',
-  },
-  {
-    code: 'bad_debt_unrealized',
-    level: 'warning',
-    description: 'This market has some unrealized bad debt',
-    category: 'general',
-  },
-  {
-    code: 'bad_debt_realized',
-    level: 'warning',
-    description: 'This market has some realized bad debt (>10 BPS of total supply)',
-    category: 'general',
-  },
-  {
-    code: 'not_whitelisted',
-    level: 'alert',
-    description: 'This market is not whitelisted by Morpho team',
-    category: 'general',
-  },
-  {
-    code: 'low_liquidity',
-    level: 'warning',
-    description: 'This market has low liquidity, you may not be able to withdraw once supplied',
-    category: 'general',
-  },
-  {
-    code: 'unsafe_vault_as_collateral_asset',
-    level: 'alert',
-    description:
-      'Market is using a MetaMorpho vault as collateral asset which has at least one minor (yellow) warning',
-    category: 'general',
+      category: WarningCategory.oracle
   },
   {
     code: 'incompatible_oracle_feeds',
     level: 'alert',
     description: 'The market is using oracle feeds which do not match with each other.',
-    category: 'oracle',
+    category: WarningCategory.oracle
+  },
+  // asset types
+  {
+    code: 'unrecognized_collateral_asset',
+    level: 'alert',
+    description: 'The collateral asset is not recognized',
+    category: WarningCategory.asset,
+  },
+  {
+    code: 'unrecognized_loan_asset',
+    level: 'alert',
+    description: 'The loan asset is not recognized',
+    category: WarningCategory.asset,
+  },
+  // debt types: might have losses
+  {
+    code: 'bad_debt_unrealized',
+    level: 'warning',
+    description: 'This market has some unrealized bad debt',
+    category: WarningCategory.debt
+  },
+  {
+    code: 'bad_debt_realized',
+    level: 'warning',
+    description: 'This market has some realized bad debt (>10 BPS of total supply)',
+    category: WarningCategory.debt
+  },
+  {
+    code: 'not_whitelisted',
+    level: 'alert',
+    description: 'This market is not whitelisted by Morpho team',
+    category: WarningCategory.general,
+  },
+  {
+    code: 'low_liquidity',
+    level: 'warning',
+    description: 'This market has low liquidity, you may not be able to withdraw once supplied',
+    category: WarningCategory.general,
+  },
+  {
+    code: 'unsafe_vault_as_collateral_asset',
+    level: 'alert',
+    description:
+      'Market is using a MetaMorpho vault as collateral asset which has at least one minor warning',
+      category: WarningCategory.asset,
   },
 ];
 
-export const filterWarningTypes = (category: string, warnings: MarketWarning[]) => {
+export const getMarketWarningsWithDetail = (market: Market) => {
   const result = [];
-  for (const warning of warnings) {
+
+  // process official warnings
+  for (const warning of market.warnings) {
     const foundWarning = morphoOfficialWarnings.find((w) => w.code === warning.type);
-    if (foundWarning && foundWarning.category === category) {
+    if (foundWarning) {
       result.push(foundWarning);
     }
   }
+
+  // ======================
+  //   Add Extra warnings 
+  // ======================
+
+  // bad debt warnings
+  // if (market.badDebt && market.badDebt.usd > 0) {
+  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_unrealized');
+  //   if (warning) {
+  //     if (Number(market.badDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
+  //       warning.level = 'alert';
+  //     }
+  //     result.push(warning);
+  //   }
+  // }
+  // if (market.realizedBadDebt && market.realizedBadDebt.usd > 0) {
+  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_realized');
+  //   if (warning) {
+  //     if (Number(market.realizedBadDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
+  //       warning.level = 'alert';
+  //     }
+  //     result.push(warning);
+  //   }
+  // }
+
   return result;
 };
