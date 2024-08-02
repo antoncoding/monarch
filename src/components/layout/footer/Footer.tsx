@@ -32,11 +32,11 @@ export default function Footer() {
             {/* license link */}
             <div className="flex h-8 w-full items-center justify-center md:w-1/3">
               <NextLink
-                href="https://github.com/antoncoding/monarch/blob/main/LICENSE.md"
+                href="https://t.me/+kM48_lzD9gQ3NzRl"
                 target="_blank"
                 className="no-underline"
               >
-                View LICENSE
+                Send Feedback
               </NextLink>{' '}
             </div>
           </div>

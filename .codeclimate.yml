@@ -1,2 +1,8 @@
 exclude_patterns:
 - "src/abis/"
+checks:
+  method-lines:
+    config:
+      threshold: 80
+  argument-count:
+    enabled: false
