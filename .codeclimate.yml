@@ -1,2 +1,2 @@
 exclude_patterns:
-- "src/abis/
+- "src/abis/"
