@@ -4,6 +4,14 @@
   <h5 align="center"> Easy access to Morpho Blue.</h5>
 </div>
 
+
+![LICENSE](https://img.shields.io/github/license/antoncoding/monarch?style=flat-square)
+![style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)
+![Code Climate technical debt](https://img.shields.io/codeclimate/issues/antoncoding/monarch?style=flat-square)
+![GitHub top language](https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square)
+
+
+
 ![Monarch UI Screenshot](./imgs/Screenshot-1.png)
 
 ## Overview
