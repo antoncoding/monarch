@@ -21,9 +21,7 @@ export function RiskIndicator({ level, description }: RiskFlagProps) {
   
 
 export function MarketAssetIndicator({ market }: { market: Market }) {
-    const { warningsWithDetail } = market;
-
-    const warnings = warningsWithDetail.filter(w => w.category === WarningCategory.asset);
+    const warnings = market.warningsWithDetail.filter(w => w.category === WarningCategory.asset);
     
     if (warnings.length === 0) {
         return <RiskIndicator level="green" description="Legit Assets" />;
@@ -38,8 +36,7 @@ export function MarketAssetIndicator({ market }: { market: Market }) {
 }
 
 export function MarketOracleIndicator({ market }: { market: Market }) {
-    const { warningsWithDetail } = market;
-    const warnings = warningsWithDetail.filter(w => w.category === WarningCategory.oracle);
+    const warnings = market.warningsWithDetail.filter(w => w.category === WarningCategory.oracle);
     
     if (warnings.length === 0) {
         return <RiskIndicator level="green" description="Oracle seems OK!" />;
@@ -54,8 +51,7 @@ export function MarketOracleIndicator({ market }: { market: Market }) {
 }
 
 export function MarketDebtIndicator({ market }: { market: Market }) {
-    const { warningsWithDetail } = market;
-    const warnings = warningsWithDetail.filter(w => w.category === WarningCategory.debt);
+    const warnings = market.warningsWithDetail.filter(w => w.category === WarningCategory.debt);
 
     if (warnings.length === 0) {
         return <RiskIndicator level="green" description="No bad debt" />;

@@ -1,9 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Checkbox, Tooltip } from '@nextui-org/react';
 import storage from 'local-storage-fallback';
 import { Toaster } from 'react-hot-toast';
-import { BsQuestionCircle } from 'react-icons/bs';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
@@ -17,6 +15,7 @@ import {
 } from '@/utils/tokens';
 
 import AssetFilter from './AssetFilter';
+import CheckFilter from './CheckFilter';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
@@ -262,47 +261,25 @@ export default function HomePage() {
 
           {/* right section: checkbox */}
           <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
-            <Checkbox
-              classNames={{
-                base: 'bg-secondary items-center cursor-pointer rounded-sm p-3',
-              }}
-              isSelected={hideDust}
-              onValueChange={(checked: boolean) => {
+            <CheckFilter
+              checked={hideDust}
+              onChange={(checked: boolean) => {
                 setHideDust(checked);
                 storage.setItem(keys.MarketsHideDustKey, checked.toString());
               }}
-              size="sm"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-default-500"> Hide Dust </span>
-                <Tooltip content="Hide markets with lower than $1000 supplied">
-                  <div>
-                    <BsQuestionCircle className="text-default-500" />
-                  </div>
-                </Tooltip>
-              </div>
-            </Checkbox>
+              label='Hide Dust'
+              tooltip='Hide markets with lower than $1000 supplied'
+            />
 
-            <Checkbox
-              classNames={{
-                base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm m-1 p-3',
-              }}
-              isSelected={hideUnknown}
-              onValueChange={(checked: boolean) => {
+            <CheckFilter
+              checked={hideUnknown}
+              onChange={(checked: boolean) => {
                 setHideUnknown(checked);
                 storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
               }}
-              size="sm"
-            >
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-default-500"> Hide Unknown </span>
-                <Tooltip content="Hide markets with unknown assets">
-                  <div>
-                    <BsQuestionCircle className="text-default-500" />
-                  </div>
-                </Tooltip>
-              </div>
-            </Checkbox>
+              label='Hide Unknown'
+              tooltip='Hide markets with unknown assets'
+            />
           </div>
         </div>
 
