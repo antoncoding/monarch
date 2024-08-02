@@ -7,7 +7,7 @@ export const getMarketURL = (id: string, chainId: number): string => {
 
 export const getAssetURL = (address: string, chain: SupportedNetworks): string => {
   switch (chain) { 
-    case SupportedNetworks.Base: return `https://basescan.org/address/${address}`; 
+    case SupportedNetworks.Base: return `https://basescan.org/token/${address}`; 
     default: return `https://etherscan.io/token/${address}`;
   }
 };

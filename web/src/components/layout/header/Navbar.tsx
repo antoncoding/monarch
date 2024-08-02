@@ -52,8 +52,6 @@ export function NavbarTitle() {
 function Navbar() {
   const { theme, setTheme } = useTheme();
 
-  console.log('theme', theme);
-
   const { address } = useAccount();
 
   return (
