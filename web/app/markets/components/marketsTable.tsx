@@ -221,7 +221,7 @@ function MarketsTable({
                       {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
                       <a
                         className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.loanAsset.address)}
+                        href={getAssetURL(item.loanAsset.address, item.morphoBlue.chain.id)}
                         target="_blank"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -241,7 +241,7 @@ function MarketsTable({
                       ) : null}
                       <a
                         className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.collateralAsset.address)}
+                        href={getAssetURL(item.collateralAsset.address, item.morphoBlue.chain.id)}
                         target="_blank"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -324,7 +324,7 @@ function MarketsTable({
                             <p className="font-inter text-sm opacity-80">Oracle:</p>
                             <a
                               className="group flex items-center gap-1 no-underline hover:underline"
-                              href={getExplorerURL(item.oracleAddress)}
+                              href={getExplorerURL(item.oracleAddress, item.morphoBlue.chain.id)}
                               target="_blank"
                             >
                               <p className="text-right font-zen text-sm">{item.oracleInfo.type}</p>
