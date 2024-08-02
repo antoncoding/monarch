@@ -10,7 +10,6 @@ import * as keys from '@/utils/storageKeys';
 import {
   supportedTokens,
   ERC20Token,
-  isWhitelisted
 } from '@/utils/tokens';
 
 import AssetFilter from './AssetFilter';
@@ -19,6 +18,7 @@ import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
+import { applyFilterAndSort } from './utils';
 
 const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString());
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
@@ -29,32 +29,12 @@ const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
 ) as string[];
 
-const sortProperties = {
-  [SortColumn.LoanAsset]: 'loanAsset.name',
-  [SortColumn.CollateralAsset]: 'collateralAsset.name',
-  [SortColumn.LLTV]: 'lltv',
-  [SortColumn.Reward]: (item: Market) => Number(item.rewardPer1000USD ?? '0'),
-  [SortColumn.Supply]: 'state.supplyAssetsUsd',
-  [SortColumn.Borrow]: 'state.borrowAssetsUsd',
-  [SortColumn.SupplyAPY]: 'state.supplyApy',
-};
-
-const getNestedProperty = (obj: Market, path: string | ((item: Market) => number)) => {
-  if (typeof path === 'function') {
-    return path(obj);
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
-};
-
-
 /**
  * Use the page component toLowerCase() wrap the components
  * that you want toLowerCase() render on the page.
  */
-export default function HomePage() {
-  const { loading, data } = useMarkets();
+export default function Markets() {
+  const { loading, data: rawMarkets } = useMarkets();
 
   // token keys, aggregated with | for each "ERC20Token" object
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
@@ -80,7 +60,7 @@ export default function HomePage() {
 
   const [staredIds, setStaredIds] = useState<string[]>(defaultStaredMarkets);
 
-  const [filteredData, setFilteredData] = useState(data);
+  const [filteredMarkets, setFilteredMarkets] = useState(rawMarkets);
 
   const starMarket = useCallback(
     (id: string) => {
@@ -100,10 +80,10 @@ export default function HomePage() {
 
   // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
-    if (data) {
+    if (rawMarkets) {
       // filter ERC20Token objects that exist in markets list
       const collaterals = supportedTokens.filter((token) => {
-        return data.find((market) =>
+        return rawMarkets.find((market) =>
           token.networks.find(
             (network) =>
               network.address.toLowerCase() === market.collateralAsset.address.toLowerCase() &&
@@ -113,7 +93,7 @@ export default function HomePage() {
       });
 
       const loanAssets = supportedTokens.filter((token) => {
-        return data.find((market) =>
+        return rawMarkets.find((market) =>
           token.networks.find(
             (network) =>
               network.address.toLowerCase() === market.loanAsset.address.toLowerCase() &&
@@ -124,64 +104,14 @@ export default function HomePage() {
       setUniqueCollaterals(collaterals);
       setUniqueLoanAssets(loanAssets);
     }
-  }, [data]);
+  }, [rawMarkets]);
 
-  // Update the filter effect toLowerCase() also filter based on the checkbox
+  // Update the all markets pass to the table
   useEffect(() => {
-    let newData = [...data];
-
-    if (selectedNetwork !== null) {
-      newData = newData.filter((item) => item.morphoBlue.chain.id === selectedNetwork);
-    }
-
-    if (hideDust) {
-      newData = newData
-        .filter((item) => Number(item.state.supplyAssetsUsd) > 1000)
-        .filter((item) => Number(item.state.borrowAssetsUsd) > 100);
-    }
-
-    if (hideUnknown) {
-      newData = newData
-        // Filter out any items which's collateral are not in the supported tokens list
-        // Filter out any items which's loan are not in the supported tokens list
-        .filter((item) => isWhitelisted(item.collateralAsset.address, item.morphoBlue.chain.id))
-        .filter((item) => isWhitelisted(item.loanAsset.address, item.morphoBlue.chain.id));
-    }
-
-    if (selectedCollaterals.length > 0) {
-      newData = newData.filter((item) =>
-        selectedCollaterals.find((combinedKey) =>
-          combinedKey
-            .split('|')
-            .includes(`${item.collateralAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
-        ),
-      );
-    }
-
-    if (selectedLoanAssets.length > 0) {
-      newData = newData.filter((item) =>
-        selectedLoanAssets.find((combinedKey) =>
-          combinedKey
-            .split('|')
-            .includes(`${item.loanAsset.address.toLowerCase()}-${item.morphoBlue.chain.id}`),
-        ),
-      );
-    }
-
-    newData.sort((a, b) => {
-
-      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
-      const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
-      
-      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
-      const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
-  
-      return propertyA > propertyB ? sortDirection : -sortDirection;
-    });
-
-    setFilteredData(newData);
+    const filtered = applyFilterAndSort(rawMarkets, sortColumn, sortDirection, selectedNetwork, hideDust, hideUnknown, selectedCollaterals, selectedLoanAssets)
+    setFilteredMarkets(filtered);
   }, [
-    data,
+    rawMarkets,
     hideDust,
     sortColumn,
     sortDirection,
@@ -271,12 +201,12 @@ export default function HomePage() {
 
         {loading ? (
           <div className="py-3 opacity-70"> Loading Morpho Blue Markets... </div>
-        ) : data == null ? (
+        ) : rawMarkets == null ? (
           <div> No data </div>
         ) : (
           <div className="max-w-screen mt-4 overflow-auto bg-secondary">
             <MarketsTable
-              markets={filteredData}
+              markets={filteredMarkets}
               titleOnclick={titleOnclick}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
