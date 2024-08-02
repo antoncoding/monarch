@@ -18,8 +18,8 @@ Follow these steps to run the Monarch UI on your local machine:
 # Clone the repository
 git clone git@github.com:antoncoding/monarch.git
 
-# Navigate into the 'web' directory of the 'monarch' repository
-cd monarch/web
+# Navigate into the folder
+cd monarch
 
 # Install dependencies
 yarn
@@ -27,4 +27,3 @@ yarn
 # Start the development server
 yarn dev
 ```
-
