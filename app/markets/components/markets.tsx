@@ -39,12 +39,13 @@ const sortProperties = {
   [SortColumn.SupplyAPY]: 'state.supplyApy',
 };
 
-const getNestedProperty = (obj: any, path: string | ((item: Market) => number)) => {
+const getNestedProperty = (obj: Market, path: string | ((item: Market) => number)) => {
   if (typeof path === 'function') {
     return path(obj);
   }
 
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
 };
 
 
@@ -168,7 +169,11 @@ export default function HomePage() {
     }
 
     newData.sort((a, b) => {
+
+      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
       const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
+      
+      // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
       const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
   
       return propertyA > propertyB ? sortDirection : -sortDirection;

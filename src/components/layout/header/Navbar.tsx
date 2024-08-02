@@ -72,12 +72,12 @@ function Navbar() {
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/positions/${address || ''}`}>
+              <NavbarLink href={`/positions/${address ?? ''}`}>
                 <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/rewards/${address || ''}`}>
+              <NavbarLink href={`/rewards/${address ?? ''}`}>
                 {' '}
                 <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
               </NavbarLink>
