@@ -9,7 +9,7 @@ import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 
-export default function PositionEntry() {
+export default function SearchOrConnect({path}: {path: string}) {
   const { address } = useAccount();
 
   const [inputAddress, setInputAddress] = useState<string>('');
@@ -21,13 +21,13 @@ export default function PositionEntry() {
       <div className="container items-center justify-center gap-8" style={{ padding: '0 5%' }}>
         <div className="flex justify-center py-14">
           <div className="w-full items-center rounded-md p-12 text-center text-lg text-secondary">
-            Connect wallet or search an account to view positions.
+            Connect wallet or search an account to continue.
           </div>
         </div>
         <div className="flex justify-center">
           {/* {show connect button or input} */}
           {address ? (
-            <Link href={`/positions/${address}`} className="no-underline">
+            <Link href={`/${path}/${address}`} className="no-underline">
               <div className="flex font-zen opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
@@ -69,7 +69,7 @@ export default function PositionEntry() {
               type="button"
               onClick={() => {
                 if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
-                  window.location.href = `/positions/${inputAddress}`;
+                  window.location.href = `/${path}/${inputAddress}`;
                 } else {
                   console.log('inputAddress', inputAddress);
                   toast.error('Invalid address');
