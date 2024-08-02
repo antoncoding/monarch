@@ -37,7 +37,6 @@ type SortableHeaderProps = {
   sortDirection: number;
 };
 
-
 function SortableHeader({
   label,
   sortColumn,
@@ -45,19 +44,26 @@ function SortableHeader({
   sortDirection,
   targetColumn,
 }: SortableHeaderProps) {
-  return (<th
-    className={`${sortColumn === targetColumn ? 'text-primary' : ''}`}
-    onClick={() => titleOnclick(targetColumn)}
-  >
-    <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-      <div>{label}</div>
-      {sortColumn === targetColumn && sortDirection === 1 ? (
-        <ArrowDownIcon />
-      ) : sortColumn === targetColumn && sortDirection === -1 ? (
-        <ArrowUpIcon />
-      ) : null}
-    </div>
-  </th>)
+
+  const sortingCurrent = sortColumn === targetColumn;
+
+  return (
+    <th
+      className={`${sortingCurrent ? 'text-primary' : ''}`}
+      onClick={() => titleOnclick(targetColumn)}
+    >
+      <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+        <div> {label} </div>
+        {sortingCurrent ? (
+          sortDirection === 1 ? (
+            <ArrowDownIcon />
+          ) : (
+            <ArrowUpIcon />
+          )
+        ) : null}
+      </div>
+    </th>
+  );
 }
 
 function MarketsTable({
@@ -113,7 +119,7 @@ function MarketsTable({
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.Supply}
-            />
+          />
           <SortableHeader
             label="Total Borrow"
             sortColumn={sortColumn}
@@ -128,10 +134,8 @@ function MarketsTable({
             sortDirection={sortDirection}
             targetColumn={SortColumn.SupplyAPY}
           />
-          <th >
-            <Tooltip content="Risks associated with Asset, Oracle and others">
-              Risk
-            </Tooltip>
+          <th>
+            <Tooltip content="Risks associated with Asset, Oracle and others">Risk</Tooltip>
           </th>
           <th> Actions </th>
         </tr>
@@ -161,7 +165,6 @@ function MarketsTable({
             reward = reward === '0.00' ? undefined : reward;
 
             const isStared = staredIds.includes(item.uniqueKey);
-
             const chainImg = getNetworkImg(item.morphoBlue.chain.id);
 
             return (
@@ -293,9 +296,9 @@ function MarketsTable({
                   {/* risk score */}
                   <td>
                     <div className="flex items-center justify-center gap-1">
-                      <MarketAssetIndicator market={item}/>
-                      <MarketOracleIndicator market={item}/>
-                      <MarketDebtIndicator market={item}/>
+                      <MarketAssetIndicator market={item} />
+                      <MarketOracleIndicator market={item} />
+                      <MarketDebtIndicator market={item} />
                     </div>
                   </td>
 
@@ -422,11 +425,11 @@ function MarketsTable({
                           {
                             // if no warning
                             item.warnings.length === 0 && (
-                                <Info
-                                  description="No warning flagged for this market!"
-                                  level="success"
-                                />
-                              )
+                              <Info
+                                description="No warning flagged for this market!"
+                                level="success"
+                              />
+                            )
                           }
                         </div>
                       </div>

@@ -40,30 +40,15 @@ export default function NavbarMobile() {
             </li>
 
             <li className="flex">
-              {address ? (
-                <NavbarLink href={`/positions/${address}`}>
-                  {' '}
-                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
-                </NavbarLink>
-              ) : (
-                <NavbarLink href="/positions">
-                  {' '}
-                  <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
-                </NavbarLink>
-              )}
+              <NavbarLink href={`/positions/${address || ''}`}>
+                <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+              </NavbarLink>
             </li>
             <li className="flex">
-              {address ? (
-                <NavbarLink href={`/rewards/${address}`}>
-                  {' '}
-                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
-                </NavbarLink>
-              ) : (
-                <NavbarLink href="/rewards">
-                  {' '}
-                  <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
-                </NavbarLink>
-              )}
+              <NavbarLink href={`/rewards/${address || ''}`}>
+                {' '}
+                <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+              </NavbarLink>
             </li>
 
             <li className="flex">
