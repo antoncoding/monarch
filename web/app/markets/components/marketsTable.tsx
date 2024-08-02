@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Tooltip } from '@nextui-org/tooltip';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 
 import Image from 'next/image';
@@ -6,13 +7,12 @@ import { GoStarFill, GoStar } from 'react-icons/go';
 import { zeroAddress } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { Tooltip } from '@nextui-org/tooltip';
+import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
@@ -173,9 +173,6 @@ function MarketsTable({
             const isStared = staredIds.includes(item.uniqueKey);
 
             const chainImg = getNetworkImg(item.morphoBlue.chain.id);
-
-            // risk indicators
-            const officialWarningIndicator = item.warnings.length > 2 ? 'red' : 'green';
 
             return (
               <>

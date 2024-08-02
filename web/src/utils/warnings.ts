@@ -1,5 +1,5 @@
 import { Market } from '@/hooks/useMarkets';
-import { MarketWarning, WarningCategory, WarningWithDetail } from './types';
+import { WarningCategory, WarningWithDetail } from './types';
 
 const morphoOfficialWarnings: WarningWithDetail[] = [
   {
@@ -106,7 +106,7 @@ export const getMarketWarningsWithDetail = (market: Market) => {
   // ======================
   //   Add Extra warnings 
   // ======================
-  
+
   // bad debt warnings
   // if (market.badDebt && market.badDebt.usd > 0) {
   //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_unrealized');
