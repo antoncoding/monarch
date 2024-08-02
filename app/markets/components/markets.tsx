@@ -1,26 +1,24 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { Checkbox, Select, SelectItem, SelectSection, Tooltip } from '@nextui-org/react';
+import { Checkbox, Tooltip } from '@nextui-org/react';
 import storage from 'local-storage-fallback';
-import Image from 'next/image';
 import { Toaster } from 'react-hot-toast';
 import { BsQuestionCircle } from 'react-icons/bs';
 import Header from '@/components/layout/header/Header';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { generateMetadata } from '@/utils/generateMetadata';
-import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
+import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import {
   supportedTokens,
   ERC20Token,
-  isWhitelisted,
-  findTokenWithKey,
-  infoToKey,
+  isWhitelisted
 } from '@/utils/tokens';
 
-import NetworkFilter from './NetworkFilter';
+import AssetFilter from './AssetFilter';
 import MarketsTable from './marketsTable';
+import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
 
 const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? '5');
@@ -239,101 +237,27 @@ export default function HomePage() {
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
             {/* network filter */}
-            <NetworkFilter selectedNetwork={selectedNetwork} setSelectedNetwork={setSelectedNetwork} />
+            <NetworkFilter setSelectedNetwork={setSelectedNetwork} />
 
-            <Select
+            <AssetFilter
               label="Loan Asset"
-              selectionMode="multiple"
               placeholder="All loan asset"
-              selectedKeys={selectedLoanAssets}
-              onChange={(e) => {
-                if (!e.target.value) setSelectedLoanAssets([]);
-                else setSelectedLoanAssets((e.target.value as string).split(','));
-              }}
-              classNames={{
-                trigger: 'bg-secondary rounded-sm min-w-48',
-                popoverContent: 'bg-secondary rounded-sm',
-              }}
+              selectedAssets={selectedLoanAssets}
+              setSelectedAssets={setSelectedLoanAssets}
               items={uniqueLoanAssets}
-              // className='w-48 rounded-sm'
-              isLoading={loading}
-              renderValue={(items) => {
-                return (
-                  <div className="flex-scroll flex gap-1">
-                    {items.map((item) => {
-                      const token = findTokenWithKey(item.key as string);
-                      return token?.img ? (
-                        <Image src={token.img} alt="icon" height="18" />
-                      ) : (
-                        item.textValue
-                      );
-                    })}
-                  </div>
-                );
-              }}
-            >
-              <SelectSection title="Choose loan assets">
-                {uniqueLoanAssets.map((token) => {
-                  // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
-                  const key = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-                  return (
-                    <SelectItem key={key} textValue={token.symbol}>
-                      <div className="flex items-center justify-between">
-                        <p>{token?.symbol}</p>
-                        {token.img && <Image src={token.img} alt="icon" height="18" />}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectSection>
-            </Select>
+              loading={loading}
+            />
+
 
             {/* collateral  */}
-            <Select
-              label="Collateral Asset"
-              selectionMode="multiple"
-              placeholder="All collateral asset"
-              selectedKeys={selectedCollaterals}
-              onChange={(e) => {
-                if (!e.target.value) setSelectedCollaterals([]);
-                else setSelectedCollaterals((e.target.value as string).split(','));
-              }}
-              classNames={{
-                trigger: 'bg-secondary rounded-sm min-w-48',
-                popoverContent: 'bg-secondary rounded-sm',
-              }}
+            <AssetFilter
+              label="Collateral"
+              placeholder="All collateral"
+              selectedAssets={selectedCollaterals}
+              setSelectedAssets={setSelectedCollaterals}
               items={uniqueCollaterals}
-              isLoading={loading}
-              renderValue={(items) => {
-                return (
-                  <div className="flex-scroll flex gap-1">
-                    {items.map((item) => {
-                      const token = findTokenWithKey(item.key as string);
-                      return token?.img ? (
-                        <Image src={token.img} alt="icon" height="18" />
-                      ) : (
-                        item.textValue
-                      );
-                    })}
-                  </div>
-                );
-              }}
-            >
-              <SelectSection title="Choose collateral assets">
-                {uniqueCollaterals.map((token) => {
-                  // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
-                  const key = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-                  return (
-                    <SelectItem key={key} textValue={token.symbol}>
-                      <div className="flex items-center justify-between">
-                        <p>{token?.symbol}</p>
-                        {token.img && <Image src={token.img} alt="icon" height="18" />}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectSection>
-            </Select>
+              loading={loading}
+            />            
           </div>
 
           {/* right section: checkbox */}

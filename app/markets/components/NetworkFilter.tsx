@@ -5,10 +5,9 @@ import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/
 
 
 type FilterProps = {
-  selectedNetwork: SupportedNetworks | null;
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
 }
-export default function NetworkFilter({selectedNetwork, setSelectedNetwork} : FilterProps) {
+export default function NetworkFilter({setSelectedNetwork} : FilterProps) {
 
   return (
     
