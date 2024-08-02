@@ -3,6 +3,36 @@ import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning } from 'react-icons/md';
 import { MdError } from 'react-icons/md';
 
+const levelToCellColor = (level: string) => {
+  switch (level) {
+    case 'info':
+      return 'bg-blue-200 text-blue-700';
+    case 'success':
+      return 'bg-green-200 text-green-700';
+    case 'warning':
+      return 'bg-yellow-200 text-yellow-700';
+    case 'alert':
+      return 'bg-red-200 text-red-700';
+    default:
+      return '';
+  }
+};
+
+const levelToIcon = (level: string) => {
+  switch (level) {
+    case 'info':
+      return <FaRegLightbulb className="mr-2" size={18} />;
+    case 'success':
+      return <GrStatusGood className="mr-2" size={18} />;
+    case 'warning':
+      return <MdWarning className="mr-2" size={18} />;
+    case 'alert':
+      return <MdError className="mr-2" size={18} />;
+    default:
+      return '';
+  }
+};
+
 /**
  * based on level, return different color and icon
  * @param description
@@ -17,55 +47,13 @@ export function Info({
   level: string;
   title?: string;
 }) {
-  let content;
-  switch (level) {
-    case 'info':
-      content = (
-        <div className="flex items-center rounded-sm bg-blue-200 p-4 text-blue-700 opacity-80">
-          <FaRegLightbulb className="mr-2" size={18} />
-          <div>
-            <h2 className="font-bold">{title}</h2>
-            <p>{description}</p>
-          </div>
-        </div>
-      );
-      break;
-    case 'success':
-      content = (
-        <div className="flex items-center rounded-sm bg-green-200 p-4 text-green-700 opacity-80">
-          <GrStatusGood className="mr-2" size={18} />
-          <div>
-            <h2 className="font-bold">{title}</h2>
-            <p>{description}</p>
-          </div>
-        </div>
-      );
-      break;
-    case 'warning':
-      content = (
-        <div className="flex items-center rounded-sm bg-yellow-200 p-4 text-yellow-700 opacity-80">
-          <MdWarning className="mr-2" size={18} />
-          <div>
-            <h2 className="font-bold">{title}</h2>
-            <p>{description}</p>
-          </div>
-        </div>
-      );
-      break;
-    case 'alert':
-      content = (
-        <div className="flex items-center rounded-sm bg-red-200 p-4 text-red-700 opacity-80">
-          <MdError className="mr-2" size={18} />
-          <div>
-            <h2 className="font-bold">{title}</h2>
-            <p>{description}</p>
-          </div>
-        </div>
-      );
-      break;
-    default:
-      content = <div>{description}</div>;
-  }
-
-  return content;
+  return (
+    <div className={`flex items-center rounded-sm ${levelToCellColor(level)} opacity-80 p-4`}>
+      {levelToIcon(level)}
+      <div>
+        <h2 className="font-bold">{title}</h2>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
 }
