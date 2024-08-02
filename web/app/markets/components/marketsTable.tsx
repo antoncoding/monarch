@@ -301,7 +301,7 @@ function MarketsTable({
                   <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
 
                   {/* risk score */}
-                  <td data-label="Risk Score">
+                  <td>
                     <div className="flex items-center justify-center gap-1">
                       <MarketAssetIndicator market={item}/>
                       <MarketOracleIndicator market={item}/>
