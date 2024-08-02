@@ -8,7 +8,7 @@ import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 
 export function AccountInfoPanel() {
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
   const handleDisconnectWallet = useCallback(() => {
     disconnect();
@@ -28,7 +28,7 @@ export function AccountInfoPanel() {
             {getSlicedAddress(address)}
           </span>
         </div>
-        <Link href={getExplorerURL(address)} target="_blank">
+        <Link href={getExplorerURL(address, chainId ?? 1)} target="_blank">
           <ExternalLinkIcon className="relative h-4 w-4" />
         </Link>
       </div>

@@ -4,14 +4,14 @@ import { Address, zeroAddress } from 'viem';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 
-export function OracleFeedInfo({ address, title }: { address: string; title: string | null }) {
+export function OracleFeedInfo({ address, title, chainId }: { address: string; title: string | null, chainId: number }): JSX.Element {
   const isLink = address !== zeroAddress;
 
   if (isLink)
     return (
       <Link
         className="group flex items-center gap-1 text-right no-underline hover:underline"
-        href={getExplorerURL(address as Address)}
+        href={getExplorerURL(address as Address, chainId)}
         target="_blank"
       >
         {title ? (

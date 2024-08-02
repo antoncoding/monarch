@@ -356,6 +356,7 @@ function MarketsTable({
                                 <OracleFeedInfo
                                   address={item.oracleFeed.baseFeedOneAddress}
                                   title={item.oracleFeed.baseFeedOneDescription}
+                                  chainId={item.morphoBlue.chain.id}
                                 />
                               </div>
                               {/* only shows base feed 2 if non-zero */}
@@ -365,6 +366,7 @@ function MarketsTable({
                                   <OracleFeedInfo
                                     address={item.oracleFeed.baseFeedTwoAddress}
                                     title={item.oracleFeed.baseFeedTwoDescription}
+                                    chainId={item.morphoBlue.chain.id}
                                   />
                                 </div>
                               )}
@@ -374,6 +376,7 @@ function MarketsTable({
                                 <OracleFeedInfo
                                   address={item.oracleFeed.quoteFeedOneAddress}
                                   title={item.oracleFeed.quoteFeedOneDescription}
+                                  chainId={item.morphoBlue.chain.id}
                                 />
                               </div>
 
@@ -384,6 +387,7 @@ function MarketsTable({
                                   <OracleFeedInfo
                                     address={item.oracleFeed.quoteFeedTwoAddress}
                                     title={item.oracleFeed.quoteFeedTwoDescription}
+                                    chainId={item.morphoBlue.chain.id}
                                   />
                                 </div>
                               )}

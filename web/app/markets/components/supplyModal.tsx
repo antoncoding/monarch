@@ -171,7 +171,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <p className="font-inter text-sm opacity-50">Oracle:</p>
             <a
               className="group flex items-center gap-1 no-underline hover:underline"
-              href={getExplorerURL(market.oracleAddress)}
+              href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
               target="_blank"
             >
               <p className="text-right font-zen text-sm">{market.oracleInfo.type}</p>
@@ -182,7 +182,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <p className="font-inter text-sm opacity-50">IRM:</p>
             <a
               className="group flex items-center gap-1 no-underline hover:underline"
-              href={getExplorerURL(market.irmAddress)}
+              href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
               target="_blank"
             >
               <p className="text-right font-zen text-sm">{getIRMTitle(market.irmAddress)}</p>
