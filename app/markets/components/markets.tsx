@@ -15,12 +15,12 @@ import {
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
+import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
-import { SortColumn } from './constants';
 
-const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? '5');
+const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString());
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 const defaultHideDust = storage.getItem(keys.MarketsHideDustKey) === 'true';
 const defaultHideUnknown = storage.getItem(keys.MarketsHideUnknownKey) === 'true';
@@ -33,13 +33,13 @@ const sortProperties = {
   [SortColumn.LoanAsset]: 'loanAsset.name',
   [SortColumn.CollateralAsset]: 'collateralAsset.name',
   [SortColumn.LLTV]: 'lltv',
-  [SortColumn.Reward]: (item: any) => Number(item.rewardPer1000USD ?? '0'),
+  [SortColumn.Reward]: (item: Market) => Number(item.rewardPer1000USD ?? '0'),
   [SortColumn.Supply]: 'state.supplyAssetsUsd',
   [SortColumn.Borrow]: 'state.borrowAssetsUsd',
   [SortColumn.SupplyAPY]: 'state.supplyApy',
 };
 
-const getNestedProperty = (obj: any, path: string | ((item: any) => number)) => {
+const getNestedProperty = (obj: any, path: string | ((item: Market) => number)) => {
   if (typeof path === 'function') {
     return path(obj);
   }

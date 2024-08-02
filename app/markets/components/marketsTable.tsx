@@ -12,8 +12,8 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 import { SortColumn } from './constants';
+import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
