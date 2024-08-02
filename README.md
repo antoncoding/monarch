@@ -2,13 +2,16 @@
   <h1 > Monarch </h1>
   <img height=80 src="./imgs/logo.png"/>
   <h5 align="center"> Easy access to Morpho Blue.</h5>
+
+  <!-- move badges here -->
+  <img src="https://img.shields.io/github/license/antoncoding/monarch?style=flat-square" alt="LICENSE" />
+  <img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square" alt="style" />
+  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/issues/antoncoding/monarch?style=flat-square" alt="Code Climate technical debt" /></a>
+  <img src="https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square" alt="GitHub top language" />
+
+  <br/>
+  <br/>
 </div>
-
-
-![LICENSE](https://img.shields.io/github/license/antoncoding/monarch?style=flat-square)
-![style](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)
-![Code Climate technical debt](https://img.shields.io/codeclimate/issues/antoncoding/monarch?style=flat-square)
-![GitHub top language](https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square)
 
 
 
