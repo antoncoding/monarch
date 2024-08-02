@@ -4,6 +4,9 @@
   <h5 align="center"> Easy access to Morpho Blue.</h5>
 </div>
 
+![Website Deploy](https://deploy-badge.vercel.app/?url=https://www.monarchlend.xyz/&name=Website)
+
+
 ![Monarch UI Screenshot](./imgs/Screenshot-1.png)
 
 ## Overview
