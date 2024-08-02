@@ -1,5 +1,5 @@
-import { generateMetadata } from '@/utils/generateMetadata';
 import SearchOrConnect from '@/components/SearchOrConnect/SearchOrConnect';
+import { generateMetadata } from '@/utils/generateMetadata';
 
 export const metadata = generateMetadata({
   title: 'Positions',
