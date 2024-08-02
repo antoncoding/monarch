@@ -139,7 +139,7 @@ function MarketsTable({
             </div>
           </th>
           <th >
-            <Tooltip content="Risk Score">
+            <Tooltip content="Risks associated with Asset, Oracle and others">
               Risk
             </Tooltip>
           </th>
