@@ -6,11 +6,13 @@ import { GoStarFill, GoStar } from 'react-icons/go';
 import { zeroAddress } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
+import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
+import { Tooltip } from '@nextui-org/tooltip';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
@@ -136,6 +138,11 @@ function MarketsTable({
               ) : null}
             </div>
           </th>
+          <th >
+            <Tooltip content="Risk Score">
+              Risk
+            </Tooltip>
+          </th>
           <th> Actions </th>
         </tr>
       </thead>
@@ -166,6 +173,9 @@ function MarketsTable({
             const isStared = staredIds.includes(item.uniqueKey);
 
             const chainImg = getNetworkImg(item.morphoBlue.chain.id);
+
+            // risk indicators
+            const officialWarningIndicator = item.warnings.length > 2 ? 'red' : 'green';
 
             return (
               <>
@@ -291,9 +301,16 @@ function MarketsTable({
                     </p>
                   </td>
 
-                  {/* <td> {item.loanAsset.address} </td> */}
-
                   <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
+
+                  {/* risk score */}
+                  <td data-label="Risk Score">
+                    <div className="flex items-center justify-center gap-1">
+                      <MarketAssetIndicator market={item}/>
+                      <MarketOracleIndicator market={item}/>
+                      <MarketDebtIndicator market={item}/>
+                    </div>
+                  </td>
 
                   <td>
                     <button
@@ -312,7 +329,7 @@ function MarketsTable({
                 </tr>
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                    <td className="collaps-viewer bg-hovered" colSpan={10}>
+                    <td className="collaps-viewer bg-hovered" colSpan={11}>
                       <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
                         {/* Oracle info */}
                         <div className="m-4 lg:w-1/3">
@@ -400,7 +417,7 @@ function MarketsTable({
                           </div>
 
                           <div className="w-full gap-2 ">
-                            {item.marketWarnings.concat(item.oracleWarnings)?.map((warning) => {
+                            {item.warningsWithDetail.map((warning) => {
                               return (
                                 <Info
                                   key={warning.code}
@@ -413,8 +430,7 @@ function MarketsTable({
                           </div>
                           {
                             // if no warning
-                            item.marketWarnings.length === 0 &&
-                              item.oracleWarnings.length === 0 && (
+                            item.warnings.length === 0 && (
                                 <Info
                                   description="No warning flagged for this market!"
                                   level="success"
