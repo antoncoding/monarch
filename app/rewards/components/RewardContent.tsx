@@ -7,15 +7,15 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Address } from 'viem';
+import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
 
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { useAccount, useSwitchChain } from 'wagmi';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();

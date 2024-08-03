@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 
 import { toast } from 'react-hot-toast';
-import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 
 export function useTransactionWithToast(
   toastId: string,
