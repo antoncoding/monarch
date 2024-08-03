@@ -4,14 +4,21 @@ import Image from 'next/image';
 import { ERC20Token, findTokenWithKey, infoToKey } from '@/utils/tokens';
 
 type FilterProps = {
-  label: string
-  placeholder: string
+  label: string;
+  placeholder: string;
   selectedAssets: string[];
   setSelectedAssets: (assets: string[]) => void;
-  items: ERC20Token[]
-  loading: boolean
+  items: ERC20Token[];
+  loading: boolean;
 };
-export default function AssetFilter({ label, placeholder, selectedAssets, setSelectedAssets, items, loading }: FilterProps) {
+export default function AssetFilter({
+  label,
+  placeholder,
+  selectedAssets,
+  setSelectedAssets,
+  items,
+  loading,
+}: FilterProps) {
   return (
     <Select
       label={label}

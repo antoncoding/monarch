@@ -44,7 +44,6 @@ function SortableHeader({
   sortDirection,
   targetColumn,
 }: SortableHeaderProps) {
-
   const sortingCurrent = sortColumn === targetColumn;
 
   return (
@@ -54,15 +53,63 @@ function SortableHeader({
     >
       <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
         <div> {label} </div>
-        {sortingCurrent ? (
-          sortDirection === 1 ? (
-            <ArrowDownIcon />
-          ) : (
-            <ArrowUpIcon />
-          )
-        ) : null}
+        {sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null}
       </div>
     </th>
+  );
+}
+
+function TDAsset({
+  asset,
+  chainId,
+  img,
+  symbol,
+  dataLabel,
+}: {
+  asset: string;
+  chainId: number;
+  symbol: string;
+  dataLabel?: string;
+  img?: string;
+}) {
+  return (
+    <td data-label={dataLabel ?? symbol} className="z-50">
+      <div className="flex items-center justify-center gap-1">
+        {img ? <Image src={img} alt="icon" width="18" height="18" /> : null}
+        <a
+          className="group flex items-center gap-1 no-underline hover:underline"
+          href={getAssetURL(asset, chainId)}
+          target="_blank"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p> {symbol} </p>
+          <p className="opacity-0 group-hover:opacity-100">
+            <ExternalLinkIcon />
+          </p>
+        </a>
+      </div>
+    </td>
+  );
+}
+
+function TDTotalSupplyOrBorrow({
+  dataLabel,
+  assetsUSD,
+  assets,
+  decimals,
+  symbol,
+}: {
+  dataLabel: string;
+  assetsUSD: string;
+  assets: string;
+  decimals: number;
+  symbol: string;
+}) {
+  return (
+    <td data-label={dataLabel} className="z-50">
+      <p>${formatReadable(Number(assetsUSD)) + '   '} </p>
+      <p className="opacity-70">{formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}</p>
+    </td>
   );
 }
 
@@ -178,6 +225,7 @@ function MarketsTable({
                     item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
                   }'`}
                 >
+                  {/* star */}
                   <td data-label="" className="z-50">
                     <button
                       type="button"
@@ -216,42 +264,22 @@ function MarketsTable({
                   </td>
 
                   {/* loan */}
-                  <td data-label="Loan" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
-                      <a
-                        className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.loanAsset.address, item.morphoBlue.chain.id)}
-                        target="_blank"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p> {item.loanAsset.symbol} </p>
-                        <p className="opacity-0 group-hover:opacity-100">
-                          <ExternalLinkIcon />
-                        </p>
-                      </a>
-                    </div>
-                  </td>
+                  <TDAsset
+                    dataLabel="Loan"
+                    asset={item.loanAsset.address}
+                    chainId={item.morphoBlue.chain.id}
+                    img={loanImg}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   {/* collateral */}
-                  <td data-label="Collateral" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      {collatImg ? (
-                        <Image src={collatImg} alt="icon" width="18" height="18" />
-                      ) : null}
-                      <a
-                        className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.collateralAsset.address, item.morphoBlue.chain.id)}
-                        target="_blank"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p> {collatToShow} </p>
-                        <p className="opacity-0 group-hover:opacity-100">
-                          <ExternalLinkIcon />
-                        </p>
-                      </a>
-                    </div>
-                  </td>
+                  <TDAsset
+                    dataLabel="Collateral"
+                    asset={item.collateralAsset.address}
+                    chainId={item.morphoBlue.chain.id}
+                    img={collatImg}
+                    symbol={collatToShow}
+                  />
 
                   {/* lltv */}
                   <td data-label="LLTV" className="z-50">
@@ -268,28 +296,22 @@ function MarketsTable({
                   </td>
 
                   {/* total supply */}
-                  <td data-label="Total Supply" className="z-50">
-                    <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
-                    <p className="opacity-70">
-                      {formatReadable(
-                        formatBalance(item.state.supplyAssets, item.loanAsset.decimals),
-                      ) +
-                        ' ' +
-                        item.loanAsset.symbol}
-                    </p>
-                  </td>
+                  <TDTotalSupplyOrBorrow
+                    dataLabel="Total Supply"
+                    assetsUSD={item.state.supplyAssetsUsd}
+                    assets={item.state.supplyAssets}
+                    decimals={item.loanAsset.decimals}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   {/* total borrow */}
-                  <td data-label="Total Borrow">
-                    <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
-                    <p style={{ opacity: '0.7' }}>
-                      {formatReadable(
-                        formatBalance(item.state.borrowAssets, item.loanAsset.decimals),
-                      ) +
-                        ' ' +
-                        item.loanAsset.symbol}
-                    </p>
-                  </td>
+                  <TDTotalSupplyOrBorrow
+                    dataLabel="Total Borrow"
+                    assetsUSD={item.state.borrowAssetsUsd}
+                    assets={item.state.borrowAssets}
+                    decimals={item.loanAsset.decimals}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
 

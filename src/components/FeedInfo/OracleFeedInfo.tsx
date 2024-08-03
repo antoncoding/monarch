@@ -4,7 +4,15 @@ import { Address, zeroAddress } from 'viem';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 
-export function OracleFeedInfo({ address, title, chainId }: { address: string; title: string | null, chainId: number }): JSX.Element {
+export function OracleFeedInfo({
+  address,
+  title,
+  chainId,
+}: {
+  address: string;
+  title: string | null;
+  chainId: number;
+}): JSX.Element {
   const isLink = address !== zeroAddress;
 
   if (isLink)

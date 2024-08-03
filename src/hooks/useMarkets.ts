@@ -84,7 +84,6 @@ export type Market = {
   // appended by us
   rewardPer1000USD?: string;
   warningsWithDetail: WarningWithDetail[];
-  
 };
 
 const query = `query getMarkets(
@@ -274,7 +273,7 @@ const useMarkets = () => {
           return {
             ...market,
             rewardPer1000USD,
-            warningsWithDetail
+            warningsWithDetail,
           };
         });
 

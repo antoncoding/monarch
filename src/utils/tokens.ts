@@ -233,7 +233,7 @@ const supportedTokens = [
     img: require('../imgs/tokens/AERO.png') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0x940181a94A35A4569E4529A3CDfB74e38FD98631' }],
-  }
+  },
 ];
 
 const isWhitelisted = (address: string, chainId: number) => {

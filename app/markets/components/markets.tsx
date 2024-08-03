@@ -7,10 +7,7 @@ import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
-import {
-  supportedTokens,
-  ERC20Token,
-} from '@/utils/tokens';
+import { supportedTokens, ERC20Token } from '@/utils/tokens';
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
@@ -20,7 +17,9 @@ import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
 import { applyFilterAndSort } from './utils';
 
-const defaultSortColumn = Number(storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString());
+const defaultSortColumn = Number(
+  storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
+);
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 const defaultHideDust = storage.getItem(keys.MarketsHideDustKey) === 'true';
 const defaultHideUnknown = storage.getItem(keys.MarketsHideUnknownKey) === 'true';
@@ -108,7 +107,16 @@ export default function Markets() {
 
   // Update the all markets pass to the table
   useEffect(() => {
-    const filtered = applyFilterAndSort(rawMarkets, sortColumn, sortDirection, selectedNetwork, hideDust, hideUnknown, selectedCollaterals, selectedLoanAssets)
+    const filtered = applyFilterAndSort(
+      rawMarkets,
+      sortColumn,
+      sortDirection,
+      selectedNetwork,
+      hideDust,
+      hideUnknown,
+      selectedCollaterals,
+      selectedLoanAssets,
+    );
     setFilteredMarkets(filtered);
   }, [
     rawMarkets,
@@ -163,7 +171,6 @@ export default function Markets() {
               loading={loading}
             />
 
-
             {/* collateral  */}
             <AssetFilter
               label="Collateral"
@@ -172,7 +179,7 @@ export default function Markets() {
               setSelectedAssets={setSelectedCollaterals}
               items={uniqueCollaterals}
               loading={loading}
-            />            
+            />
           </div>
 
           {/* right section: checkbox */}
@@ -183,8 +190,8 @@ export default function Markets() {
                 setHideDust(checked);
                 storage.setItem(keys.MarketsHideDustKey, checked.toString());
               }}
-              label='Hide Dust'
-              tooltip='Hide markets with lower than $1000 supplied'
+              label="Hide Dust"
+              tooltip="Hide markets with lower than $1000 supplied"
             />
 
             <CheckFilter
@@ -193,8 +200,8 @@ export default function Markets() {
                 setHideUnknown(checked);
                 storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
               }}
-              label='Hide Unknown'
-              tooltip='Hide markets with unknown assets'
+              label="Hide Unknown"
+              tooltip="Hide markets with unknown assets"
             />
           </div>
         </div>
