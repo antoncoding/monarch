@@ -54,8 +54,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     chainId: market.morphoBlue.chain.id,
   });
 
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
 
   const needSwitchChain = useMemo(
@@ -103,25 +101,18 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   useEffect(() => {
     if (supplyPending) {
-      const pendingId = toast.loading('Tx Pending');
-      setPendingToastId(pendingId);
+      toast.loading('Tx Pending', { id: 'supply' });
     }
   }, [supplyPending]);
 
   useEffect(() => {
     if (supplySuccess) {
-      toast.success('Asset Supplied');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.success('Asset Supplied', { id: 'supply' });
     }
     if (supplyError) {
-      toast.error('Tx Error');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.error('Tx Error', { id: 'supply' });
     }
-  }, [supplySuccess, supplyError, pendingToastId]);
+  }, [supplySuccess, supplyError]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">

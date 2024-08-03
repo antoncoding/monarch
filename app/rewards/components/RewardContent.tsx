@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
@@ -16,9 +16,7 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
 
-export default function Positions() {
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
+export default function Rewards() {
   const { account } = useParams<{ account: string }>();
 
   const { loading, data: markets } = useMarkets();
@@ -32,23 +30,18 @@ export default function Positions() {
 
   useEffect(() => {
     if (icClaiming) {
-      const pendingId = toast.loading('Tx Pending');
-      setPendingToastId(pendingId);
+      toast.loading('Tx Pending', {id: 'claim'});
     }
   }, [icClaiming]);
 
   useEffect(() => {
     if (claimError) {
-      toast.error('Error claiming rewards');
-      if (pendingToastId) toast.dismiss(pendingToastId);
+      toast.error('Error claiming rewards', {id: 'claim'});
     }
     if (claimingSucceed) {
-      toast.success('Rewards claimed');
-      if (pendingToastId) toast.dismiss(pendingToastId);
+      toast.success('Rewards claimed', {id: 'claim'});
     }
-  }, [claimError, claimingSucceed, pendingToastId]);
-
-  console.log('rewards', rewards);
+  }, [claimError, claimingSucceed]);
 
   // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
   const allRewardTokens = useMemo(
@@ -137,7 +130,6 @@ export default function Positions() {
                         to: distribution.distributor.address as Address,
                         data: distribution.tx_data as `0x${string}`,
                       });
-                      // toast('Coming soon 🚀')
                     }}
                   >
                     Claim{' '}

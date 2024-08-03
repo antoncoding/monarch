@@ -31,8 +31,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     position.market.morphoBlue.chain.id,
   );
 
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
   const needSwitchChain = useMemo(
     () => chainId !== position.market.morphoBlue.chain.id,
     [chainId, position.market.morphoBlue.chain.id],
@@ -93,25 +91,18 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   useEffect(() => {
     if (isConfirming) {
-      const pendingId = toast.loading('Tx Pending');
-      setPendingToastId(pendingId);
+      toast.loading('Tx Pending', { id: 'withdraw' });
     }
   }, [isConfirming]);
 
   useEffect(() => {
     if (isConfirmed) {
-      toast.success('Asset Withdrawn!');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.success('Asset Withdrawn!', { id: 'withdraw' });
     }
     if (supplyError) {
-      toast.error('Tx Error');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.error('Tx Error', { id: 'withdraw' });
     }
-  }, [isConfirmed, supplyError, pendingToastId]);
+  }, [isConfirmed, supplyError]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">

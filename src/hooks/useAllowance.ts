@@ -30,8 +30,6 @@ export function useAllowance({
   const [isLoadingAllowance, setIsLoadingAllowance] = useState<boolean>(false);
   const [allowance, setAllowance] = useState<bigint>(BigInt(0));
 
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
   const publicClient = usePublicClient({ chainId: chainIdFromArgumentOrConnectedWallet });
@@ -91,25 +89,18 @@ export function useAllowance({
 
   useEffect(() => {
     if (approvePending) {
-      const pendingId = toast.loading('Please sign in wallet');
-      setPendingToastId(pendingId);
+      toast.loading('Approving token', { id: 'approve'});
     }
   }, [approvePending]);
 
   useEffect(() => {
     if (approveSuccess) {
-      toast.success('Successfully Approved');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.success('Successfully Approved', { id: 'approve' });
     }
     if (checkInError) {
-      toast.error('Tx Error');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
+      toast.error('Tx Error', { id: 'approve' });
     }
-  }, [approveSuccess, checkInError, pendingToastId, dataHash]);
+  }, [approveSuccess, checkInError, dataHash]);
 
   return { allowance, isLoadingAllowance, approveInfinite, approvePending };
 }
