@@ -6,44 +6,44 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     code: 'hardcoded_oracle',
     level: 'warning',
     description: 'This market uses a hardcoded oracle value',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'hardcoded_oracle_feed',
     level: 'warning',
     description: 'This market is using a hardcoded value in its oracle.	',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'unrecognized_oracle',
     level: 'alert',
     description: 'The oracle is not recognized',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'unrecognized_oracle_feed',
     level: 'alert',
     description: 'This market oracle has feed(s) that are not part of our recognized feeds list.',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'incorrect_loan_exchange_rate',
     level: 'warning',
     description: 'The market is using the exchange rate from a token different from the loan one.	',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'incorrect_collateral_exchange_rate',
     level: 'warning',
     description:
       'The market is using the exchange rate from a token different from the collateral one.',
-      category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   {
     code: 'incompatible_oracle_feeds',
     level: 'alert',
     description: 'The market is using oracle feeds which do not match with each other.',
-    category: WarningCategory.oracle
+    category: WarningCategory.oracle,
   },
   // asset types
   {
@@ -63,13 +63,13 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     code: 'bad_debt_unrealized',
     level: 'warning',
     description: 'This market has some unrealized bad debt',
-    category: WarningCategory.debt
+    category: WarningCategory.debt,
   },
   {
     code: 'bad_debt_realized',
     level: 'warning',
     description: 'This market has some realized bad debt (>10 BPS of total supply)',
-    category: WarningCategory.debt
+    category: WarningCategory.debt,
   },
   {
     code: 'not_whitelisted',
@@ -88,7 +88,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     level: 'alert',
     description:
       'Market is using a MetaMorpho vault as collateral asset which has at least one minor warning',
-      category: WarningCategory.asset,
+    category: WarningCategory.asset,
   },
 ];
 
@@ -104,7 +104,7 @@ export const getMarketWarningsWithDetail = (market: Market) => {
   }
 
   // ======================
-  //   Add Extra warnings 
+  //   Add Extra warnings
   // ======================
 
   // bad debt warnings

@@ -1,14 +1,15 @@
 // Import the necessary hooks
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Address } from 'viem';
-import { useAccount, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { Address, encodeFunctionData } from 'viem';
+import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
@@ -31,8 +32,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     position.market.morphoBlue.chain.id,
   );
 
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
   const needSwitchChain = useMemo(
     () => chainId !== position.market.morphoBlue.chain.id,
     [chainId, position.market.morphoBlue.chain.id],
@@ -40,16 +39,12 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   const { switchChain } = useSwitchChain();
 
-  const {
-    data: hash,
-    writeContract,
-    // data: hash,
-    error: supplyError,
-  } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isConfirming, sendTransaction } = useTransactionWithToast(
+    'withdraw',
+    'Withdrawing...',
+    'Asset Withdrawn',
+    'Failed to withdraw',
+  );
 
   const withdraw = useCallback(async () => {
     if (!account) {
@@ -62,56 +57,36 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
     const sharesToWithdraw = isMax ? position.supplyShares : '0';
 
-    writeContract({
+    sendTransaction({
       account,
-      address: MORPHO,
-      abi: morphoAbi,
-      functionName: 'withdraw',
-      args: [
-        {
-          loanToken: position.market.loanAsset.address as Address,
-          collateralToken: position.market.collateralAsset.address as Address,
-          oracle: position.market.oracleAddress as Address,
-          irm: position.market.irmAddress as Address,
-          lltv: BigInt(position.market.lltv),
-        },
-        BigInt(assetsToWithdraw),
-        BigInt(sharesToWithdraw),
-        account, // onBehalf
-        account, // receiver
-      ],
+      to: MORPHO,
+      data: encodeFunctionData({
+        abi: morphoAbi,
+        functionName: 'withdraw',
+        args: [
+          {
+            loanToken: position.market.loanAsset.address as Address,
+            collateralToken: position.market.collateralAsset.address as Address,
+            oracle: position.market.oracleAddress as Address,
+            irm: position.market.irmAddress as Address,
+            lltv: BigInt(position.market.lltv),
+          },
+          BigInt(assetsToWithdraw),
+          BigInt(sharesToWithdraw),
+          account, // onBehalf
+          account, // receiver
+        ],
+      }),
       chainId: position.market.morphoBlue.chain.id,
     });
   }, [
     account,
     position.market,
     withdrawAmount,
-    writeContract,
+    sendTransaction,
     position.supplyAssets,
     position.supplyShares,
   ]);
-
-  useEffect(() => {
-    if (isConfirming) {
-      const pendingId = toast.loading('Tx Pending');
-      setPendingToastId(pendingId);
-    }
-  }, [isConfirming]);
-
-  useEffect(() => {
-    if (isConfirmed) {
-      toast.success('Asset Withdrawn!');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
-    }
-    if (supplyError) {
-      toast.error('Tx Error');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
-    }
-  }, [isConfirmed, supplyError, pendingToastId]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">

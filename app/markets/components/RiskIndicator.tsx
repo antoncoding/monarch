@@ -19,7 +19,13 @@ export function RiskIndicator({ level, description }: RiskFlagProps) {
   );
 }
 
-export function RiskIndicatorFromWarning({ market, category, greeDescription, yellowDescription, redDescription }: {
+export function RiskIndicatorFromWarning({
+  market,
+  category,
+  greeDescription,
+  yellowDescription,
+  redDescription,
+}: {
   market: Market;
   category: WarningCategory;
   greeDescription: string;
@@ -33,35 +39,40 @@ export function RiskIndicatorFromWarning({ market, category, greeDescription, ye
   if (warnings.some((warning) => warning.level === 'alert')) {
     return <RiskIndicator level="red" description={redDescription} />;
   } else return <RiskIndicator level="yellow" description={yellowDescription} />;
-
 }
 
 export function MarketAssetIndicator({ market }: { market: Market }) {
-  return <RiskIndicatorFromWarning
-    market={market}
-    category={WarningCategory.asset}
-    greeDescription="Recognized assets"
-    yellowDescription="Some warning flagged with the assets"
-    redDescription="Dangerous assets"
-  />
+  return (
+    <RiskIndicatorFromWarning
+      market={market}
+      category={WarningCategory.asset}
+      greeDescription="Recognized assets"
+      yellowDescription="Some warning flagged with the assets"
+      redDescription="Dangerous assets"
+    />
+  );
 }
 
 export function MarketOracleIndicator({ market }: { market: Market }) {
-  return <RiskIndicatorFromWarning
-    market={market}
-    category={WarningCategory.oracle}
-    greeDescription="Recognized oracles"
-    yellowDescription="Some warning flagged with the oracle"
-    redDescription="Some alert flagged with the oracle"
-  />
+  return (
+    <RiskIndicatorFromWarning
+      market={market}
+      category={WarningCategory.oracle}
+      greeDescription="Recognized oracles"
+      yellowDescription="Some warning flagged with the oracle"
+      redDescription="Some alert flagged with the oracle"
+    />
+  );
 }
 
 export function MarketDebtIndicator({ market }: { market: Market }) {
-  return <RiskIndicatorFromWarning
-    market={market}
-    category={WarningCategory.debt}
-    greeDescription="No bad debt"
-    yellowDescription="Bad debt has occurred"
-    redDescription="Bad debt higher than 1% of supply"
-  />
+  return (
+    <RiskIndicatorFromWarning
+      market={market}
+      category={WarningCategory.debt}
+      greeDescription="No bad debt"
+      yellowDescription="Bad debt has occurred"
+      redDescription="Bad debt higher than 1% of supply"
+    />
+  );
 }

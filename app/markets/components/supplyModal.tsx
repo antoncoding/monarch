@@ -1,22 +1,17 @@
 // Import the necessary hooks
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Address, formatUnits } from 'viem';
-import {
-  useAccount,
-  useBalance,
-  useSwitchChain,
-  useWaitForTransactionReceipt,
-  useWriteContract,
-} from 'wagmi';
+import { Address, encodeFunctionData, formatUnits } from 'viem';
+import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { MORPHO, getIRMTitle } from '@/utils/morpho';
@@ -54,8 +49,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     chainId: market.morphoBlue.chain.id,
   });
 
-  const [pendingToastId, setPendingToastId] = useState<string | undefined>();
-
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);
 
   const needSwitchChain = useMemo(
@@ -63,11 +56,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     [chainId, market.morphoBlue.chain.id],
   );
 
-  const { writeContract, data: hash, error: supplyError } = useWriteContract();
-
-  const { isLoading: supplyPending, isSuccess: supplySuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isConfirming: supplyPending, sendTransaction } = useTransactionWithToast(
+    'supply',
+    'Supplying...',
+    'Asset Supplied',
+    'Failed to supply',
+  );
 
   const supply = useCallback(async () => {
     if (!account) {
@@ -79,49 +73,29 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       switchChain({ chainId: market.morphoBlue.chain.id });
     }
 
-    writeContract({
+    sendTransaction({
       account,
-      address: MORPHO,
-      abi: morphoAbi,
-      functionName: 'supply',
-      args: [
-        {
-          loanToken: market.loanAsset.address as Address,
-          collateralToken: market.collateralAsset.address as Address,
-          oracle: market.oracleAddress as Address,
-          irm: market.irmAddress as Address,
-          lltv: BigInt(market.lltv),
-        },
-        supplyAmount,
-        BigInt(0),
-        account,
-        '0x',
-      ],
+      to: MORPHO,
+      data: encodeFunctionData({
+        abi: morphoAbi,
+        functionName: 'supply',
+        args: [
+          {
+            loanToken: market.loanAsset.address as Address,
+            collateralToken: market.collateralAsset.address as Address,
+            oracle: market.oracleAddress as Address,
+            irm: market.irmAddress as Address,
+            lltv: BigInt(market.lltv),
+          },
+          supplyAmount,
+          BigInt(0),
+          account,
+          '0x',
+        ],
+      }),
       chainId: market.morphoBlue.chain.id,
     });
-  }, [account, market, supplyAmount, writeContract, switchChain, chainId]);
-
-  useEffect(() => {
-    if (supplyPending) {
-      const pendingId = toast.loading('Tx Pending');
-      setPendingToastId(pendingId);
-    }
-  }, [supplyPending]);
-
-  useEffect(() => {
-    if (supplySuccess) {
-      toast.success('Asset Supplied');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
-    }
-    if (supplyError) {
-      toast.error('Tx Error');
-      if (pendingToastId) {
-        toast.dismiss(pendingToastId);
-      }
-    }
-  }, [supplySuccess, supplyError, pendingToastId]);
+  }, [account, market, supplyAmount, sendTransaction, switchChain, chainId]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
@@ -244,7 +218,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </button>
           ) : needApproval ? (
             <button
-              disabled={!isConnected || approvePending || inputError !== null}
+              disabled={!isConnected || approvePending}
               type="button"
               onClick={() => void approveInfinite()}
               className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"

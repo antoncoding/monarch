@@ -1,16 +1,13 @@
 'use client';
-import { Select, SelectItem, } from '@nextui-org/react';
+import { Select, SelectItem } from '@nextui-org/react';
 import Image from 'next/image';
 import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
 
-
 type FilterProps = {
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
-}
-export default function NetworkFilter({setSelectedNetwork} : FilterProps) {
-
+};
+export default function NetworkFilter({ setSelectedNetwork }: FilterProps) {
   return (
-    
     <Select
       label="Network"
       selectionMode="single"

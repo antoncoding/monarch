@@ -9,5 +9,5 @@ export const metadata = generateMetadata({
 });
 
 export default function LogIn() {
-  return <SearchOrConnect path='positions' />;
+  return <SearchOrConnect path="positions" />;
 }

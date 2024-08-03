@@ -48,7 +48,7 @@ export function Info({
   title?: string;
 }) {
   return (
-    <div className={`flex items-center rounded-sm ${levelToCellColor(level)} opacity-80 p-4`}>
+    <div className={`flex items-center rounded-sm ${levelToCellColor(level)} p-4 opacity-80`}>
       {levelToIcon(level)}
       <div>
         <h2 className="font-bold">{title}</h2>

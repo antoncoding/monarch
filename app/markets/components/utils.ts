@@ -1,7 +1,7 @@
-import { Market } from "@/hooks/useMarkets";
-import { SupportedNetworks } from "@/utils/networks";
-import { isWhitelisted } from "@/utils/tokens";
-import { SortColumn } from "./constants";
+import { Market } from '@/hooks/useMarkets';
+import { SupportedNetworks } from '@/utils/networks';
+import { isWhitelisted } from '@/utils/tokens';
+import { SortColumn } from './constants';
 
 export const sortProperties = {
   [SortColumn.LoanAsset]: 'loanAsset.name',
@@ -22,17 +22,26 @@ export const getNestedProperty = (obj: Market, path: string | ((item: Market) =>
   return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
 };
 
-const isSelectedAsset = (market: Market, selectedAssetKeys: string[], type: 'collateral' | 'loan') => {
+const isSelectedAsset = (
+  market: Market,
+  selectedAssetKeys: string[],
+  type: 'collateral' | 'loan',
+) => {
   return selectedAssetKeys.find((combinedKey) =>
     combinedKey
       .split('|')
-      .includes(`${(type === 'collateral' ? market.collateralAsset : market.loanAsset).address.toLowerCase()}-${market.morphoBlue.chain.id}`),
+      .includes(
+        `${(type === 'collateral'
+          ? market.collateralAsset
+          : market.loanAsset
+        ).address.toLowerCase()}-${market.morphoBlue.chain.id}`,
+      ),
   );
-}
+};
 
 export function applyFilterAndSort(
-  markets: Market[], 
-  sortColumn: SortColumn, 
+  markets: Market[],
+  sortColumn: SortColumn,
   sortDirection: number,
   selectedNetwork: SupportedNetworks | null,
   hideDust: boolean,
@@ -69,11 +78,10 @@ export function applyFilterAndSort(
   }
 
   newData.sort((a, b) => {
-
-    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
     const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
-    
-    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment 
+
+    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
     const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
 
     return propertyA > propertyB ? sortDirection : -sortDirection;

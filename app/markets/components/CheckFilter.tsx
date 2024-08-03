@@ -1,14 +1,13 @@
-import { Checkbox } from "@nextui-org/checkbox";
-import { Tooltip } from "@nextui-org/tooltip";
-import { BsQuestionCircle } from "react-icons/bs";
+import { Checkbox } from '@nextui-org/checkbox';
+import { Tooltip } from '@nextui-org/tooltip';
+import { BsQuestionCircle } from 'react-icons/bs';
 
-type CheckFilterProps= {
+type CheckFilterProps = {
   label: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
   tooltip?: string;
 };
-
 
 export default function CheckFilter({ label, checked, onChange, tooltip }: CheckFilterProps) {
   return (
@@ -22,11 +21,13 @@ export default function CheckFilter({ label, checked, onChange, tooltip }: Check
     >
       <div className="flex items-center justify-center gap-2">
         <span className="text-sm text-default-500"> {label} </span>
-        {tooltip && <Tooltip content={tooltip}>
-          <div>
-            <BsQuestionCircle className="text-default-500" />
-          </div>
-        </Tooltip>}
+        {tooltip && (
+          <Tooltip content={tooltip}>
+            <div>
+              <BsQuestionCircle className="text-default-500" />
+            </div>
+          </Tooltip>
+        )}
       </div>
     </Checkbox>
   );

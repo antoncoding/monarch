@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
-import { zeroAddress } from 'viem';
-import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
-import { Info } from '@/components/Info/info';
 import { Market } from '@/hooks/useMarkets';
-import { formatReadable, formatBalance } from '@/utils/balance';
-import { getMarketURL, getAssetURL, getExplorerURL } from '@/utils/external';
+import { formatReadable } from '@/utils/balance';
+import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { SortColumn } from './constants';
+import { ExpandedMarketDetail } from './MarketRowDetail';
+import { HTSortable, TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
@@ -28,43 +27,6 @@ type MarketsTableProps = {
   unstarMarket: (id: string) => void;
   starMarket: (id: string) => void;
 };
-
-type SortableHeaderProps = {
-  label: string;
-  sortColumn: SortColumn;
-  targetColumn: SortColumn;
-  titleOnclick: (column: number) => void;
-  sortDirection: number;
-};
-
-function SortableHeader({
-  label,
-  sortColumn,
-  titleOnclick,
-  sortDirection,
-  targetColumn,
-}: SortableHeaderProps) {
-
-  const sortingCurrent = sortColumn === targetColumn;
-
-  return (
-    <th
-      className={`${sortingCurrent ? 'text-primary' : ''}`}
-      onClick={() => titleOnclick(targetColumn)}
-    >
-      <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-        <div> {label} </div>
-        {sortingCurrent ? (
-          sortDirection === 1 ? (
-            <ArrowDownIcon />
-          ) : (
-            <ArrowUpIcon />
-          )
-        ) : null}
-      </div>
-    </th>
-  );
-}
 
 function MarketsTable({
   staredIds,
@@ -85,49 +47,49 @@ function MarketsTable({
         <tr>
           <th> {} </th>
           <th> Id </th>
-          <SortableHeader
+          <HTSortable
             label="Loan"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.LoanAsset}
           />
-          <SortableHeader
+          <HTSortable
             label="Collateral"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.CollateralAsset}
           />
-          <SortableHeader
+          <HTSortable
             label="LLTV"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.LLTV}
           />
-          <SortableHeader
+          <HTSortable
             label="Rewards"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.Reward}
           />
-          <SortableHeader
+          <HTSortable
             label="Total Supply"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.Supply}
           />
-          <SortableHeader
+          <HTSortable
             label="Total Borrow"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.Borrow}
           />
-          <SortableHeader
+          <HTSortable
             label="APY"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
@@ -178,6 +140,7 @@ function MarketsTable({
                     item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
                   }'`}
                 >
+                  {/* star */}
                   <td data-label="" className="z-50">
                     <button
                       type="button"
@@ -216,42 +179,22 @@ function MarketsTable({
                   </td>
 
                   {/* loan */}
-                  <td data-label="Loan" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      {loanImg ? <Image src={loanImg} alt="icon" width="18" height="18" /> : null}
-                      <a
-                        className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.loanAsset.address, item.morphoBlue.chain.id)}
-                        target="_blank"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p> {item.loanAsset.symbol} </p>
-                        <p className="opacity-0 group-hover:opacity-100">
-                          <ExternalLinkIcon />
-                        </p>
-                      </a>
-                    </div>
-                  </td>
+                  <TDAsset
+                    dataLabel="Loan"
+                    asset={item.loanAsset.address}
+                    chainId={item.morphoBlue.chain.id}
+                    img={loanImg}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   {/* collateral */}
-                  <td data-label="Collateral" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      {collatImg ? (
-                        <Image src={collatImg} alt="icon" width="18" height="18" />
-                      ) : null}
-                      <a
-                        className="group flex items-center gap-1 no-underline hover:underline"
-                        href={getAssetURL(item.collateralAsset.address, item.morphoBlue.chain.id)}
-                        target="_blank"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <p> {collatToShow} </p>
-                        <p className="opacity-0 group-hover:opacity-100">
-                          <ExternalLinkIcon />
-                        </p>
-                      </a>
-                    </div>
-                  </td>
+                  <TDAsset
+                    dataLabel="Collateral"
+                    asset={item.collateralAsset.address}
+                    chainId={item.morphoBlue.chain.id}
+                    img={collatImg}
+                    symbol={collatToShow}
+                  />
 
                   {/* lltv */}
                   <td data-label="LLTV" className="z-50">
@@ -268,28 +211,22 @@ function MarketsTable({
                   </td>
 
                   {/* total supply */}
-                  <td data-label="Total Supply" className="z-50">
-                    <p>${formatReadable(Number(item.state.supplyAssetsUsd)) + '   '} </p>
-                    <p className="opacity-70">
-                      {formatReadable(
-                        formatBalance(item.state.supplyAssets, item.loanAsset.decimals),
-                      ) +
-                        ' ' +
-                        item.loanAsset.symbol}
-                    </p>
-                  </td>
+                  <TDTotalSupplyOrBorrow
+                    dataLabel="Total Supply"
+                    assetsUSD={item.state.supplyAssetsUsd}
+                    assets={item.state.supplyAssets}
+                    decimals={item.loanAsset.decimals}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   {/* total borrow */}
-                  <td data-label="Total Borrow">
-                    <p>${formatReadable(Number(item.state.borrowAssetsUsd))} </p>
-                    <p style={{ opacity: '0.7' }}>
-                      {formatReadable(
-                        formatBalance(item.state.borrowAssets, item.loanAsset.decimals),
-                      ) +
-                        ' ' +
-                        item.loanAsset.symbol}
-                    </p>
-                  </td>
+                  <TDTotalSupplyOrBorrow
+                    dataLabel="Total Borrow"
+                    assetsUSD={item.state.borrowAssetsUsd}
+                    assets={item.state.borrowAssets}
+                    decimals={item.loanAsset.decimals}
+                    symbol={item.loanAsset.symbol}
+                  />
 
                   <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
 
@@ -320,119 +257,7 @@ function MarketsTable({
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
                     <td className="collaps-viewer bg-hovered" colSpan={11}>
-                      <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
-                        {/* Oracle info */}
-                        <div className="m-4 lg:w-1/3">
-                          {/* warnings */}
-                          <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="mb-2 font-zen">Oracle Info</p>
-                          </div>
-                          <div className="mb-1 flex items-start justify-between">
-                            <p className="font-inter text-sm opacity-80">Oracle:</p>
-                            <a
-                              className="group flex items-center gap-1 no-underline hover:underline"
-                              href={getExplorerURL(item.oracleAddress, item.morphoBlue.chain.id)}
-                              target="_blank"
-                            >
-                              <p className="text-right font-zen text-sm">{item.oracleInfo.type}</p>
-                              <ExternalLinkIcon />
-                            </a>
-                          </div>
-                          {item.oracleFeed && (
-                            <>
-                              <div className="mb-1 flex items-start justify-between">
-                                <p className="font-inter text-xs opacity-80">Base feed</p>
-
-                                <OracleFeedInfo
-                                  address={item.oracleFeed.baseFeedOneAddress}
-                                  title={item.oracleFeed.baseFeedOneDescription}
-                                  chainId={item.morphoBlue.chain.id}
-                                />
-                              </div>
-                              {/* only shows base feed 2 if non-zero */}
-                              {item.oracleFeed.baseFeedTwoAddress !== zeroAddress && (
-                                <div className="mb-1 flex items-start justify-between">
-                                  <p className="font-inter text-xs opacity-80">Base feed 2</p>
-                                  <OracleFeedInfo
-                                    address={item.oracleFeed.baseFeedTwoAddress}
-                                    title={item.oracleFeed.baseFeedTwoDescription}
-                                    chainId={item.morphoBlue.chain.id}
-                                  />
-                                </div>
-                              )}
-
-                              <div className="mb-1 flex items-start justify-between">
-                                <p className="font-inter text-xs opacity-80">Quote feed 1</p>
-                                <OracleFeedInfo
-                                  address={item.oracleFeed.quoteFeedOneAddress}
-                                  title={item.oracleFeed.quoteFeedOneDescription}
-                                  chainId={item.morphoBlue.chain.id}
-                                />
-                              </div>
-
-                              {/* only shows quote feed 2 if non-zero */}
-                              {item.oracleFeed.quoteFeedTwoAddress !== zeroAddress && (
-                                <div className="mb-1 flex items-start justify-between">
-                                  <p className="font-inter text-xs opacity-80">Quote feed 2</p>
-                                  <OracleFeedInfo
-                                    address={item.oracleFeed.quoteFeedTwoAddress}
-                                    title={item.oracleFeed.quoteFeedTwoDescription}
-                                    chainId={item.morphoBlue.chain.id}
-                                  />
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-
-                        {/* market info */}
-                        <div className="m-4 lg:w-1/3">
-                          <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="mb-2 font-zen">Market State</p>
-                          </div>
-                          <div className="mb-1 flex items-start justify-between">
-                            <p className="font-inter text-sm opacity-80">Available Liquidity</p>
-                            <p className="text-right font-zen text-sm">
-                              {formatReadable(Number(item.state.liquidityAssetsUsd))}
-                            </p>
-                          </div>
-                          <div className="mb-1 flex items-start justify-between">
-                            <p className="font-inter text-sm opacity-80">Utilization Rate</p>
-                            <p className="text-right font-zen text-sm">
-                              {formatReadable(Number(item.state.utilization * 100))}%
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* warnings */}
-                        <div className="m-4 mr-0 lg:w-1/3">
-                          <div className="mb-1 flex items-start justify-between text-base font-bold">
-                            <p className="mb-2 font-zen">Warnings</p>
-                          </div>
-
-                          <div className="w-full gap-2 ">
-                            {item.warningsWithDetail.map((warning) => {
-                              return (
-                                <Info
-                                  key={warning.code}
-                                  description={warning.description}
-                                  level={warning.level}
-                                  title={' '}
-                                />
-                              );
-                            })}
-                          </div>
-                          {
-                            // if no warning
-                            item.warnings.length === 0 && (
-                              <Info
-                                description="No warning flagged for this market!"
-                                level="success"
-                              />
-                            )
-                          }
-                        </div>
-                      </div>
+                      <ExpandedMarketDetail market={item} />
                     </td>
                   </tr>
                 )}

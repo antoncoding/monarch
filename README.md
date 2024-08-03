@@ -12,8 +12,6 @@
   <br/>
 </div>
 
-
-
 ![Monarch UI Screenshot](./imgs/Screenshot-1.png)
 
 ## Overview

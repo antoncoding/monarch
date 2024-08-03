@@ -9,7 +9,7 @@ import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 
-export default function SearchOrConnect({path}: {path: string}) {
+export default function SearchOrConnect({ path }: { path: string }) {
   const { address } = useAccount();
 
   const [inputAddress, setInputAddress] = useState<string>('');
