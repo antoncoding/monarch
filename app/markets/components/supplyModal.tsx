@@ -4,12 +4,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
-import { Address, formatUnits } from 'viem';
-import {
-  useAccount,
-  useBalance,
-  useSwitchChain,
-} from 'wagmi';
+import { Address, encodeFunctionData, formatUnits } from 'viem';
+import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -60,7 +56,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     [chainId, market.morphoBlue.chain.id],
   );
 
-  const { isConfirming: supplyPending, writeContract } = useTransactionWithToast('supply', 'Supplying...', 'Asset Supplied', 'Failed to supply');
+  const { isConfirming: supplyPending, sendTransaction } = useTransactionWithToast(
+    'supply',
+    'Supplying...',
+    'Asset Supplied',
+    'Failed to supply',
+  );
 
   const supply = useCallback(async () => {
     if (!account) {
@@ -72,28 +73,29 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       switchChain({ chainId: market.morphoBlue.chain.id });
     }
 
-    writeContract({
+    sendTransaction({
       account,
-      address: MORPHO,
-      abi: morphoAbi,
-      functionName: 'supply',
-      args: [
-        {
-          loanToken: market.loanAsset.address as Address,
-          collateralToken: market.collateralAsset.address as Address,
-          oracle: market.oracleAddress as Address,
-          irm: market.irmAddress as Address,
-          lltv: BigInt(market.lltv),
-        },
-        supplyAmount,
-        BigInt(0),
-        account,
-        '0x',
-      ],
+      to: MORPHO,
+      data: encodeFunctionData({
+        abi: morphoAbi,
+        functionName: 'supply',
+        args: [
+          {
+            loanToken: market.loanAsset.address as Address,
+            collateralToken: market.collateralAsset.address as Address,
+            oracle: market.oracleAddress as Address,
+            irm: market.irmAddress as Address,
+            lltv: BigInt(market.lltv),
+          },
+          supplyAmount,
+          BigInt(0),
+          account,
+          '0x',
+        ],
+      }),
       chainId: market.morphoBlue.chain.id,
     });
-  }, [account, market, supplyAmount, writeContract, switchChain, chainId]);
-
+  }, [account, market, supplyAmount, sendTransaction, switchChain, chainId]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
@@ -216,7 +218,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </button>
           ) : needApproval ? (
             <button
-              disabled={!isConnected || approvePending || inputError !== null}
+              disabled={!isConnected || approvePending}
               type="button"
               onClick={() => void approveInfinite()}
               className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"

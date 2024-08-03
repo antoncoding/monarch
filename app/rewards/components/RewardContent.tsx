@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import toast, { Toaster } from 'react-hot-toast';
 import { Address } from 'viem';
-import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import useMarkets from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
@@ -15,6 +14,8 @@ import useUserRewards from '@/hooks/useRewards';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useAccount, useSwitchChain } from 'wagmi';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
@@ -22,26 +23,14 @@ export default function Rewards() {
   const { loading, data: markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
-  const { data: hash, sendTransaction, error: claimError } = useSendTransaction();
+  const { chainId } = useAccount();
 
-  const { isLoading: icClaiming, isSuccess: claimingSucceed } = useWaitForTransactionReceipt({
-    hash,
-  });
-
-  useEffect(() => {
-    if (icClaiming) {
-      toast.loading('Tx Pending', {id: 'claim'});
-    }
-  }, [icClaiming]);
-
-  useEffect(() => {
-    if (claimError) {
-      toast.error('Error claiming rewards', {id: 'claim'});
-    }
-    if (claimingSucceed) {
-      toast.success('Rewards claimed', {id: 'claim'});
-    }
-  }, [claimError, claimingSucceed]);
+  const { sendTransaction } = useTransactionWithToast(
+    'claim',
+    'Claiming...',
+    'Reward claimed!',
+    'Failed to claim rewards',
+  );
 
   // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
   const allRewardTokens = useMemo(
@@ -90,6 +79,8 @@ export default function Rewards() {
     [markets, rewards],
   );
 
+  const { switchChain } = useSwitchChain();
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -112,6 +103,7 @@ export default function Rewards() {
                       <Image src={matchedToken.img} alt="icon" width="20" height="20" />
                     )}
                   </div>
+
                   <button
                     type="button"
                     className="flex justify-center gap-2 rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
@@ -125,10 +117,16 @@ export default function Rewards() {
                         toast.error('No claim data');
                         return;
                       }
+                      if (chainId !== distribution.distributor.chain_id) {
+                        switchChain({ chainId: tokenReward.chainId });
+                        toast('Click on claim again after switching network');
+                        return;
+                      }
                       sendTransaction({
                         account: account as Address,
                         to: distribution.distributor.address as Address,
                         data: distribution.tx_data as `0x${string}`,
+                        chainId: distribution.distributor.chain_id,
                       });
                     }}
                   >

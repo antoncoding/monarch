@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 
 import { toast } from 'react-hot-toast';
-import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useSendTransaction, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 
 export function useTransactionWithToast(
   toastId: string,
@@ -10,7 +10,7 @@ export function useTransactionWithToast(
   successText: string,
   errorText: string,
 ) {
-  const { data: hash, writeContract, error: txError } = useWriteContract();
+  const { data: hash, sendTransaction, error: txError } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -31,5 +31,5 @@ export function useTransactionWithToast(
     }
   }, [isConfirmed, txError, successText, toastId, errorText]);
 
-  return { writeContract, isConfirming, isConfirmed };
+  return { sendTransaction, isConfirming, isConfirmed };
 }

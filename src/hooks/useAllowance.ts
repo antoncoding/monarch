@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Address } from 'abitype';
-import { toast } from 'react-hot-toast';
 import { encodeFunctionData, erc20Abi, maxUint256 } from 'viem';
 import { Chain } from 'viem/chains';
-import { useAccount, usePublicClient, useSendTransaction } from 'wagmi';
+import { useAccount, usePublicClient } from 'wagmi';
+import { useTransactionWithToast } from './useTransactionWithToast';
 
 type Props = {
   token: Address;
@@ -63,13 +63,12 @@ export function useAllowance({
     return () => clearInterval(interval);
   }, [user, spender, chainId, token, publicClient, refetchInterval]);
 
-  const {
-    sendTransaction,
-    data: dataHash,
-    error: checkInError,
-    isPending: approvePending,
-    isSuccess: approveSuccess,
-  } = useSendTransaction();
+  const { sendTransaction, isConfirming: approvePending } = useTransactionWithToast(
+    'approve',
+    'Approving...',
+    'Authorized',
+    'Approve Error',
+  );
 
   const approveInfinite = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
@@ -86,21 +85,6 @@ export function useAllowance({
       chainId: chainIdFromArgumentOrConnectedWallet,
     });
   }, [user, spender, token, sendTransaction, chainIdFromArgumentOrConnectedWallet]);
-
-  useEffect(() => {
-    if (approvePending) {
-      toast.loading('Approving token', { id: 'approve'});
-    }
-  }, [approvePending]);
-
-  useEffect(() => {
-    if (approveSuccess) {
-      toast.success('Successfully Approved', { id: 'approve' });
-    }
-    if (checkInError) {
-      toast.error('Tx Error', { id: 'approve' });
-    }
-  }, [approveSuccess, checkInError, dataHash]);
 
   return { allowance, isLoadingAllowance, approveInfinite, approvePending };
 }
