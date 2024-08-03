@@ -1,5 +1,5 @@
 // Import the necessary hooks
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
@@ -9,14 +9,13 @@ import {
   useAccount,
   useBalance,
   useSwitchChain,
-  useWaitForTransactionReceipt,
-  useWriteContract,
 } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useAllowance } from '@/hooks/useAllowance';
 import { Market } from '@/hooks/useMarkets';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { MORPHO, getIRMTitle } from '@/utils/morpho';
@@ -61,11 +60,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     [chainId, market.morphoBlue.chain.id],
   );
 
-  const { writeContract, data: hash, error: supplyError } = useWriteContract();
-
-  const { isLoading: supplyPending, isSuccess: supplySuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isConfirming: supplyPending, writeContract } = useTransactionWithToast('supply', 'Supplying...', 'Asset Supplied', 'Failed to supply');
 
   const supply = useCallback(async () => {
     if (!account) {
@@ -99,20 +94,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     });
   }, [account, market, supplyAmount, writeContract, switchChain, chainId]);
 
-  useEffect(() => {
-    if (supplyPending) {
-      toast.loading('Tx Pending', { id: 'supply' });
-    }
-  }, [supplyPending]);
-
-  useEffect(() => {
-    if (supplySuccess) {
-      toast.success('Asset Supplied', { id: 'supply' });
-    }
-    if (supplyError) {
-      toast.error('Tx Error', { id: 'supply' });
-    }
-  }, [supplySuccess, supplyError]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">

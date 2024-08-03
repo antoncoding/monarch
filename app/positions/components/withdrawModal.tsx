@@ -1,14 +1,15 @@
 // Import the necessary hooks
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import { Address } from 'viem';
-import { useAccount, useSwitchChain, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
@@ -38,16 +39,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   const { switchChain } = useSwitchChain();
 
-  const {
-    data: hash,
-    writeContract,
-    // data: hash,
-    error: supplyError,
-  } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isConfirming, writeContract } = useTransactionWithToast('withdraw', 'Withdrawing...', 'Asset Withdrawn', 'Failed to withdraw');
 
   const withdraw = useCallback(async () => {
     if (!account) {
@@ -88,21 +80,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     position.supplyAssets,
     position.supplyShares,
   ]);
-
-  useEffect(() => {
-    if (isConfirming) {
-      toast.loading('Tx Pending', { id: 'withdraw' });
-    }
-  }, [isConfirming]);
-
-  useEffect(() => {
-    if (isConfirmed) {
-      toast.success('Asset Withdrawn!', { id: 'withdraw' });
-    }
-    if (supplyError) {
-      toast.error('Tx Error', { id: 'withdraw' });
-    }
-  }, [isConfirmed, supplyError]);
 
   return (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
