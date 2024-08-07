@@ -7,7 +7,7 @@ import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
-import { supportedTokens, ERC20Token } from '@/utils/tokens';
+import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
@@ -80,28 +80,15 @@ export default function Markets() {
   // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
     if (rawMarkets) {
+      const collatList = rawMarkets.map((m) => {
+        return { address: m.collateralAsset.address, chainId: m.morphoBlue.chain.id };
+      });
+      const loanList = rawMarkets.map((m) => {
+        return { address: m.loanAsset.address, chainId: m.morphoBlue.chain.id };
+      });
       // filter ERC20Token objects that exist in markets list
-      const collaterals = supportedTokens.filter((token) => {
-        return rawMarkets.find((market) =>
-          token.networks.find(
-            (network) =>
-              network.address.toLowerCase() === market.collateralAsset.address.toLowerCase() &&
-              network.chain.id === market.morphoBlue.chain.id,
-          ),
-        );
-      });
-
-      const loanAssets = supportedTokens.filter((token) => {
-        return rawMarkets.find((market) =>
-          token.networks.find(
-            (network) =>
-              network.address.toLowerCase() === market.loanAsset.address.toLowerCase() &&
-              network.chain.id === market.morphoBlue.chain.id,
-          ),
-        );
-      });
-      setUniqueCollaterals(collaterals);
-      setUniqueLoanAssets(loanAssets);
+      setUniqueCollaterals(getUniqueTokens(collatList));
+      setUniqueLoanAssets(getUniqueTokens(loanList));
     }
   }, [rawMarkets]);
 

@@ -328,11 +328,24 @@ const findTokenWithKey = (key: string) => {
   });
 };
 
+const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
+  return supportedTokens.filter((token) => {
+    return tokenList.find((item) =>
+      token.networks.find(
+        (network) =>
+          network.address.toLowerCase() === item.address.toLowerCase() &&
+          network.chain.id === item.chainId,
+      ),
+    );
+  });
+};
+
 export {
   supportedTokens,
   isWhitelisted,
   MORPHOTokenAddress,
   findTokenWithKey,
   findToken,
+  getUniqueTokens,
   infoToKey,
 };

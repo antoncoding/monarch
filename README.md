@@ -6,8 +6,8 @@
   <!-- move badges here -->
   <img src="https://img.shields.io/github/license/antoncoding/monarch?style=flat-square" alt="LICENSE" />
   <img src="https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square" alt="style" />
-  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/issues/antoncoding/monarch?style=flat-square" alt="Code Climate Issues" /></a>  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/tech-debt/antoncoding/monarch?style=flat-square" alt="Code Climate Debt" /></a>  <img src="https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square" alt="GitHub top language" />
-
+  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/issues/antoncoding/monarch?style=flat-square" alt="Code Climate Issues" /></a>  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/tech-debt/antoncoding/monarch?style=flat-square" alt="Code Climate Debt" /></a>  <a href="https://codeclimate.com/github/antoncoding/monarch" target="_blank"><img src="https://img.shields.io/codeclimate/maintainability/antoncoding/monarch?style=flat-square" alt="Code Climate Maintainability" /></a> <img src="https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square" alt="GitHub top language" />
+  
   <br/>
   <br/>
 </div>
