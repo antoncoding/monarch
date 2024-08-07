@@ -201,7 +201,7 @@ const supportedTokens = [
   },
   {
     symbol: 'bsdETH',
-    img: require('../imgs/tokens/bsdeth.svg') as string,
+    img: require('../imgs/tokens/bsdETH.svg') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0xCb327b99fF831bF8223cCEd12B1338FF3aA322Ff' }],
     protocol: {
