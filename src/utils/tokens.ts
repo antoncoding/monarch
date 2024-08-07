@@ -5,6 +5,10 @@ export type ERC20Token = {
   img: string | undefined;
   decimals: number;
   networks: { chain: Chain; address: string }[];
+  protocol?: {
+    name: string;
+    isProxy: boolean;
+  };
 };
 
 const MORPHOTokenAddress = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
@@ -41,6 +45,39 @@ const supportedTokens = [
     img: require('../imgs/tokens/usda.png') as string,
     decimals: 6,
     networks: [{ chain: mainnet, address: '0x0000206329b97DB379d5E1Bf586BbDB969C63274' }],
+  },
+  {
+    symbol: 'eUSD',
+    img: require('../imgs/tokens/eusd.svg') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F' },
+      { chain: base, address: '0xCfA3Ef56d303AE4fAabA0592388F19d7C3399FB4' },
+    ],
+    protocol: {
+      name: 'Reserve',
+      isProxy: true,
+    },
+  },
+  {
+    symbol: 'USD0++',
+    img: require('../imgs/tokens/usd0pp.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x35D8949372D46B7a3D5A56006AE77B215fc69bC0' }],
+    protocol: {
+      name: 'Usual',
+      isProxy: true,
+    },
+  },
+  {
+    symbol: 'hyUSD',
+    img: require('../imgs/tokens/hyusd.svg') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0xCc7FF230365bD730eE4B352cC2492CEdAC49383e' }],
+    protocol: {
+      name: 'Resolve',
+      isProxy: true,
+    },
   },
   {
     symbol: 'FRAX',
@@ -163,6 +200,26 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x9Ba021B0a9b958B5E75cE9f6dff97C7eE52cb3E6' }],
   },
   {
+    symbol: 'bsdETH',
+    img: require('../imgs/tokens/bsdeth.svg') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0xCb327b99fF831bF8223cCEd12B1338FF3aA322Ff' }],
+    protocol: {
+      name: 'Reserve',
+      isProxy: true,
+    },
+  },
+  {
+    symbol: 'ETH+',
+    img: require('../imgs/tokens/eth+.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xE72B141DF173b999AE7c1aDcbF60Cc9833Ce56a8' }],
+    protocol: {
+      name: 'Reserve',
+      isProxy: true,
+    },
+  },
+  {
     symbol: 'LDO',
     img: require('../imgs/tokens/ldo.webp') as string,
     decimals: 18,
@@ -172,7 +229,10 @@ const supportedTokens = [
     symbol: 'rETH',
     img: require('../imgs/tokens/reth.webp') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0xae78736Cd615f374D3085123A210448E74Fc6393' }],
+    networks: [
+      { chain: mainnet, address: '0xae78736Cd615f374D3085123A210448E74Fc6393' },
+      { chain: base, address: '0xB6fe221Fe9EeF5aBa221c348bA20A1Bf5e73624c' },
+    ],
   },
   {
     symbol: 'ezETH',
