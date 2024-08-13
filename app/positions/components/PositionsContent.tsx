@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
-import useUserRewards from '@/hooks/useRewards';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
@@ -19,7 +18,6 @@ export default function Positions() {
   const { account } = useParams<{ account: string }>();
 
   const { loading, data: marketPositions } = useUserPositions(account);
-  const { rewards, loading: loadingRewards } = useUserRewards(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -48,7 +46,7 @@ export default function Positions() {
           />
         )}
 
-        {loading || loadingRewards ? (
+        {loading ? (
           <div className="py-3 opacity-70"> Loading Positions... </div>
         ) : marketPositions.length === 0 ? (
           <div className="w-full items-center rounded-md p-12 text-center text-secondary">
@@ -65,7 +63,6 @@ export default function Positions() {
 
             <SuppliedMarketsTable
               marketPositions={marketPositions}
-              rewards={rewards}
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
             />

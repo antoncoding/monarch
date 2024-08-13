@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { SortColumn } from './constants';
+import { Tooltip } from '@nextui-org/tooltip';
 
 type HTSortableProps = {
   label: string;
@@ -10,6 +11,7 @@ type HTSortableProps = {
   targetColumn: SortColumn;
   titleOnclick: (column: number) => void;
   sortDirection: number;
+  toolTip?: string;
 };
 
 export function HTSortable({
@@ -18,6 +20,7 @@ export function HTSortable({
   titleOnclick,
   sortDirection,
   targetColumn,
+  toolTip,
 }: HTSortableProps) {
   const sortingCurrent = sortColumn === targetColumn;
 
@@ -27,7 +30,7 @@ export function HTSortable({
       onClick={() => titleOnclick(targetColumn)}
     >
       <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-        <div> {label} </div>
+        {toolTip ? <Tooltip content={toolTip}>{label}</Tooltip> : <div>{label}</div>}
         {sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null}
       </div>
     </th>

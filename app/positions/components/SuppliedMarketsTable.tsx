@@ -2,25 +2,20 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 
-import { RewardResponseType } from '@/hooks/useRewards';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
-import { MORPHOTokenAddress, findToken } from '@/utils/tokens';
+import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
-
-const MORPHO_LOGO = require('@/imgs/tokens/morpho.svg') as string;
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
-  rewards: RewardResponseType[];
   setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
 };
 
 export function SuppliedMarketsTable({
   marketPositions,
-  rewards,
   setShowModal,
   setSelectedPosition,
 }: PositionTableProps) {
@@ -33,32 +28,24 @@ export function SuppliedMarketsTable({
     >
       <TableHeader className="table-header">
         <TableColumn> Network </TableColumn>
-        <TableColumn> Market ID </TableColumn>
-        <TableColumn>
-          <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+        <TableColumn className='text-center'> Market ID </TableColumn>
+        <TableColumn className='text-center'>
             <div> Supplied Asset </div>
-          </div>
         </TableColumn>
-        <TableColumn>
+        <TableColumn className='text-center'>
           <div> Collateral </div>
         </TableColumn>
-        <TableColumn>
+        <TableColumn className='text-center'>
           <div> LLTV </div>
-        </TableColumn>
-        <TableColumn>
-          <div> Claimable Reward </div>
-        </TableColumn>
-        <TableColumn>
-          <div> Pending Reward </div>
-        </TableColumn>
-        <TableColumn>
+        </TableColumn >
+        <TableColumn className='text-center'>
           <div> APY </div>
         </TableColumn>
-        <TableColumn>
+        <TableColumn className='text-center'>
           <div> % of Market </div>
         </TableColumn>
 
-        <TableColumn> Actions </TableColumn>
+        <TableColumn className='text-center'> Actions </TableColumn>
       </TableHeader>
       <TableBody>
         {marketPositions.map((position, index) => {
@@ -73,21 +60,7 @@ export function SuppliedMarketsTable({
 
           const networkImg = getNetworkImg(position.market.morphoBlue.chain.id);
 
-          const matchingRewards = rewards.filter((info) => {
-            return (
-              info.program.market_id === position.market.uniqueKey &&
-              info.program.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase()
-            );
-          });
-
-          const hasRewards = matchingRewards.length !== 0;
-
-          const claimableMorpho = matchingRewards.reduce((a: bigint, b) => {
-            return a + BigInt(b.for_supply?.claimable_now ?? '0');
-          }, BigInt(0));
-          const pendingMorpho = matchingRewards.reduce((a: bigint, b) => {
-            return a + BigInt(b.for_supply?.claimable_next ?? '0');
-          }, BigInt(0));
+          console.log('position', position)
 
           return (
             <TableRow key={index.toFixed()}>
@@ -147,31 +120,15 @@ export function SuppliedMarketsTable({
                 </div>
               </TableCell>
 
-              <TableCell>
-                <div className="flex items-center justify-center gap-1">
-                  {hasRewards && <p> {formatReadable(formatBalance(claimableMorpho, 18))} </p>}
-                  {hasRewards && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
-                  {!hasRewards && <p> - </p>}
-                </div>
-              </TableCell>
-
-              <TableCell>
-                <div className="flex items-center justify-center gap-1">
-                  {hasRewards && <p> {formatReadable(formatBalance(pendingMorpho, 18))} </p>}
-                  {hasRewards && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
-                  {!hasRewards && <p> - </p>}
-                </div>
-              </TableCell>
-
               {/* APYs */}
-              <TableCell className="z-50">
+              <TableCell className="z-50 text-center">
                 {formatReadable(position.market.dailyApys.netSupplyApy * 100)}
                 {/* <p>{formatReadable(position.market.weeklyApys.netSupplyApy * 100)}</p> */}
               </TableCell>
 
               {/* percentage */}
-              <TableCell>
-                <p className="opacity-70">
+              <TableCell className='justify-center'>
+                <p className="opacity-70 text-center">
                   {formatReadable(
                     (Number(position.supplyAssets) / Number(position.market.state.supplyAssets)) *
                       100,
@@ -180,7 +137,7 @@ export function SuppliedMarketsTable({
                 </p>
               </TableCell>
 
-              <TableCell>
+              <TableCell className='flex justify-center'>
                 <button
                   type="button"
                   aria-label="Supply"

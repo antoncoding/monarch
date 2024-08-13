@@ -107,9 +107,6 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
-        console.log('result1', result1);
-        console.log('result2', result2);
-
         const allPositions = (
           result1.data ? (result1.data.userByAddress.marketPositions as MarketPosition[]) : []
         ).concat(
