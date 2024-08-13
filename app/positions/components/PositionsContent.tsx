@@ -68,7 +68,7 @@ export default function Positions() {
               setSelectedPosition={setSelectedPosition}
             />
 
-            <h1 className="py-4 font-zen text-xl"> History </h1>
+            <h1 className="py-4 pt-8 font-zen text-xl"> History </h1>
 
             <HistoryTable history={history} />
           </div>

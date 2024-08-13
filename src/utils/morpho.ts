@@ -40,3 +40,14 @@ export const actionTypeToText = (type: UserTxTypes) => {
       return type;
   }
 };
+
+export const isSupportedAction = (type: UserTxTypes) => {
+  switch (type) {
+    case UserTxTypes.MarketBorrow:
+    case UserTxTypes.MarketSupply:
+    case UserTxTypes.MarketWithdraw:
+      return true;
+    default:
+      return false;
+  }
+};

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect } from 'react';
+import { isSupportedAction } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 
@@ -146,8 +147,15 @@ const useUserPositions = (user: string | undefined) => {
 
         for (const result of [result1, result2]) {
           if (result.data.userByAddress) {
-            marketPositions.push(...result.data.userByAddress.marketPositions as MarketPosition[]);
-            transactions.push(...result.data.userByAddress.transactions as UserTransaction[]);
+            marketPositions.push(
+              ...(result.data.userByAddress.marketPositions as MarketPosition[]),
+            );
+
+            // filter only actions that we can display
+            const filteredTx = (result.data.userByAddress.transactions as UserTransaction[]).filter(
+              (tx) => isSupportedAction(tx.type),
+            );
+            transactions.push(...filteredTx);
           }
         }
 

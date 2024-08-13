@@ -66,6 +66,8 @@ export function HistoryTable({ history }: HistoryTableProps) {
       </TableHeader>
       <TableBody>
         {items.map((tx, index) => {
+          console.log('tx', tx);
+
           const loanImg = findToken(
             tx.data.market.loanAsset.address,
             tx.data.market.morphoBlue.chain.id,
