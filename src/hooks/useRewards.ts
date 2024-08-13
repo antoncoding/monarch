@@ -92,8 +92,13 @@ const useUserRewards = (user: string | undefined) => {
         const newRewards = (await totalRewardsRes.json()).data as RewardResponseType[];
         const newDistributions = (await distributionRes.json()).data as DistributionResponseType[];
 
+        if (Array.isArray(newDistributions)) {
+          setDistributions(newDistributions);
+        } else {
+          setDistributions([newDistributions]);
+        }
+
         setRewards(newRewards);
-        setDistributions(newDistributions);
 
         setLoading(false);
       } catch (_error) {
