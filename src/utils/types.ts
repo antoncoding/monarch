@@ -53,6 +53,43 @@ export type MarketPosition = {
   };
 };
 
+export enum UserTxTypes {
+  MarketBorrow = 'MarketBorrow',
+  MarketLiquidation = 'MarketLiquidation',
+  MarketRepay = 'MarketRepay',
+  MarketSupply = 'MarketSupply',
+  MarketSupplyCollateral = 'MarketSupplyCollateral',
+  MarketWithdraw = 'MarketWithdraw',
+  MarketWithdrawCollateral = 'MarketWithdrawCollateral',
+}
+
+export type UserTransaction = {
+  hash: string;
+  timestamp: number;
+  type: UserTxTypes;
+  data: {
+    __typename: UserTxTypes;
+    assetsUsd: number;
+    shares: string;
+    assets: string;
+    market: {
+      id: string;
+      uniqueKey: string;
+      morphoBlue: {
+        chain: {
+          id: number;
+        };
+      };
+      loanAsset: {
+        id: string;
+        address: string;
+        decimals: number;
+        symbol: string;
+      };
+    };
+  };
+};
+
 export type WhitelistMarketResponse = {
   mainnet: {
     markets: {

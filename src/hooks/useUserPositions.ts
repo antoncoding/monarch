@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SupportedNetworks } from '@/utils/networks';
-import { MarketPosition } from '@/utils/types';
+import { MarketPosition, UserTransaction } from '@/utils/types';
 
 const query = `query getUserMarketPositions(
   $address: String!
@@ -63,12 +63,46 @@ const query = `query getUserMarketPositions(
         }
       }
     }
+    transactions {
+      hash
+      timestamp
+      type
+      data {
+        __typename
+        ... on MarketTransferTransactionData {
+          assetsUsd
+          shares
+          assets
+          market {
+            id
+            uniqueKey
+            morphoBlue {
+              chain {
+                id
+              }
+            }
+            collateralAsset {
+              id
+              address
+              decimals
+            }
+            loanAsset {
+              id
+              address
+              decimals
+              symbol
+            } 
+          }
+        }
+      }
+    }
   }
 }`;
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MarketPosition[]>([]);
+  const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
@@ -107,18 +141,21 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
-        console.log('result1', result1);
-        console.log('result2', result2);
+        const marketPositions: MarketPosition[] = [];
+        const transactions: UserTransaction[] = [];
 
-        const allPositions = (
-          result1.data ? (result1.data.userByAddress.marketPositions as MarketPosition[]) : []
-        ).concat(
-          result2.data ? (result2.data.userByAddress.marketPositions as MarketPosition[]) : [],
-        );
-        const filtered = allPositions.filter(
+        for (const result of [result1, result2]) {
+          if (result.data.userByAddress) {
+            marketPositions.push(...result.data.userByAddress.marketPositions as MarketPosition[]);
+            transactions.push(...result.data.userByAddress.transactions as UserTransaction[]);
+          }
+        }
+
+        const filtered = marketPositions.filter(
           (position: MarketPosition) => position.supplyShares.toString() !== '0',
-          // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
         );
+
+        setHistory(transactions);
 
         setData(filtered);
         setLoading(false);
@@ -133,7 +170,7 @@ const useUserPositions = (user: string | undefined) => {
     fetchData().catch(console.error);
   }, [user]);
 
-  return { loading, data, error };
+  return { loading, data, history, error };
 };
 
 export default useUserPositions;
