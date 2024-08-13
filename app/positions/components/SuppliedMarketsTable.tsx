@@ -27,7 +27,7 @@ export function SuppliedMarketsTable({
       }}
     >
       <TableHeader className="table-header">
-        <TableColumn> Network </TableColumn>
+        <TableColumn className="text-center"> Network </TableColumn>
         <TableColumn className="text-center"> Market ID </TableColumn>
         <TableColumn className="text-center">
           <div> Supplied Asset </div>

@@ -141,22 +141,23 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
-        const allPositions = (
-          result1.data ? (result1.data.userByAddress.marketPositions as MarketPosition[]) : []
-        ).concat(
-          result2.data ? (result2.data.userByAddress.marketPositions as MarketPosition[]) : [],
-        );
-        const filtered = allPositions.filter(
+        const marketPositions: MarketPosition[] = []
+        const transactions: UserTransaction[] = []
+
+        if (result1.data.userByAddress) {
+          marketPositions.push(...result1.data.userByAddress.marketPositions)
+          transactions.push(...result1.data.userByAddress.transactions)
+        }
+        if (result2.data.userByAddress) {
+          marketPositions.push(...result2.data.userByAddress.marketPositions)
+          transactions.push(...result2.data.userByAddress.transactions)
+        }
+
+        const filtered = marketPositions.filter(
           (position: MarketPosition) => position.supplyShares.toString() !== '0',
-          // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
         );
 
-        const allTransactions = (
-          result1.data ? (result1.data.userByAddress.transactions as UserTransaction[]) : []
-        ).concat(
-          result2.data ? (result2.data.userByAddress.transactions as UserTransaction[]) : [],
-        );
-        setHistory(allTransactions);
+        setHistory(transactions);
 
         setData(filtered);
         setLoading(false);

@@ -53,7 +53,7 @@ export function HistoryTable({ history }: HistoryTableProps) {
       }
     >
       <TableHeader className="table-header">
-        <TableColumn> Network </TableColumn>
+        <TableColumn className="text-center"> Network </TableColumn>
         <TableColumn className="text-center">Market ID </TableColumn>
         <TableColumn className="text-center">Action</TableColumn>
         <TableColumn className="text-center">Asset</TableColumn>
@@ -77,10 +77,9 @@ export function HistoryTable({ history }: HistoryTableProps) {
 
           return (
             <TableRow key={index.toFixed()}>
-              {/* network */}
               <TableCell>
                 <div className="flex justify-center">
-                  {networkImg ? <Image src={networkImg} alt="icon" width="18" height="18" /> : null}
+                  {networkImg && <Image src={networkImg} alt="network" width="20" height="20" />}
                 </div>
               </TableCell>
 
