@@ -22,3 +22,12 @@ export const getExplorerURL = (address: string, chain: SupportedNetworks): strin
       return `https://etherscan.io/address/${address}`;
   }
 };
+
+export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string => {
+  switch (chain) {
+    case SupportedNetworks.Base:
+      return `https://basescan.org/tx/${hash}`;
+    default:
+      return `https://etherscan.io/tx/${hash}`;
+  }
+};

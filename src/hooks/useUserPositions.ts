@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SupportedNetworks } from '@/utils/networks';
-import { MarketPosition } from '@/utils/types';
+import { MarketPosition, UserTransaction } from '@/utils/types';
 
 const query = `query getUserMarketPositions(
   $address: String!
@@ -63,12 +63,46 @@ const query = `query getUserMarketPositions(
         }
       }
     }
+    transactions {
+      hash
+      timestamp
+      type
+      data {
+        __typename
+        ... on MarketTransferTransactionData {
+          assetsUsd
+          shares
+          assets
+          market {
+            id
+            uniqueKey
+            morphoBlue {
+              chain {
+                id
+              }
+            }
+            collateralAsset {
+              id
+              address
+              decimals
+            }
+            loanAsset {
+              id
+              address
+              decimals
+              symbol
+            } 
+          }
+        }
+      }
+    }
   }
 }`;
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<MarketPosition[]>([]);
+  const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
   useEffect(() => {
@@ -117,6 +151,13 @@ const useUserPositions = (user: string | undefined) => {
           // whitelist.mainnet.markets.some((market) => market.id === position.market.uniqueKey) &&
         );
 
+        const allTransactions = (
+          result1.data ? (result1.data.userByAddress.transactions as UserTransaction[]) : []
+        ).concat(
+          result2.data ? (result2.data.userByAddress.transactions as UserTransaction[]) : [],
+        );
+        setHistory(allTransactions);
+
         setData(filtered);
         setLoading(false);
       } catch (_error) {
@@ -130,7 +171,7 @@ const useUserPositions = (user: string | undefined) => {
     fetchData().catch(console.error);
   }, [user]);
 
-  return { loading, data, error };
+  return { loading, data, history, error };
 };
 
 export default useUserPositions;

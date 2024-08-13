@@ -74,7 +74,7 @@ function MarketsTable({
             titleOnclick={titleOnclick}
             sortDirection={sortDirection}
             targetColumn={SortColumn.Reward}
-            toolTip='Rewards per $1000 supplied'
+            toolTip="Rewards per $1000 supplied"
           />
           <HTSortable
             label="Total Supply"

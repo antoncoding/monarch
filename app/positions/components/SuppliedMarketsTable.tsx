@@ -28,24 +28,24 @@ export function SuppliedMarketsTable({
     >
       <TableHeader className="table-header">
         <TableColumn> Network </TableColumn>
-        <TableColumn className='text-center'> Market ID </TableColumn>
-        <TableColumn className='text-center'>
-            <div> Supplied Asset </div>
+        <TableColumn className="text-center"> Market ID </TableColumn>
+        <TableColumn className="text-center">
+          <div> Supplied Asset </div>
         </TableColumn>
-        <TableColumn className='text-center'>
+        <TableColumn className="text-center">
           <div> Collateral </div>
         </TableColumn>
-        <TableColumn className='text-center'>
+        <TableColumn className="text-center">
           <div> LLTV </div>
-        </TableColumn >
-        <TableColumn className='text-center'>
+        </TableColumn>
+        <TableColumn className="text-center">
           <div> APY </div>
         </TableColumn>
-        <TableColumn className='text-center'>
+        <TableColumn className="text-center">
           <div> % of Market </div>
         </TableColumn>
 
-        <TableColumn className='text-center'> Actions </TableColumn>
+        <TableColumn className="text-center"> Actions </TableColumn>
       </TableHeader>
       <TableBody>
         {marketPositions.map((position, index) => {
@@ -59,8 +59,6 @@ export function SuppliedMarketsTable({
           )?.img;
 
           const networkImg = getNetworkImg(position.market.morphoBlue.chain.id);
-
-          console.log('position', position)
 
           return (
             <TableRow key={index.toFixed()}>
@@ -127,8 +125,8 @@ export function SuppliedMarketsTable({
               </TableCell>
 
               {/* percentage */}
-              <TableCell className='justify-center'>
-                <p className="opacity-70 text-center">
+              <TableCell className="justify-center">
+                <p className="text-center opacity-70">
                   {formatReadable(
                     (Number(position.supplyAssets) / Number(position.market.state.supplyAssets)) *
                       100,
@@ -137,7 +135,7 @@ export function SuppliedMarketsTable({
                 </p>
               </TableCell>
 
-              <TableCell className='flex justify-center'>
+              <TableCell className="flex justify-center">
                 <button
                   type="button"
                   aria-label="Supply"

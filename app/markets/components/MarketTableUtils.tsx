@@ -1,9 +1,9 @@
+import { Tooltip } from '@nextui-org/tooltip';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { SortColumn } from './constants';
-import { Tooltip } from '@nextui-org/tooltip';
 
 type HTSortableProps = {
   label: string;

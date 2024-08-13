@@ -8,6 +8,7 @@ import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
+import { HistoryTable } from './HistoryTable';
 import { SuppliedMarketsTable } from './SuppliedMarketsTable';
 import { WithdrawModal } from './withdrawModal';
 
@@ -17,7 +18,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
 
-  const { loading, data: marketPositions } = useUserPositions(account);
+  const { loading, data: marketPositions, history: history } = useUserPositions(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -66,6 +67,10 @@ export default function Positions() {
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
             />
+
+            <h1 className="py-4 font-zen text-xl"> History </h1>
+
+            <HistoryTable history={history} />
           </div>
         )}
 

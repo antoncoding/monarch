@@ -217,35 +217,22 @@ const useMarkets = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [response /*whitelistRes*/] = await Promise.all([
-          fetch('https://blue-api.morpho.org/graphql', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+        const response = await fetch('https://blue-api.morpho.org/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+            variables: {
+              first: 1000,
+              where: { whitelisted: true },
             },
-            body: JSON.stringify({
-              query,
-              variables: {
-                first: 1000,
-              },
-            }),
           }),
-          // fetch('https://blue-services.morpho.org/whitelisting', {
-          //   method: 'GET',
-          // }),
-        ]);
+        });
         const result = await response.json();
 
-        // const whitelist = (await whitelistRes.json()) as WhitelistMarketResponse;
-
         const items = result.data.markets.items as Market[];
-
-        // const allWhitelistedMarketAddr = whitelist.mainnet.markets.map((market) =>
-        //   market.id.toLowerCase(),
-        // );
-
-        // batch fetch rewards https://rewards.morpho.org/rates/markets?ids=
-        // each with 10 ids, otherwise the server breaks!
 
         const filtered = items
           .filter((market) => market.collateralAsset != undefined)

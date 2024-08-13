@@ -1,4 +1,5 @@
 import { formatBalance } from './balance';
+import { UserTxTypes } from './types';
 
 export const MORPHO = '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
 
@@ -24,5 +25,18 @@ export const getIRMTitle = (address: string) => {
       return 'Adaptive Curve';
     default:
       return 'Unknown IRM';
+  }
+};
+
+export const actionTypeToText = (type: UserTxTypes) => {
+  switch (type) {
+    case UserTxTypes.MarketBorrow:
+      return 'Borrow';
+    case UserTxTypes.MarketSupply:
+      return 'Supply';
+    case UserTxTypes.MarketWithdraw:
+      return 'Withdraw';
+    default:
+      return type;
   }
 };
