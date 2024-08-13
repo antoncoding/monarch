@@ -141,16 +141,14 @@ const useUserPositions = (user: string | undefined) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
-        const marketPositions: MarketPosition[] = []
-        const transactions: UserTransaction[] = []
+        const marketPositions: MarketPosition[] = [];
+        const transactions: UserTransaction[] = [];
 
-        if (result1.data.userByAddress) {
-          marketPositions.push(...result1.data.userByAddress.marketPositions)
-          transactions.push(...result1.data.userByAddress.transactions)
-        }
-        if (result2.data.userByAddress) {
-          marketPositions.push(...result2.data.userByAddress.marketPositions)
-          transactions.push(...result2.data.userByAddress.transactions)
+        for (const result of [result1, result2]) {
+          if (result.data.userByAddress) {
+            marketPositions.push(...result.data.userByAddress.marketPositions as MarketPosition[]);
+            transactions.push(...result.data.userByAddress.transactions as UserTransaction[]);
+          }
         }
 
         const filtered = marketPositions.filter(
