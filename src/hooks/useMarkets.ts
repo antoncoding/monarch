@@ -241,8 +241,6 @@ const useMarkets = () => {
           )
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
-        // console.log('filtered', filtered)
-
         const final = filtered.map((market) => {
           const entry = market.state.rewards.find(
             (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),

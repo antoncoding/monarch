@@ -145,9 +145,12 @@ const useUserPositions = (user: string | undefined) => {
         const transactions: UserTransaction[] = [];
 
         for (const result of [result1, result2]) {
-          if (result.data.userByAddress) {
-            marketPositions.push(...result.data.userByAddress.marketPositions as MarketPosition[]);
-            transactions.push(...result.data.userByAddress.transactions as UserTransaction[]);
+          // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+          if (result.data && result.data.userByAddress) {
+            marketPositions.push(
+              ...(result.data.userByAddress.marketPositions as MarketPosition[]),
+            );
+            transactions.push(...(result.data.userByAddress.transactions as UserTransaction[]));
           }
         }
 
