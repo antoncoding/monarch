@@ -150,7 +150,9 @@ const useUserPositions = (user: string | undefined) => {
             marketPositions.push(
               ...(result.data.userByAddress.marketPositions as MarketPosition[]),
             );
-            transactions.push(...(result.data.userByAddress.transactions as UserTransaction[]));
+
+            const parsableTxs = (result.data.userByAddress.transactions as UserTransaction[]).filter(t => t.data?.market)
+            transactions.push(...(parsableTxs as UserTransaction[]));
           }
         }
 
