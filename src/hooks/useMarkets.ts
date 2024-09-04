@@ -7,6 +7,7 @@ import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
 import { OracleFeedsInfo, MarketWarning, WarningWithDetail, TokenInfo } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
+import useLiquidations from './useLiquidations';
 
 export type Reward = {
   id: string;
@@ -84,157 +85,149 @@ export type Market = {
   // appended by us
   rewardPer1000USD?: string;
   warningsWithDetail: WarningWithDetail[];
+  isProtectedByLiquidationBots: boolean;
 };
 
-const query = `query getMarkets(
-  $first: Int, 
-  $skip: Int, 
-  $orderBy: MarketOrderBy, 
-  $orderDirection: OrderDirection, 
-  $where: MarketFilters
-) { 
-  markets(
-    first: $first
-    skip: $skip
-    orderBy: $orderBy
-    orderDirection: $orderDirection
-    where: $where
-  ) {
-    items {
-      id
-      lltv
-      uniqueKey
-      irmAddress
-      oracleAddress
-      collateralPrice
-      morphoBlue {
+const marketsQuery = `
+  query getMarkets($first: Int, $where: MarketFilters) {
+    markets(first: $first, where: $where) {
+      items {
+        id
+        lltv
+        uniqueKey
+        irmAddress
+        oracleAddress
+        collateralPrice
+        morphoBlue {
+            id
+            address
+            chain {
+              id
+              __typename
+            }
+            __typename
+        }
+        oracleInfo {
+          type
+          __typename
+        }
+        oracleFeed {
+          baseFeedOneAddress
+          baseFeedOneDescription
+          baseFeedTwoAddress
+          baseFeedTwoDescription
+          quoteFeedOneAddress
+          quoteFeedOneDescription
+          quoteFeedTwoAddress
+          quoteFeedTwoDescription
+          baseVault
+          baseVaultDescription
+          baseVaultVendor
+          quoteVault
+          quoteVaultDescription
+          quoteVaultVendor
+        }
+        loanAsset {
           id
           address
-          chain {
-            id
-            __typename
+          symbol
+          name
+          decimals
+          priceUsd
+          __typename
+        }
+        collateralAsset {
+          id
+          address
+          symbol
+          name
+          decimals
+          priceUsd
+          __typename
+        }
+        state {
+          borrowAssets
+          supplyAssets
+          borrowAssetsUsd
+          supplyAssetsUsd
+          borrowShares
+          supplyShares
+          liquidityAssets
+          liquidityAssetsUsd
+          collateralAssets
+          collateralAssetsUsd
+          utilization
+          supplyApy
+          borrowApy
+          fee
+          timestamp
+          rateAtUTarget
+          rewards {
+            yearlySupplyTokens
+            asset {
+              address
+              priceUsd
+              spotPriceEth
+            }
+            amountPerSuppliedToken
+            amountPerBorrowedToken
           }
           __typename
-      }
-      oracleInfo {
-        type
-        __typename
-      }
-      oracleFeed {
-        baseFeedOneAddress
-        baseFeedOneDescription
-        baseFeedTwoAddress
-        baseFeedTwoDescription
-        quoteFeedOneAddress
-        quoteFeedOneDescription
-        quoteFeedTwoAddress
-        quoteFeedTwoDescription
-        baseVault
-        baseVaultDescription
-        baseVaultVendor
-        quoteVault
-        quoteVaultDescription
-        quoteVaultVendor
-      }
-      loanAsset {
-        id
-        address
-        symbol
-        name
-        decimals
-        priceUsd
-        __typename
-      }
-      collateralAsset {
-        id
-        address
-        symbol
-        name
-        decimals
-        priceUsd
-        __typename
-      }
-      state {
-        borrowAssets
-        supplyAssets
-        borrowAssetsUsd
-        supplyAssetsUsd
-        borrowShares
-        supplyShares
-        liquidityAssets
-        liquidityAssetsUsd
-        collateralAssets
-        collateralAssetsUsd
-        utilization
-        supplyApy
-        borrowApy
-        fee
-        timestamp
-        rateAtUTarget
-        rewards {
-          yearlySupplyTokens
-          asset {
-            address
-            priceUsd
-            spotPriceEth
-          }
-          amountPerSuppliedToken
-          amountPerBorrowedToken
         }
+        warnings {
+          type
+          level
+          __typename
+        }
+        badDebt {
+          underlying
+          usd
+        }
+        realizedBadDebt {
+          underlying
+          usd
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
         __typename
-      }
-      warnings {
-        type
-        level
-        __typename
-      }
-      badDebt {
-        underlying
-        usd
-      }
-      realizedBadDebt {
-        underlying
-        usd
-      }
-    }
-    pageInfo {
-      countTotal
-      count
-      limit
-      skip
+      }  
       __typename
-    }  
-    __typename
+    }
   }
-}`;
+`;
 
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
+  const {
+    loading: liquidationsLoading,
+    liquidatedMarketIds,
+    error: liquidationsError,
+  } = useLiquidations();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://blue-api.morpho.org/graphql', {
+
+        // Fetch markets
+        const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            query,
-            variables: {
-              first: 1000,
-              where: { whitelisted: true },
-            },
+            query: marketsQuery,
+            variables: { first: 1000, where: { whitelisted: true } },
           }),
         });
-        const result = await response.json();
+        const marketsResult = await marketsResponse.json();
+        const markets = marketsResult.data.markets.items as Market[];
 
-        const items = result.data.markets.items as Market[];
-
-        const filtered = items
+        const filtered = markets
           .filter((market) => market.collateralAsset != undefined)
           .filter(
             (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
@@ -247,9 +240,15 @@ const useMarkets = () => {
           );
 
           const warningsWithDetail = getMarketWarningsWithDetail(market);
+          const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 
           if (!entry) {
-            return { ...market, rewardPer1000USD: undefined, warningsWithDetail };
+            return {
+              ...market,
+              rewardPer1000USD: undefined,
+              warningsWithDetail,
+              isProtectedByLiquidationBots,
+            };
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
@@ -259,6 +258,7 @@ const useMarkets = () => {
             ...market,
             rewardPer1000USD,
             warningsWithDetail,
+            isProtectedByLiquidationBots,
           };
         });
 
@@ -270,10 +270,15 @@ const useMarkets = () => {
       }
     };
 
-    fetchData().catch(console.error);
-  }, []);
+    if (!liquidationsLoading) {
+      fetchData().catch(console.error);
+    }
+  }, [liquidationsLoading, liquidatedMarketIds]);
 
-  return { loading, data, error };
+  const isLoading = loading || liquidationsLoading;
+  const combinedError = error || liquidationsError;
+
+  return { loading: isLoading, data, error: combinedError };
 };
 
 export default useMarkets;
