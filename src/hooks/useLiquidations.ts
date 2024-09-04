@@ -50,6 +50,22 @@ export type LiquidationTransaction = {
   };
 };
 
+type PageInfo = {
+  countTotal: number;
+  count: number;
+  limit: number;
+  skip: number;
+};
+
+type QueryResult = {
+  data: {
+    transactions: {
+      items: LiquidationTransaction[];
+      pageInfo: PageInfo;
+    };
+  };
+};
+
 const useLiquidations = () => {
   const [loading, setLoading] = useState(true);
   const [liquidatedMarketIds, setLiquidatedMarketIds] = useState<Set<string>>(new Set());
@@ -75,8 +91,8 @@ const useLiquidations = () => {
               variables: { first: pageSize, skip },
             }),
           });
-          const result = await response.json();
-          const liquidations = result.data.transactions.items as LiquidationTransaction[];
+          const result = await response.json() as QueryResult;
+          const liquidations = result.data.transactions.items;
           const pageInfo = result.data.transactions.pageInfo;
 
           liquidations.forEach((tx) => {

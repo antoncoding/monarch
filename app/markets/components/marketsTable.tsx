@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 
-import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable } from '@/utils/balance';
