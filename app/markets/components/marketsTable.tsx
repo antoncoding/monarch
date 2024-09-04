@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { FaShieldAlt } from "react-icons/fa";
+
 
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
@@ -99,6 +101,9 @@ function MarketsTable({
           />
           <th>
             <Tooltip content="Risks associated with Asset, Oracle and others">Risk</Tooltip>
+          </th>
+          <th>
+            <Tooltip content="Protected by Liquidation Bots">Bot</Tooltip>
           </th>
           <th> Actions </th>
         </tr>
@@ -240,6 +245,15 @@ function MarketsTable({
                     </div>
                   </td>
 
+                  {/* Liquidation Bot Protection Indicator */}
+                  <td data-label="Bot Protection" className="z-50">
+                    {item.isProtectedByLiquidationBots && (
+                      <Tooltip content="Protected by Liquidation Bots">
+                        <FaShieldAlt size={16} className="text-primary text-opacity-50" />
+                      </Tooltip>
+                    )}
+                  </td>
+
                   <td>
                     <button
                       type="button"
@@ -257,7 +271,7 @@ function MarketsTable({
                 </tr>
                 {expandedRowId === item.uniqueKey && (
                   <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                    <td className="collaps-viewer bg-hovered" colSpan={11}>
+                    <td className="collaps-viewer bg-hovered" colSpan={12}>
                       <ExpandedMarketDetail market={item} />
                     </td>
                   </tr>
