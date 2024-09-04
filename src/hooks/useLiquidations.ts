@@ -55,7 +55,7 @@ const useLiquidations = () => {
   const [liquidatedMarketIds, setLiquidatedMarketIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<unknown | null>(null);
 
-  console.log('liquidatedMarketIds', liquidatedMarketIds)
+  console.log('liquidatedMarketIds', liquidatedMarketIds);
 
   useEffect(() => {
     const fetchLiquidations = async () => {
@@ -79,7 +79,7 @@ const useLiquidations = () => {
           const liquidations = result.data.transactions.items as LiquidationTransaction[];
           const pageInfo = result.data.transactions.pageInfo;
 
-          liquidations.forEach(tx => {
+          liquidations.forEach((tx) => {
             if (tx.data && 'market' in tx.data) {
               liquidatedIds.add(tx.data.market.id);
             }

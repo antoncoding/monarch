@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { FaShieldAlt } from "react-icons/fa";
-
+import { FaShieldAlt } from 'react-icons/fa';
 
 import Image from 'next/image';
 import { GoStarFill, GoStar } from 'react-icons/go';
@@ -71,14 +70,6 @@ function MarketsTable({
             targetColumn={SortColumn.LLTV}
           />
           <HTSortable
-            label="Rewards"
-            sortColumn={sortColumn}
-            titleOnclick={titleOnclick}
-            sortDirection={sortDirection}
-            targetColumn={SortColumn.Reward}
-            toolTip="Rewards per $1000 supplied"
-          />
-          <HTSortable
             label="Total Supply"
             sortColumn={sortColumn}
             titleOnclick={titleOnclick}
@@ -102,9 +93,7 @@ function MarketsTable({
           <th>
             <Tooltip content="Risks associated with Asset, Oracle and others">Risk</Tooltip>
           </th>
-          <th>
-            <Tooltip content="Protected by Liquidation Bots">Bot</Tooltip>
-          </th>
+          <th> Indicators </th>
           <th> Actions </th>
         </tr>
       </thead>
@@ -207,15 +196,6 @@ function MarketsTable({
                     {Number(item.lltv) / 1e16}%
                   </td>
 
-                  {/* rewards */}
-                  <td data-label="Reward" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      {' '}
-                      <p> {reward ? reward : '-'}</p>
-                      {reward && <Image src={MORPHO_LOGO} alt="icon" width="18" height="18" />}
-                    </div>
-                  </td>
-
                   {/* total supply */}
                   <TDTotalSupplyOrBorrow
                     dataLabel="Total Supply"
@@ -246,12 +226,21 @@ function MarketsTable({
                   </td>
 
                   {/* Liquidation Bot Protection Indicator */}
-                  <td data-label="Bot Protection" className="z-50">
-                    {item.isProtectedByLiquidationBots && (
-                      <Tooltip content="Protected by Liquidation Bots">
-                        <FaShieldAlt size={16} className="text-primary text-opacity-50" />
-                      </Tooltip>
-                    )}
+                  <td data-label="Indicators" className="z-50">
+                    <div className="flex items-center justify-center gap-2">
+                      {reward && (
+                        <Tooltip content="Supplying to this market gives you $MORPHO rewards">
+                          <Image src={MORPHO_LOGO} alt="MORPHO reward" width="18" height="18" />
+                        </Tooltip>
+                      )}
+                      {item.isProtectedByLiquidationBots && (
+                        <Tooltip content="This market has on-chain liquidation events performed by liquidation bots">
+                          <div>
+                            <FaShieldAlt size={16} className="text-primary text-opacity-50" />
+                          </div>
+                        </Tooltip>
+                      )}
+                    </div>
                   </td>
 
                   <td>

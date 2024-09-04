@@ -204,7 +204,11 @@ const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
-  const { loading: liquidationsLoading, liquidatedMarketIds, error: liquidationsError } = useLiquidations();
+  const {
+    loading: liquidationsLoading,
+    liquidatedMarketIds,
+    error: liquidationsError,
+  } = useLiquidations();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -225,19 +229,26 @@ const useMarkets = () => {
 
         const filtered = markets
           .filter((market) => market.collateralAsset != undefined)
-          .filter((market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined)
+          .filter(
+            (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
+          )
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
         const final = filtered.map((market) => {
           const entry = market.state.rewards.find(
-            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase()
+            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
           );
 
           const warningsWithDetail = getMarketWarningsWithDetail(market);
           const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 
           if (!entry) {
-            return { ...market, rewardPer1000USD: undefined, warningsWithDetail, isProtectedByLiquidationBots };
+            return {
+              ...market,
+              rewardPer1000USD: undefined,
+              warningsWithDetail,
+              isProtectedByLiquidationBots,
+            };
           }
 
           const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
