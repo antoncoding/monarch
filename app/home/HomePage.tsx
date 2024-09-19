@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Footer from '@/components/layout/footer/Footer';
 import backgroundImage from '@/imgs/bg/bg.png';
 import HomeHeader from './_components/HomeHeader';
+import PrimaryButton from '@/components/common/PrimaryButton';
 
 export default function HomePage() {
   const [isMorphoBlue, setIsMorphoBlue] = useState(false);
@@ -45,15 +46,8 @@ export default function HomePage() {
             </div>
           </section>
         </main>
-        <div className="flex h-3/4 w-4/5 items-center justify-center pb-12 pt-4 opacity-80">
-          <Link href="/markets">
-            <button
-              type="button"
-              className="bg-monarch-orange rounded-sm p-4 px-10 font-zen opacity-100 transition-all duration-200 ease-in-out hover:scale-105"
-            >
-              Start
-            </button>
-          </Link>
+        <div className="flex h-3/4 w-4/5 items-center justify-center pb-12 pt-4">
+          <PrimaryButton href="/markets">Start</PrimaryButton>
         </div>
       </div>
       <Footer />

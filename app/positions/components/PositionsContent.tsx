@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
+import PrimaryButton from '@/components/common/PrimaryButton';
 
 import { MarketPosition } from '@/utils/types';
 import { HistoryTable } from './HistoryTable';
@@ -75,14 +76,7 @@ export default function Positions() {
         )}
 
         <div className="flex justify-center pt-14">
-          <Link href="/markets">
-            <button
-              type="button"
-              className="bg-monarch-orange rounded-sm p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-            >
-              View All Markets
-            </button>
-          </Link>
+          <PrimaryButton href="/markets">View All Markets</PrimaryButton>
         </div>
         <div className="flex justify-center pt-8">
           <Link href="/positions">
