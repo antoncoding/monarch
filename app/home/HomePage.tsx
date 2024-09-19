@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import PrimaryButton from '@/components/common/PrimaryButton';
 import Footer from '@/components/layout/footer/Footer';
 import backgroundImage from '@/imgs/bg/bg.png';
 import HomeHeader from './_components/HomeHeader';
-import PrimaryButton from '@/components/common/PrimaryButton';
 
 export default function HomePage() {
   const [isMorphoBlue, setIsMorphoBlue] = useState(false);
