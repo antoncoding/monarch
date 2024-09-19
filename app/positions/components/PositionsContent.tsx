@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
+import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
 
@@ -75,24 +76,12 @@ export default function Positions() {
         )}
 
         <div className="flex justify-center pt-14">
-          <Link href="/markets">
-            <button
-              type="button"
-              className="bg-monarch-orange rounded-sm p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-            >
-              View All Markets
-            </button>
-          </Link>
+          <PrimaryButton href="/markets">View All Markets</PrimaryButton>
         </div>
         <div className="flex justify-center pt-8">
-          <Link href="/positions">
-            <button
-              type="button"
-              className="rounded-sm bg-secondary p-3 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-            >
+          <PrimaryButton href="/positions" isSecondary>
               Search Address
-            </button>
-          </Link>
+          </PrimaryButton>
         </div>
       </div>
     </div>

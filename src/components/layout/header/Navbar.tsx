@@ -64,7 +64,7 @@ function Navbar() {
       <div className="flex h-8 grow items-center justify-between gap-2">
         <NavbarTitle />
         <div className="flex items-center justify-start gap-8">
-          <ul className="hidden items-center justify-start gap-8 md:flex">
+          <ul className="hidden items-center justify-start gap-8 font-zen md:flex">
             <li className="flex">
               <NavbarLink href="/markets">
                 {' '}
