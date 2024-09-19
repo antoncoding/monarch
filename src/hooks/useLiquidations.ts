@@ -91,7 +91,7 @@ const useLiquidations = () => {
               variables: { first: pageSize, skip },
             }),
           });
-          const result = await response.json() as QueryResult;
+          const result = (await response.json()) as QueryResult;
           const liquidations = result.data.transactions.items;
           const pageInfo = result.data.transactions.pageInfo;
 

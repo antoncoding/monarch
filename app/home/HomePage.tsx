@@ -17,10 +17,19 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="flex h-screen flex-col">
-      <div className="flex flex-col items-center justify-center">
+    <div className="flex min-h-screen flex-col bg-primary">
+      <div
+        className="flex flex-col items-center justify-center"
+        style={{
+          backgroundImage: `url(${backgroundImage.src})`,
+          // position: right and bottom
+          backgroundPosition: 'right bottom',
+          backgroundSize: 'original',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
         <HomeHeader />
-        <main className="container mt-48 flex flex-col">
+        <main className="container flex flex-col">
           <section className="flex flex-col items-center justify-center">
             <div className="min-h-40 w-3/5">
               <h2 className="mb-10 px-4 font-zen text-2xl text-primary sm:px-2 md:text-2xl lg:text-3xl">
@@ -36,15 +45,7 @@ export default function HomePage() {
             </div>
           </section>
         </main>
-        <div
-          className="flex h-3/4 w-4/5 items-center justify-center pt-4 opacity-80"
-          style={{
-            backgroundImage: `url(${backgroundImage.src})`,
-            backgroundPosition: 'right',
-            backgroundSize: 'original',
-            backgroundRepeat: 'no-repeat',
-          }}
-        >
+        <div className="flex h-3/4 w-4/5 items-center justify-center pb-12 pt-4 opacity-80">
           <Link href="/markets">
             <button
               type="button"
