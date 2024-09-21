@@ -120,7 +120,7 @@ h1 {
   text-align: center;
 }
 
-.table-body tr:hover {
+.table-body tr:not(.no-hover-effect tr, .no-hover-effect tr):hover {
   background-color: var(--palette-bg-hovered);
   border-left: 2px solid var(--palette-orange);
 }

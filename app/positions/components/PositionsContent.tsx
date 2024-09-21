@@ -9,7 +9,7 @@ import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
-import { SuppliedMarketsTable } from './SuppliedMarketsTable';
+import { PositionsSummaryTable } from './PositionsSummaryTable';
 import { WithdrawModal } from './withdrawModal';
 
 export default function Positions() {
@@ -28,7 +28,7 @@ export default function Positions() {
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <div className="flex items-center justify-between">
-          <h1 className="py-4 font-zen text-2xl"> User Portfolio </h1>
+          <h1 className="py-4 font-zen text-2xl">Your Supplies</h1>
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
               <button
@@ -60,10 +60,10 @@ export default function Positions() {
         )}
 
         {loading ? (
-          <div className="py-3 opacity-70"> Loading Positions... </div>
+          <div className="py-3 opacity-70"> Loading Supplies... </div>
         ) : !hasSuppliedMarkets ? (
           <div className="w-full items-center rounded-md p-12 text-center text-secondary">
-            No opened positions, go to the{' '}
+            No open supplies, go to the{' '}
             <a href="/markets" className="text-orange-500 no-underline">
               Markets
             </a>{' '}
@@ -71,8 +71,7 @@ export default function Positions() {
           </div>
         ) : (
           <div className="mt-4">
-            <h1 className="py-4 font-zen text-xl"> Supplied Markets </h1>
-            <SuppliedMarketsTable
+            <PositionsSummaryTable
               marketPositions={marketPositions}
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
