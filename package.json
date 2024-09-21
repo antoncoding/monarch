@@ -63,6 +63,7 @@
     "rehype-stringify": "^10.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.0.0",
+    "sharp": "^0.33.5",
     "shikiji": "^0.9.17",
     "shikiji-core": "^0.9.17",
     "unified": "^11.0.4",
