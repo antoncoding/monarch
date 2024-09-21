@@ -3,9 +3,9 @@
 import { Toaster } from 'react-hot-toast';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
 import { HistoryTable } from './HistoryTable';
-import LoadingScreen from '@/components/Status/LoadingScreen';
 
 export default function HistoryContent({ account }: { account: string }) {
   const { loading, history } = useUserPositions(account);

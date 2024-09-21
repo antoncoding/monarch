@@ -6,13 +6,13 @@ import { useParams } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
-import useUserPositions from '@/hooks/useUserPositions';
+import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
+import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 import { WithdrawModal } from './withdrawModal';
-import EmptyScreen from '@/components/Status/EmptyScreen';
 
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);

@@ -1,11 +1,10 @@
 import Image from 'next/image';
 import { BarLoader } from 'react-spinners';
+import loadingImg from '../imgs/aragon/loading.png';
 
-const loadingImg = require('../imgs/aragon/loading.png');
-
-interface LoadingScreenProps {
+type LoadingScreenProps = {
   message?: string;
-}
+};
 
 export default function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
   return (

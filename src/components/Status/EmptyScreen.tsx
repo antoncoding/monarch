@@ -1,14 +1,14 @@
 import Image from 'next/image';
-const img = require('../imgs/aragon/empty.png');
+import emptyImg from '../imgs/aragon/empty.png';
 
-interface EmptyScreenProps {
+type EmptyScreenProps = {
   message?: string;
-}
+};
 
 export default function EmptyScreen({ message = 'No data' }: EmptyScreenProps) {
   return (
     <div className="flex flex-col  items-center justify-center space-y-4 rounded-sm bg-secondary py-8 shadow-sm">
-      <Image src={img} alt="Logo" width={200} height={200} className="py-4 pb-6" />
+      <Image src={emptyImg} alt="Logo" width={200} height={200} className="py-4 pb-6" />
       <p className="pt-8 text-center text-secondary">{message}</p>
     </div>
   );
