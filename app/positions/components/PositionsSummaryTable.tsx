@@ -22,7 +22,12 @@ export type GroupedPosition = {
   totalWeightedApy: number;
   collaterals: { address: string; symbol: string | undefined; amount: number }[];
   markets: MarketPosition[];
-  processedCollaterals: { address: string; symbol: string | undefined; amount: number; percentage: number }[];
+  processedCollaterals: {
+    address: string;
+    symbol: string | undefined;
+    amount: number;
+    percentage: number;
+  }[];
 };
 
 export function PositionsSummaryTable({
@@ -66,20 +71,22 @@ export function PositionsSummaryTable({
       }
       groupedPosition.totalWeightedApy += weightedApy;
 
-      const collateralAddress = position.market.collateralAsset.address;
-      const collateralSymbol = position.market.collateralAsset.symbol;
+      const collateralAddress = position.market.collateralAsset?.address;
+      const collateralSymbol = position.market.collateralAsset?.symbol;
 
-      const existingCollateral = groupedPosition.collaterals.find(
-        (c) => c.address === collateralAddress,
-      );
-      if (existingCollateral) {
-        existingCollateral.amount += supplyAmount;
-      } else {
-        groupedPosition.collaterals.push({
-          address: collateralAddress,
-          symbol: collateralSymbol,
-          amount: supplyAmount,
-        });
+      if (collateralAddress && collateralSymbol) {
+        const existingCollateral = groupedPosition.collaterals.find(
+          (c) => c.address === collateralAddress,
+        );
+        if (existingCollateral) {
+          existingCollateral.amount += supplyAmount;
+        } else {
+          groupedPosition.collaterals.push({
+            address: collateralAddress,
+            symbol: collateralSymbol,
+            amount: supplyAmount,
+          });
+        }
       }
 
       groupedPosition.markets.push(position);

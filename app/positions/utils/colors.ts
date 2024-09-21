@@ -1,4 +1,3 @@
-
 // Helper function to get a color for each collateral
 export function getCollateralColor(index: number, total: number): string {
   // Start with blue (240 degrees) and rotate around the color wheel

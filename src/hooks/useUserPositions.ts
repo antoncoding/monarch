@@ -43,7 +43,7 @@ const query = `query getUserMarketPositions(
           symbol
           decimals
         }
-        collateralAsset{
+        collateralAsset {
           address
           symbol
           decimals

@@ -66,25 +66,29 @@ export function SuppliedMarketsDetail({
                   </a>
                 </td>
                 <td data-label="Collateral" className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    {position.market.collateralAsset.symbol}
-                    {findToken(
-                      position.market.collateralAsset.address,
-                      position.market.morphoBlue.chain.id,
-                    )?.img && (
-                      <Image
-                        src={
-                          findToken(
-                            position.market.collateralAsset.address,
-                            position.market.morphoBlue.chain.id,
-                          )?.img ?? ''
-                        }
-                        alt={position.market.collateralAsset.symbol}
-                        width={18}
-                        height={18}
-                      />
-                    )}
-                  </div>
+                  {position.market.collateralAsset ? (
+                    <div className="flex items-center justify-center gap-1">
+                      {position.market.collateralAsset.symbol}
+                      {findToken(
+                        position.market.collateralAsset.address,
+                        position.market.morphoBlue.chain.id,
+                      )?.img && (
+                        <Image
+                          src={
+                            findToken(
+                              position.market.collateralAsset.address,
+                              position.market.morphoBlue.chain.id,
+                            )?.img ?? ''
+                          }
+                          alt={position.market.collateralAsset.symbol}
+                          width={18}
+                          height={18}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    'N/A'
+                  )}
                 </td>
                 <td data-label="LLTV" className="text-center">
                   {formatBalance(position.market.lltv, 16)}%
