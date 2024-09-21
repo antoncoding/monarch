@@ -80,7 +80,7 @@ export default function Positions() {
         </div>
         <div className="flex justify-center pt-8">
           <PrimaryButton href="/positions" isSecondary>
-              Search Address
+            Search Address
           </PrimaryButton>
         </div>
       </div>
