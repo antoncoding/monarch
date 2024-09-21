@@ -1,9 +1,9 @@
 'use client';
 
 import { Toaster } from 'react-hot-toast';
+import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
-import PrimaryButton from '@/components/common/PrimaryButton';
 import { HistoryTable } from './HistoryTable';
 
 export default function HistoryContent({ account }: { account: string }) {

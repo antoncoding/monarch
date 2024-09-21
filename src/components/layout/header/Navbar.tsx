@@ -4,12 +4,12 @@ import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
-import { usePathname } from 'next/navigation';
 
 export function NavbarLink({
   href,

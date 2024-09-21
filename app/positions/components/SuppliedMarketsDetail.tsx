@@ -77,7 +77,7 @@ export function SuppliedMarketsDetail({
                           findToken(
                             position.market.collateralAsset.address,
                             position.market.morphoBlue.chain.id,
-                          )?.img || ''
+                          )?.img ?? ''
                         }
                         alt={position.market.collateralAsset.symbol}
                         width={18}

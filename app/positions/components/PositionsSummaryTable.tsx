@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
+import { getCollateralColor } from '../utils/colors';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
@@ -21,6 +22,7 @@ export type GroupedPosition = {
   totalWeightedApy: number;
   collaterals: { address: string; symbol: string | undefined; amount: number }[];
   markets: MarketPosition[];
+  processedCollaterals: { address: string; symbol: string | undefined; amount: number; percentage: number }[];
 };
 
 export function PositionsSummaryTable({
@@ -48,6 +50,7 @@ export function PositionsSummaryTable({
           totalWeightedApy: 0,
           collaterals: [],
           markets: [],
+          processedCollaterals: [],
         };
         acc.push(groupedPosition);
       }
@@ -84,7 +87,7 @@ export function PositionsSummaryTable({
     }, []);
   }, [marketPositions]);
 
-  const processedCollaterals = useMemo(() => {
+  const processedPositions = useMemo(() => {
     return groupedPositions.map((position) => {
       const sortedCollaterals = [...position.collaterals].sort((a, b) => b.amount - a.amount);
       const totalSupply = position.totalSupply;
@@ -131,7 +134,7 @@ export function PositionsSummaryTable({
       <table className="responsive w-full font-zen">
         <thead className="table-header">
           <tr>
-            <th className="w-10"></th>
+            <th className="w-10" />
             <th className="w-10">Network</th>
             <th>Asset</th>
             <th>Total Supplied</th>
@@ -140,7 +143,7 @@ export function PositionsSummaryTable({
           </tr>
         </thead>
         <tbody className="table-body text-sm">
-          {processedCollaterals.map((position, index) => {
+          {processedPositions.map((position) => {
             const rowKey = `${position.loanAssetAddress}-${position.chainId}`;
             const isExpanded = expandedRows.has(rowKey);
             const avgApy = position.totalWeightedApy / position.totalSupply;
@@ -153,7 +156,7 @@ export function PositionsSummaryTable({
                   <td className="w-10">
                     <div className="flex items-center justify-center">
                       <Image
-                        src={getNetworkImg(position.chainId) || ''}
+                        src={getNetworkImg(position.chainId) ?? ''}
                         alt={`Chain ${position.chainId}`}
                         width={24}
                         height={24}
@@ -164,7 +167,7 @@ export function PositionsSummaryTable({
                     <div className="flex items-center justify-center gap-2">
                       {findToken(position.loanAssetAddress, position.chainId)?.img && (
                         <Image
-                          src={findToken(position.loanAssetAddress, position.chainId)?.img || ''}
+                          src={findToken(position.loanAssetAddress, position.chainId)?.img ?? ''}
                           alt={position.loanAsset}
                           width={24}
                           height={24}
@@ -185,7 +188,7 @@ export function PositionsSummaryTable({
                     <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
                       {position.processedCollaterals.map((collateral, colIndex) => (
                         <div
-                          key={colIndex}
+                          key={`${collateral.address}-${colIndex}`}
                           className="h-full opacity-70"
                           style={{
                             width: `${collateral.percentage}%`,
@@ -203,7 +206,7 @@ export function PositionsSummaryTable({
                     </div>
                     <div className="mt-1 flex flex-wrap justify-center text-xs">
                       {position.processedCollaterals.map((collateral, colIndex) => (
-                        <span key={colIndex} className="mb-1 mr-2">
+                        <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2">
                           <span
                             style={{
                               color:
@@ -241,11 +244,4 @@ export function PositionsSummaryTable({
       </table>
     </div>
   );
-}
-
-// Updated helper function to get a color for each collateral
-function getCollateralColor(index: number, total: number): string {
-  // Start with blue (240 degrees) and rotate around the color wheel
-  const hue = (240 + (index * 360) / (total + 1)) % 360;
-  return `hsl(${hue}, 70%, 50%)`;
 }
