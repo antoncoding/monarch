@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import storage from 'local-storage-fallback';
 import { Toaster } from 'react-hot-toast';
 import Header from '@/components/layout/header/Header';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 
 import { SupportedNetworks } from '@/utils/networks';
@@ -194,7 +195,7 @@ export default function Markets() {
         </div>
 
         {loading ? (
-          <div className="py-3 opacity-70"> Loading Morpho Blue Markets... </div>
+          <LoadingScreen message="Loading Morpho Blue Markets..." />
         ) : rawMarkets == null ? (
           <div> No data </div>
         ) : (

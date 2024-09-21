@@ -9,6 +9,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
+import EmptyScreen from '@/components/Status/EmptyScreen';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 import useMarkets from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
 
@@ -85,7 +87,7 @@ export default function Rewards() {
     <div className="flex flex-col justify-between font-zen">
       <Header />
       <Toaster />
-      <div className="container gap-8" style={{ padding: '0 5%' }}>
+      <div className="container mt-4 gap-8" style={{ padding: '0 5%' }}>
         {allRewardTokens.map((tokenReward) => {
           const matchedToken = findToken(tokenReward.token, tokenReward.chainId);
           const distribution = distributions.find(
@@ -342,11 +344,9 @@ export default function Rewards() {
         })}
 
         {loading || loadingRewards ? (
-          <div className="py-3 opacity-70"> Loading Rewards... </div>
+          <LoadingScreen message="Loading Rewards..." />
         ) : markets.length === 0 ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
-            No rewards{' '}
-          </div>
+          <EmptyScreen message="No rewards" />
         ) : (
           <div> </div>
         )}
