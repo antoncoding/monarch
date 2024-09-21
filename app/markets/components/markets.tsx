@@ -16,6 +16,7 @@ import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
 import { applyFilterAndSort } from './utils';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 
 const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
@@ -194,7 +195,7 @@ export default function Markets() {
         </div>
 
         {loading ? (
-          <div className="py-3 opacity-70"> Loading Morpho Blue Markets... </div>
+          <LoadingScreen message="Loading Morpho Blue Markets..." />
         ) : rawMarkets == null ? (
           <div> No data </div>
         ) : (

@@ -14893,6 +14893,7 @@ __metadata:
     react-hot-toast: "npm:^2.4.1"
     react-icons: "npm:^5.2.1"
     react-remove-scroll: "npm:^2.5.7"
+    react-spinners: "npm:^0.14.1"
     react-table: "npm:^7.8.0"
     rehype-pretty-code: "npm:0.12.3"
     rehype-stringify: "npm:^10.0.0"
@@ -16362,6 +16363,16 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/5057ebf11cf6b7a9126087c37be56f08bb96065906d871e7715f94caf74d980e01df8ad074e049d9d2f40d2946e50c14bd3c77966bcf4bf1d53ca303ecc64955
+  languageName: node
+  linkType: hard
+
+"react-spinners@npm:^0.14.1":
+  version: 0.14.1
+  resolution: "react-spinners@npm:0.14.1"
+  peerDependencies:
+    react: ^16.0.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/5b3c101f789716331a0b6afad156293fb9aa05620e65494753001afcdb611788057f379b5979b34d570d527fa978003293266b59db505bf2d243ebab899ceeda
   languageName: node
   linkType: hard
 

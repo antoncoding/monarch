@@ -7,10 +7,12 @@ import { Toaster } from 'react-hot-toast';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 import { WithdrawModal } from './withdrawModal';
+import EmptyScreen from '@/components/Status/EmptyScreen';
 
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -27,7 +29,7 @@ export default function Positions() {
       <Header />
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pb-4">
           <h1 className="py-4 font-zen text-2xl">Your Supplies</h1>
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
@@ -60,15 +62,9 @@ export default function Positions() {
         )}
 
         {loading ? (
-          <div className="py-3 opacity-70"> Loading Supplies... </div>
+          <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
-            No open supplies, go to the{' '}
-            <a href="/markets" className="text-orange-500 no-underline">
-              Markets
-            </a>{' '}
-            to open a new position.
-          </div>
+          <EmptyScreen message="No open supplies, go to the markets to open a new position." />
         ) : (
           <div className="mt-4">
             <PositionsSummaryTable

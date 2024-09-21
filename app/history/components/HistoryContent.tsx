@@ -5,6 +5,7 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
 import { HistoryTable } from './HistoryTable';
+import LoadingScreen from '@/components/Status/LoadingScreen';
 
 export default function HistoryContent({ account }: { account: string }) {
   const { loading, history } = useUserPositions(account);
@@ -17,7 +18,7 @@ export default function HistoryContent({ account }: { account: string }) {
         <h1 className="py-4 font-zen text-2xl">Transaction History</h1>
 
         {loading ? (
-          <div className="py-3 opacity-70">Loading History...</div>
+          <LoadingScreen message="Loading History..." />
         ) : history.length === 0 ? (
           <div className="w-full items-center rounded-md p-12 text-center text-secondary">
             No transaction history available.
