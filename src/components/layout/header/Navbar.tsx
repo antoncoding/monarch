@@ -16,14 +16,16 @@ export function NavbarLink({
   children,
   target,
   ariaLabel,
+  matchKey,
 }: {
   href: string;
   children: React.ReactNode;
   target?: string;
   ariaLabel?: string;
+  matchKey?: string;
 }) {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname.includes(matchKey ?? href);
 
   return (
     <NextLink
@@ -74,13 +76,19 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-4 text-opacity-80 md:flex">
             <li className="flex">
-              <NavbarLink href="/markets">Markets</NavbarLink>
+              <NavbarLink href="/markets" matchKey="markets">
+                Markets
+              </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/positions/${address ?? ''}`}>Portfolio</NavbarLink>
+              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
+                Portfolio
+              </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/rewards/${address ?? ''}`}>Rewards</NavbarLink>
+              <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
+                Rewards
+              </NavbarLink>
             </li>
             <li className="flex">
               <NavigationMenu.Root className="relative">
