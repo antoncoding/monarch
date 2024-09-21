@@ -58,14 +58,6 @@ html {
   scroll-behavior: smooth;
 }
 
-html .font-zen {
-  font-family: var(--font-zen);
-}
-
-html .font-inter {
-  font-family: var(--font-inter);
-}
-
 body {
   height: auto;
   min-height: 100%;
@@ -128,7 +120,7 @@ h1 {
   text-align: center;
 }
 
-.table-body tr:hover {
+.table-body tr:not(.no-hover-effect tr, .no-hover-effect tr):hover {
   background-color: var(--palette-bg-hovered);
   border-left: 2px solid var(--palette-orange);
 }

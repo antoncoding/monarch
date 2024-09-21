@@ -36,6 +36,7 @@ module.exports = {
     'react/prop-types': 'off',
     'react/require-default-props': 'off',
     'react/sort-prop-types': 'off',
+    'react/no-array-index-key': 'off',
 
     // Performance: Avoid unnecessary renders
     'react-perf/jsx-no-new-array-as-prop': 'warn',
@@ -173,6 +174,6 @@ module.exports = {
       'required': {
         'some': ['nesting', 'id']
       }
-    }]
+    }],
   },
 };

@@ -9,8 +9,7 @@ import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
-import { HistoryTable } from './HistoryTable';
-import { SuppliedMarketsTable } from './SuppliedMarketsTable';
+import { PositionsSummaryTable } from './PositionsSummaryTable';
 import { WithdrawModal } from './withdrawModal';
 
 export default function Positions() {
@@ -19,7 +18,9 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
 
-  const { loading, data: marketPositions, history: history } = useUserPositions(account);
+  const { loading, data: marketPositions } = useUserPositions(account);
+
+  const hasSuppliedMarkets = marketPositions.length > 0;
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -27,15 +28,25 @@ export default function Positions() {
       <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <div className="flex items-center justify-between">
-          <h1 className="py-4 font-zen text-2xl"> User Portfolio </h1>
-          <Link href={`/rewards/${account}`}>
-            <button
-              type="button"
-              className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-            >
-              View All Rewards
-            </button>
-          </Link>
+          <h1 className="py-4 font-zen text-2xl">Your Supplies</h1>
+          <div className="flex gap-4">
+            <Link href={`/history/${account}`}>
+              <button
+                type="button"
+                className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                View History
+              </button>
+            </Link>
+            <Link href={`/rewards/${account}`}>
+              <button
+                type="button"
+                className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                View Rewards
+              </button>
+            </Link>
+          </div>
         </div>
 
         {showModal && selectedPosition && (
@@ -49,29 +60,22 @@ export default function Positions() {
         )}
 
         {loading ? (
-          <div className="py-3 opacity-70"> Loading Positions... </div>
-        ) : marketPositions.length === 0 ? (
+          <div className="py-3 opacity-70"> Loading Supplies... </div>
+        ) : !hasSuppliedMarkets ? (
           <div className="w-full items-center rounded-md p-12 text-center text-secondary">
-            No opened positions, goes to the{' '}
+            No open supplies, go to the{' '}
             <a href="/markets" className="text-orange-500 no-underline">
-              {' '}
-              Markets{' '}
+              Markets
             </a>{' '}
             to open a new position.
           </div>
         ) : (
           <div className="mt-4">
-            <h1 className="py-4 font-zen text-xl"> Supplied Markets </h1>
-
-            <SuppliedMarketsTable
+            <PositionsSummaryTable
               marketPositions={marketPositions}
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
             />
-
-            <h1 className="py-4 font-zen text-xl"> History </h1>
-
-            <HistoryTable history={history} />
           </div>
         )}
 
@@ -80,7 +84,7 @@ export default function Positions() {
         </div>
         <div className="flex justify-center pt-8">
           <PrimaryButton href="/positions" isSecondary>
-              Search Address
+            Search Address
           </PrimaryButton>
         </div>
       </div>

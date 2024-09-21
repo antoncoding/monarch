@@ -176,6 +176,21 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' }],
   },
   {
+    symbol: 'cbBTC',
+    img: require('../imgs/tokens/cbbtc.webp') as string,
+    decimals: 8,
+    networks: [
+      { chain: mainnet, address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+      { chain: base, address: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf' },
+    ],
+  },
+  {
+    symbol: 'tBTC',
+    img: require('../imgs/tokens/tbtc.webp') as string,
+    decimals: 8,
+    networks: [{ chain: mainnet, address: '0x18084fbA666a33d37592fA2633fD49a74DD93a88' }],
+  },
+  {
     symbol: 'rsETH',
     img: require('../imgs/tokens/rseth.png') as string,
     decimals: 18,
