@@ -146,7 +146,7 @@ export function PositionsSummaryTable({
             <th>Asset</th>
             <th>Total Supplied</th>
             <th>Avg APY</th>
-            <th className="w-1/4">Collateral Breakdown</th>
+            <th className="w-1/4">Collateral Exposure</th>
           </tr>
         </thead>
         <tbody className="table-body text-sm">
@@ -213,7 +213,7 @@ export function PositionsSummaryTable({
                     </div>
                     <div className="mt-1 flex flex-wrap justify-center text-xs">
                       {position.processedCollaterals.map((collateral, colIndex) => (
-                        <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2">
+                        <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
                           <span
                             style={{
                               color:
