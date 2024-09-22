@@ -213,7 +213,10 @@ export function PositionsSummaryTable({
                     </div>
                     <div className="mt-1 flex flex-wrap justify-center text-xs">
                       {position.processedCollaterals.map((collateral, colIndex) => (
-                        <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
+                        <span
+                          key={`${collateral.address}-${colIndex}`}
+                          className="mb-1 mr-2 opacity-70"
+                        >
                           <span
                             style={{
                               color:
