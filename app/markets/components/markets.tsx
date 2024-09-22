@@ -199,7 +199,7 @@ export default function Markets() {
         ) : rawMarkets == null ? (
           <div> No data </div>
         ) : (
-          <div className="max-w-screen mt-4 overflow-auto bg-secondary">
+          <div className="max-w-screen mt-4">
             <MarketsTable
               markets={filteredMarkets}
               titleOnclick={titleOnclick}
