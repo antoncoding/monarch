@@ -71,8 +71,6 @@ const useLiquidations = () => {
   const [liquidatedMarketIds, setLiquidatedMarketIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<unknown | null>(null);
 
-  console.log('liquidatedMarketIds', liquidatedMarketIds);
-
   useEffect(() => {
     const fetchLiquidations = async () => {
       try {
