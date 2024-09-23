@@ -183,3 +183,29 @@ pre {
 .text-secondary {
   color: var(--color-text-secondary);
 }
+
+/* Add this to the existing CSS */
+
+.zen-font {
+  font-family: 'Zen Kaku Gothic Antique', sans-serif;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, #4caf50, #f44336);
+  animation: progressBar 2s linear infinite;
+}
+
+@keyframes progressBar {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 0%;
+  }
+}
+
+.underline-on-hover:hover {
+  text-decoration: underline;
+}

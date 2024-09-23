@@ -1,7 +1,18 @@
 import { formatBalance } from './balance';
+import { SupportedNetworks } from './networks';
 import { UserTxTypes } from './types';
 
 export const MORPHO = '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
+
+export const getBundlerV2 = (chain: SupportedNetworks) => {
+  if (chain === SupportedNetworks.Base) {
+    // ChainAgnosticBundlerV2
+    return '0x23055618898e202386e6c13955a58D3C68200BFB';
+  }
+
+  // EthereumBundlerV2
+  return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077 ';
+};
 
 export const getRewardPer1000USD = (yearlySupplyTokens: string, marketSupplyAssetUSD: number) => {
   return ((formatBalance(yearlySupplyTokens, 18) / marketSupplyAssetUSD) * 1000).toString();

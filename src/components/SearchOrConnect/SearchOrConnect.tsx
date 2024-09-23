@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
-import toast, { Toaster } from 'react-hot-toast';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
+import { ToastContainer, toast } from 'react-toastify';
 
 export default function SearchOrConnect({ path }: { path: string }) {
   const { address } = useAccount();
@@ -17,7 +17,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <Toaster />
+      <ToastContainer position="bottom-right" />
       <div className="container items-center justify-center gap-8" style={{ padding: '0 5%' }}>
         <div className="flex justify-center py-14">
           <div className="w-full items-center rounded-md p-12 text-center text-lg text-secondary">
@@ -65,7 +65,6 @@ export default function SearchOrConnect({ path }: { path: string }) {
             />
 
             <button
-              // disabled={!isConnected || approvePending}
               type="button"
               onClick={() => {
                 if (isAddress(inputAddress.toLowerCase(), { strict: false })) {

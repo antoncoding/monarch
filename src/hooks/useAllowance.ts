@@ -68,6 +68,7 @@ export function useAllowance({
     'Approving...',
     'Authorized',
     'Approve Error',
+    chainId,
   );
 
   const approveInfinite = useCallback(async () => {

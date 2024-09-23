@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
@@ -41,9 +41,12 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   const { isConfirming, sendTransaction } = useTransactionWithToast(
     'withdraw',
-    'Withdrawing...',
-    'Asset Withdrawn',
+    `Withdrawing ${formatBalance(withdrawAmount, position.market.loanAsset.decimals)} ${
+      position.market.loanAsset.symbol
+    }`,
+    `${position.market.loanAsset.symbol} Withdrawn`,
     'Failed to withdraw',
+    chainId,
   );
 
   const withdraw = useCallback(async () => {
@@ -77,7 +80,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
           account, // receiver
         ],
       }),
-      chainId: position.market.morphoBlue.chain.id,
+      chainId,
     });
   }, [
     account,
