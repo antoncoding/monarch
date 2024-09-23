@@ -202,10 +202,7 @@ export function PositionsSummaryTable({
                             backgroundColor:
                               collateral.symbol === 'Others'
                                 ? '#A0AEC0'
-                                : getCollateralColor(
-                                    colIndex,
-                                    position.processedCollaterals.length - 1,
-                                  ),
+                                : getCollateralColor(collateral.address),
                           }}
                           title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
                         />
@@ -222,10 +219,7 @@ export function PositionsSummaryTable({
                               color:
                                 collateral.symbol === 'Others'
                                   ? '#A0AEC0'
-                                  : getCollateralColor(
-                                      colIndex,
-                                      position.processedCollaterals.length - 1,
-                                    ),
+                                  : getCollateralColor(collateral.address),
                             }}
                           >
                             ■

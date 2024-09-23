@@ -1,6 +1,6 @@
 'use client';
 
-import { Toaster } from 'react-hot-toast';
+import { ToastContainer } from 'react-toastify';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -13,7 +13,6 @@ export default function HistoryContent({ account }: { account: string }) {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <Toaster />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <h1 className="py-4 font-zen text-2xl">Transaction History</h1>
 
@@ -33,6 +32,7 @@ export default function HistoryContent({ account }: { account: string }) {
           <PrimaryButton href={`/positions/${account}`}>Back to Portfolio</PrimaryButton>
         </div>
       </div>
+      <ToastContainer position="bottom-right" />
     </div>
   );
 }
