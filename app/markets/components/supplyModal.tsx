@@ -53,6 +53,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     token: market.loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
     chainId: market.morphoBlue.chain.id,
+    tokenSymbol: market.loanAsset.symbol,
   });
 
   const needApproval = useMemo(() => supplyAmount > allowance, [supplyAmount, allowance]);

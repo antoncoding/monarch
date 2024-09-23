@@ -11,6 +11,7 @@ type Props = {
   user: Address | undefined;
   spender: Address;
   refetchInterval?: number;
+  tokenSymbol?: string;
 };
 
 /**
@@ -26,6 +27,7 @@ export function useAllowance({
   chainId = 1,
   token,
   refetchInterval = 10000,
+  tokenSymbol,
 }: Props) {
   const [isLoadingAllowance, setIsLoadingAllowance] = useState<boolean>(false);
   const [allowance, setAllowance] = useState<bigint>(BigInt(0));
@@ -65,8 +67,8 @@ export function useAllowance({
 
   const { sendTransaction, isConfirming: approvePending } = useTransactionWithToast(
     'approve',
-    'Approving...',
-    'Authorized',
+    `Pending approval of ${tokenSymbol ?? 'your token'}`,
+    `Succesfully approved`,
     'Approve Error',
     chainId,
   );
