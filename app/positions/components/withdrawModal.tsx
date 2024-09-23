@@ -80,7 +80,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
           account, // receiver
         ],
       }),
-      chainId,
+      chainId: position.market.morphoBlue.chain.id,
     });
   }, [
     account,
@@ -89,7 +89,6 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     sendTransaction,
     position.supplyAssets,
     position.supplyShares,
-    chainId,
   ]);
 
   return (
