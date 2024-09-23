@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getExplorerTxURL } from '../utils/external';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { getExplorerTxURL } from '../utils/external';
 import { SupportedNetworks } from '../utils/networks';
 
 export function useTransactionWithToast(
@@ -40,7 +40,7 @@ export function useTransactionWithToast(
         },
       );
     }
-  }, [isConfirming, pendingText, toastId, hash]);
+  }, [isConfirming, pendingText, toastId, hash, onClick]);
 
   useEffect(() => {
     if (isConfirmed) {
@@ -73,7 +73,7 @@ export function useTransactionWithToast(
         onClick,
       });
     }
-  }, [isConfirmed, txError, successText, toastId, errorText, hash]);
+  }, [isConfirmed, txError, successText, toastId, errorText, hash, onClick]);
 
   return { sendTransaction, isConfirming, isConfirmed };
 }

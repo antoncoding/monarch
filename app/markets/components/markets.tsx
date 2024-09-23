@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import storage from 'local-storage-fallback';
+import { ToastContainer } from 'react-toastify';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useMarkets, { Market } from '@/hooks/useMarkets';
@@ -16,7 +17,6 @@ import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { SupplyModal } from './supplyModal';
 import { applyFilterAndSort } from './utils';
-import { ToastContainer } from 'react-toastify';
 
 const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),

@@ -5,6 +5,7 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
+import { ToastContainer, toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
@@ -17,7 +18,6 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
-import { ToastContainer, toast } from 'react-toastify';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();

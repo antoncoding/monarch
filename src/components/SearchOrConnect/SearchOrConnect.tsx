@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
+import { ToastContainer, toast } from 'react-toastify';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
-import { ToastContainer, toast } from 'react-toastify';
 
 export default function SearchOrConnect({ path }: { path: string }) {
   const { address } = useAccount();

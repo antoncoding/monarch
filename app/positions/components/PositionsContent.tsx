@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { ToastContainer } from 'react-toastify';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -12,7 +13,6 @@ import useUserPositions from '@/hooks/useUserPositions';
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 import { WithdrawModal } from './withdrawModal';
-import { ToastContainer } from 'react-toastify';
 
 export default function Positions() {
   const [showModal, setShowModal] = useState<boolean>(false);

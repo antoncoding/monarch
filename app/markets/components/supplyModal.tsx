@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 import { Address, encodeFunctionData, formatUnits } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -14,7 +15,6 @@ import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
-import { ToastContainer } from 'react-toastify';
 
 type SupplyModalProps = {
   market: Market;
