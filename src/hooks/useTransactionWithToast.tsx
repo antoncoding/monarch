@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { TxHashDisplay } from '../components/TxHashDisplay';
 import { getExplorerTxURL } from '../utils/external';
 import { SupportedNetworks } from '../utils/networks';
 
@@ -30,9 +31,7 @@ export function useTransactionWithToast(
       toast.loading(
         <div className="p-2">
           <div>{pendingText}</div>
-          <div className="underline-on-hover py-2 font-mono text-xs">
-            {hash ? `Tx Hash: ${hash.slice(0, 6)}...${hash.slice(-4)}` : ''}
-          </div>
+          <TxHashDisplay hash={hash} />
         </div>,
         {
           toastId,
@@ -48,9 +47,7 @@ export function useTransactionWithToast(
         render: (
           <div className="p-2">
             <div>{successText} 🎉</div>
-            <div className="underline-on-hover py-2 font-mono text-xs">
-              {hash ? `Tx Hash: ${hash.slice(0, 6)}...${hash.slice(-4)}` : ''}
-            </div>
+            <TxHashDisplay hash={hash} />
           </div>
         ),
         type: 'success',
@@ -64,7 +61,7 @@ export function useTransactionWithToast(
         render: (
           <div className="p-2">
             <div>{errorText}</div>
-            <div className="underline-on-hover py-2 font-mono text-xs">{txError.message}</div>
+            <div className="py-2 font-mono text-xs hover:underline">{txError.message}</div>
           </div>
         ),
         type: 'error',
