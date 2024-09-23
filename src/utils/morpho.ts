@@ -11,7 +11,7 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
   }
 
   // EthereumBundlerV2
-  return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077 ';
+  return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077';
 };
 
 export const getRewardPer1000USD = (yearlySupplyTokens: string, marketSupplyAssetUSD: number) => {

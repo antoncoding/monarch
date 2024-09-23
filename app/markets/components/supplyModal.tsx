@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
@@ -22,9 +23,10 @@ type SupplyModalProps = {
 };
 
 export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element {
-  // Add state for the supply amount
+  // Add state for the supply amount and using ETH
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
+  const [useEth, setUseEth] = useState<boolean>(false);
 
   const { address: account, isConnected, chainId } = useAccount();
 
@@ -35,6 +37,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   const { data: tokenBalance } = useBalance({
     token: market.loanAsset.address as `0x${string}`,
+    address: account,
+    chainId: market.morphoBlue.chain.id,
+  });
+
+  const { data: ethBalance } = useBalance({
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
@@ -75,11 +82,17 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       switchChain({ chainId: market.morphoBlue.chain.id });
     }
 
-    const transferFromTx = encodeFunctionData({
-      abi: morphoBundlerAbi,
-      functionName: 'erc20TransferFrom',
-      args: [market.loanAsset.address as Address, supplyAmount],
-    });
+    const prepareTx = useEth
+      ? encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'wrapNative',
+          args: [supplyAmount],
+        })
+      : encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'erc20TransferFrom',
+          args: [market.loanAsset.address as Address, supplyAmount],
+        });
 
     const minShares = BigInt(1);
 
@@ -108,11 +121,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       data: encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'multicall',
-        args: [[transferFromTx, morphoSupplyTx]],
+        args: [[prepareTx, morphoSupplyTx]],
       }),
+      value: useEth ? supplyAmount : 0n,
       chainId: market.morphoBlue.chain.id,
     });
-  }, [account, market, supplyAmount, sendTransaction, switchChain, chainId]);
+  }, [account, market, supplyAmount, sendTransaction, switchChain, chainId, useEth]);
 
   return (
     <>
@@ -184,18 +198,19 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           </div>
 
           {isConnected ? (
-            <div className="mt-8">
-              <div className="mb-1 flex items-start justify-between">
+            <div className="mb-1 mt-8">
+              <div className="flex items-start justify-between">
                 <p className="font-inter text-sm opacity-50">My Balance:</p>
                 <div className="flex items-center justify-center gap-2">
                   <p className="text-right font-zen">
-                    {' '}
-                    {formatBalance(
-                      tokenBalance?.value ? tokenBalance.value : '0',
-                      market.loanAsset.decimals,
-                    )}{' '}
+                    {useEth
+                      ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
+                      : formatBalance(
+                          tokenBalance?.value ? tokenBalance.value : '0',
+                          market.loanAsset.decimals,
+                        )}
                   </p>
-                  <p className="text-right font-zen">{market.loanAsset.symbol} </p>
+                  <p className="text-right font-zen">{useEth ? 'ETH' : market.loanAsset.symbol} </p>
                   <div>
                     {loanToken?.img && (
                       <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
@@ -203,6 +218,20 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   </div>
                 </div>
               </div>
+              {loanToken?.symbol === 'WETH' && (
+                <div className="mx-6 flex items-start justify-between">
+                  <div />
+                  <div className="mt-4 flex items-center">
+                    <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
+                    <Switch
+                      size="sm"
+                      isSelected={useEth}
+                      onValueChange={setUseEth}
+                      className="h-4 w-4"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex justify-center">
@@ -218,7 +247,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <div className="relative flex-grow">
               <Input
                 decimals={market.loanAsset.decimals}
-                max={tokenBalance?.value ? tokenBalance.value : BigInt(0)}
+                max={
+                  useEth
+                    ? ethBalance?.value
+                      ? ethBalance.value
+                      : BigInt(0)
+                    : tokenBalance?.value
+                    ? tokenBalance.value
+                    : BigInt(0)
+                }
                 setValue={setSupplyAmount}
                 setError={setInputError}
                 exceedMaxErrMessage="Insufficient Balance"
@@ -234,7 +271,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               >
                 Switch Chain
               </button>
-            ) : needApproval ? (
+            ) : needApproval && !useEth ? (
               <button
                 disabled={!isConnected || approvePending}
                 type="button"

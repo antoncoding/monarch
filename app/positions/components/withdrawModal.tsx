@@ -89,6 +89,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
     sendTransaction,
     position.supplyAssets,
     position.supplyShares,
+    chainId
   ]);
 
   return (
