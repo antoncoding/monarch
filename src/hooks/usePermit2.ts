@@ -67,8 +67,6 @@ export function usePermit2({
 
     const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;
 
-    console.log('nonce', nonce);
-
     const permitSingle = {
       details: {
         token: token,
