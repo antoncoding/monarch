@@ -27,13 +27,15 @@ export default function Rewards() {
 
   const { chainId } = useAccount();
 
-  const { sendTransaction } = useTransactionWithToast(
-    'claim',
-    'Claiming Reward...',
-    'Reward Claimed!',
-    'Failed to claim rewards',
+  const { sendTransaction } = useTransactionWithToast({
+    toastId: 'claim',
+    pendingText: 'Claiming Reward...',
+    successText: 'Reward Claimed!',
+    errorText: 'Failed to claim rewards',
     chainId,
-  );
+    pendingDescription: `Claiming rewards`,
+    successDescription: `Successfully claimed rewards`,
+  });
 
   // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
   const allRewardTokens = useMemo(

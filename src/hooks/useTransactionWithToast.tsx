@@ -6,13 +6,25 @@ import { TxHashDisplay } from '../components/TxHashDisplay';
 import { getExplorerTxURL } from '../utils/external';
 import { SupportedNetworks } from '../utils/networks';
 
-export function useTransactionWithToast(
-  toastId: string,
-  pendingText: string,
-  successText: string,
-  errorText: string,
-  chainId?: number,
-) {
+type UseTransactionWithToastProps = {
+  toastId: string;
+  pendingText: string;
+  successText: string;
+  errorText: string;
+  chainId?: number;
+  pendingDescription?: string;
+  successDescription?: string;
+};
+
+export function useTransactionWithToast({
+  toastId,
+  pendingText,
+  successText,
+  errorText,
+  chainId,
+  pendingDescription,
+  successDescription,
+}: UseTransactionWithToastProps) {
   const { data: hash, sendTransaction, error: txError } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
@@ -26,30 +38,30 @@ export function useTransactionWithToast(
     }
   }, [hash, chainId]);
 
+  const renderToastContent = useCallback(
+    (title: string, description?: string) => (
+      <div className="p-2">
+        <div>{title}</div>
+        {description && <div className="mb-2 mt-1 text-sm">{description}</div>}
+        <TxHashDisplay hash={hash} />
+      </div>
+    ),
+    [hash],
+  );
+
   useEffect(() => {
     if (isConfirming) {
-      toast.loading(
-        <div className="p-2">
-          <div>{pendingText}</div>
-          <TxHashDisplay hash={hash} />
-        </div>,
-        {
-          toastId,
-          onClick,
-        },
-      );
+      toast.loading(renderToastContent(pendingText, pendingDescription), {
+        toastId,
+        onClick,
+      });
     }
-  }, [isConfirming, pendingText, toastId, hash, onClick]);
+  }, [isConfirming, pendingText, pendingDescription, toastId, onClick, renderToastContent]);
 
   useEffect(() => {
     if (isConfirmed) {
       toast.update(toastId, {
-        render: (
-          <div className="p-2">
-            <div>{successText} 🎉</div>
-            <TxHashDisplay hash={hash} />
-          </div>
-        ),
+        render: renderToastContent(`${successText} 🎉`, successDescription),
         type: 'success',
         isLoading: false,
         autoClose: 5000,
@@ -70,7 +82,16 @@ export function useTransactionWithToast(
         onClick,
       });
     }
-  }, [isConfirmed, txError, successText, toastId, errorText, hash, onClick]);
+  }, [
+    isConfirmed,
+    txError,
+    successText,
+    successDescription,
+    errorText,
+    toastId,
+    onClick,
+    renderToastContent,
+  ]);
 
   return { sendTransaction, isConfirming, isConfirmed };
 }

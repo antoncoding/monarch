@@ -39,15 +39,19 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
 
   const { switchChain } = useSwitchChain();
 
-  const { isConfirming, sendTransaction } = useTransactionWithToast(
-    'withdraw',
-    `Withdrawing ${formatBalance(withdrawAmount, position.market.loanAsset.decimals)} ${
-      position.market.loanAsset.symbol
-    }`,
-    `${position.market.loanAsset.symbol} Withdrawn`,
-    'Failed to withdraw',
+  const { isConfirming, sendTransaction } = useTransactionWithToast({
+    toastId: 'withdraw',
+    pendingText: `Pending withdrawal`,
+    successText: `Successfully withdrew`,
+    errorText: 'Failed to withdraw',
     chainId,
-  );
+    pendingDescription: `Your withdrawal request of ${formatReadable(
+      formatBalance(withdrawAmount, position.market.loanAsset.decimals),
+    )} ${position.market.loanAsset.symbol} is being processed`,
+    successDescription: `Successfully withdrew ${formatReadable(
+      formatBalance(withdrawAmount, position.market.loanAsset.decimals),
+    )} ${position.market.loanAsset.symbol} from market ${position.market.uniqueKey.slice(2, 8)}`,
+  });
 
   const withdraw = useCallback(async () => {
     if (!account) {
