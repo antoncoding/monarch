@@ -1,5 +1,6 @@
 import './global.css';
 
+import { ToastContainer } from 'react-toastify';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import OnchainProviders from '@/OnchainProviders';
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <OnchainProviders>{children}</OnchainProviders>
+          <ToastContainer position="bottom-right" />
         </Providers>
       </body>
       <GoogleAnalytics />

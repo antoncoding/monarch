@@ -1,6 +1,5 @@
 'use client';
 
-import { ToastContainer } from 'react-toastify';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -32,7 +31,6 @@ export default function HistoryContent({ account }: { account: string }) {
           <PrimaryButton href={`/positions/${account}`}>Back to Portfolio</PrimaryButton>
         </div>
       </div>
-      <ToastContainer position="bottom-right" />
     </div>
   );
 }

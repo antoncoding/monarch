@@ -53,13 +53,11 @@ export function usePermit2({
     chainId,
   });
 
-  const isLoading = useMemo(() => isLoadingAllowance, [isLoadingAllowance]);
-
   const { data: signature, signTypedDataAsync } = useSignTypedData({});
 
   const permit2Authorized = useMemo(
-    () => allowanceToPermit2 && allowanceToPermit2 > 0,
-    [allowanceToPermit2],
+    () => allowanceToPermit2 && allowanceToPermit2 > amount,
+    [allowanceToPermit2, amount],
   );
 
   const signForBundlers = useCallback(async () => {
@@ -108,7 +106,13 @@ export function usePermit2({
     });
 
     return { sigs, permitSingle };
-  }, [user, spender, token, chainId, packedAllowance, amount]);
+  }, [user, spender, token, chainId, packedAllowance, amount, signTypedDataAsync]);
 
-  return { permit2Authorized, authorizePermit2, signForBundlers, isLoading, signature };
+  return {
+    permit2Authorized,
+    authorizePermit2,
+    signForBundlers,
+    isLoading: isLoadingAllowance,
+    signature,
+  };
 }

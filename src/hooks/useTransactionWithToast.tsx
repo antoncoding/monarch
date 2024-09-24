@@ -54,6 +54,8 @@ export function useTransactionWithToast({
     [hash],
   );
 
+  console.log('isConfirming', isConfirming);
+
   useEffect(() => {
     if (isConfirming) {
       toast.loading(renderToastContent(pendingText, pendingDescription), {

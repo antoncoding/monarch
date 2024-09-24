@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -17,7 +17,6 @@ export default function SearchOrConnect({ path }: { path: string }) {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <ToastContainer position="bottom-right" />
       <div className="container items-center justify-center gap-8" style={{ padding: '0 5%' }}>
         <div className="flex justify-center py-14">
           <div className="w-full items-center rounded-md p-12 text-center text-lg text-secondary">

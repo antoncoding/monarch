@@ -3,7 +3,6 @@ import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
-import { ToastContainer } from 'react-toastify';
 import { Address, encodeFunctionData, formatUnits } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -96,7 +95,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       } else {
         const { sigs, permitSingle } = await signForBundlers();
         console.log('Signed for bundlers:', { sigs, permitSingle });
-        setCurrentStep('supplying');
 
         const tx1 = encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -114,8 +112,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         txs.push(tx2);
       }
 
-      const minShares = BigInt(1);
+      setCurrentStep('supplying');
 
+      const minShares = BigInt(1);
       const morphoSupplyTx = encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'morphoSupply',
@@ -137,8 +136,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
       txs.push(morphoSupplyTx);
 
-      console.log('Sending transaction with txs:', txs);
-
       // add timeout here to prevent rabby reverting
       await new Promise((resolve) => setTimeout(resolve, 800));
 
@@ -151,10 +148,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           args: [txs],
         }),
         value: useEth ? supplyAmount : 0n,
-        chainId: market.morphoBlue.chain.id,
       });
+
+      // come back to main supply page
+      setShowProcessModal(false);
     } catch (error) {
-      console.error('Error during supply transaction:', error);
       setShowProcessModal(false);
       toast.error('An error occurred. Please try again.');
     }
@@ -166,27 +164,20 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       return;
     }
 
-    if (chainId !== market.morphoBlue.chain.id) {
-      switchChain({ chainId: market.morphoBlue.chain.id });
-    }
-
     setShowProcessModal(true);
     setCurrentStep('approve');
-    console.log('Current Step: approve');
 
     try {
       await authorizePermit2();
       setCurrentStep('signing');
-      console.log('Current Step: signing');
+
       await executeSupplyTransaction();
-      setCurrentStep('supplying');
-      console.log('Current Step: supplying');
     } catch (error) {
       console.error('Error during approve and supply:', error);
       setShowProcessModal(false);
       toast.error('An error occurred. Please try again.');
     }
-  }, [account, chainId, authorizePermit2, executeSupplyTransaction, switchChain]);
+  }, [account, authorizePermit2, executeSupplyTransaction, market.morphoBlue.chain.id]);
 
   const signAndSupply = useCallback(async () => {
     if (!account) {
@@ -194,34 +185,26 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       return;
     }
 
-    if (chainId !== market.morphoBlue.chain.id) {
-      switchChain({ chainId: market.morphoBlue.chain.id });
-    }
-
     setShowProcessModal(true);
     setCurrentStep('signing');
-    console.log('Current Step: signing');
 
     try {
       await executeSupplyTransaction();
-      setCurrentStep('supplying');
-      console.log('Current Step: supplying');
     } catch (error) {
-      console.error('Error during sign and supply:', error);
-      setShowProcessModal(false);
       toast.error('An error occurred. Please try again.');
     }
-  }, [account, chainId, executeSupplyTransaction, switchChain]);
+  }, [account, executeSupplyTransaction]);
 
   return (
     <>
       {showProcessModal ? (
         <SupplyProcessModal
-          marketSymbol={market.loanAsset.symbol}
           marketId={market.uniqueKey.slice(2, 8)}
           supplyAmount={formatBalance(supplyAmount, market.loanAsset.decimals)}
           currentStep={currentStep}
           onClose={() => setShowProcessModal(false)}
+          tokenSymbol={market.loanAsset.symbol}
+          useEth={useEth}
         />
       ) : (
         <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
@@ -363,7 +346,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                 <button
                   type="button"
                   onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-                  className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
                 >
                   Switch Chain
                 </button>
@@ -372,7 +355,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   disabled={!isConnected || isLoadingPermit2}
                   type="button"
                   onClick={() => void approveAndSupply()}
-                  className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
                 >
                   Approve and Supply
                 </button>
@@ -381,16 +364,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   disabled={!isConnected || supplyPending || inputError !== null}
                   type="button"
                   onClick={() => void signAndSupply()}
-                  className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
                 >
-                  Sign and Supply
+                  {useEth ? 'Supply' : 'Sign and Supply'}
                 </button>
               )}
             </div>
           </div>
         </div>
       )}
-      <ToastContainer position="bottom-right" />
     </>
   );
 }

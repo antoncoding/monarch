@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ToastContainer } from 'react-toastify';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -27,7 +26,6 @@ export default function Positions() {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <ToastContainer position="bottom-right" />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <div className="flex items-center justify-between pb-4">
           <h1 className="py-4 font-zen text-2xl">Your Supplies</h1>
