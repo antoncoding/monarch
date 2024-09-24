@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Address } from 'abitype';
 import { encodeFunctionData, erc20Abi, maxUint256, zeroAddress } from 'viem';
 import { Chain } from 'viem/chains';
-import { useAccount, usePublicClient, useReadContract } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 type Props = {
@@ -43,7 +43,7 @@ export function useAllowance({
     },
   });
 
-  const { sendTransaction, isConfirming: approvePending } = useTransactionWithToast({
+  const { sendTransactionAsync, isConfirming: approvePending } = useTransactionWithToast({
     toastId: 'approve',
     pendingText: `Pending approval of ${tokenSymbol ?? 'your token'}`,
     successText: 'Successfully approved',
@@ -59,7 +59,7 @@ export function useAllowance({
   const approveInfinite = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
     // some weird bug with writeContract, update to use useSendTransaction
-    sendTransaction({
+    await sendTransactionAsync({
       account: user,
       to: token,
       data: encodeFunctionData({
@@ -69,7 +69,7 @@ export function useAllowance({
       }),
       chainId: chainIdFromArgumentOrConnectedWallet,
     });
-  }, [user, spender, token, sendTransaction, chainIdFromArgumentOrConnectedWallet]);
+  }, [user, spender, token, sendTransactionAsync, chainIdFromArgumentOrConnectedWallet]);
 
   const allowance = data ? data : BigInt(0);
   const isLoadingAllowance = data === undefined;

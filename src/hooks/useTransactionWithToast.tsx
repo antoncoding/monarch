@@ -25,7 +25,12 @@ export function useTransactionWithToast({
   pendingDescription,
   successDescription,
 }: UseTransactionWithToastProps) {
-  const { data: hash, sendTransaction, error: txError } = useSendTransaction();
+  const {
+    data: hash,
+    sendTransaction,
+    error: txError,
+    sendTransactionAsync,
+  } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash,
   });
@@ -93,5 +98,5 @@ export function useTransactionWithToast({
     renderToastContent,
   ]);
 
-  return { sendTransaction, isConfirming, isConfirmed };
+  return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }

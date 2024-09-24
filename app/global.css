@@ -183,3 +183,53 @@ pre {
 .text-secondary {
   color: var(--color-text-secondary);
 }
+
+.steps-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.step-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.loading-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top: 3px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.step-label {
+  display: flex;
+  flex-direction: column;
+}

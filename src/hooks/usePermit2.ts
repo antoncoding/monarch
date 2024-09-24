@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Address } from 'abitype';
-import { maxUint256 } from 'viem';
+import moment from 'moment';
 import { Chain } from 'viem/chains';
 import { useReadContract, useSignTypedData } from 'wagmi';
-import { useTransactionWithToast } from './useTransactionWithToast';
 
 import permit2Abi from '@/abis/permit2';
 import { PERMIT2_ADDRESS } from '@/utils/permit2';
 import { useAllowance } from './useAllowance';
-import moment from 'moment';
 
 type Props = {
   token: Address;
@@ -55,9 +53,6 @@ export function usePermit2({
     chainId,
   });
 
-  // const [amount, expiration, nonce] = packedAllowance ? packedAllowance : [0, 0, 0]
-  console.log('packedAllowance', packedAllowance);
-
   const isLoading = useMemo(() => isLoadingAllowance, [isLoadingAllowance]);
 
   const { data: signature, signTypedDataAsync } = useSignTypedData({});
@@ -70,19 +65,30 @@ export function usePermit2({
   const signForBundlers = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
 
+    const deadline = moment.now() + 600;
+
+    const nonce = packedAllowance ? ((packedAllowance as number[])[2] as number) : 0;
+
+    console.log('nonce', nonce);
+
     const permitSingle = {
       details: {
         token: token,
         amount: amount,
-        expiration: moment.now() + 600,
-        nonce: packedAllowance ? ((packedAllowance as number[])[2] as number) : 0,
+        expiration: deadline,
+        nonce,
       },
       spender: spender,
-      sigDeadline: maxUint256,
+      sigDeadline: BigInt(deadline),
     };
 
     // sign erc712 signature for permit2
     const sigs = await signTypedDataAsync({
+      domain: {
+        name: 'Permit2',
+        chainId,
+        verifyingContract: PERMIT2_ADDRESS,
+      },
       types: {
         PermitDetails: [
           { name: 'token', type: 'address' },
@@ -102,7 +108,7 @@ export function usePermit2({
     });
 
     return { sigs, permitSingle };
-  }, [user, spender, token, chainId, packedAllowance]);
+  }, [user, spender, token, chainId, packedAllowance, amount]);
 
   return { permit2Authorized, authorizePermit2, signForBundlers, isLoading, signature };
 }
