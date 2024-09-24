@@ -5,7 +5,7 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
@@ -27,13 +27,15 @@ export default function Rewards() {
 
   const { chainId } = useAccount();
 
-  const { sendTransaction } = useTransactionWithToast(
-    'claim',
-    'Claiming Reward...',
-    'Reward Claimed!',
-    'Failed to claim rewards',
+  const { sendTransaction } = useTransactionWithToast({
+    toastId: 'claim',
+    pendingText: 'Claiming Reward...',
+    successText: 'Reward Claimed!',
+    errorText: 'Failed to claim rewards',
     chainId,
-  );
+    pendingDescription: `Claiming rewards`,
+    successDescription: `Successfully claimed rewards`,
+  });
 
   // all rewards returned as "rewards", not necessarily in distributions (might not be claimable)
   const allRewardTokens = useMemo(
@@ -87,7 +89,6 @@ export default function Rewards() {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <ToastContainer position="bottom-right" />
       <div className="container mt-4 gap-8" style={{ padding: '0 5%' }}>
         {allRewardTokens.map((tokenReward) => {
           const matchedToken = findToken(tokenReward.token, tokenReward.chainId);

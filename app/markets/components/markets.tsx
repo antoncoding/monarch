@@ -1,7 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import storage from 'local-storage-fallback';
-import { ToastContainer } from 'react-toastify';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useMarkets, { Market } from '@/hooks/useMarkets';
@@ -133,7 +132,6 @@ export default function Markets() {
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <ToastContainer position="bottom-right" />
       <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
         <h1 className="py-8 font-zen"> Markets </h1>
 

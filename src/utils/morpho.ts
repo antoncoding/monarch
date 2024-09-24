@@ -34,6 +34,8 @@ export const getIRMTitle = (address: string) => {
   switch (address.toLowerCase()) {
     case '0x870ac11d48b15db9a138cf899d20f13f79ba00bc':
       return 'Adaptive Curve';
+    case '0x46415998764c29ab2a25cbea6254146d50d22687': // on base
+      return 'Adaptive Curve';
     default:
       return 'Unknown IRM';
   }

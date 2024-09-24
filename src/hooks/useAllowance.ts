@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Address } from 'abitype';
-import { encodeFunctionData, erc20Abi, maxUint256 } from 'viem';
+import { encodeFunctionData, erc20Abi, maxUint256, zeroAddress } from 'viem';
 import { Chain } from 'viem/chains';
-import { useAccount, usePublicClient } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 type Props = {
@@ -29,55 +29,37 @@ export function useAllowance({
   refetchInterval = 10000,
   tokenSymbol,
 }: Props) {
-  const [isLoadingAllowance, setIsLoadingAllowance] = useState<boolean>(false);
-  const [allowance, setAllowance] = useState<bigint>(BigInt(0));
-
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
-  const publicClient = usePublicClient({ chainId: chainIdFromArgumentOrConnectedWallet });
 
-  useEffect(() => {
-    async function fetchApproval() {
-      if (!publicClient || !token || !user) return;
+  const { data } = useReadContract({
+    abi: erc20Abi,
+    functionName: 'allowance',
+    address: token,
+    args: [user ?? zeroAddress, spender],
+    query: {
+      enabled: !!user && !!spender && !!token,
+      refetchInterval,
+    },
+  });
 
-      setIsLoadingAllowance(true);
-
-      try {
-        const approval = await publicClient.readContract({
-          abi: erc20Abi,
-          functionName: 'allowance',
-          address: token,
-          args: [user, spender],
-        });
-        setAllowance(approval);
-      } catch (error) {
-        console.error('useAllowance Error', error);
-      } finally {
-        setIsLoadingAllowance(false);
-      }
-    }
-
-    void fetchApproval();
-
-    // use set interval to call fetchApproval every refetchInterval
-    const interval = setInterval(() => void fetchApproval(), refetchInterval);
-
-    return () => clearInterval(interval);
-  }, [user, spender, chainId, token, publicClient, refetchInterval]);
-
-  const { sendTransaction, isConfirming: approvePending } = useTransactionWithToast(
-    'approve',
-    `Pending approval of ${tokenSymbol ?? 'your token'}`,
-    `Succesfully approved`,
-    'Approve Error',
+  const { sendTransactionAsync, isConfirming: approvePending } = useTransactionWithToast({
+    toastId: 'approve',
+    pendingText: `Pending approval of ${tokenSymbol ?? 'your token'}`,
+    successText: 'Successfully approved',
+    errorText: 'Approve Error',
     chainId,
-  );
+    pendingDescription: `Approving ${tokenSymbol ?? 'token'} for ${spender.slice(0, 6)}...`,
+    successDescription: `Successfully approved ${tokenSymbol ?? 'token'} for ${spender.slice(
+      0,
+      6,
+    )}...`,
+  });
 
   const approveInfinite = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');
-
     // some weird bug with writeContract, update to use useSendTransaction
-    sendTransaction({
+    await sendTransactionAsync({
       account: user,
       to: token,
       data: encodeFunctionData({
@@ -87,7 +69,10 @@ export function useAllowance({
       }),
       chainId: chainIdFromArgumentOrConnectedWallet,
     });
-  }, [user, spender, token, sendTransaction, chainIdFromArgumentOrConnectedWallet]);
+  }, [user, spender, token, sendTransactionAsync, chainIdFromArgumentOrConnectedWallet]);
+
+  const allowance = data ? data : BigInt(0);
+  const isLoadingAllowance = data === undefined;
 
   return { allowance, isLoadingAllowance, approveInfinite, approvePending };
 }
