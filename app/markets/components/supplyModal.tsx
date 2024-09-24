@@ -171,6 +171,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       await authorizePermit2();
       setCurrentStep('signing');
 
+      // add timeout here to prevent rabby reverting
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       await executeSupplyTransaction();
     } catch (error) {
       console.error('Error during approve and supply:', error);
@@ -208,7 +211,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
-        className="relative z-50 rounded-sm bg-secondary p-12 transition-all duration-500 ease-in-out"
+        className="relative z-50 rounded bg-secondary p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
@@ -342,7 +345,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             <button
               type="button"
               onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
             >
               Switch Chain
             </button>
@@ -351,7 +354,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               disabled={!isConnected || isLoadingPermit2}
               type="button"
               onClick={() => void approveAndSupply()}
-              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
             >
               Approve and Supply
             </button>
