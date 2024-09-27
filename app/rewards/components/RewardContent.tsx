@@ -18,7 +18,7 @@ export default function Rewards() {
   const { loading, data: markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
-  console.log('rewards', rewards);
+  console.log('distributions', distributions);
 
   const marketRewards = useMemo(() => filterMarketRewards(rewards), [rewards]);
   const uniformRewards = useMemo(() => filterUniformRewards(rewards), [rewards]);

@@ -161,9 +161,14 @@ export default function UniformProgram({
                   <div className="flex justify-end">
                     <button
                       type="button"
-                      className="rounded-sm bg-primary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                      className={`bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out ${
+                        reward.claimable === BigInt(0) || !reward.distribution
+                          ? 'cursor-not-allowed opacity-50'
+                          : 'hover:scale-110 hover:bg-orange-500'
+                      }`}
                       disabled={reward.claimable === BigInt(0) || !reward.distribution}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!account) {
                           toast.error('Connect wallet');
                           return;

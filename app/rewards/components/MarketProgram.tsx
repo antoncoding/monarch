@@ -205,10 +205,12 @@ export default function MarketProgram({
                       <div className="flex justify-end">
                         <button
                           type="button"
-                          className="rounded-sm bg-primary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
-                          disabled={
+                          className={`bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out ${
                             tokenReward.claimable === BigInt(0) || distribution === undefined
-                          }
+                              ? 'cursor-not-allowed opacity-50'
+                              : 'hover:scale-110 hover:bg-orange-500'
+                          }`}
+                          disabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!account) {
