@@ -11,3 +11,7 @@ export function isUniformReward(reward: RewardResponseType): reward is UniformRe
 export function filterMarketRewards(rewards: RewardResponseType[]): MarketProgramType[] {
   return rewards.filter(isMarketReward);
 }
+
+export function filterUniformRewards(rewards: RewardResponseType[]): UniformRewardType[] {
+  return rewards.filter(isUniformReward);
+}
