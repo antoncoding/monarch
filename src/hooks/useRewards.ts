@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';
+import { RewardResponseType } from '@/utils/types';
 
-type DistributionResponseType = {
+export type DistributionResponseType = {
   user: Address;
   asset: {
     id: string;
@@ -16,52 +17,6 @@ type DistributionResponseType = {
   claimable: string;
   proof: string[];
   tx_data: string;
-};
-
-export type RewardResponseType = {
-  user: string;
-  type: string;
-  program: {
-    id: string;
-    creator: string;
-    start: string;
-    end: string;
-    created_at: string;
-    type: string;
-    distributor: {
-      id: string;
-      address: string;
-      chain_id: number;
-    };
-    asset: {
-      id: string;
-      address: string;
-      chain_id: 1;
-    };
-    market_id: string;
-    supply_rate_per_year: string;
-    borrow_rate_per_year: string;
-    collateral_rate_per_year: string;
-    chain_id: 1;
-  };
-  for_supply: {
-    total: string;
-    claimable_now: string;
-    claimable_next: string;
-    claimed: string;
-  } | null;
-  for_borrow: {
-    total: string;
-    claimable_now: string;
-    claimable_next: string;
-    claimed: string;
-  } | null;
-  for_collateral: {
-    total: string;
-    claimable_now: string;
-    claimable_next: string;
-    claimed: string;
-  } | null;
 };
 
 const useUserRewards = (user: string | undefined) => {

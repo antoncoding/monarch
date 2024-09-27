@@ -150,3 +150,48 @@ export type TokenInfo = {
   decimals: number;
   priceUsd: number;
 };
+
+// Common types
+type AssetType = {
+  id: string;
+  address: string;
+  chain_id: number;
+};
+
+type RewardAmount = {
+  total: string;
+  claimable_now: string;
+  claimable_next: string;
+  claimed: string;
+};
+
+// Market Program Type
+export type MarketProgramType = {
+  type: 'market-reward';
+  asset: AssetType;
+  for_borrow: RewardAmount | null;
+  for_collateral: RewardAmount | null;
+  for_supply: RewardAmount | null;
+  program: {
+    creator: string;
+    start: string;
+    end: string;
+    created_at: string;
+    blacklist: string[];
+    market_id: string;
+    asset: AssetType;
+  };
+  user: string;
+};
+
+// Uniform Reward Type
+export type UniformRewardType = {
+  type: 'uniform-reward';
+  amount: RewardAmount;
+  asset: AssetType;
+  program_id: string;
+  user: string;
+};
+
+// Combined RewardResponseType
+export type RewardResponseType = MarketProgramType | UniformRewardType;
