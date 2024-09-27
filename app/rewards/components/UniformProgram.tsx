@@ -51,6 +51,7 @@ export default function UniformProgram({
           claimable: BigInt(reward.amount.claimable_now ?? '0'),
           pending: BigInt(reward.amount.claimable_next ?? '0'),
           total: BigInt(reward.amount.total ?? '0'),
+          claimed: BigInt(reward.amount.claimed ?? '0'),
         };
       }),
     [uniformRewards, distributions],
@@ -89,6 +90,7 @@ export default function UniformProgram({
             <TableColumn align="center">Chain</TableColumn>
             <TableColumn align="center">Claimable</TableColumn>
             <TableColumn align="center">Pending</TableColumn>
+            <TableColumn align="center">Claimed</TableColumn>
             <TableColumn align="center">Total</TableColumn>
             <TableColumn align="end">Action</TableColumn>
           </TableHeader>
@@ -129,6 +131,16 @@ export default function UniformProgram({
                   <div className="flex items-center justify-center gap-1">
                     <p>
                       {formatReadable(formatBalance(reward.pending, reward.token?.decimals ?? 18))}
+                    </p>
+                    {reward.token?.img && (
+                      <Image src={reward.token.img} alt="token icon" width="16" height="16" />
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center gap-1">
+                    <p>
+                      {formatReadable(formatBalance(reward.claimed, reward.token?.decimals ?? 18))}
                     </p>
                     {reward.token?.img && (
                       <Image src={reward.token.img} alt="token icon" width="16" height="16" />
