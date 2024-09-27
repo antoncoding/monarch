@@ -96,8 +96,7 @@ export default function MarketProgram({
     <div className="mt-4 gap-8">
       <div className="px-4 py-2 font-zen text-xl"> Market Program Rewards </div>
       <p className="px-4 text-sm text-gray-500">
-        Incentivize market supply, borrow, and/or collateral using a linear distribution over a
-        timeline.
+        Market Program Rewards are incentives tailored to specific markets on Morpho. These rewards encourage particular actions within each market, such as supplying, borrowing, or providing collateral. The program may include additional incentives designed to stimulate activity in targeted markets.
       </p>
 
       <div className="mb-6 mt-2">

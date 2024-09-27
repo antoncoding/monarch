@@ -60,8 +60,7 @@ export default function UniformProgram({
     <div className="mt-4 gap-8">
       <div className="px-4 py-2 font-zen text-xl">Uniform Program Rewards</div>
       <p className="px-4 pb-8 text-sm text-gray-500">
-        A uniform reward rate for each dollar supplied in a curated market. More detail can be found
-        in the{' '}
+        The Uniform Program is a new reward system that applies to all users who supply to Morpho, regardless of the specific market. It provides a consistent reward rate for each dollar supplied across eligible markets, promoting broader participation in the Morpho ecosystem. For more details, check the{' '}
         <a
           href="https://forum.morpho.org/t/mip65-new-scalable-rewards-model/617"
           target="_blank"

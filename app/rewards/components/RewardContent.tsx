@@ -50,8 +50,8 @@ export default function Rewards() {
         <div className="pb-8">
           <div className="font-zen text-3xl">Rewards</div>
           <div className="pt-4 text-base text-gray-500">
-            Morpho Lab have launched different programs to incentivize different actions. Choose
-            reward type to see more details.
+            Morpho offers multiple reward programs to incentivize user participation.
+            Choose a program type below to see more details.
           </div>
 
           <div className="mt-6 flex justify-center">
