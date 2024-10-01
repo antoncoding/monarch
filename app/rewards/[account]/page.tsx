@@ -3,7 +3,7 @@ import { generateMetadata } from '@/utils/generateMetadata';
 import Content from '../components/RewardContent';
 
 export const metadata = generateMetadata({
-  title: 'Rewards',
+  title: 'Rewards | Monarch',
   description: 'Permission-less access to morpho blue protocol',
   images: 'themes.png',
   pathname: '',

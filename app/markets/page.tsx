@@ -3,7 +3,7 @@ import { generateMetadata } from '@/utils/generateMetadata';
 import MarketContent from './components/markets';
 
 export const metadata = generateMetadata({
-  title: 'Markets',
+  title: 'Markets | Monarch',
   description: 'Permission-less access to morpho blue protocol',
   images: 'themes.png',
   pathname: '',
