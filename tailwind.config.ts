@@ -45,6 +45,10 @@ const config: Config = {
         zen: ['var(--font-zen)'],
         monospace: ['var(--font-monospace)'],
       },
+      fontWeight: {
+        normal: '400',
+        bold: '700',
+      },
     },
   },
   darkMode: 'class',
