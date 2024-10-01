@@ -219,7 +219,10 @@ const supportedTokens = [
     symbol: 'weETH',
     img: require('../imgs/tokens/weeth.webp') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee' }],
+    networks: [
+      { chain: mainnet, address: '0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee' },
+      { chain: base, address: '0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A' },
+    ],
   },
   {
     symbol: 'apxETH',

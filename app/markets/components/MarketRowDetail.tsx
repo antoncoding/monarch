@@ -7,6 +7,8 @@ import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
+  console.log('market.oracleFeed', market.oracleFeed);
+
   return (
     <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
       {/* Oracle info */}
@@ -49,14 +51,16 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
               </div>
             )}
 
-            <div className="mb-1 flex items-start justify-between">
-              <p className="font-inter text-xs opacity-80">Quote feed 1</p>
-              <OracleFeedInfo
-                address={market.oracleFeed.quoteFeedOneAddress}
-                title={market.oracleFeed.quoteFeedOneDescription}
-                chainId={market.morphoBlue.chain.id}
-              />
-            </div>
+            {market.oracleFeed.quoteFeedOneAddress !== zeroAddress && (
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-xs opacity-80">Quote feed</p>
+                <OracleFeedInfo
+                  address={market.oracleFeed.quoteFeedOneAddress}
+                  title={market.oracleFeed.quoteFeedOneDescription}
+                  chainId={market.morphoBlue.chain.id}
+                />
+              </div>
+            )}
 
             {/* only shows quote feed 2 if non-zero */}
             {market.oracleFeed.quoteFeedTwoAddress !== zeroAddress && (
