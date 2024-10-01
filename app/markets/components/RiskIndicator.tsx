@@ -47,8 +47,8 @@ export function MarketAssetIndicator({ market }: { market: Market }) {
       market={market}
       category={WarningCategory.asset}
       greeDescription="Recognized assets"
-      yellowDescription="Some warning flagged with the assets"
-      redDescription="Dangerous assets"
+      yellowDescription="Some warnings flagged with the assets"
+      redDescription="Potentially dangerous assets"
     />
   );
 }
@@ -59,8 +59,8 @@ export function MarketOracleIndicator({ market }: { market: Market }) {
       market={market}
       category={WarningCategory.oracle}
       greeDescription="Recognized oracles"
-      yellowDescription="Some warning flagged with the oracle"
-      redDescription="Some alert flagged with the oracle"
+      yellowDescription="Some warnings flagged with the oracle"
+      redDescription="Some alerts flagged with the oracle"
     />
   );
 }
