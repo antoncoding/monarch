@@ -210,7 +210,9 @@ export default function MarketProgram({
                               ? 'cursor-not-allowed opacity-50'
                               : 'hover:scale-110 hover:bg-orange-500'
                           }`}
-                          disabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
+                          disabled={
+                            tokenReward.claimable === BigInt(0) || distribution === undefined
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!account) {

@@ -9,6 +9,7 @@ type InputProps = {
   setValue: React.Dispatch<React.SetStateAction<bigint>>;
   setError?: React.Dispatch<React.SetStateAction<string | null>>;
   exceedMaxErrMessage?: string;
+  allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
 };
 
 export default function Input({
@@ -17,6 +18,7 @@ export default function Input({
   setValue,
   setError,
   exceedMaxErrMessage,
+  allowExceedMax = false,
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>('0');
@@ -32,6 +34,9 @@ export default function Input({
 
         if (inputBigInt > max) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
+          if (allowExceedMax) {
+            setValue(inputBigInt);
+          }
           return;
         }
 
@@ -44,7 +49,7 @@ export default function Input({
         console.log('e', e);
       }
     },
-    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage],
+    [decimals, setError, setInputAmount, setValue, max, exceedMaxErrMessage, allowExceedMax],
   );
 
   // if max is clicked, set the input to the max value

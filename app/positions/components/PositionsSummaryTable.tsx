@@ -137,8 +137,8 @@ export function PositionsSummaryTable({
   };
 
   return (
-    <div className="space-y-4">
-      <table className="responsive w-full font-zen">
+    <div className="space-y-4 overflow-x-auto">
+      <table className="responsive w-full min-w-[640px] font-zen">
         <thead className="table-header">
           <tr>
             <th className="w-10" />

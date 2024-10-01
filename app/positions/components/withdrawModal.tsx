@@ -185,6 +185,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
               setValue={setWithdrawAmount}
               setError={setInputError}
               exceedMaxErrMessage="Insufficient Liquidity"
+              allowExceedMax
             />
             {/* input error */}
             {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
@@ -199,7 +200,7 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
             </button>
           ) : (
             <button
-              disabled={!isConnected || isConfirming || inputError !== null}
+              disabled={!isConnected || isConfirming} // allow hitting the withdraw button even if input error is not null, wallet should warn an error anyway!
               type="button"
               onClick={() => void withdraw()}
               className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
