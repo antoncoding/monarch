@@ -37,6 +37,7 @@ module.exports = {
     'react/require-default-props': 'off',
     'react/sort-prop-types': 'off',
     'react/no-array-index-key': 'off',
+    'react/no-unescaped-entities': 'off',
 
     // Performance: Avoid unnecessary renders
     'react-perf/jsx-no-new-array-as-prop': 'warn',
