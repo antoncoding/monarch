@@ -2,6 +2,7 @@ import './global.css';
 
 import { ToastContainer } from 'react-toastify';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
+import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Stat analytics before the App renders,
+// Start analytics before the App renders,
 // so we can track page views and early events
 initAnalytics();
 
@@ -26,13 +27,12 @@ initAnalytics();
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
-      {/* <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head> */}
       <body>
         <Providers>
-          <OnchainProviders>{children}</OnchainProviders>
+          <OnchainProviders>
+            {children}
+            <RiskNotificationModal />
+          </OnchainProviders>
           <ToastContainer position="bottom-right" />
         </Providers>
       </body>

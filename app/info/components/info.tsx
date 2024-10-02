@@ -30,7 +30,9 @@ function InfoPage() {
     setTimeout(() => setIsTransitioning(false), 500);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const nextSection = () => changeSection('next');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const prevSection = () => changeSection('prev');
 
   useEffect(() => {

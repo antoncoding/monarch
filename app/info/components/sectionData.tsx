@@ -12,28 +12,29 @@ export const sections = [
     content: (
       <>
         <p>
-          Monarch is an advanced interface for <span className="font-bold">Morpho Blue</span>, a
-          decentralized, immutable, and neutral lending protocol. Morpho Blue allows anyone to lend
-          and borrow assets without potential censorship, providing a foundation for decentralized
-          finance.
-        </p>
-        <p className="mt-4">
-          In the rapid development of DeFi, Morpho Blue stands out as a{' '}
+          <span className="font-bold">Morpho Blue</span> is the core protocol of the Morpho
+          ecosystem. It's a decentralized, immutable, and neutral lending protocol that enables the
+          creation of lending markets with any assets in a truly decentralized manner. As a{' '}
           <a
             href="https://jacob.energy/hyperstructures.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-monarch-primary underline"
+            class="text-monarch-primary underline"
           >
             hyperstructure
           </a>
-          , embodying the spirit of unstoppable, free, and valuable protocols. Built with a
-          minimalistic, security-focused, and immutable approach, Morpho Blue is highly praised by
-          the security community as one of the most efficient and secure protocols.
+          , Morpho Blue embodies unstoppable, free, and neutral DeFi primitives.
         </p>
         <p className="mt-4">
-          As we explore Monarch, we'll start by understanding Morpho Blue and how Monarch enhances
-          your interaction with this powerful hyperstructure.
+          Built with a minimalistic and unopinionated approach, Morpho Blue is the foundation upon
+          which the entire Morpho ecosystem is constructed. Its efficiency and security have made it
+          highly regarded in the DeFi community, positioning it as the most crucial element in
+          Morpho's architecture.
+        </p>
+        <p className="mt-4">
+          Monarch serves as an advanced interface for Morpho Blue, providing users with a gateway to
+          interact with this powerful core protocol. As we explore Morpho's ecosystem, understanding
+          Morpho Blue is essential, as it underpins all other components and functionalities.
         </p>
       </>
     ),
@@ -45,9 +46,10 @@ export const sections = [
     content: (
       <>
         <p>
-          The Morpho ecosystem introduces <span className="font-bold">Morpho Vaults</span>,
+          The Morpho Lab team introduces <span className="font-bold">Morpho Vaults</span>,
           intermediate contracts managed by curators to simplify risk management for normal
-          suppliers.
+          suppliers. This is the recommended way to interact with Morpho Blue, as it offers a more
+          user-friendly experience and simplified risk management.
         </p>
         <p className="mt-4">
           <span className="font-bold">Advantages:</span>
@@ -86,8 +88,8 @@ export const sections = [
       <>
         <p>
           Monarch empowers advanced users by enabling{' '}
-          <span className="font-bold">direct lending to markets</span>, bypassing the need for
-          vaults. This approach offers greater control and customization over your lending
+          <span className="font-bold">direct lending to Morpho Blue markets</span>, bypassing the
+          need for vaults. This approach offers greater control and customization over your lending
           positions.
         </p>
         <p className="mt-4">
@@ -124,13 +126,13 @@ export const sections = [
     content: (
       <>
         <p>
-          <span className="font-bold">Coming Soon: Monarch Auto</span>
+          <span className="text-xl font-bold">Coming Soon: Monarch Auto</span>
           <br />
           We're developing "Monarch Auto", a feature that will help automate the rebalancing process
           with your custom strategies. This will combine the benefits of direct market access with
           automated management.
         </p>
-        <p className="mt-2">
+        <p className="mt-4">
           <span className="font-bold">What's in Progress:</span>
           <ul className="mt-2 list-inside list-disc">
             <li>Automated rebalancing strategies</li>

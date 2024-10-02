@@ -12,22 +12,24 @@ const riskSections = [
         <p>When supplying directly to markets, you are responsible for:</p>
         <ul className="mt-2 list-inside list-disc">
           <li>
-            Managing potential temporary inability to withdraw funds due to high utilization rates
+            Managing partial fund availability for withdrawal during periods of high market
+            utilization
           </li>
           <li>Actively monitoring and managing liquidity across different markets</li>
-          <li>Understanding the trade-offs between liquidity and yield optimization</li>
         </ul>
       </>
     ),
   },
   {
     mainTitle: 'Risk Management',
-    subTitle: 'Your Duty to Monitor',
+    subTitle: 'Active Monitoring Required',
     content: (
       <>
         <p>Direct market positions require you to take charge of risk management:</p>
         <ul className="mt-2 list-inside list-disc">
-          <li>Managing changes in LLTV / oracle for each collateral exposure</li>
+          <li>
+            Rebalance between markets with different LLTVs / oracles to adjust collateral exposure
+          </li>
           <li>Regularly assessing and adjusting positions based on market conditions</li>
         </ul>
       </>
@@ -35,7 +37,7 @@ const riskSections = [
   },
   {
     mainTitle: 'APY Optimization',
-    subTitle: 'Your Task to Maximize Yields',
+    subTitle: 'Optimizing Your Lending Strategy',
     content: (
       <>
         <p>Optimizing returns through direct lending becomes your responsibility:</p>
