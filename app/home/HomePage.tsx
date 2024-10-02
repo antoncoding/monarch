@@ -45,8 +45,11 @@ export default function HomePage() {
             </div>
           </section>
         </main>
-        <div className="flex h-3/4 w-4/5 items-center justify-center pb-12 pt-4">
-          <PrimaryButton href="/markets">Start</PrimaryButton>
+        <div className="flex h-3/4 w-4/5 items-center justify-center gap-2 pb-12 pt-4">
+          <PrimaryButton isSecondary href="/info">
+            Why Monarch
+          </PrimaryButton>
+          <PrimaryButton href="/markets">View Markets</PrimaryButton>
         </div>
       </div>
       <Footer />

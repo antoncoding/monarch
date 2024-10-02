@@ -14,7 +14,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
       {/* Oracle info */}
       <div className="m-4 lg:w-1/3">
         {/* warnings */}
-        <div className="mb-1 flex items-start justify-between text-base font-bold">
+        <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Oracle Info</p>
         </div>
         <div className="mb-1 flex items-start justify-between">
@@ -79,7 +79,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
 
       {/* market info */}
       <div className="m-4 lg:w-1/3">
-        <div className="mb-1 flex items-start justify-between text-base font-bold">
+        <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Market State</p>
         </div>
         <div className="mb-1 flex items-start justify-between">
@@ -98,7 +98,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
 
       {/* warnings */}
       <div className="m-4 mr-0 lg:w-1/3">
-        <div className="mb-1 flex items-start justify-between text-base font-bold">
+        <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Warnings</p>
         </div>
 
