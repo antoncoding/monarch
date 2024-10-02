@@ -23,7 +23,7 @@ export const sections = [
             href="https://jacob.energy/hyperstructures.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-monarch-orange underline"
+            className="text-monarch-primary underline"
           >
             hyperstructure
           </a>
@@ -60,7 +60,7 @@ export const sections = [
               <a
                 href="https://docs.morpho.org/morpho-vaults/concepts/benefits-of-morpho-vaults/"
                 target="_blank"
-                className="text-monarch-orange underline"
+                className="text-monarch-primary underline"
               >
                 Benefit of Morpho Vaults
               </a>{' '}
@@ -103,10 +103,10 @@ export const sections = [
           <ul className="mt-2 list-inside list-disc">
             <li>Deep understanding of market risks needed</li>
             <li>Currently requires manual rebalancing</li>
-            <li>
+            <li className="font-bold">
               {' '}
               Learn more about the risks{' '}
-              <a href="/risks" className="text-monarch-orange underline">
+              <a href="/info/risks" className="text-monarch-primary underline">
                 {' '}
                 here{' '}
               </a>{' '}
@@ -143,7 +143,7 @@ export const sections = [
           <br />
           Your input is crucial in shaping the future of Monarch. We encourage you to share your
           thoughts, suggestions, and any issues you encounter. Please send your feedback to
-          <a href="https://t.me/+kM48_lzD9gQ3NzRl" className="text-monarch-orange underline">
+          <a href="https://t.me/+kM48_lzD9gQ3NzRl" className="underline">
             {' '}
             our telegram chat here{' '}
           </a>

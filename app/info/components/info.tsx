@@ -2,7 +2,7 @@
 // eslint-disable jsx-a11y/no-static-element-interactions
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Header from '@/components/layout/header/Header';
 import { sections } from './sectionData';
@@ -90,9 +90,7 @@ function InfoPage() {
               >
                 <div className="w-full max-w-4xl">
                   <h1 className="mb-2 text-center text-4xl font-bold">{section.mainTitle}</h1>
-                  <h2 className="text-monarch-orange mb-4 text-center text-xl">
-                    {section.subTitle}
-                  </h2>
+                  <h2 className="mb-4 text-center text-xl text-secondary">{section.subTitle}</h2>
                   <div className="flex max-h-[calc(100vh-250px)] flex-col items-center gap-8 overflow-y-auto">
                     <div className="flex w-full items-center justify-center overflow-hidden rounded-lg">
                       <Image
