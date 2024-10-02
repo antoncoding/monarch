@@ -19,7 +19,7 @@ export const sections = [
             href="https://jacob.energy/hyperstructures.html"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-monarch-primary underline"
+            className="text-monarch-primary underline"
           >
             hyperstructure
           </a>
