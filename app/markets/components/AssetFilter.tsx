@@ -1,7 +1,8 @@
 'use client';
-import { Select, SelectItem, SelectSection } from '@nextui-org/react';
+import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { ERC20Token, findTokenWithKey, infoToKey } from '@/utils/tokens';
+import { ERC20Token, infoToKey } from '@/utils/tokens';
 
 type FilterProps = {
   label: string;
@@ -9,58 +10,147 @@ type FilterProps = {
   selectedAssets: string[];
   setSelectedAssets: (assets: string[]) => void;
   items: ERC20Token[];
-  loading: boolean;
+  loading?: boolean; // Made optional since it's not used
 };
+
 export default function AssetFilter({
   label,
   placeholder,
   selectedAssets,
   setSelectedAssets,
   items,
-  loading,
 }: FilterProps) {
+  const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
+
+  const selectOption = (token: ERC20Token) => {
+    const tokenKey = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
+    if (selectedAssets.includes(tokenKey)) {
+      setSelectedAssets(selectedAssets.filter((asset) => asset !== tokenKey));
+    } else {
+      setSelectedAssets([...selectedAssets, tokenKey]);
+    }
+    setQuery('');
+  };
+
+  const clearSelection = () => {
+    setSelectedAssets([]);
+    setQuery('');
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      toggleDropdown();
+    }
+  };
+
+  const filteredItems = items.filter((token) =>
+    token.symbol.toLowerCase().includes(query.toLowerCase()),
+  );
+
   return (
-    <Select
-      label={label}
-      selectionMode="multiple"
-      placeholder={placeholder}
-      selectedKeys={selectedAssets}
-      onChange={(e) => {
-        if (!e.target.value) setSelectedAssets([]);
-        else setSelectedAssets((e.target.value as string).split(','));
-      }}
-      classNames={{
-        trigger: 'bg-secondary rounded-sm min-w-48',
-        popoverContent: 'bg-secondary rounded-sm',
-      }}
-      items={items}
-      // className='w-48 rounded-sm'
-      isLoading={loading}
-      renderValue={(tokens) => {
-        return (
-          <div className="flex-scroll flex gap-1">
-            {tokens.map((t) => {
-              const token = findTokenWithKey(t.key as string);
-              return token?.img ? <Image src={token.img} alt="icon" height="18" /> : t.textValue;
-            })}
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        className={`min-w-48 cursor-pointer rounded-sm bg-secondary p-2 transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+          isOpen ? 'bg-secondary-dark' : ''
+        }`}
+        role="button"
+        tabIndex={0}
+        onClick={toggleDropdown}
+        onKeyDown={handleKeyDown}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+      >
+        <span className="absolute left-2 top-2 px-1 text-xs">{label}</span>
+        <div className="flex items-center justify-between pt-4">
+          {selectedAssets.length > 0 ? (
+            <div className="flex-scroll flex gap-2 p-1">
+              {selectedAssets.map((asset) => {
+                const token = items.find(
+                  (item) =>
+                    item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset,
+                );
+                return token?.img ? (
+                  <Image key={asset} src={token.img} alt={token.symbol} width={18} height={18} />
+                ) : null;
+              })}
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400">{placeholder}</span>
+          )}
+          <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+            &#9662;
+          </span>
+        </div>
+      </div>
+      {isOpen && (
+        <div className="absolute z-10 mt-1 w-full rounded-sm bg-secondary shadow-lg">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search tokens..."
+            className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
+          />
+          <div className="relative">
+            <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
+              {filteredItems.map((token) => (
+                <li
+                  key={token.symbol}
+                  className={`flex cursor-pointer items-center justify-between rounded-sm p-2 hover:bg-primary ${
+                    selectedAssets.includes(
+                      token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
+                    )
+                      ? 'bg-primary'
+                      : ''
+                  }`}
+                  onClick={() => selectOption(token)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      selectOption(token);
+                    }
+                  }}
+                  role="option"
+                  aria-selected={selectedAssets.includes(
+                    token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
+                  )}
+                  tabIndex={0}
+                >
+                  <span>{token.symbol}</span>
+                  {token.img && <Image src={token.img} alt={token.symbol} width={18} height={18} />}
+                </li>
+              ))}
+            </ul>
+            <div className="absolute bottom-0 left-0 right-0 border-gray-700 bg-secondary p-2">
+              <button
+                className="flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary hover:bg-primary"
+                onClick={clearSelection}
+                type="button"
+              >
+                <span>Clear All</span>
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
-        );
-      }}
-    >
-      <SelectSection title="Choose loan assets">
-        {items.map((token) => {
-          // key = `0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-1|0x5A98FcBEA516Cf06857215779Fd812CA3beF1B32-42`
-          const key = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-          return (
-            <SelectItem key={key} textValue={token.symbol}>
-              <div className="flex items-center justify-between">
-                <p>{token?.symbol}</p>
-                {token.img && <Image src={token.img} alt="icon" height="18" />}
-              </div>
-            </SelectItem>
-          );
-        })}
-      </SelectSection>
-    </Select>
+        </div>
+      )}
+    </div>
   );
 }

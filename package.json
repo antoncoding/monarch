@@ -39,6 +39,7 @@
     "@uniswap/permit2-sdk": "^1.2.1",
     "abitype": "^0.10.3",
     "clsx": "^2.1.0",
+    "downshift": "^9.0.8",
     "framer-motion": "^11.2.10",
     "graphql": "14",
     "graphql-request": "6",

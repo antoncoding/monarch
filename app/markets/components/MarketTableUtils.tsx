@@ -29,7 +29,7 @@ export function HTSortable({
       className={`${sortingCurrent ? 'text-primary' : ''}`}
       onClick={() => titleOnclick(targetColumn)}
     >
-      <div className="flex items-center justify-center gap-1 hover:cursor-pointer font-normal">
+      <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer">
         {toolTip ? <Tooltip content={toolTip}>{label}</Tooltip> : <div>{label}</div>}
         {sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null}
       </div>

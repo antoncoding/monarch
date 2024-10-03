@@ -233,3 +233,24 @@ pre {
   display: flex;
   flex-direction: column;
 }
+
+/* Add this at the end of your global.css file */
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-secondary) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-text-secondary);
+  border-radius: 20px;
+  border: transparent;
+}
