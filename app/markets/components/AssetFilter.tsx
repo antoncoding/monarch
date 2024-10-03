@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { TrashIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { ERC20Token, infoToKey } from '@/utils/tokens';
 
@@ -81,7 +81,7 @@ export default function AssetFilter({
         <span className="absolute left-2 top-2 px-1 text-xs">{label}</span>
         <div className="flex items-center justify-between pt-4">
           {selectedAssets.length > 0 ? (
-            <div className="flex-scroll flex gap-2 p-1">
+            <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
               {selectedAssets.map((asset) => {
                 const token = items.find(
                   (item) =>
@@ -93,10 +93,10 @@ export default function AssetFilter({
               })}
             </div>
           ) : (
-            <span className="text-sm text-gray-400">{placeholder}</span>
+            <span className="p-[2px] text-sm text-gray-400">{placeholder}</span>
           )}
           <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-            &#9662;
+            <ChevronDownIcon />
           </span>
         </div>
       </div>
