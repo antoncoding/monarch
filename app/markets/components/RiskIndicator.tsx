@@ -11,9 +11,9 @@ export function RiskIndicator({ level, description }: RiskFlagProps) {
   return (
     <Tooltip content={description}>
       <div className="gap flex">
-        {level === 'green' && <div className="h-4 w-2 bg-green-500" />}
-        {level === 'yellow' && <div className="h-4 w-2 bg-yellow-500" />}
-        {level === 'red' && <div className="h-4 w-2 bg-red-500" />}
+        {level === 'green' && <div className="h-4 w-[4px] bg-green-500" />}
+        {level === 'yellow' && <div className="h-4 w-[4px] bg-yellow-500" />}
+        {level === 'red' && <div className="h-4 w-[4px] bg-red-500" />}
       </div>
     </Tooltip>
   );

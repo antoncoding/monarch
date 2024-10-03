@@ -47,7 +47,7 @@ function MarketsTable({
           <thead className="table-header">
             <tr>
               <th> {} </th>
-              <th> Id </th>
+              <th className="font-normal"> Id </th>
               <HTSortable
                 label="Loan"
                 sortColumn={sortColumn}
@@ -90,11 +90,11 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.SupplyAPY}
               />
-              <th>
+              <th className="font-normal">
                 <Tooltip content="Risks associated with Asset, Oracle and others">Risk</Tooltip>
               </th>
-              <th> Indicators </th>
-              <th> Actions </th>
+              <th className="font-normal"> Indicators </th>
+              <th className="font-normal"> Actions </th>
             </tr>
           </thead>
           <MarketTableBody
