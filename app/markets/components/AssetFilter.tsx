@@ -68,7 +68,7 @@ export default function AssetFilter({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`min-w-48 cursor-pointer rounded-sm bg-secondary p-2 transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+        className={`min-w-48 cursor-pointer rounded-sm bg-secondary p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-secondary-dark' : ''
         }`}
         role="button"
@@ -114,11 +114,11 @@ export default function AssetFilter({
               {filteredItems.map((token) => (
                 <li
                   key={token.symbol}
-                  className={`flex cursor-pointer items-center justify-between rounded-sm p-2 hover:bg-primary ${
+                  className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
                     selectedAssets.includes(
                       token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
                     )
-                      ? 'bg-primary'
+                      ? 'bg-gray-300 dark:bg-gray-700'
                       : ''
                   }`}
                   onClick={() => selectOption(token)}

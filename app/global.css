@@ -237,7 +237,7 @@ pre {
 /* Add this at the end of your global.css file */
 
 .custom-scrollbar {
-  scrollbar-width: thin;
+  scrollbar-width: none;
   scrollbar-color: var(--color-text-secondary) transparent;
 }
 
