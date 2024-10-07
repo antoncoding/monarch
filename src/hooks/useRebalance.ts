@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useAccount, useContractRead, useReadContract, useSignTypedData } from 'wagmi';
-import { encodeFunctionData, Address, parseSignature } from 'viem';
+import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { encodeFunctionData, Address, parseSignature } from 'viem';
+import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
+import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MORPHO } from '@/utils/morpho';
 import { RebalanceAction, GroupedPosition } from '@/utils/types';
 
@@ -55,8 +55,6 @@ export function useRebalance(groupedPosition: GroupedPosition) {
 
     if (!isAuthorized) {
       const domain = {
-        name: 'Morpho Blue',
-        version: '1',
         chainId: groupedPosition.chainId,
         verifyingContract: MORPHO as Address,
       };
@@ -81,30 +79,41 @@ export function useRebalance(groupedPosition: GroupedPosition) {
         deadline: BigInt(deadline),
       };
 
-      const signatureRaw = await signTypedDataAsync({ domain, types, primaryType: 'Authorization', message: value }  );
-      const signature = parseSignature(signatureRaw);      
+      const signatureRaw = await signTypedDataAsync({
+        domain,
+        types,
+        primaryType: 'Authorization',
+        message: value,
+      });
+      const signature = parseSignature(signatureRaw);
 
       const authorizationTx = encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'morphoSetAuthorizationWithSig',
-        args: [{
-          authorizer: account,
-          authorized: bundlerAddress,
-          isAuthorized: true,
-          nonce: BigInt(nonce ?? 0),
-          deadline: BigInt(deadline),
-        }, {
-          v: Number(signature.v),
-          r: signature.r,
-          s: signature.s,
-        }, false],
+        args: [
+          {
+            authorizer: account,
+            authorized: bundlerAddress,
+            isAuthorized: true,
+            nonce: BigInt(nonce ?? 0),
+            deadline: BigInt(deadline),
+          },
+          {
+            v: Number(signature.v),
+            r: signature.r,
+            s: signature.s,
+          },
+          false,
+        ],
       });
 
       transactions.push(authorizationTx);
 
       // Wait for 0.5 seconds
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+
+    console.log('rebalanceActions', rebalanceActions);
 
     const rebalanceTxs = rebalanceActions.flatMap((action) => {
       const withdrawTx = encodeFunctionData({
@@ -149,6 +158,8 @@ export function useRebalance(groupedPosition: GroupedPosition) {
 
     transactions.push(...rebalanceTxs);
 
+    console.log('transactions', transactions);
+
     const multicallTx = encodeFunctionData({
       abi: morphoBundlerAbi,
       functionName: 'multicall',
@@ -161,8 +172,15 @@ export function useRebalance(groupedPosition: GroupedPosition) {
       data: multicallTx,
       chainId: groupedPosition.chainId,
     });
-
-  }, [account, isAuthorized, bundlerAddress, groupedPosition.chainId, rebalanceActions, sendTransaction, signTypedDataAsync]);
+  }, [
+    account,
+    isAuthorized,
+    bundlerAddress,
+    groupedPosition.chainId,
+    rebalanceActions,
+    sendTransaction,
+    signTypedDataAsync,
+  ]);
 
   return {
     rebalanceActions,

@@ -58,15 +58,17 @@ export function Pagination({
           }}
           size="md"
         />
-        {showSettings && <Button
-          isIconOnly
-          aria-label="Settings"
-          className="ml-2 bg-secondary"
-          onClick={onOpen}
-          size="md"
-        >
-          <FiSettings />
-        </Button>}
+        {showSettings && (
+          <Button
+            isIconOnly
+            aria-label="Settings"
+            className="ml-2 bg-secondary"
+            onClick={onOpen}
+            size="md"
+          >
+            <FiSettings />
+          </Button>
+        )}
       </div>
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>

@@ -1,17 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input } from "@nextui-org/react";
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@nextui-org/react";
-import { ArrowRightIcon } from '@radix-ui/react-icons';
-import useMarkets, { Market } from '@/hooks/useMarkets';
-import { usePagination } from '@/hooks/usePagination';
-import { SortColumn } from 'app/markets/components/constants';
-import { GroupedPosition, RebalanceAction } from '@/utils/types';
-import { useRebalance } from '@/hooks/useRebalance';
-import { MarketTables } from './MarketTables';
-import { formatUnits } from 'viem';
-import { formatReadable, formatBalance } from '@/utils/balance';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+} from '@nextui-org/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
+import { ArrowRightIcon, ArrowDownIcon } from '@radix-ui/react-icons';
+import Image from 'next/image';
+import { useTheme } from 'next-themes';
 import { toast } from 'react-toastify';
-import { useTheme } from "next-themes";
+import { formatUnits } from 'viem';
+import useMarkets from '@/hooks/useMarkets';
+import { usePagination } from '@/hooks/usePagination';
+import { useRebalance } from '@/hooks/useRebalance';
+import { formatReadable, formatBalance } from '@/utils/balance';
+import { findToken } from '@/utils/tokens';
+import { GroupedPosition } from '@/utils/types';
+import { FromAndToMarkets } from './FromAndToMarkets';
 
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
@@ -19,28 +28,40 @@ type RebalanceModalProps = {
   onClose: () => void;
 };
 
-const MarketBadge = ({ market }: { market: { uniqueKey: string, collateralAsset: { symbol: string }, lltv: string } | null }) => {
-  if (!market) return <span className="text-gray-500">Select a market</span>;
-  
+function MarketBadge({
+  market,
+}: {
+  market: { uniqueKey: string; collateralAsset: { symbol: string }; lltv: string } | null;
+}) {
+  if (!market)
+    return <span className="py-3 font-monospace text-sm text-secondary">Select market</span>;
+
   return (
-    <div className="bg-orange-100 text-orange-800 rounded-full px-3 py-1 text-xs font-medium whitespace-normal">
-      <span className="font-monospace">{market.uniqueKey.slice(2, 8)}</span> | {market.collateralAsset.symbol} | LLTV: {formatUnits(BigInt(market.lltv), 16)}%
+    <div className="whitespace-nowrap rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-100">
+      <span className="font-monospace">{market.uniqueKey.slice(2, 8)}</span> |{' '}
+      {market.collateralAsset.symbol}
     </div>
   );
-};
+}
 
 export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceModalProps) {
-  const { theme } = useTheme();
   const [fromMarketFilter, setFromMarketFilter] = useState('');
   const [toMarketFilter, setToMarketFilter] = useState('');
   const [selectedFromMarketUniqueKey, setSelectedFromMarketUniqueKey] = useState('');
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState('');
-  const [sortColumn, setSortColumn] = useState<SortColumn>(SortColumn.SupplyAPY);
-  const [sortDirection, setSortDirection] = useState<number>(1);
 
   const { data: allMarkets } = useMarkets();
-  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isConfirming, isAuthorized } = useRebalance(groupedPosition);
+  const {
+    rebalanceActions,
+    addRebalanceAction,
+    removeRebalanceAction,
+    executeRebalance,
+    isConfirming,
+    isAuthorized,
+  } = useRebalance(groupedPosition);
+
+  const tokenImg = findToken(groupedPosition.loanAsset, groupedPosition.chainId);
 
   const fromPagination = usePagination();
   const toPagination = usePagination();
@@ -53,7 +74,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     );
   }, [allMarkets, groupedPosition]);
 
-  const getPendingAmount = (marketUniqueKey: string) => {
+  const getPendingDelta = (marketUniqueKey: string) => {
     return rebalanceActions.reduce((acc, action) => {
       if (action.fromMarket.uniqueKey === marketUniqueKey) {
         return acc - Number(action.amount);
@@ -67,15 +88,19 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
 
   const handleAddAction = () => {
     if (selectedFromMarketUniqueKey && selectedToMarketUniqueKey && amount) {
-      const fromMarket = groupedPosition.markets.find(m => m.market.uniqueKey === selectedFromMarketUniqueKey)!.market;
-      const toMarket = eligibleMarkets.find(m => m.uniqueKey === selectedToMarketUniqueKey)!;
-      
-      const fromMarketSupplied = Number(formatBalance(fromMarket.state.supplyAssets, fromMarket.loanAsset.decimals));
-      const pendingAmount = getPendingAmount(fromMarket.uniqueKey);
-      const availableAmount = fromMarketSupplied + pendingAmount;
+      const fromMarket = groupedPosition.markets.find(
+        (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
+      )!.market;
+      const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey)!;
 
-      if (Number(amount) > availableAmount) {
-        toast.error("Insufficient balance for this action");
+      const currentBalance = Number(
+        formatBalance(fromMarket.state.supplyAssets, fromMarket.loanAsset.decimals),
+      );
+      const pendingDelta = getPendingDelta(fromMarket.uniqueKey);
+      const availableBalance = currentBalance + pendingDelta;
+
+      if (Number(amount) > availableBalance) {
+        toast.error('Insufficient balance for this action');
         return;
       }
 
@@ -105,43 +130,72 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
   };
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
       size="5xl"
       classNames={{
-        base: "min-w-[1000px]",
+        base: 'min-w-[1100px]',
       }}
     >
       <ModalContent>
-        <ModalHeader className="font-zen text-xl">Rebalance {groupedPosition.loanAsset} Positions</ModalHeader>
+        <ModalHeader className="font-zen text-xl">
+          Rebalance {groupedPosition.loanAsset} Positions
+        </ModalHeader>
         <ModalBody className="font-zen">
-          <div className="bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-4">
+          <div className="mb-4 rounded-lg border-2 border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Use this tool to batch update positions or split one position into multiple markets. Optimize your portfolio by rebalancing across different collaterals and LLTVs.
+              Use this tool to batch update positions or split one position into multiple markets.
+              Optimize your portfolio by rebalancing across different collaterals and LLTVs.
             </p>
           </div>
 
-          <div className="flex items-center justify-between mb-4 bg-orange-100 dark:bg-orange-900 bg-opacity-20 p-4 rounded-lg border-2 border-dashed border-orange-300 dark:border-orange-700">
-            <MarketBadge market={groupedPosition.markets.find(p => p.market.uniqueKey === selectedFromMarketUniqueKey)?.market as any} />
+          <div className="mb-4 flex items-center justify-between rounded-lg border-2 border-dashed border-orange-300 bg-orange-100 bg-opacity-20 p-4 dark:border-orange-700 dark:bg-orange-900">
+            <span className="mr-2">Rebalance</span>
             <Input
               type="number"
               placeholder="Amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-40"
+              className="mx-2 w-40 bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100"
             />
-            <MarketBadge market={eligibleMarkets.find(m => m.uniqueKey === selectedToMarketUniqueKey) as any} />
-            <Button 
-              onClick={handleAddAction} 
-              className="bg-orange-500 dark:bg-orange-600 text-white rounded-sm p-4 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100 hover:scale-105"
+            <div className="mx-2 flex items-center">
+              <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
+              {tokenImg?.img && (
+                <Image src={tokenImg.img} alt={groupedPosition.loanAsset} width={24} height={24} />
+              )}
+            </div>
+            <span className="mr-2">From </span>
+            <div className="w-48">
+              <MarketBadge
+                market={
+                  groupedPosition.markets.find(
+                    (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
+                  )?.market as unknown
+                }
+              />
+            </div>
+            <ArrowRightIcon className="mx-2" />
+            <div className="w-48">
+              <MarketBadge
+                market={
+                  eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey) as unknown
+                }
+              />
+            </div>
+            <Button
+              onClick={handleAddAction}
+              className="ml-4 rounded-sm bg-orange-500 p-2 px-4 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
             >
               Add Action
             </Button>
           </div>
 
-          <MarketTables
-            fromMarkets={groupedPosition.markets}
+          <FromAndToMarkets
+            fromMarkets={groupedPosition.markets.map((market) => ({
+              ...market,
+              pendingDelta: getPendingDelta(market.market.uniqueKey),
+            }))}
             toMarkets={eligibleMarkets}
             fromFilter={fromMarketFilter}
             toFilter={toMarketFilter}
@@ -149,16 +203,6 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             onToFilterChange={setToMarketFilter}
             onFromMarketSelect={setSelectedFromMarketUniqueKey}
             onToMarketSelect={setSelectedToMarketUniqueKey}
-            sortColumn={sortColumn}
-            sortDirection={sortDirection}
-            onSortChange={(column) => {
-              if (column === sortColumn) {
-                setSortDirection(sortDirection * -1);
-              } else {
-                setSortColumn(column);
-                setSortDirection(1);
-              }
-            }}
             fromPagination={{
               currentPage: fromPagination.currentPage,
               totalPages: Math.ceil(groupedPosition.markets.length / 5),
@@ -173,12 +217,13 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
 
           <h3 className="mt-4 text-lg font-semibold">Rebalance Cart</h3>
           {rebalanceActions.length === 0 ? (
-            <p className="text-center py-4 text-gray-500 dark:text-gray-400">Your rebalance cart is empty. Add some actions!</p>
+            <p className="py-4 text-center text-gray-500 dark:text-gray-400">
+              Your rebalance cart is empty. Add some actions!
+            </p>
           ) : (
             <Table>
               <TableHeader>
                 <TableColumn>From Market</TableColumn>
-                <TableColumn> {""} </TableColumn>
                 <TableColumn>To Market</TableColumn>
                 <TableColumn>Amount</TableColumn>
                 <TableColumn>Actions</TableColumn>
@@ -186,16 +231,33 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
               <TableBody>
                 {rebalanceActions.map((action, index) => (
                   <TableRow key={index}>
-                    <TableCell><MarketBadge market={groupedPosition.markets.find(m => m.market.uniqueKey === action.fromMarket.uniqueKey)?.market as any} /></TableCell>
-                    <TableCell><ArrowRightIcon /></TableCell>
-                    <TableCell><MarketBadge market={eligibleMarkets.find(m => m.uniqueKey === action.toMarket.uniqueKey) as any} /></TableCell>
-                    <TableCell>{formatReadable(Number(action.amount))} {groupedPosition.loanAsset}</TableCell>
                     <TableCell>
-                      <Button 
-                        color="danger" 
-                        size="sm" 
+                      <MarketBadge
+                        market={
+                          groupedPosition.markets.find(
+                            (m) => m.market.uniqueKey === action.fromMarket.uniqueKey,
+                          )?.market as unknown
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <MarketBadge
+                        market={
+                          eligibleMarkets.find(
+                            (m) => m.uniqueKey === action.toMarket.uniqueKey,
+                          ) as unknown
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {formatReadable(Number(action.amount))} {groupedPosition.loanAsset}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        color="danger"
+                        size="sm"
                         onPress={() => removeRebalanceAction(index)}
-                        className="bg-red-500 dark:bg-red-600 text-white rounded-sm p-2 text-xs duration-300 ease-in-out hover:bg-red-600 dark:hover:bg-red-700"
+                        className="rounded-sm bg-red-500 p-2 text-xs text-white duration-300 ease-in-out hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
                       >
                         Remove
                       </Button>
@@ -207,11 +269,11 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
           )}
         </ModalBody>
         <ModalFooter>
-          <Button 
-            color="danger" 
-            variant="light" 
+          <Button
+            color="danger"
+            variant="light"
             onPress={onClose}
-            className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-sm p-4 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100 hover:scale-105"
+            className="rounded-sm bg-gray-200 p-4 px-10 font-zen text-gray-700 opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-gray-700 dark:text-gray-300"
           >
             Cancel
           </Button>
@@ -219,7 +281,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             color="primary"
             onPress={executeRebalance}
             disabled={isConfirming || rebalanceActions.length === 0}
-            className="bg-orange-500 dark:bg-orange-600 text-white rounded-sm p-4 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100 hover:scale-105"
+            className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
           >
             {isAuthorized ? 'Rebalance' : 'Authorize and Rebalance'}
           </Button>
