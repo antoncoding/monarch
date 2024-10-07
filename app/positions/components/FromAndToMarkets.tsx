@@ -2,7 +2,6 @@ import React from 'react';
 import { Input } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
 import { ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
-import { useTheme } from 'next-themes';
 import { formatUnits } from 'viem';
 import { Market } from '@/hooks/useMarkets';
 import { formatReadable } from '@/utils/balance';
@@ -41,8 +40,6 @@ export function FromAndToMarkets({
   fromPagination,
   toPagination,
 }: MarketTablesProps) {
-  const { theme } = useTheme();
-
   const filteredFromMarkets = fromMarkets.filter(
     (marketPosition) =>
       marketPosition.market.uniqueKey.toLowerCase().includes(fromFilter.toLowerCase()) ||
@@ -63,6 +60,14 @@ export function FromAndToMarkets({
     (toPagination.currentPage - 1) * 5,
     toPagination.currentPage * 5,
   );
+
+  const handleFromPaginationChange = (page: number) => {
+    fromPagination.onPageChange(page);
+  };
+
+  const handleToPaginationChange = (page: number) => {
+    toPagination.onPageChange(page);
+  };
 
   return (
     <div className="flex gap-4 font-zen">
@@ -132,7 +137,7 @@ export function FromAndToMarkets({
           <Pagination
             total={fromPagination.totalPages}
             initialPage={fromPagination.currentPage}
-            onChange={fromPagination.onPageChange}
+            onChange={handleFromPaginationChange}
             color="primary"
           />
         </div>
@@ -187,7 +192,7 @@ export function FromAndToMarkets({
           <Pagination
             total={toPagination.totalPages}
             initialPage={toPagination.currentPage}
-            onChange={toPagination.onPageChange}
+            onChange={handleToPaginationChange}
             color="primary"
           />
         </div>

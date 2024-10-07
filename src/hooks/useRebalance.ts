@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
-import { encodeFunctionData, Address, parseSignature } from 'viem';
+import { encodeFunctionData, Address, parseSignature, maxUint256 } from 'viem';
 import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
@@ -10,7 +10,7 @@ import { RebalanceAction, GroupedPosition } from '@/utils/types';
 
 export function useRebalance(groupedPosition: GroupedPosition) {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
-  const { address: account, isConnected } = useAccount();
+  const { address: account } = useAccount();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
 
   const { data: isAuthorized } = useReadContract({
@@ -115,6 +115,12 @@ export function useRebalance(groupedPosition: GroupedPosition) {
 
     console.log('rebalanceActions', rebalanceActions);
 
+    const totalAmount = rebalanceActions.reduce(
+      (acc, action) => acc + BigInt(action.amount),
+      BigInt(0),
+    );
+    console.log('permitting totalAmount', totalAmount.toString());
+
     const rebalanceTxs = rebalanceActions.flatMap((action) => {
       const withdrawTx = encodeFunctionData({
         abi: morphoBundlerAbi,
@@ -127,10 +133,10 @@ export function useRebalance(groupedPosition: GroupedPosition) {
             irm: action.fromMarket.irm as Address,
             lltv: BigInt(action.fromMarket.lltv),
           },
-          BigInt(action.amount),
-          BigInt(0),
-          BigInt(0),
-          account,
+          BigInt(action.amount), // assets
+          BigInt(0), // shares
+          maxUint256, // slippageAmount => max share burned
+          account, // receiver
         ],
       });
 
@@ -147,7 +153,7 @@ export function useRebalance(groupedPosition: GroupedPosition) {
           },
           BigInt(action.amount),
           BigInt(0),
-          BigInt(0),
+          BigInt(0), // slippageAmount => min share minted
           account,
           '0x',
         ],
@@ -166,7 +172,7 @@ export function useRebalance(groupedPosition: GroupedPosition) {
       args: [transactions],
     });
 
-    await sendTransaction({
+    sendTransaction({
       account,
       to: bundlerAddress,
       data: multicallTx,

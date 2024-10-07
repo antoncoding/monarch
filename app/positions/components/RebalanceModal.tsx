@@ -9,12 +9,10 @@ import {
   Input,
 } from '@nextui-org/react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
-import { ArrowRightIcon, ArrowDownIcon } from '@radix-ui/react-icons';
+import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { useTheme } from 'next-themes';
 import { toast } from 'react-toastify';
-import { formatUnits } from 'viem';
-import useMarkets from '@/hooks/useMarkets';
+import useMarkets, { Market } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -61,7 +59,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     isAuthorized,
   } = useRebalance(groupedPosition);
 
-  const tokenImg = findToken(groupedPosition.loanAsset, groupedPosition.chainId);
+  const token = findToken(groupedPosition.loanAssetAddress, groupedPosition.chainId);
 
   const fromPagination = usePagination();
   const toPagination = usePagination();
@@ -90,8 +88,13 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     if (selectedFromMarketUniqueKey && selectedToMarketUniqueKey && amount) {
       const fromMarket = groupedPosition.markets.find(
         (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
-      )!.market;
-      const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey)!;
+      )?.market;
+      const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
+
+      if (!fromMarket || !toMarket) {
+        toast.error('Invalid market selection');
+        return;
+      }
 
       const currentBalance = Number(
         formatBalance(fromMarket.state.supplyAssets, fromMarket.loanAsset.decimals),
@@ -161,8 +164,8 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             />
             <div className="mx-2 flex items-center">
               <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
-              {tokenImg?.img && (
-                <Image src={tokenImg.img} alt={groupedPosition.loanAsset} width={24} height={24} />
+              {token?.img && (
+                <Image src={token.img} alt={groupedPosition.loanAsset} width={24} height={24} />
               )}
             </div>
             <span className="mr-2">From </span>
@@ -171,7 +174,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
                 market={
                   groupedPosition.markets.find(
                     (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
-                  )?.market as unknown
+                  )?.market as unknown as Market
                 }
               />
             </div>
@@ -179,7 +182,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             <div className="w-48">
               <MarketBadge
                 market={
-                  eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey) as unknown
+                  eligibleMarkets.find(
+                    (m) => m.uniqueKey === selectedToMarketUniqueKey,
+                  ) as unknown as Market
                 }
               />
             </div>
@@ -236,7 +241,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
                         market={
                           groupedPosition.markets.find(
                             (m) => m.market.uniqueKey === action.fromMarket.uniqueKey,
-                          )?.market as unknown
+                          )?.market as unknown as Market
                         }
                       />
                     </TableCell>
@@ -245,7 +250,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
                         market={
                           eligibleMarkets.find(
                             (m) => m.uniqueKey === action.toMarket.uniqueKey,
-                          ) as unknown
+                          ) as unknown as Market
                         }
                       />
                     </TableCell>
@@ -279,7 +284,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
           </Button>
           <Button
             color="primary"
-            onPress={executeRebalance}
+            onPress={() => {
+              void executeRebalance();
+            }}
             disabled={isConfirming || rebalanceActions.length === 0}
             className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
           >
