@@ -20,7 +20,7 @@ export function RebalanceProcessModal({
       {
         key: 'approve',
         label: 'Authorize Permit2',
-        detail:  `This one-time approval ensures you don't need to send approval transactions in the future.`,
+        detail: `This one-time approval ensures you don't need to send approval transactions in the future.`,
       },
       {
         key: 'authorize',

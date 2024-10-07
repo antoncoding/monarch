@@ -24,7 +24,7 @@ export function Pagination({
   currentPage,
   onPageChange,
   entriesPerPage,
-  onEntriesPerPageChange
+  onEntriesPerPageChange,
 }: PaginationProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [customEntries, setCustomEntries] = useState(entriesPerPage.toString());

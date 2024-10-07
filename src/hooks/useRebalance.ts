@@ -1,18 +1,20 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
+import { Address, encodeFunctionData, maxUint256, parseSignature } from 'viem';
 import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
-import { usePermit2 } from './usePermit2';
-import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MORPHO } from '@/utils/morpho';
-import { Address, encodeFunctionData, maxUint256, parseSignature } from 'viem';
+import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import { usePermit2 } from './usePermit2';
 
 export const useRebalance = (groupedPosition: GroupedPosition) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'idle' | 'approve' | 'authorize' | 'sign' | 'execute'>('idle');
+  const [currentStep, setCurrentStep] = useState<
+    'idle' | 'approve' | 'authorize' | 'sign' | 'execute'
+  >('idle');
 
   const { address: account } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
@@ -34,13 +36,12 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
     chainId: groupedPosition.chainId,
   });
 
-  const totalAmount = rebalanceActions.reduce((acc, action) => acc + BigInt(action.amount), BigInt(0));
+  const totalAmount = rebalanceActions.reduce(
+    (acc, action) => acc + BigInt(action.amount),
+    BigInt(0),
+  );
 
-  const {
-    authorizePermit2,
-    permit2Authorized,
-    signForBundlers,
-  } = usePermit2({
+  const { authorizePermit2, permit2Authorized, signForBundlers } = usePermit2({
     user: account as `0x${string}`,
     spender: getBundlerV2(groupedPosition.chainId),
     token: groupedPosition.loanAssetAddress as `0x${string}`,
@@ -162,7 +163,13 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
         functionName: 'approve2',
         args: [permitSingle, sigs, false],
       });
+      const transferFromTx = encodeFunctionData({
+        abi: morphoBundlerAbi,
+        functionName: 'transferFrom2',
+        args: [groupedPosition.loanAssetAddress as Address, totalAmount],
+      });
       transactions.push(permitTx);
+      transactions.push(transferFromTx);
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Step 4: Append rebalance actions and generate tx
@@ -213,7 +220,6 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
 
       console.log('transactions', transactions);
 
-
       // Execute all transactions
       const multicallTx = encodeFunctionData({
         abi: morphoBundlerAbi,
@@ -237,7 +243,21 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
       setIsConfirming(false);
       setCurrentStep('idle');
     }
-  }, [account, permit2Authorized, authorizePermit2, signForBundlers, isAuthorized, nonce, bundlerAddress, groupedPosition.chainId, signTypedDataAsync, rebalanceActions, sendTransactionAsync]);
+  }, [
+    account,
+    permit2Authorized,
+    authorizePermit2,
+    signForBundlers,
+    isAuthorized,
+    nonce,
+    bundlerAddress,
+    groupedPosition.chainId,
+    signTypedDataAsync,
+    rebalanceActions,
+    sendTransactionAsync,
+    groupedPosition.loanAssetAddress,
+    totalAmount
+  ]);
 
   return {
     rebalanceActions,

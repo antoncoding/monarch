@@ -8,10 +8,11 @@ import {
   Button,
 } from '@nextui-org/react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
-import Input from '@/components/Input/Input'
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
+import { formatUnits, maxUint256 } from 'viem';
+import Input from '@/components/Input/Input';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -20,7 +21,6 @@ import { findToken } from '@/utils/tokens';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
-import { formatUnits, maxUint256 } from 'viem';
 
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
@@ -39,7 +39,7 @@ function MarketBadge({
   return (
     <div className="whitespace-nowrap rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-100">
       <span className="font-monospace">{market.uniqueKey.slice(2, 8)}</span> |{' '}
-      {market.collateralAsset.symbol} | {' '} {formatUnits(BigInt(market.lltv), 16)} %
+      {market.collateralAsset.symbol} | {formatUnits(BigInt(market.lltv), 16)} %
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     removeRebalanceAction,
     executeRebalance,
     isConfirming,
-    currentStep
+    currentStep,
   } = useRebalance(groupedPosition);
 
   const token = findToken(groupedPosition.loanAssetAddress, groupedPosition.chainId);
@@ -107,7 +107,8 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         formatBalance(fromMarket.state.supplyAssets, fromMarket.loanAsset.decimals),
       );
       const pendingDelta = getPendingDelta(fromMarket.uniqueKey);
-      const availableBalance = currentBalance + formatBalance(pendingDelta.toString(), fromMarket.loanAsset.decimals);
+      const availableBalance =
+        currentBalance + formatBalance(pendingDelta.toString(), fromMarket.loanAsset.decimals);
 
       if (Number(amount) > availableBalance) {
         toast.error('Insufficient balance for this action');
@@ -162,7 +163,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         }}
       >
         <ModalContent>
-          <ModalHeader className="font-zen text-2xl p-4">
+          <ModalHeader className="p-4 font-zen text-2xl">
             Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Positions
           </ModalHeader>
           <ModalBody className="font-zen">
@@ -302,12 +303,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             </Button>
             <Button
               color="primary"
-              onPress={handleExecuteRebalance}
+              onPress={() => void handleExecuteRebalance()}
               disabled={isConfirming || rebalanceActions.length === 0}
               isLoading={isConfirming}
               className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
             >
-              {'Execute Rebalance'}
+              Execute Rebalance
             </Button>
           </ModalFooter>
         </ModalContent>
