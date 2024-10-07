@@ -17,6 +17,7 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
   entriesPerPage: number;
   onEntriesPerPageChange: (entries: number) => void;
+  showSettings?: boolean;
 };
 
 export function Pagination({
@@ -25,6 +26,7 @@ export function Pagination({
   onPageChange,
   entriesPerPage,
   onEntriesPerPageChange,
+  showSettings = true,
 }: PaginationProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [customEntries, setCustomEntries] = useState(entriesPerPage.toString());
@@ -56,7 +58,7 @@ export function Pagination({
           }}
           size="md"
         />
-        <Button
+        {showSettings && <Button
           isIconOnly
           aria-label="Settings"
           className="ml-2 bg-secondary"
@@ -64,7 +66,7 @@ export function Pagination({
           size="md"
         >
           <FiSettings />
-        </Button>
+        </Button>}
       </div>
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
         <ModalContent>

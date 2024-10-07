@@ -52,6 +52,8 @@ const query = `query getUserMarketPositions(
           liquidityAssets
           supplyAssetsUsd
           supplyAssets
+          borrowAssets
+          borrowAssetsUsd
           rewards {
             yearlySupplyTokens
             asset {
@@ -60,6 +62,26 @@ const query = `query getUserMarketPositions(
               spotPriceEth
             }
           }
+          utilization
+        }
+        oracleFeed {
+          baseFeedOneAddress
+          baseFeedOneDescription
+          baseFeedTwoAddress
+          baseFeedTwoDescription
+          quoteFeedOneAddress
+          quoteFeedOneDescription
+          quoteFeedTwoAddress
+          quoteFeedTwoDescription
+          baseVault
+          baseVaultDescription
+          baseVaultVendor
+          quoteVault
+          quoteVaultDescription
+          quoteVaultVendor
+        }
+        oracleInfo {
+          type
         }
       }
     }

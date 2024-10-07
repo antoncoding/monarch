@@ -6,6 +6,7 @@ import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
+import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
 type PositionTableProps = {
@@ -36,6 +37,10 @@ export function PositionsSummaryTable({
   setSelectedPosition,
 }: PositionTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [showRebalanceModal, setShowRebalanceModal] = useState(false);
+  const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
+    null,
+  );
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
@@ -147,6 +152,7 @@ export function PositionsSummaryTable({
             <th>Total Supplied</th>
             <th>Avg APY</th>
             <th className="w-1/4">Collateral Exposure</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody className="table-body text-sm">
@@ -192,7 +198,7 @@ export function PositionsSummaryTable({
                     <div className="text-center">{formatReadable(avgApy * 100)}%</div>
                   </td>
                   <td data-label="Collateral Breakdown" className="w-1/4">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
                       {position.processedCollaterals.map((collateral, colIndex) => (
                         <div
                           key={`${collateral.address}-${colIndex}`}
@@ -229,10 +235,23 @@ export function PositionsSummaryTable({
                       ))}
                     </div>
                   </td>
+                  <td data-label="Actions" className="text-right">
+                    <button
+                      type="button"
+                      className="bg-hovered rounded-sm p-2 text-xs duration-300 ease-in-out hover:bg-orange-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedGroupedPosition(position);
+                        setShowRebalanceModal(true);
+                      }}
+                    >
+                      Rebalance
+                    </button>
+                  </td>
                 </tr>
                 {isExpanded && (
                   <tr>
-                    <td colSpan={6} className="p-0">
+                    <td colSpan={7} className="p-0">
                       <SuppliedMarketsDetail
                         groupedPosition={position}
                         setShowModal={setShowModal}
@@ -246,6 +265,13 @@ export function PositionsSummaryTable({
           })}
         </tbody>
       </table>
+      {showRebalanceModal && selectedGroupedPosition && (
+        <RebalanceModal
+          groupedPosition={selectedGroupedPosition}
+          onClose={() => setShowRebalanceModal(false)}
+          isOpen={showRebalanceModal}
+        />
+      )}
     </div>
   );
 }
