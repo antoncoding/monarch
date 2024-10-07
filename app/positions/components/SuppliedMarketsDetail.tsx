@@ -4,8 +4,7 @@ import Image from 'next/image';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
-import { MarketPosition } from '@/utils/types';
-import { GroupedPosition } from './PositionsSummaryTable';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
