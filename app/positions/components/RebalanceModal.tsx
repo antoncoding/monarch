@@ -86,6 +86,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
 
   const handleAddAction = () => {
     if (selectedFromMarketUniqueKey && selectedToMarketUniqueKey && amount) {
+      if (Number(amount) <= 0) {
+        toast.error('Amount must be greater than zero');
+        return;
+      }
       const fromMarket = groupedPosition.markets.find(
         (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
       )?.market;
@@ -142,8 +146,8 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
       }}
     >
       <ModalContent>
-        <ModalHeader className="font-zen text-xl">
-          Rebalance {groupedPosition.loanAsset} Positions
+        <ModalHeader className="font-zen text-2xl p-4">
+          Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Positions
         </ModalHeader>
         <ModalBody className="font-zen">
           <div className="mb-4 rounded-lg border-2 border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">

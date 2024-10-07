@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { MarketPosition } from '@/utils/types';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
@@ -13,22 +13,6 @@ type PositionTableProps = {
   marketPositions: MarketPosition[];
   setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
-};
-
-export type GroupedPosition = {
-  loanAsset: string;
-  loanAssetAddress: string;
-  chainId: number;
-  totalSupply: number;
-  totalWeightedApy: number;
-  collaterals: { address: string; symbol: string | undefined; amount: number }[];
-  markets: MarketPosition[];
-  processedCollaterals: {
-    address: string;
-    symbol: string | undefined;
-    amount: number;
-    percentage: number;
-  }[];
 };
 
 export function PositionsSummaryTable({

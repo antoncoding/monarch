@@ -136,7 +136,7 @@ export function FromAndToMarkets({
         <div className="mt-2 flex justify-center">
           <Pagination
             total={fromPagination.totalPages}
-            initialPage={fromPagination.currentPage}
+            page={fromPagination.currentPage}
             onChange={handleFromPaginationChange}
             color="primary"
           />

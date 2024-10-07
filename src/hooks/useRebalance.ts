@@ -53,7 +53,7 @@ export function useRebalance(groupedPosition: GroupedPosition) {
 
     const transactions = [] as `0x${string}`[];
 
-    if (!isAuthorized) {
+    if (isAuthorized === false) {
       const domain = {
         chainId: groupedPosition.chainId,
         verifyingContract: MORPHO as Address,
@@ -79,12 +79,18 @@ export function useRebalance(groupedPosition: GroupedPosition) {
         deadline: BigInt(deadline),
       };
 
-      const signatureRaw = await signTypedDataAsync({
-        domain,
-        types,
-        primaryType: 'Authorization',
-        message: value,
-      });
+      let signatureRaw;  
+      try {  
+        signatureRaw = await signTypedDataAsync({  
+          domain,  
+          types,  
+          primaryType: 'Authorization',  
+          message: value,  
+        });  
+      } catch (error) {  
+        toast.error('Signature request was rejected or failed. Please try again.');  
+        return;  
+      }
       const signature = parseSignature(signatureRaw);
 
       const authorizationTx = encodeFunctionData({
@@ -181,6 +187,7 @@ export function useRebalance(groupedPosition: GroupedPosition) {
   }, [
     account,
     isAuthorized,
+    nonce,
     bundlerAddress,
     groupedPosition.chainId,
     rebalanceActions,
