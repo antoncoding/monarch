@@ -29,6 +29,7 @@ export function PositionsSummaryTable({
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
+      const loanAssetDecimals = position.market.loanAsset.decimals;
       const chainId = position.market.morphoBlue.chain.id;
 
       let groupedPosition = acc.find(
@@ -39,6 +40,7 @@ export function PositionsSummaryTable({
         groupedPosition = {
           loanAsset: position.market.loanAsset.symbol || 'Unknown',
           loanAssetAddress,
+          loanAssetDecimals,
           chainId,
           totalSupply: 0,
           totalWeightedApy: 0,

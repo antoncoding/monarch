@@ -220,12 +220,13 @@ export type RebalanceAction = {
     lltv: string;
     uniqueKey: string;
   };
-  amount: string;
+  amount: bigint;
 };
 
 export type GroupedPosition = {
   loanAsset: string;
   loanAssetAddress: string;
+  loanAssetDecimals: number;
   chainId: number;
   totalSupply: number;
   totalWeightedApy: number;
