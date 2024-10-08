@@ -72,7 +72,6 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
       toast.error('Please connect your wallet');
       return;
     }
-
     setIsConfirming(true);
     const transactions: `0x${string}`[] = [];
 

@@ -308,9 +308,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             <Button
               color="primary"
               onPress={() => void handleExecuteRebalance()}
-              disabled={isConfirming || rebalanceActions.length === 0}
+              isDisabled={isConfirming || rebalanceActions.length === 0}
               isLoading={isConfirming}
-              className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
+              className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600 disabled:opacity-50"
             >
               Execute Rebalance
             </Button>
