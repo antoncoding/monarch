@@ -223,7 +223,10 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
 
       // Generate batched supply transactions
       Object.values(groupedSupplies).forEach((actions) => {
-        const bachedAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+        const bachedAmount = actions.reduce(
+          (sum, action) => sum + BigInt(action.amount),
+          BigInt(0),
+        );
         const market = actions[0].toMarket;
 
         const supplyTx = encodeFunctionData({

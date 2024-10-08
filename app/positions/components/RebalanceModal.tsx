@@ -158,20 +158,19 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         isDismissable={false} // Prevent closing on overlay click
         size="5xl"
         classNames={{
-          base: 'min-w-[1200px] z-[1000] p-6',
+          base: 'min-w-[1200px] z-[1000] p-4',
           backdrop: showProcessModal && 'z-[999]',
         }}
       >
         <ModalContent>
-          <ModalHeader className="p-8 font-zen text-2xl">
+          <ModalHeader className="px-8 font-zen text-2xl">
             Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
           </ModalHeader>
           <ModalBody className="font-zen">
             <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-sm text-secondary">
-                You can batch update your position by adding "Rebalance" actions to the cart.
-                <br />
-                Optimize your portfolio by rebalancing across different collaterals and LLTVs.
+                Optimize your {groupedPosition.loanAsset} lending strategy by redistributing funds
+                across markets, add "Rebalance" actions to fine-tune your portfolio.
               </p>
             </div>
 
@@ -218,6 +217,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
             </div>
 
             <FromAndToMarkets
+              eligibleMarkets={eligibleMarkets}
               fromMarkets={groupedPosition.markets.map((market) => ({
                 ...market,
                 pendingDelta: getPendingDelta(market.market.uniqueKey),

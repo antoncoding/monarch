@@ -18,6 +18,11 @@ export function RebalanceProcessModal({
   const steps = useMemo(
     () => [
       {
+        key: 'idle',
+        label: 'Idle',
+        detail: 'Waiting to start the rebalance process.',
+      },
+      {
         key: 'approve',
         label: 'Authorize Permit2',
         detail: `This one-time approval ensures you don't need to send approval transactions in the future.`,
@@ -75,24 +80,26 @@ export function RebalanceProcessModal({
         </div>
 
         <div className="steps-container mx-4 gap-4">
-          {steps.map((step, index) => (
-            <div key={step.key} className="step gap-4">
-              <div className="step-icon">
-                {getStepStatus(step.key) === 'done' && <FaCheckCircle color="orange" size="md" />}
-                {getStepStatus(step.key) === 'current' && <div className="loading-ring" />}
-                {getStepStatus(step.key) === 'undone' && <FaCircle className="text-gray-400" />}
+          {steps
+            .filter((step) => step.key !== 'idle')
+            .map((step, index) => (
+              <div key={step.key} className="step gap-4">
+                <div className="step-icon">
+                  {getStepStatus(step.key) === 'done' && <FaCheckCircle color="orange" size={24} />}
+                  {getStepStatus(step.key) === 'current' && <div className="loading-ring" />}
+                  {getStepStatus(step.key) === 'undone' && <FaCircle className="text-gray-400" />}
+                </div>
+                <div className="step-label">
+                  <div className="text-lg">{step.label}</div>
+                  {currentStep === step.key && step.detail && (
+                    <div className="flex items-center gap-2 text-sm text-secondary">
+                      {step.detail}
+                    </div>
+                  )}
+                </div>
+                {index < steps.length - 2 && <div className="step-line" />}
               </div>
-              <div className="step-label">
-                <div className="text-lg">{step.label}</div>
-                {currentStep === step.key && step.detail && (
-                  <div className="flex items-center gap-2 text-sm text-secondary">
-                    {step.detail}
-                  </div>
-                )}
-              </div>
-              {index < steps.length - 1 && <div className="step-line" />}
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
