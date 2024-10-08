@@ -171,6 +171,7 @@ module.exports = {
     // We prefer labels to be associated with inputs
     'jsx-a11y/label-has-associated-control': ['off'],
     'jsx-a11y/control-has-associated-label': ['off'],
+    'jsx-a11y/no-static-element-interactions': ['off'],
     'jsx-a11y/label-has-for': ['error', {
       'required': {
         'some': ['nesting', 'id']

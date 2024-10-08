@@ -4,8 +4,7 @@ import Image from 'next/image';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
-import { MarketPosition } from '@/utils/types';
-import { GroupedPosition } from './PositionsSummaryTable';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -28,7 +27,7 @@ export function SuppliedMarketsDetail({
   const totalSupply = groupedPosition.totalSupply;
 
   return (
-    <div className="bg-gray-50 px-2 py-4">
+    <div className="bg-secondary px-2 py-4">
       <table className="no-hover-effect w-full font-zen">
         <thead className="table-header">
           <tr>
@@ -68,7 +67,6 @@ export function SuppliedMarketsDetail({
                 <td data-label="Collateral" className="text-center">
                   {position.market.collateralAsset ? (
                     <div className="flex items-center justify-center gap-1">
-                      {position.market.collateralAsset.symbol}
                       {findToken(
                         position.market.collateralAsset.address,
                         position.market.morphoBlue.chain.id,
@@ -85,6 +83,7 @@ export function SuppliedMarketsDetail({
                           height={18}
                         />
                       )}
+                      {position.market.collateralAsset.symbol}
                     </div>
                   ) : (
                     'N/A'

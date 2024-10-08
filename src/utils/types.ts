@@ -10,6 +10,10 @@ export type MarketPosition = {
     uniqueKey: string;
     lltv: string;
     oracleAddress: string;
+    oracleFeed?: OracleFeedsInfo;
+    oracleInfo: {
+      type: string;
+    };
     irmAddress: string;
     morphoBlue: {
       id: string;
@@ -41,6 +45,8 @@ export type MarketPosition = {
       liquidityAssets: string;
       supplyAssets: string;
       supplyAssetsUsd: number;
+      borrowAssets: string;
+      borrowAssetsUsd: number;
       rewards: {
         yearlySupplyTokens: string;
         asset: {
@@ -49,6 +55,7 @@ export type MarketPosition = {
           spotPriceEth: string | null;
         };
       }[];
+      utilization: number;
     };
   };
 };
@@ -195,3 +202,40 @@ export type UniformRewardType = {
 
 // Combined RewardResponseType
 export type RewardResponseType = MarketProgramType | UniformRewardType;
+
+export type RebalanceAction = {
+  fromMarket: {
+    loanToken: string;
+    collateralToken: string;
+    oracle: string;
+    irm: string;
+    lltv: string;
+    uniqueKey: string;
+  };
+  toMarket: {
+    loanToken: string;
+    collateralToken: string;
+    oracle: string;
+    irm: string;
+    lltv: string;
+    uniqueKey: string;
+  };
+  amount: bigint;
+};
+
+export type GroupedPosition = {
+  loanAsset: string;
+  loanAssetAddress: string;
+  loanAssetDecimals: number;
+  chainId: number;
+  totalSupply: number;
+  totalWeightedApy: number;
+  collaterals: { address: string; symbol: string | undefined; amount: number }[];
+  markets: MarketPosition[];
+  processedCollaterals: {
+    address: string;
+    symbol: string | undefined;
+    amount: number;
+    percentage: number;
+  }[];
+};

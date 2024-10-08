@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { toast } from 'react-toastify';
+import { useAccount } from 'wagmi';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { MarketPosition } from '@/utils/types';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
+import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
 type PositionTableProps = {
@@ -14,32 +17,23 @@ type PositionTableProps = {
   setSelectedPosition: (position: MarketPosition) => void;
 };
 
-export type GroupedPosition = {
-  loanAsset: string;
-  loanAssetAddress: string;
-  chainId: number;
-  totalSupply: number;
-  totalWeightedApy: number;
-  collaterals: { address: string; symbol: string | undefined; amount: number }[];
-  markets: MarketPosition[];
-  processedCollaterals: {
-    address: string;
-    symbol: string | undefined;
-    amount: number;
-    percentage: number;
-  }[];
-};
-
 export function PositionsSummaryTable({
   marketPositions,
   setShowModal,
   setSelectedPosition,
 }: PositionTableProps) {
+  const { address: account } = useAccount();
+
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [showRebalanceModal, setShowRebalanceModal] = useState(false);
+  const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
+    null,
+  );
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
+      const loanAssetDecimals = position.market.loanAsset.decimals;
       const chainId = position.market.morphoBlue.chain.id;
 
       let groupedPosition = acc.find(
@@ -50,6 +44,7 @@ export function PositionsSummaryTable({
         groupedPosition = {
           loanAsset: position.market.loanAsset.symbol || 'Unknown',
           loanAssetAddress,
+          loanAssetDecimals,
           chainId,
           totalSupply: 0,
           totalWeightedApy: 0,
@@ -147,6 +142,7 @@ export function PositionsSummaryTable({
             <th>Total Supplied</th>
             <th>Avg APY</th>
             <th className="w-1/4">Collateral Exposure</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody className="table-body text-sm">
@@ -192,7 +188,7 @@ export function PositionsSummaryTable({
                     <div className="text-center">{formatReadable(avgApy * 100)}%</div>
                   </td>
                   <td data-label="Collateral Breakdown" className="w-1/4">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
                       {position.processedCollaterals.map((collateral, colIndex) => (
                         <div
                           key={`${collateral.address}-${colIndex}`}
@@ -229,10 +225,27 @@ export function PositionsSummaryTable({
                       ))}
                     </div>
                   </td>
+                  <td data-label="Actions" className="text-right">
+                    <button
+                      type="button"
+                      className="bg-hovered rounded-sm p-2 text-xs duration-300 ease-in-out hover:bg-orange-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (account) {
+                          setSelectedGroupedPosition(position);
+                          setShowRebalanceModal(true);
+                        } else {
+                          toast.info('Please connect your wallet to rebalance');
+                        }
+                      }}
+                    >
+                      Rebalance
+                    </button>
+                  </td>
                 </tr>
                 {isExpanded && (
                   <tr>
-                    <td colSpan={6} className="p-0">
+                    <td colSpan={7} className="p-0">
                       <SuppliedMarketsDetail
                         groupedPosition={position}
                         setShowModal={setShowModal}
@@ -246,6 +259,13 @@ export function PositionsSummaryTable({
           })}
         </tbody>
       </table>
+      {showRebalanceModal && selectedGroupedPosition && (
+        <RebalanceModal
+          groupedPosition={selectedGroupedPosition}
+          onClose={() => setShowRebalanceModal(false)}
+          isOpen={showRebalanceModal}
+        />
+      )}
     </div>
   );
 }
