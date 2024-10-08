@@ -25,6 +25,8 @@ type RebalanceModalProps = {
   onClose: () => void;
 };
 
+export const PER_PAGE = 5;
+
 export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceModalProps) {
   const [fromMarketFilter, setFromMarketFilter] = useState('');
   const [toMarketFilter, setToMarketFilter] = useState('');
@@ -53,7 +55,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         market.loanAsset.address === groupedPosition.loanAssetAddress &&
         market.morphoBlue.chain.id === groupedPosition.chainId,
     );
-  }, [allMarkets, groupedPosition]);
+  }, [allMarkets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
   const getPendingDelta = (marketUniqueKey: string) => {
     return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
@@ -208,12 +210,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
               onToMarketSelect={setSelectedToMarketUniqueKey}
               fromPagination={{
                 currentPage: fromPagination.currentPage,
-                totalPages: Math.ceil(groupedPosition.markets.length / 5),
+                totalPages: Math.ceil(groupedPosition.markets.length / PER_PAGE),
                 onPageChange: fromPagination.setCurrentPage,
               }}
               toPagination={{
                 currentPage: toPagination.currentPage,
-                totalPages: Math.ceil(eligibleMarkets.length / 5),
+                totalPages: Math.ceil(eligibleMarkets.length / PER_PAGE),
                 onPageChange: toPagination.setCurrentPage,
               }}
               selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}

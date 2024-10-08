@@ -14,6 +14,8 @@ import {
   MarketDebtIndicator,
 } from '../../markets/components/RiskIndicator';
 
+import { PER_PAGE } from './RebalanceModal';
+
 type MarketTablesProps = {
   eligibleMarkets: Market[];
   fromMarkets: (MarketPosition & { pendingDelta: number })[];
@@ -66,12 +68,12 @@ export function FromAndToMarkets({
   );
 
   const paginatedFromMarkets = filteredFromMarkets.slice(
-    (fromPagination.currentPage - 1) * 5,
-    fromPagination.currentPage * 5,
+    (fromPagination.currentPage - 1) * PER_PAGE,
+    fromPagination.currentPage * PER_PAGE,
   );
   const paginatedToMarkets = filteredToMarkets.slice(
-    (toPagination.currentPage - 1) * 5,
-    toPagination.currentPage * 5,
+    (toPagination.currentPage - 1) * PER_PAGE,
+    toPagination.currentPage * PER_PAGE,
   );
 
   const handleFromPaginationChange = (page: number) => {
