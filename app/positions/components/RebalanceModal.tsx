@@ -11,12 +11,10 @@ import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from 
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
-import { formatUnits, maxUint256 } from 'viem';
-import Input from '@/components/Input/Input';
+import { formatUnits, parseUnits } from 'viem';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
-import { formatReadable, formatBalance } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
@@ -49,7 +47,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
   const [toMarketFilter, setToMarketFilter] = useState('');
   const [selectedFromMarketUniqueKey, setSelectedFromMarketUniqueKey] = useState('');
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
-  const [amount, setAmount] = useState<bigint>(BigInt(0));
+  const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
 
   const { data: allMarkets } = useMarkets();
@@ -63,7 +61,6 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
   } = useRebalance(groupedPosition);
 
   const token = findToken(groupedPosition.loanAssetAddress, groupedPosition.chainId);
-
   const fromPagination = usePagination();
   const toPagination = usePagination();
 
@@ -89,13 +86,15 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
 
   const handleAddAction = () => {
     if (selectedFromMarketUniqueKey && selectedToMarketUniqueKey && amount) {
-      if (Number(amount) <= 0) {
+      const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
+      if (scaledAmount <= 0) {
         toast.error('Amount must be greater than zero');
         return;
       }
       const fromMarket = groupedPosition.markets.find(
         (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
       )?.market;
+
       const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
       if (!fromMarket || !toMarket) {
@@ -103,14 +102,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         return;
       }
 
-      const currentBalance = Number(
-        formatBalance(fromMarket.state.supplyAssets, fromMarket.loanAsset.decimals),
-      );
-      const pendingDelta = getPendingDelta(fromMarket.uniqueKey);
-      const availableBalance =
-        currentBalance + formatBalance(pendingDelta.toString(), fromMarket.loanAsset.decimals);
+      const oldBalance = groupedPosition.markets.find(
+        (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
+      )?.supplyAssets;
 
-      if (Number(amount) > availableBalance) {
+      const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
+      const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
+
+      if (scaledAmount > pendingBalance) {
         toast.error('Insufficient balance for this action');
         return;
       }
@@ -132,11 +131,11 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
           lltv: toMarket.lltv,
           uniqueKey: toMarket.uniqueKey,
         },
-        amount,
+        amount: BigInt(scaledAmount),
       });
       setSelectedFromMarketUniqueKey('');
       setSelectedToMarketUniqueKey('');
-      setAmount(BigInt(0));
+      setAmount('0');
     }
   };
 
@@ -156,30 +155,33 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
       <Modal
         isOpen={isOpen}
         onClose={onClose}
+        isDismissable={false} // Prevent closing on overlay click
         size="5xl"
         classNames={{
-          base: 'min-w-[1100px] z-[1000]',
+          base: 'min-w-[1200px] z-[1000] p-6',
           backdrop: showProcessModal && 'z-[999]',
         }}
       >
         <ModalContent>
-          <ModalHeader className="p-4 font-zen text-2xl">
-            Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Positions
+          <ModalHeader className="p-8 font-zen text-2xl">
+            Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
           </ModalHeader>
           <ModalBody className="font-zen">
-            <div className="mb-4 rounded-lg border-2 border-gray-300 bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                Use this tool to batch update positions or split one position into multiple markets.
+            <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-sm text-secondary">
+                You can batch update your position by adding "Rebalance" actions to the cart.
+                <br />
                 Optimize your portfolio by rebalancing across different collaterals and LLTVs.
               </p>
             </div>
 
-            <div className="mb-4 flex items-center justify-between rounded-lg border-2 border-dashed border-orange-300 bg-orange-100 bg-opacity-20 p-4 dark:border-orange-700 dark:bg-orange-900">
+            <div className="mb-4 flex items-center justify-between rounded-lg border-2 border-dashed border-orange-300 p-4 light:bg-orange-100 light:bg-opacity-20 dark:border-orange-700">
               <span className="mr-2">Rebalance</span>
-              <Input
-                decimals={groupedPosition.loanAssetDecimals}
-                max={maxUint256}
-                setValue={setAmount}
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="bg-hovered h-10 w-32 rounded p-2 focus:outline-none"
               />
               <div className="mx-2 flex items-center">
                 <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
@@ -237,15 +239,17 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
                 totalPages: Math.ceil(eligibleMarkets.length / 5),
                 onPageChange: toPagination.setCurrentPage,
               }}
+              selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
+              selectedToMarketUniqueKey={selectedToMarketUniqueKey}
             />
 
             <h3 className="mt-4 text-lg font-semibold">Rebalance Cart</h3>
             {rebalanceActions.length === 0 ? (
-              <p className="py-4 text-center text-gray-500 dark:text-gray-400">
+              <p className="min-h-20 py-4 text-center text-secondary">
                 Your rebalance cart is empty. Add some actions!
               </p>
             ) : (
-              <Table>
+              <Table className="min-h-20">
                 <TableHeader>
                   <TableColumn>From Market</TableColumn>
                   <TableColumn>To Market</TableColumn>
@@ -274,7 +278,8 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
                         />
                       </TableCell>
                       <TableCell>
-                        {formatReadable(Number(action.amount))} {groupedPosition.loanAsset}
+                        {formatUnits(action.amount, groupedPosition.loanAssetDecimals)}{' '}
+                        {groupedPosition.loanAsset}
                       </TableCell>
                       <TableCell>
                         <Button
@@ -294,10 +299,9 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
           </ModalBody>
           <ModalFooter>
             <Button
-              color="danger"
               variant="light"
               onPress={onClose}
-              className="rounded-sm bg-gray-200 p-4 px-10 font-zen text-gray-700 opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-gray-700 dark:text-gray-300"
+              className="rounded-sm bg-gray-200 p-4 px-10 font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-gray-700 dark:text-gray-300"
             >
               Cancel
             </Button>

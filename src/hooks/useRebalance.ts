@@ -168,45 +168,76 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
         functionName: 'transferFrom2',
         args: [groupedPosition.loanAssetAddress as Address, totalAmount],
       });
+
+      // don't push the transferFromTx to the array, do it after all withdrawals. Here we only dealt with permit
       transactions.push(permitTx);
-      transactions.push(transferFromTx);
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Step 4: Append rebalance actions and generate tx
       setCurrentStep('execute');
 
-      const rebalanceTxs = rebalanceActions.flatMap((action) => {
-        console.log('action', action.amount.toString());
+      const withdrawTxs: `0x${string}`[] = [];
+      const supplyTxs: `0x${string}`[] = [];
+
+      // Group actions by market
+      const groupedWithdraws: Record<string, RebalanceAction[]> = {};
+      const groupedSupplies: Record<string, RebalanceAction[]> = {};
+
+      rebalanceActions.forEach((action) => {
+        const withdrawKey = action.fromMarket.uniqueKey;
+        const supplyKey = action.toMarket.uniqueKey;
+
+        if (!groupedWithdraws[withdrawKey]) groupedWithdraws[withdrawKey] = [];
+        if (!groupedSupplies[supplyKey]) groupedSupplies[supplyKey] = [];
+
+        groupedWithdraws[withdrawKey].push(action);
+        groupedSupplies[supplyKey].push(action);
+      });
+
+      // Generate batched withdraw transactions
+      Object.values(groupedWithdraws).forEach((actions) => {
+        const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+        const market = actions[0].fromMarket;
+
         const withdrawTx = encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'morphoWithdraw',
           args: [
             {
-              loanToken: action.fromMarket.loanToken as Address,
-              collateralToken: action.fromMarket.collateralToken as Address,
-              oracle: action.fromMarket.oracle as Address,
-              irm: action.fromMarket.irm as Address,
-              lltv: BigInt(action.fromMarket.lltv),
+              loanToken: market.loanToken as Address,
+              collateralToken: market.collateralToken as Address,
+              oracle: market.oracle as Address,
+              irm: market.irm as Address,
+              lltv: BigInt(market.lltv),
             },
-            action.amount, // assets
+            batchAmount, // assets
             BigInt(0), // shares
             maxUint256, // slippageAmount => max share burned
             account, // receiver
           ],
         });
 
+        withdrawTxs.push(withdrawTx);
+      });
+
+      // Generate batched supply transactions
+      Object.values(groupedSupplies).forEach((actions) => {
+        const totalAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+        const market = actions[0].toMarket;
+
         const supplyTx = encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'morphoSupply',
           args: [
             {
-              loanToken: action.toMarket.loanToken as Address,
-              collateralToken: action.toMarket.collateralToken as Address,
-              oracle: action.toMarket.oracle as Address,
-              irm: action.toMarket.irm as Address,
-              lltv: BigInt(action.toMarket.lltv),
+              loanToken: market.loanToken as Address,
+              collateralToken: market.collateralToken as Address,
+              oracle: market.oracle as Address,
+              irm: market.irm as Address,
+              lltv: BigInt(market.lltv),
             },
-            action.amount,
+            totalAmount,
             BigInt(0),
             BigInt(0), // slippageAmount => min share minted
             account,
@@ -214,11 +245,13 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
           ],
         });
 
-        return [withdrawTx, supplyTx];
+        supplyTxs.push(supplyTx);
       });
-      transactions.push(...rebalanceTxs);
 
-      console.log('transactions', transactions);
+      // Reorder transactions
+      transactions.push(...withdrawTxs);
+      transactions.push(transferFromTx);
+      transactions.push(...supplyTxs);
 
       // Execute all transactions
       const multicallTx = encodeFunctionData({
@@ -256,7 +289,7 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
     rebalanceActions,
     sendTransactionAsync,
     groupedPosition.loanAssetAddress,
-    totalAmount
+    totalAmount,
   ]);
 
   return {
