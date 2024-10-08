@@ -7,17 +7,16 @@ import {
   ModalFooter,
   Button,
 } from '@nextui-org/react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
-import { ArrowRightIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { toast } from 'react-toastify';
-import { formatUnits, parseUnits } from 'viem';
+import { parseUnits } from 'viem';
 import useMarkets, { Market } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { findToken } from '@/utils/tokens';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
+import { RebalanceActionInput } from './RebalanceActionInput';
+import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
 
 type RebalanceModalProps = {
@@ -25,22 +24,6 @@ type RebalanceModalProps = {
   isOpen: boolean;
   onClose: () => void;
 };
-
-function MarketBadge({
-  market,
-}: {
-  market: { uniqueKey: string; collateralAsset: { symbol: string }; lltv: string } | null;
-}) {
-  if (!market)
-    return <span className="py-3 font-monospace text-sm text-secondary">Select market</span>;
-
-  return (
-    <div className="whitespace-nowrap rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-100">
-      <span className="font-monospace">{market.uniqueKey.slice(2, 8)}</span> |{' '}
-      {market.collateralAsset.symbol} | {formatUnits(BigInt(market.lltv), 16)} %
-    </div>
-  );
-}
 
 export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceModalProps) {
   const [fromMarketFilter, setFromMarketFilter] = useState('');
@@ -84,59 +67,84 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     }, 0);
   };
 
-  const handleAddAction = () => {
-    if (selectedFromMarketUniqueKey && selectedToMarketUniqueKey && amount) {
-      const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
-      if (scaledAmount <= 0) {
-        toast.error('Amount must be greater than zero');
-        return;
-      }
-      const fromMarket = groupedPosition.markets.find(
-        (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
-      )?.market;
-
-      const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
-
-      if (!fromMarket || !toMarket) {
-        toast.error('Invalid market selection');
-        return;
-      }
-
-      const oldBalance = groupedPosition.markets.find(
-        (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
-      )?.supplyAssets;
-
-      const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
-      const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
-
-      if (scaledAmount > pendingBalance) {
-        toast.error('Insufficient balance for this action');
-        return;
-      }
-
-      addRebalanceAction({
-        fromMarket: {
-          loanToken: fromMarket.loanAsset.address,
-          collateralToken: fromMarket.collateralAsset.address,
-          oracle: fromMarket.oracleAddress,
-          irm: fromMarket.irmAddress,
-          lltv: fromMarket.lltv,
-          uniqueKey: fromMarket.uniqueKey,
-        },
-        toMarket: {
-          loanToken: toMarket.loanAsset.address,
-          collateralToken: toMarket.collateralAsset.address,
-          oracle: toMarket.oracleAddress,
-          irm: toMarket.irmAddress,
-          lltv: toMarket.lltv,
-          uniqueKey: toMarket.uniqueKey,
-        },
-        amount: BigInt(scaledAmount),
-      });
-      setSelectedFromMarketUniqueKey('');
-      setSelectedToMarketUniqueKey('');
-      setAmount('0');
+  const validateInputs = () => {
+    if (!selectedFromMarketUniqueKey || !selectedToMarketUniqueKey || !amount) {
+      toast.error('Please fill in all fields');
+      return false;
     }
+    const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
+    if (scaledAmount <= 0) {
+      toast.error('Amount must be greater than zero');
+      return false;
+    }
+    return true;
+  };
+
+  const getMarkets = () => {
+    const fromMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedFromMarketUniqueKey);
+
+    const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
+
+    if (!fromMarket || !toMarket) {
+      toast.error('Invalid market selection');
+      return null;
+    }
+
+    return { fromMarket, toMarket };
+  };
+
+  const checkBalance = () => {
+    const oldBalance = groupedPosition.markets.find(
+      (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
+    )?.supplyAssets;
+
+    const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
+    const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
+
+    const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
+    if (scaledAmount > pendingBalance) {
+      toast.error('Insufficient balance for this action');
+      return false;
+    }
+    return true;
+  };
+
+  const createAction = (fromMarket: Market, toMarket: Market): RebalanceAction => {
+    return {
+      fromMarket: {
+        loanToken: fromMarket.loanAsset.address,
+        collateralToken: fromMarket.collateralAsset.address,
+        oracle: fromMarket.oracleAddress,
+        irm: fromMarket.irmAddress,
+        lltv: fromMarket.lltv,
+        uniqueKey: fromMarket.uniqueKey,
+      },
+      toMarket: {
+        loanToken: toMarket.loanAsset.address,
+        collateralToken: toMarket.collateralAsset.address,
+        oracle: toMarket.oracleAddress,
+        irm: toMarket.irmAddress,
+        lltv: toMarket.lltv,
+        uniqueKey: toMarket.uniqueKey,
+      },
+      amount: parseUnits(amount, groupedPosition.loanAssetDecimals),
+    };
+  };
+
+  const resetSelections = () => {
+    setSelectedFromMarketUniqueKey('');
+    setSelectedToMarketUniqueKey('');
+    setAmount('0');
+  };
+
+  const handleAddAction = () => {
+    if (!validateInputs()) return;
+    const markets = getMarkets();
+    if (!markets) return;
+    const { fromMarket, toMarket } = markets;
+    if (!checkBalance()) return;
+    addRebalanceAction(createAction(fromMarket, toMarket));
+    resetSelections();
   };
 
   const handleExecuteRebalance = useCallback(async () => {
@@ -155,10 +163,10 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        isDismissable={false} // Prevent closing on overlay click
+        isDismissable={false}
         size="5xl"
         classNames={{
-          base: 'min-w-[1200px] z-[1000] p-4',
+          base: 'min-w-[1250px] z-[1000] p-4',
           backdrop: showProcessModal && 'z-[999]',
         }}
       >
@@ -166,7 +174,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
           <ModalHeader className="px-8 font-zen text-2xl">
             Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
           </ModalHeader>
-          <ModalBody className="font-zen">
+          <ModalBody className="mx-2 font-zen">
             <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-sm text-secondary">
                 Optimize your {groupedPosition.loanAsset} lending strategy by redistributing funds
@@ -174,47 +182,16 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
               </p>
             </div>
 
-            <div className="mb-4 flex items-center justify-between rounded-lg border-2 border-dashed border-orange-300 p-4 light:bg-orange-100 light:bg-opacity-20 dark:border-orange-700">
-              <span className="mr-2">Rebalance</span>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="bg-hovered h-10 w-32 rounded p-2 focus:outline-none"
-              />
-              <div className="mx-2 flex items-center">
-                <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
-                {token?.img && (
-                  <Image src={token.img} alt={groupedPosition.loanAsset} width={24} height={24} />
-                )}
-              </div>
-              <span className="mr-2">From </span>
-              <div className="w-48">
-                <MarketBadge
-                  market={
-                    groupedPosition.markets.find(
-                      (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
-                    )?.market as unknown as Market
-                  }
-                />
-              </div>
-              <ArrowRightIcon className="mx-2" />
-              <div className="w-48">
-                <MarketBadge
-                  market={
-                    eligibleMarkets.find(
-                      (m) => m.uniqueKey === selectedToMarketUniqueKey,
-                    ) as unknown as Market
-                  }
-                />
-              </div>
-              <Button
-                onClick={handleAddAction}
-                className="ml-4 rounded-sm bg-orange-500 p-2 px-4 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
-              >
-                Add Action
-              </Button>
-            </div>
+            <RebalanceActionInput
+              amount={amount}
+              setAmount={setAmount}
+              selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
+              selectedToMarketUniqueKey={selectedToMarketUniqueKey}
+              groupedPosition={groupedPosition}
+              eligibleMarkets={eligibleMarkets}
+              token={token}
+              onAddAction={handleAddAction}
+            />
 
             <FromAndToMarkets
               eligibleMarkets={eligibleMarkets}
@@ -243,61 +220,14 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
               selectedToMarketUniqueKey={selectedToMarketUniqueKey}
             />
 
-            <h3 className="mt-4 text-lg font-semibold">Rebalance Cart</h3>
-            {rebalanceActions.length === 0 ? (
-              <p className="min-h-20 py-4 text-center text-secondary">
-                Your rebalance cart is empty. Add some actions!
-              </p>
-            ) : (
-              <Table className="min-h-20">
-                <TableHeader>
-                  <TableColumn>From Market</TableColumn>
-                  <TableColumn>To Market</TableColumn>
-                  <TableColumn>Amount</TableColumn>
-                  <TableColumn>Actions</TableColumn>
-                </TableHeader>
-                <TableBody>
-                  {rebalanceActions.map((action: RebalanceAction, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <MarketBadge
-                          market={
-                            groupedPosition.markets.find(
-                              (m) => m.market.uniqueKey === action.fromMarket.uniqueKey,
-                            )?.market as unknown as Market
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <MarketBadge
-                          market={
-                            eligibleMarkets.find(
-                              (m) => m.uniqueKey === action.toMarket.uniqueKey,
-                            ) as unknown as Market
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {formatUnits(action.amount, groupedPosition.loanAssetDecimals)}{' '}
-                        {groupedPosition.loanAsset}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          color="danger"
-                          size="sm"
-                          onPress={() => removeRebalanceAction(index)}
-                          className="rounded-sm bg-red-500 p-2 text-xs text-white duration-300 ease-in-out hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
-                        >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            <RebalanceCart
+              rebalanceActions={rebalanceActions}
+              groupedPosition={groupedPosition}
+              eligibleMarkets={eligibleMarkets}
+              removeRebalanceAction={removeRebalanceAction}
+            />
           </ModalBody>
-          <ModalFooter>
+          <ModalFooter className="mx-2">
             <Button
               variant="light"
               onPress={onClose}
@@ -310,7 +240,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
               onPress={() => void handleExecuteRebalance()}
               isDisabled={isConfirming || rebalanceActions.length === 0}
               isLoading={isConfirming}
-              className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600 disabled:opacity-50"
+              className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-orange-600"
             >
               Execute Rebalance
             </Button>

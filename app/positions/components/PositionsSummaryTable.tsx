@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { toast } from 'react-toastify';
+import { useAccount } from 'wagmi';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -20,6 +22,8 @@ export function PositionsSummaryTable({
   setShowModal,
   setSelectedPosition,
 }: PositionTableProps) {
+  const { address: account } = useAccount();
+
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
@@ -227,8 +231,12 @@ export function PositionsSummaryTable({
                       className="bg-hovered rounded-sm p-2 text-xs duration-300 ease-in-out hover:bg-orange-500"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedGroupedPosition(position);
-                        setShowRebalanceModal(true);
+                        if (account) {
+                          setSelectedGroupedPosition(position);
+                          setShowRebalanceModal(true);
+                        } else {
+                          toast.info('Please connect your wallet to rebalance');
+                        }
                       }}
                     >
                       Rebalance

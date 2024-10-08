@@ -1,7 +1,6 @@
 import React from 'react';
 import { Input } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
-import { ArrowUpIcon, ArrowDownIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { Market } from '@/hooks/useMarkets';
@@ -102,7 +101,7 @@ export function FromAndToMarkets({
             <table className="responsive w-full rounded-md font-zen">
               <thead className="table-header bg-gray-50 text-sm dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-2 text-left">Market ID</th>
+                  <th className="px-4 py-2 text-left">Market</th>
                   <th className="px-4 py-2 text-left">Collateral</th>
                   <th className="px-4 py-2 text-left">LLTV</th>
                   <th className="px-4 py-2 text-left">APY</th>
@@ -166,16 +165,11 @@ export function FromAndToMarkets({
                         {marketPosition.market.loanAsset.symbol}
                         {marketPosition.pendingDelta !== 0 && (
                           <span
-                            className={`ml-1 ${
+                            className={`ml-1 text-xs ${
                               marketPosition.pendingDelta > 0 ? 'text-green-500' : 'text-red-500'
                             }`}
                           >
-                            {marketPosition.pendingDelta > 0 ? (
-                              <ArrowUpIcon className="inline" />
-                            ) : (
-                              <ArrowDownIcon className="inline" />
-                            )}
-                            (
+                            ({marketPosition.pendingDelta > 0 ? '+' : '-'}
                             {formatReadable(
                               Math.abs(
                                 Number(

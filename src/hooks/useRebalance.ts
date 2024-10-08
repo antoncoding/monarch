@@ -69,7 +69,6 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
 
   const executeRebalance = useCallback(async () => {
     if (!account) {
-      toast.error('Please connect your wallet');
       return;
     }
     setIsConfirming(true);
