@@ -9,10 +9,11 @@ import {
 } from '@nextui-org/react';
 import { toast } from 'react-toastify';
 import { parseUnits } from 'viem';
-import useMarkets, { Market } from '@/hooks/useMarkets';
+import useMarkets from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';

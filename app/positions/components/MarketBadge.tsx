@@ -1,6 +1,5 @@
 import React from 'react';
 import { formatUnits } from 'viem';
-
 type MarketBadgeProps = {
   market:
     | { uniqueKey: string; lltv: string; collateralAsset: { symbol: string } }

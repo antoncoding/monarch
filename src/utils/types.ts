@@ -239,3 +239,68 @@ export type GroupedPosition = {
     percentage: number;
   }[];
 };
+
+// Add this type to the existing types in the file
+export type Market = {
+  id: string;
+  lltv: string;
+  uniqueKey: string;
+  irmAddress: string;
+  oracleAddress: string;
+  collateralPrice: string;
+  morphoBlue: {
+    id: string;
+    address: string;
+    chain: {
+      id: number;
+    };
+  };
+  oracleInfo: {
+    type: string;
+  };
+  oracleFeed?: OracleFeedsInfo;
+  loanAsset: TokenInfo;
+  collateralAsset: TokenInfo;
+  state: {
+    borrowAssets: string;
+    supplyAssets: string;
+    borrowAssetsUsd: string;
+    supplyAssetsUsd: string;
+    borrowShares: string;
+    supplyShares: string;
+    liquidityAssets: string;
+    liquidityAssetsUsd: number;
+    collateralAssets: string;
+    collateralAssetsUsd: number | null;
+    utilization: number;
+    supplyApy: number;
+    borrowApy: number;
+    fee: number;
+    timestamp: number;
+    rateAtUTarget: number;
+    rewards: {
+      yearlySupplyTokens: string;
+      asset: {
+        address: string;
+        priceUsd: string | null;
+        spotPriceEth: string | null;
+      };
+      amountPerSuppliedToken: string;
+      amountPerBorrowedToken: string;
+    }[];
+  };
+  warnings: MarketWarning[];
+  badDebt?: {
+    underlying: number;
+    usd: number;
+  };
+  realizedBadDebt?: {
+    underlying: number;
+    usd: number;
+  };
+
+  // appended by us
+  rewardPer1000USD?: string;
+  warningsWithDetail: WarningWithDetail[];
+  isProtectedByLiquidationBots: boolean;
+};

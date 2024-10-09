@@ -3,10 +3,10 @@ import { Input } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
-import { Market } from '@/hooks/useMarkets';
 import { formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { MarketPosition } from '@/utils/types';
 import {
   MarketAssetIndicator,

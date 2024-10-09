@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
-import { OracleFeedsInfo, MarketWarning, WarningWithDetail, TokenInfo } from '@/utils/types';
+import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import useLiquidations from './useLiquidations';
 
@@ -22,70 +22,6 @@ export type Reward = {
       token_amount_per1000_usd: string; // with decimals
     };
   }[];
-};
-
-export type Market = {
-  id: string;
-  lltv: string;
-  uniqueKey: string;
-  irmAddress: string;
-  oracleAddress: string;
-  collateralPrice: string;
-  morphoBlue: {
-    id: string;
-    address: string;
-    chain: {
-      id: number;
-    };
-  };
-  oracleInfo: {
-    type: string;
-  };
-  oracleFeed?: OracleFeedsInfo;
-  loanAsset: TokenInfo;
-  collateralAsset: TokenInfo;
-  state: {
-    borrowAssets: string;
-    supplyAssets: string;
-    borrowAssetsUsd: string;
-    supplyAssetsUsd: string;
-    borrowShares: string;
-    supplyShares: string;
-    liquidityAssets: string;
-    liquidityAssetsUsd: number;
-    collateralAssets: string;
-    collateralAssetsUsd: number | null;
-    utilization: number;
-    supplyApy: number;
-    borrowApy: number;
-    fee: number;
-    timestamp: number;
-    rateAtUTarget: number;
-    rewards: {
-      yearlySupplyTokens: string;
-      asset: {
-        address: string;
-        priceUsd: string | null;
-        spotPriceEth: string | null;
-      };
-      amountPerSuppliedToken: string;
-      amountPerBorrowedToken: string;
-    }[];
-  };
-  warnings: MarketWarning[];
-  badDebt?: {
-    underlying: number;
-    usd: number;
-  };
-  realizedBadDebt?: {
-    underlying: number;
-    usd: number;
-  };
-
-  // appended by us
-  rewardPer1000USD?: string;
-  warningsWithDetail: WarningWithDetail[];
-  isProtectedByLiquidationBots: boolean;
 };
 
 const marketsQuery = `
@@ -210,75 +146,78 @@ const useMarkets = () => {
     error: liquidationsError,
   } = useLiquidations();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Fetch markets
+      const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: marketsQuery,
+          variables: { first: 1000, where: { whitelisted: true } },
+        }),
+      });
+      const marketsResult = await marketsResponse.json();
+      const markets = marketsResult.data.markets.items as Market[];
 
-        // Fetch markets
-        const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: marketsQuery,
-            variables: { first: 1000, where: { whitelisted: true } },
-          }),
-        });
-        const marketsResult = await marketsResponse.json();
-        const markets = marketsResult.data.markets.items as Market[];
+      const filtered = markets
+        .filter((market) => market.collateralAsset != undefined)
+        .filter(
+          (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
+        )
+        .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
-        const filtered = markets
-          .filter((market) => market.collateralAsset != undefined)
-          .filter(
-            (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
-          )
-          .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
+      const final = filtered.map((market) => {
+        const entry = market.state.rewards.find(
+          (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
+        );
 
-        const final = filtered.map((market) => {
-          const entry = market.state.rewards.find(
-            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
-          );
+        const warningsWithDetail = getMarketWarningsWithDetail(market);
+        const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 
-          const warningsWithDetail = getMarketWarningsWithDetail(market);
-          const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
-
-          if (!entry) {
-            return {
-              ...market,
-              rewardPer1000USD: undefined,
-              warningsWithDetail,
-              isProtectedByLiquidationBots,
-            };
-          }
-
-          const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
-          const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
-
+        if (!entry) {
           return {
             ...market,
-            rewardPer1000USD,
+            rewardPer1000USD: undefined,
             warningsWithDetail,
             isProtectedByLiquidationBots,
           };
-        });
+        }
 
-        setData(final);
-        setLoading(false);
-      } catch (_error) {
-        setError(_error);
-        setLoading(false);
-      }
-    };
+        const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
+        const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
 
+        return {
+          ...market,
+          rewardPer1000USD,
+          warningsWithDetail,
+          isProtectedByLiquidationBots,
+        };
+      });
+
+      setData(final);
+      setLoading(false);
+    } catch (_error) {
+      setError(_error);
+      setLoading(false);
+    }
+  }, [liquidatedMarketIds]);
+
+  useEffect(() => {
     if (!liquidationsLoading) {
       fetchData().catch(console.error);
     }
-  }, [liquidationsLoading, liquidatedMarketIds]);
+  }, [liquidationsLoading, fetchData]);
+
+  const refetch = useCallback(() => {
+    fetchData().catch(console.error);
+  }, [fetchData]);
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;
 
-  return { loading: isLoading, data, error: combinedError };
+  return { loading: isLoading, data, error: combinedError, refetch };
 };
 
 export default useMarkets;

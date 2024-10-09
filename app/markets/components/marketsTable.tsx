@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { Market } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
+import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
 import { HTSortable } from './MarketTableUtils';

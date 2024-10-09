@@ -8,13 +8,13 @@ import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
-import { Market } from '@/hooks/useMarkets';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
 type SupplyModalProps = {

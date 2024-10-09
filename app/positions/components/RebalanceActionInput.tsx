@@ -2,9 +2,8 @@ import React from 'react';
 import { Button } from '@nextui-org/react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { Market } from '@/hooks/useMarkets';
 import { ERC20Token } from '@/utils/tokens';
-import { GroupedPosition } from '@/utils/types';
+import { GroupedPosition, Market } from '@/utils/types';
 import { MarketBadge } from './MarketBadge';
 
 type RebalanceActionInputProps = {
