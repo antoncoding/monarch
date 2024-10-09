@@ -96,6 +96,16 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x6c3ea9036406852006290770bedfcaba0e23a0e8' }],
   },
   {
+    symbol: 'aUSD',
+    img: require('../imgs/tokens/aUSD.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' }],
+    protocol: {
+      name: 'Agora',
+      isProxy: true,
+    },
+  },
+  {
     symbol: 'EURe',
     img: require('../imgs/tokens/eure.png') as string,
     decimals: 18,
@@ -204,6 +214,12 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x18084fbA666a33d37592fA2633fD49a74DD93a88' }],
   },
   {
+    symbol: 'lBTC',
+    img: require('../imgs/tokens/lbtc.webp') as string,
+    decimals: 8,
+    networks: [{ chain: mainnet, address: '0x8236a87084f8B84306f72007F36F2618A5634494' }],
+  },
+  {
     symbol: 'rsETH',
     img: require('../imgs/tokens/rseth.png') as string,
     decimals: 18,
@@ -290,6 +306,12 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0xD533a949740bb3306d119CC777fa900bA034cd52' }],
   },
   {
+    symbol: 'DEGEN',
+    img: require('../imgs/tokens/degen.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed' }],
+  },
+  {
     symbol: 'LINK',
     img: require('../imgs/tokens/link.png') as string,
     decimals: 18,
@@ -324,6 +346,12 @@ const supportedTokens = [
     img: require('../imgs/tokens/AERO.png') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0x940181a94A35A4569E4529A3CDfB74e38FD98631' }],
+  },
+  {
+    symbol: 'EIGEN',
+    img: require('../imgs/tokens/eigen.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83' }],
   },
 ];
 
