@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Market } from '@/hooks/useMarkets';
+import { Market } from '@/utils/types';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';

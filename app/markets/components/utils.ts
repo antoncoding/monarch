@@ -1,4 +1,4 @@
-import { Market } from '@/hooks/useMarkets';
+import { Market } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
 import { isWhitelisted } from '@/utils/tokens';
 import { SortColumn } from './constants';

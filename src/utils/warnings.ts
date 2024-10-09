@@ -1,4 +1,4 @@
-import { Market } from '@/hooks/useMarkets';
+import { Market } from '@/utils/types';
 import { WarningCategory, WarningWithDetail } from './types';
 
 const morphoOfficialWarnings: WarningWithDetail[] = [

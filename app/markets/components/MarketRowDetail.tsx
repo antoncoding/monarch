@@ -2,7 +2,7 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { zeroAddress } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
-import { Market } from '@/hooks/useMarkets';
+import { Market } from '@/utils/types';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 
