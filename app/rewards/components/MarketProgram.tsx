@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Market } from '@/utils/types';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { MarketProgramType } from '@/utils/types';
 
 type MarketProgramProps = {

@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { Spinner } from '@nextui-org/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -11,7 +12,6 @@ import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { GrRefresh } from 'react-icons/gr';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
