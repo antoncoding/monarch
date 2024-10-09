@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { Spinner } from '@nextui-org/react';
 import Image from 'next/image';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
@@ -10,17 +11,22 @@ import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+import { GrRefresh } from 'react-icons/gr';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
   setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
+  refetch: () => void;
+  isRefetching: boolean;
 };
 
 export function PositionsSummaryTable({
   marketPositions,
   setShowModal,
   setSelectedPosition,
+  refetch,
+  isRefetching,
 }: PositionTableProps) {
   const { address: account } = useAccount();
 
@@ -31,6 +37,7 @@ export function PositionsSummaryTable({
   );
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
+    console.log('updating groupedPositions');
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
       const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -119,6 +126,20 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
+  // Update selectedGroupedPosition when groupedPositions change
+  useEffect(() => {
+    if (selectedGroupedPosition) {
+      const updatedPosition = processedPositions.find(
+        (position) =>
+          position.loanAssetAddress === selectedGroupedPosition.loanAssetAddress &&
+          position.chainId === selectedGroupedPosition.chainId,
+      );
+      if (updatedPosition) {
+        setSelectedGroupedPosition(updatedPosition);
+      }
+    }
+  }, [processedPositions, selectedGroupedPosition]);
+
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
@@ -131,8 +152,28 @@ export function PositionsSummaryTable({
     });
   };
 
+  const handleManualRefresh = () => {
+    refetch();
+    toast.info('Data refreshed', { icon: <span>🚀</span>, delay: 1000 });
+  };
+
   return (
     <div className="space-y-4 overflow-x-auto">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold">Position Summary</h2>
+          {isRefetching && <Spinner size="sm" />}
+        </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefetching}
+          type="button"
+          className="flex items-center gap-2 rounded-md bg-gray-200 dark:bg-gray-700 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+        >
+          <GrRefresh size={16} />
+          Refresh
+        </button>
+      </div>
       <table className="responsive w-full min-w-[640px] font-zen">
         <thead className="table-header">
           <tr>
@@ -264,6 +305,8 @@ export function PositionsSummaryTable({
           groupedPosition={selectedGroupedPosition}
           onClose={() => setShowRebalanceModal(false)}
           isOpen={showRebalanceModal}
+          refetch={refetch}
+          isRefetching={isRefetching}
         />
       )}
     </div>

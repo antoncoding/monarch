@@ -138,17 +138,24 @@ const marketsQuery = `
 
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
   const {
     loading: liquidationsLoading,
     liquidatedMarketIds,
     error: liquidationsError,
+    refetch: refetchLiquidations,
   } = useLiquidations();
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isRefetch = false) => {
     try {
-      setLoading(true);
+      if (isRefetch) {
+        setIsRefetching(true);
+      } else {
+        setLoading(true);
+      }
+
       // Fetch markets
       const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
         method: 'POST',
@@ -197,10 +204,11 @@ const useMarkets = () => {
       });
 
       setData(final);
-      setLoading(false);
     } catch (_error) {
       setError(_error);
+    } finally {
       setLoading(false);
+      setIsRefetching(false);
     }
   }, [liquidatedMarketIds]);
 
@@ -211,13 +219,14 @@ const useMarkets = () => {
   }, [liquidationsLoading, fetchData]);
 
   const refetch = useCallback(() => {
-    fetchData().catch(console.error);
-  }, [fetchData]);
+    refetchLiquidations();
+    fetchData(true).catch(console.error);
+  }, [refetchLiquidations, fetchData]);
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;
 
-  return { loading: isLoading, data, error: combinedError, refetch };
+  return { loading: isLoading, isRefetching, data, error: combinedError, refetch };
 };
 
 export default useMarkets;
