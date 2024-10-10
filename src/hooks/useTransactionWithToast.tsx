@@ -101,7 +101,7 @@ export function useTransactionWithToast({
     toastId,
     onClick,
     renderToastContent,
-    onSuccess
+    onSuccess,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };

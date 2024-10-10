@@ -15,7 +15,7 @@ type RebalanceActionInputProps = {
   eligibleMarkets: Market[];
   token: ERC20Token | undefined;
   onAddAction: () => void;
-}
+};
 
 export function RebalanceActionInput({
   amount,

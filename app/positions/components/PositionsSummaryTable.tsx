@@ -17,7 +17,7 @@ type PositionTableProps = {
   marketPositions: MarketPosition[];
   setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
-  refetch: () => void;
+  refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
 };
 
@@ -37,7 +37,6 @@ export function PositionsSummaryTable({
   );
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
-    console.log('updating groupedPositions');
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
       const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -138,6 +137,7 @@ export function PositionsSummaryTable({
         setSelectedGroupedPosition(updatedPosition);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processedPositions]);
 
   const toggleRow = (rowKey: string) => {
@@ -153,8 +153,9 @@ export function PositionsSummaryTable({
   };
 
   const handleManualRefresh = () => {
-    refetch();
-    toast.info('Data refreshed', { icon: <span>🚀</span>, delay: 1000 });
+    refetch(() => {
+      toast.info('Data refreshed', { icon: <span>🚀</span> });
+    });
   };
 
   return (
@@ -168,7 +169,7 @@ export function PositionsSummaryTable({
           onClick={handleManualRefresh}
           disabled={isRefetching}
           type="button"
-          className="flex items-center gap-2 rounded-md bg-gray-200 dark:bg-gray-700 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
         >
           <GrRefresh size={16} />
           Refresh

@@ -26,7 +26,7 @@ type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
   onClose: () => void;
-  refetch: () => void;
+  refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
 };
 
@@ -172,8 +172,9 @@ export function RebalanceModal({
   }, [executeRebalance]);
 
   const handleManualRefresh = () => {
-    refetch();
-    toast.info('Data refreshed', {icon: <span>🚀</span>, delay: 1000});
+    refetch(() => {
+      toast.info('Data refreshed', { icon: <span>🚀</span> });
+    });
   };
 
   return (
@@ -198,7 +199,7 @@ export function RebalanceModal({
               onClick={handleManualRefresh}
               disabled={isRefetching}
               type="button"
-              className="flex items-center gap-2 rounded-md bg-gray-200 dark:bg-gray-700 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               <GrRefresh size={16} />
               Refresh

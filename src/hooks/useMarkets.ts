@@ -148,69 +148,72 @@ const useMarkets = () => {
     refetch: refetchLiquidations,
   } = useLiquidations();
 
-  const fetchData = useCallback(async (isRefetch = false) => {
-    try {
-      if (isRefetch) {
-        setIsRefetching(true);
-      } else {
-        setLoading(true);
-      }
+  const fetchData = useCallback(
+    async (isRefetch = false) => {
+      try {
+        if (isRefetch) {
+          setIsRefetching(true);
+        } else {
+          setLoading(true);
+        }
 
-      // Fetch markets
-      const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: marketsQuery,
-          variables: { first: 1000, where: { whitelisted: true } },
-        }),
-      });
-      const marketsResult = await marketsResponse.json();
-      const markets = marketsResult.data.markets.items as Market[];
+        // Fetch markets
+        const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: marketsQuery,
+            variables: { first: 1000, where: { whitelisted: true } },
+          }),
+        });
+        const marketsResult = await marketsResponse.json();
+        const markets = marketsResult.data.markets.items as Market[];
 
-      const filtered = markets
-        .filter((market) => market.collateralAsset != undefined)
-        .filter(
-          (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
-        )
-        .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
+        const filtered = markets
+          .filter((market) => market.collateralAsset != undefined)
+          .filter(
+            (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
+          )
+          .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
-      const final = filtered.map((market) => {
-        const entry = market.state.rewards.find(
-          (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
-        );
+        const final = filtered.map((market) => {
+          const entry = market.state.rewards.find(
+            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
+          );
 
-        const warningsWithDetail = getMarketWarningsWithDetail(market);
-        const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
+          const warningsWithDetail = getMarketWarningsWithDetail(market);
+          const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 
-        if (!entry) {
+          if (!entry) {
+            return {
+              ...market,
+              rewardPer1000USD: undefined,
+              warningsWithDetail,
+              isProtectedByLiquidationBots,
+            };
+          }
+
+          const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
+          const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
+
           return {
             ...market,
-            rewardPer1000USD: undefined,
+            rewardPer1000USD,
             warningsWithDetail,
             isProtectedByLiquidationBots,
           };
-        }
+        });
 
-        const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
-        const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
-
-        return {
-          ...market,
-          rewardPer1000USD,
-          warningsWithDetail,
-          isProtectedByLiquidationBots,
-        };
-      });
-
-      setData(final);
-    } catch (_error) {
-      setError(_error);
-    } finally {
-      setLoading(false);
-      setIsRefetching(false);
-    }
-  }, [liquidatedMarketIds]);
+        setData(final);
+      } catch (_error) {
+        setError(_error);
+      } finally {
+        setLoading(false);
+        setIsRefetching(false);
+      }
+    },
+    [liquidatedMarketIds],
+  );
 
   useEffect(() => {
     if (!liquidationsLoading) {
@@ -218,10 +221,13 @@ const useMarkets = () => {
     }
   }, [liquidationsLoading, fetchData]);
 
-  const refetch = useCallback(() => {
-    refetchLiquidations();
-    fetchData(true).catch(console.error);
-  }, [refetchLiquidations, fetchData]);
+  const refetch = useCallback(
+    (onSuccess?: () => void) => {
+      refetchLiquidations();
+      fetchData(true).then(onSuccess).catch(console.error);
+    },
+    [refetchLiquidations, fetchData],
+  );
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;

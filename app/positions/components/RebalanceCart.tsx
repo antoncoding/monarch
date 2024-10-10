@@ -18,7 +18,7 @@ type RebalanceCartProps = {
   groupedPosition: GroupedPosition;
   eligibleMarkets: Market[];
   removeRebalanceAction: (index: number) => void;
-}
+};
 
 export function RebalanceCart({
   rebalanceActions,

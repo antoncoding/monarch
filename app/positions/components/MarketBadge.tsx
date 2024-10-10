@@ -5,7 +5,7 @@ type MarketBadgeProps = {
     | { uniqueKey: string; lltv: string; collateralAsset: { symbol: string } }
     | null
     | undefined;
-}
+};
 
 export function MarketBadge({ market }: MarketBadgeProps) {
   if (!market)
