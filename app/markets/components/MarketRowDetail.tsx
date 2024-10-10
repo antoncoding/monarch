@@ -2,9 +2,9 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { zeroAddress } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
-import { Market } from '@/hooks/useMarkets';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
+import { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   console.log('market.oracleFeed', market.oracleFeed);

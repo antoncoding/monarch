@@ -6,13 +6,16 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Spinner,
 } from '@nextui-org/react';
+import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits } from 'viem';
-import useMarkets, { Market } from '@/hooks/useMarkets';
+import useMarkets from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
@@ -23,11 +26,19 @@ type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
   onClose: () => void;
+  refetch: (onSuccess?: () => void) => void;
+  isRefetching: boolean;
 };
 
 export const PER_PAGE = 5;
 
-export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceModalProps) {
+export function RebalanceModal({
+  groupedPosition,
+  isOpen,
+  onClose,
+  refetch,
+  isRefetching,
+}: RebalanceModalProps) {
   const [fromMarketFilter, setFromMarketFilter] = useState('');
   const [toMarketFilter, setToMarketFilter] = useState('');
   const [selectedFromMarketUniqueKey, setSelectedFromMarketUniqueKey] = useState('');
@@ -43,7 +54,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     executeRebalance,
     isConfirming,
     currentStep,
-  } = useRebalance(groupedPosition);
+  } = useRebalance(groupedPosition, refetch);
 
   const token = findToken(groupedPosition.loanAssetAddress, groupedPosition.chainId);
   const fromPagination = usePagination();
@@ -160,6 +171,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
     }
   }, [executeRebalance]);
 
+  const handleManualRefresh = () => {
+    refetch(() => {
+      toast.info('Data refreshed', { icon: <span>🚀</span> });
+    });
+  };
+
   return (
     <>
       <Modal
@@ -173,8 +190,20 @@ export function RebalanceModal({ groupedPosition, isOpen, onClose }: RebalanceMo
         }}
       >
         <ModalContent>
-          <ModalHeader className="px-8 font-zen text-2xl">
-            Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
+          <ModalHeader className="flex items-center justify-between px-8 font-zen text-2xl">
+            <div className="flex items-center gap-2">
+              Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
+              {isRefetching && <Spinner size="sm" />}
+            </div>
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefetching}
+              type="button"
+              className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <GrRefresh size={16} />
+              Refresh
+            </button>
           </ModalHeader>
           <ModalBody className="mx-2 font-zen">
             <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">

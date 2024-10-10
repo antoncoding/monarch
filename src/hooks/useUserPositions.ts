@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 
@@ -123,14 +123,22 @@ const query = `query getUserMarketPositions(
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [data, setData] = useState<MarketPosition[]>([]);
   const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(
+    async (isRefetch = false) => {
+      if (!user) return;
+
       try {
-        setLoading(true);
+        if (isRefetch) {
+          setIsRefetching(true);
+        } else {
+          setLoading(true);
+        }
+
         const [responseMainnet, responseBase] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
@@ -187,19 +195,28 @@ const useUserPositions = (user: string | undefined) => {
         setHistory(transactions);
 
         setData(filtered);
-        setLoading(false);
       } catch (_error) {
         setError(_error);
+      } finally {
         setLoading(false);
+        setIsRefetching(false);
       }
-    };
+    },
+    [user],
+  );
 
-    if (!user) return;
-
+  useEffect(() => {
     fetchData().catch(console.error);
-  }, [user]);
+  }, [fetchData]);
 
-  return { loading, data, history, error };
+  const refetch = useCallback(
+    (onSuccess?: () => void) => {
+      fetchData(true).then(onSuccess).catch(console.error);
+    },
+    [fetchData],
+  );
+
+  return { loading, isRefetching, data, history, error, refetch };
 };
 
 export default useUserPositions;

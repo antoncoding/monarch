@@ -1,6 +1,6 @@
-import { Market } from '@/hooks/useMarkets';
 import { SupportedNetworks } from '@/utils/networks';
 import { isWhitelisted } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 
 export const sortProperties = {

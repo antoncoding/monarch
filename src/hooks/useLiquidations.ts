@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const liquidationsQuery = `
   query getLiquidations($first: Int, $skip: Int) {
@@ -68,53 +68,63 @@ type QueryResult = {
 
 const useLiquidations = () => {
   const [loading, setLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [liquidatedMarketIds, setLiquidatedMarketIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<unknown | null>(null);
 
-  useEffect(() => {
-    const fetchLiquidations = async () => {
-      try {
+  const fetchLiquidations = useCallback(async (isRefetch = false) => {
+    try {
+      if (isRefetch) {
+        setIsRefetching(true);
+      } else {
         setLoading(true);
-        const liquidatedIds = new Set<string>();
-        let skip = 0;
-        const pageSize = 1000;
-        let totalCount = 0;
-
-        do {
-          const response = await fetch('https://blue-api.morpho.org/graphql', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              query: liquidationsQuery,
-              variables: { first: pageSize, skip },
-            }),
-          });
-          const result = (await response.json()) as QueryResult;
-          const liquidations = result.data.transactions.items;
-          const pageInfo = result.data.transactions.pageInfo;
-
-          liquidations.forEach((tx) => {
-            if (tx.data && 'market' in tx.data) {
-              liquidatedIds.add(tx.data.market.id);
-            }
-          });
-
-          totalCount = pageInfo.countTotal;
-          skip += pageInfo.count;
-        } while (skip < totalCount);
-
-        setLiquidatedMarketIds(liquidatedIds);
-        setLoading(false);
-      } catch (_error) {
-        setError(_error);
-        setLoading(false);
       }
-    };
+      const liquidatedIds = new Set<string>();
+      let skip = 0;
+      const pageSize = 1000;
+      let totalCount = 0;
 
-    fetchLiquidations().catch(console.error);
+      do {
+        const response = await fetch('https://blue-api.morpho.org/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: liquidationsQuery,
+            variables: { first: pageSize, skip },
+          }),
+        });
+        const result = (await response.json()) as QueryResult;
+        const liquidations = result.data.transactions.items;
+        const pageInfo = result.data.transactions.pageInfo;
+
+        liquidations.forEach((tx) => {
+          if (tx.data && 'market' in tx.data) {
+            liquidatedIds.add(tx.data.market.id);
+          }
+        });
+
+        totalCount = pageInfo.countTotal;
+        skip += pageInfo.count;
+      } while (skip < totalCount);
+
+      setLiquidatedMarketIds(liquidatedIds);
+    } catch (_error) {
+      setError(_error);
+    } finally {
+      setLoading(false);
+      setIsRefetching(false);
+    }
   }, []);
 
-  return { loading, liquidatedMarketIds, error };
+  useEffect(() => {
+    fetchLiquidations().catch(console.error);
+  }, [fetchLiquidations]);
+
+  const refetch = useCallback(() => {
+    fetchLiquidations(true).catch(console.error);
+  }, [fetchLiquidations]);
+
+  return { loading, isRefetching, liquidatedMarketIds, error, refetch };
 };
 
 export default useLiquidations;

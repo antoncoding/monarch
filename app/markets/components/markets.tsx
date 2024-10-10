@@ -3,11 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import storage from 'local-storage-fallback';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
-import useMarkets, { Market } from '@/hooks/useMarkets';
-
+import useMarkets from '@/hooks/useMarkets';
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';

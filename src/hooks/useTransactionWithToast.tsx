@@ -14,6 +14,7 @@ type UseTransactionWithToastProps = {
   chainId?: number;
   pendingDescription?: string;
   successDescription?: string;
+  onSuccess?: () => void;
 };
 
 export function useTransactionWithToast({
@@ -24,6 +25,7 @@ export function useTransactionWithToast({
   chainId,
   pendingDescription,
   successDescription,
+  onSuccess,
 }: UseTransactionWithToastProps) {
   const {
     data: hash,
@@ -72,6 +74,9 @@ export function useTransactionWithToast({
         autoClose: 5000,
         onClick,
       });
+      if (onSuccess) {
+        onSuccess();
+      }
     }
     if (txError) {
       toast.update(toastId, {
@@ -96,6 +101,7 @@ export function useTransactionWithToast({
     toastId,
     onClick,
     renderToastContent,
+    onSuccess,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };

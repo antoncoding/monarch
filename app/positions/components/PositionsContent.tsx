@@ -19,7 +19,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
 
-  const { loading, data: marketPositions } = useUserPositions(account);
+  const { loading, isRefetching, data: marketPositions, refetch } = useUserPositions(account);
 
   const hasSuppliedMarkets = marketPositions.length > 0;
 
@@ -28,7 +28,7 @@ export default function Positions() {
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <div className="flex items-center justify-between pb-4">
-          <h1 className="py-4 font-zen text-2xl">Your Supplies</h1>
+          <h1 className="flex items-center gap-2 py-4 font-zen text-2xl">Your Supplies</h1>
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
               <button
@@ -56,6 +56,7 @@ export default function Positions() {
               setShowModal(false);
               setSelectedPosition(null);
             }}
+            refetch={refetch}
           />
         )}
 
@@ -69,6 +70,8 @@ export default function Positions() {
               marketPositions={marketPositions}
               setShowModal={setShowModal}
               setSelectedPosition={setSelectedPosition}
+              refetch={refetch}
+              isRefetching={isRefetching}
             />
           </div>
         )}

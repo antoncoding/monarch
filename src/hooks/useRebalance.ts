@@ -9,7 +9,7 @@ import { getBundlerV2, MORPHO } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { usePermit2 } from './usePermit2';
 
-export const useRebalance = (groupedPosition: GroupedPosition) => {
+export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentStep, setCurrentStep] = useState<
@@ -65,6 +65,7 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
     successText: 'Positions rebalanced successfully',
     errorText: 'Failed to rebalance positions',
     chainId: groupedPosition.chainId,
+    onSuccess: onRebalance,
   });
 
   const executeRebalance = useCallback(async () => {

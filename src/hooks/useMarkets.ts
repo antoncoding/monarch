@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
-import { OracleFeedsInfo, MarketWarning, WarningWithDetail, TokenInfo } from '@/utils/types';
+import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import useLiquidations from './useLiquidations';
 
@@ -22,70 +22,6 @@ export type Reward = {
       token_amount_per1000_usd: string; // with decimals
     };
   }[];
-};
-
-export type Market = {
-  id: string;
-  lltv: string;
-  uniqueKey: string;
-  irmAddress: string;
-  oracleAddress: string;
-  collateralPrice: string;
-  morphoBlue: {
-    id: string;
-    address: string;
-    chain: {
-      id: number;
-    };
-  };
-  oracleInfo: {
-    type: string;
-  };
-  oracleFeed?: OracleFeedsInfo;
-  loanAsset: TokenInfo;
-  collateralAsset: TokenInfo;
-  state: {
-    borrowAssets: string;
-    supplyAssets: string;
-    borrowAssetsUsd: string;
-    supplyAssetsUsd: string;
-    borrowShares: string;
-    supplyShares: string;
-    liquidityAssets: string;
-    liquidityAssetsUsd: number;
-    collateralAssets: string;
-    collateralAssetsUsd: number | null;
-    utilization: number;
-    supplyApy: number;
-    borrowApy: number;
-    fee: number;
-    timestamp: number;
-    rateAtUTarget: number;
-    rewards: {
-      yearlySupplyTokens: string;
-      asset: {
-        address: string;
-        priceUsd: string | null;
-        spotPriceEth: string | null;
-      };
-      amountPerSuppliedToken: string;
-      amountPerBorrowedToken: string;
-    }[];
-  };
-  warnings: MarketWarning[];
-  badDebt?: {
-    underlying: number;
-    usd: number;
-  };
-  realizedBadDebt?: {
-    underlying: number;
-    usd: number;
-  };
-
-  // appended by us
-  rewardPer1000USD?: string;
-  warningsWithDetail: WarningWithDetail[];
-  isProtectedByLiquidationBots: boolean;
 };
 
 const marketsQuery = `
@@ -202,18 +138,24 @@ const marketsQuery = `
 
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
   const [data, setData] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
   const {
     loading: liquidationsLoading,
     liquidatedMarketIds,
     error: liquidationsError,
+    refetch: refetchLiquidations,
   } = useLiquidations();
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(
+    async (isRefetch = false) => {
       try {
-        setLoading(true);
+        if (isRefetch) {
+          setIsRefetching(true);
+        } else {
+          setLoading(true);
+        }
 
         // Fetch markets
         const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
@@ -263,22 +205,34 @@ const useMarkets = () => {
         });
 
         setData(final);
-        setLoading(false);
       } catch (_error) {
         setError(_error);
+      } finally {
         setLoading(false);
+        setIsRefetching(false);
       }
-    };
+    },
+    [liquidatedMarketIds],
+  );
 
+  useEffect(() => {
     if (!liquidationsLoading) {
       fetchData().catch(console.error);
     }
-  }, [liquidationsLoading, liquidatedMarketIds]);
+  }, [liquidationsLoading, fetchData]);
+
+  const refetch = useCallback(
+    (onSuccess?: () => void) => {
+      refetchLiquidations();
+      fetchData(true).then(onSuccess).catch(console.error);
+    },
+    [refetchLiquidations, fetchData],
+  );
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;
 
-  return { loading: isLoading, data, error: combinedError };
+  return { loading: isLoading, isRefetching, data, error: combinedError, refetch };
 };
 
 export default useMarkets;

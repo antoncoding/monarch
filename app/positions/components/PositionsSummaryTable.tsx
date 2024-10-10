@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Spinner } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -15,12 +17,16 @@ type PositionTableProps = {
   marketPositions: MarketPosition[];
   setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
+  refetch: (onSuccess?: () => void) => void;
+  isRefetching: boolean;
 };
 
 export function PositionsSummaryTable({
   marketPositions,
   setShowModal,
   setSelectedPosition,
+  refetch,
+  isRefetching,
 }: PositionTableProps) {
   const { address: account } = useAccount();
 
@@ -119,6 +125,21 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
+  // Update selectedGroupedPosition when groupedPositions change, don't depend on selectedGroupedPosition
+  useEffect(() => {
+    if (selectedGroupedPosition) {
+      const updatedPosition = processedPositions.find(
+        (position) =>
+          position.loanAssetAddress === selectedGroupedPosition.loanAssetAddress &&
+          position.chainId === selectedGroupedPosition.chainId,
+      );
+      if (updatedPosition) {
+        setSelectedGroupedPosition(updatedPosition);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processedPositions]);
+
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
       const newSet = new Set(prev);
@@ -131,8 +152,29 @@ export function PositionsSummaryTable({
     });
   };
 
+  const handleManualRefresh = () => {
+    refetch(() => {
+      toast.info('Data refreshed', { icon: <span>🚀</span> });
+    });
+  };
+
   return (
     <div className="space-y-4 overflow-x-auto">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold">Position Summary</h2>
+          {isRefetching && <Spinner size="sm" />}
+        </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={isRefetching}
+          type="button"
+          className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+        >
+          <GrRefresh size={16} />
+          Refresh
+        </button>
+      </div>
       <table className="responsive w-full min-w-[640px] font-zen">
         <thead className="table-header">
           <tr>
@@ -264,6 +306,8 @@ export function PositionsSummaryTable({
           groupedPosition={selectedGroupedPosition}
           onClose={() => setShowRebalanceModal(false)}
           isOpen={showRebalanceModal}
+          refetch={refetch}
+          isRefetching={isRefetching}
         />
       )}
     </div>

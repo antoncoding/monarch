@@ -9,7 +9,7 @@ import {
   Button,
 } from '@nextui-org/react';
 import { formatUnits } from 'viem';
-import { Market } from '@/hooks/useMarkets';
+import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { MarketBadge } from './MarketBadge';
 
@@ -18,7 +18,7 @@ type RebalanceCartProps = {
   groupedPosition: GroupedPosition;
   eligibleMarkets: Market[];
   removeRebalanceAction: (index: number) => void;
-}
+};
 
 export function RebalanceCart({
   rebalanceActions,

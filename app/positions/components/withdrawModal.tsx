@@ -18,9 +18,10 @@ import { MarketPosition } from '@/utils/types';
 type ModalProps = {
   position: MarketPosition;
   onClose: () => void;
+  refetch: () => void;
 };
 
-export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
+export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.Element {
   // Add state for the supply amount
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -53,6 +54,10 @@ export function WithdrawModal({ position, onClose }: ModalProps): JSX.Element {
       2,
       8,
     )}`,
+    onSuccess: () => {
+      refetch();
+      onClose();
+    },
   });
 
   const withdraw = useCallback(async () => {
