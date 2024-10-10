@@ -126,7 +126,7 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
-  // Update selectedGroupedPosition when groupedPositions change
+  // Update selectedGroupedPosition when groupedPositions change, don't depend on selectedGroupedPosition
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
@@ -138,7 +138,7 @@ export function PositionsSummaryTable({
         setSelectedGroupedPosition(updatedPosition);
       }
     }
-  }, [processedPositions, selectedGroupedPosition]);
+  }, [processedPositions]);
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
