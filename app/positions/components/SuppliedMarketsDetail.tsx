@@ -14,6 +14,27 @@ type SuppliedMarketsDetailProps = {
   setSelectedPosition: (position: MarketPosition) => void;
 };
 
+function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
+  return (
+    <div className="p-2 font-zen">
+      {Object.values(WarningCategory).map((category) => {
+        const categoryWarnings = warnings.filter((w) => w.category === category);
+        if (categoryWarnings.length === 0) return null;
+        return (
+          <div key={category} className="mb-2">
+            <h4 className="font-bold capitalize">{category}</h4>
+            <ul className="list-none pl-0">
+              {categoryWarnings.map((warning, index) => (
+                <li key={index}>- {warning.description}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SuppliedMarketsDetail({
   groupedPosition,
   setShowModal,
@@ -32,25 +53,6 @@ export function SuppliedMarketsDetail({
     if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
     return '';
   };
-
-  const WarningTooltip = ({ warnings }: { warnings: WarningWithDetail[] }) => (
-    <div className="p-2 font-zen">
-      {Object.values(WarningCategory).map((category) => {
-        const categoryWarnings = warnings.filter((w) => w.category === category);
-        if (categoryWarnings.length === 0) return null;
-        return (
-          <div key={category} className="mb-2">
-            <h4 className="font-bold capitalize">{category}</h4>
-            <ul className="list-none pl-0">
-              {categoryWarnings.map((warning, index) => (
-                <li key={index}>- {warning.description}</li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
-    </div>
-  );
 
   return (
     <div className="bg-secondary bg-opacity-20 p-4">

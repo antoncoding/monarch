@@ -8,15 +8,14 @@ import { useAccount } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
-import { getCollateralColor } from '../utils/colors';
-import { RebalanceModal } from './RebalanceModal';
-import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,
   MarketDebtIndicator,
 } from 'app/markets/components/RiskIndicator';
+import { RebalanceModal } from './RebalanceModal';
+import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
@@ -38,9 +37,6 @@ export function PositionsSummaryTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
-    null,
-  );
-  const [hoveredWarningCategory, setHoveredWarningCategory] = useState<WarningCategory | null>(
     null,
   );
 
@@ -170,12 +166,6 @@ export function PositionsSummaryTable({
     refetch(() => {
       toast.info('Data refreshed', { icon: <span>🚀</span> });
     });
-  };
-
-  const getWarningColor = (warnings: WarningWithDetail[]) => {
-    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
-    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
-    return '';
   };
 
   return (

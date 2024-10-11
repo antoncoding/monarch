@@ -1,5 +1,5 @@
 import { Tooltip } from '@nextui-org/tooltip';
-import { Market, WarningWithDetail } from '@/utils/types';
+import { WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
 type RiskFlagProps = {
