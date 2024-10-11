@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { SupportedNetworks } from '@/utils/networks';
-import { Market, MarketPosition, UserTransaction } from '@/utils/types';
+import { MarketPosition, UserTransaction } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 const query = `query getUserMarketPositions(
@@ -198,7 +198,7 @@ const useUserPositions = (user: string | undefined) => {
           .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
           .map((position: MarketPosition) => ({
             ...position,
-            warningsWithDetail: getMarketWarningsWithDetail(position.market as unknown as Market),
+            warningsWithDetail: getMarketWarningsWithDetail(position.market),
           }));
 
         setHistory(transactions);

@@ -1,4 +1,4 @@
-import { Market } from '@/utils/types';
+import { MarketWarning } from '@/utils/types';
 import { WarningCategory, WarningWithDetail } from './types';
 
 const morphoOfficialWarnings: WarningWithDetail[] = [
@@ -92,7 +92,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   },
 ];
 
-export const getMarketWarningsWithDetail = (market: Market) => {
+export const getMarketWarningsWithDetail = (market: {warnings: MarketWarning[]}) => {
   const result = [];
 
   // process official warnings

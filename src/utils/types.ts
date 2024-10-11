@@ -57,6 +57,7 @@ export type MarketPosition = {
       }[];
       utilization: number;
     };
+    warnings: MarketWarning[];
   };
   warningsWithDetail: WarningWithDetail[];
 };
@@ -239,7 +240,7 @@ export type GroupedPosition = {
     amount: number;
     percentage: number;
   }[];
-  allWarnings: WarningWithDetail[]; // Changed from warningsWithDetail to allWarnings
+  allWarnings: WarningWithDetail[];
 };
 
 // Add this type to the existing types in the file

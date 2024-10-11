@@ -12,8 +12,8 @@ type TokenIconProps = {
 export function TokenIcon({ address, chainId, width, height }: TokenIconProps) {
   const token = findToken(address, chainId);
 
-  // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-  if (!token || !token.img) {
+   
+  if (!token?.img) {
     return <div className="rounded-full bg-gray-300" style={{ width, height }} />;
   }
 
