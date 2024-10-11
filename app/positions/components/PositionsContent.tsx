@@ -28,7 +28,7 @@ export default function Positions() {
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
         <div className="flex items-center justify-between pb-4">
-          <h1 className="flex items-center gap-2 py-4 font-zen text-2xl">Your Supplies</h1>
+          <h1 className="flex items-center gap-2 py-4 font-zen text-2xl">Portfolio</h1>
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
               <button

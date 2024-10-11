@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
+import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 const query = `query getUserMarketPositions(
   $address: String!
@@ -82,6 +83,11 @@ const query = `query getUserMarketPositions(
         }
         oracleInfo {
           type
+        }
+        warnings {
+          type
+          level
+          __typename
         }
       }
     }
@@ -188,12 +194,14 @@ const useUserPositions = (user: string | undefined) => {
           }
         }
 
-        const filtered = marketPositions.filter(
-          (position: MarketPosition) => position.supplyShares.toString() !== '0',
-        );
+        const filtered = marketPositions
+          .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
+          .map((position: MarketPosition) => ({
+            ...position,
+            warningsWithDetail: getMarketWarningsWithDetail(position.market),
+          }));
 
         setHistory(transactions);
-
         setData(filtered);
       } catch (_error) {
         setError(_error);

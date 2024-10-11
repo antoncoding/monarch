@@ -1,4 +1,4 @@
-import { Market } from '@/utils/types';
+import { MarketWarning } from '@/utils/types';
 import { WarningCategory, WarningWithDetail } from './types';
 
 const morphoOfficialWarnings: WarningWithDetail[] = [
@@ -80,7 +80,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'low_liquidity',
     level: 'warning',
-    description: 'This market has low liquidity, you may not be able to withdraw once supplied',
+    description: 'This market has low liquidity.',
     category: WarningCategory.general,
   },
   {
@@ -92,7 +92,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   },
 ];
 
-export const getMarketWarningsWithDetail = (market: Market) => {
+export const getMarketWarningsWithDetail = (market: {warnings: MarketWarning[]}) => {
   const result = [];
 
   // process official warnings

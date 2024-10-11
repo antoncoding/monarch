@@ -1,5 +1,5 @@
 import { Tooltip } from '@nextui-org/tooltip';
-import { Market } from '@/utils/types';
+import { WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
 type RiskFlagProps = {
@@ -22,57 +22,93 @@ export function RiskIndicator({ level, description }: RiskFlagProps) {
 export function RiskIndicatorFromWarning({
   market,
   category,
-  greeDescription,
+  greenDescription,
   yellowDescription,
   redDescription,
+  isBatched = false,
 }: {
-  market: Market;
+  market: { warningsWithDetail: WarningWithDetail[] };
   category: WarningCategory;
-  greeDescription: string;
+  greenDescription: string;
   yellowDescription: string;
   redDescription: string;
+  isBatched?: boolean;
 }) {
   const warnings = market.warningsWithDetail.filter((w) => w.category === category);
   if (warnings.length === 0) {
-    return <RiskIndicator level="green" description={greeDescription} />;
+    return <RiskIndicator level="green" description={greenDescription} />;
   }
   if (warnings.some((warning) => warning.level === 'alert')) {
-    return <RiskIndicator level="red" description={redDescription} />;
-  } else return <RiskIndicator level="yellow" description={yellowDescription} />;
+    return (
+      <RiskIndicator
+        level="red"
+        description={isBatched ? `One or more markets have: ${redDescription}` : redDescription}
+      />
+    );
+  } else
+    return (
+      <RiskIndicator
+        level="yellow"
+        description={
+          isBatched ? `One or more markets have: ${yellowDescription}` : yellowDescription
+        }
+      />
+    );
 }
 
-export function MarketAssetIndicator({ market }: { market: Market }) {
+export function MarketAssetIndicator({
+  market,
+  isBatched = false,
+}: {
+  market: { warningsWithDetail: WarningWithDetail[] };
+  isBatched?: boolean;
+}) {
   return (
     <RiskIndicatorFromWarning
       market={market}
       category={WarningCategory.asset}
-      greeDescription="Recognized assets"
+      greenDescription="Recognized assets"
       yellowDescription="Some warnings flagged with the assets"
       redDescription="Potentially dangerous assets"
+      isBatched={isBatched}
     />
   );
 }
 
-export function MarketOracleIndicator({ market }: { market: Market }) {
+export function MarketOracleIndicator({
+  market,
+  isBatched = false,
+}: {
+  market: { warningsWithDetail: WarningWithDetail[] };
+  isBatched?: boolean;
+}) {
   return (
     <RiskIndicatorFromWarning
       market={market}
       category={WarningCategory.oracle}
-      greeDescription="Recognized oracles"
+      greenDescription="Recognized oracles"
       yellowDescription="Some warnings flagged with the oracle"
       redDescription="Some alerts flagged with the oracle"
+      isBatched={isBatched}
     />
   );
 }
 
-export function MarketDebtIndicator({ market }: { market: Market }) {
+export function MarketDebtIndicator({
+  market,
+  isBatched = false,
+}: {
+  market: { warningsWithDetail: WarningWithDetail[] };
+  isBatched?: boolean;
+}) {
   return (
     <RiskIndicatorFromWarning
       market={market}
       category={WarningCategory.debt}
-      greeDescription="No bad debt"
+      greenDescription="No bad debt"
       yellowDescription="Bad debt has occurred"
       redDescription="Bad debt higher than 1% of supply"
+      isBatched={isBatched}
     />
   );
 }

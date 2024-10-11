@@ -57,7 +57,9 @@ export type MarketPosition = {
       }[];
       utilization: number;
     };
+    warnings: MarketWarning[];
   };
+  warningsWithDetail: WarningWithDetail[];
 };
 
 export enum UserTxTypes {
@@ -238,6 +240,7 @@ export type GroupedPosition = {
     amount: number;
     percentage: number;
   }[];
+  allWarnings: WarningWithDetail[];
 };
 
 // Add this type to the existing types in the file
