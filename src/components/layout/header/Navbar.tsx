@@ -76,13 +76,13 @@ function Navbar() {
         <div className="flex items-center justify-start gap-8">
           <ul className="hidden items-center justify-start gap-4 text-opacity-80 md:flex">
             <li className="flex">
-              <NavbarLink href="/markets" matchKey="markets">
-                Markets
+              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
+                Dashboard
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
-                Portfolio
+              <NavbarLink href="/markets" matchKey="markets">
+                Markets
               </NavbarLink>
             </li>
             <li className="flex">

@@ -5,11 +5,15 @@ import Image from 'next/image';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
+import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
-import { MarketPosition, GroupedPosition } from '@/utils/types';
-import { getCollateralColor } from '../utils/colors';
+import { MarketPosition, GroupedPosition, Market } from '@/utils/types';
+import {
+  MarketAssetIndicator,
+  MarketDebtIndicator,
+  MarketOracleIndicator,
+} from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
@@ -57,6 +61,7 @@ export function PositionsSummaryTable({
           collaterals: [],
           markets: [],
           processedCollaterals: [],
+          warningsWithDetail: [],
         };
         acc.push(groupedPosition);
       }
@@ -91,6 +96,16 @@ export function PositionsSummaryTable({
       }
 
       groupedPosition.markets.push(position);
+
+      // Combine warnings from all markets
+      if (!groupedPosition.warningsWithDetail) {
+        groupedPosition.warningsWithDetail = [];
+      }
+      groupedPosition.warningsWithDetail = [
+        ...groupedPosition.warningsWithDetail,
+        ...position.warningsWithDetail,
+      ];
+
       return acc;
     }, []);
   }, [marketPositions]);
@@ -162,7 +177,7 @@ export function PositionsSummaryTable({
     <div className="space-y-4 overflow-x-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">Position Summary</h2>
+          <h2 className="text-xl font-semibold">Your Supply</h2>
           {isRefetching && <Spinner size="sm" />}
         </div>
         <button
@@ -180,10 +195,10 @@ export function PositionsSummaryTable({
           <tr>
             <th className="w-10" />
             <th className="w-10">Network</th>
-            <th>Asset</th>
-            <th>Total Supplied</th>
+            <th>Size</th>
             <th>Avg APY</th>
-            <th className="w-1/4">Collateral Exposure</th>
+            <th>Collateral Exposure</th>
+            <th>Warnings</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -208,64 +223,42 @@ export function PositionsSummaryTable({
                       />
                     </div>
                   </td>
-                  <td data-label="Asset">
+                  <td data-label="Size">
                     <div className="flex items-center justify-center gap-2">
-                      {findToken(position.loanAssetAddress, position.chainId)?.img && (
-                        <Image
-                          src={findToken(position.loanAssetAddress, position.chainId)?.img ?? ''}
-                          alt={position.loanAsset}
-                          width={24}
-                          height={24}
-                        />
-                      )}
-                      <span className="font-medium">{position.loanAsset}</span>
-                    </div>
-                  </td>
-                  <td data-label="Total Supplied">
-                    <div className="text-center">
-                      {formatReadable(position.totalSupply)} {position.loanAsset}
+                      <span className="font-medium">{formatReadable(position.totalSupply)}</span>
+                      <span>{position.loanAsset}</span>
+                      <TokenIcon
+                        address={position.loanAssetAddress}
+                        chainId={position.chainId}
+                        width={16}
+                        height={16}
+                      />
                     </div>
                   </td>
                   <td data-label="Avg APY">
                     <div className="text-center">{formatReadable(avgApy * 100)}%</div>
                   </td>
-                  <td data-label="Collateral Breakdown" className="w-1/4">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
-                      {position.processedCollaterals.map((collateral, colIndex) => (
-                        <div
-                          key={`${collateral.address}-${colIndex}`}
-                          className="h-full opacity-70"
-                          style={{
-                            width: `${collateral.percentage}%`,
-                            backgroundColor:
-                              collateral.symbol === 'Others'
-                                ? '#A0AEC0'
-                                : getCollateralColor(collateral.address),
-                          }}
-                          title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
-                        />
-                      ))}
+                  <td data-label="Collateral Exposure">
+                    <div className="flex items-center justify-center gap-1">
+                      {position.collaterals.length > 0 ? (
+                        position.collaterals.map((collateral, index) => (
+                          <TokenIcon
+                            key={`${collateral.address}-${index}`}
+                            address={collateral.address}
+                            chainId={position.chainId}
+                            width={20}
+                            height={20}
+                          />
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No known collaterals</span>
+                      )}
                     </div>
-                    <div className="mt-1 flex flex-wrap justify-center text-xs">
-                      {position.processedCollaterals.map((collateral, colIndex) => (
-                        <span
-                          key={`${collateral.address}-${colIndex}`}
-                          className="mb-1 mr-2 opacity-70"
-                        >
-                          <span
-                            style={{
-                              color:
-                                collateral.symbol === 'Others'
-                                  ? '#A0AEC0'
-                                  : getCollateralColor(collateral.address),
-                            }}
-                          >
-                            ■
-                          </span>{' '}
-                          {collateral.symbol}
-                        </span>
-                      ))}
-                    </div>
+                  </td>
+                  <td data-label="Warnings" className="flex items-center justify-center gap-1 ">
+                    <MarketAssetIndicator market={position as unknown as Market} />
+                    <MarketOracleIndicator market={position as unknown as Market} />
+                    <MarketDebtIndicator market={position as unknown as Market} />
                   </td>
                   <td data-label="Actions" className="text-right">
                     <button

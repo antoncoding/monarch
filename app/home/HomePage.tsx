@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Footer from '@/components/layout/footer/Footer';
 import backgroundImage from '@/imgs/bg/bg.png';
@@ -15,6 +16,8 @@ export default function HomePage() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  const { address } = useAccount();
 
   return (
     <div className="flex min-h-screen flex-col bg-primary">
@@ -49,7 +52,7 @@ export default function HomePage() {
           <PrimaryButton isSecondary href="/info">
             Why Monarch
           </PrimaryButton>
-          <PrimaryButton href="/markets">View Markets</PrimaryButton>
+          <PrimaryButton href={`/positions/${address ?? ''}`}>View Portfolio</PrimaryButton>
         </div>
       </div>
       <Footer />

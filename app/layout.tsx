@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
             <RiskNotificationModal />
           </OnchainProviders>
-          <ToastContainer position="bottom-right" />
+          <ToastContainer position="bottom-right" bodyClassName="font-zen" />
         </Providers>
       </body>
       <GoogleAnalytics />
