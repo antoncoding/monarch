@@ -12,7 +12,11 @@ import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } f
 import { getCollateralColor } from '../utils/colors';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from 'app/markets/components/RiskIndicator';
+import {
+  MarketAssetIndicator,
+  MarketOracleIndicator,
+  MarketDebtIndicator,
+} from 'app/markets/components/RiskIndicator';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
@@ -36,7 +40,9 @@ export function PositionsSummaryTable({
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
-  const [hoveredWarningCategory, setHoveredWarningCategory] = useState<WarningCategory | null>(null);
+  const [hoveredWarningCategory, setHoveredWarningCategory] = useState<WarningCategory | null>(
+    null,
+  );
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
@@ -167,8 +173,8 @@ export function PositionsSummaryTable({
   };
 
   const getWarningColor = (warnings: WarningWithDetail[]) => {
-    if (warnings.some(w => w.level === 'alert')) return 'text-red-500';
-    if (warnings.some(w => w.level === 'warning')) return 'text-yellow-500';
+    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
+    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
     return '';
   };
 
@@ -239,28 +245,36 @@ export function PositionsSummaryTable({
                     <div className="text-center">{formatReadable(avgApy * 100)}%</div>
                   </td>
                   <td data-label="Collateral Exposure">
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
-                      {position.processedCollaterals.map((collateral, colIndex) => (
-                        <div
-                          key={`${collateral.address}-${colIndex}`}
-                          className="h-full opacity-70"
-                          style={{
-                            width: `${collateral.percentage}%`,
-                            backgroundColor:
-                              collateral.symbol === 'Others'
-                                ? '#A0AEC0'
-                                : getCollateralColor(collateral.address),
-                          }}
-                          title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
-                        />
-                      ))}
+                    <div className="flex items-center justify-center gap-1">
+                      {position.collaterals.length > 0 ? (
+                        position.collaterals.map((collateral, index) => (
+                          <TokenIcon
+                            key={`${collateral.address}-${index}`}
+                            address={collateral.address}
+                            chainId={position.chainId}
+                            width={20}
+                            height={20}
+                          />
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">No known collaterals</span>
+                      )}
                     </div>
                   </td>
                   <td data-label="Warnings" className="align-middle">
                     <div className="flex items-center justify-center gap-1">
-                      <MarketAssetIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
-                      <MarketOracleIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
-                      <MarketDebtIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
+                      <MarketAssetIndicator
+                        market={{ warningsWithDetail: position.allWarnings }}
+                        isBatched
+                      />
+                      <MarketOracleIndicator
+                        market={{ warningsWithDetail: position.allWarnings }}
+                        isBatched
+                      />
+                      <MarketDebtIndicator
+                        market={{ warningsWithDetail: position.allWarnings }}
+                        isBatched
+                      />
                     </div>
                   </td>
                   <td data-label="Actions" className="text-right">

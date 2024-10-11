@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { IoWarningOutline } from "react-icons/io5";
+import { IoWarningOutline } from 'react-icons/io5';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
@@ -28,15 +28,15 @@ export function SuppliedMarketsDetail({
   const totalSupply = groupedPosition.totalSupply;
 
   const getWarningColor = (warnings: WarningWithDetail[]) => {
-    if (warnings.some(w => w.level === 'alert')) return 'text-red-500';
-    if (warnings.some(w => w.level === 'warning')) return 'text-yellow-500';
+    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
+    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
     return '';
   };
 
   const WarningTooltip = ({ warnings }: { warnings: WarningWithDetail[] }) => (
     <div className="p-2 font-zen">
-      {Object.values(WarningCategory).map(category => {
-        const categoryWarnings = warnings.filter(w => w.category === category);
+      {Object.values(WarningCategory).map((category) => {
+        const categoryWarnings = warnings.filter((w) => w.category === category);
         if (categoryWarnings.length === 0) return null;
         return (
           <div key={category} className="mb-2">
@@ -131,18 +131,18 @@ export function SuppliedMarketsDetail({
                       )}
                     </div>
                     {/* <Tooltip content="View on Explorer" placement="top"> */}
-                      <a
-                        className="group flex items-center justify-center no-underline hover:underline"
-                        href={getMarketURL(
-                          position.market.uniqueKey,
-                          position.market.morphoBlue.chain.id,
-                        )}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {position.market.uniqueKey.slice(2, 8)}
-                        <ExternalLinkIcon className="ml-1 opacity-0 group-hover:opacity-100" />
-                      </a>
+                    <a
+                      className="group flex items-center justify-center no-underline hover:underline"
+                      href={getMarketURL(
+                        position.market.uniqueKey,
+                        position.market.morphoBlue.chain.id,
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {position.market.uniqueKey.slice(2, 8)}
+                      <ExternalLinkIcon className="ml-1 opacity-0 group-hover:opacity-100" />
+                    </a>
                     {/* </Tooltip> */}
                   </div>
                 </td>
