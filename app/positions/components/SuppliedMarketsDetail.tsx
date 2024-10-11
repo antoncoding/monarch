@@ -1,9 +1,11 @@
 import React from 'react';
+import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { IoWarningOutline } from "react-icons/io5";
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
-import { MarketPosition, GroupedPosition } from '@/utils/types';
+import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 
 type SuppliedMarketsDetailProps = {
@@ -25,10 +27,34 @@ export function SuppliedMarketsDetail({
 
   const totalSupply = groupedPosition.totalSupply;
 
+  const getWarningColor = (warnings: WarningWithDetail[]) => {
+    if (warnings.some(w => w.level === 'alert')) return 'text-red-500';
+    if (warnings.some(w => w.level === 'warning')) return 'text-yellow-500';
+    return '';
+  };
+
+  const WarningTooltip = ({ warnings }: { warnings: WarningWithDetail[] }) => (
+    <div className="p-2 font-zen">
+      {Object.values(WarningCategory).map(category => {
+        const categoryWarnings = warnings.filter(w => w.category === category);
+        if (categoryWarnings.length === 0) return null;
+        return (
+          <div key={category} className="mb-2">
+            <h4 className="font-bold capitalize">{category}</h4>
+            <ul className="list-none pl-0">
+              {categoryWarnings.map((warning, index) => (
+                <li key={index}>- {warning.description}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="bg-secondary bg-opacity-20 p-4">
       <div className="mb-4 flex items-center justify-center">
-        {/* collateral exposure block */}
         <div className="my-4 w-1/2">
           <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>
           <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
@@ -84,22 +110,41 @@ export function SuppliedMarketsDetail({
               formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
             );
             const percentageOfPortfolio = (suppliedAmount / totalSupply) * 100;
+            const warningColor = getWarningColor(position.warningsWithDetail);
 
             return (
               <tr key={position.market.uniqueKey} className="gap-1">
                 <td data-label="Market" className="text-center">
-                  <a
-                    className="group flex items-center justify-center gap-1 no-underline hover:underline"
-                    href={getMarketURL(
-                      position.market.uniqueKey,
-                      position.market.morphoBlue.chain.id,
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {position.market.uniqueKey.slice(2, 8)}
-                    <ExternalLinkIcon className="opacity-0 group-hover:opacity-100" />
-                  </a>
+                  <div className="flex items-center justify-center">
+                    <div className="mr-1 w-4">
+                      {position.warningsWithDetail.length > 0 ? (
+                        <Tooltip
+                          content={<WarningTooltip warnings={position.warningsWithDetail} />}
+                          placement="top"
+                        >
+                          <div>
+                            <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
+                          </div>
+                        </Tooltip>
+                      ) : (
+                        <div className="h-4 w-4" />
+                      )}
+                    </div>
+                    {/* <Tooltip content="View on Explorer" placement="top"> */}
+                      <a
+                        className="group flex items-center justify-center no-underline hover:underline"
+                        href={getMarketURL(
+                          position.market.uniqueKey,
+                          position.market.morphoBlue.chain.id,
+                        )}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {position.market.uniqueKey.slice(2, 8)}
+                        <ExternalLinkIcon className="ml-1 opacity-0 group-hover:opacity-100" />
+                      </a>
+                    {/* </Tooltip> */}
+                  </div>
                 </td>
                 <td data-label="Collateral" className="text-center">
                   {position.market.collateralAsset ? (
@@ -131,7 +176,7 @@ export function SuppliedMarketsDetail({
                       <div
                         className="h-full rounded-full bg-blue-500"
                         style={{ width: `${percentageOfPortfolio}%` }}
-                       />
+                      />
                     </div>
                     <span className="whitespace-nowrap">
                       {formatReadable(percentageOfPortfolio)}%

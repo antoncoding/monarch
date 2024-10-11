@@ -8,14 +8,11 @@ import { useAccount } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { MarketPosition, GroupedPosition, Market } from '@/utils/types';
-import {
-  MarketAssetIndicator,
-  MarketDebtIndicator,
-  MarketOracleIndicator,
-} from 'app/markets/components/RiskIndicator';
+import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
+import { getCollateralColor } from '../utils/colors';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from 'app/markets/components/RiskIndicator';
 
 type PositionTableProps = {
   marketPositions: MarketPosition[];
@@ -39,6 +36,7 @@ export function PositionsSummaryTable({
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
+  const [hoveredWarningCategory, setHoveredWarningCategory] = useState<WarningCategory | null>(null);
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
@@ -61,10 +59,17 @@ export function PositionsSummaryTable({
           collaterals: [],
           markets: [],
           processedCollaterals: [],
-          warningsWithDetail: [],
+          allWarnings: [], // Initialize allWarnings as an empty array
         };
         acc.push(groupedPosition);
       }
+
+      groupedPosition.markets.push(position);
+
+      // Combine warnings from all markets
+      groupedPosition.allWarnings = [
+        ...new Set([...groupedPosition.allWarnings, ...position.warningsWithDetail]),
+      ];
 
       const supplyAmount = Number(
         formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
@@ -72,9 +77,6 @@ export function PositionsSummaryTable({
       groupedPosition.totalSupply += supplyAmount;
 
       const weightedApy = supplyAmount * position.market.dailyApys.netSupplyApy;
-      if (!groupedPosition.totalWeightedApy) {
-        groupedPosition.totalWeightedApy = 0;
-      }
       groupedPosition.totalWeightedApy += weightedApy;
 
       const collateralAddress = position.market.collateralAsset?.address;
@@ -94,17 +96,6 @@ export function PositionsSummaryTable({
           });
         }
       }
-
-      groupedPosition.markets.push(position);
-
-      // Combine warnings from all markets
-      if (!groupedPosition.warningsWithDetail) {
-        groupedPosition.warningsWithDetail = [];
-      }
-      groupedPosition.warningsWithDetail = [
-        ...groupedPosition.warningsWithDetail,
-        ...position.warningsWithDetail,
-      ];
 
       return acc;
     }, []);
@@ -140,6 +131,8 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
+  console.log('processedPositions', processedPositions);
+
   // Update selectedGroupedPosition when groupedPositions change, don't depend on selectedGroupedPosition
   useEffect(() => {
     if (selectedGroupedPosition) {
@@ -171,6 +164,12 @@ export function PositionsSummaryTable({
     refetch(() => {
       toast.info('Data refreshed', { icon: <span>🚀</span> });
     });
+  };
+
+  const getWarningColor = (warnings: WarningWithDetail[]) => {
+    if (warnings.some(w => w.level === 'alert')) return 'text-red-500';
+    if (warnings.some(w => w.level === 'warning')) return 'text-yellow-500';
+    return '';
   };
 
   return (
@@ -207,6 +206,7 @@ export function PositionsSummaryTable({
             const rowKey = `${position.loanAssetAddress}-${position.chainId}`;
             const isExpanded = expandedRows.has(rowKey);
             const avgApy = position.totalWeightedApy / position.totalSupply;
+
             return (
               <React.Fragment key={rowKey}>
                 <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(rowKey)}>
@@ -239,26 +239,29 @@ export function PositionsSummaryTable({
                     <div className="text-center">{formatReadable(avgApy * 100)}%</div>
                   </td>
                   <td data-label="Collateral Exposure">
-                    <div className="flex items-center justify-center gap-1">
-                      {position.collaterals.length > 0 ? (
-                        position.collaterals.map((collateral, index) => (
-                          <TokenIcon
-                            key={`${collateral.address}-${index}`}
-                            address={collateral.address}
-                            chainId={position.chainId}
-                            width={20}
-                            height={20}
-                          />
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">No known collaterals</span>
-                      )}
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-secondary">
+                      {position.processedCollaterals.map((collateral, colIndex) => (
+                        <div
+                          key={`${collateral.address}-${colIndex}`}
+                          className="h-full opacity-70"
+                          style={{
+                            width: `${collateral.percentage}%`,
+                            backgroundColor:
+                              collateral.symbol === 'Others'
+                                ? '#A0AEC0'
+                                : getCollateralColor(collateral.address),
+                          }}
+                          title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
+                        />
+                      ))}
                     </div>
                   </td>
-                  <td data-label="Warnings" className="flex items-center justify-center gap-1 ">
-                    <MarketAssetIndicator market={position as unknown as Market} />
-                    <MarketOracleIndicator market={position as unknown as Market} />
-                    <MarketDebtIndicator market={position as unknown as Market} />
+                  <td data-label="Warnings" className="align-middle">
+                    <div className="flex items-center justify-center gap-1">
+                      <MarketAssetIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
+                      <MarketOracleIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
+                      <MarketDebtIndicator market={{ warningsWithDetail: position.allWarnings }} isBatched />
+                    </div>
                   </td>
                   <td data-label="Actions" className="text-right">
                     <button

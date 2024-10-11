@@ -239,7 +239,7 @@ export type GroupedPosition = {
     amount: number;
     percentage: number;
   }[];
-  warningsWithDetail: WarningWithDetail[];
+  allWarnings: WarningWithDetail[]; // Changed from warningsWithDetail to allWarnings
 };
 
 // Add this type to the existing types in the file

@@ -80,7 +80,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'low_liquidity',
     level: 'warning',
-    description: 'This market has low liquidity, you may not be able to withdraw once supplied',
+    description: 'This market has low liquidity.',
     category: WarningCategory.general,
   },
   {
