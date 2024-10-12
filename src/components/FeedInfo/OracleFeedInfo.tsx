@@ -21,7 +21,6 @@ export function OracleFeedInfo({
 
   const fromAsset = feed.pair?.[0] ?? 'Unknown';
   const toAsset = feed.pair?.[1] ?? 'Unknown';
-  const isLink = feed.address !== zeroAddress;
 
   const vendorIcon =
     OracleVendorIcons[feed.vendor as OracleVendors] ?? OracleVendorIcons[OracleVendors.Unknown];
@@ -41,7 +40,6 @@ export function OracleFeedInfo({
     </div>
   );
 
-  if (isLink) {
     return (
       <Tooltip
         content={feed.description ?? getSlicedAddress(feed.address as Address)}
@@ -59,11 +57,3 @@ export function OracleFeedInfo({
     );
   }
 
-  return (
-    <Tooltip content="Hardcoded 1" className="rounded-sm">
-      <div className="w-full text-right font-zen text-sm text-yellow-500 hover:no-underline">
-        {content}
-      </div>
-    </Tooltip>
-  );
-}

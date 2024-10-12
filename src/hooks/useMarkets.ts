@@ -25,6 +25,17 @@ export type Reward = {
 };
 
 const marketsQuery = `
+  fragment FeedFields on OracleFeed {
+    address
+    chain {
+      id
+    }
+    description
+    id
+    pair
+    vendor
+  }
+
   query getMarkets($first: Int, $where: MarketFilters) {
     markets(first: $first, where: $where) {
       items {
@@ -51,86 +62,30 @@ const marketsQuery = `
           data {
             ... on MorphoChainlinkOracleData {
               baseFeedOne {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               baseFeedTwo {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               quoteFeedOne {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               quoteFeedTwo {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
             }
             ... on MorphoChainlinkOracleV2Data {
               baseFeedOne {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               baseFeedTwo {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               quoteFeedOne {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
               quoteFeedTwo {
-                address
-                chain {
-                  id
-                }
-                description
-                id
-                pair
-                vendor
+                ...FeedFields
               }
             }
           }

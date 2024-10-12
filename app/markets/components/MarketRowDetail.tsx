@@ -8,7 +8,7 @@ import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
-  const oracleData = market.oracle.data;
+  const oracleData = market.oracle ? market.oracle.data : null;
 
   const hasFeeds =
     oracleData &&

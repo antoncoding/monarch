@@ -2,13 +2,19 @@ import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import Image from 'next/image';
 import { IoWarningOutline } from 'react-icons/io5';
-import { OracleVendorIcons, parseOracleVendors } from '@/utils/oracle';
+import { OracleVendorIcons, OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
-  oracleData: MorphoChainlinkOracleData;
+  oracleData: MorphoChainlinkOracleData | null;
   useTooltip?: boolean;
 };
+
+const renderVendorIcon = (vendor: OracleVendors) => (  
+  OracleVendorIcons[vendor] 
+    ? <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />  
+    : <IoWarningOutline className="text-secondary" size={16} />  
+);  
 
 function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeProps) {
   const { vendors } = parseOracleVendors(oracleData);
@@ -27,11 +33,7 @@ function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeP
       ) : (
         vendors.map((vendor, index) => (
           <React.Fragment key={index}>
-            {OracleVendorIcons[vendor] ? (
-              <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
-            ) : (
-              <IoWarningOutline className="text-secondary" size={16} />
-            )}
+            {renderVendorIcon(vendor)}
           </React.Fragment>
         ))
       )}
