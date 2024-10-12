@@ -35,7 +35,6 @@ export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null)
   )
     return { vendors: [], isUnknown: true };
 
-  const vendors = new Set<OracleVendors>();
   const feeds = [
     oracleData.baseFeedOne,
     oracleData.baseFeedTwo,
@@ -43,14 +42,13 @@ export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null)
     oracleData.quoteFeedTwo,
   ];
 
-  feeds.forEach((feed) => {
-    if (feed?.vendor) {
-      const knownVendor = Object.values(OracleVendors).find(
-        (v) => v.toLowerCase() === feed.vendor?.toLowerCase(),
-      );
-      vendors.add(knownVendor ?? OracleVendors.Unknown);
-    }
-  });
+  const vendors = new Set(  
+    feeds  
+      .filter(feed => feed?.vendor)  
+      .map(feed => Object.values(OracleVendors)
+        .find(v => v.toLowerCase() === feed!.vendor!.toLowerCase()) ?? OracleVendors.Unknown
+      )  
+  );  
 
   return {
     vendors: Array.from(vendors),

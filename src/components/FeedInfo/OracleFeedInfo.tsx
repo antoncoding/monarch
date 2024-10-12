@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { IoIosSwap } from 'react-icons/io';
 import { IoWarningOutline } from 'react-icons/io5';
-import { Address, zeroAddress } from 'viem';
+import { Address } from 'viem';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
