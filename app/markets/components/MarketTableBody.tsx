@@ -4,6 +4,7 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
@@ -116,6 +117,9 @@ export function MarketTableBody({
                   img={collatImg}
                   symbol={collatToShow}
                 />
+                <td data-label="Oracle" className="z-50">
+                  <OracleVendorBadge oracleData={item.oracle.data} />
+                </td>
                 <td data-label="LLTV" className="z-50">
                   {Number(item.lltv) / 1e16}%
                 </td>
@@ -174,7 +178,7 @@ export function MarketTableBody({
               </tr>
               {expandedRowId === item.uniqueKey && (
                 <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                  <td className="collaps-viewer bg-hovered" colSpan={12}>
+                  <td className="collaps-viewer bg-hovered" colSpan={13}>
                     <ExpandedMarketDetail market={item} />
                   </td>
                 </tr>

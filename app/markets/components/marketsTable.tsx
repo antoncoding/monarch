@@ -62,6 +62,7 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.CollateralAsset}
               />
+              <th className="font-normal">Oracle</th>
               <HTSortable
                 label="LLTV"
                 sortColumn={sortColumn}
