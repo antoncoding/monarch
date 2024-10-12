@@ -111,7 +111,8 @@ export function SuppliedMarketsDetail({
             const suppliedAmount = Number(
               formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
             );
-            const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
+            const percentageOfPortfolio =
+              totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
             const warningColor = getWarningColor(position.warningsWithDetail);
 
             return (

@@ -2,6 +2,7 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { zeroAddress } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
@@ -18,13 +19,13 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
           <p className="mb-2 font-zen">Oracle Info</p>
         </div>
         <div className="mb-1 flex items-start justify-between">
-          <p className="font-inter text-sm opacity-80">Oracle:</p>
+          <p className="font-inter text-sm opacity-80">Vendors:</p>
           <a
             className="group flex items-center gap-1 no-underline hover:underline"
             href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
             target="_blank"
           >
-            <p className="text-right font-zen text-sm">{market.oracleInfo.type}</p>
+            <OracleVendorBadge oracleData={market.oracle.data} showTooltip={false} />
             <ExternalLinkIcon />
           </a>
         </div>

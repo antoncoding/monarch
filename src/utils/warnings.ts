@@ -92,7 +92,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   },
 ];
 
-export const getMarketWarningsWithDetail = (market: {warnings: MarketWarning[]}) => {
+export const getMarketWarningsWithDetail = (market: { warnings: MarketWarning[] }) => {
   const result = [];
 
   // process official warnings

@@ -58,6 +58,9 @@ export type MarketPosition = {
       utilization: number;
     };
     warnings: MarketWarning[];
+    oracle: {
+      data: MorphoChainlinkOracleData;
+    };
   };
   warningsWithDetail: WarningWithDetail[];
 };
@@ -243,7 +246,26 @@ export type GroupedPosition = {
   allWarnings: WarningWithDetail[];
 };
 
-// Add this type to the existing types in the file
+// Add these new types
+export type OracleFeed = {
+  address: string;
+  chain: {
+    id: number;
+  };
+  description: string | null;
+  id: string;
+  pair: string[] | null;
+  vendor: string | null;
+};
+
+export type MorphoChainlinkOracleData = {
+  baseFeedOne: OracleFeed | null;
+  baseFeedTwo: OracleFeed | null;
+  quoteFeedOne: OracleFeed | null;
+  quoteFeedTwo: OracleFeed | null;
+};
+
+// Update the Market type
 export type Market = {
   id: string;
   lltv: string;
@@ -306,4 +328,7 @@ export type Market = {
   rewardPer1000USD?: string;
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
+  oracle: {
+    data: MorphoChainlinkOracleData;
+  };
 };
