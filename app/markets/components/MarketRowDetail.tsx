@@ -9,6 +9,13 @@ import { Market } from '@/utils/types';
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   const oracleData = market.oracle.data;
 
+  const hasFeeds =
+    oracleData &&
+    (oracleData.baseFeedOne ||
+      oracleData.baseFeedTwo ||
+      oracleData.quoteFeedOne ||
+      oracleData.quoteFeedTwo);
+
   return (
     <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
       {/* Oracle info */}
@@ -27,13 +34,15 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
             <ExternalLinkIcon />
           </a>
         </div>
-        <div className="mt-4">
-          <p className="mb-2 text-left font-inter text-sm opacity-80">Feed Routes:</p>
-          <OracleFeedInfo feed={oracleData.baseFeedOne} chainId={market.morphoBlue.chain.id} />
-          <OracleFeedInfo feed={oracleData.baseFeedTwo} chainId={market.morphoBlue.chain.id} />
-          <OracleFeedInfo feed={oracleData.quoteFeedOne} chainId={market.morphoBlue.chain.id} />
-          <OracleFeedInfo feed={oracleData.quoteFeedTwo} chainId={market.morphoBlue.chain.id} />
-        </div>
+        {hasFeeds && (
+          <div className="mt-4">
+            <p className="mb-2 text-left font-inter text-sm opacity-80">Feed Routes:</p>
+            <OracleFeedInfo feed={oracleData.baseFeedOne} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.baseFeedTwo} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.quoteFeedOne} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.quoteFeedTwo} chainId={market.morphoBlue.chain.id} />
+          </div>
+        )}
       </div>
 
       {/* market info */}

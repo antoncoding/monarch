@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Address, zeroAddress } from 'viem';
 import { IoIosSwap } from 'react-icons/io';
+import { IoWarningOutline } from 'react-icons/io5';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
@@ -22,24 +23,21 @@ export function OracleFeedInfo({
   const toAsset = feed.pair?.[1] || 'Unknown';
   const isLink = feed.address !== zeroAddress;
 
-  console.log(`feed.vendor`, feed.vendor);
+  const vendorIcon =
+    OracleVendorIcons[feed.vendor as OracleVendors] || OracleVendorIcons[OracleVendors.Unknown];
 
   const content = (
-    <div className="flex w-full items-center justify-between">
-      <div className="flex items-center space-x-2">
+    <div className="flex w-full items-center justify-between ml-2">
+      <div className="flex items-center space-x-2 text-xs">
         <span>{fromAsset}</span>
         <IoIosSwap />
         <span>{toAsset}</span>
       </div>
-      <Image
-        src={
-          OracleVendorIcons[feed.vendor as OracleVendors] ||
-          OracleVendorIcons[OracleVendors.Unknown]
-        }
-        alt={feed.vendor || 'Unknown'}
-        width={16}
-        height={16}
-      />
+      {vendorIcon ? (
+        <Image src={vendorIcon} alt={feed.vendor || 'Unknown'} width={16} height={16} />
+      ) : (
+        <IoWarningOutline size={16} />
+      )}
     </div>
   );
 

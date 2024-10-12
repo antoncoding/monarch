@@ -1,3 +1,4 @@
+import { IoWarningOutline } from 'react-icons/io5';
 import { MorphoChainlinkOracleData } from './types';
 
 type VendorInfo = {
@@ -26,7 +27,14 @@ export const OracleVendorIcons: Record<OracleVendors, string> = {
 };
 
 export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null): VendorInfo {
-  if (!oracleData) return { vendors: [], isUnknown: true };
+  if (!oracleData) return { vendors: [], isUnknown: false };
+  if (
+    !oracleData.baseFeedOne &&
+    !oracleData.baseFeedTwo &&
+    !oracleData.quoteFeedOne &&
+    !oracleData.quoteFeedTwo
+  )
+    return { vendors: [], isUnknown: true };
 
   const vendors = new Set<OracleVendors>();
   const feeds = [
@@ -38,22 +46,10 @@ export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null)
 
   feeds.forEach((feed) => {
     if (feed && feed.vendor) {
-      switch (feed.vendor) {
-        case OracleVendors.Chainlink:
-          vendors.add(OracleVendors.Chainlink);
-          break;
-        case OracleVendors.PythNetwork:
-          vendors.add(OracleVendors.PythNetwork);
-          break;
-        case OracleVendors.Redstone:
-          vendors.add(OracleVendors.Redstone);
-          break;
-        case OracleVendors.Oval:
-          vendors.add(OracleVendors.Oval);
-          break;
-        default:
-          vendors.add(OracleVendors.Unknown);
-      }
+      const knownVendor = Object.values(OracleVendors).find(
+        (v) => v.toLowerCase() === feed.vendor?.toLowerCase(),
+      );
+      vendors.add(knownVendor || OracleVendors.Unknown);
     }
   });
 

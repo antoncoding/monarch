@@ -11,22 +11,28 @@ type OracleVendorBadgeProps = {
 };
 
 const OracleVendorBadge: React.FC<OracleVendorBadgeProps> = ({ oracleData, useTooltip = true }) => {
-  const { vendors, isUnknown } = parseOracleVendors(oracleData);
+  const { vendors } = parseOracleVendors(oracleData);
+
+  const noFeeds = vendors.length === 0;
 
   const content = (
     <div className={`flex items-center space-x-1 ${useTooltip ? '' : 'rounded bg-primary p-1'}`}>
-      {!useTooltip && <span className="mr-1 text-xs font-medium">{vendors.join(', ')}:</span>}
-      {isUnknown ? (
+      {!useTooltip && (
+        <span className="mr-1 text-xs font-medium">
+          {noFeeds ? 'No Feeds' : vendors.join(', ')}:
+        </span>
+      )}
+      {noFeeds ? (
         <IoWarningOutline className="text-secondary" size={16} />
       ) : (
         vendors.map((vendor, index) => (
-          <Image
-            key={index}
-            src={OracleVendorIcons[vendor as OracleVendors]}
-            alt={vendor}
-            width={16}
-            height={16}
-          />
+          <React.Fragment key={index}>
+            {OracleVendorIcons[vendor] ? (
+              <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
+            ) : (
+              <IoWarningOutline className="text-secondary" size={16} />
+            )}
+          </React.Fragment>
         ))
       )}
     </div>
@@ -37,7 +43,7 @@ const OracleVendorBadge: React.FC<OracleVendorBadgeProps> = ({ oracleData, useTo
       <Tooltip
         content={
           <div className="m-2">
-            <p className="text-sm font-medium">Oracle Vendors:</p>
+            <p className="text-sm font-medium">{noFeeds ? 'No live oralce' : 'Oracle Vendors:'}</p>
             <ul>
               {vendors.map((vendor, index) => (
                 <li key={index} className="text-xs">
