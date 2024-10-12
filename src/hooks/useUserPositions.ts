@@ -5,127 +5,155 @@ import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
-const query = `query getUserMarketPositions(
-  $address: String!
-  $chainId: Int
-) {
-  userByAddress(address: $address, chainId: $chainId) {
-    marketPositions {
-      supplyShares
-      supplyAssets
-      supplyAssetsUsd
-      borrowShares
-      borrowAssets
-      borrowAssetsUsd
-      market {
-        id
-        uniqueKey
-        lltv
-        oracleAddress
-        irmAddress
-        morphoBlue {
+const query = `
+  fragment FeedFields on OracleFeed {
+    address
+    chain {
+      id
+    }
+    description
+    id
+    pair
+    vendor
+  }
+
+  query getUserMarketPositions(
+    $address: String!
+    $chainId: Int
+  ) {
+    userByAddress(address: $address, chainId: $chainId) {
+      marketPositions {
+        supplyShares
+        supplyAssets
+        supplyAssetsUsd
+        borrowShares
+        borrowAssets
+        borrowAssetsUsd
+        market {
           id
-          address
-          chain {
+          uniqueKey
+          lltv
+          oracleAddress
+          irmAddress
+          morphoBlue {
             id
-          }
-        }
-        dailyApys {
-          netSupplyApy
-        }
-        weeklyApys {
-          netSupplyApy
-        }
-        monthlyApys {
-          netSupplyApy
-        }
-        loanAsset {
-          address
-          symbol
-          decimals
-        }
-        collateralAsset {
-          address
-          symbol
-          decimals
-        }
-        state {
-          liquidityAssets
-          supplyAssetsUsd
-          supplyAssets
-          borrowAssets
-          borrowAssetsUsd
-          rewards {
-            yearlySupplyTokens
-            asset {
-              address
-              priceUsd
-              spotPriceEth
+            address
+            chain {
+              id
             }
           }
-          utilization
-        }
-        oracleFeed {
-          baseFeedOneAddress
-          baseFeedOneDescription
-          baseFeedTwoAddress
-          baseFeedTwoDescription
-          quoteFeedOneAddress
-          quoteFeedOneDescription
-          quoteFeedTwoAddress
-          quoteFeedTwoDescription
-          baseVault
-          baseVaultDescription
-          baseVaultVendor
-          quoteVault
-          quoteVaultDescription
-          quoteVaultVendor
-        }
-        oracleInfo {
-          type
-        }
-        warnings {
-          type
-          level
-          __typename
-        }
-      }
-    }
-    transactions {
-      hash
-      timestamp
-      type
-      data {
-        __typename
-        ... on MarketTransferTransactionData {
-          assetsUsd
-          shares
-          assets
-          market {
-            id
-            uniqueKey
-            morphoBlue {
-              chain {
-                id
+          dailyApys {
+            netSupplyApy
+          }
+          weeklyApys {
+            netSupplyApy
+          }
+          monthlyApys {
+            netSupplyApy
+          }
+          loanAsset {
+            address
+            symbol
+            decimals
+          }
+          collateralAsset {
+            address
+            symbol
+            decimals
+          }
+          state {
+            liquidityAssets
+            supplyAssetsUsd
+            supplyAssets
+            borrowAssets
+            borrowAssetsUsd
+            rewards {
+              yearlySupplyTokens
+              asset {
+                address
+                priceUsd
+                spotPriceEth
               }
             }
-            collateralAsset {
-              id
-              address
-              decimals
+            utilization
+          }
+          oracle {
+            data {
+              ... on MorphoChainlinkOracleData {
+                baseFeedOne {
+                  ...FeedFields
+                }
+                baseFeedTwo {
+                  ...FeedFields
+                }
+                quoteFeedOne {
+                  ...FeedFields
+                }
+                quoteFeedTwo {
+                  ...FeedFields
+                }
+              }
+              ... on MorphoChainlinkOracleV2Data {
+                baseFeedOne {
+                  ...FeedFields
+                }
+                baseFeedTwo {
+                  ...FeedFields
+                }
+                quoteFeedOne {
+                  ...FeedFields
+                }
+                quoteFeedTwo {
+                  ...FeedFields
+                }
+              }
             }
-            loanAsset {
+          }
+          oracleInfo {
+            type
+          }
+          warnings {
+            type
+            level
+            __typename
+          }
+        }
+      }
+      transactions {
+        hash
+        timestamp
+        type
+        data {
+          __typename
+          ... on MarketTransferTransactionData {
+            assetsUsd
+            shares
+            assets
+            market {
               id
-              address
-              decimals
-              symbol
-            } 
+              uniqueKey
+              morphoBlue {
+                chain {
+                  id
+                }
+              }
+              collateralAsset {
+                id
+                address
+                decimals
+              }
+              loanAsset {
+                id
+                address
+                decimals
+                symbol
+              } 
+            }
           }
         }
       }
     }
-  }
-}`;
+  }`;
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);

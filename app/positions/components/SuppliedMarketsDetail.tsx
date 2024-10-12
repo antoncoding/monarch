@@ -2,6 +2,7 @@ import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { IoWarningOutline } from 'react-icons/io5';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getMarketURL } from '@/utils/external';
@@ -99,6 +100,7 @@ export function SuppliedMarketsDetail({
           <tr>
             <th>Market</th>
             <th>Collateral</th>
+            <th>Oracle</th>
             <th>LLTV</th>
             <th>APY</th>
             <th>Supplied</th>
@@ -111,7 +113,8 @@ export function SuppliedMarketsDetail({
             const suppliedAmount = Number(
               formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
             );
-            const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
+            const percentageOfPortfolio =
+              totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
             const warningColor = getWarningColor(position.warningsWithDetail);
 
             return (
@@ -162,6 +165,11 @@ export function SuppliedMarketsDetail({
                   ) : (
                     'N/A'
                   )}
+                </td>
+                <td data-label="Oracle" className="text-center">
+                  <div className="flex justify-center">
+                    <OracleVendorBadge oracleData={position.market.oracle.data} useTooltip />
+                  </div>
                 </td>
                 <td data-label="LLTV" className="text-center">
                   {formatBalance(position.market.lltv, 16)}%

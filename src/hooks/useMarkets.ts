@@ -25,6 +25,17 @@ export type Reward = {
 };
 
 const marketsQuery = `
+  fragment FeedFields on OracleFeed {
+    address
+    chain {
+      id
+    }
+    description
+    id
+    pair
+    vendor
+  }
+
   query getMarkets($first: Int, $where: MarketFilters) {
     markets(first: $first, where: $where) {
       items {
@@ -47,21 +58,37 @@ const marketsQuery = `
           type
           __typename
         }
-        oracleFeed {
-          baseFeedOneAddress
-          baseFeedOneDescription
-          baseFeedTwoAddress
-          baseFeedTwoDescription
-          quoteFeedOneAddress
-          quoteFeedOneDescription
-          quoteFeedTwoAddress
-          quoteFeedTwoDescription
-          baseVault
-          baseVaultDescription
-          baseVaultVendor
-          quoteVault
-          quoteVaultDescription
-          quoteVaultVendor
+        oracle {
+          data {
+            ... on MorphoChainlinkOracleData {
+              baseFeedOne {
+                ...FeedFields
+              }
+              baseFeedTwo {
+                ...FeedFields
+              }
+              quoteFeedOne {
+                ...FeedFields
+              }
+              quoteFeedTwo {
+                ...FeedFields
+              }
+            }
+            ... on MorphoChainlinkOracleV2Data {
+              baseFeedOne {
+                ...FeedFields
+              }
+              baseFeedTwo {
+                ...FeedFields
+              }
+              quoteFeedOne {
+                ...FeedFields
+              }
+              quoteFeedTwo {
+                ...FeedFields
+              }
+            }
+          }
         }
         loanAsset {
           id

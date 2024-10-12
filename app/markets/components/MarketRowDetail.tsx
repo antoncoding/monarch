@@ -1,79 +1,56 @@
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { zeroAddress } from 'viem';
+import { Tooltip } from '@nextui-org/tooltip';
+import { ExternalLinkIcon, QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
-  console.log('market.oracleFeed', market.oracleFeed);
+  const oracleData = market.oracle ? market.oracle.data : null;
+
+  const hasFeeds =
+    oracleData &&
+    (oracleData.baseFeedOne ||
+      oracleData.baseFeedTwo ||
+      oracleData.quoteFeedOne ||
+      oracleData.quoteFeedTwo);
 
   return (
     <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
       {/* Oracle info */}
       <div className="m-4 lg:w-1/3">
-        {/* warnings */}
         <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Oracle Info</p>
         </div>
-        <div className="mb-1 flex items-start justify-between">
-          <p className="font-inter text-sm opacity-80">Oracle:</p>
+        <div className="flex items-start justify-between">
+          <p className="font-inter text-sm opacity-80">Vendors:</p>
           <a
             className="group flex items-center gap-1 no-underline hover:underline"
             href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
             target="_blank"
           >
-            <p className="text-right font-zen text-sm">{market.oracleInfo.type}</p>
+            <OracleVendorBadge oracleData={oracleData} useTooltip />
             <ExternalLinkIcon />
           </a>
         </div>
-        {market.oracleFeed && (
-          <>
-            <div className="mb-1 flex items-start justify-between">
-              <p className="font-inter text-xs opacity-80">Base feed</p>
-
-              <OracleFeedInfo
-                address={market.oracleFeed.baseFeedOneAddress}
-                title={market.oracleFeed.baseFeedOneDescription}
-                chainId={market.morphoBlue.chain.id}
-              />
+        {hasFeeds && (
+          <div className="">
+            <div className="mb-1 flex items-center">
+              <p className="text-left font-inter text-sm opacity-80">Feed Routes:</p>
+              <Tooltip
+                content="Feed routes show how asset prices are derived from different oracle providers"
+                className="rounded-sm p-2"
+              >
+                <QuestionMarkCircledIcon className="ml-2 h-4 w-4 cursor-help text-secondary" />
+              </Tooltip>
             </div>
-            {/* only shows base feed 2 if non-zero */}
-            {market.oracleFeed.baseFeedTwoAddress !== zeroAddress && (
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-xs opacity-80">Base feed 2</p>
-                <OracleFeedInfo
-                  address={market.oracleFeed.baseFeedTwoAddress}
-                  title={market.oracleFeed.baseFeedTwoDescription}
-                  chainId={market.morphoBlue.chain.id}
-                />
-              </div>
-            )}
-
-            {market.oracleFeed.quoteFeedOneAddress !== zeroAddress && (
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-xs opacity-80">Quote feed</p>
-                <OracleFeedInfo
-                  address={market.oracleFeed.quoteFeedOneAddress}
-                  title={market.oracleFeed.quoteFeedOneDescription}
-                  chainId={market.morphoBlue.chain.id}
-                />
-              </div>
-            )}
-
-            {/* only shows quote feed 2 if non-zero */}
-            {market.oracleFeed.quoteFeedTwoAddress !== zeroAddress && (
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-xs opacity-80">Quote feed 2</p>
-                <OracleFeedInfo
-                  address={market.oracleFeed.quoteFeedTwoAddress}
-                  title={market.oracleFeed.quoteFeedTwoDescription}
-                  chainId={market.morphoBlue.chain.id}
-                />
-              </div>
-            )}
-          </>
+            <OracleFeedInfo feed={oracleData.baseFeedOne} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.baseFeedTwo} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.quoteFeedOne} chainId={market.morphoBlue.chain.id} />
+            <OracleFeedInfo feed={oracleData.quoteFeedTwo} chainId={market.morphoBlue.chain.id} />
+          </div>
         )}
       </div>
 

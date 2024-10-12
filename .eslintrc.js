@@ -100,7 +100,6 @@ module.exports = {
     '@typescript-eslint/consistent-type-assertions': 'error',
     '@typescript-eslint/no-confusing-non-null-assertion': 'error',
     '@typescript-eslint/no-extra-non-null-assertion': 'error',
-    '@typescript-eslint/no-non-null-assertion': 'error',
     '@typescript-eslint/no-non-null-asserted-optional-chain': 'error',
     '@typescript-eslint/prefer-as-const': 'error',
 
