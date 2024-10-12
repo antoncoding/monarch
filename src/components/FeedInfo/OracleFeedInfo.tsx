@@ -1,10 +1,10 @@
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { Tooltip } from '@nextui-org/tooltip';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Address, zeroAddress } from 'viem';
 import { IoIosSwap } from 'react-icons/io';
 import { IoWarningOutline } from 'react-icons/io5';
+import { Address, zeroAddress } from 'viem';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
@@ -19,22 +19,22 @@ export function OracleFeedInfo({
 }): JSX.Element | null {
   if (!feed) return null;
 
-  const fromAsset = feed.pair?.[0] || 'Unknown';
-  const toAsset = feed.pair?.[1] || 'Unknown';
+  const fromAsset = feed.pair?.[0] ?? 'Unknown';
+  const toAsset = feed.pair?.[1] ?? 'Unknown';
   const isLink = feed.address !== zeroAddress;
 
   const vendorIcon =
-    OracleVendorIcons[feed.vendor as OracleVendors] || OracleVendorIcons[OracleVendors.Unknown];
+    OracleVendorIcons[feed.vendor as OracleVendors] ?? OracleVendorIcons[OracleVendors.Unknown];
 
   const content = (
-    <div className="flex w-full items-center justify-between ml-2">
+    <div className="ml-2 flex w-full items-center justify-between pb-1">
       <div className="flex items-center space-x-2 text-xs">
         <span>{fromAsset}</span>
         <IoIosSwap />
         <span>{toAsset}</span>
       </div>
       {vendorIcon ? (
-        <Image src={vendorIcon} alt={feed.vendor || 'Unknown'} width={16} height={16} />
+        <Image src={vendorIcon} alt={feed.vendor ?? 'Unknown'} width={16} height={16} />
       ) : (
         <IoWarningOutline size={16} />
       )}
@@ -44,7 +44,7 @@ export function OracleFeedInfo({
   if (isLink) {
     return (
       <Tooltip
-        content={feed.description || getSlicedAddress(feed.address as Address)}
+        content={feed.description ?? getSlicedAddress(feed.address as Address)}
         className="rounded-sm"
       >
         <Link

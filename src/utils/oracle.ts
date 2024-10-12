@@ -1,4 +1,3 @@
-import { IoWarningOutline } from 'react-icons/io5';
 import { MorphoChainlinkOracleData } from './types';
 
 type VendorInfo = {
@@ -8,7 +7,7 @@ type VendorInfo = {
 
 export enum OracleVendors {
   Chainlink = 'Chainlink',
-  PythNetwork = 'Pyth network',
+  PythNetwork = 'Pyth Network',
   Redstone = 'Redstone',
   Oval = 'Oval',
   Compound = 'Compound',
@@ -17,12 +16,12 @@ export enum OracleVendors {
 }
 
 export const OracleVendorIcons: Record<OracleVendors, string> = {
-  [OracleVendors.Chainlink]: require('../imgs/oracles/chainlink.png'),
-  [OracleVendors.PythNetwork]: require('../imgs/oracles/pyth.png'),
-  [OracleVendors.Redstone]: require('../imgs/oracles/redstone.png'),
-  [OracleVendors.Oval]: require('../imgs/oracles/uma.png'),
-  [OracleVendors.Compound]: require('../imgs/oracles/compound.webp'),
-  [OracleVendors.Lido]: require('../imgs/oracles/lido.png'),
+  [OracleVendors.Chainlink]: require('../imgs/oracles/chainlink.png') as string,
+  [OracleVendors.PythNetwork]: require('../imgs/oracles/pyth.png') as string,
+  [OracleVendors.Redstone]: require('../imgs/oracles/redstone.png') as string,
+  [OracleVendors.Oval]: require('../imgs/oracles/uma.png') as string,
+  [OracleVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
+  [OracleVendors.Lido]: require('../imgs/oracles/lido.png') as string,
   [OracleVendors.Unknown]: '',
 };
 
@@ -45,11 +44,11 @@ export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null)
   ];
 
   feeds.forEach((feed) => {
-    if (feed && feed.vendor) {
+    if (feed?.vendor) {
       const knownVendor = Object.values(OracleVendors).find(
         (v) => v.toLowerCase() === feed.vendor?.toLowerCase(),
       );
-      vendors.add(knownVendor || OracleVendors.Unknown);
+      vendors.add(knownVendor ?? OracleVendors.Unknown);
     }
   });
 

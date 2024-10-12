@@ -283,7 +283,6 @@ export type Market = {
   oracleInfo: {
     type: string;
   };
-  oracleFeed?: OracleFeedsInfo;
   loanAsset: TokenInfo;
   collateralAsset: TokenInfo;
   state: {

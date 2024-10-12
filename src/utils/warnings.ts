@@ -5,13 +5,13 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'hardcoded_oracle',
     level: 'warning',
-    description: 'This market uses a hardcoded oracle value',
+    description: 'This market uses a hardcoded oracle value (or missing one or more feed routes)',
     category: WarningCategory.oracle,
   },
   {
     code: 'hardcoded_oracle_feed',
     level: 'warning',
-    description: 'This market is using a hardcoded value in its oracle.	',
+    description: 'This market is using a hardcoded value in one or more of its feed routes',
     category: WarningCategory.oracle,
   },
   {

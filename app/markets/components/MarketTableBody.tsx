@@ -118,7 +118,9 @@ export function MarketTableBody({
                   symbol={collatToShow}
                 />
                 <td data-label="Oracle" className="z-50">
-                  <OracleVendorBadge oracleData={item.oracle.data} />
+                  <div className="flex justify-center">
+                    <OracleVendorBadge oracleData={item.oracle.data} />
+                  </div>
                 </td>
                 <td data-label="LLTV" className="z-50">
                   {Number(item.lltv) / 1e16}%

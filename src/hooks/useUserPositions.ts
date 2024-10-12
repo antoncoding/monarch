@@ -65,21 +65,93 @@ const query = `query getUserMarketPositions(
           }
           utilization
         }
-        oracleFeed {
-          baseFeedOneAddress
-          baseFeedOneDescription
-          baseFeedTwoAddress
-          baseFeedTwoDescription
-          quoteFeedOneAddress
-          quoteFeedOneDescription
-          quoteFeedTwoAddress
-          quoteFeedTwoDescription
-          baseVault
-          baseVaultDescription
-          baseVaultVendor
-          quoteVault
-          quoteVaultDescription
-          quoteVaultVendor
+        oracle {
+          data {
+            ... on MorphoChainlinkOracleData {
+              baseFeedOne {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              baseFeedTwo {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              quoteFeedOne {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              quoteFeedTwo {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+            }
+            ... on MorphoChainlinkOracleV2Data {
+              baseFeedOne {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              baseFeedTwo {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              quoteFeedOne {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+              quoteFeedTwo {
+                address
+                chain {
+                  id
+                }
+                description
+                id
+                pair
+                vendor
+              }
+            }
+          }
         }
         oracleInfo {
           type
