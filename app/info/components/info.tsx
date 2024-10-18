@@ -74,6 +74,21 @@ function InfoPage() {
     };
   }, [nextSection, prevSection]);
 
+  const renderImage = (section: typeof sections[0], index: number) => (
+    <div className={`flex items-center justify-center rounded-lg overflow-hidden ${
+      index === sections.length - 1 ? 'h-32 w-32 sm:h-48 sm:w-48 p-2 sm:p-4' : 'h-48 w-full sm:h-64'
+    }`}>
+      <Image
+        src={section.image}
+        alt={section.mainTitle}
+        width={index === sections.length - 1 ? 128 : 800}
+        height={index === sections.length - 1 ? 128 : 256}
+        objectFit="contain"
+        className="rounded-lg"
+      />
+    </div>
+  );
+
   if (!isClient) {
     return null; // or a loading spinner
   }
@@ -88,7 +103,7 @@ function InfoPage() {
             style={{ transform: `translateX(-${currentSection * 100}%)` }}
           >
             {sections.map((section, index) => (
-              <div key={section.mainTitle} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
+              <div key={`section-${index}`} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
                 <div className="mx-auto max-w-3xl rounded-lg bg-secondary px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
                   <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
                     {section.mainTitle}
@@ -97,31 +112,7 @@ function InfoPage() {
                     {section.subTitle}
                   </h2>
                   <div className="flex flex-col items-center gap-4 sm:gap-8">
-                    {index === sections.length - 1 ? (
-                      // Special case for the logo in the last section
-                      <div className="flex h-32 w-32 items-center justify-center rounded-lg p-2 sm:h-48 sm:w-48 sm:p-4">
-                        <Image
-                          src={section.image}
-                          alt={section.mainTitle}
-                          width={128}
-                          height={128}
-                          objectFit="contain"
-                          className="rounded-lg"
-                        />
-                      </div>
-                    ) : (
-                      // For all other sections
-                      <div className="flex h-48 w-full items-center justify-center overflow-hidden rounded-lg sm:h-64">
-                        <Image
-                          src={section.image}
-                          alt={section.mainTitle}
-                          width={800}
-                          height={256}
-                          objectFit="contain"
-                          className="rounded-lg"
-                        />
-                      </div>
-                    )}
+                    {renderImage(section, index)}
                     <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert w-full">
                       {section.content}
                     </div>
