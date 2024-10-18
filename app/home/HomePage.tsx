@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Footer from '@/components/layout/footer/Footer';
-import backgroundImage from '@/imgs/bg/bg.png';
 import HomeHeader from './_components/HomeHeader';
 
 export default function HomePage() {
@@ -21,16 +20,7 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-primary">
-      <div
-        className="flex flex-col items-center justify-center"
-        style={{
-          backgroundImage: `url(${backgroundImage.src})`,
-          // position: right and bottom
-          backgroundPosition: 'right bottom',
-          backgroundSize: 'original',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      <div className="flex flex-col items-center justify-center">
         <HomeHeader />
         <main className="container flex flex-col">
           <section className="flex flex-col items-center justify-center">
