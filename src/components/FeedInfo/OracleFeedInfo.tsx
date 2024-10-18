@@ -40,20 +40,19 @@ export function OracleFeedInfo({
     </div>
   );
 
-    return (
-      <Tooltip
-        content={feed.description ?? getSlicedAddress(feed.address as Address)}
-        className="rounded-sm"
+  return (
+    <Tooltip
+      content={feed.description ?? getSlicedAddress(feed.address as Address)}
+      className="rounded-sm"
+    >
+      <Link
+        className="group flex w-full items-center gap-1 text-right no-underline hover:underline"
+        href={getExplorerURL(feed.address as Address, chainId)}
+        target="_blank"
       >
-        <Link
-          className="group flex w-full items-center gap-1 text-right no-underline hover:underline"
-          href={getExplorerURL(feed.address as Address, chainId)}
-          target="_blank"
-        >
-          {content}
-          <ExternalLinkIcon className="ml-1" />
-        </Link>
-      </Tooltip>
-    );
-  }
-
+        {content}
+        <ExternalLinkIcon className="ml-1" />
+      </Link>
+    </Tooltip>
+  );
+}

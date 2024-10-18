@@ -3,11 +3,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Button } from '@nextui-org/react';
 import Image from 'next/image';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
 import { sections } from './sectionData';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import { Button } from '@nextui-org/react';
 
 function InfoPage() {
   const [currentSection, setCurrentSection] = useState(0);
@@ -45,7 +45,7 @@ function InfoPage() {
     const handleWheel = (e: WheelEvent) => {
       const now = Date.now();
       if (now - lastWheelTime < wheelThreshold) return;
-      
+
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
         e.preventDefault();
         if (e.deltaX > 0) {
@@ -79,7 +79,7 @@ function InfoPage() {
   }
 
   return (
-    <div className="min-h-screen font-zen bg-primary" ref={containerRef}>
+    <div className="min-h-screen bg-primary font-zen" ref={containerRef}>
       <Header />
       <main className="container relative mx-auto px-4 py-8">
         <div className="relative overflow-hidden">
@@ -88,17 +88,18 @@ function InfoPage() {
             style={{ transform: `translateX(-${currentSection * 100}%)` }}
           >
             {sections.map((section, index) => (
-              <div
-                key={section.mainTitle}
-                className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16"
-              >
-                <div className="rounded-lg bg-secondary px-4 sm:px-8 md:px-12 py-6 sm:py-8 shadow-lg max-w-3xl mx-auto">
-                  <h1 className="mb-2 text-center text-3xl sm:text-4xl font-bold">{section.mainTitle}</h1>
-                  <h2 className="mb-4 sm:mb-6 text-center text-lg sm:text-xl text-secondary">{section.subTitle}</h2>
+              <div key={section.mainTitle} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
+                <div className="mx-auto max-w-3xl rounded-lg bg-secondary px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
+                  <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
+                    {section.mainTitle}
+                  </h1>
+                  <h2 className="mb-4 text-center text-lg text-secondary sm:mb-6 sm:text-xl">
+                    {section.subTitle}
+                  </h2>
                   <div className="flex flex-col items-center gap-4 sm:gap-8">
                     {index === sections.length - 1 ? (
                       // Special case for the logo in the last section
-                      <div className="w-32 h-32 sm:w-48 sm:h-48 flex items-center justify-center rounded-lg p-2 sm:p-4">
+                      <div className="flex h-32 w-32 items-center justify-center rounded-lg p-2 sm:h-48 sm:w-48 sm:p-4">
                         <Image
                           src={section.image}
                           alt={section.mainTitle}
@@ -110,7 +111,7 @@ function InfoPage() {
                       </div>
                     ) : (
                       // For all other sections
-                      <div className="flex h-48 sm:h-64 w-full items-center justify-center overflow-hidden rounded-lg">
+                      <div className="flex h-48 w-full items-center justify-center overflow-hidden rounded-lg sm:h-64">
                         <Image
                           src={section.image}
                           alt={section.mainTitle}
@@ -121,7 +122,7 @@ function InfoPage() {
                         />
                       </div>
                     )}
-                    <div className="w-full prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert">
+                    <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert w-full">
                       {section.content}
                     </div>
                   </div>
@@ -155,9 +156,10 @@ function InfoPage() {
         <nav className="pointer-events-none fixed inset-x-0 bottom-8 flex justify-center space-x-2">
           {sections.map((_, index) => (
             <button
+              type="button"
               key={index}
               onClick={() => setCurrentSection(index)}
-              className={`w-3 h-3 rounded-full pointer-events-auto transition-colors duration-200 ease-in-out ${
+              className={`pointer-events-auto h-3 w-3 rounded-full transition-colors duration-200 ease-in-out ${
                 index === currentSection ? 'bg-monarch-orange' : 'bg-gray-300 hover:bg-gray-400'
               }`}
               aria-label={`Go to section ${index + 1}`}

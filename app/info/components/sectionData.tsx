@@ -4,16 +4,18 @@ import monarchImage from '../../../src/imgs/intro/direct-supply.png';
 import morphoImage from '../../../src/imgs/intro/morpho.png';
 import vaultsImage from '../../../src/imgs/intro/vaults.png';
 
-const Card = ({ title, items }: { title: string; items: string[] }) => (
-  <div className="flex-1 rounded-lg bg-primary p-4 shadow">
-    <h3 className="mb-2 text-lg font-bold font-zen">{title}</h3>
-    <ul className="list-inside list-disc">
-      {items.map((item, index) => (
-        <li key={index}>{item}</li>
-      ))}
-    </ul>
-  </div>
-);
+function Card({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="flex-1 rounded-lg bg-primary p-4 shadow">
+      <h3 className="mb-2 font-zen text-lg font-bold">{title}</h3>
+      <ul className="list-inside list-disc">
+        {items.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 export const sections = [
   {
@@ -53,17 +55,17 @@ export const sections = [
           <Card
             title="Advantages"
             items={[
-              "Simplified user experience",
-              "Managed risk exposure",
-              "ERC4626 token compatibility"
+              'Simplified user experience',
+              'Managed risk exposure',
+              'ERC4626 token compatibility',
             ]}
           />
           <Card
             title="Limitations"
             items={[
-              "Less control over parameters",
-              "Limited customization",
-              "Potential performance fees"
+              'Less control over parameters',
+              'Limited customization',
+              'Potential performance fees',
             ]}
           />
         </div>
@@ -85,17 +87,17 @@ export const sections = [
           <Card
             title="Benefits"
             items={[
-              "Full control over parameters",
-              "Customizable risk management",
-              "No performance fees"
+              'Full control over parameters',
+              'Customizable risk management',
+              'No performance fees',
             ]}
           />
           <Card
             title="Considerations"
             items={[
-              "Requires market risk knowledge",
-              "Manual rebalancing needed",
-              "Higher complexity"
+              'Requires market risk knowledge',
+              'Manual rebalancing needed',
+              'Higher complexity',
             ]}
           />
         </div>
@@ -111,7 +113,8 @@ export const sections = [
         <p>
           <span className="text-xl font-bold">Coming Soon: Monarch Auto</span>
           <br />
-          We're developing "Monarch Auto" to automate the rebalancing process with custom strategies.
+          We're developing "Monarch Auto" to automate the rebalancing process with custom
+          strategies.
         </p>
         <p className="mt-4">
           <span className="font-bold">What's in Progress:</span>
@@ -127,7 +130,8 @@ export const sections = [
           Your input is crucial in shaping Monarch's future. Share your thoughts in our{' '}
           <a href="https://t.me/+kM48_lzD9gQ3NzRl" className="underline">
             Telegram chat
-          </a>.
+          </a>
+          .
         </p>
       </>
     ),
