@@ -46,7 +46,7 @@ function InfoPage() {
       const now = Date.now();
       if (now - lastWheelTime < wheelThreshold) return;
 
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 5) {
         e.preventDefault();
         if (e.deltaX > 0) {
           nextSection();
