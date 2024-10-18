@@ -42,13 +42,16 @@ export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null)
     oracleData.quoteFeedTwo,
   ];
 
-  const vendors = new Set(  
-    feeds  
-      .filter(feed => feed?.vendor)  
-      .map(feed => Object.values(OracleVendors)
-        .find(v => v.toLowerCase() === feed!.vendor!.toLowerCase()) ?? OracleVendors.Unknown
-      )  
-  );  
+  const vendors = new Set(
+    feeds
+      .filter((feed) => feed?.vendor)
+      .map(
+        (feed) =>
+          Object.values(OracleVendors).find(
+            (v) => v.toLowerCase() === feed!.vendor!.toLowerCase(),
+          ) ?? OracleVendors.Unknown,
+      ),
+  );
 
   return {
     vendors: Array.from(vendors),

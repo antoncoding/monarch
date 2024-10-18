@@ -10,11 +10,12 @@ type OracleVendorBadgeProps = {
   useTooltip?: boolean;
 };
 
-const renderVendorIcon = (vendor: OracleVendors) => (  
-  OracleVendorIcons[vendor] 
-    ? <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />  
-    : <IoWarningOutline className="text-secondary" size={16} />  
-);  
+const renderVendorIcon = (vendor: OracleVendors) =>
+  OracleVendorIcons[vendor] ? (
+    <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
+  ) : (
+    <IoWarningOutline className="text-secondary" size={16} />
+  );
 
 function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeProps) {
   const { vendors } = parseOracleVendors(oracleData);
@@ -32,9 +33,7 @@ function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeP
         <IoWarningOutline className="text-secondary" size={16} />
       ) : (
         vendors.map((vendor, index) => (
-          <React.Fragment key={index}>
-            {renderVendorIcon(vendor)}
-          </React.Fragment>
+          <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
         ))
       )}
     </div>
@@ -65,6 +64,6 @@ function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeP
   }
 
   return content;
-};
+}
 
 export default OracleVendorBadge;

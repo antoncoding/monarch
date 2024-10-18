@@ -12,15 +12,16 @@ export default function NavbarMobile() {
 
   const { address } = useAccount();
 
+  const navbarClass = [
+    'flex flex-1 flex-grow items-center justify-between',
+    'rounded-sm bg-primary p-4 backdrop-blur-2xl',
+    'mx-4',
+  ].join(' ');
+
   if (isMobileMenuOpen) {
     return (
       <nav className="sm:max-h-100 flex flex-col gap-4 rounded-sm bg-primary p-2 backdrop-blur-2xl">
-        <div
-          className={[
-            'flex flex-1 flex-grow items-center justify-between',
-            'rounded-sm bg-secondary p-4 backdrop-blur-2xl',
-          ].join(' ')}
-        >
+        <div className={navbarClass}>
           <div className="flex grow items-center justify-between gap-4">
             <NavbarTitle />
             <button
@@ -36,21 +37,23 @@ export default function NavbarMobile() {
         <div>
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
+              <NavbarLink href="/">
+                <p className="text-base opacity-80 hover:opacity-100">Home</p>
+              </NavbarLink>
+            </li>
+            <li className="flex">
               <NavbarLink href="/markets">Markets</NavbarLink>
             </li>
-
             <li className="flex">
               <NavbarLink href={`/positions/${address ?? ''}`}>
-                <p className="text-base opacity-80 hover:opacity-100"> Portfolio </p>{' '}
+                <p className="text-base opacity-80 hover:opacity-100">Portfolio</p>
               </NavbarLink>
             </li>
             <li className="flex">
               <NavbarLink href={`/rewards/${address ?? ''}`}>
-                {' '}
-                <p className="text-base opacity-80 hover:opacity-100"> Rewards </p>{' '}
+                <p className="text-base opacity-80 hover:opacity-100">Rewards</p>
               </NavbarLink>
             </li>
-
             <li className="flex">
               <NavigationMenu.Root className="relative flex flex-grow flex-col">
                 <NavigationMenu.Viewport className={clsx('flex flex-col justify-center')} />
@@ -66,13 +69,7 @@ export default function NavbarMobile() {
   }
 
   return (
-    <nav
-      className={[
-        'flex flex-1 flex-grow items-center justify-between',
-        'rounded-sm border border-stone-200 bg-white bg-opacity-10 p-2 backdrop-blur-2xl',
-        'mx-4',
-      ].join(' ')}
-    >
+    <nav className={navbarClass}>
       <div className="flex h-8 grow items-center justify-between gap-4">
         <NavbarTitle />
         <button type="button" aria-label="Menu" data-state="closed" onClick={toggleMobileMenuOpen}>

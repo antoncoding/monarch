@@ -3,7 +3,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Button } from '@nextui-org/react';
 import Image from 'next/image';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
 import { sections } from './sectionData';
 
@@ -30,35 +32,35 @@ function InfoPage() {
     setTimeout(() => setIsTransitioning(false), 500);
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const nextSection = () => changeSection('next');
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const prevSection = () => changeSection('prev');
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    let lastScrollTime = 0;
-    const scrollCooldown = 1000; // 1 second cooldown
+    let lastWheelTime = 0;
+    const wheelThreshold = 50; // Minimum time between wheel events in ms
 
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const now = new Date().getTime();
-      if (now - lastScrollTime < scrollCooldown) return;
+      const now = Date.now();
+      if (now - lastWheelTime < wheelThreshold) return;
 
-      if (e.deltaY > 0) {
-        nextSection();
-      } else {
-        prevSection();
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 5) {
+        e.preventDefault();
+        if (e.deltaX > 0) {
+          nextSection();
+        } else {
+          prevSection();
+        }
+        lastWheelTime = now;
       }
-      lastScrollTime = now;
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') {
+      if (e.key === 'ArrowRight') {
         nextSection();
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === 'ArrowLeft') {
         prevSection();
       }
     };
@@ -72,58 +74,90 @@ function InfoPage() {
     };
   }, [nextSection, prevSection]);
 
+  const renderImage = (section: typeof sections[0], index: number) => (
+    <div className={`flex items-center justify-center rounded-lg overflow-hidden ${
+      index === sections.length - 1 ? 'h-32 w-32 sm:h-48 sm:w-48 p-2 sm:p-4' : 'h-48 w-full sm:h-64'
+    }`}>
+      <Image
+        src={section.image}
+        alt={section.mainTitle}
+        width={index === sections.length - 1 ? 128 : 800}
+        height={index === sections.length - 1 ? 128 : 256}
+        objectFit="contain"
+        className="rounded-lg"
+      />
+    </div>
+  );
+
   if (!isClient) {
     return null; // or a loading spinner
   }
 
   return (
-    <div className="flex min-h-screen flex-col font-zen" ref={containerRef}>
+    <div className="min-h-screen bg-primary font-zen" ref={containerRef}>
       <Header />
-      <main className="flex flex-grow flex-col overflow-hidden pt-8">
-        <div className="relative flex-grow overflow-hidden">
+      <main className="container relative mx-auto px-4 py-8">
+        <div className="relative overflow-hidden">
           <div
-            className="absolute inset-0 flex flex-col transition-transform duration-500 ease-in-out"
-            style={{ transform: `translateY(-${currentSection * 100}%)` }}
+            className="flex transition-transform duration-500 ease-in-out"
+            style={{ transform: `translateX(-${currentSection * 100}%)` }}
           >
-            {sections.map((section) => (
-              <div
-                key={section.mainTitle}
-                className="flex h-full w-full flex-shrink-0 flex-col items-center justify-start px-4 md:px-0"
-              >
-                <div className="w-full max-w-4xl">
-                  <h1 className="mb-2 text-center text-4xl font-bold">{section.mainTitle}</h1>
-                  <h2 className="mb-4 text-center text-xl text-secondary">{section.subTitle}</h2>
-                  <div className="flex max-h-[calc(100vh-250px)] flex-col items-center gap-8 overflow-y-auto">
-                    <div className="flex w-full items-center justify-center overflow-hidden rounded-lg">
-                      <Image
-                        src={section.image}
-                        alt={section.mainTitle}
-                        height={section.customHeight ? section.customHeight : 250}
-                        objectFit="cover"
-                        className="rounded-lg"
-                      />
+            {sections.map((section, index) => (
+              <div key={`section-${index}`} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
+                <div className="mx-auto max-w-3xl rounded-lg bg-secondary px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
+                  <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
+                    {section.mainTitle}
+                  </h1>
+                  <h2 className="mb-4 text-center text-lg text-secondary sm:mb-6 sm:text-xl">
+                    {section.subTitle}
+                  </h2>
+                  <div className="flex flex-col items-center gap-4 sm:gap-8">
+                    {renderImage(section, index)}
+                    <div className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert w-full">
+                      {section.content}
                     </div>
-                    <div className="w-full px-4 pb-8">{section.content}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+        <div className="pointer-events-none fixed inset-0 flex items-center justify-between px-4 sm:px-12 md:px-24 lg:px-32">
+          <Button
+            isIconOnly
+            color="primary"
+            variant="flat"
+            onPress={prevSection}
+            className="pointer-events-auto"
+            aria-label="Previous section"
+          >
+            <FaChevronLeft />
+          </Button>
+          <Button
+            isIconOnly
+            color="primary"
+            variant="flat"
+            onPress={nextSection}
+            className="pointer-events-auto"
+            aria-label="Next section"
+          >
+            <FaChevronRight />
+          </Button>
+        </div>
+        <nav className="pointer-events-none fixed inset-x-0 bottom-8 flex justify-center space-x-2">
+          {sections.map((_, index) => (
+            <button
+              type="button"
+              key={index}
+              onClick={() => setCurrentSection(index)}
+              className={`pointer-events-auto h-3 w-3 rounded-full transition-colors duration-200 ease-in-out ${
+                index === currentSection ? 'bg-monarch-orange' : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              aria-label={`Go to section ${index + 1}`}
+            />
+          ))}
+        </nav>
       </main>
-      <nav className="fixed bottom-8 left-1/2 flex -translate-x-1/2 transform space-x-2">
-        {sections.map((_, index) => (
-          <button
-            type="button"
-            key={index}
-            className={`h-2 w-2 cursor-pointer rounded-full ${
-              index === currentSection ? 'bg-monarch-orange' : 'bg-gray-300'
-            }`}
-            onClick={() => setCurrentSection(index)}
-            aria-label={`Go to section ${index + 1}`}
-          />
-        ))}
-      </nav>
     </div>
   );
 }
