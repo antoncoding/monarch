@@ -37,10 +37,12 @@ export default function RiskNotificationModal() {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {}} hideCloseButton size="3xl">
-      <ModalContent className="p-8 font-zen">
-        <ModalHeader className="flex flex-col gap-1 text-2xl">Welcome to Monarch</ModalHeader>
-        <ModalBody>
+    <Modal isOpen={isOpen} onClose={() => {}} hideCloseButton size="3xl" scrollBehavior="inside">
+      <ModalContent className="max-h-[90vh] p-4 font-zen sm:p-8">
+        <ModalHeader className="flex flex-col gap-1 font-zen text-xl sm:text-2xl">
+          Welcome to Monarch
+        </ModalHeader>
+        <ModalBody className="overflow-auto">
           <p className="mb-4">
             Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's
             important to understand the key aspects of this approach. For a comprehensive overview,
@@ -68,14 +70,19 @@ export default function RiskNotificationModal() {
             </Link>
             .
           </p>
-          <Checkbox
-            isSelected={isChecked}
-            onValueChange={setIsChecked}
-            className="gap-2 text-sm text-secondary"
-          >
-            I understand that direct lending through Monarch requires active management and have
-            read about the associated risks.
-          </Checkbox>
+          <div className="mt-4 rounded-lg border-2 border-dotted border-monarch-primary p-4">
+            <Checkbox
+              isSelected={isChecked}
+              onValueChange={setIsChecked}
+              className="gap-2"
+              size="sm"
+            >
+              <span className="text-zen text-sm text-secondary">
+                I understand that direct lending through Monarch requires active management and have
+                read about the associated risks.
+              </span>
+            </Checkbox>
+          </div>
         </ModalBody>
         <ModalFooter>
           <Button

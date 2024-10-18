@@ -74,10 +74,14 @@ function InfoPage() {
     };
   }, [nextSection, prevSection]);
 
-  const renderImage = (section: typeof sections[0], index: number) => (
-    <div className={`flex items-center justify-center rounded-lg overflow-hidden ${
-      index === sections.length - 1 ? 'h-32 w-32 sm:h-48 sm:w-48 p-2 sm:p-4' : 'h-48 w-full sm:h-64'
-    }`}>
+  const renderImage = (section: (typeof sections)[0], index: number) => (
+    <div
+      className={`flex items-center justify-center overflow-hidden rounded-lg ${
+        index === sections.length - 1
+          ? 'h-32 w-32 p-2 sm:h-48 sm:w-48 sm:p-4'
+          : 'h-48 w-full sm:h-64'
+      }`}
+    >
       <Image
         src={section.image}
         alt={section.mainTitle}
