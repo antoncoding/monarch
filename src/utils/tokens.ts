@@ -64,6 +64,12 @@ const supportedTokens = [
     },
   },
   {
+    symbol: 'USD0',
+    img: require('../imgs/tokens/usd0.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x73A15FeD60Bf67631dC6cd7Bc5B6e8da8190aCF5' }],
+  },
+  {
     symbol: 'USD0++',
     img: require('../imgs/tokens/usd0pp.svg') as string,
     decimals: 18,
@@ -104,6 +110,15 @@ const supportedTokens = [
       name: 'Agora',
       isProxy: true,
     },
+  },
+  {
+    symbol: 'wUSDM',
+    img: require('../imgs/tokens/wusdm.png') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: '0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812' },
+      { chain: base, address: '0x57F5E098CaD7A3D1Eed53991D4d66C45C9AF7812' },
+    ],
   },
   {
     symbol: 'EURe',
@@ -352,6 +367,12 @@ const supportedTokens = [
     img: require('../imgs/tokens/eigen.png') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0xec53bF9167f50cDEB3Ae105f56099aaaB9061F83' }],
+  },
+  {
+    symbol: 'wsuperOETHb',
+    img: require('../imgs/tokens/wsuperOETHb.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6' }],
   },
 ];
 
