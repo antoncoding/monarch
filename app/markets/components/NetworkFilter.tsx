@@ -4,14 +4,16 @@ import Image from 'next/image';
 import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
 
 type FilterProps = {
+  selectedNetwork: SupportedNetworks | null;
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
 };
-export default function NetworkFilter({ setSelectedNetwork }: FilterProps) {
+export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: FilterProps) {
   return (
     <Select
       label="Network"
       selectionMode="single"
       placeholder="All networks"
+      selectedKeys={selectedNetwork ? [selectedNetwork.toString()] : []}
       onChange={(e) => {
         if (!e.target.value) setSelectedNetwork(null);
         const newId = Number(e.target.value);
