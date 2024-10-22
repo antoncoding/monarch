@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, TrashIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { ERC20Token, infoToKey } from '@/utils/tokens';
 
@@ -10,7 +10,7 @@ type FilterProps = {
   selectedAssets: string[];
   setSelectedAssets: (assets: string[]) => void;
   items: ERC20Token[];
-  loading?: boolean; // Made optional since it's not used
+  loading: boolean;
 };
 
 export default function AssetFilter({
@@ -19,10 +19,22 @@ export default function AssetFilter({
   selectedAssets,
   setSelectedAssets,
   items,
+  loading,
 }: FilterProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Check if the selected assets are invalid (not present in the items list) after loading is complete
+  const invalidSelection =
+    !loading &&
+    selectedAssets.length > 0 &&
+    selectedAssets.every(
+      (asset) =>
+        !items.some(
+          (item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset,
+        ),
+    );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,7 +92,14 @@ export default function AssetFilter({
       >
         <span className="absolute left-2 top-2 px-1 text-xs">{label}</span>
         <div className="flex items-center justify-between pt-4">
-          {selectedAssets.length > 0 ? (
+          {loading ? (
+            <span className="p-[2px] text-sm text-gray-400">Loading...</span>
+          ) : invalidSelection ? (
+            <div className="flex items-center gap-2">
+              <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
+              <span className="pt-[4px] text-sm text-yellow-500">Invalid</span>
+            </div>
+          ) : selectedAssets.length > 0 ? (
             <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
               {selectedAssets.map((asset) => {
                 const token = items.find(
@@ -100,7 +119,7 @@ export default function AssetFilter({
           </span>
         </div>
       </div>
-      {isOpen && (
+      {isOpen && !loading && (
         <div className="absolute z-10 mt-1 w-full rounded-sm bg-secondary shadow-lg">
           <input
             type="text"

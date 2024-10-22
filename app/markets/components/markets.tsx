@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import storage from 'local-storage-fallback';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useMarkets from '@/hooks/useMarkets';
@@ -39,16 +39,28 @@ export default function Markets() {
 
   const { loading, data: rawMarkets } = useMarkets();
 
-  // token keys, aggregated with | for each "ERC20Token" object
-  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(
-    searchParams.get('collaterals')?.split(',').filter(Boolean) || []
-  );
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(
-    searchParams.get('loanAssets')?.split(',').filter(Boolean) || []
-  );
+  // Parse and validate network parameter
+  const defaultNetwork = (() => {
+    const networkParam = searchParams.get('network');
+    return networkParam &&
+      Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
+      ? (Number(networkParam) as SupportedNetworks)
+      : null;
+  })();
+
+  // Update these state initializations
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(() => {
+    const collaterals = searchParams.get('collaterals');
+    return collaterals ? collaterals.split(',').filter(Boolean) : [];
+  });
+
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(() => {
+    const loanAssets = searchParams.get('loanAssets');
+    return loanAssets ? loanAssets.split(',').filter(Boolean) : [];
+  });
 
   // single choice: null for all networks
-  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(defaultNetwork);
 
   const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<ERC20Token[]>([]);
@@ -100,21 +112,28 @@ export default function Markets() {
     }
   }, [rawMarkets]);
 
-
-  const updateUrlParams = useCallback((collaterals: string[], loanAssets: string[]) => {
-    const params = new URLSearchParams(searchParams);
-    if (collaterals.length > 0) {
-      params.set('collaterals', collaterals.join(','));
-    } else {
-      params.delete('collaterals');
-    }
-    if (loanAssets.length > 0) {
-      params.set('loanAssets', loanAssets.join(','));
-    } else {
-      params.delete('loanAssets');
-    }
-    router.push(`?${params.toString()}`, { scroll: false });
-  }, [router, searchParams]);
+  const updateUrlParams = useCallback(
+    (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
+      const params = new URLSearchParams(searchParams);
+      if (collaterals.length > 0) {
+        params.set('collaterals', collaterals.join(','));
+      } else {
+        params.delete('collaterals');
+      }
+      if (loanAssets.length > 0) {
+        params.set('loanAssets', loanAssets.join(','));
+      } else {
+        params.delete('loanAssets');
+      }
+      if (network) {
+        params.set('network', network.toString());
+      } else {
+        params.delete('network');
+      }
+      router.push(`?${params.toString()}`, { scroll: false });
+    },
+    [router, searchParams],
+  );
 
   // Update the all markets pass to the table
   useEffect(() => {
@@ -129,7 +148,7 @@ export default function Markets() {
       selectedLoanAssets,
     );
     setFilteredMarkets(filtered);
-    updateUrlParams(selectedCollaterals, selectedLoanAssets);
+    updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
   }, [
     rawMarkets,
     hideDust,
@@ -155,7 +174,6 @@ export default function Markets() {
     [sortColumn, sortDirection],
   );
 
-
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -173,7 +191,13 @@ export default function Markets() {
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
             {/* network filter */}
-            <NetworkFilter setSelectedNetwork={setSelectedNetwork} />
+            <NetworkFilter
+              selectedNetwork={selectedNetwork}
+              setSelectedNetwork={(network) => {
+                setSelectedNetwork(network);
+                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+              }}
+            />
 
             <AssetFilter
               label="Loan Asset"
@@ -181,7 +205,7 @@ export default function Markets() {
               selectedAssets={selectedLoanAssets}
               setSelectedAssets={(assets) => {
                 setSelectedLoanAssets(assets);
-                updateUrlParams(selectedCollaterals, assets);
+                updateUrlParams(selectedCollaterals, assets, selectedNetwork);
               }}
               items={uniqueLoanAssets}
               loading={loading}
@@ -194,7 +218,7 @@ export default function Markets() {
               selectedAssets={selectedCollaterals}
               setSelectedAssets={(assets) => {
                 setSelectedCollaterals(assets);
-                updateUrlParams(assets, selectedLoanAssets);
+                updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
               }}
               items={uniqueCollaterals}
               loading={loading}
