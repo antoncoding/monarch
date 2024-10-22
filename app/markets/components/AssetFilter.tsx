@@ -25,16 +25,14 @@ export default function AssetFilter({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Check if the selected assets are invalid (not present in the items list) after loading is complete
+  // Precompute a set of valid asset keys
+  const validAssetKeys = new Set(
+    items.map((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')),
+  );
   const invalidSelection =
     !loading &&
     selectedAssets.length > 0 &&
-    selectedAssets.every(
-      (asset) =>
-        !items.some(
-          (item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset,
-        ),
-    );
+    selectedAssets.every((asset) => !validAssetKeys.has(asset));
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

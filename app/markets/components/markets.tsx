@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header/Header';
@@ -48,18 +48,9 @@ export default function Markets() {
       : null;
   })();
 
-  // Update these state initializations
-  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(() => {
-    const collaterals = searchParams.get('collaterals');
-    return collaterals ? collaterals.split(',').filter(Boolean) : [];
-  });
-
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(() => {
-    const loanAssets = searchParams.get('loanAssets');
-    return loanAssets ? loanAssets.split(',').filter(Boolean) : [];
-  });
-
-  // single choice: null for all networks
+  // Initialize states
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(defaultNetwork);
 
   const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
@@ -80,6 +71,31 @@ export default function Markets() {
   const [staredIds, setStaredIds] = useState<string[]>(defaultStaredMarkets);
 
   const [filteredMarkets, setFilteredMarkets] = useState(rawMarkets);
+
+  // Use useRef to store the previous URL parameters
+  const prevParamsRef = useRef<string>('');
+
+  // Synchronize state with URL parameters
+  useEffect(() => {
+    const currentParams = searchParams.toString();
+    if (currentParams !== prevParamsRef.current) {
+      const collaterals = searchParams.get('collaterals');
+      setSelectedCollaterals(collaterals ? collaterals.split(',').filter(Boolean) : []);
+
+      const loanAssets = searchParams.get('loanAssets');
+      setSelectedLoanAssets(loanAssets ? loanAssets.split(',').filter(Boolean) : []);
+
+      const networkParam = searchParams.get('network');
+      setSelectedNetwork(
+        networkParam &&
+          Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
+          ? (Number(networkParam) as SupportedNetworks)
+          : null,
+      );
+
+      prevParamsRef.current = currentParams;
+    }
+  }, [searchParams]);
 
   const starMarket = useCallback(
     (id: string) => {
@@ -130,12 +146,16 @@ export default function Markets() {
       } else {
         params.delete('network');
       }
-      router.push(`?${params.toString()}`, { scroll: false });
+      const newParams = params.toString();
+      if (newParams !== prevParamsRef.current) {
+        router.push(`?${newParams}`, { scroll: false });
+        prevParamsRef.current = newParams;
+      }
     },
     [router, searchParams],
   );
 
-  // Update the all markets pass to the table
+  // Update filtered markets
   useEffect(() => {
     const filtered = applyFilterAndSort(
       rawMarkets,
@@ -148,7 +168,6 @@ export default function Markets() {
       selectedLoanAssets,
     );
     setFilteredMarkets(filtered);
-    updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
   }, [
     rawMarkets,
     hideDust,
@@ -158,8 +177,12 @@ export default function Markets() {
     selectedCollaterals,
     selectedLoanAssets,
     selectedNetwork,
-    updateUrlParams,
   ]);
+
+  // Update URL params when filters change
+  useEffect(() => {
+    updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
+  }, [selectedCollaterals, selectedLoanAssets, selectedNetwork, updateUrlParams]);
 
   const titleOnclick = useCallback(
     (column: number) => {
