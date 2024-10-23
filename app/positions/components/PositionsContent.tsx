@@ -7,11 +7,11 @@ import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
+import { SupplyModal } from '@/components/supplyModal';
+import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
-import { SupplyModal } from '@/components/supplyModal';
-import { WithdrawModal } from '@/components/withdrawModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
 export default function Positions() {

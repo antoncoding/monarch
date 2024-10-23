@@ -4,13 +4,13 @@ import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
+import { SupplyModal } from '@/components/supplyModal';
 import useMarkets from '@/hooks/useMarkets';
 import { SupportedNetworks } from '@/utils/networks';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
-import { SupplyModal } from '@/components/supplyModal';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';
