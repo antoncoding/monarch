@@ -10,12 +10,12 @@ import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
+import { SupplyModal } from '@/components/supplyModal';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
-import { SupplyModal } from './supplyModal';
 import { applyFilterAndSort } from './utils';
 
 const defaultSortColumn = Number(

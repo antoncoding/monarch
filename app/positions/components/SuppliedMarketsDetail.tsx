@@ -11,7 +11,8 @@ import { getCollateralColor } from '../utils/colors';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
-  setShowModal: (show: boolean) => void;
+  setShowWithdrawModal: (show: boolean) => void;
+  setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
 };
 
@@ -38,7 +39,8 @@ function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
 
 export function SuppliedMarketsDetail({
   groupedPosition,
-  setShowModal,
+  setShowWithdrawModal,
+  setShowSupplyModal,
   setSelectedPosition,
 }: SuppliedMarketsDetailProps) {
   const sortedMarkets = [...groupedPosition.markets].sort(
@@ -115,16 +117,16 @@ export function SuppliedMarketsDetail({
             );
             const percentageOfPortfolio =
               totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
-            const warningColor = getWarningColor(position.warningsWithDetail);
+            const warningColor = getWarningColor(position.market.warningsWithDetail);
 
             return (
               <tr key={position.market.uniqueKey} className="gap-1">
                 <td data-label="Market" className="text-center">
                   <div className="flex items-center justify-center">
                     <div className="mr-1 w-4">
-                      {position.warningsWithDetail.length > 0 ? (
+                      {position.market.warningsWithDetail.length > 0 ? (
                         <Tooltip
-                          content={<WarningTooltip warnings={position.warningsWithDetail} />}
+                          content={<WarningTooltip warnings={position.market.warningsWithDetail} />}
                           placement="top"
                         >
                           <div>
@@ -193,16 +195,26 @@ export function SuppliedMarketsDetail({
                     </span>
                   </div>
                 </td>
-                <td data-label="Actions" className="text-right">
+                <td data-label="Actions" className="flex justify-center gap-2 text-right">
                   <button
                     type="button"
                     className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
                     onClick={() => {
-                      setShowModal(true);
                       setSelectedPosition(position);
+                      setShowWithdrawModal(true);
                     }}
                   >
                     Withdraw
+                  </button>
+                  <button
+                    type="button"
+                    className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
+                    onClick={() => {
+                      setSelectedPosition(position);
+                      setShowSupplyModal(true);
+                    }}
+                  >
+                    Supply
                   </button>
                 </td>
               </tr>

@@ -5,64 +5,7 @@ export type MarketPosition = {
   borrowShares: string;
   borrowAssets: string;
   borrowAssetsUsd: number;
-  market: {
-    id: string;
-    uniqueKey: string;
-    lltv: string;
-    oracleAddress: string;
-    oracleFeed?: OracleFeedsInfo;
-    oracleInfo: {
-      type: string;
-    };
-    irmAddress: string;
-    morphoBlue: {
-      id: string;
-      address: string;
-      chain: {
-        id: number;
-      };
-    };
-    dailyApys: {
-      netSupplyApy: number;
-    };
-    weeklyApys: {
-      netSupplyApy: number;
-    };
-    monthlyApys: {
-      netSupplyApy: number;
-    };
-    loanAsset: {
-      address: string;
-      symbol: string;
-      decimals: number;
-    };
-    collateralAsset: {
-      address: string;
-      symbol: string;
-      decimals: number;
-    };
-    state: {
-      liquidityAssets: string;
-      supplyAssets: string;
-      supplyAssetsUsd: number;
-      borrowAssets: string;
-      borrowAssetsUsd: number;
-      rewards: {
-        yearlySupplyTokens: string;
-        asset: {
-          address: string;
-          priceUsd: string | null;
-          spotPriceEth: string | null;
-        };
-      }[];
-      utilization: number;
-    };
-    warnings: MarketWarning[];
-    oracle: {
-      data: MorphoChainlinkOracleData;
-    };
-  };
-  warningsWithDetail: WarningWithDetail[];
+  market: Market; // Now using the full Market type
 };
 
 export enum UserTxTypes {
@@ -321,6 +264,10 @@ export type Market = {
   realizedBadDebt?: {
     underlying: number;
     usd: number;
+  };
+  dailyApys: {
+    netSupplyApy: number;
+    netBorrowApy: number;
   };
 
   // appended by us

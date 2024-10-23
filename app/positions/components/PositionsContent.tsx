@@ -10,11 +10,13 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
+import { SupplyModal } from '@/components/supplyModal';
+import { WithdrawModal } from '@/components/withdrawModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import { WithdrawModal } from './withdrawModal';
 
 export default function Positions() {
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
@@ -49,14 +51,24 @@ export default function Positions() {
           </div>
         </div>
 
-        {showModal && selectedPosition && (
+        {showWithdrawModal && selectedPosition && (
           <WithdrawModal
             position={selectedPosition}
             onClose={() => {
-              setShowModal(false);
+              setShowWithdrawModal(false);
               setSelectedPosition(null);
             }}
             refetch={refetch}
+          />
+        )}
+
+        {showSupplyModal && selectedPosition && (
+          <SupplyModal
+            market={selectedPosition.market}
+            onClose={() => {
+              setShowSupplyModal(false);
+              setSelectedPosition(null);
+            }}
           />
         )}
 
@@ -68,7 +80,8 @@ export default function Positions() {
           <div className="mt-4">
             <PositionsSummaryTable
               marketPositions={marketPositions}
-              setShowModal={setShowModal}
+              setShowWithdrawModal={setShowWithdrawModal}
+              setShowSupplyModal={setShowSupplyModal}
               setSelectedPosition={setSelectedPosition}
               refetch={refetch}
               isRefetching={isRefetching}

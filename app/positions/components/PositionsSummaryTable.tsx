@@ -4,11 +4,10 @@ import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
-import { useAccount } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { MarketPosition, GroupedPosition } from '@/utils/types';
+import { MarketPosition, GroupedPosition, WarningWithDetail } from '@/utils/types';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,
@@ -17,9 +16,10 @@ import {
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
-type PositionTableProps = {
+type PositionsSummaryTableProps = {
   marketPositions: MarketPosition[];
-  setShowModal: (show: boolean) => void;
+  setShowWithdrawModal: (show: boolean) => void;
+  setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
@@ -27,13 +27,12 @@ type PositionTableProps = {
 
 export function PositionsSummaryTable({
   marketPositions,
-  setShowModal,
+  setShowWithdrawModal,
+  setShowSupplyModal,
   setSelectedPosition,
   refetch,
   isRefetching,
-}: PositionTableProps) {
-  const { address: account } = useAccount();
-
+}: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
@@ -70,15 +69,15 @@ export function PositionsSummaryTable({
 
       // Combine warnings from all markets
       groupedPosition.allWarnings = [
-        ...new Set([...groupedPosition.allWarnings, ...position.warningsWithDetail]),
-      ];
+        ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
+      ] as WarningWithDetail[];
 
       const supplyAmount = Number(
         formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
       );
       groupedPosition.totalSupply += supplyAmount;
 
-      const weightedApy = supplyAmount * position.market.dailyApys.netSupplyApy;
+      const weightedApy = supplyAmount * position.market.state.supplyApy;
       groupedPosition.totalWeightedApy += weightedApy;
 
       const collateralAddress = position.market.collateralAsset?.address;
@@ -163,9 +162,8 @@ export function PositionsSummaryTable({
   };
 
   const handleManualRefresh = () => {
-    refetch(() => {
-      toast.info('Data refreshed', { icon: <span>🚀</span> });
-    });
+    refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
+    ;
   };
 
   return (
@@ -268,21 +266,18 @@ export function PositionsSummaryTable({
                     </div>
                   </td>
                   <td data-label="Actions" className="text-right">
-                    <button
-                      type="button"
-                      className="bg-hovered rounded-sm p-2 text-xs duration-300 ease-in-out hover:bg-orange-500"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (account) {
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-monarch-primary"
+                        onClick={() => {
                           setSelectedGroupedPosition(position);
                           setShowRebalanceModal(true);
-                        } else {
-                          toast.info('Please connect your wallet to rebalance');
-                        }
-                      }}
-                    >
-                      Rebalance
-                    </button>
+                        }}
+                      >
+                        Rebalance
+                      </button>
+                    </div>
                   </td>
                 </tr>
                 {isExpanded && (
@@ -290,7 +285,8 @@ export function PositionsSummaryTable({
                     <td colSpan={7} className="p-0">
                       <SuppliedMarketsDetail
                         groupedPosition={position}
-                        setShowModal={setShowModal}
+                        setShowSupplyModal={setShowSupplyModal}
+                        setShowWithdrawModal={setShowWithdrawModal}
                         setSelectedPosition={setSelectedPosition}
                       />
                     </td>
