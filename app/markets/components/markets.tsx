@@ -10,7 +10,7 @@ import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
-import { SupplyModal } from '../../../src/components/supplyModal';
+import { SupplyModal } from '@/components/supplyModal';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';

@@ -10,8 +10,8 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
 
 import { MarketPosition } from '@/utils/types';
-import { SupplyModal } from '../../../src/components/supplyModal';
-import { WithdrawModal } from '../../../src/components/withdrawModal';
+import { SupplyModal } from '@/components/supplyModal';
+import { WithdrawModal } from '@/components/withdrawModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
 export default function Positions() {
