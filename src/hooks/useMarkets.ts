@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { marketsQuery } from '@/graphql/queries';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
@@ -24,145 +25,6 @@ export type Reward = {
   }[];
 };
 
-const marketsQuery = `
-  fragment FeedFields on OracleFeed {
-    address
-    chain {
-      id
-    }
-    description
-    id
-    pair
-    vendor
-  }
-
-  query getMarkets($first: Int, $where: MarketFilters) {
-    markets(first: $first, where: $where) {
-      items {
-        id
-        lltv
-        uniqueKey
-        irmAddress
-        oracleAddress
-        collateralPrice
-        morphoBlue {
-            id
-            address
-            chain {
-              id
-              __typename
-            }
-            __typename
-        }
-        oracleInfo {
-          type
-          __typename
-        }
-        oracle {
-          data {
-            ... on MorphoChainlinkOracleData {
-              baseFeedOne {
-                ...FeedFields
-              }
-              baseFeedTwo {
-                ...FeedFields
-              }
-              quoteFeedOne {
-                ...FeedFields
-              }
-              quoteFeedTwo {
-                ...FeedFields
-              }
-            }
-            ... on MorphoChainlinkOracleV2Data {
-              baseFeedOne {
-                ...FeedFields
-              }
-              baseFeedTwo {
-                ...FeedFields
-              }
-              quoteFeedOne {
-                ...FeedFields
-              }
-              quoteFeedTwo {
-                ...FeedFields
-              }
-            }
-          }
-        }
-        loanAsset {
-          id
-          address
-          symbol
-          name
-          decimals
-          priceUsd
-          __typename
-        }
-        collateralAsset {
-          id
-          address
-          symbol
-          name
-          decimals
-          priceUsd
-          __typename
-        }
-        state {
-          borrowAssets
-          supplyAssets
-          borrowAssetsUsd
-          supplyAssetsUsd
-          borrowShares
-          supplyShares
-          liquidityAssets
-          liquidityAssetsUsd
-          collateralAssets
-          collateralAssetsUsd
-          utilization
-          supplyApy
-          borrowApy
-          fee
-          timestamp
-          rateAtUTarget
-          rewards {
-            yearlySupplyTokens
-            asset {
-              address
-              priceUsd
-              spotPriceEth
-            }
-            amountPerSuppliedToken
-            amountPerBorrowedToken
-          }
-          __typename
-        }
-        warnings {
-          type
-          level
-          __typename
-        }
-        badDebt {
-          underlying
-          usd
-        }
-        realizedBadDebt {
-          underlying
-          usd
-        }
-      }
-      pageInfo {
-        countTotal
-        count
-        limit
-        skip
-        __typename
-      }  
-      __typename
-    }
-  }
-`;
-
 const useMarkets = () => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -174,6 +36,8 @@ const useMarkets = () => {
     error: liquidationsError,
     refetch: refetchLiquidations,
   } = useLiquidations();
+
+  console.log('data', data);
 
   const fetchData = useCallback(
     async (isRefetch = false) => {
