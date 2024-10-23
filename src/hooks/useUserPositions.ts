@@ -82,7 +82,7 @@ const useUserPositions = (user: string | undefined) => {
             market: {
               ...position.market,
               warningsWithDetail: getMarketWarningsWithDetail(position.market),
-            }           
+            },
           }));
 
         setHistory(transactions);

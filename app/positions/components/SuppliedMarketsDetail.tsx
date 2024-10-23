@@ -195,7 +195,7 @@ export function SuppliedMarketsDetail({
                     </span>
                   </div>
                 </td>
-                <td data-label="Actions" className="text-right">
+                <td data-label="Actions" className="flex justify-center gap-2 text-right">
                   <button
                     type="button"
                     className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
