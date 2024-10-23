@@ -21,7 +21,7 @@ type PositionsSummaryTableProps = {
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
-  refetch: () => void;
+  refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
 };
 
@@ -162,8 +162,8 @@ export function PositionsSummaryTable({
   };
 
   const handleManualRefresh = () => {
-    refetch();
-    toast.info('Data refreshed', { icon: <span>🚀</span> });
+    refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
+    ;
   };
 
   return (

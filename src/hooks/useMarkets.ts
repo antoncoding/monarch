@@ -37,8 +37,6 @@ const useMarkets = () => {
     refetch: refetchLiquidations,
   } = useLiquidations();
 
-  console.log('data', data);
-
   const fetchData = useCallback(
     async (isRefetch = false) => {
       try {
