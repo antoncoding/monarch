@@ -70,12 +70,11 @@ export function applyFilterAndSort(
         return false;
       }
 
-      if (selectedCollaterals.length > 0) {
-        return isSelectedAsset(market, selectedCollaterals, 'collateral');
-      }
-
-      if (selectedLoanAssets.length > 0) {
-        return isSelectedAsset(market, selectedLoanAssets, 'loan');
+      if (
+        (selectedCollaterals.length > 0 && !isSelectedAsset(market, selectedCollaterals, 'collateral')) ||
+        (selectedLoanAssets.length > 0 && !isSelectedAsset(market, selectedLoanAssets, 'loan'))
+      ) {
+        return false;
       }
 
       if (selectedOracles.length > 0) {
