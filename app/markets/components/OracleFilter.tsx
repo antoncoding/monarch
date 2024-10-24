@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
+import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleFilterProps = {
   selectedOracles: OracleVendors[];
@@ -61,12 +62,15 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         <span className="absolute left-2 top-2 px-1 text-xs">Oracle</span>
         <div className="flex items-center justify-between pt-4">
           {selectedOracles.length > 0 ? (
-            <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
+            <div className="flex-scroll flex gap-2 px-1">
               {selectedOracles.map((oracle) => (
                 <OracleVendorBadge
                   key={oracle}
-                  oracleData={{ baseFeedOne: { vendor: oracle } } as any}
-                  useTooltip={true}
+                  oracleData={
+                    { baseFeedOne: { vendor: oracle } } as unknown as MorphoChainlinkOracleData
+                  }
+                  showText={false}
+                  useTooltip={false}
                 />
               ))}
             </div>

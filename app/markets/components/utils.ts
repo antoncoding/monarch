@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { SupportedNetworks } from '@/utils/networks';
+import { parseOracleVendors, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
-import { parseOracleVendors, OracleVendors } from '@/utils/oracle';
 
 export const sortProperties = {
   [SortColumn.LoanAsset]: 'loanAsset.name',
@@ -21,6 +23,23 @@ export const getNestedProperty = (obj: Market, path: string | ((item: Market) =>
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
   return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
+};
+
+const isSelectedAsset = (
+  market: Market,
+  selectedAssetKeys: string[],
+  type: 'collateral' | 'loan',
+) => {
+  return selectedAssetKeys.find((combinedKey) =>
+    combinedKey
+      .split('|')
+      .includes(
+        `${(type === 'collateral'
+          ? market.collateralAsset
+          : market.loanAsset
+        ).address.toLowerCase()}-${market.morphoBlue.chain.id}`,
+      ),
+  );
 };
 
 export function applyFilterAndSort(
@@ -51,20 +70,12 @@ export function applyFilterAndSort(
         return false;
       }
 
-      if (
-        selectedCollaterals.length > 0 &&
-        !selectedCollaterals.includes(
-          `${market.collateralAsset.address}|${market.morphoBlue.chain.id}`,
-        )
-      ) {
-        return false;
+      if (selectedCollaterals.length > 0) {
+        return isSelectedAsset(market, selectedCollaterals, 'collateral');
       }
 
-      if (
-        selectedLoanAssets.length > 0 &&
-        !selectedLoanAssets.includes(`${market.loanAsset.address}|${market.morphoBlue.chain.id}`)
-      ) {
-        return false;
+      if (selectedLoanAssets.length > 0) {
+        return isSelectedAsset(market, selectedLoanAssets, 'loan');
       }
 
       if (selectedOracles.length > 0) {
@@ -80,7 +91,9 @@ export function applyFilterAndSort(
       let comparison = 0;
       const property = sortProperties[sortColumn];
       if (property) {
+         
         const aValue = getNestedProperty(a, property);
+         
         const bValue = getNestedProperty(b, property);
         comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
       }

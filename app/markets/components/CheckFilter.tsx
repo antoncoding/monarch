@@ -13,7 +13,7 @@ export default function CheckFilter({ label, checked, onChange, tooltip }: Check
   return (
     <Checkbox
       classNames={{
-        base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm px-2 h-14',
+        base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm px-2 h-14 min-w-48',
       }}
       isSelected={checked}
       onValueChange={onChange}

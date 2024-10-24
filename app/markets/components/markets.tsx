@@ -1,6 +1,6 @@
 'use client';
-import { Input } from '@nextui-org/input';
 import { useCallback, useEffect, useState, useRef } from 'react';
+import { Input } from '@nextui-org/input';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSearch, FaEllipsisH } from 'react-icons/fa';
@@ -8,19 +8,20 @@ import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import useMarkets from '@/hooks/useMarkets';
+import { usePagination } from '@/hooks/usePagination';
 import { SupportedNetworks } from '@/utils/networks';
+import { OracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
-import OracleFilter from './OracleFilter'; // New import
 import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
+import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
-import { OracleVendors } from '@/utils/oracle'; // New import
 
 const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
@@ -70,9 +71,11 @@ export default function Markets() {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [riskFilter, setRiskFilter] = useState<string>('all');
 
   const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
+
+  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange } =
+    usePagination();
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -151,6 +154,10 @@ export default function Markets() {
     [router, searchParams],
   );
 
+  const resetPage = useCallback(() => {
+    setCurrentPage(1);
+  }, [setCurrentPage]);
+
   useEffect(() => {
     const filtered = applyFilterAndSort(
       rawMarkets,
@@ -161,7 +168,7 @@ export default function Markets() {
       showUnknownOracle,
       selectedCollaterals,
       selectedLoanAssets,
-      selectedOracles, // New parameter
+      selectedOracles,
     ).filter((market) => {
       const query = searchQuery.toLowerCase();
       return (
@@ -171,6 +178,7 @@ export default function Markets() {
       );
     });
     setFilteredMarkets(filtered);
+    resetPage();
   }, [
     rawMarkets,
     sortColumn,
@@ -181,7 +189,8 @@ export default function Markets() {
     selectedLoanAssets,
     selectedNetwork,
     searchQuery,
-    selectedOracles, // New dependency
+    selectedOracles,
+    resetPage,
   ]);
 
   useEffect(() => {
@@ -236,13 +245,13 @@ export default function Markets() {
         <div className="flex items-center justify-between pb-4">
           <Input
             id="market-search-input"
-            label="Search"
+            label="Quick Search"
             placeholder="Search by Market ID or Asset (Ctrl+F)"
             value={searchQuery}
             onValueChange={setSearchQuery}
-            endContent={<FaSearch className="text-gray-500" />}
+            endContent={<FaSearch className="text-secondary" />}
             classNames={{
-              inputWrapper: 'bg-secondary rounded-sm w-full md:w-96', // Increased width
+              inputWrapper: 'bg-secondary rounded-sm w-full lg:w-[400px]', // Increased width
               input: 'bg-secondary rounded-sm text-xs',
             }}
           />
@@ -251,7 +260,7 @@ export default function Markets() {
         {/* basic filter row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
-          <div className="flex flex-col gap-2 lg:flex-row">
+          <div className="flex flex-col gap-4 lg:flex-row">
             <NetworkFilter
               selectedNetwork={selectedNetwork}
               setSelectedNetwork={(network) => {
@@ -290,11 +299,11 @@ export default function Markets() {
             />
           </div>
 
-          <div>
+          <div className="mt-4 lg:mt-0">
             <button
               onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
               type="button"
-              className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               <FaEllipsisH size={16} className={showAdvancedSettings ? 'rotate-180' : ''} />
               Advanced
@@ -304,11 +313,11 @@ export default function Markets() {
 
         {/* advanced filters */}
         <div
-          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`flex flex-row overflow-hidden transition-all duration-300 ease-in-out md:flex-col ${
             showAdvancedSettings ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
           }`}
         >
-          <div className="my-4 flex flex-col gap-4 p-2 lg:flex-row">
+          <div className="mt-4 flex flex-col gap-8 p-2 sm:flex-row">
             <CheckFilter
               checked={showUnknown}
               onChange={(checked: boolean) => {
@@ -316,7 +325,6 @@ export default function Markets() {
                 storage.setItem(keys.MarketsShowUnknownKey, checked.toString());
               }}
               label="Show Unknown Assets"
-              tooltip="Show markets with unknown assets"
             />
 
             <CheckFilter
@@ -326,7 +334,6 @@ export default function Markets() {
                 storage.setItem(keys.MarketsShowUnknownOracleKey, checked.toString());
               }}
               label="Show Unknown Oracle"
-              tooltip="Show markets with unknown oracle"
             />
           </div>
         </div>
@@ -347,6 +354,10 @@ export default function Markets() {
               staredIds={staredIds}
               starMarket={starMarket}
               unstarMarket={unstarMarket}
+              currentPage={currentPage}
+              entriesPerPage={entriesPerPage}
+              handleEntriesPerPageChange={handleEntriesPerPageChange}
+              setCurrentPage={setCurrentPage}
             />
           </div>
         )}
