@@ -172,7 +172,7 @@ export default function Markets() {
     ).filter((market) => {
       const query = searchQuery.toLowerCase();
       return (
-        market.id.toLowerCase().startsWith(query) ||
+        market.uniqueKey.toLowerCase().includes(query) ||
         market.collateralAsset.symbol.toLowerCase().includes(query) ||
         market.loanAsset.symbol.toLowerCase().includes(query)
       );
