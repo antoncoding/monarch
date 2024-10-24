@@ -47,7 +47,7 @@ export function Pagination({
         <NextUIPagination
           showControls
           total={totalPages}
-          page={currentPage}
+          page={currentPage ?? 1}
           onChange={onPageChange}
           classNames={{
             wrapper: 'gap-0 overflow-visible h-8',

@@ -163,7 +163,6 @@ export function PositionsSummaryTable({
 
   const handleManualRefresh = () => {
     refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
-    ;
   };
 
   return (
