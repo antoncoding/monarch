@@ -3,7 +3,7 @@ import { Input } from '@nextui-org/input';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaSearch, FaEllipsisH } from 'react-icons/fa'; // Import search and ellipsis icons
+import { FaSearch, FaEllipsisH } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
@@ -15,10 +15,12 @@ import { Market } from '@/utils/types';
 
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
+import OracleFilter from './OracleFilter'; // New import
 import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import { applyFilterAndSort } from './utils';
+import { OracleVendors } from '@/utils/oracle'; // New import
 
 const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
@@ -69,6 +71,8 @@ export default function Markets() {
 
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [riskFilter, setRiskFilter] = useState<string>('all');
+
+  const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -157,14 +161,9 @@ export default function Markets() {
       showUnknownOracle,
       selectedCollaterals,
       selectedLoanAssets,
+      selectedOracles, // New parameter
     ).filter((market) => {
       const query = searchQuery.toLowerCase();
-      const riskWarnings = market.warningsWithDetail || [];
-      const riskLevel = riskWarnings.length;
-
-      if (riskFilter === 'threeGreen' && riskLevel > 0) return false;
-      if (riskFilter === 'twoGreen' && riskLevel > 1) return false;
-
       return (
         market.id.toLowerCase().startsWith(query) ||
         market.collateralAsset.symbol.toLowerCase().includes(query) ||
@@ -182,7 +181,7 @@ export default function Markets() {
     selectedLoanAssets,
     selectedNetwork,
     searchQuery,
-    riskFilter,
+    selectedOracles, // New dependency
   ]);
 
   useEffect(() => {
@@ -243,7 +242,7 @@ export default function Markets() {
             onValueChange={setSearchQuery}
             endContent={<FaSearch className="text-gray-500" />}
             classNames={{
-              inputWrapper: 'bg-secondary rounded-sm w-64',
+              inputWrapper: 'bg-secondary rounded-sm w-full md:w-96', // Increased width
               input: 'bg-secondary rounded-sm text-xs',
             }}
           />
@@ -253,7 +252,6 @@ export default function Markets() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
-            {/* network filter */}
             <NetworkFilter
               selectedNetwork={selectedNetwork}
               setSelectedNetwork={(network) => {
@@ -285,6 +283,11 @@ export default function Markets() {
               items={uniqueCollaterals}
               loading={loading}
             />
+
+            <OracleFilter
+              selectedOracles={selectedOracles}
+              setSelectedOracles={setSelectedOracles}
+            />
           </div>
 
           <div>
@@ -293,14 +296,18 @@ export default function Markets() {
               type="button"
               className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
-              <FaEllipsisH size={16} />
+              <FaEllipsisH size={16} className={showAdvancedSettings ? 'rotate-180' : ''} />
               Advanced
             </button>
           </div>
         </div>
 
         {/* advanced filters */}
-        {showAdvancedSettings && (
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            showAdvancedSettings ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
           <div className="my-4 flex flex-col gap-4 p-2 lg:flex-row">
             <CheckFilter
               checked={showUnknown}
@@ -322,7 +329,7 @@ export default function Markets() {
               tooltip="Show markets with unknown oracle"
             />
           </div>
-        )}
+        </div>
 
         {loading ? (
           <LoadingScreen message="Loading Morpho Blue Markets..." />
