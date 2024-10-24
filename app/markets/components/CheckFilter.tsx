@@ -13,10 +13,11 @@ export default function CheckFilter({ label, checked, onChange, tooltip }: Check
   return (
     <Checkbox
       classNames={{
-        base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm m-1 p-3',
+        base: 'inline-flex bg-secondary items-center cursor-pointer rounded-sm px-2 h-14',
       }}
       isSelected={checked}
       onValueChange={onChange}
+      radius="sm"
       size="sm"
     >
       <div className="flex items-center justify-center gap-2">

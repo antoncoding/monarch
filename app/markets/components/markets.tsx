@@ -1,7 +1,9 @@
 'use client';
+import { Input } from '@nextui-org/input';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { FaSearch, FaEllipsisH } from 'react-icons/fa'; // Import search and ellipsis icons
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
@@ -22,24 +24,18 @@ const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
 );
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
-const defaultHideDust = storage.getItem(keys.MarketsHideDustKey) === 'true';
-const defaultHideUnknown = storage.getItem(keys.MarketsHideUnknownKey) === 'true';
-
+const defaultShowUnknown = storage.getItem(keys.MarketsShowUnknownKey) === 'true';
+const defaultShowUnknownOracle = storage.getItem(keys.MarketsShowUnknownOracleKey) === 'true';
 const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
 ) as string[];
 
-/**
- * Use the page component toLowerCase() wrap the components
- * that you want toLowerCase() render on the page.
- */
 export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const { loading, data: rawMarkets } = useMarkets();
 
-  // Parse and validate network parameter
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
     return networkParam &&
@@ -48,7 +44,6 @@ export default function Markets() {
       : null;
   })();
 
-  // Initialize states
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
   const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(defaultNetwork);
@@ -56,15 +51,11 @@ export default function Markets() {
   const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<ERC20Token[]>([]);
 
-  // Add state for the checkbox
-  const [hideDust, setHideDust] = useState(defaultHideDust);
-  const [hideUnknown, setHideUnknown] = useState(defaultHideUnknown);
-
-  // Add state for the sort column and direction
+  const [showUnknown, setShowUnknown] = useState(defaultShowUnknown);
+  const [showUnknownOracle, setShowUnknownOracle] = useState(defaultShowUnknownOracle);
   const [sortColumn, setSortColumn] = useState<SortColumn>(defaultSortColumn);
   const [sortDirection, setSortDirection] = useState(defaultSortDirection);
 
-  // Control supply modal
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
 
@@ -72,10 +63,13 @@ export default function Markets() {
 
   const [filteredMarkets, setFilteredMarkets] = useState(rawMarkets);
 
-  // Use useRef to store the previous URL parameters
   const prevParamsRef = useRef<string>('');
 
-  // Synchronize state with URL parameters
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [riskFilter, setRiskFilter] = useState<string>('all');
+
   useEffect(() => {
     const currentParams = searchParams.toString();
     if (currentParams !== prevParamsRef.current) {
@@ -113,7 +107,6 @@ export default function Markets() {
     [staredIds],
   );
 
-  // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
     if (rawMarkets) {
       const collatList = rawMarkets.map((m) => {
@@ -122,7 +115,6 @@ export default function Markets() {
       const loanList = rawMarkets.map((m) => {
         return { address: m.loanAsset.address, chainId: m.morphoBlue.chain.id };
       });
-      // filter ERC20Token objects that exist in markets list
       setUniqueCollaterals(getUniqueTokens(collatList));
       setUniqueLoanAssets(getUniqueTokens(loanList));
     }
@@ -155,31 +147,44 @@ export default function Markets() {
     [router, searchParams],
   );
 
-  // Update filtered markets
   useEffect(() => {
     const filtered = applyFilterAndSort(
       rawMarkets,
       sortColumn,
       sortDirection,
       selectedNetwork,
-      hideDust,
-      hideUnknown,
+      showUnknown,
+      showUnknownOracle,
       selectedCollaterals,
       selectedLoanAssets,
-    );
+    ).filter((market) => {
+      const query = searchQuery.toLowerCase();
+      const riskWarnings = market.warningsWithDetail || [];
+      const riskLevel = riskWarnings.length;
+
+      if (riskFilter === 'threeGreen' && riskLevel > 0) return false;
+      if (riskFilter === 'twoGreen' && riskLevel > 1) return false;
+
+      return (
+        market.id.toLowerCase().startsWith(query) ||
+        market.collateralAsset.symbol.toLowerCase().includes(query) ||
+        market.loanAsset.symbol.toLowerCase().includes(query)
+      );
+    });
     setFilteredMarkets(filtered);
   }, [
     rawMarkets,
-    hideDust,
     sortColumn,
     sortDirection,
-    hideUnknown,
+    showUnknown,
+    showUnknownOracle,
     selectedCollaterals,
     selectedLoanAssets,
     selectedNetwork,
+    searchQuery,
+    riskFilter,
   ]);
 
-  // Update URL params when filters change
   useEffect(() => {
     updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
   }, [selectedCollaterals, selectedLoanAssets, selectedNetwork, updateUrlParams]);
@@ -197,6 +202,24 @@ export default function Markets() {
     [sortColumn, sortDirection],
   );
 
+  // Add keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        const searchInput = document.getElementById('market-search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -210,6 +233,23 @@ export default function Markets() {
           />
         )}
 
+        {/* search bar row */}
+        <div className="flex items-center justify-between pb-4">
+          <Input
+            id="market-search-input"
+            label="Search"
+            placeholder="Search by Market ID or Asset (Ctrl+F)"
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+            endContent={<FaSearch className="text-gray-500" />}
+            classNames={{
+              inputWrapper: 'bg-secondary rounded-sm w-64',
+              input: 'bg-secondary rounded-sm text-xs',
+            }}
+          />
+        </div>
+
+        {/* basic filter row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-2 lg:flex-row">
@@ -234,7 +274,6 @@ export default function Markets() {
               loading={loading}
             />
 
-            {/* collateral  */}
             <AssetFilter
               label="Collateral"
               placeholder="All collateral"
@@ -248,29 +287,42 @@ export default function Markets() {
             />
           </div>
 
-          {/* right section: checkbox */}
-          <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
+          <div>
+            <button
+              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+              type="button"
+              className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <FaEllipsisH size={16} />
+              Advanced
+            </button>
+          </div>
+        </div>
+
+        {/* advanced filters */}
+        {showAdvancedSettings && (
+          <div className="my-4 flex flex-col gap-4 p-2 lg:flex-row">
             <CheckFilter
-              checked={hideDust}
+              checked={showUnknown}
               onChange={(checked: boolean) => {
-                setHideDust(checked);
-                storage.setItem(keys.MarketsHideDustKey, checked.toString());
+                setShowUnknown(checked);
+                storage.setItem(keys.MarketsShowUnknownKey, checked.toString());
               }}
-              label="Hide Dust"
-              tooltip="Hide markets with lower than $1000 supplied"
+              label="Show Unknown Assets"
+              tooltip="Show markets with unknown assets"
             />
 
             <CheckFilter
-              checked={hideUnknown}
+              checked={showUnknownOracle}
               onChange={(checked: boolean) => {
-                setHideUnknown(checked);
-                storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
+                setShowUnknownOracle(checked);
+                storage.setItem(keys.MarketsShowUnknownOracleKey, checked.toString());
               }}
-              label="Hide Unknown"
-              tooltip="Hide markets with unknown assets"
+              label="Show Unknown Oracle"
+              tooltip="Show markets with unknown oracle"
             />
           </div>
-        </div>
+        )}
 
         {loading ? (
           <LoadingScreen message="Loading Morpho Blue Markets..." />

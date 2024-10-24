@@ -2,6 +2,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { isWhitelisted } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
+import { parseOracleVendors } from '@/utils/oracle';
 
 export const sortProperties = {
   [SortColumn.LoanAsset]: 'loanAsset.name',
@@ -44,8 +45,8 @@ export function applyFilterAndSort(
   sortColumn: SortColumn,
   sortDirection: number,
   selectedNetwork: SupportedNetworks | null,
-  hideDust: boolean,
-  hideUnknown: boolean,
+  showUnknown: boolean,
+  showUnknownOracle: boolean,
   selectedCollaterals: string[],
   selectedLoanAssets: string[],
 ) {
@@ -55,18 +56,19 @@ export function applyFilterAndSort(
     newData = newData.filter((item) => item.morphoBlue.chain.id === selectedNetwork);
   }
 
-  if (hideDust) {
-    newData = newData
-      .filter((item) => Number(item.state.supplyAssetsUsd) > 1000)
-      .filter((item) => Number(item.state.borrowAssetsUsd) > 100);
-  }
-
-  if (hideUnknown) {
+  if (!showUnknown) {
     newData = newData
       // Filter out any items which's collateral are not in the supported tokens list
       // Filter out any items which's loan are not in the supported tokens list
       .filter((item) => isWhitelisted(item.collateralAsset.address, item.morphoBlue.chain.id))
       .filter((item) => isWhitelisted(item.loanAsset.address, item.morphoBlue.chain.id));
+  }
+
+  if (!showUnknownOracle) {
+    newData = newData.filter((item) => {
+      const { vendors } = parseOracleVendors(item.oracle.data);
+      return vendors.length > 0;
+    });
   }
 
   if (selectedCollaterals.length > 0) {

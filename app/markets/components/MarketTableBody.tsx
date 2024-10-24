@@ -139,7 +139,7 @@ export function MarketTableBody({
                   decimals={item.loanAsset.decimals}
                   symbol={item.loanAsset.symbol}
                 />
-                <td data-label="APY">{(item.state.supplyApy * 100).toFixed(3)}</td>
+                <td data-label="APY">{(item.state.supplyApy * 100).toFixed(2)} %</td>
                 <td>
                   <div className="flex items-center justify-center gap-1">
                     <MarketAssetIndicator market={item} />
