@@ -15,8 +15,8 @@ import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { SupplyProcessModal } from './SupplyProcessModal';
 import OracleVendorBadge from './OracleVendorBadge';
+import { SupplyProcessModal } from './SupplyProcessModal';
 
 type SupplyModalProps = {
   market: Market;
@@ -261,7 +261,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             >
               <OracleVendorBadge
                 oracleData={market.oracle.data}
-                showText={true}
+                showText
                 useTooltip={false}
               />
             </a>

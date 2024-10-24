@@ -91,9 +91,8 @@ export function applyFilterAndSort(
       let comparison = 0;
       const property = sortProperties[sortColumn];
       if (property) {
-         
         const aValue = getNestedProperty(a, property);
-         
+
         const bValue = getNestedProperty(b, property);
         comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
       }
