@@ -1,3 +1,5 @@
+'use client';
+
 import { Checkbox } from '@nextui-org/checkbox';
 import { Tooltip } from '@nextui-org/tooltip';
 import { BsQuestionCircle } from 'react-icons/bs';

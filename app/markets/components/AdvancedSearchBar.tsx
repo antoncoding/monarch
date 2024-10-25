@@ -14,7 +14,7 @@ type SearchProps = {
   searchQuery: string; // currently active search query
 };
 
-function AdvancedSearchBar ({
+function AdvancedSearchBar({
   onSearch,
   onFilterUpdate,
   selectedCollaterals,
@@ -103,7 +103,6 @@ function AdvancedSearchBar ({
       })
       .join(' ');
 
-    console.log('searching cleanedInput', cleanedInput);
     onSearch(cleanedInput);
     setInputValue(cleanedInput); // Update the input value to reflect the cleaned search
     setSuggestions([]);
@@ -121,7 +120,13 @@ function AdvancedSearchBar ({
       const token = supportedTokens.find((t) => t.symbol.toLowerCase() === symbol.toLowerCase());
       if (token) {
         const tokenId = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-        onFilterUpdate(type as 'collateral' | 'loan', [
+
+        // make sure type is collateral or loan
+        if (type !== 'collateral' && type !== 'loan') {
+          return;
+        }
+
+        onFilterUpdate(type, [
           ...(type === 'collateral' ? selectedCollaterals : selectedLoanAssets),
           tokenId,
         ]);
@@ -135,7 +140,6 @@ function AdvancedSearchBar ({
     setShowSuggestions(false);
     inputRef.current?.focus();
   };
-
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab') {
@@ -193,7 +197,6 @@ function AdvancedSearchBar ({
         >
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {
-              console.log('suggestion', suggestion);
               const isTokenSuggestion = suggestion.includes(':');
               const token = isTokenSuggestion
                 ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1])
@@ -243,6 +246,6 @@ function AdvancedSearchBar ({
       )}
     </div>
   );
-};
+}
 
 export default AdvancedSearchBar;
