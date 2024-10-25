@@ -75,7 +75,7 @@ export default function Markets() {
 
   const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
 
-  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange } =
+  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
     usePagination();
 
   useEffect(() => {
@@ -154,10 +154,6 @@ export default function Markets() {
     },
     [router, searchParams],
   );
-
-  const resetPage = useCallback(() => {
-    setCurrentPage(1);
-  }, [setCurrentPage]);
 
   const applyFiltersAndSort = useCallback(() => {
     if (!rawMarkets) return;
