@@ -1,20 +1,20 @@
 'use client';
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { Input } from '@nextui-org/input';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaSearch, FaEllipsisH } from 'react-icons/fa';
+import { FaEllipsisH } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import useMarkets from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { SupportedNetworks } from '@/utils/networks';
-import { OracleVendors } from '@/utils/oracle';
+import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
+import AdvancedSearchBar from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';
@@ -64,7 +64,7 @@ export default function Markets() {
 
   const [staredIds, setStaredIds] = useState<string[]>(defaultStaredMarkets);
 
-  const [filteredMarkets, setFilteredMarkets] = useState(rawMarkets);
+  const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
   const prevParamsRef = useRef<string>('');
 
@@ -158,7 +158,9 @@ export default function Markets() {
     setCurrentPage(1);
   }, [setCurrentPage]);
 
-  useEffect(() => {
+  const applyFiltersAndSort = useCallback(() => {
+    if (!rawMarkets) return;
+
     const filtered = applyFilterAndSort(
       rawMarkets,
       sortColumn,
@@ -170,11 +172,15 @@ export default function Markets() {
       selectedLoanAssets,
       selectedOracles,
     ).filter((market) => {
-      const query = searchQuery.toLowerCase();
+      if (!searchQuery) return true; // If no search query, show all markets
+      const lowercaseQuery = searchQuery.toLowerCase();
+      const {vendors} = parseOracleVendors(market.oracle.data);
+      const vendorsName = vendors.join(',');
       return (
-        market.uniqueKey.toLowerCase().includes(query) ||
-        market.collateralAsset.symbol.toLowerCase().includes(query) ||
-        market.loanAsset.symbol.toLowerCase().includes(query)
+        market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
+        market.collateralAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
+        market.loanAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
+        vendorsName.toLowerCase().includes(lowercaseQuery)
       );
     });
     setFilteredMarkets(filtered);
@@ -183,19 +189,19 @@ export default function Markets() {
     rawMarkets,
     sortColumn,
     sortDirection,
+    selectedNetwork,
     showUnknown,
     showUnknownOracle,
     selectedCollaterals,
     selectedLoanAssets,
-    selectedNetwork,
-    searchQuery,
     selectedOracles,
+    searchQuery,
     resetPage,
   ]);
 
   useEffect(() => {
-    updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
-  }, [selectedCollaterals, selectedLoanAssets, selectedNetwork, updateUrlParams]);
+    applyFiltersAndSort();
+  }, [applyFiltersAndSort]);
 
   const titleOnclick = useCallback(
     (column: number) => {
@@ -228,6 +234,25 @@ export default function Markets() {
     };
   }, []);
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
+  };
+
+  const handleFilterUpdate = (type: 'collateral' | 'loan', tokens: string[]) => {
+    // remove duplicates
+    const uniqueTokens = [...new Set(tokens)];
+
+    if (type === 'collateral') {
+      setSelectedCollaterals(uniqueTokens);
+    } else {
+      setSelectedLoanAssets(uniqueTokens);
+    }
+    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
+  };
+
+  console.log('search query', searchQuery);
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -241,19 +266,14 @@ export default function Markets() {
           />
         )}
 
-        {/* search bar row */}
+        {/* Replace the old search bar with AdvancedSearchBar */}
         <div className="flex items-center justify-between pb-4">
-          <Input
-            id="market-search-input"
-            label="Quick Search"
-            placeholder="Search by Market ID or Asset (Ctrl+F)"
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            endContent={<FaSearch className="text-secondary" />}
-            classNames={{
-              inputWrapper: 'bg-secondary rounded-sm w-full lg:w-[400px]', // Increased width
-              input: 'bg-secondary rounded-sm text-xs',
-            }}
+          <AdvancedSearchBar
+            searchQuery={searchQuery}
+            onSearch={handleSearch}
+            onFilterUpdate={handleFilterUpdate}
+            selectedCollaterals={selectedCollaterals}
+            selectedLoanAssets={selectedLoanAssets}
           />
         </div>
 
@@ -279,6 +299,7 @@ export default function Markets() {
               }}
               items={uniqueLoanAssets}
               loading={loading}
+              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
             />
 
             <AssetFilter
@@ -291,6 +312,7 @@ export default function Markets() {
               }}
               items={uniqueCollaterals}
               loading={loading}
+              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
             />
 
             <OracleFilter

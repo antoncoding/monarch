@@ -11,6 +11,7 @@ type FilterProps = {
   setSelectedAssets: (assets: string[]) => void;
   items: ERC20Token[];
   loading: boolean;
+  updateFromSearch?: string[]; // New prop
 };
 
 export default function AssetFilter({
@@ -20,6 +21,7 @@ export default function AssetFilter({
   setSelectedAssets,
   items,
   loading,
+  updateFromSearch,
 }: FilterProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -74,6 +76,17 @@ export default function AssetFilter({
   const filteredItems = items.filter((token) =>
     token.symbol.toLowerCase().includes(query.toLowerCase()),
   );
+
+  useEffect(() => {
+    if (updateFromSearch) {
+      const newSelection = updateFromSearch.map(symbol => 
+        items.find(item => item.symbol.toLowerCase() === symbol.toLowerCase())
+      ).filter(Boolean).map(token => 
+        token!.networks.map(n => infoToKey(n.address, n.chain.id)).join('|')
+      );
+      setSelectedAssets(newSelection);
+    }
+  }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
     <div className="relative w-full" ref={dropdownRef}>

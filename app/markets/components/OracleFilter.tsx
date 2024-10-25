@@ -13,18 +13,22 @@ type OracleFilterProps = {
 export default function OracleFilter({ selectedOracles, setSelectedOracles }: OracleFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const mounted = useRef(true); 
+  const mounted = useRef(true);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (mounted.current && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        mounted.current &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      mounted.current = false;  
+      mounted.current = false;
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);

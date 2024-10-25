@@ -71,7 +71,8 @@ export function applyFilterAndSort(
       }
 
       if (
-        (selectedCollaterals.length > 0 && !isSelectedAsset(market, selectedCollaterals, 'collateral')) ||
+        (selectedCollaterals.length > 0 &&
+          !isSelectedAsset(market, selectedCollaterals, 'collateral')) ||
         (selectedLoanAssets.length > 0 && !isSelectedAsset(market, selectedLoanAssets, 'loan'))
       ) {
         return false;

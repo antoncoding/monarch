@@ -259,11 +259,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
               target="_blank"
             >
-              <OracleVendorBadge
-                oracleData={market.oracle.data}
-                showText
-                useTooltip={false}
-              />
+              <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
             </a>
           </div>
           <div className="mb-1 flex items-start justify-between">

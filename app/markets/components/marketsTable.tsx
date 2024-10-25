@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
@@ -121,6 +121,7 @@ function MarketsTable({
         onPageChange={setCurrentPage}
         entriesPerPage={entriesPerPage}
         onEntriesPerPageChange={handleEntriesPerPageChange}
+        isDataLoaded={markets.length > 0}
       />
     </div>
   );
