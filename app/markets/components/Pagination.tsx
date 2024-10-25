@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pagination as NextUIPagination,
   Modal,
@@ -17,6 +17,7 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
   entriesPerPage: number;
   onEntriesPerPageChange: (entries: number) => void;
+  isDataLoaded: boolean; // New prop to check if data is loaded
 };
 
 export function Pagination({
@@ -25,6 +26,7 @@ export function Pagination({
   onPageChange,
   entriesPerPage,
   onEntriesPerPageChange,
+  isDataLoaded, // New prop
 }: PaginationProps) {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [customEntries, setCustomEntries] = useState(entriesPerPage.toString());
@@ -41,13 +43,26 @@ export function Pagination({
     }
   };
 
+  // Force re-render when data is loaded
+  useEffect(() => {
+    if (isDataLoaded) {
+      onPageChange(1); // Reset to first page when data loads
+    }
+  }, [isDataLoaded, onPageChange]);
+
+  if (!isDataLoaded || totalPages === 0) {
+    return null; // Don't render pagination if data isn't loaded or there are no pages
+  }
+
   return (
     <div className="mt-4 flex items-center justify-center">
       <div className="flex items-center">
         <NextUIPagination
+          key={`pagination-${isDataLoaded}-${totalPages}`} // Force re-render when these change
           showControls
           total={totalPages}
           page={currentPage}
+          initialPage={1}
           onChange={onPageChange}
           classNames={{
             wrapper: 'gap-0 overflow-visible h-8',

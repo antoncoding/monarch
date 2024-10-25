@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { usePagination } from '@/hooks/usePagination';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
@@ -17,6 +16,10 @@ type MarketsTableProps = {
   staredIds: string[];
   unstarMarket: (id: string) => void;
   starMarket: (id: string) => void;
+  currentPage: number;
+  entriesPerPage: number;
+  handleEntriesPerPageChange: (value: number) => void;
+  setCurrentPage: (value: number) => void;
 };
 
 function MarketsTable({
@@ -29,10 +32,12 @@ function MarketsTable({
   setSelectedMarket,
   starMarket,
   unstarMarket,
+  currentPage,
+  entriesPerPage,
+  handleEntriesPerPageChange,
+  setCurrentPage,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange } =
-    usePagination();
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -116,6 +121,7 @@ function MarketsTable({
         onPageChange={setCurrentPage}
         entriesPerPage={entriesPerPage}
         onEntriesPerPageChange={handleEntriesPerPageChange}
+        isDataLoaded={markets.length > 0}
       />
     </div>
   );

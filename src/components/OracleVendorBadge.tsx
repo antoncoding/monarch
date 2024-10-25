@@ -8,6 +8,7 @@ import { MorphoChainlinkOracleData } from '@/utils/types';
 type OracleVendorBadgeProps = {
   oracleData: MorphoChainlinkOracleData | null;
   useTooltip?: boolean;
+  showText?: boolean;
 };
 
 const renderVendorIcon = (vendor: OracleVendors) =>
@@ -17,14 +18,18 @@ const renderVendorIcon = (vendor: OracleVendors) =>
     <IoWarningOutline className="text-secondary" size={16} />
   );
 
-function OracleVendorBadge({ oracleData, useTooltip = true }: OracleVendorBadgeProps) {
+function OracleVendorBadge({
+  oracleData,
+  showText = true,
+  useTooltip = true,
+}: OracleVendorBadgeProps) {
   const { vendors } = parseOracleVendors(oracleData);
 
   const noFeeds = vendors.length === 0;
 
   const content = (
     <div className={`flex items-center space-x-1 ${useTooltip ? '' : 'rounded bg-primary p-1'}`}>
-      {!useTooltip && (
+      {!useTooltip && showText && (
         <span className="mr-1 text-xs font-medium">
           {noFeeds ? 'No Oracle' : vendors.join(', ')}:
         </span>

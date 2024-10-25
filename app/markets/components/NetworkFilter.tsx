@@ -22,7 +22,7 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
         }
       }}
       classNames={{
-        trigger: 'bg-secondary rounded-sm min-w-32',
+        trigger: 'bg-secondary rounded-sm min-w-48',
         popoverContent: 'bg-secondary rounded-sm',
       }}
       items={networks}

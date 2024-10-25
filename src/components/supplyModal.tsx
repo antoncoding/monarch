@@ -15,6 +15,7 @@ import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
 type SupplyModalProps = {
@@ -258,8 +259,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
               target="_blank"
             >
-              <p className="text-right font-zen text-sm">{market.oracleInfo.type}</p>
-              <ExternalLinkIcon />
+              <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
             </a>
           </div>
           <div className="mb-1 flex items-start justify-between">

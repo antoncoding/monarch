@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { SupportedNetworks } from '@/utils/networks';
-import { isWhitelisted } from '@/utils/tokens';
+import { parseOracleVendors, OracleVendors } from '@/utils/oracle';
+import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 
@@ -44,48 +47,55 @@ export function applyFilterAndSort(
   sortColumn: SortColumn,
   sortDirection: number,
   selectedNetwork: SupportedNetworks | null,
-  hideDust: boolean,
-  hideUnknown: boolean,
+  showUnknown: boolean,
+  showUnknownOracle: boolean,
   selectedCollaterals: string[],
   selectedLoanAssets: string[],
-) {
-  let newData = [...markets];
+  selectedOracles: OracleVendors[],
+): Market[] {
+  return markets
+    .filter((market) => {
+      if (selectedNetwork !== null && market.morphoBlue.chain.id !== selectedNetwork) {
+        return false;
+      }
 
-  if (selectedNetwork !== null) {
-    newData = newData.filter((item) => item.morphoBlue.chain.id === selectedNetwork);
-  }
+      const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
+      const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
-  if (hideDust) {
-    newData = newData
-      .filter((item) => Number(item.state.supplyAssetsUsd) > 1000)
-      .filter((item) => Number(item.state.borrowAssetsUsd) > 100);
-  }
+      if (!showUnknown && (!collateralToken || !loanToken)) {
+        return false;
+      }
 
-  if (hideUnknown) {
-    newData = newData
-      // Filter out any items which's collateral are not in the supported tokens list
-      // Filter out any items which's loan are not in the supported tokens list
-      .filter((item) => isWhitelisted(item.collateralAsset.address, item.morphoBlue.chain.id))
-      .filter((item) => isWhitelisted(item.loanAsset.address, item.morphoBlue.chain.id));
-  }
+      if (!showUnknownOracle && parseOracleVendors(market.oracle.data).isUnknown) {
+        return false;
+      }
 
-  if (selectedCollaterals.length > 0) {
-    newData = newData.filter((item) => isSelectedAsset(item, selectedCollaterals, 'collateral'));
-  }
+      if (
+        (selectedCollaterals.length > 0 &&
+          !isSelectedAsset(market, selectedCollaterals, 'collateral')) ||
+        (selectedLoanAssets.length > 0 && !isSelectedAsset(market, selectedLoanAssets, 'loan'))
+      ) {
+        return false;
+      }
 
-  if (selectedLoanAssets.length > 0) {
-    newData = newData.filter((item) => isSelectedAsset(item, selectedLoanAssets, 'loan'));
-  }
+      if (selectedOracles.length > 0) {
+        const marketOracles = parseOracleVendors(market.oracle.data).vendors;
+        if (!marketOracles.some((oracle) => selectedOracles.includes(oracle))) {
+          return false;
+        }
+      }
 
-  newData.sort((a, b) => {
-    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
-    const propertyA = getNestedProperty(a, sortProperties[sortColumn]);
+      return true;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      const property = sortProperties[sortColumn];
+      if (property) {
+        const aValue = getNestedProperty(a, property);
 
-    // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
-    const propertyB = getNestedProperty(b, sortProperties[sortColumn]);
-
-    return propertyA > propertyB ? sortDirection : -sortDirection;
-  });
-
-  return newData;
+        const bValue = getNestedProperty(b, property);
+        comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      }
+      return comparison * sortDirection;
+    });
 }

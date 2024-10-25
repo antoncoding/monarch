@@ -2,44 +2,44 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { FaEllipsisH } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
+import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import useMarkets from '@/hooks/useMarkets';
+import { usePagination } from '@/hooks/usePagination';
 import { SupportedNetworks } from '@/utils/networks';
+import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
+import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
+import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
 
 const defaultSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
 );
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
-const defaultHideDust = storage.getItem(keys.MarketsHideDustKey) === 'true';
-const defaultHideUnknown = storage.getItem(keys.MarketsHideUnknownKey) === 'true';
-
+const defaultShowUnknown = storage.getItem(keys.MarketsShowUnknownKey) === 'true';
+const defaultShowUnknownOracle = storage.getItem(keys.MarketsShowUnknownOracleKey) === 'true';
 const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
 ) as string[];
 
-/**
- * Use the page component toLowerCase() wrap the components
- * that you want toLowerCase() render on the page.
- */
 export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const { loading, data: rawMarkets } = useMarkets();
 
-  // Parse and validate network parameter
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
     return networkParam &&
@@ -48,7 +48,6 @@ export default function Markets() {
       : null;
   })();
 
-  // Initialize states
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
   const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(defaultNetwork);
@@ -56,26 +55,29 @@ export default function Markets() {
   const [uniqueCollaterals, setUniqueCollaterals] = useState<ERC20Token[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<ERC20Token[]>([]);
 
-  // Add state for the checkbox
-  const [hideDust, setHideDust] = useState(defaultHideDust);
-  const [hideUnknown, setHideUnknown] = useState(defaultHideUnknown);
-
-  // Add state for the sort column and direction
+  const [showUnknown, setShowUnknown] = useState(defaultShowUnknown);
+  const [showUnknownOracle, setShowUnknownOracle] = useState(defaultShowUnknownOracle);
   const [sortColumn, setSortColumn] = useState<SortColumn>(defaultSortColumn);
   const [sortDirection, setSortDirection] = useState(defaultSortDirection);
 
-  // Control supply modal
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
 
   const [staredIds, setStaredIds] = useState<string[]>(defaultStaredMarkets);
 
-  const [filteredMarkets, setFilteredMarkets] = useState(rawMarkets);
+  const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
-  // Use useRef to store the previous URL parameters
   const prevParamsRef = useRef<string>('');
 
-  // Synchronize state with URL parameters
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+
+  const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
+
+  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
+    usePagination();
+
   useEffect(() => {
     const currentParams = searchParams.toString();
     if (currentParams !== prevParamsRef.current) {
@@ -113,7 +115,6 @@ export default function Markets() {
     [staredIds],
   );
 
-  // Update the unique collateral and loan assets when the data changes
   useEffect(() => {
     if (rawMarkets) {
       const collatList = rawMarkets.map((m) => {
@@ -122,7 +123,6 @@ export default function Markets() {
       const loanList = rawMarkets.map((m) => {
         return { address: m.loanAsset.address, chainId: m.morphoBlue.chain.id };
       });
-      // filter ERC20Token objects that exist in markets list
       setUniqueCollaterals(getUniqueTokens(collatList));
       setUniqueLoanAssets(getUniqueTokens(loanList));
     }
@@ -155,34 +155,50 @@ export default function Markets() {
     [router, searchParams],
   );
 
-  // Update filtered markets
-  useEffect(() => {
+  const applyFiltersAndSort = useCallback(() => {
+    if (!rawMarkets) return;
+
     const filtered = applyFilterAndSort(
       rawMarkets,
       sortColumn,
       sortDirection,
       selectedNetwork,
-      hideDust,
-      hideUnknown,
+      showUnknown,
+      showUnknownOracle,
       selectedCollaterals,
       selectedLoanAssets,
-    );
+      selectedOracles,
+    ).filter((market) => {
+      if (!searchQuery) return true; // If no search query, show all markets
+      const lowercaseQuery = searchQuery.toLowerCase();
+      const { vendors } = parseOracleVendors(market.oracle.data);
+      const vendorsName = vendors.join(',');
+      return (
+        market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
+        market.collateralAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
+        market.loanAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
+        vendorsName.toLowerCase().includes(lowercaseQuery)
+      );
+    });
     setFilteredMarkets(filtered);
+    resetPage();
   }, [
     rawMarkets,
-    hideDust,
     sortColumn,
     sortDirection,
-    hideUnknown,
+    selectedNetwork,
+    showUnknown,
+    showUnknownOracle,
     selectedCollaterals,
     selectedLoanAssets,
-    selectedNetwork,
+    selectedOracles,
+    searchQuery,
+    resetPage,
   ]);
 
-  // Update URL params when filters change
   useEffect(() => {
-    updateUrlParams(selectedCollaterals, selectedLoanAssets, selectedNetwork);
-  }, [selectedCollaterals, selectedLoanAssets, selectedNetwork, updateUrlParams]);
+    applyFiltersAndSort();
+  }, [applyFiltersAndSort]);
 
   const titleOnclick = useCallback(
     (column: number) => {
@@ -197,6 +213,41 @@ export default function Markets() {
     [sortColumn, sortDirection],
   );
 
+  // Add keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        const searchInput = document.getElementById('market-search-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
+  };
+
+  const handleFilterUpdate = (type: ShortcutType, tokens: string[]) => {
+    // remove duplicates
+    const uniqueTokens = [...new Set(tokens)];
+
+    if (type === ShortcutType.Collateral) {
+      setSelectedCollaterals(uniqueTokens);
+    } else {
+      setSelectedLoanAssets(uniqueTokens);
+    }
+    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
+  };
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -210,10 +261,23 @@ export default function Markets() {
           />
         )}
 
+        {/* Pass uniqueCollaterals and uniqueLoanAssets to AdvancedSearchBar */}
+        <div className="flex items-center justify-between pb-4">
+          <AdvancedSearchBar
+            searchQuery={searchQuery}
+            onSearch={handleSearch}
+            onFilterUpdate={handleFilterUpdate}
+            selectedCollaterals={selectedCollaterals}
+            selectedLoanAssets={selectedLoanAssets}
+            uniqueCollaterals={uniqueCollaterals}
+            uniqueLoanAssets={uniqueLoanAssets}
+          />
+        </div>
+
+        {/* basic filter row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
-          <div className="flex flex-col gap-2 lg:flex-row">
-            {/* network filter */}
+          <div className="flex flex-col gap-4 lg:flex-row">
             <NetworkFilter
               selectedNetwork={selectedNetwork}
               setSelectedNetwork={(network) => {
@@ -232,9 +296,9 @@ export default function Markets() {
               }}
               items={uniqueLoanAssets}
               loading={loading}
+              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
             />
 
-            {/* collateral  */}
             <AssetFilter
               label="Collateral"
               placeholder="All collateral"
@@ -245,29 +309,52 @@ export default function Markets() {
               }}
               items={uniqueCollaterals}
               loading={loading}
+              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+            />
+
+            <OracleFilter
+              selectedOracles={selectedOracles}
+              setSelectedOracles={setSelectedOracles}
             />
           </div>
 
-          {/* right section: checkbox */}
-          <div className="my-2 flex items-center justify-start rounded-sm p-2 lg:justify-end">
+          <div className="mt-4 lg:mt-0">
+            <button
+              onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+              type="button"
+              aria-expanded={showAdvancedSettings}
+              aria-controls="advanced-settings-panel"
+              className="flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+            >
+              <FaEllipsisH size={16} className={showAdvancedSettings ? 'rotate-180' : ''} />
+              Advanced
+            </button>
+          </div>
+        </div>
+
+        {/* advanced filters */}
+        <div
+          className={`flex flex-row overflow-hidden transition-all duration-300 ease-in-out md:flex-col ${
+            showAdvancedSettings ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+          }`}
+        >
+          <div className="mt-4 flex flex-col gap-8 p-2 sm:flex-row">
             <CheckFilter
-              checked={hideDust}
+              checked={showUnknown}
               onChange={(checked: boolean) => {
-                setHideDust(checked);
-                storage.setItem(keys.MarketsHideDustKey, checked.toString());
+                setShowUnknown(checked);
+                storage.setItem(keys.MarketsShowUnknownKey, checked.toString());
               }}
-              label="Hide Dust"
-              tooltip="Hide markets with lower than $1000 supplied"
+              label="Show Unknown Assets"
             />
 
             <CheckFilter
-              checked={hideUnknown}
+              checked={showUnknownOracle}
               onChange={(checked: boolean) => {
-                setHideUnknown(checked);
-                storage.setItem(keys.MarketsHideUnknownKey, checked.toString());
+                setShowUnknownOracle(checked);
+                storage.setItem(keys.MarketsShowUnknownOracleKey, checked.toString());
               }}
-              label="Hide Unknown"
-              tooltip="Hide markets with unknown assets"
+              label="Show Unknown Oracle"
             />
           </div>
         </div>
@@ -278,17 +365,28 @@ export default function Markets() {
           <div> No data </div>
         ) : (
           <div className="max-w-screen mt-4">
-            <MarketsTable
-              markets={filteredMarkets}
-              titleOnclick={titleOnclick}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              setShowSupplyModal={setShowSupplyModal}
-              setSelectedMarket={setSelectedMarket}
-              staredIds={staredIds}
-              starMarket={starMarket}
-              unstarMarket={unstarMarket}
-            />
+            {filteredMarkets.length > 0 ? (
+              <MarketsTable
+                markets={filteredMarkets}
+                titleOnclick={titleOnclick}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                setShowSupplyModal={setShowSupplyModal}
+                setSelectedMarket={setSelectedMarket}
+                staredIds={staredIds}
+                starMarket={starMarket}
+                unstarMarket={unstarMarket}
+                currentPage={currentPage}
+                entriesPerPage={entriesPerPage}
+                handleEntriesPerPageChange={handleEntriesPerPageChange}
+                setCurrentPage={setCurrentPage}
+              />
+            ) : (
+              <EmptyScreen
+                message="No markets found with the current filters"
+                hint="Try adjusting your filters or search query to see more results."
+              />
+            )}
           </div>
         )}
       </div>

@@ -45,12 +45,6 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0xdac17f958d2ee523a2206206994597c13d831ec7' }],
   },
   {
-    symbol: 'USDA',
-    img: require('../imgs/tokens/usda.png') as string,
-    decimals: 6,
-    networks: [{ chain: mainnet, address: '0x0000206329b97DB379d5E1Bf586BbDB969C63274' }],
-  },
-  {
     symbol: 'eUSD',
     img: require('../imgs/tokens/eusd.svg') as string,
     decimals: 18,
@@ -62,6 +56,12 @@ const supportedTokens = [
       name: 'Reserve',
       isProxy: true,
     },
+  },
+  {
+    symbol: 'USDA',
+    img: require('../imgs/tokens/usda.png') as string,
+    decimals: 6,
+    networks: [{ chain: mainnet, address: '0x0000206329b97DB379d5E1Bf586BbDB969C63274' }],
   },
   {
     symbol: 'USD0',
@@ -88,6 +88,24 @@ const supportedTokens = [
       name: 'Resolve',
       isProxy: true,
     },
+  },
+  {
+    symbol: 'crvUSD',
+    img: require('../imgs/tokens/crvusd.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E' }],
+  },
+  {
+    symbol: 'USDe',
+    img: require('../imgs/tokens/usde.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x4c9EDD5852cd905f086C759E8383e09bff1E68B3' }],
+  },
+  {
+    symbol: 'sUSDe',
+    img: require('../imgs/tokens/susde.png') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x9D39A5DE30e57443BfF2A8307A4256c8797A3497' }],
   },
   {
     symbol: 'FRAX',
@@ -134,24 +152,6 @@ const supportedTokens = [
       { chain: mainnet, address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c' },
       { chain: base, address: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' },
     ],
-  },
-  {
-    symbol: 'crvUSD',
-    img: require('../imgs/tokens/crvusd.png') as string,
-    decimals: 18,
-    networks: [{ chain: mainnet, address: '0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E' }],
-  },
-  {
-    symbol: 'USDe',
-    img: require('../imgs/tokens/usde.png') as string,
-    decimals: 18,
-    networks: [{ chain: mainnet, address: '0x4c9EDD5852cd905f086C759E8383e09bff1E68B3' }],
-  },
-  {
-    symbol: 'sUSDe',
-    img: require('../imgs/tokens/susde.png') as string,
-    decimals: 18,
-    networks: [{ chain: mainnet, address: '0x9D39A5DE30e57443BfF2A8307A4256c8797A3497' }],
   },
   {
     symbol: 'WETH',
