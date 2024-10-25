@@ -2,6 +2,7 @@ import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -90,17 +91,16 @@ export function MarketTableBody({
                 <td data-label="ID" className="z-50">
                   <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                     {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
-                    <a
+                    <Link
+                      href={`/market/${item.uniqueKey}`}
                       className="group flex items-center gap-1 no-underline hover:underline"
-                      href={getMarketURL(item.uniqueKey, item.morphoBlue.chain.id)}
-                      target="_blank"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p>{item.uniqueKey.slice(2, 8)} </p>
                       <p className="opacity-0 group-hover:opacity-100">
                         <ExternalLinkIcon />
                       </p>
-                    </a>
+                    </Link>
                   </div>
                 </td>
                 <TDAsset

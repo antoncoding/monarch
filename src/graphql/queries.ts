@@ -196,3 +196,30 @@ export const userPositionsQuery = `
   }
   ${marketFragment}
 `;
+
+export const marketDetailQuery = `
+  query getMarketDetail($uniqueKey: String!, $options: TimeseriesOptions!) {
+    marketByUniqueKey(uniqueKey: $uniqueKey) {
+      ...MarketFields
+      historicalState {
+        supplyApy(options: $options) {
+          x
+          y
+        }
+        borrowApy(options: $options) {
+          x
+          y
+        }
+        supplyAssetsUsd(options: $options) {
+          x
+          y
+        }
+        borrowAssetsUsd(options: $options) {
+          x
+          y
+        }
+      }
+    }
+  }
+  ${marketFragment}
+`;

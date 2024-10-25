@@ -278,3 +278,24 @@ export type Market = {
     data: MorphoChainlinkOracleData;
   };
 };
+
+export type TimeseriesDataPoint = {
+  x: number;
+  y: number;
+};
+
+export type MarketDetail = Market & {
+  historicalState: {
+    supplyApy: TimeseriesDataPoint[];
+    borrowApy: TimeseriesDataPoint[];
+    supplyAssetsUsd: TimeseriesDataPoint[];
+    borrowAssetsUsd: TimeseriesDataPoint[];
+  };
+  // Add any additional fields specific to the market detail view
+};
+
+export type TimeseriesOptions = {
+  startTimestamp: number;
+  endTimestamp: number;
+  interval: 'HOUR' | 'DAY' | 'WEEK';
+};
