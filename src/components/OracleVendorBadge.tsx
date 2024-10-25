@@ -20,7 +20,7 @@ const renderVendorIcon = (vendor: OracleVendors) =>
 
 function OracleVendorBadge({
   oracleData,
-  showText = true,
+  showText = false,
   useTooltip = true,
 }: OracleVendorBadgeProps) {
   const { vendors } = parseOracleVendors(oracleData);
@@ -29,9 +29,9 @@ function OracleVendorBadge({
 
   const content = (
     <div className={`flex items-center space-x-1 ${useTooltip ? '' : 'rounded bg-primary p-1'}`}>
-      {!useTooltip && showText && (
+      {showText && (
         <span className="mr-1 text-xs font-medium">
-          {noFeeds ? 'No Oracle' : vendors.join(', ')}:
+          {noFeeds ? 'No Oracle' : vendors.join(', ')}
         </span>
       )}
       {noFeeds ? (

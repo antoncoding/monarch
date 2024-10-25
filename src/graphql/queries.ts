@@ -198,9 +198,17 @@ export const userPositionsQuery = `
 `;
 
 export const marketDetailQuery = `
-  query getMarketDetail($uniqueKey: String!, $options: TimeseriesOptions!) {
+  query getMarketDetail($uniqueKey: String!) {
     marketByUniqueKey(uniqueKey: $uniqueKey) {
       ...MarketFields
+    }
+  }
+  ${marketFragment}
+`;
+
+export const marketHistoricalDataQuery = `
+  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!) {
+    marketByUniqueKey(uniqueKey: $uniqueKey) {
       historicalState {
         supplyApy(options: $options) {
           x
@@ -218,8 +226,39 @@ export const marketDetailQuery = `
           x
           y
         }
+        utilization(options: $options) {
+          x
+          y
+        }
+        liquidityAssetsUsd(options: $options) {
+          x
+          y
+        }
+        dailySupplyApy(options: $options) {
+          x
+          y
+        }
+        dailyBorrowApy(options: $options) {
+          x
+          y
+        }
+        weeklySupplyApy(options: $options) {
+          x
+          y
+        }
+        weeklyBorrowApy(options: $options) {
+          x
+          y
+        }
+        monthlySupplyApy(options: $options) {
+          x
+          y
+        }
+        monthlyBorrowApy(options: $options) {
+          x
+          y
+        }
       }
     }
   }
-  ${marketFragment}
 `;

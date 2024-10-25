@@ -1,13 +1,34 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useMarket } from '@/hooks/useMarket';
+import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import { TimeseriesOptions } from '@/utils/types';
 import { useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Card, CardHeader, CardBody } from "@nextui-org/card";
-import { Divider } from "@nextui-org/divider";
-import { Spinner } from "@nextui-org/spinner";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+import { Card, CardHeader, CardBody } from '@nextui-org/card';
+import { Spinner } from '@nextui-org/spinner';
+import { Button } from '@nextui-org/button';
+import { CircularProgress } from '@nextui-org/progress';
+import Image from 'next/image';
+import Link from 'next/link';
+import { formatReadable } from '@/utils/balance';
+import { getNetworkImg } from '@/utils/networks';
+import { findToken } from '@/utils/tokens';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { formatUnits } from 'viem';
+import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { getExplorerURL } from '@/utils/external';
+import { getIRMTitle } from '@/utils/morpho';
 
 const MarketContent = () => {
   const { marketid } = useParams();
@@ -16,105 +37,408 @@ const MarketContent = () => {
     endTimestamp: Math.floor(Date.now() / 1000),
     interval: 'HOUR',
   });
+  const [apyTimeframe, setApyTimeframe] = useState<'now' | '7day' | '30day'>('now');
+  const [chartType, setChartType] = useState<'apy' | 'utilization'>('apy');
 
-  const { data: market, isLoading, error } = useMarket(marketid as string, timeRange);
+  const { data: market, isLoading, error } = useMarket(marketid as string);
+  const { data: historicalData, isLoading: isHistoricalLoading } = useMarketHistoricalData(
+    marketid as string,
+    timeRange,
+  );
 
-  if (isLoading) return <div className="flex justify-center items-center h-screen"><Spinner size="lg" /></div>;
-  if (error) return <div className="text-center text-red-500">Error: {(error as Error).message}</div>;
+  if (isLoading)
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  if (error)
+    return <div className="text-center text-red-500">Error: {(error as Error).message}</div>;
   if (!market) return <div className="text-center">Market not found</div>;
 
+  const chainImg = getNetworkImg(market.morphoBlue.chain.id);
+  const loanImg = findToken(market.loanAsset.address, market.morphoBlue.chain.id)?.img;
+  const collateralImg = findToken(market.collateralAsset.address, market.morphoBlue.chain.id)?.img;
+
+  const formatTime = (unixTime: number) => {
+    const date = new Date(unixTime * 1000);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+  const setTimeRangeAndRefetch = (days: number) => {
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const startTimestamp = endTimestamp - days * 24 * 60 * 60;
+    setTimeRange({
+      startTimestamp,
+      endTimestamp,
+      interval: days > 30 ? 'DAY' : 'HOUR',
+    });
+  };
+
+  const cardStyle = 'bg-background rounded-sm shadow-sm p-4';
+
+  const getApyValue = (type: 'supply' | 'borrow') => {
+    if (apyTimeframe === 'now') {
+      return type === 'supply' ? market.state.supplyApy : market.state.borrowApy;
+    }
+    if (!historicalData) return 0;
+    const data =
+      type === 'supply'
+        ? apyTimeframe === '7day'
+          ? historicalData.weeklySupplyApy
+          : historicalData.monthlySupplyApy
+        : apyTimeframe === '7day'
+        ? historicalData.weeklyBorrowApy
+        : historicalData.monthlyBorrowApy;
+    return data[data.length - 1]?.y || 0;
+  };
+
+  const averageLTV =
+    market.state.collateralAssetsUsd && market.state.collateralAssetsUsd > 0
+      ? (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100
+      : 0;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold mb-8 text-center">
+    <div className="container mx-auto px-4 py-8 font-zen">
+      <h1 className="mb-8 text-center text-3xl">
         {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <Card>
-          <CardHeader className="text-2xl font-semibold">Market Overview</CardHeader>
-          <Divider />
+      <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <Card className={cardStyle}>
+          <CardHeader className="text-xl">Basic Info</CardHeader>
           <CardBody>
-            <ul className="space-y-2">
-              <li><span className="font-semibold">Loan Asset:</span> {market.loanAsset.symbol}</li>
-              <li><span className="font-semibold">Collateral Asset:</span> {market.collateralAsset.symbol}</li>
-              <li><span className="font-semibold">LLTV:</span> {(parseFloat(market.lltv) * 100).toFixed(2)}%</li>
-              <li><span className="font-semibold">Supply APY:</span> {(market.state.supplyApy * 100).toFixed(2)}%</li>
-              <li><span className="font-semibold">Borrow APY:</span> {(market.state.borrowApy * 100).toFixed(2)}%</li>
-              <li><span className="font-semibold">Utilization:</span> {(market.state.utilization * 100).toFixed(2)}%</li>
-            </ul>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span>Loan Asset:</span>
+                <div className="flex items-center">
+                  {loanImg && (
+                    <Image
+                      src={loanImg}
+                      alt={market.loanAsset.symbol}
+                      width={24}
+                      height={24}
+                      className="mr-2"
+                    />
+                  )}
+                  <Link
+                    href={getExplorerURL(market.loanAsset.address, market.morphoBlue.chain.id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:underline"
+                  >
+                    {market.loanAsset.symbol} <ExternalLinkIcon className="ml-1" />
+                  </Link>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Collateral Asset:</span>
+                <div className="flex items-center">
+                  {collateralImg && (
+                    <Image
+                      src={collateralImg}
+                      alt={market.collateralAsset.symbol}
+                      width={24}
+                      height={24}
+                      className="mr-2"
+                    />
+                  )}
+                  <Link
+                    href={getExplorerURL(
+                      market.collateralAsset.address,
+                      market.morphoBlue.chain.id,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:underline"
+                  >
+                    {market.collateralAsset.symbol} <ExternalLinkIcon className="ml-1" />
+                  </Link>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>IRM:</span>
+                <Link
+                  href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center hover:underline"
+                >
+                  {getIRMTitle(market.irmAddress)} <ExternalLinkIcon className="ml-1" />
+                </Link>
+              </div>
+            </div>
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader className="text-2xl font-semibold">Market Stats</CardHeader>
-          <Divider />
+        <Card className={cardStyle}>
+          <CardHeader className="text-xl">LLTV Info</CardHeader>
           <CardBody>
-            <ul className="space-y-2">
-              <li><span className="font-semibold">Total Supply:</span> ${parseFloat(market.state.supplyAssetsUsd).toLocaleString()}</li>
-              <li><span className="font-semibold">Total Borrow:</span> ${parseFloat(market.state.borrowAssetsUsd).toLocaleString()}</li>
-              <li><span className="font-semibold">Available Liquidity:</span> ${market.state.liquidityAssetsUsd.toLocaleString()}</li>
-              <li><span className="font-semibold">Collateral:</span> ${market.state.collateralAssetsUsd?.toLocaleString() ?? 'N/A'}</li>
-            </ul>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>LLTV:</span>
+                <span>{formatUnits(BigInt(market.lltv), 16)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Average LTV:</span>
+                <span>{averageLTV.toFixed(2)}%</span>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card className={cardStyle}>
+          <CardHeader className="text-xl">Oracle Info</CardHeader>
+          <CardBody>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span>Vendor:</span>
+                <Link
+                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center hover:underline"
+                >
+                  <OracleVendorBadge oracleData={market.oracle.data} showText={true} />{' '}
+                  <ExternalLinkIcon className="ml-1" />
+                </Link>
+              </div>
+              <div>
+                <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
+                <OracleFeedInfo
+                  feed={market.oracle.data.baseFeedOne}
+                  chainId={market.morphoBlue.chain.id}
+                />
+                <OracleFeedInfo
+                  feed={market.oracle.data.baseFeedTwo}
+                  chainId={market.morphoBlue.chain.id}
+                />
+                <OracleFeedInfo
+                  feed={market.oracle.data.quoteFeedOne}
+                  chainId={market.morphoBlue.chain.id}
+                />
+                <OracleFeedInfo
+                  feed={market.oracle.data.quoteFeedTwo}
+                  chainId={market.morphoBlue.chain.id}
+                />
+              </div>
+            </div>
           </CardBody>
         </Card>
       </div>
 
-      <Card className="mb-8">
-        <CardHeader className="text-2xl font-semibold">Historical APY</CardHeader>
-        <Divider />
-        <CardBody>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={market.historicalState.supplyApy}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="x" tickFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleDateString()} />
-              <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
-              <Tooltip
-                labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
-                formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="y" name="Supply APY" stroke="#8884d8" />
-              <Line type="monotone" dataKey={(data) => market.historicalState.borrowApy.find(item => item.x === data.x)?.y} name="Borrow APY" stroke="#82ca9d" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardBody>
-      </Card>
+      <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+        <Card className={cardStyle}>
+          <CardHeader className="text-xl">Volumes</CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span>Total Supply:</span>
+                <div className="text-right">
+                  <div>${formatReadable(parseFloat(market.state.supplyAssetsUsd))}</div>
+                  <div className="text-sm opacity-70">
+                    {formatReadable(
+                      parseFloat(
+                        formatUnits(BigInt(market.state.supplyAssets), market.loanAsset.decimals),
+                      ),
+                    )}{' '}
+                    {market.loanAsset.symbol}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total Borrow:</span>
+                <div className="text-right">
+                  <div>${formatReadable(parseFloat(market.state.borrowAssetsUsd))}</div>
+                  <div className="text-sm opacity-70">
+                    {formatReadable(
+                      parseFloat(
+                        formatUnits(BigInt(market.state.borrowAssets), market.loanAsset.decimals),
+                      ),
+                    )}{' '}
+                    {market.loanAsset.symbol}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Available Liquidity:</span>
+                <div className="text-right">
+                  <div>${formatReadable(market.state.liquidityAssetsUsd)}</div>
+                  <div className="text-sm opacity-70">
+                    {formatReadable(
+                      parseFloat(
+                        formatUnits(
+                          BigInt(market.state.liquidityAssets),
+                          market.loanAsset.decimals,
+                        ),
+                      ),
+                    )}{' '}
+                    {market.loanAsset.symbol}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
 
-      <Card className="mb-8">
-        <CardHeader className="text-2xl font-semibold">Historical Assets USD</CardHeader>
-        <Divider />
-        <CardBody>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={market.historicalState.supplyAssetsUsd}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="x" tickFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleDateString()} />
-              <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} />
-              <Tooltip
-                labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
-                formatter={(value: number) => `$${value.toLocaleString()}`}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="y" name="Supply Assets USD" stroke="#8884d8" />
-              <Line type="monotone" dataKey={(data) => market.historicalState.borrowAssetsUsd.find(item => item.x === data.x)?.y} name="Borrow Assets USD" stroke="#82ca9d" />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardBody>
-      </Card>
+        <Card className={cardStyle}>
+          <CardHeader className="text-xl">Rates</CardHeader>
+          <CardBody>
+            <div className="space-y-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span>Timeframe:</span>
+                <div>
+                  <Button
+                    size="sm"
+                    onClick={() => setApyTimeframe('now')}
+                    color={apyTimeframe === 'now' ? 'warning' : 'default'}
+                  >
+                    Now
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setApyTimeframe('7day')}
+                    color={apyTimeframe === '7day' ? 'warning' : 'default'}
+                  >
+                    7d avg
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => setApyTimeframe('30day')}
+                    color={apyTimeframe === '30day' ? 'warning' : 'default'}
+                  >
+                    30d avg
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Supply APY:</span>
+                <span>{(getApyValue('supply') * 100).toFixed(2)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Borrow APY:</span>
+                <span>{(getApyValue('borrow') * 100).toFixed(2)}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Utilization Rate:</span>
+                <CircularProgress
+                  aria-label="Utilization Rate"
+                  size="sm"
+                  value={market.state.utilization * 100}
+                  color="warning"
+                  showValueLabel={true}
+                  className="mt-2"
+                />
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
 
-      <Card>
-        <CardHeader className="text-2xl font-semibold">Market Warnings</CardHeader>
-        <Divider />
+      <Card className={`${cardStyle} mb-8`}>
+        <CardHeader className="flex items-center justify-between">
+          <span className="text-xl">Historical Data</span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={() => setTimeRangeAndRefetch(7)}
+              color={
+                timeRange.endTimestamp - timeRange.startTimestamp === 7 * 24 * 60 * 60
+                  ? 'warning'
+                  : 'default'
+              }
+            >
+              1W
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setTimeRangeAndRefetch(30)}
+              color={
+                timeRange.endTimestamp - timeRange.startTimestamp === 30 * 24 * 60 * 60
+                  ? 'warning'
+                  : 'default'
+              }
+            >
+              1M
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setTimeRangeAndRefetch(365)}
+              color={
+                timeRange.endTimestamp - timeRange.startTimestamp === 365 * 24 * 60 * 60
+                  ? 'warning'
+                  : 'default'
+              }
+            >
+              1Y
+            </Button>
+          </div>
+        </CardHeader>
         <CardBody>
-          {market.warningsWithDetail.length > 0 ? (
-            <ul className="space-y-2">
-              {market.warningsWithDetail.map((warning, index) => (
-                <li key={index} className="bg-yellow-100 p-2 rounded">
-                  <span className="font-semibold">{warning.category}:</span> {warning.description}
-                </li>
-              ))}
-            </ul>
+          <div className="mb-4 flex justify-center">
+            <div className="inline-flex rounded-md shadow-sm" role="group">
+              <Button
+                onClick={() => setChartType('apy')}
+                color={chartType === 'apy' ? 'warning' : 'default'}
+              >
+                APY
+              </Button>
+              <Button
+                onClick={() => setChartType('utilization')}
+                color={chartType === 'utilization' ? 'warning' : 'default'}
+              >
+                Utilization
+              </Button>
+            </div>
+          </div>
+          {isHistoricalLoading ? (
+            <div className="flex h-64 items-center justify-center">
+              <Spinner size="lg" />
+            </div>
           ) : (
-            <p>No warnings for this market.</p>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={historicalData?.supplyApy}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="x" tickFormatter={formatTime} />
+                <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
+                <Tooltip
+                  labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
+                  formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
+                />
+                <Legend />
+                {chartType === 'apy' && (
+                  <>
+                    <Line
+                      type="monotone"
+                      dataKey="y"
+                      name="Supply APY"
+                      stroke="#8884d8"
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey={(data) =>
+                        historicalData?.borrowApy.find((item: any) => item.x === data.x)?.y
+                      }
+                      name="Borrow APY"
+                      stroke="#82ca9d"
+                      dot={false}
+                    />
+                  </>
+                )}
+                {chartType === 'utilization' && (
+                  <Line
+                    type="monotone"
+                    dataKey={(data) =>
+                      historicalData?.utilization.find((item: any) => item.x === data.x)?.y
+                    }
+                    name="Utilization Rate"
+                    stroke="#ffc658"
+                    dot={false}
+                  />
+                )}
+              </LineChart>
+            </ResponsiveContainer>
           )}
         </CardBody>
       </Card>
@@ -123,4 +447,3 @@ const MarketContent = () => {
 };
 
 export default MarketContent;
-

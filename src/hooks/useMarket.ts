@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { marketDetailQuery } from '../graphql/queries';
+import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
@@ -26,7 +26,9 @@ const graphqlFetcher = async (query: string, variables: Record<string, unknown>)
 
 const processMarketData = (market: Market): MarketDetail => {
   const entry = market.state.rewards.find(
-    (reward) => reward.asset.address.toLowerCase() === process.env.NEXT_PUBLIC_MORPHO_TOKEN_ADDRESS?.toLowerCase()
+    (reward) =>
+      reward.asset.address.toLowerCase() ===
+      process.env.NEXT_PUBLIC_MORPHO_TOKEN_ADDRESS?.toLowerCase(),
   );
 
   const warningsWithDetail = getMarketWarningsWithDetail(market);
@@ -45,15 +47,22 @@ const processMarketData = (market: Market): MarketDetail => {
   } as MarketDetail;
 };
 
-export const useMarket = (uniqueKey: string, options: TimeseriesOptions) => {
+export const useMarket = (uniqueKey: string) => {
   return useQuery<MarketDetail>({
-    queryKey: ['market', uniqueKey, options],
+    queryKey: ['market', uniqueKey],
     queryFn: async () => {
-      const response = await graphqlFetcher(marketDetailQuery, {
-        uniqueKey,
-        options,
-      });
+      const response = await graphqlFetcher(marketDetailQuery, { uniqueKey });
       return processMarketData(response.marketByUniqueKey);
+    },
+  });
+};
+
+export const useMarketHistoricalData = (uniqueKey: string, options: TimeseriesOptions) => {
+  return useQuery({
+    queryKey: ['marketHistoricalData', uniqueKey, options],
+    queryFn: async () => {
+      const response = await graphqlFetcher(marketHistoricalDataQuery, { uniqueKey, options });
+      return response.marketByUniqueKey.historicalState;
     },
   });
 };
