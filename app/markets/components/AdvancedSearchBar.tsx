@@ -4,15 +4,22 @@ import { Input } from '@nextui-org/input';
 import Image from 'next/image';
 import { AiOutlineEnter } from 'react-icons/ai';
 import { FaSearch } from 'react-icons/fa';
-import { supportedTokens, infoToKey } from '@/utils/tokens';
+import { ERC20Token, infoToKey, supportedTokens } from '@/utils/tokens';
 
 type SearchProps = {
   onSearch: (query: string) => void;
-  onFilterUpdate: (type: 'collateral' | 'loan', tokens: string[]) => void;
+  onFilterUpdate: (type: ShortcutType, tokens: string[]) => void;
   selectedCollaterals: string[];
   selectedLoanAssets: string[];
-  searchQuery: string; // currently active search query
+  searchQuery: string;
+  uniqueCollaterals: ERC20Token[];
+  uniqueLoanAssets: ERC20Token[];
 };
+
+export enum ShortcutType {
+  Collateral = 'collateral',
+  Loan = 'loan',
+}
 
 function AdvancedSearchBar({
   onSearch,
@@ -20,6 +27,8 @@ function AdvancedSearchBar({
   selectedCollaterals,
   selectedLoanAssets,
   searchQuery,
+  uniqueCollaterals,
+  uniqueLoanAssets,
 }: SearchProps) {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -29,7 +38,7 @@ function AdvancedSearchBar({
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
-  const searchKeys = ['collateral:', 'loan:'];
+  const searchKeys = Object.values(ShortcutType).map((type) => `${type}:`);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +82,10 @@ function AdvancedSearchBar({
       setIsFilterMode(true);
     } else if (lastWord.includes(':')) {
       const [key, tokenQuery] = lastWord.split(':');
-      const tokenSuggestions = supportedTokens
+      const shortcutType = key as ShortcutType;
+      const tokenList =
+        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const tokenSuggestions = tokenList
         .filter((token) => token.symbol.toLowerCase().startsWith(tokenQuery.toLowerCase()))
         .map((token) => `${key}:${token.symbol}`);
       newSuggestions = [...newSuggestions, ...tokenSuggestions];
@@ -117,19 +129,15 @@ function AdvancedSearchBar({
       updateSuggestions(suggestion);
     } else if (suggestion.includes(':')) {
       const [type, symbol] = suggestion.split(':');
-      const token = supportedTokens.find((t) => t.symbol.toLowerCase() === symbol.toLowerCase());
+      const shortcutType = type as ShortcutType;
+      const tokenList =
+        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const token = tokenList.find((t) => t.symbol.toLowerCase() === symbol.toLowerCase());
       if (token) {
         const tokenId = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-
-        // make sure type is collateral or loan
-        if (type !== 'collateral' && type !== 'loan') {
-          return;
-        }
-
-        onFilterUpdate(type, [
-          ...(type === 'collateral' ? selectedCollaterals : selectedLoanAssets),
-          tokenId,
-        ]);
+        const currentSelection =
+          shortcutType === ShortcutType.Collateral ? selectedCollaterals : selectedLoanAssets;
+        onFilterUpdate(shortcutType, [...currentSelection, tokenId]);
         setInputValue(''); // Clear the input after applying a filter
       }
     } else if (suggestion.startsWith('Search ')) {

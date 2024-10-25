@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { ChevronDownIcon, TrashIcon, ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { ERC20Token, infoToKey } from '@/utils/tokens';
 
@@ -11,7 +11,7 @@ type FilterProps = {
   setSelectedAssets: (assets: string[]) => void;
   items: ERC20Token[];
   loading: boolean;
-  updateFromSearch?: string[]; // New prop
+  updateFromSearch?: string[];
 };
 
 export default function AssetFilter({
@@ -26,15 +26,6 @@ export default function AssetFilter({
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Precompute a set of valid asset keys
-  const validAssetKeys = new Set(
-    items.map((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')),
-  );
-  const invalidSelection =
-    !loading &&
-    selectedAssets.length > 0 &&
-    selectedAssets.every((asset) => !validAssetKeys.has(asset));
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -104,11 +95,6 @@ export default function AssetFilter({
         <div className="flex items-center justify-between pt-4">
           {loading ? (
             <span className="p-[2px] text-sm text-gray-400">Loading...</span>
-          ) : invalidSelection ? (
-            <div className="flex items-center gap-2">
-              <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
-              <span className="pt-[4px] text-sm text-yellow-500">Invalid</span>
-            </div>
           ) : selectedAssets.length > 0 ? (
             <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
               {selectedAssets.map((asset) => {

@@ -4,6 +4,7 @@ import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEllipsisH } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
+import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import useMarkets from '@/hooks/useMarkets';
@@ -14,7 +15,7 @@ import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
-import AdvancedSearchBar from './AdvancedSearchBar';
+import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
 import CheckFilter from './CheckFilter';
 import { SortColumn } from './constants';
@@ -239,11 +240,11 @@ export default function Markets() {
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
 
-  const handleFilterUpdate = (type: 'collateral' | 'loan', tokens: string[]) => {
+  const handleFilterUpdate = (type: ShortcutType, tokens: string[]) => {
     // remove duplicates
     const uniqueTokens = [...new Set(tokens)];
 
-    if (type === 'collateral') {
+    if (type === ShortcutType.Collateral) {
       setSelectedCollaterals(uniqueTokens);
     } else {
       setSelectedLoanAssets(uniqueTokens);
@@ -264,7 +265,7 @@ export default function Markets() {
           />
         )}
 
-        {/* Replace the old search bar with AdvancedSearchBar */}
+        {/* Pass uniqueCollaterals and uniqueLoanAssets to AdvancedSearchBar */}
         <div className="flex items-center justify-between pb-4">
           <AdvancedSearchBar
             searchQuery={searchQuery}
@@ -272,6 +273,8 @@ export default function Markets() {
             onFilterUpdate={handleFilterUpdate}
             selectedCollaterals={selectedCollaterals}
             selectedLoanAssets={selectedLoanAssets}
+            uniqueCollaterals={uniqueCollaterals}
+            uniqueLoanAssets={uniqueLoanAssets}
           />
         </div>
 
@@ -366,21 +369,28 @@ export default function Markets() {
           <div> No data </div>
         ) : (
           <div className="max-w-screen mt-4">
-            <MarketsTable
-              markets={filteredMarkets}
-              titleOnclick={titleOnclick}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              setShowSupplyModal={setShowSupplyModal}
-              setSelectedMarket={setSelectedMarket}
-              staredIds={staredIds}
-              starMarket={starMarket}
-              unstarMarket={unstarMarket}
-              currentPage={currentPage}
-              entriesPerPage={entriesPerPage}
-              handleEntriesPerPageChange={handleEntriesPerPageChange}
-              setCurrentPage={setCurrentPage}
-            />
+            {filteredMarkets.length > 0 ? (
+              <MarketsTable
+                markets={filteredMarkets}
+                titleOnclick={titleOnclick}
+                sortColumn={sortColumn}
+                sortDirection={sortDirection}
+                setShowSupplyModal={setShowSupplyModal}
+                setSelectedMarket={setSelectedMarket}
+                staredIds={staredIds}
+                starMarket={starMarket}
+                unstarMarket={unstarMarket}
+                currentPage={currentPage}
+                entriesPerPage={entriesPerPage}
+                handleEntriesPerPageChange={handleEntriesPerPageChange}
+                setCurrentPage={setCurrentPage}
+              />
+            ) : (
+              <EmptyScreen
+                message="No markets found with the current filters"
+                hint="Try adjusting your filters or search query to see more results."
+              />
+            )}
           </div>
         )}
       </div>
