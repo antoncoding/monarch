@@ -14,13 +14,13 @@ type SearchProps = {
   searchQuery: string; // currently active search query
 };
 
-const AdvancedSearchBar: React.FC<SearchProps> = ({
+function AdvancedSearchBar ({
   onSearch,
   onFilterUpdate,
   selectedCollaterals,
   selectedLoanAssets,
   searchQuery,
-}) => {
+}: SearchProps) {
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
@@ -93,6 +93,23 @@ const AdvancedSearchBar: React.FC<SearchProps> = ({
     updateSuggestions(value);
   };
 
+  const handleSearch = () => {
+    // Clear any partial filter inputs
+    const cleanedInput = inputValue
+      .split(' ')
+      .filter((word) => {
+        // Keep words that are not partial filter inputs
+        return !searchKeys.some((key) => word.startsWith(key.slice(0, -1)) && word !== key);
+      })
+      .join(' ');
+
+    console.log('searching cleanedInput', cleanedInput);
+    onSearch(cleanedInput);
+    setInputValue(cleanedInput); // Update the input value to reflect the cleaned search
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const selectSuggestion = (suggestion: string) => {
     if (suggestion.startsWith('Clean query')) {
       handleSearch(); // This will clear the search query
@@ -119,19 +136,6 @@ const AdvancedSearchBar: React.FC<SearchProps> = ({
     inputRef.current?.focus();
   };
 
-  const handleSearch = () => {
-    // Clear any partial filter inputs
-    const cleanedInput = inputValue.split(' ').filter(word => {
-      // Keep words that are not partial filter inputs
-      return !searchKeys.some(key => word.startsWith(key.slice(0, -1)) && word !== key);
-    }).join(' ');
-
-    console.log('searching cleanedInput', cleanedInput);
-    onSearch(cleanedInput);
-    setInputValue(cleanedInput); // Update the input value to reflect the cleaned search
-    setSuggestions([]);
-    setShowSuggestions(false);
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Tab') {
@@ -188,33 +192,52 @@ const AdvancedSearchBar: React.FC<SearchProps> = ({
           className="absolute z-50 mt-1 w-full max-w-[400px] rounded-sm bg-secondary shadow-lg"
         >
           <ul className="max-h-60 overflow-auto">
-            {suggestions.map((suggestion, index) => (
-              <li
-                key={index}
-                className={`flex cursor-pointer items-center justify-between p-2 hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                  index === selectedSuggestion ? 'bg-gray-300 dark:bg-gray-700' : ''
-                }`}
-                onClick={() => selectSuggestion(suggestion)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    selectSuggestion(suggestion);
-                  }
-                }}
-                role="option"
-                tabIndex={0}
-                aria-selected={index === selectedSuggestion}
-              >
-                <div className="rounded-md bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
-                  {suggestion}
-                </div>
-                {(index === selectedSuggestion || suggestion.startsWith('Clean query') || suggestion.startsWith('Search ')) && (
-                  <div className="flex items-center text-xs text-gray-500">
-                    <AiOutlineEnter className="mr-1" />
-                    <span>Enter</span>
+            {suggestions.map((suggestion, index) => {
+              console.log('suggestion', suggestion);
+              const isTokenSuggestion = suggestion.includes(':');
+              const token = isTokenSuggestion
+                ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1])
+                : null;
+
+              return (
+                <li
+                  key={index}
+                  className={`flex cursor-pointer items-center justify-between p-2 hover:bg-gray-300 dark:hover:bg-gray-700 ${
+                    index === selectedSuggestion ? 'bg-gray-300 dark:bg-gray-700' : ''
+                  }`}
+                  onClick={() => selectSuggestion(suggestion)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      selectSuggestion(suggestion);
+                    }
+                  }}
+                  role="option"
+                  tabIndex={0}
+                  aria-selected={index === selectedSuggestion}
+                >
+                  <div className="flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
+                    {suggestion}
+                    {isTokenSuggestion && token && token.img && (
+                      <Image
+                        src={token.img}
+                        alt={suggestion.split(':')[1]}
+                        width={12}
+                        height={12}
+                        className="ml-1"
+                      />
+                    )}
                   </div>
-                )}
-              </li>
-            ))}
+                  {(index === selectedSuggestion ||
+                    suggestion.startsWith('Clean query') ||
+                    suggestion.startsWith('Search ')) && (
+                    <div className="flex items-center text-xs text-gray-500">
+                      <AiOutlineEnter className="mr-1" />
+                      <span>Enter</span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

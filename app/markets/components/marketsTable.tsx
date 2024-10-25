@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';

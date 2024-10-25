@@ -174,7 +174,7 @@ export default function Markets() {
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
-      const {vendors} = parseOracleVendors(market.oracle.data);
+      const { vendors } = parseOracleVendors(market.oracle.data);
       const vendorsName = vendors.join(',');
       return (
         market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
@@ -250,8 +250,6 @@ export default function Markets() {
     }
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
-
-  console.log('search query', searchQuery);
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">

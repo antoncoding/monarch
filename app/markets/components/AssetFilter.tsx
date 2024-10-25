@@ -79,11 +79,10 @@ export default function AssetFilter({
 
   useEffect(() => {
     if (updateFromSearch) {
-      const newSelection = updateFromSearch.map(symbol => 
-        items.find(item => item.symbol.toLowerCase() === symbol.toLowerCase())
-      ).filter(Boolean).map(token => 
-        token!.networks.map(n => infoToKey(n.address, n.chain.id)).join('|')
-      );
+      const newSelection = updateFromSearch
+        .map((symbol) => items.find((item) => item.symbol.toLowerCase() === symbol.toLowerCase()))
+        .filter(Boolean)
+        .map((token) => token!.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'));
       setSelectedAssets(newSelection);
     }
   }, [updateFromSearch, items, setSelectedAssets]);
