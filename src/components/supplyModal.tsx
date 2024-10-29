@@ -236,7 +236,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <Link href={`/market/${market.uniqueKey}`}>
+            <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
               <p className="text-right font-monospace text-sm">{market.uniqueKey.slice(2, 8)}</p>
             </Link>
           </div>

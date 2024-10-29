@@ -90,7 +90,7 @@ export function MarketTableBody({
                   <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                     {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
                     <Link
-                      href={`/market/${item.uniqueKey}`}
+                      href={`/market/${item.morphoBlue.chain.id}/${item.uniqueKey}`}
                       className="group flex items-center gap-1 no-underline hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >

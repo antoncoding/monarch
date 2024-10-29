@@ -19,9 +19,13 @@ import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
+import { SupportedNetworks } from '@/utils/networks';
 
 function MarketContent() {
-  const { marketid } = useParams();
+  const { marketid, chainId } = useParams();
+
+  const network = chainId as any as SupportedNetworks;
+
   const router = useRouter();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
     startTimestamp: Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60,
@@ -41,12 +45,12 @@ function MarketContent() {
     data: market,
     isLoading: isMarketLoading,
     error: marketError,
-  } = useMarket(marketid as string);
+  } = useMarket(marketid as string, network);
   const {
     data: historicalData,
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
-  } = useMarketHistoricalData(marketid as string, rateTimeRange, volumeTimeRange);
+  } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
 
   const setTimeRangeAndRefetch = useCallback(
     (days: number, type: 'rate' | 'volume') => {

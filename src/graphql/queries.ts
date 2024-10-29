@@ -198,8 +198,8 @@ export const userPositionsQuery = `
 `;
 
 export const marketDetailQuery = `
-  query getMarketDetail($uniqueKey: String!) {
-    marketByUniqueKey(uniqueKey: $uniqueKey) {
+  query getMarketDetail($uniqueKey: String!, $chainId: Int) {
+    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
       ...MarketFields
     }
   }
@@ -207,8 +207,8 @@ export const marketDetailQuery = `
 `;
 
 export const marketHistoricalDataQuery = `
-  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!) {
-    marketByUniqueKey(uniqueKey: $uniqueKey) {
+  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!, $chainId: Int) {
+    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
       historicalState {
         supplyApy(options: $options) {
           x

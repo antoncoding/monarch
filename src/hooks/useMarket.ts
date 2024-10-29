@@ -4,6 +4,7 @@ import { MORPHOTokenAddress } from '@/utils/tokens';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
+import { SupportedNetworks } from '@/utils/networks';
 
 type GraphQLResponse = {
   data: {
@@ -68,11 +69,12 @@ const processMarketData = (market: Market): MarketDetail => {
   };
 };
 
-export const useMarket = (uniqueKey: string) => {
+export const useMarket = (uniqueKey: string, network: SupportedNetworks) => {
+
   return useQuery<MarketDetail>({
     queryKey: ['market', uniqueKey],
     queryFn: async () => {
-      const response = await graphqlFetcher(marketDetailQuery, { uniqueKey });
+      const response = await graphqlFetcher(marketDetailQuery, { uniqueKey, chainId: network });
       return processMarketData(response.data.marketByUniqueKey);
     },
   });
@@ -80,11 +82,16 @@ export const useMarket = (uniqueKey: string) => {
 
 export const useMarketHistoricalData = (
   uniqueKey: string,
+  network: SupportedNetworks,
   rateOptions: TimeseriesOptions,
   volumeOptions: TimeseriesOptions,
 ) => {
   const fetchHistoricalData = async (options: TimeseriesOptions) => {
-    const response = await graphqlFetcher(marketHistoricalDataQuery, { uniqueKey, options });
+    const response = await graphqlFetcher(marketHistoricalDataQuery, {
+      uniqueKey,
+      options,
+      chainId: network,
+    });
     return response.data.marketByUniqueKey.historicalState;
   };
 
