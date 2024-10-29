@@ -13,13 +13,15 @@ import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
-import { getExplorerURL } from '@/utils/external';
+import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 import { SupportedNetworks } from '@/utils/networks';
+
+const MORPHO_LOGO = require('@/imgs/tokens/morpho.svg') as string;
 
 function MarketContent() {
   const { marketid, chainId } = useParams();
@@ -92,15 +94,7 @@ function MarketContent() {
   const loanImg = findToken(market.loanAsset.address, market.morphoBlue.chain.id)?.img;
   const collateralImg = findToken(market.collateralAsset.address, market.morphoBlue.chain.id)?.img;
 
-  const formatTime = (unixTime: number) => {
-    const date = new Date(unixTime * 1000);
-    if (rateTimeRange.endTimestamp - rateTimeRange.startTimestamp <= 24 * 60 * 60) {
-      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  };
-
-  const cardStyle = 'bg-surface rounded-sm shadow-sm p-4';
+  const cardStyle = 'bg-surface rounded-md shadow-sm p-4';
 
   const averageLTV =
     market.state.collateralAssetsUsd && market.state.collateralAssetsUsd > 0
@@ -110,14 +104,32 @@ function MarketContent() {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 py-8 pb-12 font-zen">
-        <Button
-          onClick={() => router.push('/markets')}
-          className="bg-surface mb-4"
-          startContent={<ChevronLeftIcon />}
-        >
-          Back to Markets
-        </Button>
+      <div className="container mx-auto px-4 py-8 pb-4 font-zen">
+
+        {/* navigation bottons */}
+        <div className="flex justify-between">
+          <Button
+            onClick={() => router.push('/markets')}
+            className="bg-surface mb-4 rounded-md"
+            startContent={<ChevronLeftIcon />}
+          >
+            Back to Markets
+          </Button>
+
+          <Button
+            className="bg-surface mb-4 rounded-md"
+            onClick={() =>
+              window.open(
+                getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
+                '_blank',
+              )
+            }
+            endContent={<Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} />}
+          >
+            View on Morpho Blue
+          </Button>
+        </div>
+
         <h1 className="mb-8 text-center text-3xl">
           {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
         </h1>
@@ -248,23 +260,23 @@ function MarketContent() {
         <VolumeChart
           historicalData={historicalData?.volumes}
           market={market}
+          volumeTimeRange={volumeTimeRange}
           isLoading={isHistoricalLoading.volumes}
           volumeView={volumeView}
           volumeTimeframe={volumeTimeframe}
           setVolumeTimeframe={setVolumeTimeframe}
           setTimeRangeAndRefetch={setTimeRangeAndRefetch}
-          formatTime={formatTime}
           setVolumeView={setVolumeView}
         />
 
         <RateChart
           historicalData={historicalData?.rates}
           market={market}
+          rateTimeRange={rateTimeRange}
           isLoading={isHistoricalLoading.rates}
           apyTimeframe={apyTimeframe}
           setApyTimeframe={setApyTimeframe}
           setTimeRangeAndRefetch={setTimeRangeAndRefetch}
-          formatTime={formatTime}
         />
       </div>
     </>

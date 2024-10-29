@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import ButtonGroup from '@/components/ButtonGroup';
-import { TimeseriesDataPoint, MarketHistoricalData, Market } from '@/utils/types';
+import { TimeseriesDataPoint, MarketHistoricalData, Market, TimeseriesOptions } from '@/utils/types';
 
 type RateChartProps = {
   historicalData: MarketHistoricalData['rates'] | undefined;
@@ -22,7 +22,7 @@ type RateChartProps = {
   apyTimeframe: '1day' | '7day' | '30day';
   setApyTimeframe: (timeframe: '1day' | '7day' | '30day') => void;
   setTimeRangeAndRefetch: (days: number, type: 'rate') => void;
-  formatTime: (unixTime: number) => string;
+  rateTimeRange: TimeseriesOptions;
 };
 
 function RateChart({
@@ -32,7 +32,7 @@ function RateChart({
   apyTimeframe,
   setApyTimeframe,
   setTimeRangeAndRefetch,
-  formatTime,
+  rateTimeRange,
 }: RateChartProps) {
   const getChartData = () => {
     if (!historicalData) return [];
@@ -82,6 +82,15 @@ function RateChart({
     );
   };
 
+  const formatTime = (unixTime: number) => {
+    const date = new Date(unixTime * 1000);
+    if (rateTimeRange.endTimestamp - rateTimeRange.startTimestamp <= 24 * 60 * 60) {
+      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
+
   const timeframeOptions = [
     { key: '1day', label: '1D', value: '1day' },
     { key: '7day', label: '7D', value: '7day' },
@@ -98,7 +107,7 @@ function RateChart({
   );
 
   return (
-    <Card className="bg-surface my-4 rounded-sm p-4 shadow-sm">
+    <Card className="bg-surface my-4 rounded-md p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Rates</span>
         <ButtonGroup

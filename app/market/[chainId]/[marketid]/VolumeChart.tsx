@@ -14,7 +14,7 @@ import {
 import { formatUnits } from 'viem';
 import ButtonGroup from '@/components/ButtonGroup';
 import { formatReadable } from '@/utils/balance';
-import { TimeseriesDataPoint, MarketHistoricalData, Market } from '@/utils/types';
+import { TimeseriesDataPoint, MarketHistoricalData, Market, TimeseriesOptions } from '@/utils/types';
 
 type VolumeChartProps = {
   historicalData: MarketHistoricalData['volumes'] | undefined;
@@ -24,7 +24,7 @@ type VolumeChartProps = {
   volumeTimeframe: '1day' | '7day' | '30day';
   setVolumeTimeframe: (timeframe: '1day' | '7day' | '30day') => void;
   setTimeRangeAndRefetch: (days: number, type: 'volume') => void;
-  formatTime: (unixTime: number) => string;
+  volumeTimeRange: TimeseriesOptions;
   setVolumeView: (view: 'USD' | 'Asset') => void;
 };
 
@@ -36,7 +36,7 @@ function VolumeChart({
   volumeTimeframe,
   setVolumeTimeframe,
   setTimeRangeAndRefetch,
-  formatTime,
+  volumeTimeRange,
   setVolumeView,
 }: VolumeChartProps) {
   const formatYAxis = (value: number) => {
@@ -46,6 +46,16 @@ function VolumeChart({
       return formatReadable(value);
     }
   };
+
+
+  const formatTime = (unixTime: number) => {
+    const date = new Date(unixTime * 1000);
+    if (volumeTimeRange.endTimestamp - volumeTimeRange.startTimestamp <= 24 * 60 * 60) {
+      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
 
   const getVolumeChartData = () => {
     if (!historicalData) return [];
@@ -139,7 +149,7 @@ function VolumeChart({
   );
 
   return (
-    <Card className="bg-surface my-4 rounded-sm p-4 shadow-sm">
+    <Card className="bg-surface my-4 rounded-md p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Volumes</span>
         <div className="flex gap-4">
