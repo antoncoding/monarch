@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEllipsisH } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -103,6 +104,7 @@ export default function Markets() {
     (id: string) => {
       setStaredIds([...staredIds, id]);
       storage.setItem(keys.MarketFavoritesKey, JSON.stringify([...staredIds, id]));
+      toast.success('Market starred', { icon: <span>🌟</span> });
     },
     [staredIds],
   );
@@ -111,6 +113,7 @@ export default function Markets() {
     (id: string) => {
       setStaredIds(staredIds.filter((i) => i !== id));
       storage.setItem(keys.MarketFavoritesKey, JSON.stringify(staredIds.filter((i) => i !== id)));
+      toast.success('Market unstarred', { icon: <span>🌟</span> });
     },
     [staredIds],
   );
@@ -168,6 +171,7 @@ export default function Markets() {
       selectedCollaterals,
       selectedLoanAssets,
       selectedOracles,
+      staredIds,
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
@@ -194,6 +198,7 @@ export default function Markets() {
     selectedOracles,
     searchQuery,
     resetPage,
+    staredIds,
   ]);
 
   useEffect(() => {

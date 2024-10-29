@@ -7,6 +7,7 @@ import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 
 export const sortProperties = {
+  [SortColumn.Starred]: 'uniqueKey',
   [SortColumn.LoanAsset]: 'loanAsset.name',
   [SortColumn.CollateralAsset]: 'collateralAsset.name',
   [SortColumn.LLTV]: 'lltv',
@@ -52,6 +53,7 @@ export function applyFilterAndSort(
   selectedCollaterals: string[],
   selectedLoanAssets: string[],
   selectedOracles: OracleVendors[],
+  staredIds: string[],
 ): Market[] {
   return markets
     .filter((market) => {
@@ -89,8 +91,14 @@ export function applyFilterAndSort(
     })
     .sort((a, b) => {
       let comparison = 0;
-      const property = sortProperties[sortColumn];
-      if (property) {
+      if (sortColumn === SortColumn.Starred) {
+        const aStared = staredIds.includes(a.uniqueKey);
+        const bStared = staredIds.includes(b.uniqueKey);
+        if (aStared && !bStared) return -1;
+        if (!aStared && bStared) return 1;
+        return 0;
+      } else {
+        const property = sortProperties[sortColumn];
         const aValue = getNestedProperty(a, property);
 
         const bValue = getNestedProperty(b, property);

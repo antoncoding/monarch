@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
+import { FaRegStar, FaStar } from 'react-icons/fa';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
@@ -51,7 +52,14 @@ function MarketsTable({
         <table className="responsive w-full rounded-md font-zen">
           <thead className="table-header">
             <tr>
-              <th> {} </th>
+              <HTSortable
+                label={sortColumn === 0 ? <FaStar /> : <FaRegStar />}
+                sortColumn={sortColumn}
+                titleOnclick={titleOnclick}
+                sortDirection={sortDirection}
+                targetColumn={SortColumn.Starred}
+                showDirection={false}
+              />
               <th className="font-normal"> Id </th>
               <HTSortable
                 label="Loan"

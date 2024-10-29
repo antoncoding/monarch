@@ -120,7 +120,7 @@ function RateChart({
   );
 
   return (
-    <Card className="bg-surface my-4 rounded-md p-4 shadow-sm mt-8">
+    <Card className="bg-surface my-4 mt-8 rounded-md p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Rates</span>
         <ButtonGroup
@@ -132,7 +132,7 @@ function RateChart({
         />
       </CardHeader>
       <CardBody>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 mb-4">
+        <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="md:col-span-2">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">

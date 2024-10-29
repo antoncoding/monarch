@@ -6,12 +6,13 @@ import { getAssetURL } from '@/utils/external';
 import { SortColumn } from './constants';
 
 type HTSortableProps = {
-  label: string;
+  label: string | React.ReactNode;
   sortColumn: SortColumn;
   targetColumn: SortColumn;
   titleOnclick: (column: number) => void;
   sortDirection: number;
   toolTip?: string;
+  showDirection?: boolean;
 };
 
 export function HTSortable({
@@ -21,6 +22,7 @@ export function HTSortable({
   sortDirection,
   targetColumn,
   toolTip,
+  showDirection = true,
 }: HTSortableProps) {
   const sortingCurrent = sortColumn === targetColumn;
 
@@ -31,7 +33,8 @@ export function HTSortable({
     >
       <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer">
         {toolTip ? <Tooltip content={toolTip}>{label}</Tooltip> : <div>{label}</div>}
-        {sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null}
+        {showDirection &&
+          (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}
       </div>
     </th>
   );
