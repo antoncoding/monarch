@@ -98,7 +98,7 @@ export default function MarketProgram({
         targeted markets.
       </p>
 
-      <div className="mb-6 mt-2 bg-surface">
+      <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Market Program Rewards Table"
           classNames={{

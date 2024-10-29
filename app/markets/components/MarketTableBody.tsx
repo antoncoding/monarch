@@ -1,13 +1,11 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
-import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';

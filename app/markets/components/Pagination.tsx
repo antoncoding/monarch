@@ -74,7 +74,7 @@ export function Pagination({
         <Button
           isIconOnly
           aria-label="Settings"
-          className="ml-2 bg-surface"
+          className="bg-surface ml-2"
           onClick={onOpen}
           size="md"
         >

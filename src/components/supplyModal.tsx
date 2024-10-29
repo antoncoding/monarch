@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address, encodeFunctionData, formatUnits } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
@@ -212,11 +213,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
-        className="relative z-50 rounded bg-surface p-12 transition-all duration-500 ease-in-out"
+        className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
-          className="absolute right-2 top-2 rounded-full bg-main p-1 text-primary hover:cursor-pointer"
+          className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
           onClick={onClose}
         >
           <Cross1Icon />{' '}
@@ -235,7 +236,9 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         <div className="mb-2">
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="text-right font-monospace text-sm">{market.uniqueKey.slice(2, 8)}</p>
+            <Link href={`/market/${market.uniqueKey}`}>
+              <p className="text-right font-monospace text-sm">{market.uniqueKey.slice(2, 8)}</p>
+            </Link>
           </div>
           <div className="mb-1 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Collateral Token:</p>

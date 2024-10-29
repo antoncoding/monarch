@@ -10,7 +10,7 @@ type GraphQLResponse = {
     marketByUniqueKey: MarketDetail;
   };
   errors?: { message: string }[];
-}
+};
 
 const graphqlFetcher = async (
   query: string,
@@ -26,7 +26,7 @@ const graphqlFetcher = async (
     throw new Error('Network response was not ok');
   }
 
-  const result: GraphQLResponse = await response.json();
+  const result = (await response.json()) as GraphQLResponse;
 
   if (result.errors) {
     throw new Error(result.errors[0].message);

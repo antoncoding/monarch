@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from '@nextui-org/button';
+import React, { useCallback } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Spinner } from '@nextui-org/spinner';
 import {
@@ -13,6 +12,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { formatUnits } from 'viem';
+import ButtonGroup from '@/components/ButtonGroup';
 import { formatReadable } from '@/utils/balance';
 import { TimeseriesDataPoint, MarketHistoricalData, Market } from '@/utils/types';
 
@@ -118,25 +118,45 @@ function VolumeChart({
     return sum / data.length;
   };
 
+  const volumeViewOptions = [
+    { key: 'USD', label: 'USD', value: 'USD' },
+    { key: 'Asset', label: market.loanAsset.symbol, value: 'Asset' },
+  ];
+
+  const timeframeOptions = [
+    { key: '1day', label: '1D', value: '1day' },
+    { key: '7day', label: '7D', value: '7day' },
+    { key: '30day', label: '30D', value: '30day' },
+  ];
+
+  const handleTimeframeChange = useCallback(
+    (value: string) => {
+      setVolumeTimeframe(value as '1day' | '7day' | '30day');
+      const days = value === '1day' ? 1 : value === '7day' ? 7 : 30;
+      setTimeRangeAndRefetch(days, 'volume');
+    },
+    [setVolumeTimeframe, setTimeRangeAndRefetch],
+  );
+
   return (
-    <Card className="my-4 rounded-sm bg-surface p-4 shadow-sm">
+    <Card className="bg-surface my-4 rounded-sm p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Volumes</span>
-        <div className="flex gap-2">
-          <Button
+        <div className="flex gap-4">
+          <ButtonGroup
+            options={volumeViewOptions}
+            value={volumeView}
+            onChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
             size="sm"
-            onClick={() => setVolumeView('USD')}
-            color={volumeView === 'USD' ? 'warning' : 'default'}
-          >
-            USD
-          </Button>
-          <Button
+            variant="default"
+          />
+          <ButtonGroup
+            options={timeframeOptions}
+            value={volumeTimeframe}
+            onChange={handleTimeframeChange}
             size="sm"
-            onClick={() => setVolumeView('Asset')}
-            color={volumeView === 'Asset' ? 'warning' : 'default'}
-          >
-            {market.loanAsset.symbol}
-          </Button>
+            variant="default"
+          />
         </div>
       </CardHeader>
       <CardBody>
@@ -237,40 +257,6 @@ function VolumeChart({
                 )}
               </div>
             </div>
-          </div>
-        </div>
-        <div className="mt-4 flex justify-center">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                setVolumeTimeframe('1day');
-                setTimeRangeAndRefetch(1, 'volume');
-              }}
-              color={volumeTimeframe === '1day' ? 'warning' : 'default'}
-            >
-              1D
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setVolumeTimeframe('7day');
-                setTimeRangeAndRefetch(7, 'volume');
-              }}
-              color={volumeTimeframe === '7day' ? 'warning' : 'default'}
-            >
-              7D
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => {
-                setVolumeTimeframe('30day');
-                setTimeRangeAndRefetch(30, 'volume');
-              }}
-              color={volumeTimeframe === '30day' ? 'warning' : 'default'}
-            >
-              30D
-            </Button>
           </div>
         </div>
       </CardBody>

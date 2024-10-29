@@ -76,7 +76,7 @@ export default function UniformProgram({
         .
       </p>
 
-      <div className="mb-6 mt-2 bg-surface">
+      <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Uniform Program Rewards Table"
           classNames={{

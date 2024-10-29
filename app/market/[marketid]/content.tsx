@@ -15,7 +15,6 @@ import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import { getExplorerURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
-import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
@@ -61,10 +60,10 @@ function MarketContent() {
 
       if (type === 'rate') {
         setRateTimeRange(newTimeRange);
-        refetchHistoricalData.rates();
+        void refetchHistoricalData.rates();
       } else {
         setVolumeTimeRange(newTimeRange);
-        refetchHistoricalData.volumes();
+        void refetchHistoricalData.volumes();
       }
     },
     [refetchHistoricalData],
@@ -86,7 +85,6 @@ function MarketContent() {
     return <div className="text-center">Market data not available</div>;
   }
 
-  const chainImg = getNetworkImg(market.morphoBlue.chain.id);
   const loanImg = findToken(market.loanAsset.address, market.morphoBlue.chain.id)?.img;
   const collateralImg = findToken(market.collateralAsset.address, market.morphoBlue.chain.id)?.img;
 
@@ -105,14 +103,13 @@ function MarketContent() {
       ? (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100
       : 0;
 
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 py-8 pb-12 font-zen">
         <Button
           onClick={() => router.push('/markets')}
-          className="mb-4"
+          className="bg-surface mb-4"
           startContent={<ChevronLeftIcon />}
         >
           Back to Markets

@@ -20,7 +20,7 @@ export default function NavbarMobile() {
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 flex flex-col gap-4 rounded-sm bg-main p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 bg-main flex flex-col gap-4 rounded-sm p-2 backdrop-blur-2xl">
         <div className={navbarClass}>
           <div className="flex grow items-center justify-between gap-4">
             <NavbarTitle />

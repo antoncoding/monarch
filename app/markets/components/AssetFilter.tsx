@@ -81,7 +81,7 @@ export default function AssetFilter({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`min-w-48 cursor-pointer rounded-sm bg-surface p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-surface-dark' : ''
         }`}
         role="button"
@@ -116,7 +116,7 @@ export default function AssetFilter({
         </div>
       </div>
       {isOpen && !loading && (
-        <div className="absolute z-10 mt-1 w-full rounded-sm bg-surface shadow-lg">
+        <div className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg">
           <input
             type="text"
             value={query}
@@ -153,9 +153,9 @@ export default function AssetFilter({
                 </li>
               ))}
             </ul>
-            <div className="absolute bottom-0 left-0 right-0 border-gray-700 bg-surface p-2">
+            <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
               <button
-                className="flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary hover:bg-main"
+                className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
                 onClick={clearSelection}
                 type="button"
               >

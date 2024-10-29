@@ -19,7 +19,7 @@ export default function HomePage() {
   const { address } = useAccount();
 
   return (
-    <div className="flex min-h-screen flex-col bg-main">
+    <div className="bg-main flex min-h-screen flex-col">
       <div className="flex flex-col items-center justify-center">
         <HomeHeader />
         <main className="container flex flex-col">

@@ -201,7 +201,7 @@ function AdvancedSearchBar({
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 mt-1 w-full max-w-[400px] rounded-sm bg-surface shadow-lg"
+          className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg"
         >
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {

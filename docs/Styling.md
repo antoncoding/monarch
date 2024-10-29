@@ -2,10 +2,10 @@
 
 ## Colors
 
-* background: `bg-main`
-* card, button: `bg-surface`
+- background: `bg-main`
+- card, button: `bg-surface`
 
 ## Tailwind-Compatible Component
 
-* primary: `text-primary`
-* secondary: `text-secondary`
+- primary: `text-primary`
+- secondary: `text-secondary`

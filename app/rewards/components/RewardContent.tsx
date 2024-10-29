@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
+import ButtonGroup from '@/components/ButtonGroup';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -44,6 +45,11 @@ export default function Rewards() {
     }
   };
 
+  const programOptions = [
+    { key: 'market', label: 'Market Program', value: 'market' },
+    { key: 'uniform', label: 'Uniform Program', value: 'uniform' },
+  ];
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -57,30 +63,12 @@ export default function Rewards() {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <div className="inline-flex rounded-md shadow-sm" role="group">
-              <button
-                type="button"
-                className={`rounded-l-lg p-4 text-sm font-medium ${
-                  activeProgram === 'market'
-                    ? 'bg-hovered hover:bg-surface'
-                    : 'bg-surface'
-                }`}
-                onClick={() => setActiveProgram('market')}
-              >
-                Market Program
-              </button>
-              <button
-                type="button"
-                className={`rounded-r-lg p-4 text-sm font-medium ${
-                  activeProgram === 'uniform'
-                    ? 'bg-hovered hover:bg-surface'
-                    : 'bg-surface'
-                }`}
-                onClick={() => setActiveProgram('uniform')}
-              >
-                Uniform Program
-              </button>
-            </div>
+            <ButtonGroup
+              options={programOptions}
+              value={activeProgram}
+              onChange={(value) => setActiveProgram(value as 'market' | 'uniform')}
+              size="md"
+            />
           </div>
         </div>
 

@@ -1,5 +1,4 @@
-import React from 'react';
-import { Button } from '@nextui-org/button';
+import React, { useCallback } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Progress } from '@nextui-org/progress';
 import { Spinner } from '@nextui-org/spinner';
@@ -13,6 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import ButtonGroup from '@/components/ButtonGroup';
 import { TimeseriesDataPoint, MarketHistoricalData, Market } from '@/utils/types';
 
 type RateChartProps = {
@@ -82,42 +82,32 @@ function RateChart({
     );
   };
 
+  const timeframeOptions = [
+    { key: '1day', label: '1D', value: '1day' },
+    { key: '7day', label: '7D', value: '7day' },
+    { key: '30day', label: '30D', value: '30day' },
+  ];
+
+  const handleTimeframeChange = useCallback(
+    (value: string) => {
+      setApyTimeframe(value as '1day' | '7day' | '30day');
+      const days = value === '1day' ? 1 : value === '7day' ? 7 : 30;
+      setTimeRangeAndRefetch(days, 'rate');
+    },
+    [setApyTimeframe, setTimeRangeAndRefetch],
+  );
+
   return (
-    <Card className="my-4 rounded-sm bg-surface p-4 shadow-sm">
+    <Card className="bg-surface my-4 rounded-sm p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Rates</span>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            onClick={() => {
-              setApyTimeframe('1day');
-              setTimeRangeAndRefetch(1, 'rate');
-            }}
-            color={apyTimeframe === '1day' ? 'warning' : 'default'}
-          >
-            1D
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setApyTimeframe('7day');
-              setTimeRangeAndRefetch(7, 'rate');
-            }}
-            color={apyTimeframe === '7day' ? 'warning' : 'default'}
-          >
-            7D
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setApyTimeframe('30day');
-              setTimeRangeAndRefetch(30, 'rate');
-            }}
-            color={apyTimeframe === '30day' ? 'warning' : 'default'}
-          >
-            30D
-          </Button>
-        </div>
+        <ButtonGroup
+          options={timeframeOptions}
+          value={apyTimeframe}
+          onChange={handleTimeframeChange}
+          size="sm"
+          variant="default"
+        />
       </CardHeader>
       <CardBody>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
