@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Spinner } from '@nextui-org/spinner';
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -15,6 +15,7 @@ import { formatUnits } from 'viem';
 import ButtonGroup from '@/components/ButtonGroup';
 import { formatReadable } from '@/utils/balance';
 import { TimeseriesDataPoint, MarketHistoricalData, Market, TimeseriesOptions } from '@/utils/types';
+import { CHART_COLORS } from '@/constants/chartColors';
 
 type VolumeChartProps = {
   historicalData: MarketHistoricalData['volumes'] | undefined;
@@ -59,6 +60,7 @@ function VolumeChart({
 
   const getVolumeChartData = () => {
     if (!historicalData) return [];
+
     const supplyData =
       volumeView === 'USD' ? historicalData.supplyAssetsUsd : historicalData.supplyAssets;
     const borrowData =
@@ -66,21 +68,37 @@ function VolumeChart({
     const liquidityData =
       volumeView === 'USD' ? historicalData.liquidityAssetsUsd : historicalData.liquidityAssets;
 
-    return supplyData.map((point: TimeseriesDataPoint, index: number) => ({
-      x: point.x,
-      supply:
-        volumeView === 'USD'
+    // Process all data in a single loop
+    return supplyData
+      .map((point: TimeseriesDataPoint, index: number) => {
+        // Get corresponding points from other series
+        const borrowPoint = borrowData[index];
+        const liquidityPoint = liquidityData[index];
+
+        // Convert values based on view type
+        const supplyValue = volumeView === 'USD'
           ? point.y
-          : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals)),
-      borrow:
-        volumeView === 'USD'
-          ? borrowData[index]?.y
-          : Number(formatUnits(BigInt(borrowData[index]?.y || 0), market.loanAsset.decimals)),
-      liquidity:
-        volumeView === 'USD'
-          ? liquidityData[index]?.y
-          : Number(formatUnits(BigInt(liquidityData[index]?.y || 0), market.loanAsset.decimals)),
-    }));
+          : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals));
+        const borrowValue = volumeView === 'USD'
+          ? borrowPoint?.y || 0
+          : Number(formatUnits(BigInt(borrowPoint?.y || 0), market.loanAsset.decimals));
+        const liquidityValue = volumeView === 'USD'
+          ? liquidityPoint?.y || 0
+          : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
+
+        // Check if any timestamps has USD value exceeds 100B
+        if (historicalData.supplyAssetsUsd[index].y >= 100_000_000_000) {
+          return null;
+        }
+
+        return {
+          x: point.x,
+          supply: supplyValue,
+          borrow: borrowValue,
+          liquidity: liquidityValue,
+        };
+      })
+      .filter((point): point is NonNullable<typeof point> => point !== null);
   };
 
   const formatValue = (value: number) => {
@@ -148,6 +166,12 @@ function VolumeChart({
     [setVolumeTimeframe, setTimeRangeAndRefetch],
   );
 
+  const [visibleLines, setVisibleLines] = useState({
+    supply: true,
+    borrow: true,
+    liquidity: true,
+  });
+
   return (
     <Card className="bg-surface my-4 rounded-md p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
@@ -178,7 +202,45 @@ function VolumeChart({
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400}>
-                <LineChart data={getVolumeChartData()}>
+                <AreaChart data={getVolumeChartData()}>
+                  <defs>
+                    <linearGradient id="supplyVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop 
+                        offset="0%" 
+                        stopColor={CHART_COLORS.supply.gradient.start} 
+                        stopOpacity={CHART_COLORS.supply.gradient.startOpacity}
+                      />
+                      <stop 
+                        offset="25%" 
+                        stopColor={CHART_COLORS.supply.gradient.start} 
+                        stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
+                      />
+                    </linearGradient>
+                    <linearGradient id="borrowVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop 
+                        offset="0%" 
+                        stopColor={CHART_COLORS.borrow.gradient.start} 
+                        stopOpacity={CHART_COLORS.borrow.gradient.startOpacity}
+                      />
+                      <stop 
+                        offset="25%" 
+                        stopColor={CHART_COLORS.borrow.gradient.start} 
+                        stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
+                      />
+                    </linearGradient>
+                    <linearGradient id="liquidityVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop 
+                        offset="0%" 
+                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start} 
+                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.startOpacity}
+                      />
+                      <stop 
+                        offset="25%" 
+                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start} 
+                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.endOpacity}
+                      />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="x" tickFormatter={formatTime} />
                   <YAxis tickFormatter={formatYAxis} domain={['auto', 'auto']} />
@@ -186,32 +248,55 @@ function VolumeChart({
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number, name: string) => [formatValue(value), name]}
                   />
-                  <Legend />
-                  <Line
+                  <Legend 
+                    onClick={(e) => {
+                      const dataKey = e.dataKey as keyof typeof visibleLines;
+                      setVisibleLines(prev => ({
+                        ...prev,
+                        [dataKey]: !prev[dataKey]
+                      }));
+                    }}
+                    formatter={(value, entry: any) => (
+                      <span style={{ 
+                        color: visibleLines[entry.dataKey as keyof typeof visibleLines] 
+                          ? undefined 
+                          : '#999'
+                      }}>
+                        {value}
+                      </span>
+                    )}
+                  />
+                  <Area
                     type="monotone"
                     dataKey="supply"
                     name="Supply Volume"
-                    stroke="#3B82F6"
+                    stroke={CHART_COLORS.supply.stroke}
                     strokeWidth={2}
-                    dot={false}
+                    fill="url(#supplyVolumeGradient)"
+                    fillOpacity={1}
+                    hide={!visibleLines.supply}
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="borrow"
                     name="Borrow Volume"
-                    stroke="#10B981"
+                    stroke={CHART_COLORS.borrow.stroke}
                     strokeWidth={2}
-                    dot={false}
+                    fill="url(#borrowVolumeGradient)"
+                    fillOpacity={1}
+                    hide={!visibleLines.borrow}
                   />
-                  <Line
+                  <Area
                     type="monotone"
                     dataKey="liquidity"
                     name="Liquidity"
-                    stroke="#F59E0B"
+                    stroke={CHART_COLORS.rateAtUTarget.stroke}
                     strokeWidth={2}
-                    dot={false}
+                    fill="url(#liquidityVolumeGradient)"
+                    fillOpacity={1}
+                    hide={!visibleLines.liquidity}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
