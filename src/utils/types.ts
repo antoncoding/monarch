@@ -290,6 +290,12 @@ export type MarketDetail = Market & {
     borrowApy: TimeseriesDataPoint[];
     supplyAssetsUsd: TimeseriesDataPoint[];
     borrowAssetsUsd: TimeseriesDataPoint[];
+    supplyAssets: TimeseriesDataPoint[];
+    borrowAssets: TimeseriesDataPoint[];
+    liquidityAssetsUsd: TimeseriesDataPoint[];
+    liquidityAssets: TimeseriesDataPoint[];
+    rateAtUTarget: TimeseriesDataPoint[];
+    utilization: TimeseriesDataPoint[];
   };
   // Add any additional fields specific to the market detail view
 };
@@ -298,4 +304,22 @@ export type TimeseriesOptions = {
   startTimestamp: number;
   endTimestamp: number;
   interval: 'HOUR' | 'DAY' | 'WEEK';
+};
+
+// Add this new type
+export type MarketHistoricalData = {
+  rates: {
+    supplyApy: TimeseriesDataPoint[];
+    borrowApy: TimeseriesDataPoint[];
+    rateAtUTarget: TimeseriesDataPoint[];
+    utilization: TimeseriesDataPoint[];
+  };
+  volumes: {
+    supplyAssetsUsd: TimeseriesDataPoint[];
+    borrowAssetsUsd: TimeseriesDataPoint[];
+    liquidityAssetsUsd: TimeseriesDataPoint[];
+    supplyAssets: TimeseriesDataPoint[];
+    borrowAssets: TimeseriesDataPoint[];
+    liquidityAssets: TimeseriesDataPoint[];
+  };
 };

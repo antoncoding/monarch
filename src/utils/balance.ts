@@ -23,14 +23,23 @@ export const formatBalance = (value: bigint | string, decimals: number) => {
 };
 
 export function formatReadable(num: number): string {
-  if (Math.abs(num) >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(2) + 'B';
-  } else if (Math.abs(num) >= 1_000_000) {
-    return (num / 1_000_000).toFixed(2) + 'M';
-  } else if (Math.abs(num) >= 1_000) {
-    return (num / 1_000).toFixed(2) + 'K';
-  } else {
-    return num.toFixed(2);
+  if (typeof num === 'string') {
+    num = parseFloat(num);
+  }
+
+  try {
+    if (Math.abs(num) >= 1_000_000_000) {
+      return (num / 1_000_000_000).toFixed(2) + 'B';
+    } else if (Math.abs(num) >= 1_000_000) {
+      return (num / 1_000_000).toFixed(2) + 'M';
+    } else if (Math.abs(num) >= 1_000) {
+      return (num / 1_000).toFixed(2) + 'K';
+    } else {
+      return num.toFixed(2);
+    }
+  } catch (e) {
+    console.log('Error formatting number', e, typeof num);
+    return num.toString();
   }
 }
 

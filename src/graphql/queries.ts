@@ -226,7 +226,15 @@ export const marketHistoricalDataQuery = `
           x
           y
         }
-        utilization(options: $options) {
+        supplyAssets(options: $options) {
+          x
+          y
+        }
+        borrowAssets(options: $options) {
+          x
+          y
+        }
+        liquidityAssets(options: $options) {
           x
           y
         }
@@ -234,27 +242,11 @@ export const marketHistoricalDataQuery = `
           x
           y
         }
-        dailySupplyApy(options: $options) {
+        utilization(options: $options) {
           x
           y
         }
-        dailyBorrowApy(options: $options) {
-          x
-          y
-        }
-        weeklySupplyApy(options: $options) {
-          x
-          y
-        }
-        weeklyBorrowApy(options: $options) {
-          x
-          y
-        }
-        monthlySupplyApy(options: $options) {
-          x
-          y
-        }
-        monthlyBorrowApy(options: $options) {
+        rateAtUTarget(options: $options) {
           x
           y
         }

@@ -97,9 +97,6 @@ export function MarketTableBody({
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p>{item.uniqueKey.slice(2, 8)} </p>
-                      <p className="opacity-0 group-hover:opacity-100">
-                        <ExternalLinkIcon />
-                      </p>
                     </Link>
                   </div>
                 </td>
