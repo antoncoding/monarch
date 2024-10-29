@@ -53,7 +53,7 @@ const processMarketData = (market: Market): MarketDetail => {
     ...market,
     rewardPer1000USD,
     warningsWithDetail,
-    isProtectedByLiquidationBots: false, // You might want to implement this check if needed
+    isProtectedByLiquidationBots: false, // NOT needed for now, might implement later
     historicalState: {
       supplyApy: [],
       borrowApy: [],
@@ -71,7 +71,7 @@ const processMarketData = (market: Market): MarketDetail => {
 
 export const useMarket = (uniqueKey: string, network: SupportedNetworks) => {
   return useQuery<MarketDetail>({
-    queryKey: ['market', uniqueKey],
+    queryKey: ['market', uniqueKey, network],
     queryFn: async () => {
       const response = await graphqlFetcher(marketDetailQuery, { uniqueKey, chainId: network });
       return processMarketData(response.data.marketByUniqueKey);
@@ -95,12 +95,12 @@ export const useMarketHistoricalData = (
   };
 
   const rateQuery = useQuery({
-    queryKey: ['marketHistoricalRates', uniqueKey, rateOptions],
+    queryKey: ['marketHistoricalRates', uniqueKey, network, rateOptions],
     queryFn: async () => fetchHistoricalData(rateOptions),
   });
 
   const volumeQuery = useQuery({
-    queryKey: ['marketHistoricalVolumes', uniqueKey, volumeOptions],
+    queryKey: ['marketHistoricalVolumes', uniqueKey, network, volumeOptions],
     queryFn: async () => fetchHistoricalData(volumeOptions),
   });
 

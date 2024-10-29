@@ -12,6 +12,11 @@ import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers
 import MarketProgram from './MarketProgram';
 import UniformProgram from './UniformProgram'; // You'll need to create this component
 
+const programOptions = [
+  { key: 'market', label: 'Market Program', value: 'market' },
+  { key: 'uniform', label: 'Uniform Program', value: 'uniform' },
+];
+
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const [activeProgram, setActiveProgram] = useState<'market' | 'uniform'>('market');
@@ -44,11 +49,6 @@ export default function Rewards() {
       );
     }
   };
-
-  const programOptions = [
-    { key: 'market', label: 'Market Program', value: 'market' },
-    { key: 'uniform', label: 'Uniform Program', value: 'uniform' },
-  ];
 
   return (
     <div className="flex flex-col justify-between font-zen">

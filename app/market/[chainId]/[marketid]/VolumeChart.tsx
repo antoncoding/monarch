@@ -132,7 +132,7 @@ function VolumeChart({
         ? data[0].y
         : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
     const netChange = current - start;
-    const netChangePercentage = (netChange / start) * 100;
+    const netChangePercentage = start !== 0 ? (netChange / start) * 100 : 0;
 
     return { current, netChange, netChangePercentage };
   };
@@ -142,7 +142,7 @@ function VolumeChart({
       volumeView === 'USD'
         ? historicalData?.[`${type}AssetsUsd`]
         : historicalData?.[`${type}Assets`];
-    if (!data) return 0;
+    if (!data || data.length === 0) return 0;
     const sum = data.reduce(
       (acc, point) =>
         acc +

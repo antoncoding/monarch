@@ -31,7 +31,7 @@ export default function ButtonGroup({
   variant = 'default',
 }: ButtonGroupProps) {
   return (
-    <div className="inline-flex rounded-lg shadow-sm" role="group">
+    <div className="inline-flex rounded-lg shadow-sm" role="group" aria-label="Button group">
       {options.map((option, index) => {
         const isFirst = index === 0;
         const isLast = index === options.length - 1;
@@ -81,10 +81,6 @@ export default function ButtonGroup({
 
               // Hover & Focus styles
               'hover:relative hover:z-20',
-
-              // New focus styles - more subtle and contained
-              // 'focus:outline-none',
-              // 'focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-0',
 
               // Animation
               'transform active:scale-95',

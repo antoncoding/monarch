@@ -13,6 +13,7 @@ import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
+import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
@@ -21,7 +22,6 @@ import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
-const MORPHO_LOGO = require('@/imgs/tokens/morpho.svg') as string;
 
 function MarketContent() {
   const { marketid, chainId } = useParams();
@@ -72,7 +72,7 @@ function MarketContent() {
         void refetchHistoricalData.volumes();
       }
     },
-    [refetchHistoricalData],
+    [refetchHistoricalData, setRateTimeRange, setVolumeTimeRange],
   );
 
   if (isMarketLoading) {
@@ -97,8 +97,10 @@ function MarketContent() {
   const cardStyle = 'bg-surface rounded-md shadow-sm p-4';
 
   const averageLTV =
-    market.state.collateralAssetsUsd && market.state.collateralAssetsUsd > 0
-      ? (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100
+    market.state.collateralAssetsUsd && market.state.borrowAssetsUsd
+      ? market.state.collateralAssetsUsd > 0
+        ? (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100
+        : 0
       : 0;
 
   return (
@@ -219,34 +221,41 @@ function MarketContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Vendor:</span>
-                  <Link
-                    href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center hover:underline"
-                  >
-                    <OracleVendorBadge oracleData={market.oracle.data} showText />{' '}
-                    <ExternalLinkIcon className="ml-1" />
-                  </Link>
+                  {market.oracle.data && (
+                    <Link
+                      href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center hover:underline"
+                    >
+                      <OracleVendorBadge oracleData={market.oracle.data} showText />{' '}
+                      <ExternalLinkIcon className="ml-1" />
+                    </Link>
+                  )}
                 </div>
                 <div>
                   <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
-                  <OracleFeedInfo
-                    feed={market.oracle.data.baseFeedOne}
-                    chainId={market.morphoBlue.chain.id}
-                  />
-                  <OracleFeedInfo
-                    feed={market.oracle.data.baseFeedTwo}
-                    chainId={market.morphoBlue.chain.id}
-                  />
-                  <OracleFeedInfo
-                    feed={market.oracle.data.quoteFeedOne}
-                    chainId={market.morphoBlue.chain.id}
-                  />
-                  <OracleFeedInfo
-                    feed={market.oracle.data.quoteFeedTwo}
-                    chainId={market.morphoBlue.chain.id}
-                  />
+                  {market.oracle.data && (
+                    <div>
+                      {' '}
+                      <OracleFeedInfo
+                        feed={market.oracle.data.baseFeedOne}
+                        chainId={market.morphoBlue.chain.id}
+                      />
+                      <OracleFeedInfo
+                        feed={market.oracle.data.baseFeedTwo}
+                        chainId={market.morphoBlue.chain.id}
+                      />
+                      <OracleFeedInfo
+                        feed={market.oracle.data.quoteFeedOne}
+                        chainId={market.morphoBlue.chain.id}
+                      />
+                      <OracleFeedInfo
+                        feed={market.oracle.data.quoteFeedTwo}
+                        chainId={market.morphoBlue.chain.id}
+                      />{' '}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardBody>

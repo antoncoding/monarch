@@ -69,7 +69,7 @@ function RateChart({
   const getAverageApyValue = (type: 'supply' | 'borrow') => {
     if (!historicalData) return 0;
     const data = type === 'supply' ? historicalData.supplyApy : historicalData.borrowApy;
-    return data.reduce((sum, point) => sum + point.y, 0) / data.length;
+    return data.length > 0 ? data.reduce((sum, point) => sum + point.y, 0) / data.length : 0;
   };
 
   const getCurrentRateAtUTargetValue = () => {
