@@ -98,7 +98,7 @@ function RateChart({
 
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
-    if (rateTimeRange.endTimestamp - rateTimeRange.startTimestamp <= 24 * 60 * 60) {
+    if (rateTimeRange.endTimestamp - rateTimeRange.startTimestamp <= 86400) {
       return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     }
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -120,7 +120,7 @@ function RateChart({
   );
 
   return (
-    <Card className="bg-surface my-4 rounded-md p-4 shadow-sm">
+    <Card className="bg-surface my-4 rounded-md p-4 shadow-sm mt-8">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Rates</span>
         <ButtonGroup
@@ -132,17 +132,17 @@ function RateChart({
         />
       </CardHeader>
       <CardBody>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 mb-4">
           <div className="md:col-span-2">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <Spinner size="lg" />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={400} id="rate-chart">
                 <AreaChart data={getChartData()}>
                   <defs>
-                    <linearGradient id="supplyApyGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="rateChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.supply.gradient.start}
@@ -154,13 +154,29 @@ function RateChart({
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="borrowApyGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.3} />
-                      <stop offset="25%" stopColor="#10B981" stopOpacity={0} />
+                    <linearGradient id="rateChart-borrowGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="0%"
+                        stopColor={CHART_COLORS.borrow.gradient.start}
+                        stopOpacity={CHART_COLORS.borrow.gradient.startOpacity}
+                      />
+                      <stop
+                        offset="25%"
+                        stopColor={CHART_COLORS.borrow.gradient.start}
+                        stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
+                      />
                     </linearGradient>
-                    <linearGradient id="rateAtUTargetGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
-                      <stop offset="25%" stopColor="#F59E0B" stopOpacity={0} />
+                    <linearGradient id="rateChart-targetGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="0%"
+                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.startOpacity}
+                      />
+                      <stop
+                        offset="25%"
+                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.endOpacity}
+                      />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -196,7 +212,7 @@ function RateChart({
                     name="Supply APY"
                     stroke={CHART_COLORS.supply.stroke}
                     strokeWidth={2}
-                    fill="url(#supplyApyGradient)"
+                    fill="url(#rateChart-supplyGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.supplyApy}
                   />
@@ -204,19 +220,19 @@ function RateChart({
                     type="monotone"
                     dataKey="borrowApy"
                     name="Borrow APY"
-                    stroke="#10B981"
+                    stroke={CHART_COLORS.borrow.stroke}
                     strokeWidth={2}
-                    fill="url(#borrowApyGradient)"
+                    fill="url(#rateChart-borrowGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.borrowApy}
                   />
                   <Area
                     type="monotone"
                     dataKey="rateAtUTarget"
-                    name="Rate at U Target"
-                    stroke="#F59E0B"
+                    name="Rate at Util Target"
+                    stroke={CHART_COLORS.rateAtUTarget.stroke}
                     strokeWidth={2}
-                    fill="url(#rateAtUTargetGradient)"
+                    fill="url(#rateChart-targetGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.rateAtUTarget}
                   />

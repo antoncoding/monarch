@@ -22,6 +22,8 @@ import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
+const NOW = Math.floor(Date.now() / 1000);
+const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
 function MarketContent() {
   const { marketid, chainId } = useParams();
@@ -30,13 +32,13 @@ function MarketContent() {
 
   const router = useRouter();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
-    startTimestamp: Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60,
-    endTimestamp: Math.floor(Date.now() / 1000),
+    startTimestamp: NOW - WEEK_IN_SECONDS,
+    endTimestamp: NOW,
     interval: 'HOUR',
   });
   const [volumeTimeRange, setVolumeTimeRange] = useState<TimeseriesOptions>({
-    startTimestamp: Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60,
-    endTimestamp: Math.floor(Date.now() / 1000),
+    startTimestamp: NOW - WEEK_IN_SECONDS,
+    endTimestamp: NOW,
     interval: 'HOUR',
   });
   const [apyTimeframe, setApyTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
@@ -97,11 +99,11 @@ function MarketContent() {
   const cardStyle = 'bg-surface rounded-md shadow-sm p-4';
 
   const averageLTV =
-    market.state.collateralAssetsUsd && market.state.borrowAssetsUsd
-      ? market.state.collateralAssetsUsd > 0
-        ? (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100
-        : 0
-      : 0;
+    !market.state.collateralAssetsUsd ||
+    !market.state.borrowAssetsUsd ||
+    market.state.collateralAssetsUsd <= 0
+      ? 0
+      : (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100;
 
   return (
     <>

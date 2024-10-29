@@ -284,42 +284,33 @@ export type TimeseriesDataPoint = {
   y: number;
 };
 
-export type MarketDetail = Market & {
-  historicalState: {
-    supplyApy: TimeseriesDataPoint[];
-    borrowApy: TimeseriesDataPoint[];
-    supplyAssetsUsd: TimeseriesDataPoint[];
-    borrowAssetsUsd: TimeseriesDataPoint[];
-    supplyAssets: TimeseriesDataPoint[];
-    borrowAssets: TimeseriesDataPoint[];
-    liquidityAssetsUsd: TimeseriesDataPoint[];
-    liquidityAssets: TimeseriesDataPoint[];
-    rateAtUTarget: TimeseriesDataPoint[];
-    utilization: TimeseriesDataPoint[];
-  };
-  // Add any additional fields specific to the market detail view
-};
-
 export type TimeseriesOptions = {
   startTimestamp: number;
   endTimestamp: number;
-  interval: 'HOUR' | 'DAY' | 'WEEK';
+  interval: 'MINUTE' | 'HALF_HOUR' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL';
 };
 
-// Add this new type
+type MarketRates = {
+  supplyApy: TimeseriesDataPoint[];
+  borrowApy: TimeseriesDataPoint[];
+  rateAtUTarget: TimeseriesDataPoint[];
+  utilization: TimeseriesDataPoint[];
+};
+
+type MarketVolumes = {
+  supplyAssetsUsd: TimeseriesDataPoint[];
+  borrowAssetsUsd: TimeseriesDataPoint[];
+  liquidityAssetsUsd: TimeseriesDataPoint[];
+  supplyAssets: TimeseriesDataPoint[];
+  borrowAssets: TimeseriesDataPoint[];
+  liquidityAssets: TimeseriesDataPoint[];
+};
+
+export type MarketDetail = Market & {
+  historicalState: MarketRates & MarketVolumes;
+};
+
 export type MarketHistoricalData = {
-  rates: {
-    supplyApy: TimeseriesDataPoint[];
-    borrowApy: TimeseriesDataPoint[];
-    rateAtUTarget: TimeseriesDataPoint[];
-    utilization: TimeseriesDataPoint[];
-  };
-  volumes: {
-    supplyAssetsUsd: TimeseriesDataPoint[];
-    borrowAssetsUsd: TimeseriesDataPoint[];
-    liquidityAssetsUsd: TimeseriesDataPoint[];
-    supplyAssets: TimeseriesDataPoint[];
-    borrowAssets: TimeseriesDataPoint[];
-    liquidityAssets: TimeseriesDataPoint[];
-  };
+  rates: MarketRates;
+  volumes: MarketVolumes;
 };

@@ -12,7 +12,7 @@ export type ButtonOption = {
 type ButtonGroupProps = {
   options: ButtonOption[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: ButtonOption['value']) => void;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'primary';
 };
@@ -21,6 +21,32 @@ const sizeClasses = {
   sm: 'px-3 py-2 text-sm',
   md: 'px-4 py-3 text-base',
   lg: 'px-6 py-4 text-lg',
+};
+
+const variantStyles = {
+  default: (isSelected: boolean) => [
+    isSelected ? 'bg-hovered hover:bg-surface z-10' : 'bg-surface hover:bg-hovered',
+    'border border-divider',
+    'shadow-sm',
+  ],
+  primary: (isSelected: boolean) => [
+    isSelected
+      ? [
+          'z-10 bg-primary hover:bg-primary/90',
+          'shadow-[0_2px_8px_-2px] shadow-primary/30',
+          'border-primary/80',
+        ]
+      : [
+          'bg-surface hover:bg-surface/90',
+          'hover:shadow-[0_2px_8px_-2px] hover:shadow-primary/20',
+          'border-primary/60 hover:border-primary/80',
+        ],
+    'border',
+    'before:absolute before:inset-0 before:rounded-[inherit]',
+    isSelected
+      ? 'before:bg-gradient-to-b before:from-white/10 before:to-transparent'
+      : 'before:bg-gradient-to-b before:from-transparent before:to-black/5',
+  ],
 };
 
 export default function ButtonGroup({
@@ -53,31 +79,8 @@ export default function ButtonGroup({
 
               // Variant & State styles
               variant === 'default'
-                ? [
-                    isSelected ? 'bg-hovered hover:bg-surface z-10' : 'bg-surface hover:bg-hovered',
-                    'border border-divider',
-                    'shadow-sm',
-                  ]
-                : [
-                    // Primary variant with enhanced styling
-                    isSelected
-                      ? [
-                          'z-10 bg-primary hover:bg-primary/90',
-                          'shadow-[0_2px_8px_-2px] shadow-primary/30',
-                          'border-primary/80',
-                        ]
-                      : [
-                          'bg-surface hover:bg-surface/90',
-                          'hover:shadow-[0_2px_8px_-2px] hover:shadow-primary/20',
-                          'border-primary/60 hover:border-primary/80',
-                        ],
-                    'border',
-                    // Subtle gradient overlay
-                    'before:absolute before:inset-0 before:rounded-[inherit]',
-                    isSelected
-                      ? 'before:bg-gradient-to-b before:from-white/10 before:to-transparent'
-                      : 'before:bg-gradient-to-b before:from-transparent before:to-black/5',
-                  ],
+                ? variantStyles.default(isSelected)
+                : variantStyles.primary(isSelected),
 
               // Hover & Focus styles
               'hover:relative hover:z-20',

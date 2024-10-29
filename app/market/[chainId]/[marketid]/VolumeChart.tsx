@@ -209,10 +209,10 @@ function VolumeChart({
                 <Spinner size="lg" />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={400} id="volume-chart">
                 <AreaChart data={getVolumeChartData()}>
                   <defs>
-                    <linearGradient id="supplyVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="volumeChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.supply.gradient.start}
@@ -224,7 +224,7 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="borrowVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="volumeChart-borrowGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.borrow.gradient.start}
@@ -236,7 +236,7 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="liquidityVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="volumeChart-liquidityGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
@@ -282,7 +282,7 @@ function VolumeChart({
                     name="Supply Volume"
                     stroke={CHART_COLORS.supply.stroke}
                     strokeWidth={2}
-                    fill="url(#supplyVolumeGradient)"
+                    fill="url(#volumeChart-supplyGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.supply}
                   />
@@ -292,7 +292,7 @@ function VolumeChart({
                     name="Borrow Volume"
                     stroke={CHART_COLORS.borrow.stroke}
                     strokeWidth={2}
-                    fill="url(#borrowVolumeGradient)"
+                    fill="url(#volumeChart-borrowGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.borrow}
                   />
@@ -302,7 +302,7 @@ function VolumeChart({
                     name="Liquidity"
                     stroke={CHART_COLORS.rateAtUTarget.stroke}
                     strokeWidth={2}
-                    fill="url(#liquidityVolumeGradient)"
+                    fill="url(#volumeChart-liquidityGradient)"
                     fillOpacity={1}
                     hide={!visibleLines.liquidity}
                   />
