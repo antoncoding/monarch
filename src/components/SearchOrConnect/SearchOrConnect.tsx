@@ -30,7 +30,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
               <div className="flex font-zen opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
                 <button
                   type="button"
-                  className="text-roboto w-80 rounded-sm bg-secondary p-4 px-10 "
+                  className="text-roboto w-80 rounded-sm bg-surface p-4 px-10 "
                 >
                   View Account {address.slice(0, 8)}
                 </button>
@@ -57,7 +57,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
         <div className="flex justify-center">
           <div className="flex font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100">
             <input
-              className="w-80 bg-secondary p-4 focus:opacity-100"
+              className="w-80 bg-surface p-4 focus:opacity-100"
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
               placeholder="0x..."

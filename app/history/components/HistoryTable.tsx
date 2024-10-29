@@ -33,8 +33,8 @@ export function HistoryTable({ history }: HistoryTableProps) {
   return (
     <Table
       classNames={{
-        th: 'bg-secondary',
-        wrapper: 'rounded-none shadow-none bg-secondary',
+        th: 'bg-surface',
+        wrapper: 'rounded-none shadow-none bg-surface',
       }}
       bottomContent={
         <div className="flex w-full justify-center">

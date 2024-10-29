@@ -60,7 +60,7 @@ function RiskPage() {
         <p className="mb-2 text-secondary">
           This page covers advanced topics. For a comprehensive overview of Monarch, please visit
           our{' '}
-          <Link href="/info" className="text-monarch-orange underline">
+          <Link href="/info" className="text-primary underline">
             introduction page
           </Link>
           .
@@ -69,18 +69,18 @@ function RiskPage() {
         <p className="mb-8 text-secondary">
           When choosing direct lending over vaults, you gain more control but also take on more
           responsibilities. The following aspects become{' '}
-          <span className="font-bold text-monarch-primary">your direct responsibility</span>:
+          <span className="font-bold text-primary">your direct responsibility</span>:
         </p>
 
         {riskSections.map((section) => (
           <div key={section.mainTitle} className="mb-8">
             <h2 className="text-2xl font-semibold">{section.mainTitle}</h2>
             <h3 className="mb-4 text-lg text-secondary">{section.subTitle}</h3>
-            <div className="text-gray-800">{section.content}</div>
+            <div className="text-normal">{section.content}</div>
           </div>
         ))}
 
-        <p className="mt-6 rounded-md border-2 border-dashed border-gray-300 p-4 font-zen text-sm text-gray-600">
+        <p className="mt-6 rounded-md border-2 border-dashed border-primary p-4 font-zen text-sm text-secondary">
           While these responsibilities require more active management, they also offer opportunities
           for advanced users to optimize their lending strategies. Always conduct your own research
           and ensure you're prepared to handle these responsibilities before engaging in direct

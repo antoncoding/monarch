@@ -98,13 +98,13 @@ export default function MarketProgram({
         targeted markets.
       </p>
 
-      <div className="mb-6 mt-2 bg-secondary">
+      <div className="mb-6 mt-2 bg-surface">
         <Table
           aria-label="Market Program Rewards Table"
           classNames={{
-            th: 'bg-secondary text-center',
+            th: 'bg-surface text-center',
             td: 'text-center',
-            wrapper: 'rounded-none shadow-none bg-secondary',
+            wrapper: 'rounded-none shadow-none bg-surface',
           }}
         >
           <TableHeader>

@@ -83,7 +83,7 @@ function RateChart({
   };
 
   return (
-    <Card className="my-4 rounded-sm bg-secondary p-4 shadow-sm">
+    <Card className="my-4 rounded-sm bg-surface p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span>Rates</span>
         <div className="flex gap-2">

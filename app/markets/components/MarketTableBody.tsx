@@ -164,7 +164,7 @@ export function MarketTableBody({
                   <button
                     type="button"
                     aria-label="Supply"
-                    className="bg-hovered items-center justify-between rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-monarch-primary "
+                    className="bg-hovered items-center justify-between rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary "
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowSupplyModal(true);

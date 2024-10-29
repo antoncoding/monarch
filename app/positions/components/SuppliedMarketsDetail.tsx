@@ -58,7 +58,7 @@ export function SuppliedMarketsDetail({
   };
 
   return (
-    <div className="bg-secondary bg-opacity-20 p-4">
+    <div className="bg-surface bg-opacity-20 p-4">
       <div className="mb-4 flex items-center justify-center">
         <div className="my-4 w-1/2">
           <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>

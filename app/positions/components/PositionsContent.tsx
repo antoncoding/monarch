@@ -35,7 +35,7 @@ export default function Positions() {
             <Link href={`/history/${account}`}>
               <button
                 type="button"
-                className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="rounded-sm bg-surface p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 View History
               </button>
@@ -43,7 +43,7 @@ export default function Positions() {
             <Link href={`/rewards/${account}`}>
               <button
                 type="button"
-                className="rounded-sm bg-secondary p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="rounded-sm bg-surface p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 View Rewards
               </button>

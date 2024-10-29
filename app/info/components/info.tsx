@@ -98,7 +98,7 @@ function InfoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-primary font-zen" ref={containerRef}>
+    <div className="min-h-screen bg-main font-zen" ref={containerRef}>
       <Header />
       <main className="container relative mx-auto px-4 py-8">
         <div className="relative overflow-hidden">
@@ -108,7 +108,7 @@ function InfoPage() {
           >
             {sections.map((section, index) => (
               <div key={`section-${index}`} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
-                <div className="mx-auto max-w-3xl rounded-lg bg-secondary px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
+                <div className="mx-auto max-w-3xl rounded-lg bg-surface px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
                   <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
                     {section.mainTitle}
                   </h1>

@@ -70,11 +70,11 @@ body {
   text-size-adjust: 100%;
 }
 
-.bg-secondary {
+.bg-surface {
   background-color: var(--color-background-secondary);
 }
 
-.bg-primary {
+.bg-main {
   background-color: var(--color-background);
 }
 

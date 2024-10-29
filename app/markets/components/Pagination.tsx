@@ -74,7 +74,7 @@ export function Pagination({
         <Button
           isIconOnly
           aria-label="Settings"
-          className="ml-2 bg-secondary"
+          className="ml-2 bg-surface"
           onClick={onOpen}
           size="md"
         >
@@ -101,7 +101,7 @@ export function Pagination({
                           className={`px-2 ${
                             entriesPerPage === value
                               ? 'bg-orange-500 text-white'
-                              : 'bg-secondary hover:bg-orange-200'
+                              : 'bg-surface hover:bg-orange-200'
                           }`}
                         >
                           {value}

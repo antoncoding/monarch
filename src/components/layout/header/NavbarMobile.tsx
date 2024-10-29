@@ -14,13 +14,13 @@ export default function NavbarMobile() {
 
   const navbarClass = [
     'flex flex-1 flex-grow items-center justify-between',
-    'rounded-sm bg-primary p-4 backdrop-blur-2xl',
+    'rounded-sm bg-main p-4 backdrop-blur-2xl',
     'mx-4',
   ].join(' ');
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 flex flex-col gap-4 rounded-sm bg-primary p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 flex flex-col gap-4 rounded-sm bg-main p-2 backdrop-blur-2xl">
         <div className={navbarClass}>
           <div className="flex grow items-center justify-between gap-4">
             <NavbarTitle />

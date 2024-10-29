@@ -98,7 +98,7 @@ function MarketContent() {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-  const cardStyle = 'bg-secondary rounded-sm shadow-sm p-4';
+  const cardStyle = 'bg-surface rounded-sm shadow-sm p-4';
 
   const averageLTV =
     market.state.collateralAssetsUsd && market.state.collateralAssetsUsd > 0

@@ -68,7 +68,7 @@ function Navbar() {
     <nav
       className={clsx(
         'flex flex-1 flex-grow items-center justify-between',
-        'rounded-[5px] bg-secondary p-4 shadow-sm backdrop-blur-2xl',
+        'rounded-[5px] bg-surface p-4 shadow-sm backdrop-blur-2xl',
       )}
     >
       <div className="flex h-8 grow items-center justify-between gap-2">

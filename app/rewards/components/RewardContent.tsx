@@ -60,10 +60,10 @@ export default function Rewards() {
             <div className="inline-flex rounded-md shadow-sm" role="group">
               <button
                 type="button"
-                className={`rounded-l-lg border border-gray-200 px-4 py-2 text-sm font-medium ${
+                className={`rounded-l-lg p-4 text-sm font-medium ${
                   activeProgram === 'market'
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-hovered hover:bg-surface'
+                    : 'bg-surface'
                 }`}
                 onClick={() => setActiveProgram('market')}
               >
@@ -71,10 +71,10 @@ export default function Rewards() {
               </button>
               <button
                 type="button"
-                className={`rounded-r-lg border border-gray-200 px-4 py-2 text-sm font-medium ${
+                className={`rounded-r-lg p-4 text-sm font-medium ${
                   activeProgram === 'uniform'
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-hovered hover:bg-surface'
+                    : 'bg-surface'
                 }`}
                 onClick={() => setActiveProgram('uniform')}
               >
