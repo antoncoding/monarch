@@ -86,7 +86,9 @@ export function HistoryTable({ history }: HistoryTableProps) {
               {/* id */}
               <TableCell>
                 <div className="flex justify-center font-monospace text-xs">
-                  <Link href={`/market/${tx.data.market.morphoBlue.chain.id}/${tx.data.market.uniqueKey}`}>
+                  <Link
+                    href={`/market/${tx.data.market.morphoBlue.chain.id}/${tx.data.market.uniqueKey}`}
+                  >
                     <p>{tx.data.market.uniqueKey.slice(2, 8)} </p>
                     <p className="opacity-0 group-hover:opacity-100">
                       <ExternalLinkIcon />

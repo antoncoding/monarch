@@ -9,11 +9,11 @@ import { useAccount, useSwitchChain } from 'wagmi';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketProgramType } from '@/utils/types';
+import Link from 'next/link';
 
 type MarketProgramProps = {
   account: string;
@@ -308,15 +308,10 @@ export default function MarketProgram({
 
                   return (
                     <TableRow key={idx}>
-                      <TableCell>
-                        <a
-                          href={getMarketURL(market.uniqueKey, market.morphoBlue.chain.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
+                      <TableCell className="font-monospace no-underline">
+                        <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
                           {market.uniqueKey.slice(2, 8)}
-                        </a>
+                        </Link>
                       </TableCell>
                       <TableCell>{market.loanAsset.symbol}</TableCell>
                       <TableCell>{market.collateralAsset.symbol}</TableCell>

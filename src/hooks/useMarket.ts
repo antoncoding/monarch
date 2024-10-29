@@ -70,7 +70,6 @@ const processMarketData = (market: Market): MarketDetail => {
 };
 
 export const useMarket = (uniqueKey: string, network: SupportedNetworks) => {
-
   return useQuery<MarketDetail>({
     queryKey: ['market', uniqueKey],
     queryFn: async () => {

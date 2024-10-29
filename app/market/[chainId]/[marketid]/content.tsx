@@ -24,7 +24,7 @@ import { SupportedNetworks } from '@/utils/networks';
 function MarketContent() {
   const { marketid, chainId } = useParams();
 
-  const network = chainId as any as SupportedNetworks;
+  const network = Number(chainId as string) as SupportedNetworks;
 
   const router = useRouter();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
