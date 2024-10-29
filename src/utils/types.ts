@@ -278,3 +278,39 @@ export type Market = {
     data: MorphoChainlinkOracleData;
   };
 };
+
+export type TimeseriesDataPoint = {
+  x: number;
+  y: number;
+};
+
+export type TimeseriesOptions = {
+  startTimestamp: number;
+  endTimestamp: number;
+  interval: 'MINUTE' | 'HALF_HOUR' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL';
+};
+
+type MarketRates = {
+  supplyApy: TimeseriesDataPoint[];
+  borrowApy: TimeseriesDataPoint[];
+  rateAtUTarget: TimeseriesDataPoint[];
+  utilization: TimeseriesDataPoint[];
+};
+
+type MarketVolumes = {
+  supplyAssetsUsd: TimeseriesDataPoint[];
+  borrowAssetsUsd: TimeseriesDataPoint[];
+  liquidityAssetsUsd: TimeseriesDataPoint[];
+  supplyAssets: TimeseriesDataPoint[];
+  borrowAssets: TimeseriesDataPoint[];
+  liquidityAssets: TimeseriesDataPoint[];
+};
+
+export type MarketDetail = Market & {
+  historicalState: MarketRates & MarketVolumes;
+};
+
+export type MarketHistoricalData = {
+  rates: MarketRates;
+  volumes: MarketVolumes;
+};

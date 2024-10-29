@@ -3,13 +3,13 @@
 import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -98,13 +98,13 @@ export default function MarketProgram({
         targeted markets.
       </p>
 
-      <div className="mb-6 mt-2 bg-secondary">
+      <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Market Program Rewards Table"
           classNames={{
-            th: 'bg-secondary text-center',
+            th: 'bg-surface text-center',
             td: 'text-center',
-            wrapper: 'rounded-none shadow-none bg-secondary',
+            wrapper: 'rounded-none shadow-none bg-surface',
           }}
         >
           <TableHeader>
@@ -308,15 +308,10 @@ export default function MarketProgram({
 
                   return (
                     <TableRow key={idx}>
-                      <TableCell>
-                        <a
-                          href={getMarketURL(market.uniqueKey, market.morphoBlue.chain.id)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
+                      <TableCell className="font-monospace no-underline">
+                        <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
                           {market.uniqueKey.slice(2, 8)}
-                        </a>
+                        </Link>
                       </TableCell>
                       <TableCell>{market.loanAsset.symbol}</TableCell>
                       <TableCell>{market.collateralAsset.symbol}</TableCell>

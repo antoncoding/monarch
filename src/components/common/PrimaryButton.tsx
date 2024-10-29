@@ -18,7 +18,7 @@ export default function PrimaryButton({
       <button
         type="button"
         className={`${
-          isSecondary ? 'bg-secondary' : 'bg-monarch-orange'
+          isSecondary ? 'bg-surface' : 'bg-monarch-orange'
         } rounded-sm p-4 px-10 font-zen opacity-80 transition-all duration-200 ease-in-out hover:opacity-100 ${className} hover:scale-105`}
       >
         {children}

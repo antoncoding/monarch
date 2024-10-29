@@ -35,7 +35,7 @@ export const inter = localFont({
 });
 
 export const monospace = localFont({
-  src: '../src/fonts/KodeMono/KodeMono-VariableFont_wght.ttf',
+  src: '../src/fonts/JetBrains_Mono/JetBrainsMono-VariableFont_wght.ttf',
   display: 'swap',
   variable: '--font-monospace',
 });

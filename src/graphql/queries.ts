@@ -196,3 +196,61 @@ export const userPositionsQuery = `
   }
   ${marketFragment}
 `;
+
+export const marketDetailQuery = `
+  query getMarketDetail($uniqueKey: String!, $chainId: Int) {
+    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
+      ...MarketFields
+    }
+  }
+  ${marketFragment}
+`;
+
+export const marketHistoricalDataQuery = `
+  query getMarketHistoricalData($uniqueKey: String!, $options: TimeseriesOptions!, $chainId: Int) {
+    marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
+      historicalState {
+        supplyApy(options: $options) {
+          x
+          y
+        }
+        borrowApy(options: $options) {
+          x
+          y
+        }
+        supplyAssetsUsd(options: $options) {
+          x
+          y
+        }
+        borrowAssetsUsd(options: $options) {
+          x
+          y
+        }
+        supplyAssets(options: $options) {
+          x
+          y
+        }
+        borrowAssets(options: $options) {
+          x
+          y
+        }
+        liquidityAssets(options: $options) {
+          x
+          y
+        }
+        liquidityAssetsUsd(options: $options) {
+          x
+          y
+        }
+        utilization(options: $options) {
+          x
+          y
+        }
+        rateAtUTarget(options: $options) {
+          x
+          y
+        }
+      }
+    }
+  }
+`;

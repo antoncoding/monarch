@@ -70,7 +70,7 @@ export default function Input({
       <button
         type="button"
         onClick={handleMax}
-        className="absolute right-2 top-1/2 -translate-y-1/2 transform rounded bg-secondary p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+        className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Max
       </button>

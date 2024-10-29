@@ -60,6 +60,7 @@
     "react-spinners": "^0.14.1",
     "react-table": "^7.8.0",
     "react-toastify": "^10.0.5",
+    "recharts": "^2.13.0",
     "rehype-pretty-code": "0.12.3",
     "rehype-stringify": "^10.0.0",
     "remark-parse": "^11.0.0",

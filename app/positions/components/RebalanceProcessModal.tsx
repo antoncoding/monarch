@@ -65,11 +65,11 @@ export function RebalanceProcessModal({
     <div className="fixed left-0 top-0 z-[1001] flex h-full w-full items-center justify-center bg-black bg-opacity-50">
       <div
         style={{ width: '500px' }}
-        className="relative z-50 rounded-md bg-secondary p-12 transition-all duration-500 ease-in-out"
+        className="bg-surface relative z-50 rounded-md p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
-          className="absolute right-2 top-2 m-4 rounded-full bg-primary p-1 text-primary hover:cursor-pointer"
+          className="bg-main absolute right-2 top-2 m-4 rounded-full p-1 text-primary hover:cursor-pointer"
           onClick={onClose}
         >
           <Cross1Icon />{' '}

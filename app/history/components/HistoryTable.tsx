@@ -1,13 +1,13 @@
 import React from 'react';
 import { useMemo, useState } from 'react';
-import { Pagination } from '@nextui-org/react';
+import { Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';
 
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getExplorerTxURL, getMarketURL } from '@/utils/external';
+import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -33,8 +33,8 @@ export function HistoryTable({ history }: HistoryTableProps) {
   return (
     <Table
       classNames={{
-        th: 'bg-secondary',
-        wrapper: 'rounded-none shadow-none bg-secondary',
+        th: 'bg-surface',
+        wrapper: 'rounded-none shadow-none bg-surface',
       }}
       bottomContent={
         <div className="flex w-full justify-center">
@@ -86,19 +86,14 @@ export function HistoryTable({ history }: HistoryTableProps) {
               {/* id */}
               <TableCell>
                 <div className="flex justify-center font-monospace text-xs">
-                  <a
-                    className="group flex items-center gap-1 no-underline hover:underline"
-                    href={getMarketURL(
-                      tx.data.market.uniqueKey,
-                      tx.data.market.morphoBlue.chain.id,
-                    )}
-                    target="_blank"
+                  <Link
+                    href={`/market/${tx.data.market.morphoBlue.chain.id}/${tx.data.market.uniqueKey}`}
                   >
                     <p>{tx.data.market.uniqueKey.slice(2, 8)} </p>
                     <p className="opacity-0 group-hover:opacity-100">
                       <ExternalLinkIcon />
                     </p>
-                  </a>
+                  </Link>
                 </div>
               </TableCell>
 

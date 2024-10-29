@@ -1,11 +1,10 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { getMarketURL } from '@/utils/external';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 
@@ -58,7 +57,7 @@ export function SuppliedMarketsDetail({
   };
 
   return (
-    <div className="bg-secondary bg-opacity-20 p-4">
+    <div className="bg-surface bg-opacity-20 p-4">
       <div className="mb-4 flex items-center justify-center">
         <div className="my-4 w-1/2">
           <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>
@@ -138,18 +137,12 @@ export function SuppliedMarketsDetail({
                       )}
                     </div>
                     {/* <Tooltip content="View on Explorer" placement="top"> */}
-                    <a
+                    <Link
                       className="group flex items-center justify-center no-underline hover:underline"
-                      href={getMarketURL(
-                        position.market.uniqueKey,
-                        position.market.morphoBlue.chain.id,
-                      )}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
                     >
                       {position.market.uniqueKey.slice(2, 8)}
-                      <ExternalLinkIcon className="ml-1 opacity-0 group-hover:opacity-100" />
-                    </a>
+                    </Link>
                     {/* </Tooltip> */}
                   </div>
                 </td>

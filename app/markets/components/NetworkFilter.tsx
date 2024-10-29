@@ -22,8 +22,8 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
         }
       }}
       classNames={{
-        trigger: 'bg-secondary rounded-sm min-w-48',
-        popoverContent: 'bg-secondary rounded-sm',
+        trigger: 'bg-surface rounded-sm min-w-48',
+        popoverContent: 'bg-surface rounded-sm',
       }}
       items={networks}
       renderValue={(items) => {

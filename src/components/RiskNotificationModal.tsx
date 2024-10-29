@@ -47,7 +47,7 @@ export default function RiskNotificationModal() {
             Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's
             important to understand the key aspects of this approach. For a comprehensive overview,
             please visit our{' '}
-            <Link href="/info" target="_blank" className="text-monarch-primary underline">
+            <Link href="/info" target="_blank" className="text-primary underline">
               introduction page
             </Link>
             .
@@ -65,12 +65,12 @@ export default function RiskNotificationModal() {
             While this approach offers more control, it also requires a deeper understanding of
             market dynamics. For a detailed explanation of the risks and considerations, please read
             our{' '}
-            <Link href="/info/risks" target="_blank" className="text-monarch-primary underline">
+            <Link href="/info/risks" target="_blank" className="text-primary underline">
               risk assessment page
             </Link>
             .
           </p>
-          <div className="mt-4 rounded-lg border-2 border-dotted border-monarch-primary p-4">
+          <div className="mt-4 rounded-lg border-2 border-dotted border-primary p-4">
             <Checkbox
               isSelected={isChecked}
               onValueChange={setIsChecked}

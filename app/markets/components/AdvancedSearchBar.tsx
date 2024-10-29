@@ -193,15 +193,15 @@ function AdvancedSearchBar({
         onFocus={handleInputFocus}
         endContent={<FaSearch className="cursor-pointer text-secondary" onClick={handleSearch} />}
         classNames={{
-          inputWrapper: 'bg-secondary rounded-sm w-full lg:w-[600px]',
-          input: 'bg-secondary rounded-sm text-xs',
+          inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px]',
+          input: 'bg-surface rounded-sm text-xs',
         }}
         autoComplete="off"
       />
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 mt-1 w-full max-w-[400px] rounded-sm bg-secondary shadow-lg"
+          className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg"
         >
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {

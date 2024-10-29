@@ -268,7 +268,7 @@ export function PositionsSummaryTable({
                     <div className="flex space-x-2">
                       <button
                         type="button"
-                        className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-monarch-primary"
+                        className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
                         onClick={() => {
                           setSelectedGroupedPosition(position);
                           setShowRebalanceModal(true);

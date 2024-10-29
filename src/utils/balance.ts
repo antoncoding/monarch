@@ -22,15 +22,26 @@ export const formatBalance = (value: bigint | string, decimals: number) => {
   return Number(value) / 10 ** decimals;
 };
 
-export function formatReadable(num: number): string {
-  if (Math.abs(num) >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(2) + 'B';
-  } else if (Math.abs(num) >= 1_000_000) {
-    return (num / 1_000_000).toFixed(2) + 'M';
-  } else if (Math.abs(num) >= 1_000) {
-    return (num / 1_000).toFixed(2) + 'K';
-  } else {
-    return num.toFixed(2);
+export function formatReadable(num: number | string): string {
+  if (typeof num === 'string') {
+    const parsed = parseFloat(num);
+    if (isNaN(parsed)) return num;
+    num = parsed;
+  }
+
+  try {
+    if (Math.abs(num) >= 1_000_000_000) {
+      return (num / 1_000_000_000).toFixed(2) + 'B';
+    } else if (Math.abs(num) >= 1_000_000) {
+      return (num / 1_000_000).toFixed(2) + 'M';
+    } else if (Math.abs(num) >= 1_000) {
+      return (num / 1_000).toFixed(2) + 'K';
+    } else {
+      return num.toFixed(2);
+    }
+  } catch (e) {
+    console.log('Error formatting number', e, typeof num);
+    return num.toString();
   }
 }
 

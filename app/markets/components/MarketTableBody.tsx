@@ -1,12 +1,11 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
-import { getMarketURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -90,17 +89,13 @@ export function MarketTableBody({
                 <td data-label="ID" className="z-50">
                   <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                     {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
-                    <a
+                    <Link
+                      href={`/market/${item.morphoBlue.chain.id}/${item.uniqueKey}`}
                       className="group flex items-center gap-1 no-underline hover:underline"
-                      href={getMarketURL(item.uniqueKey, item.morphoBlue.chain.id)}
-                      target="_blank"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <p>{item.uniqueKey.slice(2, 8)} </p>
-                      <p className="opacity-0 group-hover:opacity-100">
-                        <ExternalLinkIcon />
-                      </p>
-                    </a>
+                    </Link>
                   </div>
                 </td>
                 <TDAsset
@@ -167,7 +162,7 @@ export function MarketTableBody({
                   <button
                     type="button"
                     aria-label="Supply"
-                    className="bg-hovered items-center justify-between rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-monarch-primary "
+                    className="bg-hovered items-center justify-between rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary "
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowSupplyModal(true);
