@@ -15,11 +15,11 @@ import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
+import { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
-import { SupportedNetworks } from '@/utils/networks';
 
 const MORPHO_LOGO = require('@/imgs/tokens/morpho.svg') as string;
 
@@ -105,7 +105,6 @@ function MarketContent() {
     <>
       <Header />
       <div className="container mx-auto px-4 py-8 pb-4 font-zen">
-
         {/* navigation bottons */}
         <div className="flex justify-between">
           <Button
@@ -119,10 +118,7 @@ function MarketContent() {
           <Button
             className="bg-surface mb-4 rounded-md"
             onClick={() =>
-              window.open(
-                getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
-                '_blank',
-              )
+              window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank')
             }
             endContent={<Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} />}
           >

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
@@ -13,7 +14,6 @@ import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketProgramType } from '@/utils/types';
-import Link from 'next/link';
 
 type MarketProgramProps = {
   account: string;

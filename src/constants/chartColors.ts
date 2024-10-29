@@ -5,7 +5,7 @@ export const CHART_COLORS = {
       start: '#3B82F6',
       startOpacity: 0.3,
       endOpacity: 0,
-    }
+    },
   },
   borrow: {
     stroke: '#10B981',
@@ -13,7 +13,7 @@ export const CHART_COLORS = {
       start: '#10B981',
       startOpacity: 0.3,
       endOpacity: 0,
-    }
+    },
   },
   rateAtUTarget: {
     stroke: '#F59E0B',
@@ -21,6 +21,6 @@ export const CHART_COLORS = {
       start: '#F59E0B',
       startOpacity: 0.3,
       endOpacity: 0,
-    }
-  }
-} as const; 
+    },
+  },
+} as const;

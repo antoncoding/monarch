@@ -1,13 +1,12 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
-import Link from 'next/link';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;

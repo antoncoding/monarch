@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unstable-nested-components */
+
 import React, { useCallback, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Progress } from '@nextui-org/progress';
@@ -13,8 +15,13 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import ButtonGroup from '@/components/ButtonGroup';
-import { TimeseriesDataPoint, MarketHistoricalData, Market, TimeseriesOptions } from '@/utils/types';
 import { CHART_COLORS } from '@/constants/chartColors';
+import {
+  TimeseriesDataPoint,
+  MarketHistoricalData,
+  Market,
+  TimeseriesOptions,
+} from '@/utils/types';
 
 type RateChartProps = {
   historicalData: MarketHistoricalData['rates'] | undefined;
@@ -97,7 +104,6 @@ function RateChart({
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
-
   const timeframeOptions = [
     { key: '1day', label: '1D', value: '1day' },
     { key: '7day', label: '7D', value: '7day' },
@@ -137,24 +143,24 @@ function RateChart({
                 <AreaChart data={getChartData()}>
                   <defs>
                     <linearGradient id="supplyApyGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop 
-                        offset="0%" 
-                        stopColor={CHART_COLORS.supply.gradient.start} 
+                      <stop
+                        offset="0%"
+                        stopColor={CHART_COLORS.supply.gradient.start}
                         stopOpacity={CHART_COLORS.supply.gradient.startOpacity}
                       />
-                      <stop 
-                        offset="25%" 
-                        stopColor={CHART_COLORS.supply.gradient.start} 
+                      <stop
+                        offset="25%"
+                        stopColor={CHART_COLORS.supply.gradient.start}
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
                     <linearGradient id="borrowApyGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="25%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#10B981" stopOpacity={0.3} />
+                      <stop offset="25%" stopColor="#10B981" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="rateAtUTargetGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3}/>
-                      <stop offset="25%" stopColor="#F59E0B" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
+                      <stop offset="25%" stopColor="#F59E0B" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -164,20 +170,22 @@ function RateChart({
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
                   />
-                  <Legend 
+                  <Legend
                     onClick={(e) => {
                       const dataKey = e.dataKey as keyof typeof visibleLines;
-                      setVisibleLines(prev => ({
+                      setVisibleLines((prev) => ({
                         ...prev,
-                        [dataKey]: !prev[dataKey]
+                        [dataKey]: !prev[dataKey],
                       }));
                     }}
-                    formatter={(value, entry: any) => (
-                      <span style={{ 
-                        color: visibleLines[entry.dataKey as keyof typeof visibleLines] 
-                          ? undefined 
-                          : '#999'
-                      }}>
+                    formatter={(value, entry) => (
+                      <span
+                        style={{
+                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
+                            ? undefined
+                            : '#999',
+                        }}
+                      >
                         {value}
                       </span>
                     )}
