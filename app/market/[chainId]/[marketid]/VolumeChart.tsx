@@ -255,6 +255,9 @@ function VolumeChart({
                   <Tooltip
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number, name: string) => [formatValue(value), name]}
+                    contentStyle={{
+                      backgroundColor: 'var(--color-background)',
+                    }}
                   />
                   <Legend
                     onClick={(e) => {

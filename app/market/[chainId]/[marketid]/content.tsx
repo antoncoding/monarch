@@ -16,7 +16,7 @@ import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import RateChart from './RateChart';
@@ -29,6 +29,7 @@ function MarketContent() {
   const { marketid, chainId } = useParams();
 
   const network = Number(chainId as string) as SupportedNetworks;
+  const networkImg = getNetworkImg(network);
 
   const router = useRouter();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
@@ -139,6 +140,21 @@ function MarketContent() {
             <CardHeader className="text-xl">Basic Info</CardHeader>
             <CardBody>
               <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>Network:</span>
+                  <div className="flex items-center">
+                    {networkImg && (
+                      <Image
+                        src={networkImg}
+                        alt={network.toString()}
+                        width={20}
+                        height={20}
+                        className="mr-2"
+                      />
+                    )}
+                    {getNetworkName(network)}
+                  </div>
+                </div>
                 <div className="flex items-center justify-between">
                   <span>Loan Asset:</span>
                   <div className="flex items-center">

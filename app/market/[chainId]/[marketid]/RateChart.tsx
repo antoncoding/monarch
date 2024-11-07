@@ -185,6 +185,9 @@ function RateChart({
                   <Tooltip
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number) => `${(value * 100).toFixed(2)}%`}
+                    contentStyle={{
+                      backgroundColor: 'var(--color-background)',
+                    }}
                   />
                   <Legend
                     onClick={(e) => {

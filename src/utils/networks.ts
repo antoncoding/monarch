@@ -25,4 +25,9 @@ const getNetworkImg = (chainId: number) => {
   return target?.logo;
 };
 
-export { SupportedNetworks, isSupportedChain, getNetworkImg, networks };
+const getNetworkName = (chainId: number) => {
+  const target = networks.find((network) => network.network === chainId);
+  return target?.name;
+};
+
+export { SupportedNetworks, isSupportedChain, getNetworkImg, getNetworkName, networks };
