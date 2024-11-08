@@ -132,8 +132,8 @@ export default function MarketProgram({
                 return (
                   <TableRow
                     key={index}
-                    className={`cursor-pointer hover:bg-gray-100 ${
-                      selectedToken === tokenReward.token ? 'bg-gray-200' : ''
+                    className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                      selectedToken === tokenReward.token ? 'bg-gray-200 dark:bg-gray-700' : ''
                     }`}
                     onClick={() => handleRowClick(tokenReward.token)}
                   >
@@ -248,7 +248,7 @@ export default function MarketProgram({
       </div>
 
       {selectedToken && (
-        <div className="mt-8 bg-gray-50 p-4">
+        <div className="bg-surface mt-8 p-4">
           <h3 className="mb-4 text-lg font-semibold">
             {' '}
             Reward Breakdown for{' '}

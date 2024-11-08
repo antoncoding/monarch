@@ -1,7 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import Image from 'next/image';
-import Link from 'next/link';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -24,6 +23,7 @@ type MarketTableBodyProps = {
   setSelectedMarket: (market: Market) => void;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
+  onMarketClick: (market: Market) => void;
 };
 
 export function MarketTableBody({
@@ -35,6 +35,7 @@ export function MarketTableBody({
   setSelectedMarket,
   starMarket,
   unstarMarket,
+  onMarketClick,
 }: MarketTableBodyProps) {
   return (
     <tbody className="table-body text-sm">
@@ -81,13 +82,16 @@ export function MarketTableBody({
               <td data-label="ID" className="z-50">
                 <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                   {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
-                  <Link
-                    href={`/market/${item.morphoBlue.chain.id}/${item.uniqueKey}`}
-                    className="group flex items-center gap-1 no-underline hover:underline"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    className="cursor-pointer no-underline hover:underline"
+                    onClick={(e) => {
+                      onMarketClick(item);
+                      e.stopPropagation();
+                    }}
                   >
                     <p>{item.uniqueKey.slice(2, 8)} </p>
-                  </Link>
+                  </button>
                 </div>
               </td>
               <TDAsset

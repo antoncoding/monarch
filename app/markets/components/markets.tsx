@@ -253,6 +253,16 @@ export default function Markets() {
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
 
+  const handleMarketClick = (market: Market) => {
+    // Construct the current query parameters
+    const currentParams = searchParams.toString();
+    const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
+
+    // If we have query params, append them to the market detail URL
+    const targetPath = currentParams ? `${marketPath}?${currentParams}` : marketPath;
+    router.push(targetPath);
+  };
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -376,6 +386,7 @@ export default function Markets() {
                 titleOnclick={titleOnclick}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
+                onMarketClick={handleMarketClick}
                 setShowSupplyModal={setShowSupplyModal}
                 setSelectedMarket={setSelectedMarket}
                 staredIds={staredIds}

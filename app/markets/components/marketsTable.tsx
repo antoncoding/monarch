@@ -13,7 +13,7 @@ type MarketsTableProps = {
   sortDirection: number;
   markets: Market[];
   setShowSupplyModal: (show: boolean) => void;
-  setSelectedMarket: (market: Market) => void;
+  setSelectedMarket: (market: Market | undefined) => void;
   staredIds: string[];
   unstarMarket: (id: string) => void;
   starMarket: (id: string) => void;
@@ -21,6 +21,7 @@ type MarketsTableProps = {
   entriesPerPage: number;
   handleEntriesPerPageChange: (value: number) => void;
   setCurrentPage: (value: number) => void;
+  onMarketClick: (market: Market) => void;
 };
 
 function MarketsTable({
@@ -37,6 +38,7 @@ function MarketsTable({
   entriesPerPage,
   handleEntriesPerPageChange,
   setCurrentPage,
+  onMarketClick,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
@@ -120,6 +122,7 @@ function MarketsTable({
             setSelectedMarket={setSelectedMarket}
             starMarket={starMarket}
             unstarMarket={unstarMarket}
+            onMarketClick={onMarketClick}
           />
         </table>
       </div>

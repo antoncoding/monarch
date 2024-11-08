@@ -7,7 +7,7 @@ import { Spinner } from '@nextui-org/spinner';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
@@ -32,6 +32,7 @@ function MarketContent() {
   const networkImg = getNetworkImg(network);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
     startTimestamp: NOW - WEEK_IN_SECONDS,
     endTimestamp: NOW,
@@ -78,6 +79,17 @@ function MarketContent() {
     [refetchHistoricalData, setRateTimeRange, setVolumeTimeRange],
   );
 
+  const handleBackToMarkets = () => {
+    // Preserve all current search parameters when going back
+    const currentParams = searchParams.toString();
+    const marketsPath = '/markets';
+
+    // If we have query params, append them to the markets URL
+    const targetPath = currentParams ? `${marketsPath}?${currentParams}` : marketsPath;
+
+    router.push(targetPath);
+  };
+
   if (isMarketLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -113,7 +125,7 @@ function MarketContent() {
         {/* navigation bottons */}
         <div className="flex justify-between">
           <Button
-            onClick={() => router.push('/markets')}
+            onClick={handleBackToMarkets}
             className="bg-surface mb-4 rounded-md"
             startContent={<ChevronLeftIcon />}
           >
