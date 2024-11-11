@@ -21,6 +21,7 @@ import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
+import { useAccount, useSwitchChain } from 'wagmi';
 
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
@@ -160,7 +161,30 @@ export function RebalanceModal({
     resetSelections();
   };
 
+  const { chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  const needSwitchChain = useMemo(
+    () => chainId !== groupedPosition.chainId,
+    [chainId, groupedPosition.chainId]
+  );
+
+  console.log('needSwitchChain', needSwitchChain);
+
   const handleExecuteRebalance = useCallback(async () => {
+    if (needSwitchChain) {
+      try {
+        await switchChain({ chainId: groupedPosition.chainId });
+        // The actual execution will happen after network switch through useEffect
+        return;
+      } catch (error) {
+        console.error('Failed to switch network:', error);
+        toast.error('Failed to switch network');
+        return;
+      }
+    }
+
+    console.log('executeRebalance');
     setShowProcessModal(true);
     try {
       await executeRebalance();
@@ -169,7 +193,7 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance]);
+  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId]);
 
   const handleManualRefresh = () => {
     refetch(() => {
@@ -273,7 +297,9 @@ export function RebalanceModal({
               isLoading={isConfirming}
               className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-orange-600"
             >
-              Execute Rebalance
+              {needSwitchChain 
+                ? 'Switch Network & Execute' 
+                : 'Execute Rebalance'}
             </Button>
           </ModalFooter>
         </ModalContent>
