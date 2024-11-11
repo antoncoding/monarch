@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useCallback, useEffect, useState } from 'react';
+import { createContext, useContext, ReactNode, useCallback, useEffect, useState, useMemo } from 'react';
 import { marketsQuery } from '@/graphql/queries';
 import useLiquidations from '@/hooks/useLiquidations';
 import { getRewardPer1000USD } from '@/utils/morpho';
@@ -15,12 +15,21 @@ type MarketsContextType = {
   isRefetching: boolean;
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
+  refresh: () => Promise<void>;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
 
 type MarketsProviderProps = {
   children: ReactNode;
+};
+
+type MarketResponse = {
+  data: {
+    markets: {
+      items: Market[];
+    };
+  };
 };
 
 export function MarketsProvider({ children }: MarketsProviderProps) {
@@ -54,8 +63,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           }),
         });
         
-        const marketsResult = await marketsResponse.json();
-        const rawMarkets = marketsResult.data.markets.items as Market[];
+        const marketsResult = (await marketsResponse.json()) as MarketResponse;
+        const rawMarkets = marketsResult.data.markets.items;
 
         const filtered = rawMarkets
           .filter((market) => market.collateralAsset != undefined)
@@ -111,27 +120,39 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   const refetch = useCallback(
     (onSuccess?: () => void) => {
+      refetchLiquidations();
       fetchMarkets(true).then(onSuccess).catch(console.error);
     },
-    [fetchMarkets],
+    [refetchLiquidations, fetchMarkets],
   );
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setMarkets([]);
+    try {
+      await fetchMarkets();
+    } catch (_error) {
+      console.error('Failed to refresh markets:', _error);
+    }
+  }, [fetchMarkets]);
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;
 
-  return (
-    <MarketsContext.Provider
-      value={{
-        markets,
-        loading: isLoading,
-        isRefetching,
-        error: combinedError,
-        refetch,
-      }}
-    >
-      {children}
-    </MarketsContext.Provider>
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      markets,
+      loading: isLoading,
+      isRefetching,
+      error: combinedError,
+      refetch,
+      refresh,
+    }),
+    [markets, isLoading, isRefetching, combinedError, refetch, refresh],
   );
+
+  return <MarketsContext.Provider value={contextValue}>{children}</MarketsContext.Provider>;
 }
 
 export function useMarkets() {
