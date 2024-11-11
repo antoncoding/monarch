@@ -11,7 +11,7 @@ import {
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits } from 'viem';
-import useMarkets from '@/hooks/useMarkets';
+import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { findToken } from '@/utils/tokens';
@@ -46,7 +46,7 @@ export function RebalanceModal({
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
 
-  const { data: allMarkets } = useMarkets();
+  const { markets: allMarkets } = useMarkets();
   const {
     rebalanceActions,
     addRebalanceAction,

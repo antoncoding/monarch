@@ -6,7 +6,7 @@ import ButtonGroup from '@/components/ButtonGroup';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
-import useMarkets from '@/hooks/useMarkets';
+import { useMarkets } from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
 import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers';
 import MarketProgram from './MarketProgram';
@@ -21,7 +21,7 @@ export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const [activeProgram, setActiveProgram] = useState<'market' | 'uniform'>('market');
 
-  const { loading, data: markets } = useMarkets();
+  const { loading,  markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
   console.log('distributions', distributions);
