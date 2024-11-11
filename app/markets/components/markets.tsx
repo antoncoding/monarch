@@ -8,7 +8,7 @@ import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
-import useMarkets from '@/hooks/useMarkets';
+import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
@@ -39,7 +39,7 @@ export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { loading, data: rawMarkets } = useMarkets();
+  const { loading, markets: rawMarkets } = useMarkets();
 
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
