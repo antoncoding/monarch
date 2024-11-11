@@ -11,6 +11,7 @@ import {
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits } from 'viem';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -21,7 +22,6 @@ import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
-import { useAccount, useSwitchChain } from 'wagmi';
 
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
@@ -174,7 +174,7 @@ export function RebalanceModal({
   const handleExecuteRebalance = useCallback(async () => {
     if (needSwitchChain) {
       try {
-        await switchChain({ chainId: groupedPosition.chainId });
+        switchChain({ chainId: groupedPosition.chainId });
         // The actual execution will happen after network switch through useEffect
         return;
       } catch (error) {
