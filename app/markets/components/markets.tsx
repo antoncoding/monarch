@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaEllipsisH } from 'react-icons/fa';
+import { FaEllipsisH, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -39,7 +39,7 @@ export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { loading, markets: rawMarkets } = useMarkets();
+  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
 
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
@@ -263,6 +263,10 @@ export default function Markets() {
     router.push(targetPath);
   };
 
+  const handleRefresh = () => {
+    refetch(() => toast.success('Markets refreshed'));
+  };
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -333,7 +337,19 @@ export default function Markets() {
             />
           </div>
 
-          <div className="mt-4 lg:mt-0">
+          <div className="mt-4 lg:mt-0 flex gap-2">
+            <button
+              onClick={handleRefresh}
+              type="button"
+              disabled={loading || isRefetching}
+              className={`flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
+                loading || isRefetching ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''}`} size={10} />
+              Refresh
+            </button>
+
             <button
               onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
               type="button"

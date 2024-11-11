@@ -2,12 +2,12 @@
 
 import { createContext, useContext, ReactNode, useCallback, useEffect, useState } from 'react';
 import { marketsQuery } from '@/graphql/queries';
+import useLiquidations from '@/hooks/useLiquidations';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
-import useLiquidations from '@/hooks/useLiquidations';
 
 type MarketsContextType = {
   markets: Market[];
@@ -111,10 +111,9 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   const refetch = useCallback(
     (onSuccess?: () => void) => {
-      refetchLiquidations();
       fetchMarkets(true).then(onSuccess).catch(console.error);
     },
-    [refetchLiquidations, fetchMarkets],
+    [fetchMarkets],
   );
 
   const isLoading = loading || liquidationsLoading;

@@ -1,8 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { MarketsProvider } from '@/contexts/MarketsContext';
 import { ToastContainer } from 'react-toastify';
+import { MarketsProvider } from '@/contexts/MarketsContext';
 
 type ClientProvidersProps = {
   children: ReactNode;

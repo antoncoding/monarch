@@ -1,9 +1,9 @@
 import './global.css';
 
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
+import { ClientProviders } from '@/components/providers/ClientProviders';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
-import { ClientProviders } from '@/components/providers/ClientProviders';
 
 import { initAnalytics } from '@/utils/analytics';
 import { inter, zen, monospace } from './fonts';
