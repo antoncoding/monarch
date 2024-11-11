@@ -11,7 +11,8 @@ import {
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits } from 'viem';
-import useMarkets from '@/hooks/useMarkets';
+import { useAccount, useSwitchChain } from 'wagmi';
+import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { findToken } from '@/utils/tokens';
@@ -46,7 +47,7 @@ export function RebalanceModal({
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
 
-  const { data: allMarkets } = useMarkets();
+  const { markets: allMarkets } = useMarkets();
   const {
     rebalanceActions,
     addRebalanceAction,
@@ -160,7 +161,30 @@ export function RebalanceModal({
     resetSelections();
   };
 
+  const { chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  const needSwitchChain = useMemo(
+    () => chainId !== groupedPosition.chainId,
+    [chainId, groupedPosition.chainId]
+  );
+
+  console.log('needSwitchChain', needSwitchChain);
+
   const handleExecuteRebalance = useCallback(async () => {
+    if (needSwitchChain) {
+      try {
+        switchChain({ chainId: groupedPosition.chainId });
+        // The actual execution will happen after network switch through useEffect
+        return;
+      } catch (error) {
+        console.error('Failed to switch network:', error);
+        toast.error('Failed to switch network');
+        return;
+      }
+    }
+
+    console.log('executeRebalance');
     setShowProcessModal(true);
     try {
       await executeRebalance();
@@ -169,7 +193,7 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance]);
+  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId]);
 
   const handleManualRefresh = () => {
     refetch(() => {
@@ -273,7 +297,9 @@ export function RebalanceModal({
               isLoading={isConfirming}
               className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-orange-600"
             >
-              Execute Rebalance
+              {needSwitchChain 
+                ? 'Switch Network & Execute' 
+                : 'Execute Rebalance'}
             </Button>
           </ModalFooter>
         </ModalContent>

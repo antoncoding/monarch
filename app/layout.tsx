@@ -1,7 +1,7 @@
 import './global.css';
 
-import { ToastContainer } from 'react-toastify';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
+import { ClientProviders } from '@/components/providers/ClientProviders';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
 
@@ -21,20 +21,18 @@ export const metadata: Metadata = {
 // so we can track page views and early events
 initAnalytics();
 
-/** Root layout to define the structure of every page
- * https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts
- */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
       <body>
-        <Providers>
-          <OnchainProviders>
-            {children}
-            <RiskNotificationModal />
-          </OnchainProviders>
-          <ToastContainer position="bottom-right" bodyClassName="font-zen" />
-        </Providers>
+        <ClientProviders>
+          <Providers>
+            <OnchainProviders>
+              {children}
+              <RiskNotificationModal />
+            </OnchainProviders>
+          </Providers>
+        </ClientProviders>
       </body>
       <GoogleAnalytics />
     </html>

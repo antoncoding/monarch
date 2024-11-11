@@ -1,14 +1,15 @@
 'use client';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaEllipsisH } from 'react-icons/fa';
+import { FaEllipsisH, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
-import useMarkets from '@/hooks/useMarkets';
+import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
@@ -39,7 +40,7 @@ export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { loading, data: rawMarkets } = useMarkets();
+  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
 
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
@@ -78,6 +79,14 @@ export default function Markets() {
 
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
     usePagination();
+
+  const { chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
+
+  const needSwitchChain = useMemo(
+    () => chainId !== selectedNetwork && selectedNetwork !== null,
+    [chainId, selectedNetwork],
+  );
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -263,6 +272,10 @@ export default function Markets() {
     router.push(targetPath);
   };
 
+  const handleRefresh = () => {
+    refetch(() => toast.success('Markets refreshed'));
+  };
+
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -293,13 +306,25 @@ export default function Markets() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-4 lg:flex-row">
-            <NetworkFilter
-              selectedNetwork={selectedNetwork}
-              setSelectedNetwork={(network) => {
-                setSelectedNetwork(network);
-                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <NetworkFilter
+                selectedNetwork={selectedNetwork}
+                setSelectedNetwork={(network) => {
+                  setSelectedNetwork(network);
+                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+                }}
+              />
+              
+              {needSwitchChain && (
+                <button
+                  type="button"
+                  onClick={() => selectedNetwork && switchChain({ chainId: selectedNetwork })}
+                  className="bg-monarch-orange h-10 rounded px-4 text-sm text-white opacity-90 transition-all duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+                >
+                  Switch Network
+                </button>
+              )}
+            </div>
 
             <AssetFilter
               label="Loan Asset"
@@ -333,7 +358,19 @@ export default function Markets() {
             />
           </div>
 
-          <div className="mt-4 lg:mt-0">
+          <div className="mt-4 lg:mt-0 flex gap-2">
+            <button
+              onClick={handleRefresh}
+              type="button"
+              disabled={loading || isRefetching}
+              className={`flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
+                loading || isRefetching ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''}`} size={10} />
+              Refresh
+            </button>
+
             <button
               onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
               type="button"
