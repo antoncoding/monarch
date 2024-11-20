@@ -1,10 +1,9 @@
 'use client';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEllipsisH, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';

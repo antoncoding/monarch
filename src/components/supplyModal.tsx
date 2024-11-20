@@ -9,10 +9,10 @@ import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useERC20Approval } from '@/hooks/useERC20Approval';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
@@ -72,7 +72,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const {
     isApproved,
     approve,
-    isApproving,
   } = useERC20Approval({
     token: market.loanAsset.address as Address,
     spender: getBundlerV2(market.morphoBlue.chain.id),

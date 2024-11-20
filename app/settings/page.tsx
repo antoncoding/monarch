@@ -1,7 +1,7 @@
 'use client';
 
-import { Switch } from '@nextui-org/react';
 import { useCallback } from 'react';
+import { Switch } from '@nextui-org/react';
 import Header from '@/components/layout/header/Header';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 

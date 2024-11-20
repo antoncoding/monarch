@@ -61,8 +61,7 @@ export function NavbarTitle() {
 function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
-  const pathname = usePathname();
-
+  
   return (
     <nav
       className={clsx(
@@ -91,6 +90,7 @@ function Navbar() {
         </ul>
         <div className="flex items-center gap-4">
           <button
+            type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary hover:bg-surface-hover"
             aria-label="Toggle theme"

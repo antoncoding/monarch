@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { Name } from '@coinbase/onchainkit/identity';
 import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { clsx } from 'clsx';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAccount, useDisconnect } from 'wagmi';
 import { FiSettings } from "react-icons/fi";
-import { clsx } from 'clsx';
+import { useAccount, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
