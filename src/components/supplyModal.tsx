@@ -11,6 +11,8 @@ import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
@@ -31,6 +33,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const [useEth, setUseEth] = useState<boolean>(false);
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
+  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const { address: account, isConnected, chainId } = useAccount();
 
@@ -66,6 +69,17 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     amount: supplyAmount,
   });
 
+  const {
+    isApproved,
+    approve,
+    isApproving,
+  } = useERC20Approval({
+    token: market.loanAsset.address as Address,
+    spender: getBundlerV2(market.morphoBlue.chain.id),
+    amount: supplyAmount,
+    tokenSymbol: market.loanAsset.symbol,
+  });
+
   const needSwitchChain = useMemo(
     () => chainId !== market.morphoBlue.chain.id,
     [chainId, market.morphoBlue.chain.id],
@@ -94,7 +108,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             args: [supplyAmount],
           }),
         );
-      } else {
+      } else if (usePermit2Setting) {
         const { sigs, permitSingle } = await signForBundlers();
         console.log('Signed for bundlers:', { sigs, permitSingle });
 
@@ -104,6 +118,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           args: [permitSingle, sigs, false],
         });
 
+        // transferFrom with permit2
         const tx2 = encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'transferFrom2',
@@ -112,6 +127,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
         txs.push(tx1);
         txs.push(tx2);
+      } else {
+        // For standard ERC20 flow, we only need to transfer the tokens
+        txs.push(
+          encodeFunctionData({
+            abi: morphoBundlerAbi,
+            functionName: 'erc20TransferFrom',
+            args: [market.loanAsset.address as Address, supplyAmount],
+          }),
+        );
       }
 
       setCurrentStep('supplying');
@@ -154,11 +178,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
       // come back to main supply page
       setShowProcessModal(false);
-    } catch (error) {
+    } catch (error: unknown) {
       setShowProcessModal(false);
-      toast.error('An error occurred. Please try again.');
+      if (error instanceof Error) {
+        toast.error('An error occurred. Please try again.');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     }
-  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers]);
+  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
@@ -166,23 +194,81 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       return;
     }
 
-    setShowProcessModal(true);
-    setCurrentStep('approve');
-
     try {
-      await authorizePermit2();
-      setCurrentStep('signing');
+      setShowProcessModal(true);
+      setCurrentStep('approve');
 
-      // add timeout here to prevent rabby reverting
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      if (useEth) {
+        setCurrentStep('supplying');
+        await executeSupplyTransaction();
+        return;
+      }
+
+      if (usePermit2Setting) {
+        // Permit2 flow
+        try {
+          await authorizePermit2();
+          setCurrentStep('signing');
+          
+          // Small delay to prevent UI glitches
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          
+          await executeSupplyTransaction();
+        } catch (error: unknown) {
+          console.error('Error in Permit2 flow:', error);
+          if (error instanceof Error) {
+            if (error.message.includes('User rejected')) {
+              toast.error('Transaction rejected by user');
+            } else {
+              toast.error('Failed to process Permit2 transaction');
+            }
+          } else {
+            toast.error('An unexpected error occurred');
+          }
+          throw error;
+        }
+        return;
+      }
+
+      // Standard ERC20 flow
+      if (!isApproved) {
+        try {
+          await approve();
+          setCurrentStep('supplying');
+          
+          // Small delay to prevent UI glitches
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        } catch (error: unknown) {
+          console.error('Error in approval:', error);
+          if (error instanceof Error) {
+            if (error.message.includes('User rejected')) {
+              toast.error('Approval rejected by user');
+            } else {
+              toast.error('Failed to approve token');
+            }
+          } else {
+            toast.error('An unexpected error occurred during approval');
+          }
+          throw error;
+        }
+      } else {
+        setCurrentStep('supplying');
+      }
 
       await executeSupplyTransaction();
-    } catch (error) {
-      console.error('Error during approve and supply:', error);
+    } catch (error: unknown) {
+      console.error('Error in approveAndSupply:', error);
       setShowProcessModal(false);
-      toast.error('An error occurred. Please try again.');
     }
-  }, [account, authorizePermit2, executeSupplyTransaction]);
+  }, [
+    account,
+    authorizePermit2,
+    executeSupplyTransaction,
+    useEth,
+    usePermit2Setting,
+    isApproved,
+    approve,
+  ]);
 
   const signAndSupply = useCallback(async () => {
     if (!account) {
@@ -190,24 +276,34 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       return;
     }
 
-    setShowProcessModal(true);
-    setCurrentStep('signing');
-
     try {
+      setShowProcessModal(true);
+      setCurrentStep('signing');
       await executeSupplyTransaction();
-    } catch (error) {
-      toast.error('An error occurred. Please try again.');
+    } catch (error: unknown) {
+      console.error('Error in signAndSupply:', error);
+      setShowProcessModal(false);
+      if (error instanceof Error) {
+        if (error.message.includes('User rejected')) {
+          toast.error('Transaction rejected by user');
+        } else {
+          toast.error('Failed to process transaction');
+        }
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     }
   }, [account, executeSupplyTransaction]);
 
   return showProcessModal ? (
     <SupplyProcessModal
-      marketId={market.uniqueKey.slice(2, 8)}
-      supplyAmount={formatBalance(supplyAmount, market.loanAsset.decimals)}
+      marketId={market.uniqueKey}
+      supplyAmount={Number(formatUnits(supplyAmount, market.loanAsset.decimals))}
       currentStep={currentStep}
       onClose={() => setShowProcessModal(false)}
       tokenSymbol={market.loanAsset.symbol}
       useEth={useEth}
+      usePermit2={usePermit2Setting}
     />
   ) : (
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">

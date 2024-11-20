@@ -9,6 +9,7 @@ type SupplyProcessModalProps = {
   onClose: () => void;
   tokenSymbol: string;
   useEth: boolean;
+  usePermit2?: boolean;
 };
 
 export function SupplyProcessModal({
@@ -17,35 +18,59 @@ export function SupplyProcessModal({
   onClose,
   useEth,
   tokenSymbol,
+  usePermit2 = true,
 }: SupplyProcessModalProps): JSX.Element {
   const steps = useMemo(() => {
-    const newSteps = useEth
-      ? []
-      : [
-          {
-            key: 'approve',
-            label: 'Authorize Permit2',
-            detail: `This one-time approval make sure you don't need to send approval tx again in the future.`,
-          },
-          {
-            key: 'signing',
-            label: 'Sign message in wallet',
-            detail: 'Sign a Permit2 signature to authorize the supply',
-          },
-        ];
-    newSteps.push({
-      key: 'supplying',
-      label: 'Confirm Supply',
-      detail: 'Confirm transaction in wallet to complete the supply',
-    });
-    return newSteps;
-  }, [useEth]);
+    if (useEth) {
+      return [
+        {
+          key: 'supplying',
+          label: 'Confirm Supply',
+          detail: 'Confirm transaction in wallet to complete the supply',
+        },
+      ];
+    }
+
+    if (usePermit2) {
+      return [
+        {
+          key: 'approve',
+          label: 'Authorize Permit2',
+          detail: `This one-time approval make sure you don't need to send approval tx again in the future.`,
+        },
+        {
+          key: 'signing',
+          label: 'Sign message in wallet',
+          detail: 'Sign a Permit2 signature to authorize the supply',
+        },
+        {
+          key: 'supplying',
+          label: 'Confirm Supply',
+          detail: 'Confirm transaction in wallet to complete the supply',
+        },
+      ];
+    }
+
+    // Standard ERC20 approval flow
+    return [
+      {
+        key: 'approve',
+        label: 'Approve Token',
+        detail: `Approve ${tokenSymbol} for spending`,
+      },
+      {
+        key: 'supplying',
+        label: 'Confirm Supply',
+        detail: 'Confirm transaction in wallet to complete the supply',
+      },
+    ];
+  }, [useEth, usePermit2, tokenSymbol]);
 
   const getStepStatus = (stepKey: string) => {
-    if (
-      steps.findIndex((step) => step.key === stepKey) <
-      steps.findIndex((step) => step.key === currentStep)
-    ) {
+    const currentIndex = steps.findIndex((step) => step.key === currentStep);
+    const stepIndex = steps.findIndex((step) => step.key === stepKey);
+
+    if (stepIndex < currentIndex) {
       return 'done';
     }
     if (stepKey === currentStep) {
@@ -65,7 +90,7 @@ export function SupplyProcessModal({
           className="bg-main absolute right-2 top-2 m-4 rounded-full p-1 text-primary hover:cursor-pointer"
           onClick={onClose}
         >
-          <Cross1Icon />{' '}
+          <Cross1Icon />
         </button>
 
         <div className="mb-12 flex items-center gap-2 p-2 font-zen text-2xl">

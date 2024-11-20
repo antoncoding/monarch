@@ -1,6 +1,5 @@
 'use client';
 
-import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
@@ -31,7 +30,7 @@ export function NavbarLink({
     <NextLink
       href={href}
       className={clsx(
-        'px-2 py-1 text-center font-inter font-zen text-base font-normal text-primary no-underline',
+        'px-2 py-1 text-center text-base font-normal text-primary no-underline',
         'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-out',
         isActive && 'after:origin-bottom-left after:scale-x-100',
       )}
@@ -61,8 +60,8 @@ export function NavbarTitle() {
 
 function Navbar() {
   const { theme, setTheme } = useTheme();
-
   const { address } = useAccount();
+  const pathname = usePathname();
 
   return (
     <nav
@@ -71,53 +70,34 @@ function Navbar() {
         'bg-surface rounded-[5px] p-4 shadow-sm backdrop-blur-2xl',
       )}
     >
-      <div className="flex h-8 grow items-center justify-between gap-2">
-        <NavbarTitle />
-        <div className="flex items-center justify-start gap-8">
-          <ul className="hidden items-center justify-start gap-4 text-opacity-80 md:flex">
-            <li className="flex">
-              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
-                Dashboard
-              </NavbarLink>
-            </li>
-            <li className="flex">
-              <NavbarLink href="/markets" matchKey="markets">
-                Markets
-              </NavbarLink>
-            </li>
-            <li className="flex">
-              <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
-                Rewards
-              </NavbarLink>
-            </li>
-            <li className="flex">
-              <NavigationMenu.Root className="relative">
-                <NavigationMenu.Viewport
-                  className={clsx(
-                    'absolute flex justify-center',
-                    'left-[-20%] top-[100%] w-[140%]',
-                  )}
-                />
-              </NavigationMenu.Root>
-            </li>
-          </ul>
+      <NavbarTitle />
+      <div className="flex items-center gap-8">
+        <ul className="hidden items-center justify-end gap-4 text-opacity-80 md:flex">
+          <li className="flex">
+            <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
+              Dashboard
+            </NavbarLink>
+          </li>
+          <li className="flex">
+            <NavbarLink href="/markets" matchKey="markets">
+              Markets
+            </NavbarLink>
+          </li>
+          <li className="flex">
+            <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
+              Rewards
+            </NavbarLink>
+          </li>
+        </ul>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary hover:bg-surface-hover"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <FaSun size={20} /> : <FaRegMoon size={20} />}
+          </button>
           <AccountConnect />
-
-          {theme === 'dark' ? (
-            <FaSun
-              onClick={() => {
-                setTheme('light');
-              }}
-              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
-            />
-          ) : (
-            <FaRegMoon
-              onClick={() => {
-                setTheme('dark');
-              }}
-              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
-            />
-          )}
         </div>
       </div>
     </nav>
