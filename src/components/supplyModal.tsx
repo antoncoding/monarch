@@ -79,6 +79,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     tokenSymbol: market.loanAsset.symbol,
   });
 
+  console.log('isApproved', isApproved)
+
   const needSwitchChain = useMemo(
     () => chainId !== market.morphoBlue.chain.id,
     [chainId, market.morphoBlue.chain.id],
@@ -236,7 +238,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           setCurrentStep('supplying');
           
           // Small delay to prevent UI glitches
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error: unknown) {
           console.error('Error in approval:', error);
           if (error instanceof Error) {

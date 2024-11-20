@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
+import { RiMenu3Line, RiCloseLine } from 'react-icons/ri';
 import { useAccount } from 'wagmi';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -61,6 +63,7 @@ export function NavbarTitle() {
 function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   return (
     <nav
@@ -71,6 +74,7 @@ function Navbar() {
     >
       <NavbarTitle />
       <div className="flex items-center gap-8">
+        {/* Desktop Navigation */}
         <ul className="hidden items-center justify-end gap-4 text-opacity-80 md:flex">
           <li className="flex">
             <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
@@ -88,6 +92,17 @@ function Navbar() {
             </NavbarLink>
           </li>
         </ul>
+
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          className="md:hidden flex items-center text-primary"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          {isMobileMenuOpen ? <RiCloseLine size={24} /> : <RiMenu3Line size={24} />}
+        </button>
+
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -100,6 +115,29 @@ function Navbar() {
           <AccountConnect />
         </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {isMobileMenuOpen && (
+        <div className="absolute top-[72px] left-0 right-0 bg-surface p-4 shadow-lg md:hidden z-50">
+          <ul className="flex flex-col gap-4">
+            <li>
+              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
+                Dashboard
+              </NavbarLink>
+            </li>
+            <li>
+              <NavbarLink href="/markets" matchKey="markets">
+                Markets
+              </NavbarLink>
+            </li>
+            <li>
+              <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
+                Rewards
+              </NavbarLink>
+            </li>
+          </ul>
+        </div>
+      )}
     </nav>
   );
 }
