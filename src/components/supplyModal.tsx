@@ -449,7 +449,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             >
               Switch Chain
             </button>
-          ) : !permit2Authorized && !useEth ? (
+          ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
             <button
               disabled={!isConnected || isLoadingPermit2}
               type="button"
