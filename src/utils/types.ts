@@ -6,6 +6,9 @@ export type MarketPosition = {
   borrowAssets: string;
   borrowAssetsUsd: number;
   market: Market; // Now using the full Market type
+  principal?: string;
+  deposits?: PositionDeposit[];
+  earned?: string;
 };
 
 export enum UserTxTypes {
@@ -203,11 +206,17 @@ export type GroupedPosition = {
   chainId: number;
   totalSupply: number;
   totalWeightedApy: number;
-  collaterals: { address: string; symbol: string | undefined; amount: number }[];
+  totalPrincipal: bigint;
+  totalEarned: bigint;
+  collaterals: {
+    address: string;
+    symbol: string;
+    amount: number;
+  }[];
   markets: MarketPosition[];
   processedCollaterals: {
     address: string;
-    symbol: string | undefined;
+    symbol: string;
     amount: number;
     percentage: number;
   }[];
@@ -338,4 +347,10 @@ export type MarketDetail = Market & {
 export type MarketHistoricalData = {
   rates: MarketRates;
   volumes: MarketVolumes;
+};
+
+type PositionDeposit = {
+  amount: string;
+  id: string;
+  timestamp: string;
 };

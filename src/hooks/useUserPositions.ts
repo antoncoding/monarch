@@ -6,16 +6,147 @@ import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
+// Add API key constant
+const THEGRAPH_API_KEY = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
+console.log('THEGRAPH_API_KEY', THEGRAPH_API_KEY)
+
+// Add URL constants
+const SUBGRAPH_URLS = {
+  [SupportedNetworks.Base]: `https://gateway.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/71ZTy1veF9twER9CLMnPWeLQ7GZcwKsjmygejrgKirqs`,
+  [SupportedNetworks.Mainnet]: `https://gateway.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/8Lz789DP5VKLXumTMTgygjU2xtuzx8AhbaacgN5PYCAs`,
+};
+
+// Add new types for the detailed position data
+type PositionDeposit = {
+  amount: string;
+  id: string;
+  timestamp: string;
+};
+
+type DetailedPosition = {
+  id: string;
+  market: {
+    id: string;
+  };
+  balance: string;
+  deposits: {
+    amount: string;
+    id: string;
+    timestamp: string;
+  }[];
+  withdraws: {
+    amount: string;
+    timestamp: string;
+  }[];
+  side: 'SUPPLIER' | 'BORROWER';
+};
+
+const detailedPositionsQuery = `
+  query getDetailedPositions($address: String!, $chainId: Int) {
+    positions(where: {
+      account_in: [$address]
+      side_in: [SUPPLIER]
+    }) {
+      id
+      side
+      market {
+        id
+      }
+      deposits {
+        amount
+        timestamp
+        id
+      }
+      withdraws {
+        amount
+        timestamp
+      }
+      balance
+    }
+  }
+`;
+
+// Enhance MarketPosition type with principal and deposits
+type EnhancedMarketPosition = MarketPosition & {
+  principal?: string;
+  deposits?: PositionDeposit[];
+  earned?: string; // Difference between current assets and principal
+  balance?: string;
+};
+
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [data, setData] = useState<MarketPosition[]>([]);
+  const [data, setData] = useState<EnhancedMarketPosition[]>([]);
   const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
+  const calculatePositionDetails = (detailedPosition: DetailedPosition, supplyAssets: string) => {
+    // Calculate total deposits
+    const totalDeposits = detailedPosition.deposits.reduce(
+      (sum, deposit) => sum + BigInt(deposit.amount),
+      0n
+    );
+
+    // Calculate total withdraws
+    const totalWithdraws = detailedPosition.withdraws.reduce(
+      (sum, withdraw) => sum + BigInt(withdraw.amount),
+      0n
+    );
+
+    // Current balance from the position
+    const currentBalance = BigInt(supplyAssets);
+
+    // Calculate earned interest (current balance - (deposits - withdraws))
+    const netPrincipal = totalDeposits - totalWithdraws;
+    const earned = currentBalance > netPrincipal ? currentBalance - netPrincipal : 0n;
+
+    return {
+      principal: netPrincipal.toString(),
+      earned: earned.toString(),
+      deposits: detailedPosition.deposits,
+      balance: detailedPosition.balance,
+    };
+  };
+
+  const fetchDetailedPositions = async (address: string, chainId: number) => {
+    const subgraphUrl = SUBGRAPH_URLS[chainId as SupportedNetworks];
+    if (!subgraphUrl) {
+      console.error(`No subgraph URL for chain ID ${chainId}`);
+      return [];
+    }
+
+    const response = await fetch(subgraphUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: detailedPositionsQuery,
+        variables: {
+          address: address.toLowerCase(),
+          chainId,
+        },
+      }),
+    });
+
+    const result = await response.json();
+
+    // Check for errors in the response
+    if (result.errors) {
+      console.error('Subgraph query errors:', result.errors);
+      return [];
+    }
+    
+    return result.data?.positions ?? [];
+  };
+
   const fetchData = useCallback(
     async (isRefetch = false) => {
-      if (!user) return;
+      if (!user || !THEGRAPH_API_KEY) {
+        console.error('Missing user address or API key');
+        return;
+      }
 
       try {
         if (isRefetch) {
@@ -24,6 +155,7 @@ const useUserPositions = (user: string | undefined) => {
           setLoading(true);
         }
 
+        // Fetch basic position data
         const [responseMainnet, responseBase] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
@@ -53,41 +185,62 @@ const useUserPositions = (user: string | undefined) => {
           }),
         ]);
 
+        // Fetch detailed position data with new URLs
+        const [detailedMainnet, detailedBase] = await Promise.all([
+          fetchDetailedPositions(user, SupportedNetworks.Mainnet),
+          fetchDetailedPositions(user, SupportedNetworks.Base),
+        ]);
+
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
         const marketPositions: MarketPosition[] = [];
         const transactions: UserTransaction[] = [];
 
-        for (const result of [result1, result2]) {
-          // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-          if (result.data && result.data.userByAddress) {
-            marketPositions.push(
-              ...(result.data.userByAddress.marketPositions as MarketPosition[]),
-            );
+        // Combine all detailed positions
+        const allDetailedPositions = [...detailedMainnet, ...detailedBase];
 
-            const parsableTxs = (
-              result.data.userByAddress.transactions as UserTransaction[]
-            ).filter((t) => t.data?.market);
-            transactions.push(...(parsableTxs as UserTransaction[]));
+        for (const result of [result1, result2]) {
+          if (result.data?.userByAddress) {
+            marketPositions.push(...(result.data.userByAddress.marketPositions as MarketPosition[]));
+            const parsableTxs = (result.data.userByAddress.transactions as UserTransaction[]).filter(
+              (t) => t.data?.market,
+            );
+            transactions.push(...parsableTxs);
           }
         }
 
-        const filtered = marketPositions
+        // Enhance market positions with detailed data
+        const enhancedPositions = marketPositions
           .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
-          .map((position: MarketPosition) => ({
-            ...position,
+          .map((position: MarketPosition) => {
+            const detailedPosition = allDetailedPositions.find(
+              (dp) => dp.market.id === position.market.uniqueKey,
+            );
 
-            // add warningWithDetail to each market
-            market: {
-              ...position.market,
-              warningsWithDetail: getMarketWarningsWithDetail(position.market),
-            },
-          }));
+            const enhanced: EnhancedMarketPosition = {
+              ...position,
+              market: {
+                ...position.market,
+                warningsWithDetail: getMarketWarningsWithDetail(position.market),
+              },
+            };
+
+            if (detailedPosition) {
+              const details = calculatePositionDetails(detailedPosition, position.supplyAssets);
+              enhanced.principal = details.principal;
+              enhanced.earned = details.earned;
+              enhanced.deposits = details.deposits;
+              enhanced.balance = details.balance;
+            }
+
+            return enhanced;
+          });
 
         setHistory(transactions);
-        setData(filtered);
+        setData(enhancedPositions);
       } catch (_error) {
+        console.error('Error fetching positions:', _error);
         setError(_error);
       } finally {
         setLoading(false);

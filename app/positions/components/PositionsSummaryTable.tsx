@@ -58,17 +58,25 @@ export function PositionsSummaryTable({
           chainId,
           totalSupply: 0,
           totalWeightedApy: 0,
+          totalPrincipal: 0n,
+          totalEarned: 0n,
           collaterals: [],
           markets: [],
           processedCollaterals: [],
-          allWarnings: [], // Initialize allWarnings as an empty array
+          allWarnings: [],
         };
         acc.push(groupedPosition);
       }
 
       groupedPosition.markets.push(position);
 
-      // Combine warnings from all markets
+      if (position.principal) {
+        groupedPosition.totalPrincipal += BigInt(position.principal);
+      }
+      if (position.earned) {
+        groupedPosition.totalEarned += BigInt(position.earned);
+      }
+
       groupedPosition.allWarnings = [
         ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
       ] as WarningWithDetail[];
@@ -135,7 +143,6 @@ export function PositionsSummaryTable({
 
   console.log('processedPositions', processedPositions);
 
-  // Update selectedGroupedPosition when groupedPositions change, don't depend on selectedGroupedPosition
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
@@ -147,7 +154,6 @@ export function PositionsSummaryTable({
         setSelectedGroupedPosition(updatedPosition);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processedPositions]);
 
   const toggleRow = (rowKey: string) => {
@@ -189,6 +195,8 @@ export function PositionsSummaryTable({
             <th className="w-10" />
             <th className="w-10">Network</th>
             <th>Size</th>
+            <th>Principal</th>
+            <th>Earned</th>
             <th>Avg APY</th>
             <th>Collateral Exposure</th>
             <th>Warnings</th>
@@ -200,6 +208,15 @@ export function PositionsSummaryTable({
             const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
             const isExpanded = expandedRows.has(rowKey);
             const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+
+            const formattedPrincipal = formatBalance(
+              position.totalPrincipal.toString(),
+              position.loanAssetDecimals,
+            );
+            const formattedEarned = formatBalance(
+              position.totalEarned.toString(),
+              position.loanAssetDecimals,
+            );
 
             return (
               <React.Fragment key={rowKey}>
@@ -229,6 +246,20 @@ export function PositionsSummaryTable({
                         width={16}
                         height={16}
                       />
+                    </div>
+                  </td>
+                  <td data-label="Principal">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-medium">{formatReadable(Number(formattedPrincipal))}</span>
+                      <span>{position.loanAsset}</span>
+                    </div>
+                  </td>
+                  <td data-label="Earned">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className={`font-medium ${Number(formattedEarned) > 0 ? 'text-green-500' : ''}`}>
+                        {formatReadable(Number(formattedEarned))}
+                      </span>
+                      <span>{position.loanAsset}</span>
                     </div>
                   </td>
                   <td data-label="Avg APY">
@@ -285,7 +316,7 @@ export function PositionsSummaryTable({
                 <AnimatePresence>
                   {expandedRows.has(rowKey) && (
                     <tr>
-                      <td colSpan={7} className="p-0">
+                      <td colSpan={9} className="p-0">
                         <motion.div
                           initial={{ height: 0 }}
                           animate={{ height: 'auto' }}
