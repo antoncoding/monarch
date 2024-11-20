@@ -1,12 +1,13 @@
 'use client';
 
-import * as NavigationMenu from '@radix-ui/react-navigation-menu';
+import { useState } from 'react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
+import { RiMenu3Line, RiCloseLine } from 'react-icons/ri';
 import { useAccount } from 'wagmi';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -31,7 +32,7 @@ export function NavbarLink({
     <NextLink
       href={href}
       className={clsx(
-        'px-2 py-1 text-center font-inter font-zen text-base font-normal text-primary no-underline',
+        'px-2 py-1 text-center text-base font-normal text-primary no-underline',
         'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-out',
         isActive && 'after:origin-bottom-left after:scale-x-100',
       )}
@@ -61,9 +62,9 @@ export function NavbarTitle() {
 
 function Navbar() {
   const { theme, setTheme } = useTheme();
-
   const { address } = useAccount();
-
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   return (
     <nav
       className={clsx(
@@ -71,55 +72,72 @@ function Navbar() {
         'bg-surface rounded-[5px] p-4 shadow-sm backdrop-blur-2xl',
       )}
     >
-      <div className="flex h-8 grow items-center justify-between gap-2">
-        <NavbarTitle />
-        <div className="flex items-center justify-start gap-8">
-          <ul className="hidden items-center justify-start gap-4 text-opacity-80 md:flex">
-            <li className="flex">
+      <NavbarTitle />
+      <div className="flex items-center gap-8">
+        {/* Desktop Navigation */}
+        <ul className="hidden items-center justify-end gap-4 text-opacity-80 md:flex">
+          <li className="flex">
+            <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
+              Dashboard
+            </NavbarLink>
+          </li>
+          <li className="flex">
+            <NavbarLink href="/markets" matchKey="markets">
+              Markets
+            </NavbarLink>
+          </li>
+          <li className="flex">
+            <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
+              Rewards
+            </NavbarLink>
+          </li>
+        </ul>
+
+        {/* Mobile Menu Button */}
+        <button
+          type="button"
+          className="md:hidden flex items-center text-primary"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+        >
+          {isMobileMenuOpen ? <RiCloseLine size={24} /> : <RiMenu3Line size={24} />}
+        </button>
+
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary hover:bg-surface-hover"
+            aria-label="Toggle theme"
+          >
+            {theme === 'dark' ? <FaSun size={20} /> : <FaRegMoon size={20} />}
+          </button>
+          <AccountConnect />
+        </div>
+      </div>
+
+      {/* Mobile Navigation Menu */}
+      {isMobileMenuOpen && (
+        <div className="absolute top-[72px] left-0 right-0 bg-surface p-4 shadow-lg md:hidden z-50">
+          <ul className="flex flex-col gap-4">
+            <li>
               <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
                 Dashboard
               </NavbarLink>
             </li>
-            <li className="flex">
+            <li>
               <NavbarLink href="/markets" matchKey="markets">
                 Markets
               </NavbarLink>
             </li>
-            <li className="flex">
+            <li>
               <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
                 Rewards
               </NavbarLink>
             </li>
-            <li className="flex">
-              <NavigationMenu.Root className="relative">
-                <NavigationMenu.Viewport
-                  className={clsx(
-                    'absolute flex justify-center',
-                    'left-[-20%] top-[100%] w-[140%]',
-                  )}
-                />
-              </NavigationMenu.Root>
-            </li>
           </ul>
-          <AccountConnect />
-
-          {theme === 'dark' ? (
-            <FaSun
-              onClick={() => {
-                setTheme('light');
-              }}
-              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
-            />
-          ) : (
-            <FaRegMoon
-              onClick={() => {
-                setTheme('dark');
-              }}
-              className="h-4 w-4 transition duration-300 ease-in-out hover:scale-110"
-            />
-          )}
         </div>
-      </div>
+      )}
     </nav>
   );
 }

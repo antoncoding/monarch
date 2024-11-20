@@ -1,7 +1,10 @@
 import { useCallback } from 'react';
 import { Name } from '@coinbase/onchainkit/identity';
 import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { clsx } from 'clsx';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FiSettings } from "react-icons/fi";
 import { useAccount, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { getSlicedAddress } from '@/utils/address';
@@ -10,6 +13,8 @@ import { getExplorerURL } from '@/utils/external';
 export function AccountInfoPanel() {
   const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
+  const pathname = usePathname();
+  
   const handleDisconnectWallet = useCallback(() => {
     disconnect();
   }, [disconnect]);
@@ -33,10 +38,20 @@ export function AccountInfoPanel() {
         </Link>
       </div>
       <hr className="h-px self-stretch border-transparent bg-opacity-20 text-primary" />
+      <Link
+        href="/settings"
+        className={clsx(
+          'my-4 inline-flex items-center justify-between self-stretch no-underline',
+          pathname === '/settings' && 'text-primary'
+        )}
+      >
+        <span className="w-32 text-left font-inter text-sm font-medium text-primary">Settings</span>
+        <FiSettings className="relative h-4 w-4" />
+      </Link>
       <button
         type="button"
         aria-label="Disconnect"
-        className="my-4 inline-flex items-center justify-between self-stretch"
+        className="my-4 inline-flex items-center justify-between self-stretch" 
         onClick={handleDisconnectWallet}
       >
         <span className="w-32 text-left font-inter text-sm font-medium text-primary">Log out</span>

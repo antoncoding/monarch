@@ -1,10 +1,9 @@
 'use client';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaEllipsisH, FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
-import { useAccount, useSwitchChain } from 'wagmi';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -80,14 +79,6 @@ export default function Markets() {
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
     usePagination();
 
-  const { chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
-
-  const needSwitchChain = useMemo(
-    () => chainId !== selectedNetwork && selectedNetwork !== null,
-    [chainId, selectedNetwork],
-  );
-
   useEffect(() => {
     const currentParams = searchParams.toString();
     if (currentParams !== prevParamsRef.current) {
@@ -142,7 +133,7 @@ export default function Markets() {
 
   const updateUrlParams = useCallback(
     (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
-      const params = new URLSearchParams(searchParams);
+      const params = new URLSearchParams(Object.fromEntries(searchParams));
       if (collaterals.length > 0) {
         params.set('collaterals', collaterals.join(','));
       } else {
@@ -314,16 +305,6 @@ export default function Markets() {
                   updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
                 }}
               />
-              
-              {needSwitchChain && (
-                <button
-                  type="button"
-                  onClick={() => selectedNetwork && switchChain({ chainId: selectedNetwork })}
-                  className="bg-monarch-orange h-10 rounded px-4 text-sm text-white opacity-90 transition-all duration-300 ease-in-out hover:scale-105 hover:opacity-100"
-                >
-                  Switch Network
-                </button>
-              )}
             </div>
 
             <AssetFilter
