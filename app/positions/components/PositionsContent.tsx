@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { FaHistory, FaGift, FaPlus } from 'react-icons/fa';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -30,28 +31,31 @@ export default function Positions() {
         <div className="flex items-center justify-between pb-4">
           <h1 className="flex items-center gap-2 py-4 font-zen text-2xl">Portfolio</h1>
           <div className="flex gap-4">
-            <Link href={`/history/${account}`}>
+            <Link href={`/history/${account}`} className="no-underline">
               <button
                 type="button"
-                className="bg-surface rounded p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
-                View History
+                <FaHistory size={14} />
+                History
               </button>
             </Link>
-            <Link href={`/rewards/${account}`}>
+            <Link href={`/rewards/${account}`} className="no-underline">
               <button
                 type="button"
-                className="bg-surface rounded p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
-                View Rewards
+                <FaGift size={14} />
+                Rewards
               </button>
             </Link>
-            <Link href="/positions/onboarding" passHref>
+            <Link href="/positions/onboarding" className="no-underline">
               <button
                 type="button"
-                className="bg-monarch-orange rounded-sm p-2 font-zen text-sm text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-monarch-orange flex items-center gap-2 rounded p-2 font-zen text-sm text-white shadow-sm transition-all duration-200 ease-in-out hover:bg-monarch-orange/90 hover:shadow-md"
               >
-                Start Lending
+                <FaPlus size={14} />
+                New Position
               </button>
             </Link>
           </div>

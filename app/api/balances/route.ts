@@ -45,7 +45,14 @@ export async function GET(req: NextRequest) {
       throw new Error(`HTTP error! status: ${balancesResponse.status}`);
     }
 
-    const balancesData = await balancesResponse.json();
+    const balancesData = await balancesResponse.json() as {
+      id: number;
+      jsonrpc: string;
+      result: {
+        tokenBalances: TokenBalance[];
+      };
+    };
+
     const nonZeroBalances: TokenBalance[] = balancesData.result.tokenBalances.filter(
       (token: TokenBalance) =>
         token.tokenBalance !== '0x0000000000000000000000000000000000000000000000000000000000000000',

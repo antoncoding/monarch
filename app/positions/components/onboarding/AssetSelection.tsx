@@ -102,7 +102,7 @@ export function AssetSelection() {
             You need to have some assets in your wallet to supply
           </p>
           <Link href="/markets">
-            <Button color="primary">View Markets</Button>
+            <Button color="primary" className='rounded'>View Markets</Button>
           </Link>
         </div>
       ) : (

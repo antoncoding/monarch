@@ -74,8 +74,8 @@ export default function ButtonGroup({
               sizeClasses[size],
 
               // Position-based styles
-              isFirst ? 'rounded-l-lg' : '-ml-px',
-              isLast ? 'rounded-r-lg' : '',
+              isFirst ? 'rounded-l' : '-ml-px rounded-none',
+              isLast ? 'rounded-r' : 'rounded-none',
 
               // Variant & State styles
               variant === 'default'
