@@ -34,7 +34,7 @@ export default function Positions() {
             <Link href={`/history/${account}`}>
               <button
                 type="button"
-                className="bg-surface rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-surface rounded p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 View History
               </button>
@@ -42,7 +42,7 @@ export default function Positions() {
             <Link href={`/rewards/${account}`}>
               <button
                 type="button"
-                className="bg-surface rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-surface rounded p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 View Rewards
               </button>
@@ -82,12 +82,12 @@ export default function Positions() {
         {loading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
-          <div className="flex flex-col gap-8">
-            <EmptyScreen message="No open supplies. Start lending with your available assets:" />
+          <div className="flex flex-col gap-8 items-center">
+            <EmptyScreen message="No open supplies. Start lending now!" />
             <Link href="/positions/onboarding" passHref>
               <button
                 type="button"
-                className="bg-monarch-orange mx-auto rounded-sm px-8 py-3 font-zen text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
+                className="bg-monarch-orange mx-auto rounded px-8 py-3 font-zen text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 Start Lending
               </button>
@@ -105,12 +105,6 @@ export default function Positions() {
             />
           </div>
         )}
-
-        <div className="flex justify-center pt-14">
-          <PrimaryButton href="/markets" isSecondary>
-            View All Markets
-          </PrimaryButton>
-        </div>
       </div>
     </div>
   );
