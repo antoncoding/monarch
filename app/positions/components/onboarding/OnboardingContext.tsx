@@ -3,7 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
 
-type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
+type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup' | 'success';
 
 type OnboardingContextType = {
   selectedToken: TokenWithMarkets | null;
@@ -33,13 +33,31 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const contextValue = useMemo(
     () => ({
       selectedToken,
-      setSelectedToken,
+      setSelectedToken: (token: TokenWithMarkets | null) => {
+        setSelectedToken(token);
+        // Reset markets when token changes
+        setSelectedMarkets([]);
+      },
       selectedMarkets,
-      setSelectedMarkets,
+      setSelectedMarkets: (markets: Market[]) => {
+        setSelectedMarkets(markets);
+      },
       step: currentStep,
-      setStep,
+      setStep: (newStep: OnboardingStep) => {
+        // Validate step transitions
+        if (newStep !== 'asset-selection' && !selectedToken) {
+          throw new Error('Token must be selected before proceeding');
+        }
+        if (newStep === 'setup' && selectedMarkets.length === 0) {
+          throw new Error('Markets must be selected before setup');
+        }
+        if (newStep === 'success' && !selectedToken) {
+          throw new Error('Token must be selected before showing success');
+        }
+        setStep(newStep);
+      },
     }),
-    [selectedToken, selectedMarkets, currentStep, setStep],
+    [selectedToken, selectedMarkets, currentStep],
   );
 
   return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;

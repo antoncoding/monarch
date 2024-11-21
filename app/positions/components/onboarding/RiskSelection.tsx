@@ -125,6 +125,10 @@ export function RiskSelection() {
         </div>
       </div>
 
+      <div>
+        <p className="mt-2 text-gray-400">Choose markets you want to trust</p>
+      </div>
+
       {/* Markets Table */}
       <div className="mt-6 min-h-0 flex-1">
         <div className="h-[calc(100vh-500px)] overflow-auto">

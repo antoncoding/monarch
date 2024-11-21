@@ -228,7 +228,7 @@ export function SetupPositions() {
     try {
       const success = await approveAndSupply();
       if (success) {
-        router.push('/positions/onboarding/success');
+        router.push('/positions/onboarding?step=success');
       }
     } catch (error) {
       console.error('Supply failed:', error);
