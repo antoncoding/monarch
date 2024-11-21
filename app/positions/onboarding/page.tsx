@@ -10,7 +10,7 @@ import { SuccessPage } from '../components/onboarding/SuccessPage';
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams();
-  const step = searchParams.get('step') || 'asset-selection';
+  const step = searchParams.get('step') ?? 'asset-selection';
 
   const renderStep = () => {
     switch (step) {

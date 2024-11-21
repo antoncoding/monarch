@@ -89,7 +89,6 @@ export function SupplyProcessModal({
     return 'undone';
   };
 
-  const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
   const isMultiMarket = supplies.length > 1;
 
   return (
@@ -98,18 +97,18 @@ export function SupplyProcessModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black/30 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="relative w-full max-w-lg overflow-hidden rounded-xl border border-gray-200 bg-white/80 backdrop-blur-md dark:border-gray-700 dark:bg-gray-800/90"
+          initial={{ scale: 0.95 }}
+          animate={{ scale: 1 }}
+          exit={{ scale: 0.95 }}
+          className="relative w-full max-w-lg rounded-lg bg-white p-4 shadow-xl dark:bg-gray-900"
         >
-          {/* Close button */}
           <button
+            type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <Cross1Icon className="h-4 w-4" />
           </button>

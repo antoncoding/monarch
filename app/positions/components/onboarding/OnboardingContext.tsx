@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
@@ -30,17 +30,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     router.push(`/positions/onboarding?${params.toString()}`);
   };
 
+  const contextValue = useMemo(() => ({
+    selectedToken,
+    setSelectedToken,
+    selectedMarkets,
+    setSelectedMarkets,
+    step: currentStep,
+    setStep,
+  }), [selectedToken, selectedMarkets, currentStep, setStep]);
+
   return (
-    <OnboardingContext.Provider
-      value={{
-        selectedToken,
-        setSelectedToken,
-        selectedMarkets,
-        setSelectedMarkets,
-        step: currentStep,
-        setStep,
-      }}
-    >
+    <OnboardingContext.Provider value={contextValue}>
       {children}
     </OnboardingContext.Provider>
   );

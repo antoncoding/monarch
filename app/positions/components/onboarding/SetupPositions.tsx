@@ -17,26 +17,25 @@ import { useOnboarding } from './OnboardingContext';
 export function SetupPositions() {
   const router = useRouter();
   const { selectedToken, selectedMarkets } = useOnboarding();
-  const { balances } = useUserBalances();
-  const [totalAmount, setTotalAmount] = useState<string>('');
-  const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [percentages, setPercentages] = useState<Record<string, number>>({});
-  const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<string | null>(null);
+  const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-  const [useEth, setUseEth] = useState(false);
+  const { balances } = useUserBalances();
+  const tokenBalance = BigInt(
+    balances.find((b) => b.address.toLowerCase() === selectedToken?.address.toLowerCase())
+      ?.balance ?? '0'
+  );
+  const tokenDecimals = selectedToken?.decimals ?? 0;
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     router.push('/positions/onboarding?step=risk-selection');
     return null;
   }
 
-  const tokenBalance =
-    BigInt(
-      balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())
-        ?.balance || '0',
-    ) || 0n;
-  const tokenDecimals = selectedToken.decimals;
+  const [totalAmount, setTotalAmount] = useState<string>('');
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize percentages evenly
   useEffect(() => {
@@ -92,35 +91,6 @@ export function SetupPositions() {
     }
   };
 
-  const handleAmountChange = (marketKey: string, value: string) => {
-    if (!totalAmount) return;
-
-    // Remove any non-numeric characters except decimal point
-    const cleanValue = value.replace(/[^0-9.]/g, '');
-
-    // Ensure only one decimal point
-    const parts = cleanValue.split('.');
-    if (parts.length > 2) return;
-
-    // Limit decimal places to token decimals
-    if (parts[1] && parts[1].length > tokenDecimals) return;
-
-    try {
-      // Validate the new amount can be converted to BigInt
-      parseUnits(cleanValue || '0', tokenDecimals);
-
-      const newAmount = Number(cleanValue);
-      const percentage = (newAmount / Number(totalAmount)) * 100;
-
-      // Update this market's percentage
-      handlePercentageChange(marketKey, percentage);
-    } catch (e) {
-      // If conversion fails, don't update the state
-      console.warn(`Invalid amount format: ${cleanValue}`);
-      return;
-    }
-  };
-
   const handleSetMax = () => {
     const maxAmount = formatUnits(tokenBalance, tokenDecimals);
     setTotalAmount(maxAmount);
@@ -136,7 +106,7 @@ export function SetupPositions() {
     setLockedAmounts(newLockedAmounts);
   };
 
-  const handlePercentageChange = (marketKey: string, newPercentage: number) => {
+  const handlePercentageChange = useCallback((marketKey: string, newPercentage: number) => {
     // If the input is invalid (NaN), set it to 0
     if (isNaN(newPercentage)) {
       newPercentage = 0;
@@ -186,7 +156,36 @@ export function SetupPositions() {
     }
 
     setPercentages(newPercentages);
-  };
+  }, [percentages, selectedMarkets, lockedAmounts]);
+
+  const handleAmountChange = useCallback((marketKey: string, value: string) => {
+    if (!totalAmount) return;
+
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '');
+
+    // Ensure only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) return;
+
+    // Limit decimal places to token decimals
+    if (parts[1] && parts[1].length > tokenDecimals) return;
+
+    try {
+      // Validate the new amount can be converted to BigInt
+      parseUnits(cleanValue || '0', tokenDecimals);
+
+      const newAmount = Number(cleanValue);
+      const percentage = (newAmount / Number(totalAmount)) * 100;
+
+      // Update this market's percentage
+      handlePercentageChange(marketKey, percentage);
+    } catch (e) {
+      // If conversion fails, don't update the state
+      console.warn(`Invalid amount format: ${cleanValue}`);
+      return;
+    }
+  }, [totalAmount, tokenDecimals, handlePercentageChange]);
 
   const supplies: MarketSupply[] = useMemo(() => {
     return selectedMarkets
@@ -262,7 +261,8 @@ export function SetupPositions() {
                 className="w-full rounded border border-gray-200 bg-white px-3 py-2 pr-20 font-mono dark:border-gray-700 dark:bg-gray-800"
               />
               <button
-                onClick={handleSetMax}
+                type="button"
+                onClick={() => handleTotalAmountChange(tokenBalance.toString())}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
               >
                 Max
@@ -407,6 +407,7 @@ export function SetupPositions() {
                               {Math.round(currentPercentage)}%
                             </span>
                             <button
+                              type="button"
                               onClick={() => toggleLockAmount(market.uniqueKey)}
                               className={`text-primary hover:text-primary-400 ${
                                 isLocked ? 'opacity-100' : 'opacity-60'

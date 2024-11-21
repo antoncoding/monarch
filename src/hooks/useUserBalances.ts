@@ -2,14 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { findToken } from '@/utils/tokens';
 
-type TokenBalance = {
+interface TokenBalance {
   address: string;
   balance: string;
   chainId: number;
   decimals: number;
   logoURI?: string;
   symbol: string;
-};
+}
+
+interface TokenResponse {
+  tokens: Array<{
+    address: string;
+    balance: string;
+  }>;
+}
 
 export function useUserBalances() {
   const { address } = useAccount();
@@ -18,17 +25,17 @@ export function useUserBalances() {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchBalances = useCallback(
-    async (chainId: number) => {
+    async (chainId: number): Promise<TokenResponse['tokens']> => {
       try {
         const response = await fetch(`/api/balances?address=${address}&chainId=${chainId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch balances');
         }
-        const data = await response.json();
+        const data = (await response.json()) as TokenResponse;
         return data.tokens;
       } catch (err) {
         console.error('Error fetching balances:', err);
-        throw err;
+        throw err instanceof Error ? err : new Error('Unknown error occurred');
       }
     },
     [address],
@@ -50,7 +57,7 @@ export function useUserBalances() {
       // Process and filter tokens
       const processedBalances: TokenBalance[] = [];
 
-      const processTokens = (tokens: any[], chainId: number) => {
+      const processTokens = (tokens: TokenResponse['tokens'], chainId: number) => {
         tokens.forEach((token) => {
           const tokenInfo = findToken(token.address, chainId);
           if (tokenInfo) {
@@ -71,7 +78,7 @@ export function useUserBalances() {
 
       setBalances(processedBalances);
     } catch (err) {
-      setError(err as Error);
+      setError(err instanceof Error ? err : new Error('Unknown error occurred'));
       console.error('Error fetching all balances:', err);
     } finally {
       setLoading(false);
@@ -79,7 +86,7 @@ export function useUserBalances() {
   }, [address, fetchBalances]);
 
   useEffect(() => {
-    fetchAllBalances();
+    void fetchAllBalances();
   }, [fetchAllBalances]);
 
   return {

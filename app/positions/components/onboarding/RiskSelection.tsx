@@ -26,12 +26,6 @@ export function RiskSelection() {
   const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
   const [selectedMarkets, setSelectedMarketsLocal] = useState<Set<string>>(new Set());
 
-  if (!selectedToken) {
-    router.push('/positions/onboarding?step=asset-selection');
-    return null;
-  }
-
-  // Get unique collateral tokens from markets
   const collateralTokens = useMemo(() => {
     if (!selectedToken?.markets) return [];
     const tokens = selectedToken.markets.map((market) => ({
@@ -40,6 +34,11 @@ export function RiskSelection() {
     }));
     return getUniqueTokens(tokens);
   }, [selectedToken]);
+
+  if (!selectedToken) {
+    router.push('/positions/onboarding');
+    return null;
+  }
 
   // Filter markets based on selected collaterals and oracles
   const filteredMarkets = useMemo(() => {
