@@ -11,8 +11,8 @@ import { useMultiMarketSupply, MarketSupply } from '@/hooks/useMultiMarketSupply
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { parseOracleVendors } from '@/utils/oracle';
-import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
+import { findToken } from '@/utils/tokens';
 
 export function SetupPositions() {
   const router = useRouter();
@@ -184,37 +184,35 @@ export function SetupPositions() {
     }
   }, [totalAmount, tokenDecimals, handlePercentageChange]);
 
-  const supplies: MarketSupply[] = useMemo(() => {
+  const supplies = useMemo(() => {
+    if (!selectedMarkets || !amounts || !tokenDecimals) return [];
+
     return selectedMarkets
       .map((market) => {
-        const amountStr = amounts[market.uniqueKey] ?? '0';
-        try {
-          const amountBigInt = parseUnits(amountStr, tokenDecimals);
-          return {
-            market,
-            amount: amountBigInt,
-          };
-        } catch (e) {
-          console.warn(
-            `Failed to convert amount ${amountStr} to BigInt for market ${market.uniqueKey}`,
-          );
-          return {
-            market,
-            amount: 0n,
-          };
-        }
+        const amount = parseUnits(amounts[market.uniqueKey] || '0', tokenDecimals);
+        return {
+          market,
+          amount,
+        };
       })
       .filter((supply) => supply.amount > 0n);
   }, [selectedMarkets, amounts, tokenDecimals]);
 
   const {
-    approveAndSupply,
     currentStep,
     showProcessModal,
     setShowProcessModal,
-    supplyPending,
     isLoadingPermit2,
-  } = useMultiMarketSupply(supplies, useEth, usePermit2Setting);
+    permit2Authorized,
+    authorizePermit2,
+    supplyPending,
+    executeSupplyTransaction,
+  } = useMultiMarketSupply(
+    selectedToken!,
+    supplies,
+    useEth,
+    usePermit2Setting,
+  );
 
   const handleNext = useCallback(async () => {
     if (error || !totalAmount) return;
@@ -224,14 +222,14 @@ export function SetupPositions() {
       const totalAmountBigInt = parseUnits(totalAmount, tokenDecimals);
       if (totalAmountBigInt === 0n) return;
 
-      await approveAndSupply();
+      await executeSupplyTransaction();
       // After successful supply, navigate to success page
       router.push('/positions/onboarding?step=success');
     } catch (e) {
       setError('Invalid amount format');
       return;
     }
-  }, [error, totalAmount, tokenDecimals, approveAndSupply, router]);
+  }, [error, totalAmount, tokenDecimals, executeSupplyTransaction, router]);
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;

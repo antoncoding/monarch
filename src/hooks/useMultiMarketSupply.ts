@@ -8,6 +8,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2 } from '@/utils/morpho';
 import { Market } from '@/utils/types';
+import { NetworkToken } from '@/types/token';
 
 export type MarketSupply = {
   market: Market;
@@ -15,6 +16,7 @@ export type MarketSupply = {
 };
 
 export function useMultiMarketSupply(
+  loanAsset: NetworkToken,
   supplies: MarketSupply[],
   useEth: boolean,
   usePermit2Setting: boolean,
@@ -23,8 +25,8 @@ export function useMultiMarketSupply(
   const [showProcessModal, setShowProcessModal] = useState(false);
 
   const { address: account } = useAccount();
-  const chainId = supplies[0]?.market.morphoBlue.chain.id;
-  const tokenSymbol = supplies[0]?.market.loanAsset.symbol;
+  const chainId = loanAsset.network;
+  const tokenSymbol = loanAsset.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
 
   const {
@@ -35,7 +37,7 @@ export function useMultiMarketSupply(
   } = usePermit2({
     user: account as `0x${string}`,
     spender: getBundlerV2(chainId),
-    token: supplies[0]?.market.loanAsset.address as `0x${string}`,
+    token: loanAsset.address as `0x${string}`,
     refetchInterval: 10000,
     chainId,
     tokenSymbol,
@@ -44,10 +46,7 @@ export function useMultiMarketSupply(
 
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'multi-supply',
-    pendingText: `Supplying ${formatBalance(
-      totalAmount,
-      supplies[0]?.market.loanAsset.decimals,
-    )} ${tokenSymbol}`,
+    pendingText: `Supplying ${formatBalance(totalAmount, loanAsset.decimals)} ${tokenSymbol}`,
     successText: `${tokenSymbol} Supplied`,
     errorText: 'Failed to supply',
     chainId,
@@ -91,7 +90,7 @@ export function useMultiMarketSupply(
           encodeFunctionData({
             abi: morphoBundlerAbi,
             functionName: 'transferFrom2',
-            args: [supplies[0].market.loanAsset.address as Address, totalAmount],
+            args: [loanAsset.address as Address, totalAmount],
           }),
         );
       } else {
@@ -100,12 +99,10 @@ export function useMultiMarketSupply(
           encodeFunctionData({
             abi: morphoBundlerAbi,
             functionName: 'erc20TransferFrom',
-            args: [supplies[0].market.loanAsset.address as Address, totalAmount],
+            args: [loanAsset.address as Address, totalAmount],
           }),
         );
       }
-
-      setCurrentStep('supplying');
 
       // Add supply transactions for each market
       for (const supply of supplies) {
@@ -163,6 +160,7 @@ export function useMultiMarketSupply(
     signForBundlers,
     usePermit2Setting,
     chainId,
+    loanAsset,
   ]);
 
   const approveAndSupply = useCallback(async () => {
@@ -173,23 +171,19 @@ export function useMultiMarketSupply(
 
     try {
       setShowProcessModal(true);
-      setCurrentStep('approve');
-
-      if (!useEth) {
-        if (usePermit2Setting && !permit2Authorized) {
-          await authorizePermit2();
-        }
+      if (usePermit2Setting && !permit2Authorized) {
         setCurrentStep('signing');
+        await authorizePermit2();
       }
-
+      setCurrentStep('supplying');
       await executeSupplyTransaction();
     } catch (error) {
-      setShowProcessModal(false);
       console.error('Error in approveAndSupply:', error);
+      setShowProcessModal(false);
+      setCurrentStep('approve');
     }
   }, [
     account,
-    useEth,
     usePermit2Setting,
     permit2Authorized,
     authorizePermit2,

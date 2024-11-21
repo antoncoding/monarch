@@ -55,8 +55,6 @@ export function AssetSelection() {
 
       result.push({
         symbol: balance.symbol,
-        balance: balance.balance,
-        chainId: balance.chainId,
         markets: relevantMarkets,
         minApy,
         maxApy,
@@ -64,6 +62,7 @@ export function AssetSelection() {
         decimals: balance.decimals,
         network,
         address: balance.address,
+        balance: balance.balance
       });
     });
 
@@ -109,7 +108,7 @@ export function AssetSelection() {
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {tokensWithMarkets.map((token) => (
             <motion.button
-              key={`${token.symbol}-${token.chainId}`}
+              key={`${token.symbol}-${token.network}`}
               onClick={() => handleTokenSelect(token)}
               className="hover:border-monarch-orange group relative flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
               whileHover={{ scale: 1.02 }}

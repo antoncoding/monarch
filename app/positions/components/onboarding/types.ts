@@ -1,16 +1,12 @@
 import { Market } from '@/utils/types';
+import { NetworkToken } from '@/types/token';
 
-export type TokenWithMarkets = {
-  symbol: string;
-  balance: string;
-  chainId: number;
+export type TokenWithMarkets = NetworkToken & {
   markets: Market[];
   minApy: number;
   maxApy: number;
   logoURI?: string;
-  decimals: number;
-  network: number;
-  address: string;
+  balance: string;
 };
 
 export type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
