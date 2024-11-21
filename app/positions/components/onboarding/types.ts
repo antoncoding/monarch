@@ -10,13 +10,16 @@ export type TokenWithMarkets = {
   logoURI?: string;
   decimals: number;
   network: string;
+  address: string;
 };
 
-export type OnboardingStep = 'asset-selection' | 'risk-selection';
+export type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
 
 export type OnboardingContextType = {
   step: OnboardingStep;
   selectedToken?: TokenWithMarkets;
+  selectedMarkets: Market[];
   setStep: (step: OnboardingStep) => void;
   setSelectedToken: (token: TokenWithMarkets) => void;
+  setSelectedMarkets: (markets: Market[]) => void;
 };

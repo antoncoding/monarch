@@ -1,12 +1,17 @@
 import { createContext, useContext, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TokenWithMarkets } from './types';
+import { Market } from '@/utils/types';
+
+type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
 
 type OnboardingContextType = {
   selectedToken: TokenWithMarkets | null;
   setSelectedToken: (token: TokenWithMarkets | null) => void;
-  step: 'asset-selection' | 'risk-selection';
-  setStep: (step: 'asset-selection' | 'risk-selection') => void;
+  selectedMarkets: Market[];
+  setSelectedMarkets: (markets: Market[]) => void;
+  step: OnboardingStep;
+  setStep: (step: OnboardingStep) => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -14,11 +19,12 @@ const OnboardingContext = createContext<OnboardingContextType | null>(null);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentStep = searchParams.get('step') as 'asset-selection' | 'risk-selection' || 'asset-selection';
+  const currentStep = (searchParams.get('step') as OnboardingStep) || 'asset-selection';
   
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
+  const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
 
-  const setStep = (newStep: 'asset-selection' | 'risk-selection') => {
+  const setStep = (newStep: OnboardingStep) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('step', newStep);
     router.push(`/positions/onboarding?${params.toString()}`);
@@ -29,6 +35,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       value={{
         selectedToken,
         setSelectedToken,
+        selectedMarkets,
+        setSelectedMarkets,
         step: currentStep,
         setStep,
       }}

@@ -130,7 +130,7 @@ export function RiskSelection() {
             <thead className="table-header sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
               <tr>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Market</th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Risk Indicators</th>
+                <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Market Params</th>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Oracle</th>
                 <th className="whitespace-nowrap px-4 py-2 text-right font-normal">LLTV</th>
                 <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Supply APY</th>
@@ -169,15 +169,23 @@ export function RiskSelection() {
                           </div>
                         )}
                         <div className="flex flex-col">
-                          <a
-                            href={getAssetURL(market.collateralAsset.address, market.morphoBlue.chain.id)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1 no-underline hover:underline"
-                          >
-                            {market.collateralAsset.symbol}
-                          </a>
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={getAssetURL(market.collateralAsset.address, market.morphoBlue.chain.id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 no-underline hover:underline"
+                            >
+                              {market.collateralAsset.symbol}
+                            </a>
+                            <button
+                              onClick={(e) => handleMarketDetails(market, e)}
+                              className="text-xs text-gray-400 hover:text-gray-300"
+                            >
+                              {market.uniqueKey.slice(2, 8)}
+                            </button>
+                          </div>
                           <span className="text-xs text-gray-400">as collateral</span>
                         </div>
                       </div>
