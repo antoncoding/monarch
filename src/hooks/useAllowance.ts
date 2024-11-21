@@ -32,7 +32,7 @@ export function useAllowance({
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
 
-  const { data } = useReadContract({
+  const { data, error } = useReadContract({
     abi: erc20Abi,
     functionName: 'allowance',
     address: token,
@@ -41,6 +41,7 @@ export function useAllowance({
       enabled: !!user && !!spender && !!token,
       refetchInterval,
     },
+    chainId,
   });
 
   const { sendTransactionAsync, isConfirming: approvePending } = useTransactionWithToast({
@@ -72,6 +73,9 @@ export function useAllowance({
   }, [user, spender, token, sendTransactionAsync, chainIdFromArgumentOrConnectedWallet]);
 
   const allowance = data ? data : BigInt(0);
+
+  console.log('data', data)
+
   const isLoadingAllowance = data === undefined;
 
   return { allowance, isLoadingAllowance, approveInfinite, approvePending };

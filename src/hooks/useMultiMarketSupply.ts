@@ -197,5 +197,6 @@ export function useMultiMarketSupply(
     setShowProcessModal,
     supplyPending,
     isLoadingPermit2,
+    executeSupplyTransaction
   };
 }

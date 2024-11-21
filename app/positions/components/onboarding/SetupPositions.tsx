@@ -203,10 +203,8 @@ export function SetupPositions() {
     showProcessModal,
     setShowProcessModal,
     isLoadingPermit2,
-    permit2Authorized,
-    authorizePermit2,
+    approveAndSupply,
     supplyPending,
-    executeSupplyTransaction,
   } = useMultiMarketSupply(
     selectedToken!,
     supplies,
@@ -222,14 +220,15 @@ export function SetupPositions() {
       const totalAmountBigInt = parseUnits(totalAmount, tokenDecimals);
       if (totalAmountBigInt === 0n) return;
 
-      await executeSupplyTransaction();
+      await approveAndSupply();
       // After successful supply, navigate to success page
       router.push('/positions/onboarding?step=success');
     } catch (e) {
+      console.error(e);
       setError('Invalid amount format');
       return;
     }
-  }, [error, totalAmount, tokenDecimals, executeSupplyTransaction, router]);
+  }, [error, totalAmount, tokenDecimals, approveAndSupply, router]);
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;
