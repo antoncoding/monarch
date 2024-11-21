@@ -79,9 +79,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
       </div>
       <div
         className={`bg-surface absolute z-10 mt-1 w-full transform rounded shadow-lg transition-all duration-200 ${
-          isOpen
-            ? 'visible translate-y-0 opacity-100'
-            : 'invisible -translate-y-2 opacity-0'
+          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >
         <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">

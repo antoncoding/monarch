@@ -76,10 +76,10 @@ const config: Config = {
         },
       },
     }),
-    plugin(function({ addBase }) {
+    plugin(function ({ addBase }) {
       addBase({
         'button, .nextui-button': {
-          '@apply rounded': {},  // This makes all buttons rounded by default
+          '@apply rounded': {}, // This makes all buttons rounded by default
         },
       });
     }),

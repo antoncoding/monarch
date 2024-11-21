@@ -30,20 +30,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     router.push(`/positions/onboarding?${params.toString()}`);
   };
 
-  const contextValue = useMemo(() => ({
-    selectedToken,
-    setSelectedToken,
-    selectedMarkets,
-    setSelectedMarkets,
-    step: currentStep,
-    setStep,
-  }), [selectedToken, selectedMarkets, currentStep, setStep]);
-
-  return (
-    <OnboardingContext.Provider value={contextValue}>
-      {children}
-    </OnboardingContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      selectedToken,
+      setSelectedToken,
+      selectedMarkets,
+      setSelectedMarkets,
+      step: currentStep,
+      setStep,
+    }),
+    [selectedToken, selectedMarkets, currentStep, setStep],
   );
+
+  return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;
 }
 
 export function useOnboarding() {

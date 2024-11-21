@@ -1,66 +1,32 @@
-import { useEffect } from 'react';
-import { Button } from '@nextui-org/react';
-import { CheckCircledIcon } from '@radix-ui/react-icons';
-import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { useAccount } from 'wagmi';
+import Link from 'next/link';
+import { useOnboarding } from './OnboardingContext';
 
 export function SuccessPage() {
-  const router = useRouter();
-
-  const { address } = useAccount()
-
-  // Automatically redirect to portfolio after 3 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push(`/positions/${address}`) // Corrected
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [router]);
+  const { selectedToken } = useOnboarding();
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-1 flex-col items-center justify-center text-center"
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: 'spring', delay: 0.2 }}
-      >
-        <CheckCircledIcon className="h-20 w-20 text-green-500" />
-      </motion.div>
+    <div className="flex flex-col items-center justify-center gap-8 p-8">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <h1 className="text-4xl font-bold text-green-500">Success!</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-300">
+          Your {selectedToken?.symbol} has been successfully supplied.
+        </p>
+      </div>
 
-      <motion.h1
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="mt-6 font-zen text-3xl"
-      >
-        Position Created Successfully!
-      </motion.h1>
-
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6 }}
-        className="mt-2 text-gray-500"
-      >
-        Your supply position has been created. Redirecting to your portfolio...
-      </motion.p>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="mt-8"
-      >
-        <Button className='rounded' color="primary" onPress={() => router.push(`/positions/${address}`)}>
-          View My Portfolio
-        </Button>
-      </motion.div>
-    </motion.div>
+      <div className="flex gap-4">
+        <Link
+          href={`/positions/${selectedToken?.address ?? ''}`}
+          className="bg-monarch-orange hover:bg-monarch-orange/90 rounded px-6 py-2 font-semibold text-white transition-all"
+        >
+          View Position
+        </Link>
+        <Link
+          href="/markets"
+          className="rounded bg-gray-200 px-6 py-2 font-semibold text-gray-700 transition-all hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+        >
+          Explore Markets
+        </Link>
+      </div>
+    </div>
   );
 }

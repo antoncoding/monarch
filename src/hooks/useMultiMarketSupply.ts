@@ -5,10 +5,12 @@ import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2 } from '@/utils/morpho';
+import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
-import { NetworkToken } from '@/types/token';
+import { useERC20Approval } from './useERC20Approval';
 
 export type MarketSupply = {
   market: Market;
@@ -16,7 +18,7 @@ export type MarketSupply = {
 };
 
 export function useMultiMarketSupply(
-  loanAsset: NetworkToken,
+  loanAsset: NetworkToken | undefined,
   supplies: MarketSupply[],
   useEth: boolean,
   usePermit2Setting: boolean,
@@ -25,8 +27,8 @@ export function useMultiMarketSupply(
   const [showProcessModal, setShowProcessModal] = useState(false);
 
   const { address: account } = useAccount();
-  const chainId = loanAsset.network;
-  const tokenSymbol = loanAsset.symbol;
+  const chainId = loanAsset?.network;
+  const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
 
   const {
@@ -36,17 +38,27 @@ export function useMultiMarketSupply(
     signForBundlers,
   } = usePermit2({
     user: account as `0x${string}`,
-    spender: getBundlerV2(chainId),
-    token: loanAsset.address as `0x${string}`,
+    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    token: loanAsset?.address as `0x${string}`,
     refetchInterval: 10000,
     chainId,
     tokenSymbol,
     amount: totalAmount,
   });
 
+  const { isApproved, approve } = useERC20Approval({
+    token: loanAsset?.address as Address,
+    spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
+    amount: totalAmount,
+    tokenSymbol: loanAsset?.symbol ?? '',
+  });
+
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'multi-supply',
-    pendingText: `Supplying ${formatBalance(totalAmount, loanAsset.decimals)} ${tokenSymbol}`,
+    pendingText: `Supplying ${formatBalance(
+      totalAmount,
+      loanAsset?.decimals ?? 18,
+    )} ${tokenSymbol}`,
     successText: `${tokenSymbol} Supplied`,
     errorText: 'Failed to supply',
     chainId,
@@ -57,11 +69,12 @@ export function useMultiMarketSupply(
   });
 
   const executeSupplyTransaction = useCallback(async () => {
-    if (!account) return;
+    if (!account) throw new Error('No account connected');
+    if (!loanAsset || !chainId) throw new Error('Invalid loan asset or chain');
+
+    const txs: `0x${string}`[] = [];
 
     try {
-      const txs: `0x${string}`[] = [];
-
       // Handle ETH wrapping if needed
       if (useEth) {
         txs.push(
@@ -74,8 +87,8 @@ export function useMultiMarketSupply(
       }
       // Handle token approvals
       else if (usePermit2Setting) {
+        setCurrentStep('signing');
         const { sigs, permitSingle } = await signForBundlers();
-        console.log('Signed for bundlers:', { sigs, permitSingle });
 
         txs.push(
           encodeFunctionData({
@@ -103,6 +116,8 @@ export function useMultiMarketSupply(
           }),
         );
       }
+
+      setCurrentStep('supplying');
 
       // Add supply transactions for each market
       for (const supply of supplies) {
@@ -142,14 +157,16 @@ export function useMultiMarketSupply(
         value: useEth ? totalAmount : 0n,
       });
 
-      setShowProcessModal(false);
+      return true;
     } catch (error: unknown) {
+      console.error('Error in executeSupplyTransaction:', error);
       setShowProcessModal(false);
       if (error instanceof Error) {
-        toast.error('An error occurred. Please try again.');
+        toast.error('Transaction failed or cancelled');
       } else {
-        toast.error('An unexpected error occurred');
+        toast.error('Transaction failed');
       }
+      throw error; // Re-throw to be caught by approveAndSupply
     }
   }, [
     account,
@@ -166,27 +183,70 @@ export function useMultiMarketSupply(
   const approveAndSupply = useCallback(async () => {
     if (!account) {
       toast.error('Please connect your wallet');
-      return;
+      return false;
     }
 
     try {
       setShowProcessModal(true);
-      if (usePermit2Setting && !permit2Authorized) {
-        setCurrentStep('signing');
-        await authorizePermit2();
+      setCurrentStep('approve');
+
+      if (useEth) {
+        setCurrentStep('supplying');
+        const success = await executeSupplyTransaction();
+        return success;
       }
-      setCurrentStep('supplying');
-      await executeSupplyTransaction();
+
+      if (usePermit2Setting && !permit2Authorized) {
+        try {
+          await authorizePermit2();
+          setCurrentStep('signing');
+
+          // Small delay to prevent UI glitches
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error('Error in Permit2 authorization:', error);
+          setShowProcessModal(false);
+          return false;
+        }
+      } else if (!usePermit2Setting && !isApproved) {
+        // Standard ERC20 flow
+        try {
+          await approve();
+          setCurrentStep('supplying');
+
+          // Small delay to prevent UI glitches
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error('Error in ERC20 approval:', error);
+          setShowProcessModal(false);
+          if (error instanceof Error) {
+            if (error.message.includes('User rejected')) {
+              toast.error('Approval rejected by user');
+            } else {
+              toast.error('Failed to approve token');
+            }
+          } else {
+            toast.error('An unexpected error occurred during approval');
+          }
+          return false;
+        }
+      }
+
+      const success = await executeSupplyTransaction();
+      return success;
     } catch (error) {
       console.error('Error in approveAndSupply:', error);
       setShowProcessModal(false);
-      setCurrentStep('approve');
+      return false;
     }
   }, [
     account,
     usePermit2Setting,
     permit2Authorized,
     authorizePermit2,
+    isApproved,
+    approve,
+    useEth,
     executeSupplyTransaction,
   ]);
 
@@ -197,6 +257,6 @@ export function useMultiMarketSupply(
     setShowProcessModal,
     supplyPending,
     isLoadingPermit2,
-    executeSupplyTransaction
+    executeSupplyTransaction,
   };
 }

@@ -62,7 +62,7 @@ export function AssetSelection() {
         decimals: balance.decimals,
         network,
         address: balance.address,
-        balance: balance.balance
+        balance: balance.balance,
       });
     });
 
@@ -101,7 +101,9 @@ export function AssetSelection() {
             You need to have some assets in your wallet to supply
           </p>
           <Link href="/markets">
-            <Button color="primary" className='rounded'>View Markets</Button>
+            <Button color="primary" className="rounded">
+              View Markets
+            </Button>
           </Link>
         </div>
       ) : (

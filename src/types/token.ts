@@ -1,4 +1,4 @@
-import { SupportedNetworks } from "@/utils/networks";
+import { SupportedNetworks } from '@/utils/networks';
 
 /**
  * Represents a token with fixed network and address information

@@ -52,7 +52,7 @@ export default function Positions() {
             <Link href="/positions/onboarding" className="no-underline">
               <button
                 type="button"
-                className="bg-monarch-orange flex items-center gap-2 rounded p-2 font-zen text-sm text-white shadow-sm transition-all duration-200 ease-in-out hover:bg-monarch-orange/90 hover:shadow-md"
+                className="bg-monarch-orange hover:bg-monarch-orange/90 flex items-center gap-2 rounded p-2 font-zen text-sm text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md"
               >
                 <FaPlus size={14} />
                 New Position
@@ -85,7 +85,7 @@ export default function Positions() {
         {loading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
-          <div className="flex flex-col gap-8 items-center">
+          <div className="flex flex-col items-center gap-8">
             <EmptyScreen message="No open supplies. Start lending now!" />
             <Link href="/positions/onboarding" passHref>
               <button

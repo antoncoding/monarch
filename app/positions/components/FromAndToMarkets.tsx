@@ -94,7 +94,7 @@ export function FromAndToMarkets({
           onChange={(e) => onFromFilterChange(e.target.value)}
           className="mb-2"
           classNames={{
-            inputWrapper: 'rounded'
+            inputWrapper: 'rounded',
           }}
         />
         <div className="relative min-h-[250px] w-full overflow-x-auto">
@@ -220,7 +220,7 @@ export function FromAndToMarkets({
           onChange={(e) => onToFilterChange(e.target.value)}
           className="mb-2"
           classNames={{
-            inputWrapper: 'rounded'
+            inputWrapper: 'rounded',
           }}
         />
         <div className="relative min-h-[250px] w-full overflow-x-auto">

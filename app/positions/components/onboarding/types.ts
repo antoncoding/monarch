@@ -1,5 +1,5 @@
-import { Market } from '@/utils/types';
 import { NetworkToken } from '@/types/token';
+import { Market } from '@/utils/types';
 
 export type TokenWithMarkets = NetworkToken & {
   markets: Market[];

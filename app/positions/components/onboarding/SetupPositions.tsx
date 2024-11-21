@@ -3,6 +3,7 @@ import { Button, Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
@@ -11,8 +12,8 @@ import { useMultiMarketSupply, MarketSupply } from '@/hooks/useMultiMarketSupply
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { parseOracleVendors } from '@/utils/oracle';
-import { useOnboarding } from './OnboardingContext';
 import { findToken } from '@/utils/tokens';
+import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const router = useRouter();
@@ -25,24 +26,29 @@ export function SetupPositions() {
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [isSupplying, setIsSupplying] = useState(false);
+
+  // Redirect if no token selected
+  useEffect(() => {
+    if (!selectedToken) {
+      router.push('/positions/onboarding?step=asset-selection');
+      return;
+    }
+    if (!selectedMarkets || selectedMarkets.length === 0) {
+      router.push('/positions/onboarding?step=risk-selection');
+    }
+  }, [router, selectedToken, selectedMarkets]);
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
     if (!selectedToken) return 0n;
     return BigInt(
       balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())
-        ?.balance ?? '0'
+        ?.balance ?? '0',
     );
   }, [balances, selectedToken]);
 
   const tokenDecimals = useMemo(() => selectedToken?.decimals ?? 0, [selectedToken]);
-
-  // Redirect if no token or markets selected
-  useEffect(() => {
-    if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
-      router.push('/positions/onboarding?step=risk-selection');
-    }
-  }, [router, selectedToken, selectedMarkets]);
 
   // Initialize percentages evenly
   useEffect(() => {
@@ -93,96 +99,105 @@ export function SetupPositions() {
     }
   };
 
-  const toggleLockAmount = useCallback((marketKey: string) => {
-    const newLockedAmounts = new Set(lockedAmounts);
-    if (lockedAmounts.has(marketKey)) {
-      newLockedAmounts.delete(marketKey);
-    } else {
-      newLockedAmounts.add(marketKey);
-    }
-    setLockedAmounts(newLockedAmounts);
-  }, [lockedAmounts]);
+  const toggleLockAmount = useCallback(
+    (marketKey: string) => {
+      const newLockedAmounts = new Set(lockedAmounts);
+      if (lockedAmounts.has(marketKey)) {
+        newLockedAmounts.delete(marketKey);
+      } else {
+        newLockedAmounts.add(marketKey);
+      }
+      setLockedAmounts(newLockedAmounts);
+    },
+    [lockedAmounts],
+  );
 
-  const handlePercentageChange = useCallback((marketKey: string, newPercentage: number) => {
-    // If the input is invalid (NaN), set it to 0
-    if (isNaN(newPercentage)) {
-      newPercentage = 0;
-    }
+  const handlePercentageChange = useCallback(
+    (marketKey: string, newPercentage: number) => {
+      // If the input is invalid (NaN), set it to 0
+      if (isNaN(newPercentage)) {
+        newPercentage = 0;
+      }
 
-    const market = selectedMarkets.find((m) => m.uniqueKey === marketKey);
-    if (!market) return;
+      const market = selectedMarkets.find((m) => m.uniqueKey === marketKey);
+      if (!market) return;
 
-    const lockedMarkets = selectedMarkets.filter(
-      (m) => m.uniqueKey !== marketKey && lockedAmounts.has(m.uniqueKey),
-    );
-    const unlockedMarkets = selectedMarkets.filter(
-      (m) => m.uniqueKey !== marketKey && !lockedAmounts.has(m.uniqueKey),
-    );
+      const lockedMarkets = selectedMarkets.filter(
+        (m) => m.uniqueKey !== marketKey && lockedAmounts.has(m.uniqueKey),
+      );
+      const unlockedMarkets = selectedMarkets.filter(
+        (m) => m.uniqueKey !== marketKey && !lockedAmounts.has(m.uniqueKey),
+      );
 
-    // Calculate total locked percentage
-    const totalLockedPercentage = lockedMarkets.reduce(
-      (sum, m) => sum + (percentages[m.uniqueKey] || 0),
-      0,
-    );
-
-    // Ensure we don't exceed 100% - totalLockedPercentage
-    const maxAllowedPercentage = 100 - totalLockedPercentage;
-    newPercentage = Math.min(newPercentage, maxAllowedPercentage);
-
-    // Calculate remaining percentage for unlocked markets
-    const remainingPercentage = 100 - totalLockedPercentage - newPercentage;
-
-    // Distribute remaining percentage among unlocked markets proportionally
-    const newPercentages = { ...percentages };
-    newPercentages[marketKey] = newPercentage;
-
-    if (unlockedMarkets.length > 0 && remainingPercentage > 0) {
-      const currentUnlockedTotal = unlockedMarkets.reduce(
+      // Calculate total locked percentage
+      const totalLockedPercentage = lockedMarkets.reduce(
         (sum, m) => sum + (percentages[m.uniqueKey] || 0),
         0,
       );
 
-      unlockedMarkets.forEach((m) => {
-        const currentPct = percentages[m.uniqueKey] || 0;
-        const proportion =
-          currentUnlockedTotal === 0
-            ? 1 / unlockedMarkets.length
-            : currentPct / currentUnlockedTotal;
-        newPercentages[m.uniqueKey] = remainingPercentage * proportion;
-      });
-    }
+      // Ensure we don't exceed 100% - totalLockedPercentage
+      const maxAllowedPercentage = 100 - totalLockedPercentage;
+      newPercentage = Math.min(newPercentage, maxAllowedPercentage);
 
-    setPercentages(newPercentages);
-  }, [percentages, selectedMarkets, lockedAmounts]);
+      // Calculate remaining percentage for unlocked markets
+      const remainingPercentage = 100 - totalLockedPercentage - newPercentage;
 
-  const handleAmountChange = useCallback((marketKey: string, value: string) => {
-    if (!totalAmount) return;
+      // Distribute remaining percentage among unlocked markets proportionally
+      const newPercentages = { ...percentages };
+      newPercentages[marketKey] = newPercentage;
 
-    // Remove any non-numeric characters except decimal point
-    const cleanValue = value.replace(/[^0-9.]/g, '');
+      if (unlockedMarkets.length > 0 && remainingPercentage > 0) {
+        const currentUnlockedTotal = unlockedMarkets.reduce(
+          (sum, m) => sum + (percentages[m.uniqueKey] || 0),
+          0,
+        );
 
-    // Ensure only one decimal point
-    const parts = cleanValue.split('.');
-    if (parts.length > 2) return;
+        unlockedMarkets.forEach((m) => {
+          const currentPct = percentages[m.uniqueKey] || 0;
+          const proportion =
+            currentUnlockedTotal === 0
+              ? 1 / unlockedMarkets.length
+              : currentPct / currentUnlockedTotal;
+          newPercentages[m.uniqueKey] = remainingPercentage * proportion;
+        });
+      }
 
-    // Limit decimal places to token decimals
-    if (parts[1] && parts[1].length > tokenDecimals) return;
+      setPercentages(newPercentages);
+    },
+    [percentages, selectedMarkets, lockedAmounts],
+  );
 
-    try {
-      // Validate the new amount can be converted to BigInt
-      parseUnits(cleanValue || '0', tokenDecimals);
+  const handleAmountChange = useCallback(
+    (marketKey: string, value: string) => {
+      if (!totalAmount) return;
 
-      const newAmount = Number(cleanValue);
-      const percentage = (newAmount / Number(totalAmount)) * 100;
+      // Remove any non-numeric characters except decimal point
+      const cleanValue = value.replace(/[^0-9.]/g, '');
 
-      // Update this market's percentage
-      handlePercentageChange(marketKey, percentage);
-    } catch (e) {
-      // If conversion fails, don't update the state
-      console.warn(`Invalid amount format: ${cleanValue}`);
-      return;
-    }
-  }, [totalAmount, tokenDecimals, handlePercentageChange]);
+      // Ensure only one decimal point
+      const parts = cleanValue.split('.');
+      if (parts.length > 2) return;
+
+      // Limit decimal places to token decimals
+      if (parts[1] && parts[1].length > tokenDecimals) return;
+
+      try {
+        // Validate the new amount can be converted to BigInt
+        parseUnits(cleanValue || '0', tokenDecimals);
+
+        const newAmount = Number(cleanValue);
+        const percentage = (newAmount / Number(totalAmount)) * 100;
+
+        // Update this market's percentage
+        handlePercentageChange(marketKey, percentage);
+      } catch (e) {
+        // If conversion fails, don't update the state
+        console.warn(`Invalid amount format: ${cleanValue}`);
+        return;
+      }
+    },
+    [totalAmount, tokenDecimals, handlePercentageChange],
+  );
 
   const supplies = useMemo(() => {
     if (!selectedMarkets || !amounts || !tokenDecimals) return [];
@@ -205,30 +220,24 @@ export function SetupPositions() {
     isLoadingPermit2,
     approveAndSupply,
     supplyPending,
-  } = useMultiMarketSupply(
-    selectedToken!,
-    supplies,
-    useEth,
-    usePermit2Setting,
-  );
+  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting);
 
-  const handleNext = useCallback(async () => {
-    if (error || !totalAmount) return;
+  const handleSupply = async () => {
+    if (isSupplying) return;
+    setIsSupplying(true);
 
     try {
-      // Validate total amount can be converted to BigInt
-      const totalAmountBigInt = parseUnits(totalAmount, tokenDecimals);
-      if (totalAmountBigInt === 0n) return;
-
-      await approveAndSupply();
-      // After successful supply, navigate to success page
-      router.push('/positions/onboarding?step=success');
-    } catch (e) {
-      console.error(e);
-      setError('Invalid amount format');
-      return;
+      const success = await approveAndSupply();
+      if (success) {
+        router.push('/positions/onboarding/success');
+      }
+    } catch (error) {
+      console.error('Supply failed:', error);
+      // Error toast is already shown in useMultiMarketSupply
+    } finally {
+      setIsSupplying(false);
     }
-  }, [error, totalAmount, tokenDecimals, approveAndSupply, router]);
+  };
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;
@@ -258,7 +267,7 @@ export function SetupPositions() {
               />
               <button
                 type="button"
-                onClick={() => handleTotalAmountChange(tokenBalance.toString())}
+                onClick={() => handleTotalAmountChange(formatUnits(tokenBalance, tokenDecimals))}
                 className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
               >
                 Max
@@ -280,10 +289,6 @@ export function SetupPositions() {
               <span className="font-mono text-sm">
                 {formatBalance(tokenBalance, tokenDecimals)} {selectedToken.symbol}
               </span>
-              {/* Placeholder for future swap button */}
-              {/* <Button size="sm" variant="light" className="rounded">
-                <SwapIcon className="h-4 w-4" />
-              </Button> */}
             </div>
           </div>
         </div>
@@ -455,9 +460,7 @@ export function SetupPositions() {
           color="primary"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onPress={() => {
-            void handleNext();
-          }}
+          onPress={handleSupply}
           className="min-w-[120px] rounded"
         >
           Execute

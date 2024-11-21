@@ -262,7 +262,7 @@ export function RiskSelection() {
       <div className="mt-6 flex items-center justify-between pt-4">
         <Button
           variant="light"
-          className='min-w-[120px] rounded'
+          className="min-w-[120px] rounded"
           onClick={() => router.push('/positions/onboarding?step=asset-selection')}
         >
           Back

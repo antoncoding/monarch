@@ -32,7 +32,7 @@ export function useAllowance({
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
 
-  const { data, error } = useReadContract({
+  const { data } = useReadContract({
     abi: erc20Abi,
     functionName: 'allowance',
     address: token,
@@ -74,7 +74,7 @@ export function useAllowance({
 
   const allowance = data ? data : BigInt(0);
 
-  console.log('data', data)
+  console.log('data', data);
 
   const isLoadingAllowance = data === undefined;
 

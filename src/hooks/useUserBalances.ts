@@ -9,14 +9,14 @@ type TokenBalance = {
   decimals: number;
   logoURI?: string;
   symbol: string;
-}
+};
 
 type TokenResponse = {
   tokens: {
     address: string;
     balance: string;
   }[];
-}
+};
 
 export function useUserBalances() {
   const { address } = useAccount();

@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       throw new Error(`HTTP error! status: ${balancesResponse.status}`);
     }
 
-    const balancesData = await balancesResponse.json() as {
+    const balancesData = (await balancesResponse.json()) as {
       id: number;
       jsonrpc: string;
       result: {
