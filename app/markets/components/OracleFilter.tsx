@@ -37,11 +37,6 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
     }
   };
 
-  const clearSelection = () => {
-    setSelectedOracles([]);
-    setIsOpen(false);
-  };
-
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
