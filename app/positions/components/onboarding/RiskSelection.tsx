@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { formatBalance, formatReadable } from '@/utils/balance';
+import { formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import { findToken, getUniqueTokens } from '@/utils/tokens';
@@ -34,11 +34,6 @@ export function RiskSelection() {
     }));
     return getUniqueTokens(tokens);
   }, [selectedToken]);
-
-  if (!selectedToken) {
-    router.push('/positions/onboarding');
-    return null;
-  }
 
   // Filter markets based on selected collaterals and oracles
   const filteredMarkets = useMemo(() => {
@@ -201,6 +196,7 @@ export function RiskSelection() {
                             <button
                               onClick={(e) => handleMarketDetails(market, e)}
                               className="text-xs text-gray-400 hover:text-gray-300"
+                              type="button"
                             >
                               {market.uniqueKey.slice(2, 8)}
                             </button>
@@ -266,13 +262,14 @@ export function RiskSelection() {
       <div className="mt-6 flex items-center justify-between pt-4">
         <Button
           variant="light"
+          className='min-w-[120px] rounded'
           onClick={() => router.push('/positions/onboarding?step=asset-selection')}
         >
           Back
         </Button>
         <Button
           color="primary"
-          className="min-w-[120px]"
+          className="min-w-[120px] rounded"
           onClick={handleNext}
           disabled={selectedMarkets.size === 0}
         >

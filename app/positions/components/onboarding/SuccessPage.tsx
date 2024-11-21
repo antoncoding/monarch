@@ -3,14 +3,17 @@ import { Button } from '@nextui-org/react';
 import { CheckCircledIcon } from '@radix-ui/react-icons';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useAccount } from 'wagmi';
 
 export function SuccessPage() {
   const router = useRouter();
 
+  const { address } = useAccount()
+
   // Automatically redirect to portfolio after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push('/positions');
+      router.push(`/positions/${address}`) // Corrected
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -54,7 +57,7 @@ export function SuccessPage() {
         transition={{ delay: 0.8 }}
         className="mt-8"
       >
-        <Button color="primary" variant="bordered" onPress={() => router.push('/positions')}>
+        <Button className='rounded' color="primary" onPress={() => router.push(`/positions/${address}`)}>
           View My Portfolio
         </Button>
       </motion.div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { findToken } from '@/utils/tokens';
 
-interface TokenBalance {
+type TokenBalance = {
   address: string;
   balance: string;
   chainId: number;
@@ -11,11 +11,11 @@ interface TokenBalance {
   symbol: string;
 }
 
-interface TokenResponse {
-  tokens: Array<{
+type TokenResponse = {
+  tokens: {
     address: string;
     balance: string;
-  }>;
+  }[];
 }
 
 export function useUserBalances() {

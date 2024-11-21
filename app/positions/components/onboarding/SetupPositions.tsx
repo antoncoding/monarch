@@ -17,25 +17,32 @@ import { useOnboarding } from './OnboardingContext';
 export function SetupPositions() {
   const router = useRouter();
   const { selectedToken, selectedMarkets } = useOnboarding();
+  const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-  const { balances } = useUserBalances();
-  const tokenBalance = BigInt(
-    balances.find((b) => b.address.toLowerCase() === selectedToken?.address.toLowerCase())
-      ?.balance ?? '0'
-  );
-  const tokenDecimals = selectedToken?.decimals ?? 0;
-
-  if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
-    router.push('/positions/onboarding?step=risk-selection');
-    return null;
-  }
-
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+
+  // Compute token balance and decimals
+  const tokenBalance = useMemo(() => {
+    if (!selectedToken) return 0n;
+    return BigInt(
+      balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())
+        ?.balance ?? '0'
+    );
+  }, [balances, selectedToken]);
+
+  const tokenDecimals = useMemo(() => selectedToken?.decimals ?? 0, [selectedToken]);
+
+  // Redirect if no token or markets selected
+  useEffect(() => {
+    if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
+      router.push('/positions/onboarding?step=risk-selection');
+    }
+  }, [router, selectedToken, selectedMarkets]);
 
   // Initialize percentages evenly
   useEffect(() => {
@@ -50,7 +57,7 @@ export function SetupPositions() {
       );
       setPercentages(initialPercentages);
     }
-  }, [selectedMarkets.length]);
+  }, [selectedMarkets]);
 
   // Update amounts when total amount or percentages change
   useEffect(() => {
@@ -77,26 +84,16 @@ export function SetupPositions() {
     // Limit decimal places to token decimals
     if (parts[1] && parts[1].length > tokenDecimals) return;
 
-    setTotalAmount(cleanValue);
-
     try {
-      const amountBigInt = parseUnits(cleanValue || '0', tokenDecimals);
-      if (amountBigInt > tokenBalance) {
-        setError('Amount exceeds balance');
-      } else {
-        setError(null);
-      }
+      // Validate the new amount can be converted to BigInt
+      parseUnits(cleanValue || '0', tokenDecimals);
+      setTotalAmount(cleanValue);
     } catch (e) {
       setError('Invalid amount');
     }
   };
 
-  const handleSetMax = () => {
-    const maxAmount = formatUnits(tokenBalance, tokenDecimals);
-    setTotalAmount(maxAmount);
-  };
-
-  const toggleLockAmount = (marketKey: string) => {
+  const toggleLockAmount = useCallback((marketKey: string) => {
     const newLockedAmounts = new Set(lockedAmounts);
     if (lockedAmounts.has(marketKey)) {
       newLockedAmounts.delete(marketKey);
@@ -104,7 +101,7 @@ export function SetupPositions() {
       newLockedAmounts.add(marketKey);
     }
     setLockedAmounts(newLockedAmounts);
-  };
+  }, [lockedAmounts]);
 
   const handlePercentageChange = useCallback((marketKey: string, newPercentage: number) => {
     // If the input is invalid (NaN), set it to 0
@@ -190,16 +187,14 @@ export function SetupPositions() {
   const supplies: MarketSupply[] = useMemo(() => {
     return selectedMarkets
       .map((market) => {
-        const amountStr = amounts[market.uniqueKey] || '0';
+        const amountStr = amounts[market.uniqueKey] ?? '0';
         try {
-          // Convert the amount to BigInt using proper decimals
           const amountBigInt = parseUnits(amountStr, tokenDecimals);
           return {
             market,
             amount: amountBigInt,
           };
         } catch (e) {
-          // If conversion fails, return 0
           console.warn(
             `Failed to convert amount ${amountStr} to BigInt for market ${market.uniqueKey}`,
           );
@@ -238,6 +233,10 @@ export function SetupPositions() {
     }
   }, [error, totalAmount, tokenDecimals, approveAndSupply, router]);
 
+  if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
+    return null;
+  }
+
   return (
     <div className="flex h-full flex-col">
       <div>
@@ -272,7 +271,7 @@ export function SetupPositions() {
           <div className="flex min-w-[200px] flex-col items-end">
             <div className="flex items-center gap-2">
               <Image
-                src={selectedToken.logoURI || ''}
+                src={selectedToken.logoURI ?? ''}
                 alt={selectedToken.symbol}
                 width={20}
                 height={20}
@@ -315,7 +314,7 @@ export function SetupPositions() {
                 if (!collateralToken) return null;
 
                 const { vendors } = parseOracleVendors(market.oracle.data);
-                const currentPercentage = percentages[market.uniqueKey] || 0;
+                const currentPercentage = percentages[market.uniqueKey] ?? 0;
                 const isLocked = lockedAmounts.has(market.uniqueKey);
 
                 return (
@@ -394,7 +393,7 @@ export function SetupPositions() {
                             <div className="w-24">
                               <input
                                 type="text"
-                                value={amounts[market.uniqueKey] || ''}
+                                value={amounts[market.uniqueKey] ?? ''}
                                 onChange={(e) =>
                                   handleAmountChange(market.uniqueKey, e.target.value)
                                 }
@@ -449,7 +448,8 @@ export function SetupPositions() {
       <div className="mt-6 flex items-center justify-between">
         <Button
           color="primary"
-          variant="bordered"
+          variant="light"
+          className="min-w-[120px] rounded"
           onPress={() => router.push('/positions/onboarding?step=risk-selection')}
         >
           Back
@@ -458,8 +458,10 @@ export function SetupPositions() {
           color="primary"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onPress={handleNext}
-          className="min-w-[120px]"
+          onPress={() => {
+            void handleNext();
+          }}
+          className="min-w-[120px] rounded"
         >
           Execute
         </Button>
