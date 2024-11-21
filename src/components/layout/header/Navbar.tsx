@@ -64,7 +64,7 @@ function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   return (
     <nav
       className={clsx(
@@ -96,7 +96,7 @@ function Navbar() {
         {/* Mobile Menu Button */}
         <button
           type="button"
-          className="md:hidden flex items-center text-primary"
+          className="flex items-center text-primary md:hidden"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle mobile menu"
         >
@@ -107,7 +107,7 @@ function Navbar() {
           <button
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary hover:bg-surface-hover"
+            className="hover:bg-surface-hover flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <FaSun size={20} /> : <FaRegMoon size={20} />}
@@ -118,7 +118,7 @@ function Navbar() {
 
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
-        <div className="absolute top-[72px] left-0 right-0 bg-surface p-4 shadow-lg md:hidden z-50">
+        <div className="bg-surface absolute left-0 right-0 top-[72px] z-50 p-4 shadow-lg md:hidden">
           <ul className="flex flex-col gap-4">
             <li>
               <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">

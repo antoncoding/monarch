@@ -17,19 +17,22 @@ export function useUserBalances() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchBalances = useCallback(async (chainId: number) => {
-    try {
-      const response = await fetch(`/api/balances?address=${address}&chainId=${chainId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch balances');
+  const fetchBalances = useCallback(
+    async (chainId: number) => {
+      try {
+        const response = await fetch(`/api/balances?address=${address}&chainId=${chainId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch balances');
+        }
+        const data = await response.json();
+        return data.tokens;
+      } catch (err) {
+        console.error('Error fetching balances:', err);
+        throw err;
       }
-      const data = await response.json();
-      return data.tokens;
-    } catch (err) {
-      console.error('Error fetching balances:', err);
-      throw err;
-    }
-  }, [address]);
+    },
+    [address],
+  );
 
   const fetchAllBalances = useCallback(async () => {
     if (!address) return;
@@ -41,14 +44,14 @@ export function useUserBalances() {
       // Fetch balances from both chains
       const [mainnetBalances, baseBalances] = await Promise.all([
         fetchBalances(1),
-        fetchBalances(8453)
+        fetchBalances(8453),
       ]);
 
       // Process and filter tokens
       const processedBalances: TokenBalance[] = [];
-      
+
       const processTokens = (tokens: any[], chainId: number) => {
-        tokens.forEach(token => {
+        tokens.forEach((token) => {
           const tokenInfo = findToken(token.address, chainId);
           if (tokenInfo) {
             processedBalances.push({
@@ -57,7 +60,7 @@ export function useUserBalances() {
               chainId,
               decimals: tokenInfo.decimals,
               logoURI: tokenInfo.img,
-              symbol: tokenInfo.symbol
+              symbol: tokenInfo.symbol,
             });
           }
         });
@@ -83,6 +86,6 @@ export function useUserBalances() {
     balances,
     loading,
     error,
-    refetch: fetchAllBalances
+    refetch: fetchAllBalances,
   };
 }

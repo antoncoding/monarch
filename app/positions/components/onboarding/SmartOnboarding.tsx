@@ -1,5 +1,5 @@
-import { OnboardingProvider, useOnboarding } from './OnboardingContext';
 import { AssetSelection } from './AssetSelection';
+import { OnboardingProvider, useOnboarding } from './OnboardingContext';
 import { RiskSelection } from './RiskSelection';
 
 function OnboardingContent() {

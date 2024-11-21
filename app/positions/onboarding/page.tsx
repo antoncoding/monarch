@@ -1,11 +1,12 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { OnboardingProvider } from '../components/onboarding/OnboardingContext';
+import Header from '@/components/layout/header/Header';
 import { AssetSelection } from '../components/onboarding/AssetSelection';
+import { OnboardingProvider } from '../components/onboarding/OnboardingContext';
 import { RiskSelection } from '../components/onboarding/RiskSelection';
 import { SetupPositions } from '../components/onboarding/SetupPositions';
-import Header from '@/components/layout/header/Header';
+import { SuccessPage } from '../components/onboarding/SuccessPage';
 
 export default function OnboardingPage() {
   const searchParams = useSearchParams();
@@ -19,6 +20,8 @@ export default function OnboardingPage() {
         return <RiskSelection />;
       case 'setup':
         return <SetupPositions />;
+      case 'success':
+        return <SuccessPage />;
       default:
         return <AssetSelection />;
     }
@@ -27,11 +30,9 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col font-zen">
       <Header />
-      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 flex flex-col">
+      <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-8">
         <OnboardingProvider>
-          <div className="flex-1 flex flex-col min-h-0">
-            {renderStep()}
-          </div>
+          <div className="flex min-h-0 flex-1 flex-col">{renderStep()}</div>
         </OnboardingProvider>
       </div>
     </div>

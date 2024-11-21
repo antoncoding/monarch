@@ -26,7 +26,14 @@ export function createWagmiConfig(projectId: string) {
       },
       {
         groupName: 'Other Wallets',
-        wallets: [rainbowWallet, coinbaseWallet, metaMaskWallet, safeWallet, argentWallet, injectedWallet],
+        wallets: [
+          rainbowWallet,
+          coinbaseWallet,
+          metaMaskWallet,
+          safeWallet,
+          argentWallet,
+          injectedWallet,
+        ],
       },
     ],
     {

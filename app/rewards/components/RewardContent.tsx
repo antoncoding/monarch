@@ -21,7 +21,7 @@ export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const [activeProgram, setActiveProgram] = useState<'market' | 'uniform'>('market');
 
-  const { loading,  markets } = useMarkets();
+  const { loading, markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
   console.log('distributions', distributions);

@@ -1,6 +1,6 @@
 import { AssetSelection } from './onboarding/AssetSelection';
-import { RiskSelection } from './onboarding/RiskSelection';
 import { OnboardingProvider } from './onboarding/OnboardingContext';
+import { RiskSelection } from './onboarding/RiskSelection';
 
 export function SmartOnboarding() {
   return (

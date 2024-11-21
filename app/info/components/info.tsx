@@ -76,7 +76,7 @@ function InfoPage() {
 
   const renderImage = (section: (typeof sections)[0], index: number) => (
     <div
-      className={`flex items-center justify-center overflow-hidden rounded-lg ${
+      className={`flex items-center justify-center overflow-hidden rounded ${
         index === sections.length - 1
           ? 'h-32 w-32 p-2 sm:h-48 sm:w-48 sm:p-4'
           : 'h-48 w-full sm:h-64'
@@ -88,7 +88,7 @@ function InfoPage() {
         width={index === sections.length - 1 ? 128 : 800}
         height={index === sections.length - 1 ? 128 : 256}
         objectFit="contain"
-        className="rounded-lg"
+        className="rounded"
       />
     </div>
   );
@@ -108,7 +108,7 @@ function InfoPage() {
           >
             {sections.map((section, index) => (
               <div key={`section-${index}`} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
-                <div className="bg-surface mx-auto max-w-3xl rounded-lg px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
+                <div className="bg-surface mx-auto max-w-3xl rounded px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
                   <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
                     {section.mainTitle}
                   </h1>

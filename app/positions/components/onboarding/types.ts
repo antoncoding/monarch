@@ -9,7 +9,7 @@ export type TokenWithMarkets = {
   maxApy: number;
   logoURI?: string;
   decimals: number;
-  network: string;
+  network: number;
   address: string;
 };
 

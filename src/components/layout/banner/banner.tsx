@@ -13,7 +13,7 @@ export default function Banner({ pageName, pageUrl, wip }: BannerProps) {
     <section
       className={clsx(
         'flex flex-col items-center justify-between gap-6 p-6 md:flex-row md:gap-0',
-        `rounded-lg border border-zinc-400 border-opacity-10 bg-neutral-900  ${
+        `rounded border border-zinc-400 border-opacity-10 bg-neutral-900  ${
           wip ? 'text-boat-color-yellow-70' : 'text-white'
         }`,
       )}

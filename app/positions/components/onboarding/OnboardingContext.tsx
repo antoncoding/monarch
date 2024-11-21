@@ -1,7 +1,7 @@
 import { createContext, useContext, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TokenWithMarkets } from './types';
 import { Market } from '@/utils/types';
+import { TokenWithMarkets } from './types';
 
 type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
 
@@ -20,7 +20,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentStep = (searchParams.get('step') as OnboardingStep) || 'asset-selection';
-  
+
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
 

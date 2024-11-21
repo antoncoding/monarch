@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useOnboarding } from './OnboardingContext';
-import { formatBalance, formatReadable } from '@/utils/balance';
-import { formatUnits, parseUnits } from 'viem';
-import { Button } from '@nextui-org/react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Button, Slider } from '@nextui-org/react';
+import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { useUserBalances } from '@/hooks/useUserBalances';
-import { findToken } from '@/utils/tokens';
-import { parseOracleVendors } from '@/utils/oracle';
+import { useRouter } from 'next/navigation';
+import { formatUnits, parseUnits } from 'viem';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { Market } from '@/utils/types';
+import { SupplyProcessModal } from '@/components/SupplyProcessModal';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMultiMarketSupply, MarketSupply } from '@/hooks/useMultiMarketSupply';
+import { useUserBalances } from '@/hooks/useUserBalances';
+import { formatBalance, formatReadable } from '@/utils/balance';
+import { parseOracleVendors } from '@/utils/oracle';
+import { findToken } from '@/utils/tokens';
+import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const router = useRouter();
@@ -17,36 +20,61 @@ export function SetupPositions() {
   const { balances } = useUserBalances();
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const [useEth, setUseEth] = useState(false);
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     router.push('/positions/onboarding?step=risk-selection');
     return null;
   }
 
-  const tokenBalance = BigInt(balances.find(b => b.address.toLowerCase() === selectedToken.address.toLowerCase())?.balance || '0') || 0n;
+  const tokenBalance =
+    BigInt(
+      balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())
+        ?.balance || '0',
+    ) || 0n;
   const tokenDecimals = selectedToken.decimals;
 
-  // Initialize amounts evenly
+  // Initialize percentages evenly
   useEffect(() => {
-    if (selectedMarkets.length > 0 && totalAmount) {
-      const evenAmount = Number(totalAmount) / selectedMarkets.length;
-      const initialAmounts = selectedMarkets.reduce((acc, market) => {
-        acc[market.uniqueKey] = evenAmount.toFixed(tokenDecimals);
-        return acc;
-      }, {} as Record<string, string>);
-      setAmounts(initialAmounts);
+    if (selectedMarkets.length > 0) {
+      const evenPercentage = 100 / selectedMarkets.length;
+      const initialPercentages = selectedMarkets.reduce(
+        (acc, market) => {
+          acc[market.uniqueKey] = evenPercentage;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+      setPercentages(initialPercentages);
     }
-  }, [selectedMarkets.length, totalAmount, tokenDecimals]);
+  }, [selectedMarkets.length]);
+
+  // Update amounts when total amount or percentages change
+  useEffect(() => {
+    if (totalAmount && Object.keys(percentages).length > 0) {
+      const newAmounts = Object.entries(percentages).reduce(
+        (acc, [key, percentage]) => {
+          acc[key] = ((percentage / 100) * Number(totalAmount)).toFixed(tokenDecimals);
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+      setAmounts(newAmounts);
+    }
+  }, [totalAmount, percentages, tokenDecimals]);
 
   const handleTotalAmountChange = (value: string) => {
     // Remove any non-numeric characters except decimal point
     const cleanValue = value.replace(/[^0-9.]/g, '');
-    
+
     // Ensure only one decimal point
     const parts = cleanValue.split('.');
     if (parts.length > 2) return;
-    
+
     // Limit decimal places to token decimals
     if (parts[1] && parts[1].length > tokenDecimals) return;
 
@@ -65,127 +93,242 @@ export function SetupPositions() {
   };
 
   const handleAmountChange = (marketKey: string, value: string) => {
+    if (!totalAmount) return;
+
     // Remove any non-numeric characters except decimal point
     const cleanValue = value.replace(/[^0-9.]/g, '');
-    
+
     // Ensure only one decimal point
     const parts = cleanValue.split('.');
     if (parts.length > 2) return;
-    
+
     // Limit decimal places to token decimals
     if (parts[1] && parts[1].length > tokenDecimals) return;
 
-    const newAmounts = { ...amounts, [marketKey]: cleanValue };
-    setAmounts(newAmounts);
-
-    // Calculate and update total
     try {
-      const total = Object.values(newAmounts).reduce((sum, val) => sum + (Number(val) || 0), 0);
-      setTotalAmount(total.toFixed(tokenDecimals));
+      // Validate the new amount can be converted to BigInt
+      parseUnits(cleanValue || '0', tokenDecimals);
 
-      const totalBigInt = parseUnits(total.toFixed(tokenDecimals), tokenDecimals);
-      if (totalBigInt > tokenBalance) {
-        setError('Total amount exceeds balance');
-      } else {
-        setError(null);
-      }
+      const newAmount = Number(cleanValue);
+      const percentage = (newAmount / Number(totalAmount)) * 100;
+
+      // Update this market's percentage
+      handlePercentageChange(marketKey, percentage);
     } catch (e) {
-      setError('Invalid amount');
+      // If conversion fails, don't update the state
+      console.warn(`Invalid amount format: ${cleanValue}`);
+      return;
     }
   };
 
   const handleSetMax = () => {
     const maxAmount = formatUnits(tokenBalance, tokenDecimals);
     setTotalAmount(maxAmount);
-    
-    // Distribute evenly
-    const evenAmount = Number(maxAmount) / selectedMarkets.length;
-    const newAmounts = selectedMarkets.reduce((acc, market) => {
-      acc[market.uniqueKey] = evenAmount.toFixed(tokenDecimals);
-      return acc;
-    }, {} as Record<string, string>);
-    setAmounts(newAmounts);
   };
 
-  const handleNext = () => {
-    if (error) return;
-    
-    // Convert amounts to BigInt and validate
-    const positions = selectedMarkets.map(market => ({
-      market,
-      amount: amounts[market.uniqueKey]
-        ? parseUnits(amounts[market.uniqueKey], tokenDecimals)
-        : 0n
-    }));
-
-    // TODO: Handle position creation
-    console.log('Creating positions:', positions);
+  const toggleLockAmount = (marketKey: string) => {
+    const newLockedAmounts = new Set(lockedAmounts);
+    if (lockedAmounts.has(marketKey)) {
+      newLockedAmounts.delete(marketKey);
+    } else {
+      newLockedAmounts.add(marketKey);
+    }
+    setLockedAmounts(newLockedAmounts);
   };
+
+  const handlePercentageChange = (marketKey: string, newPercentage: number) => {
+    // If the input is invalid (NaN), set it to 0
+    if (isNaN(newPercentage)) {
+      newPercentage = 0;
+    }
+
+    const market = selectedMarkets.find((m) => m.uniqueKey === marketKey);
+    if (!market) return;
+
+    const lockedMarkets = selectedMarkets.filter(
+      (m) => m.uniqueKey !== marketKey && lockedAmounts.has(m.uniqueKey),
+    );
+    const unlockedMarkets = selectedMarkets.filter(
+      (m) => m.uniqueKey !== marketKey && !lockedAmounts.has(m.uniqueKey),
+    );
+
+    // Calculate total locked percentage
+    const totalLockedPercentage = lockedMarkets.reduce(
+      (sum, m) => sum + (percentages[m.uniqueKey] || 0),
+      0,
+    );
+
+    // Ensure we don't exceed 100% - totalLockedPercentage
+    const maxAllowedPercentage = 100 - totalLockedPercentage;
+    newPercentage = Math.min(newPercentage, maxAllowedPercentage);
+
+    // Calculate remaining percentage for unlocked markets
+    const remainingPercentage = 100 - totalLockedPercentage - newPercentage;
+
+    // Distribute remaining percentage among unlocked markets proportionally
+    const newPercentages = { ...percentages };
+    newPercentages[marketKey] = newPercentage;
+
+    if (unlockedMarkets.length > 0 && remainingPercentage > 0) {
+      const currentUnlockedTotal = unlockedMarkets.reduce(
+        (sum, m) => sum + (percentages[m.uniqueKey] || 0),
+        0,
+      );
+
+      unlockedMarkets.forEach((m) => {
+        const currentPct = percentages[m.uniqueKey] || 0;
+        const proportion =
+          currentUnlockedTotal === 0
+            ? 1 / unlockedMarkets.length
+            : currentPct / currentUnlockedTotal;
+        newPercentages[m.uniqueKey] = remainingPercentage * proportion;
+      });
+    }
+
+    setPercentages(newPercentages);
+  };
+
+  const supplies: MarketSupply[] = useMemo(() => {
+    return selectedMarkets
+      .map((market) => {
+        const amountStr = amounts[market.uniqueKey] || '0';
+        try {
+          // Convert the amount to BigInt using proper decimals
+          const amountBigInt = parseUnits(amountStr, tokenDecimals);
+          return {
+            market,
+            amount: amountBigInt,
+          };
+        } catch (e) {
+          // If conversion fails, return 0
+          console.warn(
+            `Failed to convert amount ${amountStr} to BigInt for market ${market.uniqueKey}`,
+          );
+          return {
+            market,
+            amount: 0n,
+          };
+        }
+      })
+      .filter((supply) => supply.amount > 0n);
+  }, [selectedMarkets, amounts, tokenDecimals]);
+
+  const {
+    approveAndSupply,
+    currentStep,
+    showProcessModal,
+    setShowProcessModal,
+    supplyPending,
+    isLoadingPermit2,
+  } = useMultiMarketSupply(supplies, useEth, usePermit2Setting);
+
+  const handleNext = useCallback(async () => {
+    if (error || !totalAmount) return;
+
+    try {
+      // Validate total amount can be converted to BigInt
+      const totalAmountBigInt = parseUnits(totalAmount, tokenDecimals);
+      if (totalAmountBigInt === 0n) return;
+
+      await approveAndSupply();
+      // After successful supply, navigate to success page
+      router.push('/positions/onboarding?step=success');
+    } catch (e) {
+      setError('Invalid amount format');
+      return;
+    }
+  }, [error, totalAmount, tokenDecimals, approveAndSupply, router]);
 
   return (
     <div className="flex h-full flex-col">
       <div>
         <h2 className="font-zen text-2xl">Setup Your Positions</h2>
         <p className="mt-2 text-gray-400">
-          Choose how much {selectedToken.symbol} you want to supply in total and distribute it across markets
+          Choose how much {selectedToken.symbol} you want to supply in total and distribute it
+          across markets
         </p>
       </div>
 
       {/* Total Amount Section */}
-      <div className="mt-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-700">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <label className="mb-2 block text-sm text-gray-500">Total Amount to Supply</label>
-            <div className="relative">
+          <div className="flex flex-1">
+            <div className="relative max-w-lg flex-1">
               <input
                 type="text"
                 value={totalAmount}
                 onChange={(e) => handleTotalAmountChange(e.target.value)}
                 placeholder="0.0"
-                className="bg-hovered focus:border-monarch-orange h-10 w-full rounded p-2 font-mono focus:outline-none"
+                className="w-full rounded border border-gray-200 bg-white px-3 py-2 pr-20 font-mono dark:border-gray-700 dark:bg-gray-800"
               />
               <button
-                type="button"
                 onClick={handleSetMax}
-                className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
               >
                 Max
               </button>
             </div>
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-sm text-gray-500">Available Balance</span>
-            <span className="font-mono text-sm">
-              {formatBalance(tokenBalance, tokenDecimals)} {selectedToken.symbol}
-            </span>
+          <div className="flex min-w-[200px] flex-col items-end">
+            <div className="flex items-center gap-2">
+              <Image
+                src={selectedToken.logoURI || ''}
+                alt={selectedToken.symbol}
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
+              <span className="text-sm text-gray-500">Wallet Balance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm">
+                {formatBalance(tokenBalance, tokenDecimals)} {selectedToken.symbol}
+              </span>
+              {/* Placeholder for future swap button */}
+              {/* <Button size="sm" variant="light" className="rounded">
+                <SwapIcon className="h-4 w-4" />
+              </Button> */}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Markets Distribution */}
-      <div className="mt-6 flex-1 min-h-0">
-        <div className="h-[calc(100vh-500px)] overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="mt-6 min-h-0 flex-1">
+        <div className="h-[calc(100vh-500px)] overflow-auto rounded border border-gray-200 dark:border-gray-700">
           <table className="w-full font-zen">
             <thead className="sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
               <tr>
                 <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market ID</th>
                 <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Collateral</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Risk Indicators</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market Params</th>
                 <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Supply APY</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Amount</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Distribution</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 text-sm dark:divide-gray-700">
               {selectedMarkets.map((market) => {
-                const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
+                const collateralToken = findToken(
+                  market.collateralAsset.address,
+                  market.morphoBlue.chain.id,
+                );
                 if (!collateralToken) return null;
 
                 const { vendors } = parseOracleVendors(market.oracle.data);
+                const currentPercentage = percentages[market.uniqueKey] || 0;
+                const isLocked = lockedAmounts.has(market.uniqueKey);
 
                 return (
                   <tr key={market.uniqueKey}>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-sm">
-                      {market.uniqueKey.slice(2, 8)}
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                      <a
+                        href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:text-primary-400"
+                      >
+                        {market.uniqueKey.slice(2, 8)}
+                      </a>
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -210,7 +353,11 @@ export function SetupPositions() {
                       <div className="flex items-center gap-2">
                         <div className="flex gap-1">
                           {vendors.map((vendor) => (
-                            <OracleVendorBadge key={vendor} oracleData={market.oracle.data} showText={false} />
+                            <OracleVendorBadge
+                              key={vendor}
+                              oracleData={market.oracle.data}
+                              showText={false}
+                            />
                           ))}
                         </div>
                         <span className="text-xs text-gray-400">
@@ -222,15 +369,57 @@ export function SetupPositions() {
                       {formatReadable(market.state.supplyApy * 100)}%
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <input
-                          type="text"
-                          value={amounts[market.uniqueKey] || ''}
-                          onChange={(e) => handleAmountChange(market.uniqueKey, e.target.value)}
-                          placeholder="0.0"
-                          className="bg-hovered focus:border-monarch-orange h-8 w-36 rounded p-2 text-right font-mono focus:outline-none"
-                        />
-                        <span className="w-12 text-gray-500">{selectedToken.symbol}</span>
+                      <div className="flex items-center gap-4">
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="flex-1">
+                            <Slider
+                              size="sm"
+                              step={1}
+                              maxValue={100}
+                              minValue={0}
+                              value={currentPercentage}
+                              onChange={(value) =>
+                                handlePercentageChange(market.uniqueKey, Number(value))
+                              }
+                              className="max-w-md"
+                              classNames={{
+                                base: 'max-w-md gap-3',
+                                track: 'bg-default-500/30',
+                                thumb: 'bg-primary',
+                              }}
+                              isDisabled={isLocked}
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24">
+                              <input
+                                type="text"
+                                value={amounts[market.uniqueKey] || ''}
+                                onChange={(e) =>
+                                  handleAmountChange(market.uniqueKey, e.target.value)
+                                }
+                                placeholder="0.0"
+                                className="bg-hovered focus:border-monarch-orange h-8 w-full rounded p-2 text-right font-mono focus:outline-none"
+                                disabled={isLocked}
+                              />
+                            </div>
+                            <span className="w-8 text-right font-mono text-gray-500">
+                              {Math.round(currentPercentage)}%
+                            </span>
+                            <button
+                              onClick={() => toggleLockAmount(market.uniqueKey)}
+                              className={`text-primary hover:text-primary-400 ${
+                                isLocked ? 'opacity-100' : 'opacity-60'
+                              }`}
+                            >
+                              {isLocked ? (
+                                <LockClosedIcon className="h-4 w-4" />
+                              ) : (
+                                <LockOpen1Icon className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -241,27 +430,37 @@ export function SetupPositions() {
         </div>
       </div>
 
-      {error && (
-        <div className="mt-4 text-sm text-red-500">
-          {error}
-        </div>
+      {error && <div className="mt-4 text-sm text-red-500">{error}</div>}
+
+      {/* Process Modal */}
+      {showProcessModal && (
+        <SupplyProcessModal
+          supplies={supplies}
+          currentStep={currentStep}
+          onClose={() => setShowProcessModal(false)}
+          tokenSymbol={selectedToken.symbol}
+          useEth={useEth}
+          usePermit2={usePermit2Setting}
+        />
       )}
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
         <Button
-          variant="light"
-          onClick={() => router.push('/positions/onboarding?step=risk-selection')}
+          color="primary"
+          variant="bordered"
+          onPress={() => router.push('/positions/onboarding?step=risk-selection')}
         >
           Back
         </Button>
         <Button
           color="primary"
+          isDisabled={error !== null || !totalAmount || supplies.length === 0}
+          isLoading={supplyPending || isLoadingPermit2}
+          onPress={handleNext}
           className="min-w-[120px]"
-          onClick={handleNext}
-          disabled={!!error || !totalAmount || Number(totalAmount) === 0}
         >
-          Next
+          Execute
         </Button>
       </div>
     </div>
