@@ -166,7 +166,7 @@ export function RebalanceModal({
 
   const needSwitchChain = useMemo(
     () => chainId !== groupedPosition.chainId,
-    [chainId, groupedPosition.chainId]
+    [chainId, groupedPosition.chainId],
   );
 
   console.log('needSwitchChain', needSwitchChain);
@@ -230,7 +230,7 @@ export function RebalanceModal({
             </button>
           </ModalHeader>
           <ModalBody className="mx-2 font-zen">
-            <div className="mb-4 rounded-lg bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 rounded bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
               <p className="text-sm text-secondary">
                 Optimize your {groupedPosition.loanAsset} lending strategy by redistributing funds
                 across markets, add "Rebalance" actions to fine-tune your portfolio.
@@ -297,9 +297,7 @@ export function RebalanceModal({
               isLoading={isConfirming}
               className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-orange-600"
             >
-              {needSwitchChain 
-                ? 'Switch Network & Execute' 
-                : 'Execute Rebalance'}
+              {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
             </Button>
           </ModalFooter>
         </ModalContent>

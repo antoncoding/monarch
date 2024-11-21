@@ -147,7 +147,7 @@ const supportedTokens = [
   {
     symbol: 'EURC',
     img: require('../imgs/tokens/eurc.png') as string,
-    decimals: 18,
+    decimals: 6,
     networks: [
       { chain: mainnet, address: '0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c' },
       { chain: base, address: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42' },

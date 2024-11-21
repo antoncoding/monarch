@@ -70,7 +70,7 @@ export default function RiskNotificationModal() {
             </Link>
             .
           </p>
-          <div className="mt-4 rounded-lg border-2 border-dotted border-primary p-4">
+          <div className="mt-4 rounded border-2 border-dotted border-primary p-4">
             <Checkbox
               isSelected={isChecked}
               onValueChange={setIsChecked}

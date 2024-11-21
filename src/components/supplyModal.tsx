@@ -69,17 +69,14 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     amount: supplyAmount,
   });
 
-  const {
-    isApproved,
-    approve,
-  } = useERC20Approval({
+  const { isApproved, approve } = useERC20Approval({
     token: market.loanAsset.address as Address,
     spender: getBundlerV2(market.morphoBlue.chain.id),
     amount: supplyAmount,
     tokenSymbol: market.loanAsset.symbol,
   });
 
-  console.log('isApproved', isApproved)
+  console.log('isApproved', isApproved);
 
   const needSwitchChain = useMemo(
     () => chainId !== market.morphoBlue.chain.id,
@@ -187,7 +184,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         toast.error('An unexpected error occurred');
       }
     }
-  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting]);
+  }, [
+    account,
+    market,
+    supplyAmount,
+    sendTransactionAsync,
+    useEth,
+    signForBundlers,
+    usePermit2Setting,
+  ]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
@@ -210,10 +215,10 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         try {
           await authorizePermit2();
           setCurrentStep('signing');
-          
+
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 500));
-          
+
           await executeSupplyTransaction();
         } catch (error: unknown) {
           console.error('Error in Permit2 flow:', error);
@@ -236,7 +241,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         try {
           await approve();
           setCurrentStep('supplying');
-          
+
           // Small delay to prevent UI glitches
           await new Promise((resolve) => setTimeout(resolve, 1000));
         } catch (error: unknown) {
@@ -296,180 +301,193 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     }
   }, [account, executeSupplyTransaction]);
 
-  return showProcessModal ? (
-    <SupplyProcessModal
-      marketId={market.uniqueKey}
-      supplyAmount={Number(formatUnits(supplyAmount, market.loanAsset.decimals))}
-      currentStep={currentStep}
-      onClose={() => setShowProcessModal(false)}
-      tokenSymbol={market.loanAsset.symbol}
-      useEth={useEth}
-      usePermit2={usePermit2Setting}
-    />
-  ) : (
-    <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
-      <div
-        style={{ width: '600px' }}
-        className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
-      >
-        <button
-          type="button"
-          className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
-          onClick={onClose}
-        >
-          <Cross1Icon />{' '}
-        </button>
+  return (
+    <div>
+      {showProcessModal && (
+        <SupplyProcessModal
+          supplies={[
+            {
+              market,
+              amount: supplyAmount,
+            },
+          ]}
+          currentStep={currentStep}
+          onClose={() => setShowProcessModal(false)}
+          tokenSymbol={market.loanAsset.symbol}
+          useEth={useEth}
+          usePermit2={usePermit2Setting}
+        />
+      )}
+      {!showProcessModal && (
+        <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
+          <div
+            style={{ width: '600px' }}
+            className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
+          >
+            <button
+              type="button"
+              className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
+              onClick={onClose}
+            >
+              <Cross1Icon />{' '}
+            </button>
 
-        <div className="mb-4 flex items-center gap-2 p-2 text-2xl">
-          Supply {loanToken ? loanToken.symbol : market.loanAsset.symbol}
-          {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
-        </div>
-
-        <p className="py-4 opacity-80">
-          {' '}
-          You are supplying {market.loanAsset.symbol} to the following market:{' '}
-        </p>
-
-        <div className="mb-2">
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
-              <p className="text-right font-monospace text-sm">{market.uniqueKey.slice(2, 8)}</p>
-            </Link>
-          </div>
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Collateral Token:</p>
-            <div className="flex items-center justify-center gap-2">
-              <p className="text-right font-zen">{market.collateralAsset.symbol} </p>
-              <div>
-                {collateralToken?.img && (
-                  <Image src={collateralToken.img} height={16} alt={collateralToken.symbol} />
-                )}{' '}
-              </div>
+            <div className="mb-4 flex items-center gap-2 p-2 text-2xl">
+              Supply {loanToken ? loanToken.symbol : market.loanAsset.symbol}
+              {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
             </div>
-          </div>
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">LLTV:</p>
-            <p className="text-right font-zen">{formatUnits(BigInt(market.lltv), 16)} %</p>
-          </div>
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Oracle:</p>
-            <a
-              className="group flex items-center gap-1 no-underline hover:underline"
-              href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-              target="_blank"
-            >
-              <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
-            </a>
-          </div>
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">IRM:</p>
-            <a
-              className="group flex items-center gap-1 no-underline hover:underline"
-              href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
-              target="_blank"
-            >
-              <p className="text-right font-zen text-sm">{getIRMTitle(market.irmAddress)}</p>
-              <ExternalLinkIcon />
-            </a>
-          </div>
-        </div>
 
-        {isConnected ? (
-          <div className="mb-1 mt-8">
-            <div className="flex items-start justify-between">
-              <p className="font-inter text-sm opacity-50">My Balance:</p>
-              <div className="flex items-center justify-center gap-2">
-                <p className="text-right font-zen">
-                  {useEth
-                    ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
-                    : formatBalance(
-                        tokenBalance?.value ? tokenBalance.value : '0',
-                        market.loanAsset.decimals,
-                      )}
-                </p>
-                <p className="text-right font-zen">{useEth ? 'ETH' : market.loanAsset.symbol} </p>
-                <div>
-                  {loanToken?.img && (
-                    <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
-                  )}{' '}
+            <p className="py-4 opacity-80">
+              {' '}
+              You are supplying {market.loanAsset.symbol} to the following market:{' '}
+            </p>
+
+            <div className="mb-2">
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-sm opacity-50">Market ID:</p>
+                <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
+                  <p className="text-right font-monospace text-sm">
+                    {market.uniqueKey.slice(2, 8)}
+                  </p>
+                </Link>
+              </div>
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-sm opacity-50">Collateral Token:</p>
+                <div className="flex items-center justify-center gap-2">
+                  <p className="text-right font-zen">{market.collateralAsset.symbol} </p>
+                  <div>
+                    {collateralToken?.img && (
+                      <Image src={collateralToken.img} height={16} alt={collateralToken.symbol} />
+                    )}{' '}
+                  </div>
                 </div>
               </div>
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-sm opacity-50">LLTV:</p>
+                <p className="text-right font-zen">{formatUnits(BigInt(market.lltv), 16)} %</p>
+              </div>
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-sm opacity-50">Oracle:</p>
+                <a
+                  className="group flex items-center gap-1 no-underline hover:underline"
+                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                >
+                  <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
+                </a>
+              </div>
+              <div className="mb-1 flex items-start justify-between">
+                <p className="font-inter text-sm opacity-50">IRM:</p>
+                <a
+                  className="group flex items-center gap-1 no-underline hover:underline"
+                  href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                >
+                  <p className="text-right font-zen text-sm">{getIRMTitle(market.irmAddress)}</p>
+                  <ExternalLinkIcon />
+                </a>
+              </div>
             </div>
-            {loanToken?.symbol === 'WETH' && (
-              <div className="mx-6 flex items-start justify-between">
-                <div />
-                <div className="mt-4 flex items-center">
-                  <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
-                  <Switch
-                    size="sm"
-                    isSelected={useEth}
-                    onValueChange={setUseEth}
-                    className="h-4 w-4"
-                  />
+
+            {isConnected ? (
+              <div className="mb-1 mt-8">
+                <div className="flex items-start justify-between">
+                  <p className="font-inter text-sm opacity-50">My Balance:</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="text-right font-zen">
+                      {useEth
+                        ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
+                        : formatBalance(
+                            tokenBalance?.value ? tokenBalance.value : '0',
+                            market.loanAsset.decimals,
+                          )}
+                    </p>
+                    <p className="text-right font-zen">
+                      {useEth ? 'ETH' : market.loanAsset.symbol}{' '}
+                    </p>
+                    <div>
+                      {loanToken?.img && (
+                        <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
+                      )}{' '}
+                    </div>
+                  </div>
+                </div>
+                {loanToken?.symbol === 'WETH' && (
+                  <div className="mx-6 flex items-start justify-between">
+                    <div />
+                    <div className="mt-4 flex items-center">
+                      <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
+                      <Switch
+                        size="sm"
+                        isSelected={useEth}
+                        onValueChange={setUseEth}
+                        className="h-4 w-4"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <div className="items-center justify-center pt-4">
+                  <AccountConnect />
                 </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div className="items-center justify-center pt-4">
-              <AccountConnect />
+
+            <div className="mt-8 block py-4 opacity-80"> Supply amount </div>
+
+            <div className="mb-1 flex items-start justify-between">
+              <div className="relative flex-grow">
+                <Input
+                  decimals={market.loanAsset.decimals}
+                  max={
+                    useEth
+                      ? ethBalance?.value
+                        ? ethBalance.value
+                        : BigInt(0)
+                      : tokenBalance?.value
+                      ? tokenBalance.value
+                      : BigInt(0)
+                  }
+                  setValue={setSupplyAmount}
+                  setError={setInputError}
+                  exceedMaxErrMessage="Insufficient Balance"
+                />
+                {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
+              </div>
+
+              {needSwitchChain ? (
+                <button
+                  type="button"
+                  onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                >
+                  Switch Chain
+                </button>
+              ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
+                <button
+                  disabled={!isConnected || isLoadingPermit2}
+                  type="button"
+                  onClick={() => void approveAndSupply()}
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                >
+                  Approve and Supply
+                </button>
+              ) : (
+                <button
+                  disabled={!isConnected || supplyPending || inputError !== null}
+                  type="button"
+                  onClick={() => void signAndSupply()}
+                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                >
+                  {useEth ? 'Supply' : 'Sign and Supply'}
+                </button>
+              )}
             </div>
           </div>
-        )}
-
-        <div className="mt-8 block py-4 opacity-80"> Supply amount </div>
-
-        <div className="mb-1 flex items-start justify-between">
-          <div className="relative flex-grow">
-            <Input
-              decimals={market.loanAsset.decimals}
-              max={
-                useEth
-                  ? ethBalance?.value
-                    ? ethBalance.value
-                    : BigInt(0)
-                  : tokenBalance?.value
-                  ? tokenBalance.value
-                  : BigInt(0)
-              }
-              setValue={setSupplyAmount}
-              setError={setInputError}
-              exceedMaxErrMessage="Insufficient Balance"
-            />
-            {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
-          </div>
-
-          {needSwitchChain ? (
-            <button
-              type="button"
-              onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
-            >
-              Switch Chain
-            </button>
-          ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-            <button
-              disabled={!isConnected || isLoadingPermit2}
-              type="button"
-              onClick={() => void approveAndSupply()}
-              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
-            >
-              Approve and Supply
-            </button>
-          ) : (
-            <button
-              disabled={!isConnected || supplyPending || inputError !== null}
-              type="button"
-              onClick={() => void signAndSupply()}
-              className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
-            >
-              {useEth ? 'Supply' : 'Sign and Supply'}
-            </button>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

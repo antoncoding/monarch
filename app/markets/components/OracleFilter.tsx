@@ -13,22 +13,16 @@ type OracleFilterProps = {
 export default function OracleFilter({ selectedOracles, setSelectedOracles }: OracleFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const mounted = useRef(true);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        mounted.current &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      mounted.current = false;
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
@@ -43,16 +37,11 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
     }
   };
 
-  const clearSelection = () => {
-    setSelectedOracles([]);
-    setIsOpen(false);
-  };
-
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-          isOpen ? 'bg-surface-dark' : ''
+        className={`bg-surface min-w-48 cursor-pointer rounded p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+          isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
         }`}
         role="button"
         tabIndex={0}
@@ -88,44 +77,42 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
           </span>
         </div>
       </div>
-      {isOpen && (
-        <div className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg">
-          <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
-            {Object.values(OracleVendors).map((oracle) => (
-              <li
-                key={oracle}
-                className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                  selectedOracles.includes(oracle) ? 'bg-gray-300 dark:bg-gray-700' : ''
-                }`}
-                onClick={() => toggleOracle(oracle)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    toggleOracle(oracle);
-                  }
-                }}
-                role="option"
-                aria-selected={selectedOracles.includes(oracle)}
-                tabIndex={0}
-              >
-                <span>{oracle}</span>
-                {OracleVendorIcons[oracle] && (
-                  <Image src={OracleVendorIcons[oracle]} alt={oracle} width={18} height={18} />
-                )}
-              </li>
-            ))}
-          </ul>
-          <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
-            <button
-              className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
-              onClick={clearSelection}
-              type="button"
+      <div
+        className={`bg-surface absolute z-10 mt-1 w-full transform rounded shadow-lg transition-all duration-200 ${
+          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
+        }`}
+      >
+        <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
+          {Object.values(OracleVendors).map((oracle) => (
+            <li
+              key={oracle}
+              className={`m-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
+                selectedOracles.includes(oracle) ? 'bg-gray-300 dark:bg-gray-700' : ''
+              }`}
+              onClick={() => toggleOracle(oracle)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  toggleOracle(oracle);
+                }
+              }}
+              role="option"
+              aria-selected={selectedOracles.includes(oracle)}
+              tabIndex={0}
             >
-              <span>Clear All</span>
-              <ChevronDownIcon className="h-5 w-5 rotate-180" />
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center gap-2">
+                <Image
+                  src={OracleVendorIcons[oracle]}
+                  alt={oracle}
+                  width={16}
+                  height={16}
+                  className="rounded-full"
+                />
+                <span>{oracle}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import styles from './Home.module.css';
 
 export default function HomeHeader() {
   return (
-    <div className={styles.HomeHeader}>
+    <div className={`${styles.HomeHeader} font-zen`}>
       <Header />
     </div>
   );

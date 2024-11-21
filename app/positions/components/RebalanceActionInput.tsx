@@ -28,7 +28,7 @@ export function RebalanceActionInput({
   onAddAction,
 }: RebalanceActionInputProps) {
   return (
-    <div className="mb-4 flex items-center justify-between rounded-lg border-2 border-dashed border-orange-300 p-4 light:bg-orange-100 light:bg-opacity-20 dark:border-orange-700">
+    <div className="mb-4 flex items-center justify-between rounded-md border-1 border-dashed border-orange-300 p-4 light:bg-orange-100 light:bg-opacity-20 dark:border-orange-700">
       <span className="mr-2">Rebalance</span>
       <input
         type="number"

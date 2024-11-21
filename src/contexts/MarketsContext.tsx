@@ -1,6 +1,14 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useCallback, useEffect, useState, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+  useMemo,
+} from 'react';
 import { marketsQuery } from '@/graphql/queries';
 import useLiquidations from '@/hooks/useLiquidations';
 import { getRewardPer1000USD } from '@/utils/morpho';
@@ -62,7 +70,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
             variables: { first: 1000, where: { whitelisted: true } },
           }),
         });
-        
+
         const marketsResult = (await marketsResponse.json()) as MarketResponse;
         const rawMarkets = marketsResult.data.markets.items;
 
@@ -161,4 +169,4 @@ export function useMarkets() {
     throw new Error('useMarkets must be used within a MarketsProvider');
   }
   return context;
-} 
+}

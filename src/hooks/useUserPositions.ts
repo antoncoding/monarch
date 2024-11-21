@@ -33,7 +33,7 @@ const useUserPositions = (user: string | undefined) => {
             body: JSON.stringify({
               query: userPositionsQuery,
               variables: {
-                address: user,
+                address: user.toLowerCase(),
                 chainId: SupportedNetworks.Mainnet,
               },
             }),
@@ -46,7 +46,7 @@ const useUserPositions = (user: string | undefined) => {
             body: JSON.stringify({
               query: userPositionsQuery,
               variables: {
-                address: user,
+                address: user.toLowerCase(),
                 chainId: SupportedNetworks.Base,
               },
             }),

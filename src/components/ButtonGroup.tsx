@@ -57,7 +57,7 @@ export default function ButtonGroup({
   variant = 'default',
 }: ButtonGroupProps) {
   return (
-    <div className="inline-flex rounded-lg shadow-sm" role="group" aria-label="Button group">
+    <div className="inline-flex rounded shadow-sm" role="group" aria-label="Button group">
       {options.map((option, index) => {
         const isFirst = index === 0;
         const isLast = index === options.length - 1;
@@ -74,8 +74,8 @@ export default function ButtonGroup({
               sizeClasses[size],
 
               // Position-based styles
-              isFirst ? 'rounded-l-lg' : '-ml-px',
-              isLast ? 'rounded-r-lg' : '',
+              isFirst ? 'rounded-l' : '-ml-px rounded-none',
+              isLast ? 'rounded-r' : 'rounded-none',
 
               // Variant & State styles
               variant === 'default'

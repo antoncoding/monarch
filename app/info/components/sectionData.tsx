@@ -6,7 +6,7 @@ import vaultsImage from '../../../src/imgs/intro/vaults.png';
 
 function Card({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="bg-main flex-1 rounded-lg p-4 shadow">
+    <div className="bg-main flex-1 rounded p-4 shadow">
       <h3 className="mb-2 font-zen text-lg font-bold">{title}</h3>
       <ul className="list-inside list-disc">
         {items.map((item, index) => (

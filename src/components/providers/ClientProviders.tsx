@@ -15,4 +15,4 @@ export function ClientProviders({ children }: ClientProvidersProps) {
       <ToastContainer position="bottom-right" bodyClassName="font-zen" />
     </MarketsProvider>
   );
-} 
+}
