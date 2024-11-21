@@ -344,7 +344,7 @@ export default function Markets() {
               onClick={handleRefresh}
               type="button"
               disabled={loading || isRefetching}
-              className={`flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
+              className={`flex items-center gap-2 rounded bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
                 loading || isRefetching ? 'cursor-not-allowed opacity-50' : ''
               }`}
             >
@@ -357,7 +357,7 @@ export default function Markets() {
               type="button"
               aria-expanded={showAdvancedSettings}
               aria-controls="advanced-settings-panel"
-              className="flex items-center gap-2 rounded-md bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+              className="flex items-center gap-2 rounded bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
             >
               <FaEllipsisH size={16} className={showAdvancedSettings ? 'rotate-180' : ''} />
               Advanced

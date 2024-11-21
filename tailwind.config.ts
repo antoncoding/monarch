@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 const { nextui } = require('@nextui-org/theme');
 
 const config: Config = {
@@ -52,7 +53,37 @@ const config: Config = {
     },
   },
   darkMode: 'class',
-  plugins: [nextui()],
+  plugins: [
+    nextui({
+      themes: {
+        light: {
+          layout: {
+            radius: {
+              small: '0.375rem', // rounded
+              medium: '0.375rem', // rounded
+              large: '0.375rem', // rounded
+            },
+          },
+        },
+        dark: {
+          layout: {
+            radius: {
+              small: '0.375rem', // rounded
+              medium: '0.375rem', // rounded
+              large: '0.375rem', // rounded
+            },
+          },
+        },
+      },
+    }),
+    plugin(function({ addBase }) {
+      addBase({
+        'button, .nextui-button': {
+          '@apply rounded': {},  // This makes all buttons rounded by default
+        },
+      });
+    }),
+  ],
 };
 
 export default config;
