@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import PrimaryButton from '@/components/common/PrimaryButton';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -10,7 +10,6 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositions from '@/hooks/useUserPositions';
-
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -23,7 +22,7 @@ export default function Positions() {
 
   const { loading, isRefetching, data: marketPositions, refetch } = useUserPositions(account);
 
-  const hasSuppliedMarkets = marketPositions.length > 0;
+  const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -46,6 +45,14 @@ export default function Positions() {
                 className="bg-surface rounded-sm p-2 font-zen text-sm opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 View Rewards
+              </button>
+            </Link>
+            <Link href="/positions/onboarding" passHref>
+              <button
+                type="button"
+                className="bg-monarch-orange rounded-sm p-2 font-zen text-sm text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                Start Lending
               </button>
             </Link>
           </div>
@@ -75,7 +82,17 @@ export default function Positions() {
         {loading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
-          <EmptyScreen message="No open supplies, go to the markets to open a new position." />
+          <div className="flex flex-col gap-8">
+            <EmptyScreen message="No open supplies. Start lending with your available assets:" />
+            <Link href="/positions/onboarding" passHref>
+              <button
+                type="button"
+                className="bg-monarch-orange mx-auto rounded-sm px-8 py-3 font-zen text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                Start Lending
+              </button>
+            </Link>
+          </div>
         ) : (
           <div className="mt-4">
             <PositionsSummaryTable
@@ -90,11 +107,8 @@ export default function Positions() {
         )}
 
         <div className="flex justify-center pt-14">
-          <PrimaryButton href="/markets">View All Markets</PrimaryButton>
-        </div>
-        <div className="flex justify-center pt-8">
-          <PrimaryButton href="/positions" isSecondary>
-            Search Address
+          <PrimaryButton href="/markets" isSecondary>
+            View All Markets
           </PrimaryButton>
         </div>
       </div>
