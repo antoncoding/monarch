@@ -186,7 +186,7 @@ export function SupplyProcessModal({
                       {status === 'done' ? (
                         <FaCheckCircle className="h-5 w-5 text-green-500" />
                       ) : status === 'current' ? (
-                        <FaCircle className="text-primary h-5 w-5 animate-pulse" />
+                        <FaCircle className="h-5 w-5 animate-pulse text-primary" />
                       ) : (
                         <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
                       )}

@@ -111,10 +111,10 @@ export function AssetSelection() {
           {tokensWithMarkets.map((token) => (
             <motion.button
               aria-label={`Select ${token.symbol} on ${getNetworkName(token.network)}`}
-              role='button'
+              role="button"
               key={`${token.symbol}-${token.network}`}
               onClick={() => handleTokenSelect(token)}
-              className="hover:border-primary group relative flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+              className="group relative flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
@@ -132,7 +132,7 @@ export function AssetSelection() {
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <p className="group-hover:text-primary font-medium transition-colors duration-300">
+                    <p className="font-medium transition-colors duration-300 group-hover:text-primary">
                       {token.symbol}
                     </p>
                     <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
@@ -150,7 +150,7 @@ export function AssetSelection() {
                   </p>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <p className="group-hover:text-primary text-sm font-medium transition-colors duration-300">
+                      <p className="text-sm font-medium ">
                         {token.markets.length} market{token.markets.length !== 1 ? 's' : ''}
                       </p>
                       <span className="text-xs text-gray-400">•</span>

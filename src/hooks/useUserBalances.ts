@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
-import { findToken } from '@/utils/tokens';
 import { SupportedNetworks } from '@/utils/networks';
+import { findToken } from '@/utils/tokens';
 
 type TokenBalance = {
   address: string;

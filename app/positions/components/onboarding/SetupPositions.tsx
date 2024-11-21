@@ -7,7 +7,7 @@ import { formatUnits, parseUnits } from 'viem';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMultiMarketSupply, MarketSupply } from '@/hooks/useMultiMarketSupply';
+import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { parseOracleVendors } from '@/utils/oracle';
@@ -230,8 +230,8 @@ export function SetupPositions() {
       if (success) {
         router.push('/positions/onboarding?step=success');
       }
-    } catch (error) {
-      console.error('Supply failed:', error);
+    } catch (supplyError) {
+      console.error('Supply failed:', supplyError);
       // Error toast is already shown in useMultiMarketSupply
     } finally {
       setIsSupplying(false);
@@ -458,7 +458,7 @@ export function SetupPositions() {
           color="primary"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onPress={handleSupply}
+          onPress={ () => void handleSupply()}
           className="min-w-[120px] rounded"
         >
           Execute

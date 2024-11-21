@@ -1,10 +1,12 @@
-import Link from 'next/link';
 import { Button } from '@nextui-org/react';
+import Link from 'next/link';
 import { FaCheckCircle } from 'react-icons/fa';
+import { useAccount } from 'wagmi';
 import { useOnboarding } from './OnboardingContext';
 
 export function SuccessPage() {
   const { selectedToken } = useOnboarding();
+  const { address } = useAccount();
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-8 p-8">
@@ -19,12 +21,12 @@ export function SuccessPage() {
       </div>
 
       <div className="flex gap-4">
-        <Link href={`/positions/${selectedToken?.address ?? ''}`} className="no-underline">
+        <Link href={`/positions/${address}`} className="no-underline">
           <Button color="primary" className="min-w-[120px] rounded">
             View Position
           </Button>
         </Link>
-        <Link href="/positions/onboarding" className="no-underline border-1 bg-surface">
+        <Link href="/positions/onboarding" className="bg-surface border-1 no-underline">
           <Button variant="light" className="min-w-[120px] rounded">
             Supply More
           </Button>
