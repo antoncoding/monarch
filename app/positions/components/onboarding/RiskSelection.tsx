@@ -88,7 +88,9 @@ export function RiskSelection() {
     const currentParams = searchParams.toString();
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
     const targetPath = currentParams ? `${marketPath}?${currentParams}` : marketPath;
-    router.push(targetPath);
+
+    // open in tab
+    window.open(targetPath, '_blank');
   };
 
   const toggleMarketSelection = (market: Market) => {
@@ -136,8 +138,8 @@ export function RiskSelection() {
             <thead className="table-header sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
               <tr>
                 <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Market</th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Market Params</th>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Oracle</th>
+                <th className="whitespace-nowrap px-4 py-2 text-center font-normal">Oracle</th>
+                <th className="whitespace-nowrap px-4 py-2 text-center font-normal">Warnings</th>
                 <th className="whitespace-nowrap px-4 py-2 text-right font-normal">LLTV</th>
                 <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Supply APY</th>
                 <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Total Supply</th>
@@ -165,7 +167,7 @@ export function RiskSelection() {
                     }`}
                   >
                     <td className="whitespace-nowrap px-4 py-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 px-4">
                         {collateralToken?.img && (
                           <div
                             className={`overflow-hidden rounded-full transition-all duration-200 ease-in-out ${
@@ -210,14 +212,7 @@ export function RiskSelection() {
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-2">
-                      <div className="flex gap-2">
-                        <MarketAssetIndicator market={market} />
-                        <MarketOracleIndicator market={market} />
-                        <MarketDebtIndicator market={market} />
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-left">
-                      <div className="flex flex-wrap gap-1">
+                      <div className="flex flex-wrap justify-center gap-1">
                         {vendors.map((vendor) => (
                           <OracleVendorBadge
                             key={vendor}
@@ -225,6 +220,13 @@ export function RiskSelection() {
                             showText={false}
                           />
                         ))}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2">
+                      <div className="flex justify-center gap-2">
+                        <MarketAssetIndicator market={market} />
+                        <MarketOracleIndicator market={market} />
+                        <MarketDebtIndicator market={market} />
                       </div>
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-right font-mono">
@@ -245,14 +247,13 @@ export function RiskSelection() {
                       {formatReadable(market.state.utilization * 100)}%
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-right">
-                      <Button
-                        size="sm"
-                        variant="light"
-                        radius="sm"
+                      <button
                         onClick={(e) => handleMarketDetails(market, e)}
+                        className="text-sm transition-colors hover:text-gray-300"
+                        type="button"
                       >
                         Details
-                      </Button>
+                      </button>
                     </td>
                   </tr>
                 );

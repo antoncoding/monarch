@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { FaQuestionCircle } from 'react-icons/fa';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
@@ -100,13 +101,17 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
               tabIndex={0}
             >
               <div className="flex items-center gap-2">
-                <Image
-                  src={OracleVendorIcons[oracle]}
-                  alt={oracle}
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
+                {OracleVendorIcons[oracle] ? (
+                  <Image
+                    src={OracleVendorIcons[oracle]}
+                    alt={oracle}
+                    width={16}
+                    height={16}
+                    className="rounded-full"
+                  />
+                ) : (
+                  <FaQuestionCircle className="h-4 w-4 text-gray-400" />
+                )}
                 <span>{oracle}</span>
               </div>
             </li>

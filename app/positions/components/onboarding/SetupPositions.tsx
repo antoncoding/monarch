@@ -458,7 +458,7 @@ export function SetupPositions() {
           color="primary"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onPress={ () => void handleSupply()}
+          onPress={() => void handleSupply()}
           className="min-w-[120px] rounded"
         >
           Execute
