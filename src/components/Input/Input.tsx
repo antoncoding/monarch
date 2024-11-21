@@ -65,7 +65,7 @@ export default function Input({
         type="number"
         value={inputAmount}
         onChange={onInputChange}
-        className="bg-hovered focus:border-monarch-orange h-10 w-full rounded p-2 focus:outline-none"
+        className="bg-hovered focus:border-primary h-10 w-full rounded p-2 focus:outline-none"
       />
       <button
         type="button"

@@ -34,6 +34,7 @@ export default function Positions() {
             <Link href={`/history/${account}`} className="no-underline">
               <button
                 type="button"
+                aria-label="View history"
                 className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 <FaHistory size={14} />
@@ -43,6 +44,7 @@ export default function Positions() {
             <Link href={`/rewards/${account}`} className="no-underline">
               <button
                 type="button"
+                aria-label="View rewards"
                 className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 <FaGift size={14} />
@@ -51,6 +53,7 @@ export default function Positions() {
             </Link>
             <Link href="/positions/onboarding" className="no-underline">
               <button
+                aria-label="Create a new position"
                 type="button"
                 className="bg-monarch-orange hover:bg-monarch-orange/90 flex items-center gap-2 rounded p-2 font-zen text-sm text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md"
               >

@@ -178,7 +178,7 @@ export function SupplyProcessModal({
                     key={step.key}
                     className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${
                       status === 'current'
-                        ? 'border-monarch-orange bg-monarch-orange/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-100 dark:border-gray-700'
                     }`}
                   >
@@ -186,7 +186,7 @@ export function SupplyProcessModal({
                       {status === 'done' ? (
                         <FaCheckCircle className="h-5 w-5 text-green-500" />
                       ) : status === 'current' ? (
-                        <FaCircle className="text-monarch-orange h-5 w-5 animate-pulse" />
+                        <FaCircle className="text-primary h-5 w-5 animate-pulse" />
                       ) : (
                         <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
                       )}

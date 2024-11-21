@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { findToken } from '@/utils/tokens';
+import { SupportedNetworks } from '@/utils/networks';
 
 type TokenBalance = {
   address: string;
@@ -50,8 +51,8 @@ export function useUserBalances() {
     try {
       // Fetch balances from both chains
       const [mainnetBalances, baseBalances] = await Promise.all([
-        fetchBalances(1),
-        fetchBalances(8453),
+        fetchBalances(SupportedNetworks.Mainnet),
+        fetchBalances(SupportedNetworks.Base),
       ]);
 
       // Process and filter tokens

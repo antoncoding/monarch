@@ -3,7 +3,6 @@ import { Button, Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
@@ -115,7 +114,7 @@ export function SetupPositions() {
   const handlePercentageChange = useCallback(
     (marketKey: string, newPercentage: number) => {
       // If the input is invalid (NaN), set it to 0
-      if (isNaN(newPercentage)) {
+      if (Number.isNaN(newPercentage)) {
         newPercentage = 0;
       }
 
@@ -449,7 +448,6 @@ export function SetupPositions() {
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
         <Button
-          color="primary"
           variant="light"
           className="min-w-[120px] rounded"
           onPress={() => router.push('/positions/onboarding?step=risk-selection')}

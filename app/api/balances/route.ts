@@ -66,8 +66,6 @@ export async function GET(req: NextRequest) {
         balance: BigInt(token.tokenBalance).toString(10),
       }));
 
-    console.log('user tokens', tokens);
-
     return NextResponse.json({
       tokens,
     });
