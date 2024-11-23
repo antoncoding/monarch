@@ -179,15 +179,21 @@ export function FromAndToMarkets({
                             size="sm"
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
+                            isDisabled={
+                              BigInt(marketPosition.supplyAssets) + BigInt(marketPosition.pendingDelta) <=
+                              0n
+                            }
                             onClick={(e) => {
                               e.stopPropagation();
                               onFromMarketSelect(marketPosition.market.uniqueKey);
-                              // Calculate remaining amount after considering pending delta
                               const remainingAmount =
-                                Number(marketPosition.supplyAssets) +
-                                Number(marketPosition.pendingDelta);
-                              if (remainingAmount > 0) {
-                                onSelectMax?.(marketPosition.market.uniqueKey, remainingAmount);
+                                BigInt(marketPosition.supplyAssets) +
+                                BigInt(marketPosition.pendingDelta);
+                              if (remainingAmount > 0n) {
+                                onSelectMax?.(
+                                  marketPosition.market.uniqueKey,
+                                  Number(remainingAmount)
+                                );
                               }
                             }}
                           >
