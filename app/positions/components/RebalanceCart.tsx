@@ -37,7 +37,9 @@ export function RebalanceCart({
   return (
     <>
       <h3 className="text-lg font-semibold">Rebalance Cart</h3>
-      <Table className="min-h-20">
+      <Table classNames={{
+        wrapper: 'rounded shadow-none',
+      }}>
         <TableHeader>
           <TableColumn>From Market</TableColumn>
           <TableColumn>To Market</TableColumn>

@@ -169,6 +169,8 @@ export type RebalanceAction = {
     uniqueKey: string;
   };
   amount: bigint;
+  isMax: boolean;
+  shares?: bigint;
 };
 
 export type GroupedPosition = {

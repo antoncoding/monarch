@@ -13,6 +13,7 @@ import {
   MarketOracleIndicator,
   MarketDebtIndicator,
 } from '../../markets/components/RiskIndicator';
+import { Button } from '@nextui-org/react';
 
 import { PER_PAGE } from './RebalanceModal';
 
@@ -26,6 +27,7 @@ type MarketTablesProps = {
   onToFilterChange: (value: string) => void;
   onFromMarketSelect: (marketUniqueKey: string) => void;
   onToMarketSelect: (marketUniqueKey: string) => void;
+  onSelectMax?: (marketUniqueKey: string, amount: number) => void;
   fromPagination: {
     currentPage: number;
     totalPages: number;
@@ -50,6 +52,7 @@ export function FromAndToMarkets({
   onToFilterChange,
   onFromMarketSelect,
   onToMarketSelect,
+  onSelectMax,
   fromPagination,
   toPagination,
   selectedFromMarketUniqueKey,
@@ -163,31 +166,31 @@ export function FromAndToMarkets({
                         {formatReadable(marketPosition.market.dailyApys.netSupplyApy * 100)}%
                       </td>
                       <td className="px-4 py-2">
-                        {formatReadable(
-                          Number(marketPosition.supplyAssets) /
-                            10 ** marketPosition.market.loanAsset.decimals,
-                        )}{' '}
-                        {marketPosition.market.loanAsset.symbol}
-                        {marketPosition.pendingDelta !== 0 && (
-                          <span
-                            className={`ml-1 text-xs ${
-                              marketPosition.pendingDelta > 0 ? 'text-green-500' : 'text-red-500'
-                            }`}
-                          >
-                            ({marketPosition.pendingDelta > 0 ? '+' : '-'}
+                        <div className="flex items-center gap-2">
+                          <div>
                             {formatReadable(
-                              Math.abs(
-                                Number(
-                                  formatUnits(
-                                    BigInt(marketPosition.pendingDelta),
-                                    marketPosition.market.loanAsset.decimals,
-                                  ),
-                                ),
-                              ),
-                            )}
-                            )
-                          </span>
-                        )}
+                              (Number(marketPosition.supplyAssets) + Number(marketPosition.pendingDelta)) /
+                                10 ** marketPosition.market.loanAsset.decimals,
+                            )}{' '}
+                            {marketPosition.market.loanAsset.symbol}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="flat"
+                            className="h-5 min-w-0 px-2 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onFromMarketSelect(marketPosition.market.uniqueKey);
+                              // Calculate remaining amount after considering pending delta
+                              const remainingAmount = Number(marketPosition.supplyAssets) + Number(marketPosition.pendingDelta);
+                              if (remainingAmount > 0) {
+                                onSelectMax?.(marketPosition.market.uniqueKey, remainingAmount);
+                              }
+                            }}
+                          >
+                            Max
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );

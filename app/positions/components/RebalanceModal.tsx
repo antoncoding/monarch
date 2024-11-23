@@ -10,7 +10,7 @@ import {
 } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
-import { parseUnits } from 'viem';
+import { parseUnits, formatUnits } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -123,7 +123,7 @@ export function RebalanceModal({
     return true;
   };
 
-  const createAction = (fromMarket: Market, toMarket: Market): RebalanceAction => {
+  const createAction = (fromMarket: Market, toMarket: Market, amount: bigint, isMax: boolean): RebalanceAction => {
     return {
       fromMarket: {
         loanToken: fromMarket.loanAsset.address,
@@ -141,7 +141,8 @@ export function RebalanceModal({
         lltv: toMarket.lltv,
         uniqueKey: toMarket.uniqueKey,
       },
-      amount: parseUnits(amount, groupedPosition.loanAssetDecimals),
+      amount,
+      isMax,
     };
   };
 
@@ -151,15 +152,64 @@ export function RebalanceModal({
     setAmount('0');
   };
 
-  const handleAddAction = () => {
+  const handleMaxSelect = useCallback(
+    (marketUniqueKey: string, amount: number) => {
+      const market = eligibleMarkets.find((m) => m.uniqueKey === marketUniqueKey);
+      if (!market) return;
+      
+      setSelectedFromMarketUniqueKey(marketUniqueKey);
+      // Convert the amount to a string with the correct number of decimals
+      const formattedAmount = formatUnits(BigInt(Math.floor(amount)), groupedPosition.loanAssetDecimals);
+      setAmount(formattedAmount);
+    },
+    [eligibleMarkets, groupedPosition.loanAssetDecimals]
+  );
+
+  // triggered when "add action" button is clicked, finally added to cart
+  const handleAddAction = useCallback(() => {
     if (!validateInputs()) return;
+
+    console.log('handleAddAction');
+
     const markets = getMarkets();
-    if (!markets) return;
+    if (!markets) {
+      toast.error('Invalid markets selected');
+      return;
+    }
+
     const { fromMarket, toMarket } = markets;
     if (!checkBalance()) return;
-    addRebalanceAction(createAction(fromMarket, toMarket));
+
+    const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
+    const selectedPosition = groupedPosition.markets.find(p => p.market.uniqueKey === selectedFromMarketUniqueKey);
+    
+    // Get the pending delta for this market
+    const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0;
+    
+    // Check if this is a max amount considering pending delta
+    const isMaxAmount = selectedPosition !== undefined && 
+      BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
+
+    console.log('isMaxAmount', isMaxAmount);
+    console.log('pendingDelta', pendingDelta.toString());
+
+    // Create the action using the helper function
+    const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
+    addRebalanceAction(action);
     resetSelections();
-  };
+  }, [
+    validateInputs,
+    getMarkets,
+    checkBalance,
+    amount,
+    groupedPosition.loanAssetDecimals,
+    selectedFromMarketUniqueKey,
+    groupedPosition.markets,
+    getPendingDelta,
+    createAction,
+    addRebalanceAction,
+    resetSelections,
+  ]);
 
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -261,6 +311,7 @@ export function RebalanceModal({
               onToFilterChange={setToMarketFilter}
               onFromMarketSelect={setSelectedFromMarketUniqueKey}
               onToMarketSelect={setSelectedToMarketUniqueKey}
+              onSelectMax={handleMaxSelect}
               fromPagination={{
                 currentPage: fromPagination.currentPage,
                 totalPages: Math.ceil(groupedPosition.markets.length / PER_PAGE),
