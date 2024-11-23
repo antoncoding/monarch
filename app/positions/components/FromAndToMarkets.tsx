@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
+import { Button } from '@nextui-org/react';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { formatReadable } from '@/utils/balance';
@@ -13,7 +14,6 @@ import {
   MarketOracleIndicator,
   MarketDebtIndicator,
 } from '../../markets/components/RiskIndicator';
-import { Button } from '@nextui-org/react';
 
 import { PER_PAGE } from './RebalanceModal';
 
@@ -169,7 +169,8 @@ export function FromAndToMarkets({
                         <div className="flex items-center gap-2">
                           <div>
                             {formatReadable(
-                              (Number(marketPosition.supplyAssets) + Number(marketPosition.pendingDelta)) /
+                              (Number(marketPosition.supplyAssets) +
+                                Number(marketPosition.pendingDelta)) /
                                 10 ** marketPosition.market.loanAsset.decimals,
                             )}{' '}
                             {marketPosition.market.loanAsset.symbol}
@@ -182,7 +183,9 @@ export function FromAndToMarkets({
                               e.stopPropagation();
                               onFromMarketSelect(marketPosition.market.uniqueKey);
                               // Calculate remaining amount after considering pending delta
-                              const remainingAmount = Number(marketPosition.supplyAssets) + Number(marketPosition.pendingDelta);
+                              const remainingAmount =
+                                Number(marketPosition.supplyAssets) +
+                                Number(marketPosition.pendingDelta);
                               if (remainingAmount > 0) {
                                 onSelectMax?.(marketPosition.market.uniqueKey, remainingAmount);
                               }

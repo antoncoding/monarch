@@ -123,7 +123,12 @@ export function RebalanceModal({
     return true;
   };
 
-  const createAction = (fromMarket: Market, toMarket: Market, amount: bigint, isMax: boolean): RebalanceAction => {
+  const createAction = (
+    fromMarket: Market,
+    toMarket: Market,
+    actionAmount: bigint,
+    isMax: boolean,
+  ): RebalanceAction => {
     return {
       fromMarket: {
         loanToken: fromMarket.loanAsset.address,
@@ -141,7 +146,7 @@ export function RebalanceModal({
         lltv: toMarket.lltv,
         uniqueKey: toMarket.uniqueKey,
       },
-      amount,
+      amount: actionAmount,
       isMax,
     };
   };
@@ -156,13 +161,16 @@ export function RebalanceModal({
     (marketUniqueKey: string, amount: number) => {
       const market = eligibleMarkets.find((m) => m.uniqueKey === marketUniqueKey);
       if (!market) return;
-      
+
       setSelectedFromMarketUniqueKey(marketUniqueKey);
       // Convert the amount to a string with the correct number of decimals
-      const formattedAmount = formatUnits(BigInt(Math.floor(amount)), groupedPosition.loanAssetDecimals);
+      const formattedAmount = formatUnits(
+        BigInt(Math.floor(amount)),
+        groupedPosition.loanAssetDecimals,
+      );
       setAmount(formattedAmount);
     },
-    [eligibleMarkets, groupedPosition.loanAssetDecimals]
+    [eligibleMarkets, groupedPosition.loanAssetDecimals],
   );
 
   // triggered when "add action" button is clicked, finally added to cart
@@ -181,13 +189,16 @@ export function RebalanceModal({
     if (!checkBalance()) return;
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
-    const selectedPosition = groupedPosition.markets.find(p => p.market.uniqueKey === selectedFromMarketUniqueKey);
-    
+    const selectedPosition = groupedPosition.markets.find(
+      (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
+    );
+
     // Get the pending delta for this market
     const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0;
-    
+
     // Check if this is a max amount considering pending delta
-    const isMaxAmount = selectedPosition !== undefined && 
+    const isMaxAmount =
+      selectedPosition !== undefined &&
       BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
 
     console.log('isMaxAmount', isMaxAmount);
