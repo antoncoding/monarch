@@ -74,8 +74,6 @@ export function useAllowance({
 
   const allowance = data ? data : BigInt(0);
 
-  console.log('data', data);
-
   const isLoadingAllowance = data === undefined;
 
   return { allowance, isLoadingAllowance, approveInfinite, approvePending };

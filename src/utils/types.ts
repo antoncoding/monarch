@@ -30,12 +30,35 @@ export type UserTransaction = {
     market: {
       id: string;
       uniqueKey: string;
+      lltv: string;
+      oracle: {
+        data: {
+          baseFeedOne: {
+            vendor: string | null;
+          } | null;
+          baseFeedTwo: {
+            vendor: string | null;
+          } | null;
+          quoteFeedOne: {
+            vendor: string | null;
+          } | null;
+          quoteFeedTwo: {
+            vendor: string | null;
+          } | null;
+        };
+      };
       morphoBlue: {
         chain: {
           id: number;
         };
       };
       loanAsset: {
+        id: string;
+        address: string;
+        decimals: number;
+        symbol: string;
+      };
+      collateralAsset: {
         id: string;
         address: string;
         decimals: number;
@@ -169,6 +192,8 @@ export type RebalanceAction = {
     uniqueKey: string;
   };
   amount: bigint;
+  isMax: boolean;
+  shares?: bigint;
 };
 
 export type GroupedPosition = {

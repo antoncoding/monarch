@@ -197,6 +197,17 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       // Generate batched withdraw transactions
       Object.values(groupedWithdraws).forEach((actions) => {
         const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+
+        // if any of the action has `isMax`,
+        const isWithdrawMax = actions.some((action) => action.isMax);
+        // if any action is max, there must be a "share" set
+        const shares = groupedPosition.markets.find(
+          (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
+        )?.supplyShares;
+        if (isWithdrawMax && shares === undefined) {
+          throw new Error('No share found for max withdraw');
+        }
+
         const market = actions[0].fromMarket;
 
         const withdrawTx = encodeFunctionData({
@@ -210,9 +221,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
               irm: market.irm as Address,
               lltv: BigInt(market.lltv),
             },
-            batchAmount, // assets
-            BigInt(0), // shares
-            maxUint256, // slippageAmount => max share burned
+            isWithdrawMax ? BigInt(0) : batchAmount, // assets
+            isWithdrawMax ? BigInt(shares as string) : BigInt(0), // shares
+            isWithdrawMax ? batchAmount : maxUint256, // slippage: max: minWithdraw => max share burned
             account, // receiver
           ],
         });

@@ -177,6 +177,7 @@ export const userPositionsQuery = `
                   id
                 }
               }
+              lltv
               collateralAsset {
                 id
                 address
@@ -188,6 +189,24 @@ export const userPositionsQuery = `
                 decimals
                 symbol
               } 
+              oracle {
+                data {
+                  ... on MorphoChainlinkOracleData {
+                    baseFeedOne {
+                      vendor
+                    }
+                    baseFeedTwo {
+                      vendor
+                    }
+                    quoteFeedOne {
+                      vendor
+                    }
+                    quoteFeedTwo {
+                      vendor
+                    }
+                  }
+                }
+              }
             }
           }
         }
