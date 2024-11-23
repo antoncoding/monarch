@@ -183,6 +183,15 @@ export function HistoryTable({ history }: HistoryTableProps) {
                       selectedAsset?.chainId === asset.chainId
                     }
                     tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedAsset(asset);
+                        setIsOpen(false);
+                        setQuery('');
+                        setPage(1);
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       {asset.img && (

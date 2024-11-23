@@ -158,14 +158,14 @@ export function RebalanceModal({
   };
 
   const handleMaxSelect = useCallback(
-    (marketUniqueKey: string, amount: number) => {
+    (marketUniqueKey: string, maxAmount: number) => {
       const market = eligibleMarkets.find((m) => m.uniqueKey === marketUniqueKey);
       if (!market) return;
 
       setSelectedFromMarketUniqueKey(marketUniqueKey);
       // Convert the amount to a string with the correct number of decimals
       const formattedAmount = formatUnits(
-        BigInt(Math.floor(amount)),
+        BigInt(Math.floor(maxAmount)),
         groupedPosition.loanAssetDecimals,
       );
       setAmount(formattedAmount);
