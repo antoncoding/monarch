@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';

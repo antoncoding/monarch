@@ -52,7 +52,7 @@ export default function NavbarMobile() {
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/rewards/${address ?? ''}`}>
+              <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="/rewards">
                 <p className="text-base opacity-80 hover:opacity-100">Rewards</p>
               </NavbarLink>
             </li>
