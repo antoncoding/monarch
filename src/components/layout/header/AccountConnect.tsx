@@ -46,8 +46,8 @@ function AccountConnect() {
 
               return (
                 <div className="flex hidden md:block">
-                    <AccountDropdown />
-                  </div>
+                  <AccountDropdown />
+                </div>
               );
             })()}
           </div>

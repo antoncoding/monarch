@@ -44,7 +44,7 @@ export function AccountDropdown() {
           className={clsx(
             'h-42 inline-flex w-60 flex-col items-start justify-start',
             'bg-surface rounded bg-opacity-90 px-6 pb-2 pt-6 shadow backdrop-blur-2xl',
-            'animate-in fade-in slide-in-from-right duration-300'
+            'animate-in fade-in slide-in-from-right duration-300',
           )}
           style={DropdownMenuContentStyle}
         >
@@ -68,10 +68,12 @@ export function AccountDropdown() {
             href="/settings"
             className={clsx(
               'my-4 inline-flex items-center justify-between self-stretch no-underline',
-              pathname === '/settings' && 'text-primary'
+              pathname === '/settings' && 'text-primary',
             )}
           >
-            <span className="w-32 text-left font-inter text-sm font-medium text-primary">Settings</span>
+            <span className="w-32 text-left font-inter text-sm font-medium text-primary">
+              Settings
+            </span>
             <FiSettings className="relative h-4 w-4" />
           </Link>
           <button
@@ -80,7 +82,9 @@ export function AccountDropdown() {
             className="my-4 inline-flex items-center justify-between self-stretch"
             onClick={handleDisconnectWallet}
           >
-            <span className="w-32 text-left font-inter text-sm font-medium text-primary">Log out</span>
+            <span className="w-32 text-left font-inter text-sm font-medium text-primary">
+              Log out
+            </span>
             <ExitIcon className="relative h-4 w-4" />
           </button>
         </DropdownMenu.Content>

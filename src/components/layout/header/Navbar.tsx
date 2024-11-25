@@ -33,7 +33,7 @@ export function NavbarLink({
         'px-2 py-1 text-center font-zen text-base font-normal text-primary no-underline',
         'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-primary',
         'transition-all duration-200 hover:-translate-y-[2px]',
-        isActive ? 'after:opacity-100' : 'after:opacity-0'
+        isActive ? 'after:opacity-100' : 'after:opacity-0',
       )}
       target={target}
       aria-label={ariaLabel}
