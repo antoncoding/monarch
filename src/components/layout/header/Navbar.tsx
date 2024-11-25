@@ -1,13 +1,11 @@
 'use client';
 
-import { useState } from 'react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon, FaSun } from 'react-icons/fa';
-import { RiMenu3Line, RiCloseLine } from 'react-icons/ri';
 import { useAccount } from 'wagmi';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -32,9 +30,10 @@ export function NavbarLink({
     <NextLink
       href={href}
       className={clsx(
-        'px-2 py-1 text-center text-base font-normal text-primary no-underline',
-        'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 after:ease-out',
-        isActive && 'after:origin-bottom-left after:scale-x-100',
+        'px-2 py-1 text-center font-zen text-base font-normal text-primary no-underline',
+        'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-primary',
+        'transition-all duration-200 hover:-translate-y-[2px]',
+        isActive ? 'after:opacity-100' : 'after:opacity-0'
       )}
       target={target}
       aria-label={ariaLabel}
@@ -60,54 +59,29 @@ export function NavbarTitle() {
   );
 }
 
-function Navbar() {
+export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <nav
-      className={clsx(
-        'flex flex-1 flex-grow items-center justify-between',
-        'bg-surface rounded-[5px] p-4 shadow-sm backdrop-blur-2xl',
-      )}
-    >
+    <nav className="bg-surface flex h-full w-full items-center justify-between rounded px-4 font-zen">
       <NavbarTitle />
-      <div className="flex items-center gap-8">
-        {/* Desktop Navigation */}
-        <ul className="hidden items-center justify-end gap-4 text-opacity-80 md:flex">
-          <li className="flex">
-            <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
-              Dashboard
-            </NavbarLink>
-          </li>
-          <li className="flex">
-            <NavbarLink href="/markets" matchKey="markets">
-              Markets
-            </NavbarLink>
-          </li>
-          <li className="flex">
-            <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
-              Rewards
-            </NavbarLink>
-          </li>
-        </ul>
 
-        {/* Mobile Menu Button */}
-        <button
-          type="button"
-          className="flex items-center text-primary md:hidden"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle mobile menu"
-        >
-          {isMobileMenuOpen ? <RiCloseLine size={24} /> : <RiMenu3Line size={24} />}
-        </button>
+      <div className="flex items-center gap-8">
+        <div className="flex items-center gap-2">
+          <NavbarLink href="/markets">Markets</NavbarLink>
+          <NavbarLink href={`/positions/${address ?? ''}`}>Portfolio</NavbarLink>
+          <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="/rewards">
+            Rewards
+          </NavbarLink>
+          {/* <NavbarLink href="/settings/faq">FAQ</NavbarLink> */}
+        </div>
 
         <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="hover:bg-surface-hover flex h-10 w-10 items-center justify-center rounded-full bg-transparent text-primary"
+            className="hover:bg-hover flex h-10 w-10 items-center justify-center rounded-full"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? <FaSun size={20} /> : <FaRegMoon size={20} />}
@@ -115,31 +89,7 @@ function Navbar() {
           <AccountConnect />
         </div>
       </div>
-
-      {/* Mobile Navigation Menu */}
-      {isMobileMenuOpen && (
-        <div className="bg-surface absolute left-0 right-0 top-[72px] z-50 p-4 shadow-lg md:hidden">
-          <ul className="flex flex-col gap-4">
-            <li>
-              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="positions">
-                Dashboard
-              </NavbarLink>
-            </li>
-            <li>
-              <NavbarLink href="/markets" matchKey="markets">
-                Markets
-              </NavbarLink>
-            </li>
-            <li>
-              <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="rewards">
-                Rewards
-              </NavbarLink>
-            </li>
-          </ul>
-        </div>
-      )}
     </nav>
   );
 }
-
 export default Navbar;

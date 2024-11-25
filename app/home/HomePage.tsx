@@ -48,7 +48,7 @@ export default function HomePage() {
     }
     return (
       <span className="absolute inset-0 flex items-center justify-center transition-all duration-700 ease-in-out">
-        <span className="-ml-8 inline-flex items-center">
+        <span className="-ml-8 inline-flex items-center text-primary">
           Manage your own
           <span className="relative mx-2 inline-flex items-center md:mx-4">
             {riskYieldTerms.map((term, index) => (
@@ -73,7 +73,7 @@ export default function HomePage() {
 
   return (
     <div className="bg-main flex min-h-screen flex-col">
-      <Header />
+      <Header ghost />
       <main className="container mx-auto flex flex-1 flex-col items-center justify-center">
         <section className="flex w-full flex-col items-center justify-center">
           <div className="h-48 w-full sm:h-44 sm:w-4/5 md:w-3/5">
