@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -7,7 +8,6 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
-import { motion, AnimatePresence } from 'framer-motion';
 
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -133,7 +133,9 @@ export function SuppliedMarketsDetail({
                       <div className="mr-1 w-4">
                         {position.market.warningsWithDetail.length > 0 ? (
                           <Tooltip
-                            content={<WarningTooltip warnings={position.market.warningsWithDetail} />}
+                            content={
+                              <WarningTooltip warnings={position.market.warningsWithDetail} />
+                            }
                             placement="top"
                           >
                             <div>

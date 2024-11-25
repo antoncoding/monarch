@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
@@ -11,7 +12,6 @@ import { Market } from '@/utils/types';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const MORPHO_LOGO = require('../../../src/imgs/tokens/morpho.svg') as string;
 
@@ -38,14 +38,6 @@ export function MarketTableBody({
   unstarMarket,
   onMarketClick,
 }: MarketTableBodyProps) {
-  const [visibleRowId, setVisibleRowId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (expandedRowId) {
-      setVisibleRowId(expandedRowId);
-    }
-  }, [expandedRowId]);
-
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {

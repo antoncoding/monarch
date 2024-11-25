@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Spinner } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
@@ -15,7 +16,6 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { motion, AnimatePresence } from 'framer-motion';
 
 type PositionsSummaryTableProps = {
   marketPositions: MarketPosition[];
@@ -219,7 +219,9 @@ export function PositionsSummaryTable({
                   </td>
                   <td data-label="Size">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="font-medium">{formatReadable(groupedPosition.totalSupply)}</span>
+                      <span className="font-medium">
+                        {formatReadable(groupedPosition.totalSupply)}
+                      </span>
                       <span>{groupedPosition.loanAsset}</span>
                       <TokenIcon
                         address={groupedPosition.loanAssetAddress}

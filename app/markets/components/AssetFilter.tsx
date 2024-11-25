@@ -1,9 +1,9 @@
 'use client';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { ERC20Token, infoToKey } from '@/utils/tokens';
-import { motion, AnimatePresence } from 'framer-motion';
 
 type FilterProps = {
   label: string;
@@ -157,7 +157,9 @@ export default function AssetFilter({
                     tabIndex={0}
                   >
                     <span>{token.symbol}</span>
-                    {token.img && <Image src={token.img} alt={token.symbol} width={18} height={18} />}
+                    {token.img && (
+                      <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                    )}
                   </li>
                 ))}
               </ul>

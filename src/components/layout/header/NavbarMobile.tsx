@@ -14,13 +14,13 @@ export default function NavbarMobile() {
 
   const navbarClass = [
     'flex flex-1 flex-grow items-center justify-between',
-    'rounded-sm bg-main p-4 backdrop-blur-2xl',
+    'rounded bg-surface p-4 backdrop-blur-2xl',
     'mx-4',
   ].join(' ');
 
   if (isMobileMenuOpen) {
     return (
-      <nav className="sm:max-h-100 bg-main flex flex-col gap-4 rounded-sm p-2 backdrop-blur-2xl">
+      <nav className="sm:max-h-100 bg-surface flex flex-col gap-4 rounded p-2 backdrop-blur-2xl">
         <div className={navbarClass}>
           <div className="flex grow items-center justify-between gap-4">
             <NavbarTitle />
@@ -37,17 +37,17 @@ export default function NavbarMobile() {
         <div>
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
-              <NavbarLink href="/" matchKey='/'>
+              <NavbarLink href="/" matchKey="/">
                 <p className="text-base opacity-80 hover:opacity-100">Home</p>
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href="/markets" matchKey='/markets'>
+              <NavbarLink href="/markets" matchKey="/markets">
                 <p className="text-base opacity-80 hover:opacity-100">Markets</p>
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/positions/${address ?? ''}`} matchKey='/positions'>
+              <NavbarLink href={`/positions/${address ?? ''}`} matchKey="/positions">
                 <p className="text-base opacity-80 hover:opacity-100">Portfolio</p>
               </NavbarLink>
             </li>
