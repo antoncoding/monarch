@@ -7,14 +7,26 @@ import Footer from '@/components/layout/footer/Footer';
 import HomeHeader from './_components/HomeHeader';
 
 export default function HomePage() {
-  const [isMorphoBlue, setIsMorphoBlue] = useState(false);
+  const [counter, setCounter] = useState(0);
+
+  const firstPhrases = ['Customized lending', 'Manage your own yield', 'Control your risk'];
+  const secondPhrases = ['on Morpho Blue', 'with no intermediates'];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsMorphoBlue((prev) => !prev);
+      setCounter(prev => (prev + 1));
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  // Get current phrases based on counter
+  const currentFirstIndex = Math.floor(counter / 2) % firstPhrases.length;
+  const nextFirstIndex = (currentFirstIndex + 1) % firstPhrases.length;
+  const currentSecondIndex = Math.floor((counter + 3) / 2) % secondPhrases.length;
+  const nextSecondIndex = (currentSecondIndex + 1) % secondPhrases.length;
+
+  // Determine which section is changing
+  const isFirstChanging = counter % 2 === 0;
 
   const { address } = useAccount();
 
@@ -24,18 +36,52 @@ export default function HomePage() {
         <HomeHeader />
         <main className="container flex flex-col">
           <section className="mt-4 flex flex-col items-center justify-center sm:mt-8">
-            <div className="h-40 w-full sm:h-32 sm:w-4/5 md:w-3/5">
-              {' '}
-              {/* Fixed height container */}
-              <h2 className="mb-2 px-4 text-center font-zen text-3xl leading-tight text-primary sm:mb-10 sm:text-4xl md:text-5xl">
-                <span className="block sm:inline">Direct access to</span>{' '}
-                <span
-                  className={`block transition-all duration-1000 sm:inline ${
-                    isMorphoBlue ? 'text-blue-500' : 'text-gray-500'
-                  }`}
-                >
-                  {isMorphoBlue ? '{Morpho Blue}' : 'the most decentralized lending protocol.'}
-                </span>
+            <div className="h-52 w-full sm:h-44 sm:w-4/5 md:w-3/5">
+              <h2 className="mb-2 flex flex-col gap-6 px-4 text-center font-zen text-3xl leading-tight text-primary sm:mb-10 sm:text-4xl md:text-5xl">
+                <div className="h-[1.3em] relative">
+                  <span
+                    className={`absolute left-0 right-0 transform transition-all duration-700 ease-in-out ${
+                      !isFirstChanging ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+                    }`}
+                  >
+                    {firstPhrases[currentFirstIndex]}
+                  </span>
+                  <span
+                    className={`absolute left-0 right-0 transform transition-all duration-700 ease-in-out ${
+                      isFirstChanging ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+                    }`}
+                  >
+                    {firstPhrases[nextFirstIndex]}
+                  </span>
+                </div>
+                <div className="h-[1.3em] relative">
+                  <span
+                    className={`absolute left-0 right-0 transform transition-all duration-700 ease-in-out ${
+                      isFirstChanging ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0'
+                    }`}
+                  >
+                    {secondPhrases[currentSecondIndex].includes('Morpho Blue') ? (
+                      <span>
+                        on <span className="text-blue-500">Morpho Blue</span>
+                      </span>
+                    ) : (
+                      secondPhrases[currentSecondIndex]
+                    )}
+                  </span>
+                  <span
+                    className={`absolute left-0 right-0 transform transition-all duration-700 ease-in-out ${
+                      !isFirstChanging ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+                    }`}
+                  >
+                    {secondPhrases[nextSecondIndex].includes('Morpho Blue') ? (
+                      <span>
+                        on <span className="text-blue-500">Morpho Blue</span>
+                      </span>
+                    ) : (
+                      secondPhrases[nextSecondIndex]
+                    )}
+                  </span>
+                </div>
               </h2>
             </div>
           </section>

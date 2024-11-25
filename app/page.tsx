@@ -3,7 +3,7 @@ import HomePage from './home/HomePage';
 
 export const metadata = generateMetadata({
   title: 'Monarch',
-  description: 'Permission-less access to morpho blue protocol',
+  description: 'Customized lending with Morpho Blue',
   images: 'themes.png',
   pathname: '',
 });
