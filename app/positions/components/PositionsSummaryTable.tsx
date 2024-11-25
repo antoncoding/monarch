@@ -169,7 +169,7 @@ export function PositionsSummaryTable({
     <div className="space-y-4 overflow-x-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">Your Supply</h2>
+          <h2 className="text-xl">Your Supply</h2>
           {isRefetching && <Spinner size="sm" />}
         </div>
         <button
