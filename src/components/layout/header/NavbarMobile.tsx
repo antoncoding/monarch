@@ -37,15 +37,17 @@ export default function NavbarMobile() {
         <div>
           <ul className="mx-2 flex flex-col gap-4">
             <li className="flex">
-              <NavbarLink href="/">
+              <NavbarLink href="/" matchKey='/'>
                 <p className="text-base opacity-80 hover:opacity-100">Home</p>
               </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href="/markets">Markets</NavbarLink>
+              <NavbarLink href="/markets" matchKey='/markets'>
+                <p className="text-base opacity-80 hover:opacity-100">Markets</p>
+              </NavbarLink>
             </li>
             <li className="flex">
-              <NavbarLink href={`/positions/${address ?? ''}`}>
+              <NavbarLink href={`/positions/${address ?? ''}`} matchKey='/positions'>
                 <p className="text-base opacity-80 hover:opacity-100">Portfolio</p>
               </NavbarLink>
             </li>

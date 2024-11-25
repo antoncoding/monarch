@@ -24,7 +24,7 @@ export function NavbarLink({
   matchKey?: string;
 }) {
   const pathname = usePathname();
-  const isActive = pathname.includes(matchKey ?? href);
+  const isActive = matchKey === '/' ? pathname === matchKey : pathname.includes(matchKey ?? href);
 
   return (
     <NextLink
