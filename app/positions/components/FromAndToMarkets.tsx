@@ -180,7 +180,8 @@ export function FromAndToMarkets({
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
                             isDisabled={
-                              BigInt(marketPosition.supplyAssets) + BigInt(marketPosition.pendingDelta) <=
+                              BigInt(marketPosition.supplyAssets) +
+                                BigInt(marketPosition.pendingDelta) <=
                               0n
                             }
                             onClick={(e) => {
@@ -192,7 +193,7 @@ export function FromAndToMarkets({
                               if (remainingAmount > 0n) {
                                 onSelectMax?.(
                                   marketPosition.market.uniqueKey,
-                                  Number(remainingAmount)
+                                  Number(remainingAmount),
                                 );
                               }
                             }}

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { ERC20Token, infoToKey } from '@/utils/tokens';
 
@@ -115,57 +116,67 @@ export default function AssetFilter({
           </span>
         </div>
       </div>
-      {isOpen && !loading && (
-        <div className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tokens..."
-            className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
-          />
-          <div className="relative">
-            <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
-              {filteredItems.map((token) => (
-                <li
-                  key={token.symbol}
-                  className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                    selectedAssets.includes(
+      <AnimatePresence>
+        {isOpen && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg"
+          >
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search tokens..."
+              className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
+            />
+            <div className="relative">
+              <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
+                {filteredItems.map((token) => (
+                  <li
+                    key={token.symbol}
+                    className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
+                      selectedAssets.includes(
+                        token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
+                      )
+                        ? 'bg-gray-300 dark:bg-gray-700'
+                        : ''
+                    }`}
+                    onClick={() => selectOption(token)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        selectOption(token);
+                      }
+                    }}
+                    role="option"
+                    aria-selected={selectedAssets.includes(
                       token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
-                    )
-                      ? 'bg-gray-300 dark:bg-gray-700'
-                      : ''
-                  }`}
-                  onClick={() => selectOption(token)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      selectOption(token);
-                    }
-                  }}
-                  role="option"
-                  aria-selected={selectedAssets.includes(
-                    token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
-                  )}
-                  tabIndex={0}
+                    )}
+                    tabIndex={0}
+                  >
+                    <span>{token.symbol}</span>
+                    {token.img && (
+                      <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
+                <button
+                  className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
+                  onClick={clearSelection}
+                  type="button"
                 >
-                  <span>{token.symbol}</span>
-                  {token.img && <Image src={token.img} alt={token.symbol} width={18} height={18} />}
-                </li>
-              ))}
-            </ul>
-            <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
-              <button
-                className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
-                onClick={clearSelection}
-                type="button"
-              >
-                <span>Clear All</span>
-                <TrashIcon className="h-5 w-5" />
-              </button>
+                  <span>Clear All</span>
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

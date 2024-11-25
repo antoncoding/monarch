@@ -357,7 +357,7 @@ export function RebalanceModal({
               onPress={() => void handleExecuteRebalance()}
               isDisabled={isConfirming || rebalanceActions.length === 0}
               isLoading={isConfirming}
-              className="rounded-sm bg-orange-500 p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-orange-600"
+              className="rounded-sm bg-primary p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-primary"
             >
               {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
             </Button>

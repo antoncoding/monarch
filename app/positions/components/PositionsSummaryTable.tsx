@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Spinner } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
@@ -169,7 +170,7 @@ export function PositionsSummaryTable({
     <div className="space-y-4 overflow-x-auto">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">Your Supply</h2>
+          <h2 className="text-xl">Your Supply</h2>
           {isRefetching && <Spinner size="sm" />}
         </div>
         <button
@@ -195,10 +196,10 @@ export function PositionsSummaryTable({
           </tr>
         </thead>
         <tbody className="table-body text-sm">
-          {processedPositions.map((position) => {
-            const rowKey = `${position.loanAssetAddress}-${position.chainId}`;
+          {processedPositions.map((groupedPosition) => {
+            const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
             const isExpanded = expandedRows.has(rowKey);
-            const avgApy = position.totalWeightedApy / position.totalSupply;
+            const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
 
             return (
               <React.Fragment key={rowKey}>
@@ -209,8 +210,8 @@ export function PositionsSummaryTable({
                   <td className="w-10">
                     <div className="flex items-center justify-center">
                       <Image
-                        src={getNetworkImg(position.chainId) ?? ''}
-                        alt={`Chain ${position.chainId}`}
+                        src={getNetworkImg(groupedPosition.chainId) ?? ''}
+                        alt={`Chain ${groupedPosition.chainId}`}
                         width={24}
                         height={24}
                       />
@@ -218,11 +219,13 @@ export function PositionsSummaryTable({
                   </td>
                   <td data-label="Size">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="font-medium">{formatReadable(position.totalSupply)}</span>
-                      <span>{position.loanAsset}</span>
+                      <span className="font-medium">
+                        {formatReadable(groupedPosition.totalSupply)}
+                      </span>
+                      <span>{groupedPosition.loanAsset}</span>
                       <TokenIcon
-                        address={position.loanAssetAddress}
-                        chainId={position.chainId}
+                        address={groupedPosition.loanAssetAddress}
+                        chainId={groupedPosition.chainId}
                         width={16}
                         height={16}
                       />
@@ -233,12 +236,12 @@ export function PositionsSummaryTable({
                   </td>
                   <td data-label="Collateral Exposure">
                     <div className="flex items-center justify-center gap-1">
-                      {position.collaterals.length > 0 ? (
-                        position.collaterals.map((collateral, index) => (
+                      {groupedPosition.collaterals.length > 0 ? (
+                        groupedPosition.collaterals.map((collateral, index) => (
                           <TokenIcon
                             key={`${collateral.address}-${index}`}
                             address={collateral.address}
-                            chainId={position.chainId}
+                            chainId={groupedPosition.chainId}
                             width={20}
                             height={20}
                           />
@@ -251,15 +254,15 @@ export function PositionsSummaryTable({
                   <td data-label="Warnings" className="align-middle">
                     <div className="flex items-center justify-center gap-1">
                       <MarketAssetIndicator
-                        market={{ warningsWithDetail: position.allWarnings }}
+                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
                         isBatched
                       />
                       <MarketOracleIndicator
-                        market={{ warningsWithDetail: position.allWarnings }}
+                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
                         isBatched
                       />
                       <MarketDebtIndicator
-                        market={{ warningsWithDetail: position.allWarnings }}
+                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
                         isBatched
                       />
                     </div>
@@ -270,7 +273,7 @@ export function PositionsSummaryTable({
                         type="button"
                         className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
                         onClick={() => {
-                          setSelectedGroupedPosition(position);
+                          setSelectedGroupedPosition(groupedPosition);
                           setShowRebalanceModal(true);
                         }}
                       >
@@ -279,18 +282,28 @@ export function PositionsSummaryTable({
                     </div>
                   </td>
                 </tr>
-                {isExpanded && (
-                  <tr>
-                    <td colSpan={7} className="p-0">
-                      <SuppliedMarketsDetail
-                        groupedPosition={position}
-                        setShowSupplyModal={setShowSupplyModal}
-                        setShowWithdrawModal={setShowWithdrawModal}
-                        setSelectedPosition={setSelectedPosition}
-                      />
-                    </td>
-                  </tr>
-                )}
+                <AnimatePresence>
+                  {expandedRows.has(rowKey) && (
+                    <tr>
+                      <td colSpan={7} className="p-0">
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: 'auto' }}
+                          exit={{ height: 0 }}
+                          transition={{ duration: 0.1 }}
+                          className="overflow-hidden"
+                        >
+                          <SuppliedMarketsDetail
+                            groupedPosition={groupedPosition}
+                            setShowWithdrawModal={setShowWithdrawModal}
+                            setShowSupplyModal={setShowSupplyModal}
+                            setSelectedPosition={setSelectedPosition}
+                          />
+                        </motion.div>
+                      </td>
+                    </tr>
+                  )}
+                </AnimatePresence>
               </React.Fragment>
             );
           })}

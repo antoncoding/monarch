@@ -28,8 +28,8 @@ export default function Positions() {
     <div className="flex flex-col justify-between font-zen">
       <Header />
       <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <div className="flex items-center justify-between pb-4">
-          <h1 className="flex items-center gap-2 py-4 font-zen text-2xl">Portfolio</h1>
+        <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
+          <h1 className="py-8 font-zen"> Portfolio </h1>
           <div className="flex gap-4">
             <Link href={`/history/${account}`} className="no-underline">
               <button

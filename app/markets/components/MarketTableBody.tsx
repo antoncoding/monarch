@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
@@ -169,13 +170,26 @@ export function MarketTableBody({
                 </button>
               </td>
             </tr>
-            {expandedRowId === item.uniqueKey && (
-              <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                <td className="collaps-viewer bg-hovered" colSpan={13}>
-                  <ExpandedMarketDetail market={item} />
-                </td>
-              </tr>
-            )}
+            <AnimatePresence>
+              {expandedRowId === item.uniqueKey && (
+                <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
+                  <td className="collaps-viewer bg-hovered p-0" colSpan={13}>
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0 }}
+                      animate={{ height: 'auto' }}
+                      exit={{ height: 0 }}
+                      transition={{ duration: 0.1 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4">
+                        <ExpandedMarketDetail market={item} />
+                      </div>
+                    </motion.div>
+                  </td>
+                </tr>
+              )}
+            </AnimatePresence>
           </React.Fragment>
         );
       })}

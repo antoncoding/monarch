@@ -28,7 +28,7 @@ export function RebalanceActionInput({
   onAddAction,
 }: RebalanceActionInputProps) {
   return (
-    <div className="mb-4 flex items-center justify-between rounded-md border-1 border-dashed border-orange-300 p-4 light:bg-orange-100 light:bg-opacity-20 dark:border-orange-700">
+    <div className="mb-4 flex items-center justify-between rounded-md border-1 border-dashed border-primary p-4">
       <span className="mr-2">Rebalance</span>
       <input
         type="number"
@@ -59,7 +59,7 @@ export function RebalanceActionInput({
       </div>
       <Button
         onClick={onAddAction}
-        className="ml-4 rounded-sm bg-orange-500 p-2 px-4 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-orange-600"
+        className="ml-4 rounded-sm bg-primary p-2 px-4 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Add Action
       </Button>

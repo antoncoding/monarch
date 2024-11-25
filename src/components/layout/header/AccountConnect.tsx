@@ -1,7 +1,6 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import { AccountDropdown } from './AccountDropdown';
-import { AccountInfoPanel } from './AccountInfoPanel';
 
 /**
  * AccountConnect
@@ -46,14 +45,9 @@ function AccountConnect() {
               }
 
               return (
-                <>
-                  <div className="flex flex-grow flex-col md:hidden">
-                    <AccountInfoPanel />
-                  </div>
-                  <div className="flex hidden md:block">
-                    <AccountDropdown />
-                  </div>
-                </>
+                <div className="block flex">
+                  <AccountDropdown />
+                </div>
               );
             })()}
           </div>
