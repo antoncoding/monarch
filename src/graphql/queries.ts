@@ -72,6 +72,12 @@ export const marketFragment = `
         amountPerSuppliedToken
         amountPerBorrowedToken
       }
+      monthlySupplyApy
+      monthlyBorrowApy
+      dailySupplyApy
+      dailyBorrowApy
+      weeklySupplyApy
+      weeklyBorrowApy
     }
     dailyApys {
       netSupplyApy

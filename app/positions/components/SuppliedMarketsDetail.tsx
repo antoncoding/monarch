@@ -174,7 +174,7 @@ export function SuppliedMarketsDetail({
                     </td>
                     <td data-label="Oracle" className="text-center">
                       <div className="flex justify-center">
-                        <OracleVendorBadge oracleData={position.market.oracle.data} useTooltip />
+                        <OracleVendorBadge oracleData={position.market.oracle ? position.market.oracle.data : null} useTooltip />
                       </div>
                     </td>
                     <td data-label="LLTV" className="text-center">

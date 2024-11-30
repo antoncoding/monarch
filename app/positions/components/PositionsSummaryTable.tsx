@@ -1,17 +1,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  Spinner,
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
   DropdownItem,
-  Button,
 } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { GrRefresh } from 'react-icons/gr';
-import { IoChevronDownOutline } from 'react-icons/io5';
+import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -25,7 +22,12 @@ import {
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
-type EarningsPeriod = 'lifetime' | '24h' | '7d' | '30d';
+export enum EarningsPeriod {
+  All = 'all',
+  Day = '1D',
+  Week = '7D',
+  Month = '30D'
+}
 
 type PositionsSummaryTableProps = {
   marketPositions: MarketPosition[];
@@ -49,19 +51,19 @@ export function PositionsSummaryTable({
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
-  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('lifetime');
+  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
 
   const getEarningsForPeriod = (position: MarketPosition) => {
     if (!position.earned) return '0';
 
     switch (earningsPeriod) {
-      case 'lifetime':
+      case EarningsPeriod.All:
         return position.earned.lifetimeEarned;
-      case '24h':
+      case EarningsPeriod.Day:
         return position.earned.last24hEarned;
-      case '7d':
+      case EarningsPeriod.Week:
         return position.earned.last7dEarned;
-      case '30d':
+      case EarningsPeriod.Month:
         return position.earned.last30dEarned;
       default:
         return '0';
@@ -78,10 +80,10 @@ export function PositionsSummaryTable({
   };
 
   const periodLabels: Record<EarningsPeriod, string> = {
-    lifetime: 'Lifetime',
-    '24h': '24h',
-    '7d': '7d',
-    '30d': '30d',
+    [EarningsPeriod.All]: 'All Time',
+    [EarningsPeriod.Day]: '24h',
+    [EarningsPeriod.Week]: '7d',
+    [EarningsPeriod.Month]: '30d',
   };
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
@@ -225,18 +227,32 @@ export function PositionsSummaryTable({
 
   return (
     <div className="space-y-4 overflow-x-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl">Your Supply</h2>
-          {isRefetching && <Spinner size="sm" />}
-        </div>
+      <div className="mb-4 flex items-center justify-end gap-2">
+        <Dropdown>
+          <DropdownTrigger>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg bg-surface-dark px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+            >
+              {periodLabels[earningsPeriod]}
+              <IoChevronDownOutline className="h-4 w-4" />
+            </button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Time period selection"
+            onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
+          >
+            {Object.entries(periodLabels).map(([period, label]) => (
+              <DropdownItem key={period}>{label}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
         <button
-          onClick={handleManualRefresh}
-          disabled={isRefetching}
           type="button"
-          className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+          className="flex items-center gap-2 rounded-lg bg-surface-dark px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+          onClick={handleManualRefresh}
         >
-          <GrRefresh size={16} />
+          <IoRefreshOutline className="h-4 w-4" />
           Refresh
         </button>
       </div>
@@ -247,28 +263,9 @@ export function PositionsSummaryTable({
               <th className="w-10" />
               <th className="w-10">Network</th>
               <th>Size</th>
-              <th>
-                <Dropdown>
-                  <DropdownTrigger>
-                    <Button
-                      variant="light"
-                      endContent={<IoChevronDownOutline className="h-4 w-4" />}
-                    >
-                      {periodLabels[earningsPeriod]} Interest Earned
-                    </Button>
-                  </DropdownTrigger>
-                  <DropdownMenu
-                    aria-label="Earnings period selection"
-                    onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
-                  >
-                    {Object.entries(periodLabels).map(([period, label]) => (
-                      <DropdownItem key={period}>{label}</DropdownItem>
-                    ))}
-                  </DropdownMenu>
-                </Dropdown>
-              </th>
-              <th>Avg APY</th>
-              <th>Collateral Exposure</th>
+              <th>APY (now)</th>
+              <th>Interest Accrued ({earningsPeriod})</th>
+              <th>Collateral</th>
               <th>Warnings</th>
               <th>Actions</th>
             </tr>
@@ -309,7 +306,14 @@ export function PositionsSummaryTable({
                         />
                       </div>
                     </td>
-                    <td data-label="Total Earned">
+                    <td data-label="APY (now)">
+                      <div className="flex items-center justify-center">
+                        <span className="font-medium">
+                          {formatReadable(avgApy * 100)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td data-label={`Interest Accrued (${earningsPeriod})`}>
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">
                           {formatReadable(
@@ -324,10 +328,7 @@ export function PositionsSummaryTable({
                         <span>{groupedPosition.loanAsset}</span>
                       </div>
                     </td>
-                    <td data-label="Avg APY">
-                      <div className="text-center">{formatReadable(avgApy * 100)}%</div>
-                    </td>
-                    <td data-label="Collateral Exposure">
+                    <td data-label="Collateral">
                       <div className="flex items-center justify-center gap-1">
                         {groupedPosition.collaterals.length > 0 ? (
                           groupedPosition.collaterals.map((collateral, index) => (
@@ -378,7 +379,7 @@ export function PositionsSummaryTable({
                   <AnimatePresence>
                     {expandedRows.has(rowKey) && (
                       <tr>
-                        <td colSpan={9} className="p-0">
+                        <td colSpan={10} className="p-0">
                           <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: 'auto' }}

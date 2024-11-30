@@ -299,6 +299,12 @@ export type Market = {
       amountPerSuppliedToken: string;
       amountPerBorrowedToken: string;
     }[];
+    monthlySupplyApy: number;
+    monthlyBorrowApy: number;
+    dailySupplyApy: number;
+    dailyBorrowApy: number;
+    weeklySupplyApy: number;
+    weeklyBorrowApy: number;
   };
   warnings: MarketWarning[];
   badDebt?: {
