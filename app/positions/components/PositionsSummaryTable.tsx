@@ -141,8 +141,6 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
-  console.log('processedPositions', processedPositions);
-
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
@@ -210,12 +208,12 @@ export function PositionsSummaryTable({
             const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
 
             const formattedPrincipal = formatBalance(
-              position.totalPrincipal.toString(),
-              position.loanAssetDecimals,
+              groupedPosition.totalPrincipal.toString(),
+              groupedPosition.loanAssetDecimals,
             );
             const formattedEarned = formatBalance(
-              position.totalEarned.toString(),
-              position.loanAssetDecimals,
+              groupedPosition.totalEarned.toString(),
+              groupedPosition.loanAssetDecimals,
             );
 
             return (
@@ -251,7 +249,7 @@ export function PositionsSummaryTable({
                   <td data-label="Principal">
                     <div className="flex items-center justify-center gap-2">
                       <span className="font-medium">{formatReadable(Number(formattedPrincipal))}</span>
-                      <span>{position.loanAsset}</span>
+                      <span>{groupedPosition.loanAsset}</span>
                     </div>
                   </td>
                   <td data-label="Earned">
@@ -259,7 +257,7 @@ export function PositionsSummaryTable({
                       <span className={`font-medium ${Number(formattedEarned) > 0 ? 'text-green-500' : ''}`}>
                         {formatReadable(Number(formattedEarned))}
                       </span>
-                      <span>{position.loanAsset}</span>
+                      <span>{groupedPosition.loanAsset}</span>
                     </div>
                   </td>
                   <td data-label="Avg APY">

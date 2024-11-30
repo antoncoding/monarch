@@ -23,6 +23,13 @@ type PositionDeposit = {
   timestamp: string;
 };
 
+type PositionWithdraw = {
+  amount: string;
+  id: string;
+  timestamp: string;
+};
+
+
 type DetailedPosition = {
   id: string;
   market: {
@@ -60,24 +67,17 @@ const detailedPositionsQuery = `
       withdraws {
         amount
         timestamp
+        id
       }
       balance
     }
   }
 `;
 
-// Enhance MarketPosition type with principal and deposits
-type EnhancedMarketPosition = MarketPosition & {
-  principal?: string;
-  deposits?: PositionDeposit[];
-  earned?: string; // Difference between current assets and principal
-  balance?: string;
-};
-
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [data, setData] = useState<EnhancedMarketPosition[]>([]);
+  const [data, setData] = useState<MarketPosition[]>([]);
   const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
@@ -218,7 +218,25 @@ const useUserPositions = (user: string | undefined) => {
               (dp) => dp.market.id === position.market.uniqueKey,
             );
 
-            const enhanced: EnhancedMarketPosition = {
+            console.log('User position, \n', position, '\n detailed position',  detailedPosition, '\n ------------------------'); 
+
+            const totalDeposits = detailedPosition?.deposits.reduce(
+              (sum: bigint, deposit: PositionDeposit) => sum + BigInt(deposit.amount),
+              0n
+            );
+
+            const totalWithdraws = detailedPosition?.withdraws.reduce(
+              (sum: bigint, withdraw: PositionWithdraw) => sum + BigInt(withdraw.amount),
+              0n
+            );
+
+            console.log('totalDeposits', totalDeposits);
+            console.log('totalWithdraws', totalWithdraws);
+
+            const netPrincipal = totalDeposits - totalWithdraws;
+            const currentBalance = BigInt(position.supplyAssets);
+
+            const enhanced: MarketPosition = {
               ...position,
               market: {
                 ...position.market,
@@ -231,7 +249,8 @@ const useUserPositions = (user: string | undefined) => {
               enhanced.principal = details.principal;
               enhanced.earned = details.earned;
               enhanced.deposits = details.deposits;
-              enhanced.balance = details.balance;
+            } else {
+              console.log('No detailed position found for market', position.market.uniqueKey);
             }
 
             return enhanced;
