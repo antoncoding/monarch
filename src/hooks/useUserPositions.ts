@@ -36,16 +36,10 @@ type DetailedPosition = {
     id: string;
   };
   balance: string;
-  deposits: {
-    amount: string;
-    id: string;
-    timestamp: string;
-  }[];
-  withdraws: {
-    amount: string;
-    timestamp: string;
-  }[];
+  deposits: PositionDeposit[];
+  withdraws: PositionWithdraw[];
   side: 'SUPPLIER' | 'BORROWER';
+  realizedEarnings?: string;
 };
 
 const detailedPositionsQuery = `
@@ -96,15 +90,50 @@ const useUserPositions = (user: string | undefined) => {
 
     // Current balance from the position
     const currentBalance = BigInt(supplyAssets);
+    console.log('currentBalance', currentBalance)
 
-    // Calculate earned interest (current balance - (deposits - withdraws))
+    // Calculate net principal (total deposits - withdraws)
     const netPrincipal = totalDeposits - totalWithdraws;
-    const earned = currentBalance > netPrincipal ? currentBalance - netPrincipal : 0n;
+
+    // Calculate current position earnings
+    const currentEarned = currentBalance > netPrincipal ? currentBalance - netPrincipal : 0n;
+
+    // Calculate realized earnings from previous withdrawals
+    // For each withdrawal, check if it was more than the total deposits at that point
+    let realizedEarnings = 0n;
+    let runningDeposits = 0n;
+
+    // Sort all transactions by timestamp
+    const allTransactions = [
+      ...detailedPosition.deposits.map(d => ({ amount: BigInt(d.amount), timestamp: d.timestamp, type: 'deposit' as const })),
+      ...detailedPosition.withdraws.map(w => ({ amount: BigInt(w.amount), timestamp: w.timestamp, type: 'withdraw' as const }))
+    ].sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
+
+    // Calculate realized earnings by tracking running balance
+    for (const tx of allTransactions) {
+      if (tx.type === 'deposit') {
+        runningDeposits += tx.amount;
+      } else {
+        // If withdrawal amount is greater than running deposits, the difference is realized earnings
+        if (tx.amount > runningDeposits) {
+          realizedEarnings += tx.amount - runningDeposits;
+          runningDeposits = 0n;
+        } else {
+          runningDeposits -= tx.amount;
+        }
+      }
+    }
+
+    // Total lifetime earnings = realized earnings + current unrealized earnings
+    const totalLifetimeEarnings = realizedEarnings + currentEarned;
 
     return {
       principal: netPrincipal.toString(),
-      earned: earned.toString(),
+      earned: currentEarned.toString(),
+      totalLifetimeEarnings: totalLifetimeEarnings.toString(),
+      realizedEarnings: realizedEarnings.toString(),
       deposits: detailedPosition.deposits,
+      withdraws: detailedPosition.withdraws,
       balance: detailedPosition.balance,
     };
   };
@@ -230,12 +259,6 @@ const useUserPositions = (user: string | undefined) => {
               0n
             );
 
-            console.log('totalDeposits', totalDeposits);
-            console.log('totalWithdraws', totalWithdraws);
-
-            const netPrincipal = totalDeposits - totalWithdraws;
-            const currentBalance = BigInt(position.supplyAssets);
-
             const enhanced: MarketPosition = {
               ...position,
               market: {
@@ -248,7 +271,10 @@ const useUserPositions = (user: string | undefined) => {
               const details = calculatePositionDetails(detailedPosition, position.supplyAssets);
               enhanced.principal = details.principal;
               enhanced.earned = details.earned;
+              enhanced.totalLifetimeEarnings = details.totalLifetimeEarnings;
+              enhanced.realizedEarnings = details.realizedEarnings;
               enhanced.deposits = details.deposits;
+              enhanced.withdraws = details.withdraws;
             } else {
               console.log('No detailed position found for market', position.market.uniqueKey);
             }

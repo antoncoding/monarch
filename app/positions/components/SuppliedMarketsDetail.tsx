@@ -1,14 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tooltip } from '@nextui-org/tooltip';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { IoWarningOutline } from 'react-icons/io5';
+import { IoWarningOutline, IoInformationCircleOutline } from 'react-icons/io5';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
-
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
   setShowWithdrawModal: (show: boolean) => void;
@@ -43,7 +42,8 @@ export function SuppliedMarketsDetail({
   setShowSupplyModal,
   setSelectedPosition,
 }: SuppliedMarketsDetailProps) {
-  const sortedMarkets = [...groupedPosition.markets].sort(
+  // Sort active markets by size
+  const sortedActiveMarkets = [...groupedPosition.markets].sort(
     (a, b) =>
       Number(formatBalance(b.supplyAssets, b.market.loanAsset.decimals)) -
       Number(formatBalance(a.supplyAssets, a.market.loanAsset.decimals)),
@@ -59,10 +59,10 @@ export function SuppliedMarketsDetail({
 
   return (
     <motion.div
-      initial={{ height: 0 }}
-      animate={{ height: 'auto' }}
-      exit={{ height: 0 }}
-      transition={{ duration: 0.1 }}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
       className="overflow-hidden"
     >
       <div className="bg-surface bg-opacity-20 p-4">
@@ -104,6 +104,9 @@ export function SuppliedMarketsDetail({
             </div>
           </div>
         </div>
+
+        {/* Markets Table - Always visible */}
+        <div>
         <table className="no-hover-effect w-full font-zen">
           <thead className="table-header">
             <tr>
@@ -118,7 +121,7 @@ export function SuppliedMarketsDetail({
             </tr>
           </thead>
           <tbody className="table-body text-xs">
-            {sortedMarkets.map((position) => {
+            {sortedActiveMarkets.map((position) => {
               const suppliedAmount = Number(
                 formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
               );
@@ -146,14 +149,12 @@ export function SuppliedMarketsDetail({
                           <div className="h-4 w-4" />
                         )}
                       </div>
-                      {/* <Tooltip content="View on Explorer" placement="top"> */}
                       <Link
                         className="group flex items-center justify-center no-underline hover:underline"
                         href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
                       >
                         {position.market.uniqueKey.slice(2, 8)}
                       </Link>
-                      {/* </Tooltip> */}
                     </div>
                   </td>
                   <td data-label="Collateral" className="text-center">
@@ -225,6 +226,7 @@ export function SuppliedMarketsDetail({
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </motion.div>
   );

@@ -9,6 +9,9 @@ export type MarketPosition = {
   principal?: string;
   deposits?: PositionDeposit[];
   earned?: string;
+  realizedEarnings?: string;  // Earnings from closed positions
+  totalLifetimeEarnings?: string;  // Total earnings including both realized and current
+  withdraws?: PositionWithdraw[];  // Adding withdraws for historical tracking
 };
 
 export enum UserTxTypes {
@@ -208,6 +211,7 @@ export type GroupedPosition = {
   totalWeightedApy: number;
   totalPrincipal: bigint;
   totalEarned: bigint;
+  totalLifetimeEarnings: bigint;  // Total earnings including historical
   collaterals: {
     address: string;
     symbol: string;
@@ -350,6 +354,12 @@ export type MarketHistoricalData = {
 };
 
 type PositionDeposit = {
+  amount: string;
+  id: string;
+  timestamp: string;
+};
+
+type PositionWithdraw = {
   amount: string;
   id: string;
   timestamp: string;
