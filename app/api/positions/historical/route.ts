@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createPublicClient, http, Address } from 'viem';
 import { mainnet, base } from 'viem/chains';
 import morphoABI from '@/abis/morpho';
+import { MORPHO } from '@/utils/morpho';
 
 // Initialize Alchemy clients for each chain
 const mainnetClient = createPublicClient({
@@ -105,10 +106,6 @@ async function getPositionAtBlock(
   console.log(`Estimated block number: ${blockNumber} for timestamp ${timestamp}`);
 
   const client = chainId === 1 ? mainnetClient : baseClient;
-  const morphoAddress =
-    chainId === 1
-      ? '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb' // mainnet
-      : '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb'; // base (same address)
 
   try {
     // Get the actual block to get its precise timestamp
@@ -120,7 +117,7 @@ async function getPositionAtBlock(
 
     // First get the position data
     const positionArray = (await client.readContract({
-      address: morphoAddress as Address,
+      address: MORPHO,
       abi: morphoABI,
       functionName: 'position',
       args: [marketId as `0x${string}`, userAddress as Address],
@@ -149,7 +146,7 @@ async function getPositionAtBlock(
 
     // Only fetch market data if position has shares
     const marketArray = (await client.readContract({
-      address: morphoAddress as Address,
+      address: MORPHO,
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],

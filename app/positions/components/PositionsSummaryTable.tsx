@@ -220,6 +220,7 @@ export function PositionsSummaryTable({
           <DropdownTrigger>
             <button
               type="button"
+              aria-label="Select earnings period"
               className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
             >
               {earningsPeriod}

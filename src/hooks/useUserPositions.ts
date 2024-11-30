@@ -111,6 +111,8 @@ const useUserPositions = (user: string | undefined) => {
     async (isRefetch = false) => {
       if (!user) {
         console.error('Missing user address');
+        setLoading(false);
+        setIsRefetching(false);
         return;
       }
 
