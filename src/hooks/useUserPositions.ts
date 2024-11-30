@@ -4,70 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
-import { MarketPosition, UserTransaction } from '@/utils/types';
+import { MarketPosition, UserTransaction, UserTxTypes } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { usePositionSnapshot, PositionSnapshot } from './usePositionSnapshot';
 
-// Add API key constant
-const THEGRAPH_API_KEY = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
-console.log('THEGRAPH_API_KEY', THEGRAPH_API_KEY)
-
-// Add URL constants
-const SUBGRAPH_URLS = {
-  [SupportedNetworks.Base]: `https://gateway.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/71ZTy1veF9twER9CLMnPWeLQ7GZcwKsjmygejrgKirqs`,
-  [SupportedNetworks.Mainnet]: `https://gateway.thegraph.com/api/${THEGRAPH_API_KEY}/subgraphs/id/8Lz789DP5VKLXumTMTgygjU2xtuzx8AhbaacgN5PYCAs`,
-};
-
-// Add new types for the detailed position data
-type PositionDeposit = {
-  amount: string;
-  id: string;
-  timestamp: string;
-};
-
-type PositionWithdraw = {
-  amount: string;
-  id: string;
-  timestamp: string;
-};
-
-
-type DetailedPosition = {
-  id: string;
-  market: {
-    id: string;
-  };
-  deposits: PositionDeposit[];
-  withdraws: PositionWithdraw[];
-  side: 'SUPPLIER' | 'BORROWER';
-  realizedEarnings?: string;
-};
-
-const detailedPositionsQuery = `
-  query getDetailedPositions($address: String!, $chainId: Int) {
-    positions(where: {
-      account_in: [$address]
-      side_in: [SUPPLIER]
-    }) {
-      id
-      side
-      market {
-        id
-      }
-      deposits {
-        amount
-        timestamp
-        id
-      }
-      withdraws {
-        amount
-        timestamp
-        id
-      }
-    }
-  }
-`;
-
+export type PositionEarnings = {
+  lifetimeEarned: string;
+  last24hEarned: string;
+  last7dEarned: string;
+  last30dEarned: string;
+}
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -78,29 +24,29 @@ const useUserPositions = (user: string | undefined) => {
 
   const { fetchPositionSnapshot } = usePositionSnapshot();
 
-  const calculatePositionDetails = async (
-    detailedPosition: DetailedPosition,
-    supplyAssets: string,
-    marketId: string,
+  const calculatePositionEarnings = async (
+    position: MarketPosition,
+    transactions: UserTransaction[],
     userAddress: Address,
     chainId: number
   ) => {
+    const currentBalance = BigInt(position.supplyAssets);
+    const marketId = position.market.uniqueKey;
 
-    // Calculate total deposits and withdraws
-    const totalDeposits = detailedPosition.deposits.reduce(
-      (sum: bigint, deposit: PositionDeposit) => sum + BigInt(deposit.amount),
-      0n
+    // Filter transactions for this specific market
+    const marketTxs = transactions.filter(tx => 
+      tx.data?.market?.uniqueKey === marketId
     );
 
-    const totalWithdraws = detailedPosition.withdraws.reduce(
-      (sum: bigint, withdraw: PositionWithdraw) => sum + BigInt(withdraw.amount),
-      0n
-    );
+    // Calculate lifetime earnings using all transactions
+    const totalDeposits = marketTxs
+      .filter(tx => tx.type === UserTxTypes.MarketSupply)
+      .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
-    // Current balance from the position
-    const currentBalance = BigInt(supplyAssets);
-  
-    // Calculate lifetime earnings (current balance + total withdraws) - (total deposits)
+    const totalWithdraws = marketTxs
+      .filter(tx => tx.type === UserTxTypes.MarketWithdraw)
+      .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
+
     const lifetimeEarned = currentBalance + totalWithdraws - totalDeposits;
 
     // Get historical snapshots
@@ -111,83 +57,53 @@ const useUserPositions = (user: string | undefined) => {
       fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60) // 30d ago
     ]);
 
-    // Calculate earnings for each period
-    const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
-
-    const calculateEarningsFromSnapshot = (snapshot: PositionSnapshot | null) => {
+    const calculateEarningsFromSnapshot = (snapshot: PositionSnapshot | null, timestamp: number) => {
       if (!snapshot) return '0';
 
       const snapshotBalance = BigInt(snapshot.supplyAssets);
       
-      const depositsAfterSnapshot = detailedPosition.deposits
-        .filter(d => Number(d.timestamp) > snapshot.timestamp)
-        .reduce((sum, d) => sum + BigInt(d.amount), 0n);
-      const withdrawsAfterSnapshot = detailedPosition.withdraws
-        .filter(w => Number(w.timestamp) > snapshot.timestamp)
-        .reduce((sum, w) => sum + BigInt(w.amount), 0n);
-    
-      const earned = (currentBalance + withdrawsAfterSnapshot) - (snapshotBalance + depositsAfterSnapshot);
+      // Get transactions after snapshot timestamp
+      const txsAfterSnapshot = marketTxs.filter(tx => Number(tx.timestamp) > timestamp);
+      
+      const depositsAfter = txsAfterSnapshot
+        .filter(tx => tx.type === UserTxTypes.MarketSupply)
+        .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
-      // print everything for debugging if earned < 0
-      if (earned < 0) {
-        console.log('snapshot          \t', snapshot);
-        console.log('snapshotBalance   \t', snapshotBalance);
-        console.log('depositsAfterSnapshot\t', depositsAfterSnapshot);
-        console.log('withdrawsAfterSnapshot\t', withdrawsAfterSnapshot);
-        console.log('currentBalance    \t', currentBalance);
+      const withdrawsAfter = txsAfterSnapshot
+        .filter(tx => tx.type === UserTxTypes.MarketWithdraw)
+        .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
+    
+      const earned = (currentBalance + withdrawsAfter) - (snapshotBalance + depositsAfter);
+
+      if (earned < 0n) {
+        console.log('Negative earnings detected:', {
+          currentBalance: currentBalance.toString(),
+          snapshotBalance: snapshotBalance.toString(),
+          depositsAfter: depositsAfter.toString(),
+          withdrawsAfter: withdrawsAfter.toString(),
+          earned: earned.toString(),
+          timestamp,
+          marketId
+        });
       }
 
       return earned.toString();
     };
 
-    return {
-      earned: {
-        lifetimeEarned: lifetimeEarned.toString(),
-        last24hEarned: calculateEarningsFromSnapshot(snapshot24h),
-        last7dEarned: calculateEarningsFromSnapshot(snapshot7d),
-        last30dEarned: calculateEarningsFromSnapshot(snapshot30d)
-      },
-      deposits: detailedPosition.deposits,
-      withdraws: detailedPosition.withdraws,
-    };
-  };
-
-  const fetchDetailedPositions = async (address: string, chainId: number) => {
-    const subgraphUrl = SUBGRAPH_URLS[chainId as SupportedNetworks];
-    if (!subgraphUrl) {
-      console.error(`No subgraph URL for chain ID ${chainId}`);
-      return [];
-    }
-
-    const response = await fetch(subgraphUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: detailedPositionsQuery,
-        variables: {
-          address: address.toLowerCase(),
-          chainId,
-        },
-      }),
-    });
-
-    const result = await response.json();
-
-    // Check for errors in the response
-    if (result.errors) {
-      console.error('Subgraph query errors:', result.errors);
-      return [];
-    }
+    const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
     
-    return result.data?.positions ?? [];
+    return {
+      lifetimeEarned: lifetimeEarned.toString(),
+      last24hEarned: calculateEarningsFromSnapshot(snapshot24h, now - 24 * 60 * 60),
+      last7dEarned: calculateEarningsFromSnapshot(snapshot7d, now - 7 * 24 * 60 * 60),
+      last30dEarned: calculateEarningsFromSnapshot(snapshot30d, now - 30 * 24 * 60 * 60)
+    };
   };
 
   const fetchData = useCallback(
     async (isRefetch = false) => {
-      if (!user || !THEGRAPH_API_KEY) {
-        console.error('Missing user address or API key');
+      if (!user) {
+        console.error('Missing user address');
         return;
       }
 
@@ -198,7 +114,7 @@ const useUserPositions = (user: string | undefined) => {
           setLoading(true);
         }
 
-        // Fetch basic position data
+        // Fetch position data from both networks
         const [responseMainnet, responseBase] = await Promise.all([
           fetch('https://blue-api.morpho.org/graphql', {
             method: 'POST',
@@ -228,21 +144,13 @@ const useUserPositions = (user: string | undefined) => {
           }),
         ]);
 
-        // Fetch detailed position data with new URLs
-        const [detailedMainnet, detailedBase] = await Promise.all([
-          fetchDetailedPositions(user, SupportedNetworks.Mainnet),
-          fetchDetailedPositions(user, SupportedNetworks.Base),
-        ]);
-
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
         const marketPositions: MarketPosition[] = [];
         const transactions: UserTransaction[] = [];
 
-        // Combine all detailed positions
-        const allDetailedPositions = [...detailedMainnet, ...detailedBase];
-
+        // Collect positions and transactions
         for (const result of [result1, result2]) {
           if (result.data?.userByAddress) {
             marketPositions.push(...(result.data.userByAddress.marketPositions as MarketPosition[]));
@@ -253,38 +161,34 @@ const useUserPositions = (user: string | undefined) => {
           }
         }
 
-        // Enhance market positions with detailed data
-        const enhancedPositions = marketPositions
-          .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
-          .map(async (position: MarketPosition) => {
-            const detailedPosition = allDetailedPositions.find(
-              (dp) => dp.market.id === position.market.uniqueKey,
-            );
+        // Sort transactions by timestamp (newest first)
+        transactions.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
 
-            if (detailedPosition) {
-              console.log('market', position.market.loanAsset.symbol, '-', position.market.collateralAsset.symbol);
-              const details = await calculatePositionDetails(
-                detailedPosition, position.supplyAssets, position.market.uniqueKey, user as Address, position.market.morphoBlue.chain.id);
+        // Process positions and calculate earnings
+        const enhancedPositions = await Promise.all(
+          marketPositions
+            .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
+            .map(async (position: MarketPosition) => {
+              const earnings = await calculatePositionEarnings(
+                position,
+                transactions,
+                user as Address,
+                position.market.morphoBlue.chain.id
+              );
+
               return {
                 ...position,
                 market: {
                   ...position.market,
                   warningsWithDetail: getMarketWarningsWithDetail(position.market),
                 },
-                earned: details.earned,
-                deposits: details.deposits,
-                withdraws: details.withdraws,
+                earned: earnings
               };
-            } else {
-              console.log('No detailed position found for market', position.market.uniqueKey);
-              return position;
-            }
-          });
-
-        const resolvedPositions = await Promise.all(enhancedPositions);
+            })
+        );
 
         setHistory(transactions);
-        setData(resolvedPositions);
+        setData(enhancedPositions);
       } catch (_error) {
         console.error('Error fetching positions:', _error);
         setError(_error);
@@ -293,7 +197,7 @@ const useUserPositions = (user: string | undefined) => {
         setIsRefetching(false);
       }
     },
-    [user],
+    [user, fetchPositionSnapshot],
   );
 
   useEffect(() => {
