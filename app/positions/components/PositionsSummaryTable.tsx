@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Spinner } from '@nextui-org/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { GrRefresh } from 'react-icons/gr';
+import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -16,6 +16,13 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+
+export enum EarningsPeriod {
+  All = 'all',
+  Day = '1D',
+  Week = '7D',
+  Month = '30D',
+}
 
 type PositionsSummaryTableProps = {
   marketPositions: MarketPosition[];
@@ -39,68 +46,112 @@ export function PositionsSummaryTable({
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
+  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
+
+  const getEarningsForPeriod = (position: MarketPosition) => {
+    if (!position.earned) return '0';
+
+    switch (earningsPeriod) {
+      case EarningsPeriod.All:
+        return position.earned.lifetimeEarned;
+      case EarningsPeriod.Day:
+        return position.earned.last24hEarned;
+      case EarningsPeriod.Week:
+        return position.earned.last7dEarned;
+      case EarningsPeriod.Month:
+        return position.earned.last30dEarned;
+      default:
+        return '0';
+    }
+  };
+
+  const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
+    return (
+      groupedPosition.markets
+        .reduce(
+          (total, position) => {
+            const earnings = getEarningsForPeriod(position);
+            if (earnings === null) return null;
+            return total === null ? BigInt(earnings) : total + BigInt(earnings);
+          },
+          null as bigint | null,
+        )
+        ?.toString() ?? null
+    );
+  };
+
+  const periodLabels: Record<EarningsPeriod, string> = {
+    [EarningsPeriod.All]: 'All Time',
+    [EarningsPeriod.Day]: '1D',
+    [EarningsPeriod.Week]: '7D',
+    [EarningsPeriod.Month]: '30D',
+  };
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
-    return marketPositions.reduce((acc: GroupedPosition[], position) => {
-      const loanAssetAddress = position.market.loanAsset.address;
-      const loanAssetDecimals = position.market.loanAsset.decimals;
-      const chainId = position.market.morphoBlue.chain.id;
+    return marketPositions
+      .reduce((acc: GroupedPosition[], position) => {
+        const loanAssetAddress = position.market.loanAsset.address;
+        const loanAssetDecimals = position.market.loanAsset.decimals;
+        const chainId = position.market.morphoBlue.chain.id;
 
-      let groupedPosition = acc.find(
-        (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
-      );
-
-      if (!groupedPosition) {
-        groupedPosition = {
-          loanAsset: position.market.loanAsset.symbol || 'Unknown',
-          loanAssetAddress,
-          loanAssetDecimals,
-          chainId,
-          totalSupply: 0,
-          totalWeightedApy: 0,
-          collaterals: [],
-          markets: [],
-          processedCollaterals: [],
-          allWarnings: [], // Initialize allWarnings as an empty array
-        };
-        acc.push(groupedPosition);
-      }
-
-      groupedPosition.markets.push(position);
-
-      // Combine warnings from all markets
-      groupedPosition.allWarnings = [
-        ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
-      ] as WarningWithDetail[];
-
-      const supplyAmount = Number(
-        formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
-      );
-      groupedPosition.totalSupply += supplyAmount;
-
-      const weightedApy = supplyAmount * position.market.state.supplyApy;
-      groupedPosition.totalWeightedApy += weightedApy;
-
-      const collateralAddress = position.market.collateralAsset?.address;
-      const collateralSymbol = position.market.collateralAsset?.symbol;
-
-      if (collateralAddress && collateralSymbol) {
-        const existingCollateral = groupedPosition.collaterals.find(
-          (c) => c.address === collateralAddress,
+        let groupedPosition = acc.find(
+          (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
         );
-        if (existingCollateral) {
-          existingCollateral.amount += supplyAmount;
-        } else {
-          groupedPosition.collaterals.push({
-            address: collateralAddress,
-            symbol: collateralSymbol,
-            amount: supplyAmount,
-          });
-        }
-      }
 
-      return acc;
-    }, []);
+        if (!groupedPosition) {
+          groupedPosition = {
+            loanAsset: position.market.loanAsset.symbol || 'Unknown',
+            loanAssetAddress,
+            loanAssetDecimals,
+            chainId,
+            totalSupply: 0,
+            totalWeightedApy: 0,
+            collaterals: [],
+            markets: [],
+            processedCollaterals: [],
+            allWarnings: [],
+          };
+          acc.push(groupedPosition);
+        }
+
+        groupedPosition.markets.push(position);
+
+        groupedPosition.allWarnings = [
+          ...new Set([
+            ...groupedPosition.allWarnings,
+            ...(position.market.warningsWithDetail || []),
+          ]),
+        ] as WarningWithDetail[];
+
+        const supplyAmount = Number(
+          formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+        );
+        groupedPosition.totalSupply += supplyAmount;
+
+        const weightedApy = supplyAmount * position.market.state.supplyApy;
+        groupedPosition.totalWeightedApy += weightedApy;
+
+        const collateralAddress = position.market.collateralAsset?.address;
+        const collateralSymbol = position.market.collateralAsset?.symbol;
+
+        if (collateralAddress && collateralSymbol) {
+          const existingCollateral = groupedPosition.collaterals.find(
+            (c) => c.address === collateralAddress,
+          );
+          if (existingCollateral) {
+            existingCollateral.amount += supplyAmount;
+          } else {
+            groupedPosition.collaterals.push({
+              address: collateralAddress,
+              symbol: collateralSymbol,
+              amount: supplyAmount,
+            });
+          }
+        }
+
+        return acc;
+      }, [])
+      .sort((a, b) => b.totalSupply - a.totalSupply);
   }, [marketPositions]);
 
   const processedPositions = useMemo(() => {
@@ -133,9 +184,6 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
-  console.log('processedPositions', processedPositions);
-
-  // Update selectedGroupedPosition when groupedPositions change, don't depend on selectedGroupedPosition
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
@@ -147,7 +195,6 @@ export function PositionsSummaryTable({
         setSelectedGroupedPosition(updatedPosition);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processedPositions]);
 
   const toggleRow = (rowKey: string) => {
@@ -168,147 +215,185 @@ export function PositionsSummaryTable({
 
   return (
     <div className="space-y-4 overflow-x-auto">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl">Your Supply</h2>
-          {isRefetching && <Spinner size="sm" />}
-        </div>
+      <div className="mb-4 flex items-center justify-end gap-2">
+        <Dropdown>
+          <DropdownTrigger>
+            <button
+              type="button"
+              aria-label="Select earnings period"
+              className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+            >
+              {earningsPeriod}
+              <IoChevronDownOutline className="h-4 w-4" />
+            </button>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Time period selection"
+            onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
+          >
+            {Object.entries(periodLabels).map(([period, label]) => (
+              <DropdownItem key={period}>{label}</DropdownItem>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
         <button
-          onClick={handleManualRefresh}
-          disabled={isRefetching}
           type="button"
-          className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+          className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+          onClick={handleManualRefresh}
         >
-          <GrRefresh size={16} />
+          <IoRefreshOutline className="h-4 w-4" />
           Refresh
         </button>
       </div>
-      <table className="responsive w-full min-w-[640px] font-zen">
-        <thead className="table-header">
-          <tr>
-            <th className="w-10" />
-            <th className="w-10">Network</th>
-            <th>Size</th>
-            <th>Avg APY</th>
-            <th>Collateral Exposure</th>
-            <th>Warnings</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody className="table-body text-sm">
-          {processedPositions.map((groupedPosition) => {
-            const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
-            const isExpanded = expandedRows.has(rowKey);
-            const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+      <div className="bg-surface overflow-hidden rounded">
+        <table className="responsive w-full min-w-[640px] font-zen">
+          <thead className="table-header">
+            <tr className="text-secondary">
+              <th className="w-10" />
+              <th className="w-10">Network</th>
+              <th>Size</th>
+              <th>APY (now)</th>
+              <th>Interest Accrued ({earningsPeriod})</th>
+              <th>Collateral</th>
+              <th>Warnings</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody className="table-body text-sm">
+            {processedPositions.map((groupedPosition) => {
+              const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
+              const isExpanded = expandedRows.has(rowKey);
+              const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
 
-            return (
-              <React.Fragment key={rowKey}>
-                <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(rowKey)}>
-                  <td className="w-10 text-center">
-                    {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                  </td>
-                  <td className="w-10">
-                    <div className="flex items-center justify-center">
-                      <Image
-                        src={getNetworkImg(groupedPosition.chainId) ?? ''}
-                        alt={`Chain ${groupedPosition.chainId}`}
-                        width={24}
-                        height={24}
-                      />
-                    </div>
-                  </td>
-                  <td data-label="Size">
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="font-medium">
-                        {formatReadable(groupedPosition.totalSupply)}
-                      </span>
-                      <span>{groupedPosition.loanAsset}</span>
-                      <TokenIcon
-                        address={groupedPosition.loanAssetAddress}
-                        chainId={groupedPosition.chainId}
-                        width={16}
-                        height={16}
-                      />
-                    </div>
-                  </td>
-                  <td data-label="Avg APY">
-                    <div className="text-center">{formatReadable(avgApy * 100)}%</div>
-                  </td>
-                  <td data-label="Collateral Exposure">
-                    <div className="flex items-center justify-center gap-1">
-                      {groupedPosition.collaterals.length > 0 ? (
-                        groupedPosition.collaterals.map((collateral, index) => (
-                          <TokenIcon
-                            key={`${collateral.address}-${index}`}
-                            address={collateral.address}
-                            chainId={groupedPosition.chainId}
-                            width={20}
-                            height={20}
-                          />
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-500">No known collaterals</span>
-                      )}
-                    </div>
-                  </td>
-                  <td data-label="Warnings" className="align-middle">
-                    <div className="flex items-center justify-center gap-1">
-                      <MarketAssetIndicator
-                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                        isBatched
-                      />
-                      <MarketOracleIndicator
-                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                        isBatched
-                      />
-                      <MarketDebtIndicator
-                        market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                        isBatched
-                      />
-                    </div>
-                  </td>
-                  <td data-label="Actions" className="text-right">
-                    <div className="flex space-x-2">
-                      <button
-                        type="button"
-                        className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
-                        onClick={() => {
-                          setSelectedGroupedPosition(groupedPosition);
-                          setShowRebalanceModal(true);
-                        }}
-                      >
-                        Rebalance
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                <AnimatePresence>
-                  {expandedRows.has(rowKey) && (
-                    <tr>
-                      <td colSpan={7} className="p-0">
-                        <motion.div
-                          initial={{ height: 0 }}
-                          animate={{ height: 'auto' }}
-                          exit={{ height: 0 }}
-                          transition={{ duration: 0.1 }}
-                          className="overflow-hidden"
+              const earnings = getGroupedEarnings(groupedPosition);
+
+              return (
+                <React.Fragment key={rowKey}>
+                  <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(rowKey)}>
+                    <td className="w-10 text-center">
+                      {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                    </td>
+                    <td className="w-10">
+                      <div className="flex items-center justify-center">
+                        <Image
+                          src={getNetworkImg(groupedPosition.chainId) ?? ''}
+                          alt={`Chain ${groupedPosition.chainId}`}
+                          width={24}
+                          height={24}
+                        />
+                      </div>
+                    </td>
+                    <td data-label="Size">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-medium">
+                          {formatReadable(groupedPosition.totalSupply)}
+                        </span>
+                        <span>{groupedPosition.loanAsset}</span>
+                        <TokenIcon
+                          address={groupedPosition.loanAssetAddress}
+                          chainId={groupedPosition.chainId}
+                          width={16}
+                          height={16}
+                        />
+                      </div>
+                    </td>
+                    <td data-label="APY (now)">
+                      <div className="flex items-center justify-center">
+                        <span className="font-medium">{formatReadable(avgApy * 100)}%</span>
+                      </div>
+                    </td>
+                    <td data-label={`Interest Accrued (${earningsPeriod})`}>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-medium">
+                          {(() => {
+                            if (earnings === null) return '-';
+                            return (
+                              formatReadable(
+                                Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)),
+                              ) +
+                              ' ' +
+                              groupedPosition.loanAsset
+                            );
+                          })()}
+                        </span>
+                      </div>
+                    </td>
+                    <td data-label="Collateral">
+                      <div className="flex items-center justify-center gap-1">
+                        {groupedPosition.collaterals.length > 0 ? (
+                          groupedPosition.collaterals.map((collateral, index) => (
+                            <TokenIcon
+                              key={`${collateral.address}-${index}`}
+                              address={collateral.address}
+                              chainId={groupedPosition.chainId}
+                              width={20}
+                              height={20}
+                            />
+                          ))
+                        ) : (
+                          <span className="text-sm text-gray-500">No known collaterals</span>
+                        )}
+                      </div>
+                    </td>
+                    <td data-label="Warnings" className="align-middle">
+                      <div className="flex items-center justify-center gap-1">
+                        <MarketAssetIndicator
+                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
+                          isBatched
+                        />
+                        <MarketOracleIndicator
+                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
+                          isBatched
+                        />
+                        <MarketDebtIndicator
+                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
+                          isBatched
+                        />
+                      </div>
+                    </td>
+                    <td data-label="Actions" className="px-4 py-3 text-right text-primary">
+                      <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                          onClick={() => {
+                            setSelectedGroupedPosition(groupedPosition);
+                            setShowRebalanceModal(true);
+                          }}
                         >
-                          <SuppliedMarketsDetail
-                            groupedPosition={groupedPosition}
-                            setShowWithdrawModal={setShowWithdrawModal}
-                            setShowSupplyModal={setShowSupplyModal}
-                            setSelectedPosition={setSelectedPosition}
-                          />
-                        </motion.div>
-                      </td>
-                    </tr>
-                  )}
-                </AnimatePresence>
-              </React.Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+                          Rebalance
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <AnimatePresence>
+                    {expandedRows.has(rowKey) && (
+                      <tr className="bg-surface">
+                        <td colSpan={10} className="bg-surface">
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: 'auto' }}
+                            exit={{ height: 0 }}
+                            transition={{ duration: 0.1 }}
+                            className="overflow-hidden"
+                          >
+                            <SuppliedMarketsDetail
+                              groupedPosition={groupedPosition}
+                              setShowWithdrawModal={setShowWithdrawModal}
+                              setShowSupplyModal={setShowSupplyModal}
+                              setSelectedPosition={setSelectedPosition}
+                            />
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                  </AnimatePresence>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       {showRebalanceModal && selectedGroupedPosition && (
         <RebalanceModal
           groupedPosition={selectedGroupedPosition}

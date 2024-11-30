@@ -6,6 +6,7 @@ export type MarketPosition = {
   borrowAssets: string;
   borrowAssetsUsd: number;
   market: Market; // Now using the full Market type
+  earned?: PositionEarnings;
 };
 
 export enum UserTxTypes {
@@ -196,6 +197,13 @@ export type RebalanceAction = {
   shares?: bigint;
 };
 
+export type PositionEarnings = {
+  lifetimeEarned: string;
+  last24hEarned: string | null;
+  last7dEarned: string | null;
+  last30dEarned: string | null;
+};
+
 export type GroupedPosition = {
   loanAsset: string;
   loanAssetAddress: string;
@@ -203,11 +211,18 @@ export type GroupedPosition = {
   chainId: number;
   totalSupply: number;
   totalWeightedApy: number;
-  collaterals: { address: string; symbol: string | undefined; amount: number }[];
+
+  earned?: PositionEarnings;
+
+  collaterals: {
+    address: string;
+    symbol: string;
+    amount: number;
+  }[];
   markets: MarketPosition[];
   processedCollaterals: {
     address: string;
-    symbol: string | undefined;
+    symbol: string;
     amount: number;
     percentage: number;
   }[];
@@ -280,6 +295,12 @@ export type Market = {
       amountPerSuppliedToken: string;
       amountPerBorrowedToken: string;
     }[];
+    monthlySupplyApy: number;
+    monthlyBorrowApy: number;
+    dailySupplyApy: number;
+    dailyBorrowApy: number;
+    weeklySupplyApy: number;
+    weeklyBorrowApy: number;
   };
   warnings: MarketWarning[];
   badDebt?: {
