@@ -1,4 +1,3 @@
-import { Market } from '@/utils/types';
 import { useCallback } from 'react';
 import { Address } from 'viem';
 
@@ -8,6 +7,16 @@ export type PositionSnapshot = {
   borrowAssets: string;
   borrowShares: string;
   timestamp: number;
+};
+
+type ApiResponse = {
+  position: {
+    supplyAssets: string;
+    supplyShares: string;
+    borrowAssets: string;
+    borrowShares: string;
+    timestamp: number;
+  } | null;
 };
 
 export function usePositionSnapshot() {
@@ -34,12 +43,12 @@ export function usePositionSnapshot() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as { error?: string };
         console.error('Failed to fetch position snapshot:', errorData);
         return null;
       }
 
-      const data = await response.json();
+      const data = await response.json() as ApiResponse;
       
       // If position is empty, return zeros
       if (!data.position) {

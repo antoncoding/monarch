@@ -1,8 +1,8 @@
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Address } from 'viem';
 
-interface AvatarProps {
+type AvatarProps = {
   address: Address;
   size?: number;
 }
@@ -22,7 +22,7 @@ export function Avatar({ address, size = 30 }: AvatarProps) {
       }
     };
 
-    checkEffigyAvailability();
+    void checkEffigyAvailability();
   }, []);
 
   return (

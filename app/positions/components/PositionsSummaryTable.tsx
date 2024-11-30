@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { GrRefresh } from 'react-icons/gr';
+import { IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -16,7 +17,6 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { IoChevronDownOutline } from 'react-icons/io5';
 
 type EarningsPeriod = 'lifetime' | '24h' | '7d' | '30d';
 
@@ -176,6 +176,9 @@ export function PositionsSummaryTable({
       return { ...position, processedCollaterals };
     });
   }, [groupedPositions]);
+
+  console.log('marketPositions:', marketPositions);
+  console.log('Processed positions:', groupedPositions);
 
   useEffect(() => {
     if (selectedGroupedPosition) {

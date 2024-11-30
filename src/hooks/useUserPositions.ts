@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useState, useEffect, useCallback } from 'react';
+import { Address } from 'viem';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
-import { Address } from 'viem';
 import { usePositionSnapshot, PositionSnapshot } from './usePositionSnapshot';
 
 // Add API key constant
@@ -64,23 +64,10 @@ const detailedPositionsQuery = `
         timestamp
         id
       }
-      balance
     }
   }
 `;
 
-interface PositionEarnings {
-  lifetimeEarned: string;
-  last24hEarned: string;
-  last7dEarned: string;
-  last30dEarned: string;
-}
-
-interface PositionDetails {
-  earned: PositionEarnings;
-  deposits: PositionDeposit[];
-  withdraws: PositionWithdraw[];
-}
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -129,7 +116,9 @@ const useUserPositions = (user: string | undefined) => {
 
     const calculateEarningsFromSnapshot = (snapshot: PositionSnapshot | null) => {
       if (!snapshot) return '0';
+
       const snapshotBalance = BigInt(snapshot.supplyAssets);
+      
       const depositsAfterSnapshot = detailedPosition.deposits
         .filter(d => Number(d.timestamp) > snapshot.timestamp)
         .reduce((sum, d) => sum + BigInt(d.amount), 0n);
@@ -138,6 +127,16 @@ const useUserPositions = (user: string | undefined) => {
         .reduce((sum, w) => sum + BigInt(w.amount), 0n);
     
       const earned = (currentBalance + withdrawsAfterSnapshot) - (snapshotBalance + depositsAfterSnapshot);
+
+      // print everything for debugging if earned < 0
+      if (earned < 0) {
+        console.log('snapshot          \t', snapshot);
+        console.log('snapshotBalance   \t', snapshotBalance);
+        console.log('depositsAfterSnapshot\t', depositsAfterSnapshot);
+        console.log('withdrawsAfterSnapshot\t', withdrawsAfterSnapshot);
+        console.log('currentBalance    \t', currentBalance);
+      }
+
       return earned.toString();
     };
 
