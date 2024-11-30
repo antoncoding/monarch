@@ -106,130 +106,128 @@ export function SuppliedMarketsDetail({
         </div>
 
         {/* Markets Table - Always visible */}
-        <div>
-          <table className="no-hover-effect w-full font-zen">
-            <thead className="table-header">
-              <tr>
-                <th>Market</th>
-                <th>Collateral</th>
-                <th>Oracle</th>
-                <th>LLTV</th>
-                <th>APY</th>
-                <th>Supplied</th>
-                <th>% of Portfolio</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="table-body text-xs">
-              {sortedActiveMarkets.map((position) => {
-                const suppliedAmount = Number(
-                  formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
-                );
-                const percentageOfPortfolio =
-                  totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
-                const warningColor = getWarningColor(position.market.warningsWithDetail);
+        <table className="no-hover-effect w-full font-zen">
+          <thead className="table-header">
+            <tr>
+              <th>Market</th>
+              <th>Collateral</th>
+              <th>Oracle</th>
+              <th>LLTV</th>
+              <th>APY</th>
+              <th>Supplied</th>
+              <th>% of Portfolio</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody className="table-body text-xs">
+            {sortedActiveMarkets.map((position) => {
+              const suppliedAmount = Number(
+                formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+              );
+              const percentageOfPortfolio =
+                totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
+              const warningColor = getWarningColor(position.market.warningsWithDetail);
 
-                return (
-                  <tr key={position.market.uniqueKey} className="gap-1">
-                    <td data-label="Market" className="text-center">
-                      <div className="flex items-center justify-center">
-                        <div className="mr-1 w-4">
-                          {position.market.warningsWithDetail.length > 0 ? (
-                            <Tooltip
-                              content={
-                                <WarningTooltip warnings={position.market.warningsWithDetail} />
-                              }
-                              placement="top"
-                            >
-                              <div>
-                                <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
-                              </div>
-                            </Tooltip>
-                          ) : (
-                            <div className="h-4 w-4" />
-                          )}
-                        </div>
-                        <Link
-                          className="group flex items-center justify-center no-underline hover:underline"
-                          href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
-                        >
-                          {position.market.uniqueKey.slice(2, 8)}
-                        </Link>
+              return (
+                <tr key={position.market.uniqueKey} className="gap-1">
+                  <td data-label="Market" className="text-center">
+                    <div className="flex items-center justify-center">
+                      <div className="mr-1 w-4">
+                        {position.market.warningsWithDetail.length > 0 ? (
+                          <Tooltip
+                            content={
+                              <WarningTooltip warnings={position.market.warningsWithDetail} />
+                            }
+                            placement="top"
+                          >
+                            <div>
+                              <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
+                            </div>
+                          </Tooltip>
+                        ) : (
+                          <div className="h-4 w-4" />
+                        )}
                       </div>
-                    </td>
-                    <td data-label="Collateral" className="text-center">
-                      {position.market.collateralAsset ? (
-                        <div className="flex items-center justify-center gap-1">
-                          <TokenIcon
-                            address={position.market.collateralAsset.address}
-                            chainId={position.market.morphoBlue.chain.id}
-                            width={18}
-                            height={18}
-                          />
-                          {position.market.collateralAsset.symbol}
-                        </div>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td data-label="Oracle" className="text-center">
-                      <div className="flex justify-center">
-                        <OracleVendorBadge
-                          oracleData={position.market.oracle ? position.market.oracle.data : null}
-                          useTooltip
+                      <Link
+                        className="group flex items-center justify-center no-underline hover:underline"
+                        href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
+                      >
+                        {position.market.uniqueKey.slice(2, 8)}
+                      </Link>
+                    </div>
+                  </td>
+                  <td data-label="Collateral" className="text-center">
+                    {position.market.collateralAsset ? (
+                      <div className="flex items-center justify-center gap-1">
+                        <TokenIcon
+                          address={position.market.collateralAsset.address}
+                          chainId={position.market.morphoBlue.chain.id}
+                          width={18}
+                          height={18}
+                        />
+                        {position.market.collateralAsset.symbol}
+                      </div>
+                    ) : (
+                      'N/A'
+                    )}
+                  </td>
+                  <td data-label="Oracle" className="text-center">
+                    <div className="flex justify-center">
+                      <OracleVendorBadge
+                        oracleData={position.market.oracle ? position.market.oracle.data : null}
+                        useTooltip
+                      />
+                    </div>
+                  </td>
+                  <td data-label="LLTV" className="text-center">
+                    {formatBalance(position.market.lltv, 16)}%
+                  </td>
+                  <td data-label="APY" className="text-center">
+                    {formatReadable(position.market.dailyApys.netSupplyApy * 100)}%
+                  </td>
+                  <td data-label="Supplied" className="text-center">
+                    {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
+                  </td>
+                  <td data-label="% of Portfolio" className="text-center">
+                    <div className="flex items-center">
+                      <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
+                        <div
+                          className="h-full rounded-full bg-blue-500"
+                          style={{ width: `${percentageOfPortfolio}%` }}
                         />
                       </div>
-                    </td>
-                    <td data-label="LLTV" className="text-center">
-                      {formatBalance(position.market.lltv, 16)}%
-                    </td>
-                    <td data-label="APY" className="text-center">
-                      {formatReadable(position.market.dailyApys.netSupplyApy * 100)}%
-                    </td>
-                    <td data-label="Supplied" className="text-center">
-                      {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
-                    </td>
-                    <td data-label="% of Portfolio" className="text-center">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
-                          <div
-                            className="h-full rounded-full bg-blue-500"
-                            style={{ width: `${percentageOfPortfolio}%` }}
-                          />
-                        </div>
-                        <span className="whitespace-nowrap">
-                          {formatReadable(percentageOfPortfolio)}%
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="Actions" className="flex justify-center gap-2 text-right">
-                      <button
-                        type="button"
-                        className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
-                        onClick={() => {
-                          setSelectedPosition(position);
-                          setShowWithdrawModal(true);
-                        }}
-                      >
-                        Withdraw
-                      </button>
-                      <button
-                        type="button"
-                        className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
-                        onClick={() => {
-                          setSelectedPosition(position);
-                          setShowSupplyModal(true);
-                        }}
-                      >
-                        Supply
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <span className="whitespace-nowrap">
+                        {formatReadable(percentageOfPortfolio)}%
+                      </span>
+                    </div>
+                  </td>
+                  <td data-label="Actions" className="flex justify-center gap-2 text-right">
+                    <button
+                      type="button"
+                      className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
+                      onClick={() => {
+                        setSelectedPosition(position);
+                        setShowWithdrawModal(true);
+                      }}
+                    >
+                      Withdraw
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
+                      onClick={() => {
+                        setSelectedPosition(position);
+                        setShowSupplyModal(true);
+                      }}
+                    >
+                      Supply
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </motion.div>
   );
