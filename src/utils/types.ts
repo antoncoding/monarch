@@ -8,7 +8,7 @@ export type MarketPosition = {
   market: Market; // Now using the full Market type
   principal?: string;
   deposits?: PositionDeposit[];
-  withdraws?: PositionWithdraw[];  // Adding withdraws for historical tracking
+  withdraws?: PositionWithdraw[]; // Adding withdraws for historical tracking
   earned?: PositionEarnings;
 };
 
@@ -217,7 +217,7 @@ export type GroupedPosition = {
   totalPrincipal: bigint;
   totalEarned: bigint;
   earned?: PositionEarnings;
-  totalLifetimeEarnings: bigint;  // Total earnings including historical
+  totalLifetimeEarnings: bigint; // Total earnings including historical
   collaterals: {
     address: string;
     symbol: string;

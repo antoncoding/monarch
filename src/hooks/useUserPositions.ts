@@ -13,7 +13,7 @@ export type PositionEarnings = {
   last24hEarned: string;
   last7dEarned: string;
   last30dEarned: string;
-}
+};
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -28,23 +28,21 @@ const useUserPositions = (user: string | undefined) => {
     position: MarketPosition,
     transactions: UserTransaction[],
     userAddress: Address,
-    chainId: number
+    chainId: number,
   ) => {
     const currentBalance = BigInt(position.supplyAssets);
     const marketId = position.market.uniqueKey;
 
     // Filter transactions for this specific market
-    const marketTxs = transactions.filter(tx => 
-      tx.data?.market?.uniqueKey === marketId
-    );
+    const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
 
     // Calculate lifetime earnings using all transactions
     const totalDeposits = marketTxs
-      .filter(tx => tx.type === UserTxTypes.MarketSupply)
+      .filter((tx) => tx.type === UserTxTypes.MarketSupply)
       .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
     const totalWithdraws = marketTxs
-      .filter(tx => tx.type === UserTxTypes.MarketWithdraw)
+      .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
       .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
     const lifetimeEarned = currentBalance + totalWithdraws - totalDeposits;
@@ -52,28 +50,31 @@ const useUserPositions = (user: string | undefined) => {
     // Get historical snapshots
     const now = Math.floor(Date.now() / 1000);
     const snapshots = await Promise.all([
-      fetchPositionSnapshot(marketId, userAddress, chainId, now - 24 * 60 * 60),     // 24h ago
+      fetchPositionSnapshot(marketId, userAddress, chainId, now - 24 * 60 * 60), // 24h ago
       fetchPositionSnapshot(marketId, userAddress, chainId, now - 7 * 24 * 60 * 60), // 7d ago
-      fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60) // 30d ago
+      fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60), // 30d ago
     ]);
 
-    const calculateEarningsFromSnapshot = (snapshot: PositionSnapshot | null, timestamp: number) => {
+    const calculateEarningsFromSnapshot = (
+      snapshot: PositionSnapshot | null,
+      timestamp: number,
+    ) => {
       if (!snapshot) return '0';
 
       const snapshotBalance = BigInt(snapshot.supplyAssets);
-      
+
       // Get transactions after snapshot timestamp
-      const txsAfterSnapshot = marketTxs.filter(tx => Number(tx.timestamp) > timestamp);
-      
+      const txsAfterSnapshot = marketTxs.filter((tx) => Number(tx.timestamp) > timestamp);
+
       const depositsAfter = txsAfterSnapshot
-        .filter(tx => tx.type === UserTxTypes.MarketSupply)
+        .filter((tx) => tx.type === UserTxTypes.MarketSupply)
         .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
       const withdrawsAfter = txsAfterSnapshot
-        .filter(tx => tx.type === UserTxTypes.MarketWithdraw)
+        .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
         .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
-    
-      const earned = (currentBalance + withdrawsAfter) - (snapshotBalance + depositsAfter);
+
+      const earned = currentBalance + withdrawsAfter - (snapshotBalance + depositsAfter);
 
       if (earned < 0n) {
         console.log('Negative earnings detected:', {
@@ -83,7 +84,7 @@ const useUserPositions = (user: string | undefined) => {
           withdrawsAfter: withdrawsAfter.toString(),
           earned: earned.toString(),
           timestamp,
-          marketId
+          marketId,
         });
       }
 
@@ -91,12 +92,12 @@ const useUserPositions = (user: string | undefined) => {
     };
 
     const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
-    
+
     return {
       lifetimeEarned: lifetimeEarned.toString(),
       last24hEarned: calculateEarningsFromSnapshot(snapshot24h, now - 24 * 60 * 60),
       last7dEarned: calculateEarningsFromSnapshot(snapshot7d, now - 7 * 24 * 60 * 60),
-      last30dEarned: calculateEarningsFromSnapshot(snapshot30d, now - 30 * 24 * 60 * 60)
+      last30dEarned: calculateEarningsFromSnapshot(snapshot30d, now - 30 * 24 * 60 * 60),
     };
   };
 
@@ -153,10 +154,12 @@ const useUserPositions = (user: string | undefined) => {
         // Collect positions and transactions
         for (const result of [result1, result2]) {
           if (result.data?.userByAddress) {
-            marketPositions.push(...(result.data.userByAddress.marketPositions as MarketPosition[]));
-            const parsableTxs = (result.data.userByAddress.transactions as UserTransaction[]).filter(
-              (t) => t.data?.market,
+            marketPositions.push(
+              ...(result.data.userByAddress.marketPositions as MarketPosition[]),
             );
+            const parsableTxs = (
+              result.data.userByAddress.transactions as UserTransaction[]
+            ).filter((t) => t.data?.market);
             transactions.push(...parsableTxs);
           }
         }
@@ -173,7 +176,7 @@ const useUserPositions = (user: string | undefined) => {
                 position,
                 transactions,
                 user as Address,
-                position.market.morphoBlue.chain.id
+                position.market.morphoBlue.chain.id,
               );
 
               return {
@@ -182,9 +185,9 @@ const useUserPositions = (user: string | undefined) => {
                   ...position.market,
                   warningsWithDetail: getMarketWarningsWithDetail(position.market),
                 },
-                earned: earnings
+                earned: earnings,
               };
-            })
+            }),
         );
 
         setHistory(transactions);

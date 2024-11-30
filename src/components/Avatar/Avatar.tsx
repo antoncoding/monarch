@@ -5,7 +5,7 @@ import { Address } from 'viem';
 type AvatarProps = {
   address: Address;
   size?: number;
-}
+};
 
 export function Avatar({ address, size = 30 }: AvatarProps) {
   const [useEffigy, setUseEffigy] = useState(true);

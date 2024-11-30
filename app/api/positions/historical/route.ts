@@ -38,7 +38,7 @@ function arrayToPosition(arr: readonly bigint[]): Position {
   return {
     supplyShares: arr[0],
     borrowShares: arr[1],
-    collateral: arr[2]
+    collateral: arr[2],
   };
 }
 
@@ -49,7 +49,7 @@ function arrayToMarket(arr: readonly bigint[]): Market {
     totalBorrowAssets: arr[2],
     totalBorrowShares: arr[3],
     lastUpdate: arr[4],
-    fee: arr[5]
+    fee: arr[5],
   };
 }
 
@@ -60,20 +60,20 @@ function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares:
 
 async function getBlockNumberFromTimestamp(timestamp: number, chainId: number): Promise<number> {
   const client = chainId === 1 ? mainnetClient : baseClient;
-  
+
   // Get current block and its timestamp
   const currentBlock = await client.getBlockNumber();
   const currentBlockData = await client.getBlock({ blockNumber: currentBlock });
   const currentTimestamp = Number(currentBlockData.timestamp);
-  
+
   // Calculate blocks ago based on timestamp difference and block time
   const timestampDiff = currentTimestamp - timestamp;
-  const blockTime = BLOCK_TIME[chainId as keyof typeof BLOCK_TIME] || 12;
+  const blockTime = BLOCK_TIME[chainId as keyof typeof BLOCK_TIME] ?? 12;
   const blocksAgo = Math.floor(timestampDiff / blockTime);
-  
+
   // Calculate target block number
   const targetBlockNumber = Number(currentBlock) - blocksAgo;
-  
+
   console.log('Block number calculation:', {
     currentBlock: Number(currentBlock),
     currentTimestamp,
@@ -81,9 +81,9 @@ async function getBlockNumberFromTimestamp(timestamp: number, chainId: number): 
     timestampDiff,
     blockTime,
     blocksAgo,
-    targetBlockNumber
+    targetBlockNumber,
   });
-  
+
   return Math.max(0, targetBlockNumber);
 }
 
@@ -91,13 +91,13 @@ async function getPositionAtBlock(
   marketId: string,
   userAddress: string,
   timestamp: number,
-  chainId: number
+  chainId: number,
 ) {
   console.log(`Processing position request for timestamp ${timestamp}`, {
     marketId,
     userAddress,
     timestamp,
-    chainId
+    chainId,
   });
 
   // Convert timestamp to block number
@@ -105,32 +105,37 @@ async function getPositionAtBlock(
   console.log(`Estimated block number: ${blockNumber} for timestamp ${timestamp}`);
 
   const client = chainId === 1 ? mainnetClient : baseClient;
-  const morphoAddress = chainId === 1 
-    ? '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb' // mainnet
-    : '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb'; // base (same address)
+  const morphoAddress =
+    chainId === 1
+      ? '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb' // mainnet
+      : '0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb'; // base (same address)
 
   try {
     // Get the actual block to get its precise timestamp
     const block = await client.getBlock({ blockNumber: BigInt(blockNumber) });
     console.log(`Retrieved block ${blockNumber}:`, {
       timestamp: Number(block.timestamp),
-      hash: block.hash
+      hash: block.hash,
     });
 
     // First get the position data
-    const positionArray = await client.readContract({
+    const positionArray = (await client.readContract({
       address: morphoAddress as Address,
       abi: morphoABI,
       functionName: 'position',
       args: [marketId as `0x${string}`, userAddress as Address],
       blockNumber: BigInt(blockNumber),
-    }) as readonly bigint[];
+    })) as readonly bigint[];
 
     // Convert array to position object
     const position = arrayToPosition(positionArray);
 
     // If position has no shares, return zeros early
-    if (position.supplyShares === 0n && position.borrowShares === 0n && position.collateral === 0n) {
+    if (
+      position.supplyShares === 0n &&
+      position.borrowShares === 0n &&
+      position.collateral === 0n
+    ) {
       console.log('Position has no shares, returning zeros');
       return {
         supplyShares: '0',
@@ -138,18 +143,18 @@ async function getPositionAtBlock(
         borrowShares: '0',
         borrowAssets: '0',
         collateral: '0',
-        timestamp: Number(block.timestamp)
+        timestamp: Number(block.timestamp),
       };
     }
 
     // Only fetch market data if position has shares
-    const marketArray = await client.readContract({
+    const marketArray = (await client.readContract({
       address: morphoAddress as Address,
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],
       blockNumber: BigInt(blockNumber),
-    }) as readonly bigint[];
+    })) as readonly bigint[];
 
     // Convert array to market object
     const market = arrayToMarket(marketArray);
@@ -158,13 +163,13 @@ async function getPositionAtBlock(
     const supplyAssets = convertSharesToAssets(
       position.supplyShares,
       market.totalSupplyAssets,
-      market.totalSupplyShares
+      market.totalSupplyShares,
     );
 
     const borrowAssets = convertSharesToAssets(
       position.borrowShares,
       market.totalBorrowAssets,
-      market.totalBorrowShares
+      market.totalBorrowShares,
     );
 
     console.log(`Successfully retrieved position data:`, {
@@ -182,7 +187,7 @@ async function getPositionAtBlock(
         totalSupplyShares: market.totalSupplyShares.toString(),
         totalBorrowAssets: market.totalBorrowAssets.toString(),
         totalBorrowShares: market.totalBorrowShares.toString(),
-      }
+      },
     });
 
     return {
@@ -191,7 +196,7 @@ async function getPositionAtBlock(
       borrowShares: position.borrowShares.toString(),
       borrowAssets: borrowAssets.toString(),
       collateral: position.collateral.toString(),
-      timestamp: Number(block.timestamp)
+      timestamp: Number(block.timestamp),
     };
   } catch (error) {
     console.error(`Error reading position:`, {
@@ -199,7 +204,7 @@ async function getPositionAtBlock(
       userAddress,
       blockNumber,
       timestamp,
-      error
+      error,
     });
     throw error;
   }
@@ -208,55 +213,43 @@ async function getPositionAtBlock(
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const timestamp = parseInt(searchParams.get('timestamp') || '0');
+    const timestamp = parseInt(searchParams.get('timestamp') ?? '0');
     const marketId = searchParams.get('marketId');
     const userAddress = searchParams.get('userAddress');
-    const chainId = parseInt(searchParams.get('chainId') || '1');
+    const chainId = parseInt(searchParams.get('chainId') ?? '1');
 
     console.log(`Historical position request:`, {
       timestamp,
       marketId,
       userAddress,
-      chainId
+      chainId,
     });
 
     if (!timestamp || !marketId || !userAddress) {
       console.error('Missing required parameters:', {
         timestamp: !!timestamp,
         marketId: !!marketId,
-        userAddress: !!userAddress
+        userAddress: !!userAddress,
       });
-      return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
     // Get position data at the specified timestamp
-    const position = await getPositionAtBlock(
-      marketId,
-      userAddress,
-      timestamp,
-      chainId
-    );
+    const position = await getPositionAtBlock(marketId, userAddress, timestamp, chainId);
 
     console.log(`Successfully retrieved historical position data:`, {
       timestamp,
       marketId,
       userAddress,
       chainId,
-      position
+      position,
     });
 
     return NextResponse.json({
       position,
     });
-
   } catch (error) {
     console.error('Error in historical position API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

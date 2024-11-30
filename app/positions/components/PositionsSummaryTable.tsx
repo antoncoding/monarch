@@ -1,5 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Spinner, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from '@nextui-org/react';
+import {
+  Spinner,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Button,
+} from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -46,7 +53,7 @@ export function PositionsSummaryTable({
 
   const getEarningsForPeriod = (position: MarketPosition) => {
     if (!position.earned) return '0';
-    
+
     switch (earningsPeriod) {
       case 'lifetime':
         return position.earned.lifetimeEarned;
@@ -62,89 +69,96 @@ export function PositionsSummaryTable({
   };
 
   const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
-    return groupedPosition.markets.reduce((total, position) => {
-      const earnings = getEarningsForPeriod(position);
-      return total + BigInt(earnings);
-    }, 0n).toString();
+    return groupedPosition.markets
+      .reduce((total, position) => {
+        const earnings = getEarningsForPeriod(position);
+        return total + BigInt(earnings);
+      }, 0n)
+      .toString();
   };
 
   const periodLabels: Record<EarningsPeriod, string> = {
-    'lifetime': 'Lifetime',
+    lifetime: 'Lifetime',
     '24h': '24h',
     '7d': '7d',
     '30d': '30d',
   };
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
-    return marketPositions.reduce((acc: GroupedPosition[], position) => {
-      const loanAssetAddress = position.market.loanAsset.address;
-      const loanAssetDecimals = position.market.loanAsset.decimals;
-      const chainId = position.market.morphoBlue.chain.id;
+    return marketPositions
+      .reduce((acc: GroupedPosition[], position) => {
+        const loanAssetAddress = position.market.loanAsset.address;
+        const loanAssetDecimals = position.market.loanAsset.decimals;
+        const chainId = position.market.morphoBlue.chain.id;
 
-      let groupedPosition = acc.find(
-        (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
-      );
-
-      if (!groupedPosition) {
-        groupedPosition = {
-          loanAsset: position.market.loanAsset.symbol || 'Unknown',
-          loanAssetAddress,
-          loanAssetDecimals,
-          chainId,
-          totalSupply: 0,
-          totalWeightedApy: 0,
-          totalPrincipal: 0n,
-          totalEarned: 0n,
-          totalLifetimeEarnings: 0n,
-          collaterals: [],
-          markets: [],
-          processedCollaterals: [],
-          allWarnings: [],
-        };
-        acc.push(groupedPosition);
-      }
-
-      groupedPosition.markets.push(position);
-
-      if (position.principal) {
-        groupedPosition.totalPrincipal += BigInt(position.principal);
-      }
-      if (position.earned) {
-        groupedPosition.totalEarned += BigInt(position.earned.lifetimeEarned);
-      }
-
-      groupedPosition.allWarnings = [
-        ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
-      ] as WarningWithDetail[];
-
-      const supplyAmount = Number(
-        formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
-      );
-      groupedPosition.totalSupply += supplyAmount;
-
-      const weightedApy = supplyAmount * position.market.state.supplyApy;
-      groupedPosition.totalWeightedApy += weightedApy;
-
-      const collateralAddress = position.market.collateralAsset?.address;
-      const collateralSymbol = position.market.collateralAsset?.symbol;
-
-      if (collateralAddress && collateralSymbol) {
-        const existingCollateral = groupedPosition.collaterals.find(
-          (c) => c.address === collateralAddress,
+        let groupedPosition = acc.find(
+          (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
         );
-        if (existingCollateral) {
-          existingCollateral.amount += supplyAmount;
-        } else {
-          groupedPosition.collaterals.push({
-            address: collateralAddress,
-            symbol: collateralSymbol,
-            amount: supplyAmount,
-          });
-        }
-      }
 
-      return acc;
-    }, []).sort((a, b) => b.totalSupply - a.totalSupply);
+        if (!groupedPosition) {
+          groupedPosition = {
+            loanAsset: position.market.loanAsset.symbol || 'Unknown',
+            loanAssetAddress,
+            loanAssetDecimals,
+            chainId,
+            totalSupply: 0,
+            totalWeightedApy: 0,
+            totalPrincipal: 0n,
+            totalEarned: 0n,
+            totalLifetimeEarnings: 0n,
+            collaterals: [],
+            markets: [],
+            processedCollaterals: [],
+            allWarnings: [],
+          };
+          acc.push(groupedPosition);
+        }
+
+        groupedPosition.markets.push(position);
+
+        if (position.principal) {
+          groupedPosition.totalPrincipal += BigInt(position.principal);
+        }
+        if (position.earned) {
+          groupedPosition.totalEarned += BigInt(position.earned.lifetimeEarned);
+        }
+
+        groupedPosition.allWarnings = [
+          ...new Set([
+            ...groupedPosition.allWarnings,
+            ...(position.market.warningsWithDetail || []),
+          ]),
+        ] as WarningWithDetail[];
+
+        const supplyAmount = Number(
+          formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+        );
+        groupedPosition.totalSupply += supplyAmount;
+
+        const weightedApy = supplyAmount * position.market.state.supplyApy;
+        groupedPosition.totalWeightedApy += weightedApy;
+
+        const collateralAddress = position.market.collateralAsset?.address;
+        const collateralSymbol = position.market.collateralAsset?.symbol;
+
+        if (collateralAddress && collateralSymbol) {
+          const existingCollateral = groupedPosition.collaterals.find(
+            (c) => c.address === collateralAddress,
+          );
+          if (existingCollateral) {
+            existingCollateral.amount += supplyAmount;
+          } else {
+            groupedPosition.collaterals.push({
+              address: collateralAddress,
+              symbol: collateralSymbol,
+              amount: supplyAmount,
+            });
+          }
+        }
+
+        return acc;
+      }, [])
+      .sort((a, b) => b.totalSupply - a.totalSupply);
   }, [marketPositions]);
 
   const processedPositions = useMemo(() => {
@@ -226,31 +240,29 @@ export function PositionsSummaryTable({
           Refresh
         </button>
       </div>
-      <div className="overflow-hidden bg-surface rounded-lg">
+      <div className="bg-surface overflow-hidden rounded-lg">
         <table className="responsive w-full min-w-[640px] font-zen">
           <thead className="table-header">
-            <tr className="text-secondary border-b border-surface-dark">
+            <tr className="border-surface-dark border-b text-secondary">
               <th className="w-10" />
               <th className="w-10">Network</th>
               <th>Size</th>
               <th>
                 <Dropdown>
                   <DropdownTrigger>
-                    <Button 
-                      variant="light" 
-                      endContent={<IoChevronDownOutline className="w-4 h-4" />}
+                    <Button
+                      variant="light"
+                      endContent={<IoChevronDownOutline className="h-4 w-4" />}
                     >
                       {periodLabels[earningsPeriod]} Interest Earned
                     </Button>
                   </DropdownTrigger>
-                  <DropdownMenu 
+                  <DropdownMenu
                     aria-label="Earnings period selection"
                     onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
                   >
                     {Object.entries(periodLabels).map(([period, label]) => (
-                      <DropdownItem key={period}>
-                        {label}
-                      </DropdownItem>
+                      <DropdownItem key={period}>{label}</DropdownItem>
                     ))}
                   </DropdownMenu>
                 </Dropdown>
@@ -266,11 +278,6 @@ export function PositionsSummaryTable({
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
-
-              const formattedEarned = formatBalance(
-                groupedPosition.totalEarned.toString(),
-                groupedPosition.loanAssetDecimals,
-              );
 
               return (
                 <React.Fragment key={rowKey}>
@@ -305,7 +312,14 @@ export function PositionsSummaryTable({
                     <td data-label="Total Earned">
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">
-                          {formatReadable(Number(formatBalance(getGroupedEarnings(groupedPosition), groupedPosition.loanAssetDecimals)))}
+                          {formatReadable(
+                            Number(
+                              formatBalance(
+                                getGroupedEarnings(groupedPosition),
+                                groupedPosition.loanAssetDecimals,
+                              ),
+                            ),
+                          )}
                         </span>
                         <span>{groupedPosition.loanAsset}</span>
                       </div>
