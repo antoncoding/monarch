@@ -184,9 +184,6 @@ export function PositionsSummaryTable({
     });
   }, [groupedPositions]);
 
-  console.log('marketPositions:', marketPositions);
-  console.log('Processed positions:', groupedPositions);
-
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
@@ -250,7 +247,7 @@ export function PositionsSummaryTable({
       <div className="bg-surface overflow-hidden rounded">
         <table className="responsive w-full min-w-[640px] font-zen">
           <thead className="table-header">
-            <tr className="border-surface-dark border-b text-secondary">
+            <tr className="text-secondary">
               <th className="w-10" />
               <th className="w-10">Network</th>
               <th>Size</th>
@@ -370,8 +367,8 @@ export function PositionsSummaryTable({
                   </tr>
                   <AnimatePresence>
                     {expandedRows.has(rowKey) && (
-                      <tr>
-                        <td colSpan={10} className="p-0">
+                      <tr className="bg-surface">
+                        <td colSpan={10} className="bg-surface">
                           <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: 'auto' }}
