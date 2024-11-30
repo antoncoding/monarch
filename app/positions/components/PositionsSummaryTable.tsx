@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Spinner, Tooltip } from '@nextui-org/react';
+import { Spinner, Tooltip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -16,7 +16,9 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { IoInformationCircle, IoInformationCircleOutline } from 'react-icons/io5';
+import { IoChevronDownOutline } from 'react-icons/io5';
+
+type EarningsPeriod = 'lifetime' | '24h' | '7d' | '30d';
 
 type PositionsSummaryTableProps = {
   marketPositions: MarketPosition[];
@@ -40,6 +42,38 @@ export function PositionsSummaryTable({
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
+  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('lifetime');
+
+  const getEarningsForPeriod = (position: MarketPosition) => {
+    if (!position.earned) return '0';
+    
+    switch (earningsPeriod) {
+      case 'lifetime':
+        return position.earned.lifetimeEarned;
+      case '24h':
+        return position.earned.last24hEarned;
+      case '7d':
+        return position.earned.last7dEarned;
+      case '30d':
+        return position.earned.last30dEarned;
+      default:
+        return '0';
+    }
+  };
+
+  const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
+    return groupedPosition.markets.reduce((total, position) => {
+      const earnings = getEarningsForPeriod(position);
+      return total + BigInt(earnings);
+    }, 0n).toString();
+  };
+
+  const periodLabels: Record<EarningsPeriod, string> = {
+    'lifetime': 'Lifetime',
+    '24h': '24h',
+    '7d': '7d',
+    '30d': '30d',
+  };
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions.reduce((acc: GroupedPosition[], position) => {
@@ -76,10 +110,7 @@ export function PositionsSummaryTable({
         groupedPosition.totalPrincipal += BigInt(position.principal);
       }
       if (position.earned) {
-        groupedPosition.totalEarned += BigInt(position.earned);
-      }
-      if (position.totalLifetimeEarnings) {
-        groupedPosition.totalLifetimeEarnings += BigInt(position.totalLifetimeEarnings);
+        groupedPosition.totalEarned += BigInt(position.earned.lifetimeEarned);
       }
 
       groupedPosition.allWarnings = [
@@ -113,7 +144,7 @@ export function PositionsSummaryTable({
       }
 
       return acc;
-    }, []);
+    }, []).sort((a, b) => b.totalSupply - a.totalSupply);
   }, [marketPositions]);
 
   const processedPositions = useMemo(() => {
@@ -200,20 +231,26 @@ export function PositionsSummaryTable({
               <th className="w-10">Network</th>
               <th>Size</th>
               <th>
-                <Tooltip content="Total earnings across all positions, including closed ones">
-                  <span className="cursor-help flex items-center">
-                    Total Earned
-                    <IoInformationCircleOutline className="ml-1" />
-                  </span>
-                </Tooltip>
-              </th>
-              <th>
-                <Tooltip content="Earnings from current active positions">
-                  <span className="cursor-help flex items-center">
-                    Current Earned
-                    <IoInformationCircleOutline className="ml-1" />
-                  </span>
-                </Tooltip>
+                <Dropdown>
+                  <DropdownTrigger>
+                    <Button 
+                      variant="light" 
+                      endContent={<IoChevronDownOutline className="w-4 h-4" />}
+                    >
+                      {periodLabels[earningsPeriod]} Interest Earned
+                    </Button>
+                  </DropdownTrigger>
+                  <DropdownMenu 
+                    aria-label="Earnings period selection"
+                    onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
+                  >
+                    {Object.entries(periodLabels).map(([period, label]) => (
+                      <DropdownItem key={period}>
+                        {label}
+                      </DropdownItem>
+                    ))}
+                  </DropdownMenu>
+                </Dropdown>
               </th>
               <th>Avg APY</th>
               <th>Collateral Exposure</th>
@@ -227,16 +264,8 @@ export function PositionsSummaryTable({
               const isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
 
-              const formattedPrincipal = formatBalance(
-                groupedPosition.totalPrincipal.toString(),
-                groupedPosition.loanAssetDecimals,
-              );
               const formattedEarned = formatBalance(
                 groupedPosition.totalEarned.toString(),
-                groupedPosition.loanAssetDecimals,
-              );
-              const formattedLifetimeEarnings = formatBalance(
-                groupedPosition.totalLifetimeEarnings.toString(),
                 groupedPosition.loanAssetDecimals,
               );
 
@@ -273,15 +302,7 @@ export function PositionsSummaryTable({
                     <td data-label="Total Earned">
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">
-                          {formatReadable(Number(formattedLifetimeEarnings))}
-                        </span>
-                        <span>{groupedPosition.loanAsset}</span>
-                      </div>
-                    </td>
-                    <td data-label="Current Earned">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className={`font-medium ${Number(formattedEarned) > 0 ? 'text-green-500' : ''}`}>
-                          {formatReadable(Number(formattedEarned))}
+                          {formatReadable(Number(formatBalance(getGroupedEarnings(groupedPosition), groupedPosition.loanAssetDecimals)))}
                         </span>
                         <span>{groupedPosition.loanAsset}</span>
                       </div>

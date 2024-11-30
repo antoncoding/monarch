@@ -8,10 +8,8 @@ export type MarketPosition = {
   market: Market; // Now using the full Market type
   principal?: string;
   deposits?: PositionDeposit[];
-  earned?: string;
-  realizedEarnings?: string;  // Earnings from closed positions
-  totalLifetimeEarnings?: string;  // Total earnings including both realized and current
   withdraws?: PositionWithdraw[];  // Adding withdraws for historical tracking
+  earned?: PositionEarnings;
 };
 
 export enum UserTxTypes {
@@ -202,6 +200,13 @@ export type RebalanceAction = {
   shares?: bigint;
 };
 
+export type PositionEarnings = {
+  lifetimeEarned: string;
+  last24hEarned: string;
+  last7dEarned: string;
+  last30dEarned: string;
+};
+
 export type GroupedPosition = {
   loanAsset: string;
   loanAssetAddress: string;
@@ -211,6 +216,7 @@ export type GroupedPosition = {
   totalWeightedApy: number;
   totalPrincipal: bigint;
   totalEarned: bigint;
+  earned?: PositionEarnings;
   totalLifetimeEarnings: bigint;  // Total earnings including historical
   collaterals: {
     address: string;

@@ -5,6 +5,8 @@ import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
+import { Address } from 'viem';
+import { usePositionSnapshot, PositionSnapshot } from './usePositionSnapshot';
 
 // Add API key constant
 const THEGRAPH_API_KEY = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
@@ -35,7 +37,6 @@ type DetailedPosition = {
   market: {
     id: string;
   };
-  balance: string;
   deposits: PositionDeposit[];
   withdraws: PositionWithdraw[];
   side: 'SUPPLIER' | 'BORROWER';
@@ -68,6 +69,19 @@ const detailedPositionsQuery = `
   }
 `;
 
+interface PositionEarnings {
+  lifetimeEarned: string;
+  last24hEarned: string;
+  last7dEarned: string;
+  last30dEarned: string;
+}
+
+interface PositionDetails {
+  earned: PositionEarnings;
+  deposits: PositionDeposit[];
+  withdraws: PositionWithdraw[];
+}
+
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -75,66 +89,67 @@ const useUserPositions = (user: string | undefined) => {
   const [history, setHistory] = useState<UserTransaction[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
-  const calculatePositionDetails = (detailedPosition: DetailedPosition, supplyAssets: string) => {
-    // Calculate total deposits
+  const { fetchPositionSnapshot } = usePositionSnapshot();
+
+  const calculatePositionDetails = async (
+    detailedPosition: DetailedPosition,
+    supplyAssets: string,
+    marketId: string,
+    userAddress: Address,
+    chainId: number
+  ) => {
+
+    // Calculate total deposits and withdraws
     const totalDeposits = detailedPosition.deposits.reduce(
-      (sum, deposit) => sum + BigInt(deposit.amount),
+      (sum: bigint, deposit: PositionDeposit) => sum + BigInt(deposit.amount),
       0n
     );
 
-    // Calculate total withdraws
     const totalWithdraws = detailedPosition.withdraws.reduce(
-      (sum, withdraw) => sum + BigInt(withdraw.amount),
+      (sum: bigint, withdraw: PositionWithdraw) => sum + BigInt(withdraw.amount),
       0n
     );
 
     // Current balance from the position
     const currentBalance = BigInt(supplyAssets);
-    console.log('currentBalance', currentBalance)
+  
+    // Calculate lifetime earnings (current balance + total withdraws) - (total deposits)
+    const lifetimeEarned = currentBalance + totalWithdraws - totalDeposits;
 
-    // Calculate net principal (total deposits - withdraws)
-    const netPrincipal = totalDeposits - totalWithdraws;
+    // Get historical snapshots
+    const now = Math.floor(Date.now() / 1000);
+    const snapshots = await Promise.all([
+      fetchPositionSnapshot(marketId, userAddress, chainId, now - 24 * 60 * 60),     // 24h ago
+      fetchPositionSnapshot(marketId, userAddress, chainId, now - 7 * 24 * 60 * 60), // 7d ago
+      fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60) // 30d ago
+    ]);
 
-    // Calculate current position earnings
-    const currentEarned = currentBalance > netPrincipal ? currentBalance - netPrincipal : 0n;
+    // Calculate earnings for each period
+    const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
-    // Calculate realized earnings from previous withdrawals
-    // For each withdrawal, check if it was more than the total deposits at that point
-    let realizedEarnings = 0n;
-    let runningDeposits = 0n;
-
-    // Sort all transactions by timestamp
-    const allTransactions = [
-      ...detailedPosition.deposits.map(d => ({ amount: BigInt(d.amount), timestamp: d.timestamp, type: 'deposit' as const })),
-      ...detailedPosition.withdraws.map(w => ({ amount: BigInt(w.amount), timestamp: w.timestamp, type: 'withdraw' as const }))
-    ].sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
-
-    // Calculate realized earnings by tracking running balance
-    for (const tx of allTransactions) {
-      if (tx.type === 'deposit') {
-        runningDeposits += tx.amount;
-      } else {
-        // If withdrawal amount is greater than running deposits, the difference is realized earnings
-        if (tx.amount > runningDeposits) {
-          realizedEarnings += tx.amount - runningDeposits;
-          runningDeposits = 0n;
-        } else {
-          runningDeposits -= tx.amount;
-        }
-      }
-    }
-
-    // Total lifetime earnings = realized earnings + current unrealized earnings
-    const totalLifetimeEarnings = realizedEarnings + currentEarned;
+    const calculateEarningsFromSnapshot = (snapshot: PositionSnapshot | null) => {
+      if (!snapshot) return '0';
+      const snapshotBalance = BigInt(snapshot.supplyAssets);
+      const depositsAfterSnapshot = detailedPosition.deposits
+        .filter(d => Number(d.timestamp) > snapshot.timestamp)
+        .reduce((sum, d) => sum + BigInt(d.amount), 0n);
+      const withdrawsAfterSnapshot = detailedPosition.withdraws
+        .filter(w => Number(w.timestamp) > snapshot.timestamp)
+        .reduce((sum, w) => sum + BigInt(w.amount), 0n);
+    
+      const earned = (currentBalance + withdrawsAfterSnapshot) - (snapshotBalance + depositsAfterSnapshot);
+      return earned.toString();
+    };
 
     return {
-      principal: netPrincipal.toString(),
-      earned: currentEarned.toString(),
-      totalLifetimeEarnings: totalLifetimeEarnings.toString(),
-      realizedEarnings: realizedEarnings.toString(),
+      earned: {
+        lifetimeEarned: lifetimeEarned.toString(),
+        last24hEarned: calculateEarningsFromSnapshot(snapshot24h),
+        last7dEarned: calculateEarningsFromSnapshot(snapshot7d),
+        last30dEarned: calculateEarningsFromSnapshot(snapshot30d)
+      },
       deposits: detailedPosition.deposits,
       withdraws: detailedPosition.withdraws,
-      balance: detailedPosition.balance,
     };
   };
 
@@ -242,48 +257,35 @@ const useUserPositions = (user: string | undefined) => {
         // Enhance market positions with detailed data
         const enhancedPositions = marketPositions
           .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
-          .map((position: MarketPosition) => {
+          .map(async (position: MarketPosition) => {
             const detailedPosition = allDetailedPositions.find(
               (dp) => dp.market.id === position.market.uniqueKey,
             );
 
-            console.log('User position, \n', position, '\n detailed position',  detailedPosition, '\n ------------------------'); 
-
-            const totalDeposits = detailedPosition?.deposits.reduce(
-              (sum: bigint, deposit: PositionDeposit) => sum + BigInt(deposit.amount),
-              0n
-            );
-
-            const totalWithdraws = detailedPosition?.withdraws.reduce(
-              (sum: bigint, withdraw: PositionWithdraw) => sum + BigInt(withdraw.amount),
-              0n
-            );
-
-            const enhanced: MarketPosition = {
-              ...position,
-              market: {
-                ...position.market,
-                warningsWithDetail: getMarketWarningsWithDetail(position.market),
-              },
-            };
-
             if (detailedPosition) {
-              const details = calculatePositionDetails(detailedPosition, position.supplyAssets);
-              enhanced.principal = details.principal;
-              enhanced.earned = details.earned;
-              enhanced.totalLifetimeEarnings = details.totalLifetimeEarnings;
-              enhanced.realizedEarnings = details.realizedEarnings;
-              enhanced.deposits = details.deposits;
-              enhanced.withdraws = details.withdraws;
+              console.log('market', position.market.loanAsset.symbol, '-', position.market.collateralAsset.symbol);
+              const details = await calculatePositionDetails(
+                detailedPosition, position.supplyAssets, position.market.uniqueKey, user as Address, position.market.morphoBlue.chain.id);
+              return {
+                ...position,
+                market: {
+                  ...position.market,
+                  warningsWithDetail: getMarketWarningsWithDetail(position.market),
+                },
+                earned: details.earned,
+                deposits: details.deposits,
+                withdraws: details.withdraws,
+              };
             } else {
               console.log('No detailed position found for market', position.market.uniqueKey);
+              return position;
             }
-
-            return enhanced;
           });
 
+        const resolvedPositions = await Promise.all(enhancedPositions);
+
         setHistory(transactions);
-        setData(enhancedPositions);
+        setData(resolvedPositions);
       } catch (_error) {
         console.error('Error fetching positions:', _error);
         setError(_error);
