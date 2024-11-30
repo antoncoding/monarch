@@ -6,9 +6,6 @@ export type MarketPosition = {
   borrowAssets: string;
   borrowAssetsUsd: number;
   market: Market; // Now using the full Market type
-  principal?: string;
-  deposits?: PositionDeposit[];
-  withdraws?: PositionWithdraw[]; // Adding withdraws for historical tracking
   earned?: PositionEarnings;
 };
 
@@ -214,10 +211,9 @@ export type GroupedPosition = {
   chainId: number;
   totalSupply: number;
   totalWeightedApy: number;
-  totalPrincipal: bigint;
-  totalEarned: bigint;
+
   earned?: PositionEarnings;
-  totalLifetimeEarnings: bigint; // Total earnings including historical
+
   collaterals: {
     address: string;
     symbol: string;
@@ -363,16 +359,4 @@ export type MarketDetail = Market & {
 export type MarketHistoricalData = {
   rates: MarketRates;
   volumes: MarketVolumes;
-};
-
-type PositionDeposit = {
-  amount: string;
-  id: string;
-  timestamp: string;
-};
-
-type PositionWithdraw = {
-  amount: string;
-  id: string;
-  timestamp: string;
 };

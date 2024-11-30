@@ -106,9 +106,6 @@ export function PositionsSummaryTable({
             chainId,
             totalSupply: 0,
             totalWeightedApy: 0,
-            totalPrincipal: 0n,
-            totalEarned: 0n,
-            totalLifetimeEarnings: 0n,
             collaterals: [],
             markets: [],
             processedCollaterals: [],
@@ -118,13 +115,6 @@ export function PositionsSummaryTable({
         }
 
         groupedPosition.markets.push(position);
-
-        if (position.principal) {
-          groupedPosition.totalPrincipal += BigInt(position.principal);
-        }
-        if (position.earned) {
-          groupedPosition.totalEarned += BigInt(position.earned.lifetimeEarned);
-        }
 
         groupedPosition.allWarnings = [
           ...new Set([
