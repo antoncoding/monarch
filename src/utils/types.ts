@@ -202,9 +202,9 @@ export type RebalanceAction = {
 
 export type PositionEarnings = {
   lifetimeEarned: string;
-  last24hEarned: string;
-  last7dEarned: string;
-  last30dEarned: string;
+  last24hEarned: string | null;
+  last7dEarned: string | null;
+  last30dEarned: string | null;
 };
 
 export type GroupedPosition = {

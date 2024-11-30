@@ -1,10 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from '@nextui-org/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -26,7 +21,7 @@ export enum EarningsPeriod {
   All = 'all',
   Day = '1D',
   Week = '7D',
-  Month = '30D'
+  Month = '30D',
 }
 
 type PositionsSummaryTableProps = {
@@ -71,19 +66,25 @@ export function PositionsSummaryTable({
   };
 
   const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
-    return groupedPosition.markets
-      .reduce((total, position) => {
-        const earnings = getEarningsForPeriod(position);
-        return total + BigInt(earnings);
-      }, 0n)
-      .toString();
+    return (
+      groupedPosition.markets
+        .reduce(
+          (total, position) => {
+            const earnings = getEarningsForPeriod(position);
+            if (earnings === null) return null;
+            return total === null ? BigInt(earnings) : total + BigInt(earnings);
+          },
+          null as bigint | null,
+        )
+        ?.toString() ?? null
+    );
   };
 
   const periodLabels: Record<EarningsPeriod, string> = {
     [EarningsPeriod.All]: 'All Time',
-    [EarningsPeriod.Day]: '24h',
-    [EarningsPeriod.Week]: '7d',
-    [EarningsPeriod.Month]: '30d',
+    [EarningsPeriod.Day]: '1D',
+    [EarningsPeriod.Week]: '7D',
+    [EarningsPeriod.Month]: '30D',
   };
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
@@ -232,9 +233,9 @@ export function PositionsSummaryTable({
           <DropdownTrigger>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-lg bg-surface-dark px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+              className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
             >
-              {periodLabels[earningsPeriod]}
+              {earningsPeriod}
               <IoChevronDownOutline className="h-4 w-4" />
             </button>
           </DropdownTrigger>
@@ -249,14 +250,14 @@ export function PositionsSummaryTable({
         </Dropdown>
         <button
           type="button"
-          className="flex items-center gap-2 rounded-lg bg-surface-dark px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+          className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
           onClick={handleManualRefresh}
         >
           <IoRefreshOutline className="h-4 w-4" />
           Refresh
         </button>
       </div>
-      <div className="bg-surface overflow-hidden rounded-lg">
+      <div className="bg-surface overflow-hidden rounded">
         <table className="responsive w-full min-w-[640px] font-zen">
           <thead className="table-header">
             <tr className="border-surface-dark border-b text-secondary">
@@ -275,6 +276,8 @@ export function PositionsSummaryTable({
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+
+              const earnings = getGroupedEarnings(groupedPosition);
 
               return (
                 <React.Fragment key={rowKey}>
@@ -308,24 +311,23 @@ export function PositionsSummaryTable({
                     </td>
                     <td data-label="APY (now)">
                       <div className="flex items-center justify-center">
-                        <span className="font-medium">
-                          {formatReadable(avgApy * 100)}%
-                        </span>
+                        <span className="font-medium">{formatReadable(avgApy * 100)}%</span>
                       </div>
                     </td>
                     <td data-label={`Interest Accrued (${earningsPeriod})`}>
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">
-                          {formatReadable(
-                            Number(
-                              formatBalance(
-                                getGroupedEarnings(groupedPosition),
-                                groupedPosition.loanAssetDecimals,
-                              ),
-                            ),
-                          )}
+                          {(() => {
+                            if (earnings === null) return '-';
+                            return (
+                              formatReadable(
+                                Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)),
+                              ) +
+                              ' ' +
+                              groupedPosition.loanAsset
+                            );
+                          })()}
                         </span>
-                        <span>{groupedPosition.loanAsset}</span>
                       </div>
                     </td>
                     <td data-label="Collateral">

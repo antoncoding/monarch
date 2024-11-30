@@ -6,14 +6,35 @@ import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction, UserTxTypes } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
-import { usePositionSnapshot, PositionSnapshot } from './usePositionSnapshot';
+import { usePositionSnapshot } from './usePositionSnapshot';
 
 export type PositionEarnings = {
   lifetimeEarned: string;
-  last24hEarned: string;
-  last7dEarned: string;
-  last30dEarned: string;
+  last24hEarned: string | null;
+  last7dEarned: string | null;
+  last30dEarned: string | null;
 };
+
+export function calculateEarningsFromSnapshot(
+  currentBalance: bigint,
+  snapshotBalance: bigint,
+  transactions: UserTransaction[],
+  timestamp: number,
+): string {
+  // Get transactions after snapshot timestamp
+  const txsAfterSnapshot = transactions.filter((tx) => Number(tx.timestamp) > timestamp);
+
+  const depositsAfter = txsAfterSnapshot
+    .filter((tx) => tx.type === UserTxTypes.MarketSupply)
+    .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
+
+  const withdrawsAfter = txsAfterSnapshot
+    .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
+    .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
+
+  const earned = currentBalance + withdrawsAfter - (snapshotBalance + depositsAfter);
+  return earned.toString();
+}
 
 const useUserPositions = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -24,7 +45,7 @@ const useUserPositions = (user: string | undefined) => {
 
   const { fetchPositionSnapshot } = usePositionSnapshot();
 
-  const calculatePositionEarnings = async (
+  const calculateEarningsFromPeriod = async (
     position: MarketPosition,
     transactions: UserTransaction[],
     userAddress: Address,
@@ -55,49 +76,34 @@ const useUserPositions = (user: string | undefined) => {
       fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60), // 30d ago
     ]);
 
-    const calculateEarningsFromSnapshot = (
-      snapshot: PositionSnapshot | null,
-      timestamp: number,
-    ) => {
-      if (!snapshot) return '0';
-
-      const snapshotBalance = BigInt(snapshot.supplyAssets);
-
-      // Get transactions after snapshot timestamp
-      const txsAfterSnapshot = marketTxs.filter((tx) => Number(tx.timestamp) > timestamp);
-
-      const depositsAfter = txsAfterSnapshot
-        .filter((tx) => tx.type === UserTxTypes.MarketSupply)
-        .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
-
-      const withdrawsAfter = txsAfterSnapshot
-        .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
-        .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
-
-      const earned = currentBalance + withdrawsAfter - (snapshotBalance + depositsAfter);
-
-      if (earned < 0n) {
-        console.log('Negative earnings detected:', {
-          currentBalance: currentBalance.toString(),
-          snapshotBalance: snapshotBalance.toString(),
-          depositsAfter: depositsAfter.toString(),
-          withdrawsAfter: withdrawsAfter.toString(),
-          earned: earned.toString(),
-          timestamp,
-          marketId,
-        });
-      }
-
-      return earned.toString();
-    };
-
     const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
     return {
       lifetimeEarned: lifetimeEarned.toString(),
-      last24hEarned: calculateEarningsFromSnapshot(snapshot24h, now - 24 * 60 * 60),
-      last7dEarned: calculateEarningsFromSnapshot(snapshot7d, now - 7 * 24 * 60 * 60),
-      last30dEarned: calculateEarningsFromSnapshot(snapshot30d, now - 30 * 24 * 60 * 60),
+      last24hEarned: snapshot24h
+        ? calculateEarningsFromSnapshot(
+            currentBalance,
+            BigInt(snapshot24h.supplyAssets),
+            marketTxs,
+            now - 24 * 60 * 60,
+          )
+        : null,
+      last7dEarned: snapshot7d
+        ? calculateEarningsFromSnapshot(
+            currentBalance,
+            BigInt(snapshot7d.supplyAssets),
+            marketTxs,
+            now - 7 * 24 * 60 * 60,
+          )
+        : null,
+      last30dEarned: snapshot30d
+        ? calculateEarningsFromSnapshot(
+            currentBalance,
+            BigInt(snapshot30d.supplyAssets),
+            marketTxs,
+            now - 30 * 24 * 60 * 60,
+          )
+        : null,
     };
   };
 
@@ -172,7 +178,7 @@ const useUserPositions = (user: string | undefined) => {
           marketPositions
             .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
             .map(async (position: MarketPosition) => {
-              const earnings = await calculatePositionEarnings(
+              const earnings = await calculateEarningsFromPeriod(
                 position,
                 transactions,
                 user as Address,
