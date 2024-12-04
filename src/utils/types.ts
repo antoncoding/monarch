@@ -360,20 +360,3 @@ export type MarketHistoricalData = {
   rates: MarketRates;
   volumes: MarketVolumes;
 };
-
-// Add this near your other types
-export type UnknownERC20Token = {
-  address: string;
-  chainId: number;
-  symbol: string;
-  img?: string;
-  isUnknown?: boolean; // Flag to identify unknown tokens
-};
-
-// Update the existing type to be more specific
-export type ERC20Token = {
-  address: string;
-  chainId: number;
-  symbol: string;
-  img: string; // Now required for known tokens
-};
