@@ -3,14 +3,14 @@ import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { ERC20Token, infoToKey } from '@/utils/tokens';
+import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 
 type FilterProps = {
   label: string;
   placeholder: string;
   selectedAssets: string[];
   setSelectedAssets: (assets: string[]) => void;
-  items: ERC20Token[];
+  items: (ERC20Token | UnknownERC20Token)[];
   loading: boolean;
   updateFromSearch?: string[];
 };
@@ -103,8 +103,17 @@ export default function AssetFilter({
                   (item) =>
                     item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset,
                 );
-                return token?.img ? (
-                  <Image key={asset} src={token.img} alt={token.symbol} width={18} height={18} />
+                return token ? (
+                  token.img ? (
+                    <Image key={asset} src={token.img} alt={token.symbol} width={18} height={18} />
+                  ) : (
+                    <div
+                      key={asset}
+                      className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700"
+                    >
+                      ?
+                    </div>
+                  )
                 ) : null;
               })}
             </div>
@@ -156,9 +165,15 @@ export default function AssetFilter({
                     )}
                     tabIndex={0}
                   >
-                    <span>{token.symbol}</span>
-                    {token.img && (
+                    <span title={token.symbol}>
+                      {token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}
+                    </span>
+                    {token.img ? (
                       <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                    ) : (
+                      <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">
+                        ?
+                      </div>
                     )}
                   </li>
                 ))}
