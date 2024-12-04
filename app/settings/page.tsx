@@ -1,19 +1,16 @@
 'use client';
 
-import { useCallback } from 'react';
 import { Switch } from '@nextui-org/react';
 import Header from '@/components/layout/header/Header';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
-
-  const handlePermit2Toggle = useCallback(
-    (checked: boolean) => {
-      setUsePermit2(checked);
-    },
-    [setUsePermit2],
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
+    'includeUnknownTokens',
+    false,
   );
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -41,7 +38,57 @@ export default function SettingsPage() {
                 </div>
                 <Switch
                   defaultSelected={usePermit2}
-                  onValueChange={handlePermit2Toggle}
+                  onValueChange={setUsePermit2}
+                  size="sm"
+                  color="primary"
+                  className="min-w-[64px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Settings Section */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-xl font-semibold text-primary">Filter Settings</h2>
+
+            <div className="bg-surface flex flex-col gap-6 rounded p-6">
+              {/* Group related settings with a subtle separator */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Show Unknown Tokens</h3>
+                  <p className="text-sm text-secondary">
+                    Display tokens that aren't in our recognized token list. These will appear with
+                    a question mark icon.
+                  </p>
+                  <p className="mt-2 text-xs text-secondary opacity-80">
+                    Warning: Unknown tokens should be approached with caution as they haven't been
+                    verified.
+                  </p>
+                </div>
+                <Switch
+                  defaultSelected={includeUnknownTokens}
+                  onValueChange={setIncludeUnknownTokens}
+                  size="sm"
+                  color="primary"
+                  className="min-w-[64px]"
+                />
+              </div>
+
+              <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Show Unknown Oracles</h3>
+                  <p className="text-sm text-secondary">
+                    Display markets using oracle implementations that haven't been verified yet.
+                  </p>
+                  <p className="mt-2 text-xs text-secondary opacity-80">
+                    Warning: Markets with unknown oracles may have additional risks.
+                  </p>
+                </div>
+                <Switch
+                  defaultSelected={showUnknownOracle}
+                  onValueChange={setShowUnknownOracle}
                   size="sm"
                   color="primary"
                   className="min-w-[64px]"
