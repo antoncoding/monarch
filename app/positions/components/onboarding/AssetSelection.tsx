@@ -114,7 +114,7 @@ export function AssetSelection() {
               role="button"
               key={`${token.symbol}-${token.network}`}
               onClick={() => handleTokenSelect(token)}
-              className="group relative flex items-start gap-4 rounded-lg border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+              className="group relative flex items-start gap-4 rounded border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
               whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
