@@ -76,8 +76,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     tokenSymbol: market.loanAsset.symbol,
   });
 
-  console.log('isApproved', isApproved);
-
   const needSwitchChain = useMemo(
     () => chainId !== market.morphoBlue.chain.id,
     [chainId, market.morphoBlue.chain.id],

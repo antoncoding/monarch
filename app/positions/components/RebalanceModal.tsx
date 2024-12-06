@@ -230,8 +230,6 @@ export function RebalanceModal({
     [chainId, groupedPosition.chainId],
   );
 
-  console.log('needSwitchChain', needSwitchChain);
-
   const handleExecuteRebalance = useCallback(async () => {
     if (needSwitchChain) {
       try {
