@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
+import { useAccount } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -25,6 +26,7 @@ export enum EarningsPeriod {
 }
 
 type PositionsSummaryTableProps = {
+  account: string;
   marketPositions: MarketPosition[];
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
@@ -40,6 +42,7 @@ export function PositionsSummaryTable({
   setSelectedPosition,
   refetch,
   isRefetching,
+  account,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -47,6 +50,12 @@ export function PositionsSummaryTable({
     null,
   );
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
+  const { address } = useAccount();
+
+  const isOwner = useMemo(() => {
+    if (!account) return false;
+    return account === address;
+  }, [marketPositions, address]);
 
   const getEarningsForPeriod = (position: MarketPosition) => {
     if (!position.earned) return '0';
@@ -218,17 +227,18 @@ export function PositionsSummaryTable({
       <div className="mb-4 flex items-center justify-end gap-2">
         <Dropdown>
           <DropdownTrigger>
-            <button
-              type="button"
-              aria-label="Select earnings period"
-              className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+            <Button
+              variant="light"
+              size="sm"
+              startContent={<IoChevronDownOutline className="h-4 w-4" />}
+              className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
               {earningsPeriod}
-              <IoChevronDownOutline className="h-4 w-4" />
-            </button>
+            </Button>
           </DropdownTrigger>
           <DropdownMenu
-            aria-label="Time period selection"
+            aria-label="Earnings period selection"
+            className="bg-surface rounded p-2"
             onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
           >
             {Object.entries(periodLabels).map(([period, label]) => (
@@ -236,14 +246,15 @@ export function PositionsSummaryTable({
             ))}
           </DropdownMenu>
         </Dropdown>
-        <button
-          type="button"
-          className="bg-surface-dark flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-secondary transition-colors hover:bg-orange-500 hover:text-white"
+        <Button
+          variant="light"
+          size="sm"
+          startContent={<IoRefreshOutline className="h-4 w-4" />}
           onClick={handleManualRefresh}
+          className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
         >
-          <IoRefreshOutline className="h-4 w-4" />
           Refresh
-        </button>
+        </Button>
       </div>
       <div className="bg-surface overflow-hidden rounded">
         <table className="responsive w-full min-w-[640px] font-zen">
@@ -351,18 +362,25 @@ export function PositionsSummaryTable({
                         />
                       </div>
                     </td>
-                    <td data-label="Actions" className="px-4 py-3 text-right text-primary">
-                      <div className="flex space-x-2">
-                        <button
-                          type="button"
-                          className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                    <td data-label="Actions" className="justify-center px-4 py-3">
+                      <div className="flex items-center justify-center">
+                        <Button
+                          variant="light"
+                          size="sm"
+                          className={`bg-opacity-50 p-2 text-xs duration-300 ease-in-out ${
+                            isOwner ? 'hover:bg-primary' : 'cursor-not-allowed opacity-50'
+                          }`}
                           onClick={() => {
+                            if (!isOwner) {
+                              toast.error('You can only rebalance your own positions');
+                              return;
+                            }
                             setSelectedGroupedPosition(groupedPosition);
                             setShowRebalanceModal(true);
                           }}
                         >
                           Rebalance
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>

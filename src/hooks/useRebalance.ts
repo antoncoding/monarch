@@ -204,6 +204,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         const shares = groupedPosition.markets.find(
           (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
         )?.supplyShares;
+
+        console.log('shares', shares);
+
         if (isWithdrawMax && shares === undefined) {
           throw new Error('No share found for max withdraw');
         }

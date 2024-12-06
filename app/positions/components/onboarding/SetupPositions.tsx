@@ -3,7 +3,9 @@ import { Button, Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
+import { useChainId, useSwitchChain } from 'wagmi';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -16,6 +18,7 @@ import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const router = useRouter();
+  const chainId = useChainId();
   const { selectedToken, selectedMarkets } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
@@ -26,6 +29,13 @@ export function SetupPositions() {
   const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [isSupplying, setIsSupplying] = useState(false);
+
+  const needSwitchChain = useMemo(
+    () => chainId !== selectedToken?.network,
+    [chainId, selectedToken],
+  );
+
+  const { switchChain } = useSwitchChain();
 
   // Redirect if no token selected
   useEffect(() => {
@@ -222,7 +232,22 @@ export function SetupPositions() {
   } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting);
 
   const handleSupply = async () => {
-    if (isSupplying) return;
+    if (isSupplying) {
+      toast.info('Supplying in progress');
+      return;
+    }
+
+    if (needSwitchChain && selectedToken) {
+      try {
+        switchChain({ chainId: selectedToken.network });
+        toast.info('Network changed, please click again to execute');
+        return;
+      } catch (switchError) {
+        console.error('Failed to switch network:', switchError);
+        toast.error('Failed to switch network');
+        return;
+      }
+    }
     setIsSupplying(true);
 
     try {
