@@ -149,11 +149,11 @@ export function useMultiMarketSupply(
       await sendTransactionAsync({
         account,
         to: getBundlerV2(chainId),
-        data: encodeFunctionData({
+        data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
           args: [txs],
-        }) + MONARCH_TX_IDENTIFIER as `0x${string}`,
+        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? totalAmount : 0n,
       });
 

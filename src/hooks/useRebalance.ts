@@ -270,11 +270,11 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       transactions.push(...supplyTxs);
 
       // Execute all transactions
-      const multicallTx = encodeFunctionData({
+      const multicallTx = (encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'multicall',
         args: [transactions],
-      }) + MONARCH_TX_IDENTIFIER as `0x${string}`;
+      }) + MONARCH_TX_IDENTIFIER) as `0x${string}`;
 
       await sendTransactionAsync({
         account,

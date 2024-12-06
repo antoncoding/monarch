@@ -164,11 +164,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       await sendTransactionAsync({
         account,
         to: getBundlerV2(market.morphoBlue.chain.id),
-        data: encodeFunctionData({
+        data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
           args: [txs],
-        }) + MONARCH_TX_IDENTIFIER as `0x${string}`,
+        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? supplyAmount : 0n,
       });
 

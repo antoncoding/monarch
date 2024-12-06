@@ -365,9 +365,8 @@ export function PositionsSummaryTable({
                     <td data-label="Actions" className="justify-center px-4 py-3">
                       <div className="flex items-center justify-center">
                         <Button
-                          variant="light"
                           size="sm"
-                          className={`bg-opacity-50 p-2 text-xs duration-300 ease-in-out rounded-sm ${
+                          className={`rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out ${
                             isOwner ? 'hover:bg-primary' : 'cursor-not-allowed opacity-50'
                           }`}
                           onClick={() => {

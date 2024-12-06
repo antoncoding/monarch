@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip, Button } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
@@ -201,27 +201,31 @@ export function SuppliedMarketsDetail({
                       </span>
                     </div>
                   </td>
-                  <td data-label="Actions" className="flex justify-center gap-2 text-right">
-                    <button
-                      type="button"
-                      className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
-                      onClick={() => {
-                        setSelectedPosition(position);
-                        setShowWithdrawModal(true);
-                      }}
-                    >
-                      Withdraw
-                    </button>
-                    <button
-                      type="button"
-                      className="bg-hovered rounded-sm p-1 text-xs duration-300 ease-in-out hover:bg-orange-500"
-                      onClick={() => {
-                        setSelectedPosition(position);
-                        setShowSupplyModal(true);
-                      }}
-                    >
-                      Supply
-                    </button>
+                  <td data-label="Actions" className="justify-center px-4 py-3">
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="light"
+                        size="sm"
+                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                        onClick={() => {
+                          setSelectedPosition(position);
+                          setShowWithdrawModal(true);
+                        }}
+                      >
+                        Withdraw
+                      </Button>
+                      <Button
+                        variant="light"
+                        size="sm"
+                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                        onClick={() => {
+                          setSelectedPosition(position);
+                          setShowSupplyModal(true);
+                        }}
+                      >
+                        Supply
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );
