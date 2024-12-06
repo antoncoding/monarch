@@ -5,7 +5,7 @@ import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { getBundlerV2, MORPHO } from '@/utils/morpho';
+import { getBundlerV2, MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { usePermit2 } from './usePermit2';
 
@@ -270,11 +270,11 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       transactions.push(...supplyTxs);
 
       // Execute all transactions
-      const multicallTx = encodeFunctionData({
+      const multicallTx = (encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'multicall',
         args: [transactions],
-      });
+      }) + MONARCH_TX_IDENTIFIER) as `0x${string}`;
 
       await sendTransactionAsync({
         account,

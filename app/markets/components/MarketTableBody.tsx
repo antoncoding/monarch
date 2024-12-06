@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip, Button } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
@@ -155,19 +155,19 @@ export function MarketTableBody({
                   )}
                 </div>
               </td>
-              <td>
-                <button
-                  type="button"
-                  aria-label="Supply"
-                  className="bg-hovered items-center justify-between rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary "
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSupplyModal(true);
-                    setSelectedMarket(item);
-                  }}
-                >
-                  Supply
-                </button>
+              <td data-label="Actions" className="justify-center px-4 py-3">
+                <div className="flex items-center justify-center">
+                  <Button
+                    size="sm"
+                    className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                    onClick={() => {
+                      setSelectedMarket(item);
+                      setShowSupplyModal(true);
+                    }}
+                  >
+                    Supply
+                  </Button>
+                </div>
               </td>
             </tr>
             <AnimatePresence>

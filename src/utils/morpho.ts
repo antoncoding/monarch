@@ -4,6 +4,9 @@ import { UserTxTypes } from './types';
 
 export const MORPHO = '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
 
+// appended to the end of datahash to identify a monarch tx
+export const MONARCH_TX_IDENTIFIER = 'beef';
+
 export const getBundlerV2 = (chain: SupportedNetworks) => {
   if (chain === SupportedNetworks.Base) {
     // ChainAgnosticBundlerV2

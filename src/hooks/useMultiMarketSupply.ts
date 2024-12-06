@@ -7,7 +7,7 @@ import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
-import { getBundlerV2 } from '@/utils/morpho';
+import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
@@ -149,11 +149,11 @@ export function useMultiMarketSupply(
       await sendTransactionAsync({
         account,
         to: getBundlerV2(chainId),
-        data: encodeFunctionData({
+        data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
           args: [txs],
-        }),
+        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? totalAmount : 0n,
       });
 

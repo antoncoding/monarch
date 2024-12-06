@@ -15,7 +15,7 @@ import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
-import { getBundlerV2, getIRMTitle } from '@/utils/morpho';
+import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from './OracleVendorBadge';
@@ -164,11 +164,11 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       await sendTransactionAsync({
         account,
         to: getBundlerV2(market.morphoBlue.chain.id),
-        data: encodeFunctionData({
+        data: (encodeFunctionData({
           abi: morphoBundlerAbi,
           functionName: 'multicall',
           args: [txs],
-        }),
+        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? supplyAmount : 0n,
       });
 
