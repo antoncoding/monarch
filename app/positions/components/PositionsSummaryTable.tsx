@@ -367,7 +367,7 @@ export function PositionsSummaryTable({
                         <Button
                           variant="light"
                           size="sm"
-                          className={`bg-opacity-50 p-2 text-xs duration-300 ease-in-out ${
+                          className={`bg-opacity-50 p-2 text-xs duration-300 ease-in-out rounded-sm ${
                             isOwner ? 'hover:bg-primary' : 'cursor-not-allowed opacity-50'
                           }`}
                           onClick={() => {
