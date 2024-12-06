@@ -3,7 +3,9 @@ import { Button, Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
+import { useChainId, useSwitchChain } from 'wagmi';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -13,12 +15,10 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { parseOracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
-import { useChainId, useSwitchChain } from 'wagmi';
-import { toast } from 'react-toastify';
 
 export function SetupPositions() {
   const router = useRouter();
-  const chainId = useChainId()
+  const chainId = useChainId();
   const { selectedToken, selectedMarkets } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
@@ -233,17 +233,17 @@ export function SetupPositions() {
 
   const handleSupply = async () => {
     if (isSupplying) {
-      toast.info('Supplying in progress')
+      toast.info('Supplying in progress');
       return;
-    };
+    }
 
     if (needSwitchChain && selectedToken) {
       try {
         switchChain({ chainId: selectedToken.network });
-        toast.info('Network changed, please click again to execute')
+        toast.info('Network changed, please click again to execute');
         return;
-      } catch (error) {
-        console.error('Failed to switch network:', error);
+      } catch (switchError) {
+        console.error('Failed to switch network:', switchError);
         toast.error('Failed to switch network');
         return;
       }

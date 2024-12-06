@@ -6,9 +6,10 @@ import { MORPHO } from '@/utils/morpho';
 type AvatarProps = {
   address: Address;
   size?: number;
+  rounded?: boolean;
 };
 
-export function Avatar({ address, size = 30 }: AvatarProps) {
+export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
   const [useEffigy, setUseEffigy] = useState(true);
   const effigyUrl = `https://effigy.im/a/${address}.svg`;
   const dicebearUrl = `https://api.dicebear.com/7.x/pixel-art/png?seed=${address}`;
@@ -34,7 +35,7 @@ export function Avatar({ address, size = 30 }: AvatarProps) {
         alt={`Avatar for ${address}`}
         width={size}
         height={size}
-        style={{ borderRadius: '50%' }}
+        style={{ borderRadius: rounded ? '50%' : '5px' }}
         onError={() => setUseEffigy(false)}
       />
     </div>

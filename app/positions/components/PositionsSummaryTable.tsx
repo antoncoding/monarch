@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
+import { useAccount } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -25,6 +26,7 @@ export enum EarningsPeriod {
 }
 
 type PositionsSummaryTableProps = {
+  account: string;
   marketPositions: MarketPosition[];
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
@@ -40,6 +42,7 @@ export function PositionsSummaryTable({
   setSelectedPosition,
   refetch,
   isRefetching,
+  account,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -47,6 +50,12 @@ export function PositionsSummaryTable({
     null,
   );
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
+  const { address } = useAccount();
+
+  const isOwner = useMemo(() => {
+    if (!account) return false;
+    return account === address;
+  }, [marketPositions, address]);
 
   const getEarningsForPeriod = (position: MarketPosition) => {
     if (!position.earned) return '0';
@@ -355,8 +364,16 @@ export function PositionsSummaryTable({
                       <div className="flex space-x-2">
                         <button
                           type="button"
-                          className="bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                          className={`bg-hovered rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out ${
+                            isOwner
+                              ? 'opacity-80 hover:opacity-100'
+                              : 'cursor-not-allowed opacity-50'
+                          }`}
                           onClick={() => {
+                            if (!isOwner) {
+                              toast.error('You can only rebalance your own positions');
+                              return;
+                            }
                             setSelectedGroupedPosition(groupedPosition);
                             setShowRebalanceModal(true);
                           }}
