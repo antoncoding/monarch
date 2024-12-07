@@ -9,6 +9,7 @@ import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { Button } from './common';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
@@ -456,31 +457,31 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               </div>
 
               {needSwitchChain ? (
-                <button
-                  type="button"
+                <Button
                   onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="ml-2 min-w-32"
+                  variant="solid"
                 >
                   Switch Chain
-                </button>
+                </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-                <button
+                <Button
                   disabled={!isConnected || isLoadingPermit2}
-                  type="button"
                   onClick={() => void approveAndSupply()}
-                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white  opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="ml-2 min-w-32"
+                  variant="solid"
                 >
                   Approve and Supply
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   disabled={!isConnected || supplyPending || inputError !== null}
-                  type="button"
                   onClick={() => void signAndSupply()}
-                  className="bg-monarch-orange ml-2 h-10 min-w-32 rounded p-2 text-sm text-white opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100 disabled:opacity-50"
+                  className="ml-2 min-w-32"
+                  variant="solid"
                 >
                   {useEth ? 'Supply' : 'Sign and Supply'}
-                </button>
+                </Button>
               )}
             </div>
           </div>

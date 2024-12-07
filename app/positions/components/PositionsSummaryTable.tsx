@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Button } from '@nextui-org/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -10,6 +10,7 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { MarketPosition, GroupedPosition, WarningWithDetail } from '@/utils/types';
+import { Button } from '@/components/common/Button';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,
@@ -230,9 +231,9 @@ export function PositionsSummaryTable({
             <Button
               variant="light"
               size="sm"
-              startContent={<IoChevronDownOutline className="h-4 w-4" />}
               className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
+              <IoChevronDownOutline className="h-4 w-4 mr-2" />
               {earningsPeriod}
             </Button>
           </DropdownTrigger>
@@ -249,10 +250,10 @@ export function PositionsSummaryTable({
         <Button
           variant="light"
           size="sm"
-          startContent={<IoRefreshOutline className="h-4 w-4" />}
           onClick={handleManualRefresh}
           className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
         >
+          <IoRefreshOutline className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
@@ -366,9 +367,8 @@ export function PositionsSummaryTable({
                       <div className="flex items-center justify-center">
                         <Button
                           size="sm"
-                          className={`rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out ${
-                            isOwner ? 'hover:bg-primary' : 'cursor-not-allowed opacity-50'
-                          }`}
+                          color="hovered"
+                          className="text-xs"
                           onClick={() => {
                             if (!isOwner) {
                               toast.error('You can only rebalance your own positions');
@@ -377,6 +377,7 @@ export function PositionsSummaryTable({
                             setSelectedGroupedPosition(groupedPosition);
                             setShowRebalanceModal(true);
                           }}
+                          disabled={!isOwner}
                         >
                           Rebalance
                         </Button>

@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { FaHistory, FaGift, FaPlus, FaCircle } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -64,37 +65,38 @@ export default function Positions() {
             </div>
           </div>
           <div className="flex gap-4">
-            <Link href={`/history/${account}`} className="no-underline">
-              <button
-                type="button"
-                aria-label="View history"
-                className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            <Link href={`/history/${account}`}>
+              <Button
+                color="surface"
+                size="md"
+                className="font-zen text-secondary"
               >
-                <FaHistory size={14} />
+                <FaHistory size={14} className="mr-2" />
                 History
-              </button>
+              </Button>
             </Link>
-            <Link href={`/rewards/${account}`} className="no-underline">
-              <button
-                type="button"
-                aria-label="View rewards"
-                className="bg-surface flex items-center gap-2 rounded p-2 font-zen text-sm text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            <Link href={`/rewards/${account}`}>
+              <Button
+                color="surface"
+                size="md"
+                className="font-zen text-secondary"
               >
-                <FaGift size={14} />
+                <FaGift size={14} className="mr-2" />
                 Rewards
-              </button>
+              </Button>
             </Link>
             {isOwner && (
-              <Link href="/positions/onboarding" className="no-underline">
-                <button
-                  aria-label="Create a new position"
-                  type="button"
-                  className="bg-monarch-orange hover:bg-monarch-orange/90 flex items-center gap-2 rounded p-2 font-zen text-sm text-white shadow-sm transition-all duration-200 ease-in-out hover:shadow-md"
+              <Link href="/positions/onboarding">
+                <Button
+                  variant="solid"
+                  color="primary"
+                  size="md"
+                  className="font-zen"
                   disabled={account !== address}
                 >
-                  <FaPlus size={14} />
+                  <FaPlus size={14} className="mr-2" />
                   New Position
-                </button>
+                </Button>
               </Link>
             )}
           </div>
@@ -126,13 +128,16 @@ export default function Positions() {
         ) : !hasSuppliedMarkets ? (
           <div className="flex flex-col items-center gap-8">
             <EmptyScreen message="No open supplies. Start lending now!" />
-            <Link href="/positions/onboarding" passHref>
-              <button
-                type="button"
-                className="bg-monarch-orange mx-auto rounded px-8 py-3 font-zen text-white opacity-90 transition-all duration-200 ease-in-out hover:opacity-100"
+            <Link href="/positions/onboarding">
+              <Button
+                variant="solid"
+                color="primary"
+                size="lg"
+                className="font-zen"
               >
+                <FaPlus size={14} className="mr-2" />
                 Start Lending
-              </button>
+              </Button>
             </Link>
           </div>
         ) : (

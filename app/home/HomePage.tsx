@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import PrimaryButton from '@/components/common/PrimaryButton';
+import Link from 'next/link';
+import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 
 export default function HomePage() {
@@ -105,12 +106,16 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="mt-8 flex w-full justify-center gap-4 px-4 sm:w-auto sm:flex-row">
-            <PrimaryButton isSecondary href="/info" className="w-full sm:w-auto">
-              Why Monarch
-            </PrimaryButton>
-            <PrimaryButton href={`/positions/${address ?? ''}`} className="w-full sm:w-auto">
-              Get Started
-            </PrimaryButton>
+            <Link href="/info" className="block w-full sm:w-auto">
+              <Button variant="solid" className="w-full font-zen px-10 py-4" size="lg">
+                Why Monarch
+              </Button>
+            </Link>
+            <Link href={`/positions/${address ?? ''}`} className="block w-full sm:w-auto">
+              <Button variant="solid" color="primary" className="w-full font-zen px-10 py-4" size="lg">
+                Get Started
+              </Button>
+            </Link>
           </div>
         </section>
       </main>

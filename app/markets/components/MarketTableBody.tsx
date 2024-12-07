@@ -1,9 +1,10 @@
 import React from 'react';
-import { Tooltip, Button } from '@nextui-org/react';
+import { Tooltip } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { Button } from '@/components/common/Button';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -159,7 +160,8 @@ export function MarketTableBody({
                 <div className="flex items-center justify-center">
                   <Button
                     size="sm"
-                    className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                    variant="highlight"
+                    className="text-xs"
                     onClick={() => {
                       setSelectedMarket(item);
                       setShowSupplyModal(true);

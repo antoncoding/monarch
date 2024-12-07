@@ -18,6 +18,7 @@ import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import { Button } from '@/components/common';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
@@ -395,17 +396,17 @@ export default function Markets() {
           </div>
 
           <div className="mt-4 flex gap-2 lg:mt-0">
-            <button
-              onClick={handleRefresh}
-              type="button"
+            <Button
               disabled={loading || isRefetching}
-              className={`flex items-center gap-2 rounded bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
-                loading || isRefetching ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              variant="light"
+              color="surface"
+              size="sm"
+              className="text-secondary"
+              onClick={handleRefresh}
             >
-              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''}`} size={10} />
+              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
               Refresh
-            </button>
+            </Button>
           </div>
         </div>
 
