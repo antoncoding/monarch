@@ -207,7 +207,6 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
                         onClick={() => {
                           setSelectedPosition(position);
                           setShowWithdrawModal(true);
@@ -218,7 +217,6 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
                         onClick={() => {
                           setSelectedPosition(position);
                           setShowSupplyModal(true);

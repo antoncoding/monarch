@@ -107,7 +107,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
-        className="bg-surface relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
+        className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"

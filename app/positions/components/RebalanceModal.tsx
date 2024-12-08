@@ -268,7 +268,7 @@ export function RebalanceModal({
         isDismissable={false}
         size="5xl"
         classNames={{
-          base: 'min-w-[1250px] z-[1000] p-4',
+          base: 'min-w-[1250px] z-[1000] p-4 rounded',
           backdrop: showProcessModal && 'z-[999]',
         }}
       >

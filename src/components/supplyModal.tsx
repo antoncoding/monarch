@@ -455,7 +455,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
                 <Button
-                  disabled={!isConnected || isLoadingPermit2}
+                  disabled={!isConnected || isLoadingPermit2 || supplyPending}
                   onClick={() => void approveAndSupply()}
                   className="ml-2 min-w-32"
                   variant="cta"

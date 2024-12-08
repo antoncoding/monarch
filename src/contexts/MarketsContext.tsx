@@ -109,7 +109,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           };
         });
 
-        console.log('fetched', processedMarkets.length, 'markets');
         setMarkets(processedMarkets);
       } catch (_error) {
         setError(_error);
@@ -126,7 +125,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   useEffect(() => {
     if (!liquidationsLoading && markets.length === 0) {
-      console.log('triggering fetch markets');
       fetchMarkets().catch(console.error);
     }
   }, [liquidationsLoading, fetchMarkets]);
