@@ -469,7 +469,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   disabled={!isConnected || isLoadingPermit2}
                   onClick={() => void approveAndSupply()}
                   className="ml-2 min-w-32"
-                  variant="solid"
+                  variant="cta"
                 >
                   Approve and Supply
                 </Button>
@@ -478,7 +478,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   disabled={!isConnected || supplyPending || inputError !== null}
                   onClick={() => void signAndSupply()}
                   className="ml-2 min-w-32"
-                  variant="solid"
+                  variant="cta"
                 >
                   {useEth ? 'Supply' : 'Sign and Supply'}
                 </Button>

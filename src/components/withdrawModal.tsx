@@ -9,6 +9,7 @@ import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { MarketAmountBlock } from '@/components/common/MarketInfoBlock';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
@@ -127,12 +128,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
         </p>
 
         <div className="mb-2">
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="text-right font-monospace text-sm">
-              {position.market.uniqueKey.slice(2, 8)}
-            </p>
-          </div>
+          <MarketAmountBlock market={position.market} />
           <div className="my-2 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Available Liquidity:</p>
 
