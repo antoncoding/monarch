@@ -21,10 +21,7 @@ export const Button = extendVariants(NextUIButton, {
     // Rounded corners
     radius: {
       none: 'rounded-none',
-      sm: 'rounded-sm',
       base: 'rounded-sm',
-      lg: 'rounded-sm',
-      full: 'rounded-sm',
     },
     // Full width option
     fullWidth: {
