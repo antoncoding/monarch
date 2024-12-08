@@ -124,18 +124,12 @@ function MarketContent() {
       <div className="container mx-auto px-4 py-8 pb-4 font-zen">
         {/* navigation bottons */}
         <div className="flex justify-between">
-          <Button
-            onClick={handleBackToMarkets}
-            color="surface"
-            size="md"
-            className="mb-4"
-          >
+          <Button onClick={handleBackToMarkets} size="md" className="mb-4">
             <ChevronLeftIcon className="mr-2" />
             Back to Markets
           </Button>
 
           <Button
-            color="surface"
             size="md"
             className="mb-4"
             onClick={() =>

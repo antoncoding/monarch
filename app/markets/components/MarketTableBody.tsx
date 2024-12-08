@@ -160,7 +160,7 @@ export function MarketTableBody({
                 <div className="flex items-center justify-center">
                   <Button
                     size="sm"
-                    variant="highlight"
+                    variant="interactive"
                     className="text-xs"
                     onClick={() => {
                       setSelectedMarket(item);

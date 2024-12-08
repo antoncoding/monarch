@@ -5,13 +5,13 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Button,
   Spinner,
 } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits, formatUnits } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -278,15 +278,15 @@ export function RebalanceModal({
               Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
               {isRefetching && <Spinner size="sm" />}
             </div>
-            <button
+            <Button
+              variant="light"
+              size="sm"
               onClick={handleManualRefresh}
-              disabled={isRefetching}
-              type="button"
-              className="flex items-center gap-2 rounded-md bg-gray-200 px-3 py-1 text-sm text-secondary transition-colors hover:bg-gray-300 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+              isDisabled={isRefetching}
             >
               <GrRefresh size={16} />
               Refresh
-            </button>
+            </Button>
           </ModalHeader>
           <ModalBody className="mx-2 font-zen">
             <div className="mb-4 rounded bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -344,18 +344,18 @@ export function RebalanceModal({
           </ModalBody>
           <ModalFooter className="mx-2">
             <Button
-              variant="light"
+              variant="secondary"
               onPress={onClose}
-              className="rounded-sm bg-gray-200 p-4 px-10 font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 dark:bg-gray-700 dark:text-gray-300"
+              className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
             >
               Cancel
             </Button>
             <Button
-              color="primary"
+              variant="cta"
               onPress={() => void handleExecuteRebalance()}
               isDisabled={isConfirming || rebalanceActions.length === 0}
               isLoading={isConfirming}
-              className="rounded-sm bg-primary p-4 px-10 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100 disabled:opacity-50 dark:bg-primary"
+              className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
             >
               {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
             </Button>

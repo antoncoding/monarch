@@ -30,7 +30,7 @@ export default function HistoryContent({ account }: { account: string }) {
 
         <div className="flex justify-center pt-14">
           <Link href={`/positions/${account}`}>
-            <Button variant="solid" color="primary" className="font-zen px-10 py-4" size="lg">
+            <Button variant="solid" color="primary" className="px-10 py-4 font-zen" size="lg">
               Back to Portfolio
             </Button>
           </Link>

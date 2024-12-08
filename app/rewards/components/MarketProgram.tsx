@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common/Button';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -14,7 +15,6 @@ import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketProgramType } from '@/utils/types';
-import { Button } from '@/components/common/Button';
 
 type MarketProgramProps = {
   account: string;
@@ -205,9 +205,11 @@ export default function MarketProgram({
                     <TableCell align="center">
                       <div className="flex justify-center">
                         <Button
-                          variant="highlight"
+                          variant="interactive"
                           size="sm"
-                          isDisabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
+                          isDisabled={
+                            tokenReward.claimable === BigInt(0) || distribution === undefined
+                          }
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!account) {

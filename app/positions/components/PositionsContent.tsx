@@ -66,21 +66,13 @@ export default function Positions() {
           </div>
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
-              <Button
-                color="surface"
-                size="md"
-                className="font-zen text-secondary"
-              >
+              <Button size="md" className="font-zen text-secondary">
                 <FaHistory size={14} className="mr-2" />
                 History
               </Button>
             </Link>
             <Link href={`/rewards/${account}`}>
-              <Button
-                color="surface"
-                size="md"
-                className="font-zen text-secondary"
-              >
+              <Button size="md" className="font-zen text-secondary">
                 <FaGift size={14} className="mr-2" />
                 Rewards
               </Button>
@@ -129,12 +121,7 @@ export default function Positions() {
           <div className="flex flex-col items-center gap-8">
             <EmptyScreen message="No open supplies. Start lending now!" />
             <Link href="/positions/onboarding">
-              <Button
-                variant="solid"
-                color="primary"
-                size="lg"
-                className="font-zen"
-              >
+              <Button variant="solid" color="primary" size="lg" className="font-zen">
                 <FaPlus size={14} className="mr-2" />
                 Start Lending
               </Button>

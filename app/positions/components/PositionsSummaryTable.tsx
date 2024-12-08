@@ -6,11 +6,11 @@ import Image from 'next/image';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
+import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { MarketPosition, GroupedPosition, WarningWithDetail } from '@/utils/types';
-import { Button } from '@/components/common/Button';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,
@@ -233,7 +233,7 @@ export function PositionsSummaryTable({
               size="sm"
               className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
             >
-              <IoChevronDownOutline className="h-4 w-4 mr-2" />
+              <IoChevronDownOutline className="mr-2 h-4 w-4" />
               {earningsPeriod}
             </Button>
           </DropdownTrigger>
@@ -253,7 +253,7 @@ export function PositionsSummaryTable({
           onClick={handleManualRefresh}
           className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
         >
-          <IoRefreshOutline className="h-4 w-4 mr-2" />
+          <IoRefreshOutline className="mr-2 h-4 w-4" />
           Refresh
         </Button>
       </div>
@@ -367,7 +367,7 @@ export function PositionsSummaryTable({
                       <div className="flex items-center justify-center">
                         <Button
                           size="sm"
-                          color="hovered"
+                          variant="interactive"
                           className="text-xs"
                           onClick={() => {
                             if (!isOwner) {

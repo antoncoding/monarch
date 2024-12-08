@@ -1,7 +1,7 @@
 import React from 'react';
-import { Button } from '@nextui-org/react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { Button } from '@/components/common';
 import { ERC20Token } from '@/utils/tokens';
 import { GroupedPosition, Market } from '@/utils/types';
 import { MarketBadge } from './MarketBadge';
@@ -59,7 +59,8 @@ export function RebalanceActionInput({
       </div>
       <Button
         onClick={onAddAction}
-        className="ml-4 rounded-sm bg-primary p-2 px-4 font-zen text-white opacity-80 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100"
+        variant="cta"
+        isDisabled={!amount || !selectedFromMarketUniqueKey || !selectedToMarketUniqueKey}
       >
         Add Action
       </Button>

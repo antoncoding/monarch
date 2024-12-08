@@ -6,6 +6,7 @@ import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -18,7 +19,6 @@ import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, getUniqueTokens, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { Button } from '@/components/common';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
@@ -399,7 +399,6 @@ export default function Markets() {
             <Button
               disabled={loading || isRefetching}
               variant="light"
-              color="surface"
               size="sm"
               className="text-secondary"
               onClick={handleRefresh}

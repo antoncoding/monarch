@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common/Button';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { UniformRewardType } from '@/utils/types';
-import { Button } from '@/components/common/Button';
 
 type UniformProgramProps = {
   account: string;
@@ -160,7 +160,7 @@ export default function UniformProgram({
                 </TableCell>
                 <TableCell align="center">
                   <Button
-                    variant="highlight"
+                    variant="interactive"
                     size="sm"
                     isDisabled={reward.claimable === BigInt(0) || !reward.distribution}
                     onClick={(e) => {
