@@ -1,11 +1,7 @@
 import React, { useMemo } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { formatUnits } from 'viem';
-import { formatBalance } from '@/utils/balance';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketAmountBlock } from './common/MarketInfoBlock';
 
@@ -127,6 +123,7 @@ export function SupplyProcessModal({
                   <MarketAmountBlock
                     market={supply.market}
                     amount={supply.amount}
+                    key={supply.market.uniqueKey}
                   />
                 );
               })}

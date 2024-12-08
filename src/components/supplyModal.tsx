@@ -4,7 +4,7 @@ import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { Address, encodeFunctionData, formatUnits } from 'viem';
+import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import Input from '@/components/Input/Input';
@@ -19,6 +19,7 @@ import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
+import { MarketAmountBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
@@ -38,7 +39,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
   const { address: account, isConnected, chainId } = useAccount();
 
-  const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
   const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
   const { switchChain } = useSwitchChain();
@@ -331,7 +331,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               <Cross1Icon />{' '}
             </button>
 
-            <div className="mb-4 flex items-center gap-2 p-2 text-2xl">
+            <div className="mb-2 flex items-center gap-2 py-2 text-2xl">
               Supply {loanToken ? loanToken.symbol : market.loanAsset.symbol}
               {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
             </div>
@@ -341,8 +341,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               You are supplying {market.loanAsset.symbol} to the following market:{' '}
             </p>
 
-            <div className="mb-2">
-              <div className="mb-1 flex items-start justify-between">
+            <div className="my-2">
+              <MarketAmountBlock market={market} />
+
+              <div className="my-2">Details</div>
+
+              <div className="my-1 flex items-start justify-between">
                 <p className="font-inter text-sm opacity-50">Market ID:</p>
                 <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
                   <p className="text-right font-monospace text-sm">
@@ -350,21 +354,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   </p>
                 </Link>
               </div>
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-sm opacity-50">Collateral Token:</p>
-                <div className="flex items-center justify-center gap-2">
-                  <p className="text-right font-zen">{market.collateralAsset.symbol} </p>
-                  <div>
-                    {collateralToken?.img && (
-                      <Image src={collateralToken.img} height={16} alt={collateralToken.symbol} />
-                    )}{' '}
-                  </div>
-                </div>
-              </div>
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-sm opacity-50">LLTV:</p>
-                <p className="text-right font-zen">{formatUnits(BigInt(market.lltv), 16)} %</p>
-              </div>
+
               <div className="mb-1 flex items-start justify-between">
                 <p className="font-inter text-sm opacity-50">Oracle:</p>
                 <a

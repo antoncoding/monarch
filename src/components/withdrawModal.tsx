@@ -7,9 +7,9 @@ import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
+import { MarketAmountBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
-import { MarketAmountBlock } from '@/components/common/MarketInfoBlock';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
@@ -117,7 +117,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
           <Cross1Icon />{' '}
         </button>
 
-        <div className="mb-4 flex items-center gap-2 p-2 text-2xl">
+        <div className="mb-4 flex items-center gap-2 py-2 text-2xl">
           Withdraw {loanToken ? loanToken.symbol : position.market.loanAsset.symbol}
           {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
         </div>

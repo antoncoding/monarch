@@ -274,7 +274,7 @@ export function RebalanceModal({
       >
         <ModalContent>
           <ModalHeader className="flex items-center justify-between px-8 font-zen text-2xl">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-2xl">
               Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
               {isRefetching && <Spinner size="sm" />}
             </div>
@@ -289,7 +289,7 @@ export function RebalanceModal({
             </Button>
           </ModalHeader>
           <ModalBody className="mx-2 font-zen">
-            <div className="mb-4 rounded bg-gray-100 p-4 dark:border-gray-700 dark:bg-gray-800">
+            <div className="py-4">
               <p className="text-sm text-secondary">
                 Optimize your {groupedPosition.loanAsset} lending strategy by redistributing funds
                 across markets, add "Rebalance" actions to fine-tune your portfolio.
