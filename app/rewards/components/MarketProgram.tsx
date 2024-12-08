@@ -14,6 +14,7 @@ import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketProgramType } from '@/utils/types';
+import { Button } from '@/components/common/Button';
 
 type MarketProgramProps = {
   account: string;
@@ -201,18 +202,12 @@ export default function MarketProgram({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          className={`bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out ${
-                            tokenReward.claimable === BigInt(0) || distribution === undefined
-                              ? 'cursor-not-allowed opacity-50'
-                              : 'hover:scale-110 hover:bg-orange-500'
-                          }`}
-                          disabled={
-                            tokenReward.claimable === BigInt(0) || distribution === undefined
-                          }
+                    <TableCell align="center">
+                      <div className="flex justify-center">
+                        <Button
+                          variant="highlight"
+                          size="sm"
+                          isDisabled={tokenReward.claimable === BigInt(0) || distribution === undefined}
                           onClick={(e) => {
                             e.stopPropagation();
                             if (!account) {
@@ -237,7 +232,7 @@ export default function MarketProgram({
                           }}
                         >
                           Claim
-                        </button>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

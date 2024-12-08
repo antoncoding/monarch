@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Button } from '@nextui-org/button';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Spinner } from '@nextui-org/spinner';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
@@ -9,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
+import { Button } from '@/components/common';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -126,20 +126,24 @@ function MarketContent() {
         <div className="flex justify-between">
           <Button
             onClick={handleBackToMarkets}
-            className="bg-surface mb-4 rounded-md"
-            startContent={<ChevronLeftIcon />}
+            color="surface"
+            size="md"
+            className="mb-4"
           >
+            <ChevronLeftIcon className="mr-2" />
             Back to Markets
           </Button>
 
           <Button
-            className="bg-surface mb-4 rounded-md"
+            color="surface"
+            size="md"
+            className="mb-4"
             onClick={() =>
               window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank')
             }
-            endContent={<Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} />}
           >
             View on Morpho Blue
+            <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
           </Button>
         </div>
 
