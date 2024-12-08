@@ -337,7 +337,6 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </div>
 
             <p className="py-4 opacity-80">
-              {' '}
               You are supplying {market.loanAsset.symbol} to the following market:{' '}
             </p>
 
