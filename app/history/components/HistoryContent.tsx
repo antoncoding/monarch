@@ -1,6 +1,7 @@
 'use client';
 
-import PrimaryButton from '@/components/common/PrimaryButton';
+import Link from 'next/link';
+import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
@@ -28,7 +29,11 @@ export default function HistoryContent({ account }: { account: string }) {
         )}
 
         <div className="flex justify-center pt-14">
-          <PrimaryButton href={`/positions/${account}`}>Back to Portfolio</PrimaryButton>
+          <Link href={`/positions/${account}`}>
+            <Button variant="solid" color="primary" className="px-10 py-4 font-zen" size="lg">
+              Back to Portfolio
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

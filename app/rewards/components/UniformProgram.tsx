@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common/Button';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -92,7 +93,7 @@ export default function UniformProgram({
             <TableColumn align="center">Pending</TableColumn>
             <TableColumn align="center">Claimed</TableColumn>
             <TableColumn align="center">Total</TableColumn>
-            <TableColumn align="end">Action</TableColumn>
+            <TableColumn align="center">Action</TableColumn>
           </TableHeader>
           <TableBody>
             {rewardsData.map((reward, index) => (
@@ -157,42 +158,36 @@ export default function UniformProgram({
                     )}
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      className={`bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out ${
-                        reward.claimable === BigInt(0) || !reward.distribution
-                          ? 'cursor-not-allowed opacity-50'
-                          : 'hover:scale-110 hover:bg-orange-500'
-                      }`}
-                      disabled={reward.claimable === BigInt(0) || !reward.distribution}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!account) {
-                          toast.error('Connect wallet');
-                          return;
-                        }
-                        if (!reward.distribution) {
-                          toast.error('No claim data');
-                          return;
-                        }
-                        if (chainId !== reward.asset.chain_id) {
-                          switchChain({ chainId: reward.asset.chain_id });
-                          toast('Click on claim again after switching network');
-                          return;
-                        }
-                        sendTransaction({
-                          account: account as Address,
-                          to: reward.distribution.distributor.address as Address,
-                          data: reward.distribution.tx_data as `0x${string}`,
-                          chainId: reward.distribution.distributor.chain_id,
-                        });
-                      }}
-                    >
-                      Claim
-                    </button>
-                  </div>
+                <TableCell align="center">
+                  <Button
+                    variant="interactive"
+                    size="sm"
+                    isDisabled={reward.claimable === BigInt(0) || !reward.distribution}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!account) {
+                        toast.error('Connect wallet');
+                        return;
+                      }
+                      if (!reward.distribution) {
+                        toast.error('No claim data');
+                        return;
+                      }
+                      if (chainId !== reward.asset.chain_id) {
+                        switchChain({ chainId: reward.asset.chain_id });
+                        toast('Click on claim again after switching network');
+                        return;
+                      }
+                      sendTransaction({
+                        account: account as Address,
+                        to: reward.distribution.distributor.address as Address,
+                        data: reward.distribution.tx_data as `0x${string}`,
+                        chainId: reward.distribution.distributor.chain_id,
+                      });
+                    }}
+                  >
+                    Claim
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}

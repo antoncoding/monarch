@@ -6,6 +6,7 @@ import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -395,17 +396,16 @@ export default function Markets() {
           </div>
 
           <div className="mt-4 flex gap-2 lg:mt-0">
-            <button
-              onClick={handleRefresh}
-              type="button"
+            <Button
               disabled={loading || isRefetching}
-              className={`flex items-center gap-2 rounded bg-gray-200 p-2 px-3 text-sm text-secondary transition-colors hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 ${
-                loading || isRefetching ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              variant="light"
+              size="sm"
+              className="text-secondary"
+              onClick={handleRefresh}
             >
-              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''}`} size={10} />
+              <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
               Refresh
-            </button>
+            </Button>
           </div>
         </div>
 

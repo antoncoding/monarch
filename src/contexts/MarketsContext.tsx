@@ -113,15 +113,18 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       } catch (_error) {
         setError(_error);
       } finally {
-        setLoading(false);
-        setIsRefetching(false);
+        if (isRefetch) {
+          setIsRefetching(false);
+        } else {
+          setLoading(false);
+        }
       }
     },
     [liquidatedMarketIds],
   );
 
   useEffect(() => {
-    if (!liquidationsLoading) {
+    if (!liquidationsLoading && markets.length === 0) {
       fetchMarkets().catch(console.error);
     }
   }, [liquidationsLoading, fetchMarkets]);

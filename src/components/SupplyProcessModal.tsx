@@ -1,12 +1,9 @@
 import React, { useMemo } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { formatUnits } from 'viem';
-import { formatBalance } from '@/utils/balance';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import { MarketAmountBlock } from './common/MarketInfoBlock';
 
 type MarketSupply = {
   market: Market;
@@ -103,7 +100,7 @@ export function SupplyProcessModal({
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           exit={{ scale: 0.95 }}
-          className="relative w-full max-w-lg rounded-lg bg-white p-4 shadow-xl dark:bg-gray-900"
+          className="relative w-full max-w-lg rounded bg-white p-4 shadow-xl dark:bg-gray-900"
         >
           <button
             type="button"
@@ -122,49 +119,12 @@ export function SupplyProcessModal({
             {/* Market details */}
             <div className="mt-4 space-y-3">
               {supplies.map((supply) => {
-                const collateralToken = findToken(
-                  supply.market.collateralAsset.address,
-                  supply.market.morphoBlue.chain.id,
-                );
                 return (
-                  <div
+                  <MarketAmountBlock
+                    market={supply.market}
+                    amount={supply.amount}
                     key={supply.market.uniqueKey}
-                    className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      {collateralToken?.img && (
-                        <div className="overflow-hidden rounded-full">
-                          <Image
-                            src={collateralToken.img}
-                            alt={supply.market.collateralAsset.symbol}
-                            width={32}
-                            height={32}
-                            className="h-8 w-8 rounded-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            {supply.market.collateralAsset.symbol}
-                          </span>
-                          <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                            {formatUnits(BigInt(supply.market.lltv), 16)}% LTV
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500">
-                          {formatBalance(supply.amount, supply.market.loanAsset.decimals)}{' '}
-                          {tokenSymbol}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono text-sm">
-                        {(supply.market.state.supplyApy * 100).toFixed(2)}%
-                      </div>
-                      <div className="text-xs text-gray-500">Supply APY</div>
-                    </div>
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -176,7 +136,7 @@ export function SupplyProcessModal({
                 return (
                   <div
                     key={step.key}
-                    className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${
+                    className={`flex items-start gap-3 rounded border p-3 transition-colors ${
                       status === 'current'
                         ? 'border-primary bg-primary/5'
                         : 'border-gray-100 dark:border-gray-700'

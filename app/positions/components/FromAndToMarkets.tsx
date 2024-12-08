@@ -92,7 +92,7 @@ export function FromAndToMarkets({
       <div className="w-2/5">
         <h3 className="mb-2 text-lg font-semibold">Your Market Positions</h3>
         <Input
-          placeholder="Filter your positions or Market ID"
+          placeholder="Filter with Market ID or Collateral"
           value={fromFilter}
           onChange={(e) => onFromFilterChange(e.target.value)}
           className="mb-2"
@@ -228,7 +228,7 @@ export function FromAndToMarkets({
       <div className="w-3/5">
         <h3 className="mb-2 text-lg font-semibold">Available Markets for Rebalancing</h3>
         <Input
-          placeholder="Filter available markets or Market ID"
+          placeholder="Filter with Market ID or Collateral"
           value={toFilter}
           onChange={(e) => onToFilterChange(e.target.value)}
           className="mb-2"

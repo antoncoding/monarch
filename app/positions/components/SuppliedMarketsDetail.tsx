@@ -1,8 +1,9 @@
 import React from 'react';
-import { Tooltip, Button } from '@nextui-org/react';
+import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
+import { Button } from '@/components/common';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -204,9 +205,8 @@ export function SuppliedMarketsDetail({
                   <td data-label="Actions" className="justify-center px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
                       <Button
-                        variant="light"
                         size="sm"
-                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                        variant="interactive"
                         onClick={() => {
                           setSelectedPosition(position);
                           setShowWithdrawModal(true);
@@ -215,9 +215,8 @@ export function SuppliedMarketsDetail({
                         Withdraw
                       </Button>
                       <Button
-                        variant="light"
                         size="sm"
-                        className="rounded-sm bg-opacity-50 p-2 text-xs duration-300 ease-in-out hover:bg-primary"
+                        variant="interactive"
                         onClick={() => {
                           setSelectedPosition(position);
                           setShowSupplyModal(true);

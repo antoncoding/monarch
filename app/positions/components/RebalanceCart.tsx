@@ -1,14 +1,7 @@
 import React from 'react';
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Button,
-} from '@nextui-org/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
 import { formatUnits } from 'viem';
+import { Button } from '@/components/common';
 import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { MarketBadge } from './MarketBadge';
@@ -71,10 +64,10 @@ export function RebalanceCart({
               </TableCell>
               <TableCell>
                 <Button
-                  color="danger"
+                  variant="secondary"
                   size="sm"
                   onPress={() => removeRebalanceAction(index)}
-                  className="rounded-sm bg-red-500 p-2 text-xs text-white duration-300 ease-in-out hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700"
+                  className="rounded-sm p-2 text-xs duration-300 ease-in-out"
                 >
                   Remove
                 </Button>

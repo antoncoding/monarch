@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
+import { MarketAmountBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -106,7 +107,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
       <div
         style={{ width: '600px' }}
-        className="bg-surface relative z-50 rounded-sm p-12 transition-all duration-500 ease-in-out"
+        className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"
@@ -116,7 +117,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
           <Cross1Icon />{' '}
         </button>
 
-        <div className="mb-4 flex items-center gap-2 p-2 text-2xl">
+        <div className="mb-4 flex items-center gap-2 py-2 text-2xl">
           Withdraw {loanToken ? loanToken.symbol : position.market.loanAsset.symbol}
           {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
         </div>
@@ -127,12 +128,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
         </p>
 
         <div className="mb-2">
-          <div className="mb-1 flex items-start justify-between">
-            <p className="font-inter text-sm opacity-50">Market ID:</p>
-            <p className="text-right font-monospace text-sm">
-              {position.market.uniqueKey.slice(2, 8)}
-            </p>
-          </div>
+          <MarketAmountBlock market={position.market} />
           <div className="my-2 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Available Liquidity:</p>
 

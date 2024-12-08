@@ -1,11 +1,108 @@
-# Styling and CSS guidelines
+# Styling and CSS Guidelines
 
-## Colors
+## Core Components
 
-- background: `bg-main`
-- card, button: `bg-surface`
+Use these shared components instead of raw HTML elements:
 
-## Tailwind-Compatible Component
+- `Button`: Import from `@/components/common/Button` for all clickable actions
+- `Modal`: For all modal dialogs
+- `Card`: For contained content sections
+- `Typography`: For text elements
 
-- primary: `text-primary`
-- secondary: `text-secondary`
+## Component Guidelines
+
+### Button Component
+
+```typescript
+import { Button } from '@/components/common/Button';
+```
+
+#### Button Variants
+
+- `default`: Standard surface-colored button
+
+  - Use for: Navigation buttons, "Back", "Cancel" actions
+  - Example: "Back to Markets", "Cancel"
+
+- `cta`: Primary call-to-action with orange background
+
+  - Use for: Main actions, confirmations, primary flows
+  - Example: "Launch App", "Execute Rebalance", "Start Lending"
+
+- `interactive`: Subtle background with strong hover effect (background → primary)
+
+  - Use for: Table row actions, interactive elements
+  - Example: "Claim", "Supply", "Withdraw" in tables
+
+- `secondary`: Subtle background (hovered color) without hover transform
+
+  - Use for: Secondary actions, less prominent options
+  - Example: "Remove" in tables, "Cancel" in modals
+
+- `ghost`: Most subtle variant with minimal visual impact
+  - Use for: Tertiary actions, subtle navigation
+  - Example: "Refresh" buttons, utility actions
+
+#### Size Guidelines
+
+- `sm`: Compact buttons (h-8)
+
+  - Use for: Table actions, tight spaces
+  - Default padding: px-3 py-1.5
+
+- `md`: Standard buttons (h-10)
+
+  - Use for: Most general actions
+  - Default padding: px-4 py-2
+
+- `lg`: Large buttons (h-12)
+  - Use for: Primary CTAs, important actions
+  - Default padding: px-6 py-3
+
+#### Common Classes
+
+- Font: `font-zen` for consistent typography
+- Icons: Use `mr-2` for icon spacing when icons are present
+- Transitions: Built into variants, no need to add transition classes
+
+#### Examples
+
+```tsx
+// Primary CTA
+<Button variant="cta" size="lg" className="font-zen">
+  Launch App
+</Button>
+
+// Table Action
+<Button variant="interactive" size="sm">
+  Claim
+</Button>
+
+// Navigation
+<Button variant="default" size="md">
+  <ChevronLeftIcon className="mr-2" />
+  Back to Markets
+</Button>
+
+// Secondary Action
+<Button variant="secondary" size="md">
+  Cancel
+</Button>
+
+// Utility Action
+<Button variant="ghost" size="sm">
+  <RefreshIcon className="mr-2" />
+  Refresh
+</Button>
+```
+
+2. Modals:
+
+   - Always use `rounded-lg`
+   - Standard padding: `p-6`
+   - Consistent max-width: `max-w-lg`
+
+3. Cards:
+   - Use `rounded-base`
+   - Consistent padding: `p-4`
+   - Standard shadow: `shadow-base`

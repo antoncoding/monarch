@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common/Button';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
@@ -201,16 +202,12 @@ export default function MarketProgram({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          className={`bg-hovered items-center justify-between rounded-sm p-2 text-xs duration-300 ease-in-out ${
-                            tokenReward.claimable === BigInt(0) || distribution === undefined
-                              ? 'cursor-not-allowed opacity-50'
-                              : 'hover:scale-110 hover:bg-orange-500'
-                          }`}
-                          disabled={
+                    <TableCell align="center">
+                      <div className="flex justify-center">
+                        <Button
+                          variant="interactive"
+                          size="sm"
+                          isDisabled={
                             tokenReward.claimable === BigInt(0) || distribution === undefined
                           }
                           onClick={(e) => {
@@ -237,7 +234,7 @@ export default function MarketProgram({
                           }}
                         >
                           Claim
-                        </button>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

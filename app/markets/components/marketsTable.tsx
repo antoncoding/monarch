@@ -49,7 +49,7 @@ function MarketsTable({
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pb-4">
       <div className="w-full overflow-x-auto">
         <table className="responsive w-full rounded-md font-zen">
           <thead className="table-header">

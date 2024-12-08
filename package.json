@@ -68,6 +68,7 @@
     "sharp": "^0.33.5",
     "shikiji": "^0.9.17",
     "shikiji-core": "^0.9.17",
+    "tailwind-merge": "^2.5.5",
     "unified": "^11.0.4",
     "viem": "2.x",
     "wagmi": "^2.10.2",
