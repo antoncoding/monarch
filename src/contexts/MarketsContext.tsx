@@ -109,19 +109,24 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           };
         });
 
+        console.log('fetched', processedMarkets.length, 'markets');
         setMarkets(processedMarkets);
       } catch (_error) {
         setError(_error);
       } finally {
-        setLoading(false);
-        setIsRefetching(false);
+        if (isRefetch) {
+          setIsRefetching(false);
+        } else {
+          setLoading(false);
+        }
       }
     },
     [liquidatedMarketIds],
   );
 
   useEffect(() => {
-    if (!liquidationsLoading) {
+    if (!liquidationsLoading && markets.length === 0) {
+      console.log('triggering fetch markets');
       fetchMarkets().catch(console.error);
     }
   }, [liquidationsLoading, fetchMarkets]);

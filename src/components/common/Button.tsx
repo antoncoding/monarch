@@ -1,6 +1,5 @@
 import React from 'react';
 import { extendVariants, Button as NextUIButton } from '@nextui-org/react';
-import { cn } from '@/utils/cn';
 
 export const Button = extendVariants(NextUIButton, {
   variants: {

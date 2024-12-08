@@ -404,7 +404,7 @@ export default function Markets() {
               className="text-secondary"
               onClick={handleRefresh}
             >
-              <FaSync className={`${loading || isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
+              <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
               Refresh
             </Button>
           </div>
