@@ -3,15 +3,34 @@ import { Address } from 'viem';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
 import useUserPositions from './useUserPositions';
 import { usePositionSnapshot } from './usePositionSnapshot';
-import { MarketPosition, MarketPositionWithEarnings, PositionEarnings, UserTransaction } from '@/utils/types';
+import {
+  MarketPosition,
+  MarketPositionWithEarnings,
+  PositionEarnings,
+  UserTransaction,
+} from '@/utils/types';
 
 const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false) => {
-  const { loading, isRefetching, data: positions, history, error, refetch } = useUserPositions(user, showEmpty);
+  const {
+    loading,
+    isRefetching,
+    data: positions,
+    history,
+    error,
+    refetch,
+  } = useUserPositions(user, showEmpty);
   const { fetchPositionSnapshot } = usePositionSnapshot();
-  const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>([]);
+  const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>(
+    [],
+  );
 
   const calculateEarningsFromPeriod = useCallback(
-    async (position: MarketPosition, transactions: UserTransaction[], userAddress: Address, chainId: number) => {
+    async (
+      position: MarketPosition,
+      transactions: UserTransaction[],
+      userAddress: Address,
+      chainId: number,
+    ) => {
       const currentBalance = BigInt(position.supplyAssets);
       const marketId = position.market.uniqueKey;
 
@@ -30,10 +49,20 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
 
       const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0);
       const last24hEarnings = snapshot24h
-        ? calculateEarningsFromSnapshot(currentBalance, BigInt(snapshot24h.supplyAssets), marketTxs, now - 24 * 60 * 60)
+        ? calculateEarningsFromSnapshot(
+            currentBalance,
+            BigInt(snapshot24h.supplyAssets),
+            marketTxs,
+            now - 24 * 60 * 60,
+          )
         : null;
       const last7dEarnings = snapshot7d
-        ? calculateEarningsFromSnapshot(currentBalance, BigInt(snapshot7d.supplyAssets), marketTxs, now - 7 * 24 * 60 * 60)
+        ? calculateEarningsFromSnapshot(
+            currentBalance,
+            BigInt(snapshot7d.supplyAssets),
+            marketTxs,
+            now - 7 * 24 * 60 * 60,
+          )
         : null;
       const last30dEarnings = snapshot30d
         ? calculateEarningsFromSnapshot(

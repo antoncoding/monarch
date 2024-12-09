@@ -56,3 +56,14 @@ export const actionTypeToText = (type: UserTxTypes) => {
       return type;
   }
 };
+
+export function getMorphoGensisDate(chainId: number): Date {
+  switch (chainId) {
+    case 1: // mainnet
+      return new Date('2023-12-28T09:09:23.000Z');
+    case 8453: // base
+      return new Date('2024-05-03T13:40:43.000Z');
+    default:
+      return new Date('2023-12-28T09:09:23.000Z'); // default to mainnet
+  }
+}

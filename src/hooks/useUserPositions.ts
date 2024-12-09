@@ -84,7 +84,9 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         // Process positions and calculate earnings
         const enhancedPositions = await Promise.all(
           marketPositions
-            .filter((position: MarketPosition) => showEmpty || position.supplyShares.toString() !== '0')
+            .filter(
+              (position: MarketPosition) => showEmpty || position.supplyShares.toString() !== '0',
+            )
             .map(async (position: MarketPosition) => {
               return {
                 ...position,

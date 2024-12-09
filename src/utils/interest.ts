@@ -1,4 +1,4 @@
-import { UserTransaction, UserTxTypes } from "./types";
+import { UserTransaction, UserTxTypes } from './types';
 
 export type EarningsCalculation = {
   earned: bigint;
@@ -14,7 +14,9 @@ export function calculateEarningsFromSnapshot(
   end: number = Math.floor(Date.now() / 1000),
 ): EarningsCalculation {
   // Get transactions after snapshot timestamp
-  const txsWithinPeriod = transactions.filter((tx) => Number(tx.timestamp) > start && Number(tx.timestamp) < end);
+  const txsWithinPeriod = transactions.filter(
+    (tx) => Number(tx.timestamp) > start && Number(tx.timestamp) < end,
+  );
 
   const depositsAfter = txsWithinPeriod
     .filter((tx) => tx.type === UserTxTypes.MarketSupply)
@@ -25,7 +27,7 @@ export function calculateEarningsFromSnapshot(
     .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
   const earned = currentBalance + withdrawsAfter - (snapshotBalance + depositsAfter);
-  
+
   return {
     earned,
     totalDeposits: depositsAfter,

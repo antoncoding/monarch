@@ -20,10 +20,9 @@ const BLOCK_TIME = {
   8453: 2, // Base: 2 seconds
 } as const;
 
-
 const GENSIS_BLOCK = {
   1: 18883124, // Ethereum mainnet: 13000000
-  8453: 13977148 , // Base: 0
+  8453: 13977148, // Base: 0
 } as const;
 
 type Position = {
@@ -122,7 +121,11 @@ async function getPositionAtBlock(
     });
 
     if (block.number < GENSIS_BLOCK[chainId as keyof typeof GENSIS_BLOCK]) {
-      console.log(`Block number ${block.number} is before genesis block ${GENSIS_BLOCK[chainId as keyof typeof GENSIS_BLOCK]}`);
+      console.log(
+        `Block number ${block.number} is before genesis block ${
+          GENSIS_BLOCK[chainId as keyof typeof GENSIS_BLOCK]
+        }`,
+      );
       return {
         supplyShares: '0',
         supplyAssets: '0',

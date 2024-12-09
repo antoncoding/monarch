@@ -34,12 +34,8 @@ function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: a
         />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <Badge size="sm">
-              {market.collateralAsset.symbol}
-            </Badge>
-            <Badge size="sm">
-              {formatUnits(BigInt(market.lltv), 16)}% LTV
-            </Badge>
+            <Badge size="sm">{market.collateralAsset.symbol}</Badge>
+            <Badge size="sm">{formatUnits(BigInt(market.lltv), 16)}% LTV</Badge>
             {/* {hasActivePosition && (
               <Badge
                 className="h-2 w-2 bg-green-500"
@@ -52,7 +48,9 @@ function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: a
         </div>
       </div>
       <div className="text-right">
-        <div className={`font-mono text-lg ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}>
+        <div
+          className={`font-mono text-lg ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}
+        >
           {formatReadable(formatUnits(BigInt(interestEarned), decimals))} {symbol}
         </div>
         <div className="text-xs text-gray-500">Interest Earned</div>
@@ -84,7 +82,10 @@ export function ReportTable({ report, asset }: ReportTableProps) {
       }
       return acc;
     },
-    { activeMarkets: [], inactiveMarkets: [] } as { activeMarkets: typeof report.marketReports; inactiveMarkets: typeof report.marketReports },
+    { activeMarkets: [], inactiveMarkets: [] } as {
+      activeMarkets: typeof report.marketReports;
+      inactiveMarkets: typeof report.marketReports;
+    },
   );
 
   return (
@@ -97,15 +98,24 @@ export function ReportTable({ report, asset }: ReportTableProps) {
             <p className="mt-1 text-lg font-semibold">{report.periodInDays.toFixed(1)} days</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Interest Earned</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Total Interest Earned
+            </h3>
             <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
-              {formatReadable(formatUnits(BigInt(report.totalInterestEarned), asset.decimals))} {asset.symbol}
+              {formatReadable(formatUnits(BigInt(report.totalInterestEarned), asset.decimals))}{' '}
+              {asset.symbol}
             </p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Flow</h3>
             <p className="mt-1 text-lg font-semibold">
-              {formatReadable(formatUnits(BigInt(report.totalDeposits) - BigInt(report.totalWithdraws), asset.decimals))} {asset.symbol}
+              {formatReadable(
+                formatUnits(
+                  BigInt(report.totalDeposits) - BigInt(report.totalWithdraws),
+                  asset.decimals,
+                ),
+              )}{' '}
+              {asset.symbol}
             </p>
           </div>
         </div>
@@ -121,10 +131,7 @@ export function ReportTable({ report, asset }: ReportTableProps) {
 
             return (
               <div key={marketKey} className="overflow-hidden rounded border dark:border-gray-700">
-                <button
-                  onClick={() => toggleMarket(marketKey)}
-                  className="w-full text-left"
-                >
+                <button onClick={() => toggleMarket(marketKey)} className="w-full text-left">
                   <MarketInfoBlock
                     market={marketReport.market}
                     interestEarned={marketReport.interestEarned}
@@ -142,20 +149,30 @@ export function ReportTable({ report, asset }: ReportTableProps) {
                       <div>
                         <div className="text-sm text-gray-500">Start Balance</div>
                         <div className="font-medium">
-                          {formatReadable(formatUnits(BigInt(marketReport.startBalance), asset.decimals))} {asset.symbol}
+                          {formatReadable(
+                            formatUnits(BigInt(marketReport.startBalance), asset.decimals),
+                          )}{' '}
+                          {asset.symbol}
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-500">End Balance</div>
                         <div className="font-medium">
-                          {formatReadable(formatUnits(BigInt(marketReport.endBalance), asset.decimals))} {asset.symbol}
+                          {formatReadable(
+                            formatUnits(BigInt(marketReport.endBalance), asset.decimals),
+                          )}{' '}
+                          {asset.symbol}
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-500">Net Flow</div>
                         <div className="font-medium">
                           {formatReadable(
-                            formatUnits(BigInt(marketReport.totalDeposits) - BigInt(marketReport.totalWithdraws), asset.decimals),
+                            formatUnits(
+                              BigInt(marketReport.totalDeposits) -
+                                BigInt(marketReport.totalWithdraws),
+                              asset.decimals,
+                            ),
                           )}{' '}
                           {asset.symbol}
                         </div>
@@ -177,13 +194,21 @@ export function ReportTable({ report, asset }: ReportTableProps) {
                               <TableCell>
                                 <span className="capitalize">{actionTypeToText(tx.type)}</span>
                               </TableCell>
-                              <TableCell>{moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}</TableCell>
                               <TableCell>
-                                {formatReadable(formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals))} {asset.symbol}
+                                {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
+                              </TableCell>
+                              <TableCell>
+                                {formatReadable(
+                                  formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals),
+                                )}{' '}
+                                {asset.symbol}
                               </TableCell>
                               <TableCell>
                                 <Link
-                                  href={getExplorerTxURL(tx.hash, marketReport.market.morphoBlue.chain.id)}
+                                  href={getExplorerTxURL(
+                                    tx.hash,
+                                    marketReport.market.morphoBlue.chain.id,
+                                  )}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1 text-blue-500 hover:text-blue-600"
@@ -215,11 +240,11 @@ export function ReportTable({ report, asset }: ReportTableProps) {
               const isExpanded = expandedMarkets.has(marketKey);
 
               return (
-                <div key={marketKey} className="overflow-hidden rounded border dark:border-gray-700">
-                  <button
-                    onClick={() => toggleMarket(marketKey)}
-                    className="w-full text-left"
-                  >
+                <div
+                  key={marketKey}
+                  className="overflow-hidden rounded border dark:border-gray-700"
+                >
+                  <button onClick={() => toggleMarket(marketKey)} className="w-full text-left">
                     <MarketInfoBlock
                       market={marketReport.market}
                       interestEarned={marketReport.interestEarned}
@@ -246,13 +271,21 @@ export function ReportTable({ report, asset }: ReportTableProps) {
                               <TableCell>
                                 <span className="capitalize">{actionTypeToText(tx.type)}</span>
                               </TableCell>
-                              <TableCell>{moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}</TableCell>
                               <TableCell>
-                                {formatReadable(formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals))} {asset.symbol}
+                                {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
+                              </TableCell>
+                              <TableCell>
+                                {formatReadable(
+                                  formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals),
+                                )}{' '}
+                                {asset.symbol}
                               </TableCell>
                               <TableCell>
                                 <Link
-                                  href={getExplorerTxURL(tx.hash, marketReport.market.morphoBlue.chain.id)}
+                                  href={getExplorerTxURL(
+                                    tx.hash,
+                                    marketReport.market.morphoBlue.chain.id,
+                                  )}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1 text-blue-500 hover:text-blue-600"

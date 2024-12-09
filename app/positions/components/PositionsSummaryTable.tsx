@@ -10,7 +10,12 @@ import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { MarketPosition, GroupedPosition, WarningWithDetail, MarketPositionWithEarnings } from '@/utils/types';
+import {
+  MarketPosition,
+  GroupedPosition,
+  WarningWithDetail,
+  MarketPositionWithEarnings,
+} from '@/utils/types';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,

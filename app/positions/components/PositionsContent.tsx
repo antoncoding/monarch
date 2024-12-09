@@ -30,7 +30,12 @@ export default function Positions() {
     return account === address;
   }, [account, address]);
 
-  const { loading, isRefetching, data: marketPositions, refetch } = useUserPositionsWithEarning(account);
+  const {
+    loading,
+    isRefetching,
+    data: marketPositions,
+    refetch,
+  } = useUserPositionsWithEarning(account);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 

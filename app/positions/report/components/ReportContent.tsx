@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
-import { DatePicker } from '@nextui-org/react';
+import DatePicker from '@/components/common/DatePicker';
 import { parseDate, getLocalTimeZone, CalendarDate, today } from '@internationalized/date';
 import { useDateFormatter } from '@react-aria/i18n';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
@@ -14,7 +14,10 @@ import { findToken } from '@/utils/tokens';
 import { usePositionReport } from '@/hooks/usePositionReport';
 import { ReportTable } from './ReportTable';
 import { Address } from 'viem';
-import { getNetworkImg, getNetworkName } from '@/utils/networks';
+import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getMorphoGensisDate } from '@/utils/morpho';
+import { DateValue } from '@nextui-org/react';
+import { Spinner } from '@/components/common/Spinner';
 
 type AssetKey = {
   symbol: string;
@@ -25,8 +28,8 @@ type AssetKey = {
 
 export default function ReportContent({ account }: { account: Address }) {
   const { loading, data: positions, history } = useUserPositions(account, true);
-  const [startDate, setStartDate] = useState<CalendarDate>(parseDate('2024-01-01'));
-  const [endDate, setEndDate] = useState<CalendarDate>(parseDate('2024-12-01'));
+  const [startDate, setStartDate] = useState<DateValue>(parseDate('2024-05-04'));
+  const [endDate, setEndDate] = useState<DateValue>(parseDate('2024-12-01'));
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -34,26 +37,28 @@ export default function ReportContent({ account }: { account: Address }) {
   const [report, setReport] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  console.log("selectedAsset", selectedAsset)
-  
   const formatter = useDateFormatter({ dateStyle: 'long' });
 
-  // Calculate maximum allowed date (now - 1 minute)
+  // Calculate minimum allowed date based on selected chain's genesis
+  const minDate = useMemo(() => {
+    const genesisDate = getMorphoGensisDate(selectedAsset?.chainId || SupportedNetworks.Mainnet);
+    return parseDate(genesisDate.toISOString().split('T')[0]);
+  }, [selectedAsset]);
+
+  // Calculate maximum allowed date (today)
   const maxDate = useMemo(() => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - 1);
-    return parseDate(now.toISOString().split('T')[0]);
+    return today(getLocalTimeZone());
   }, []);
 
   // Handle date changes with validation
-  const handleStartDateChange = (date: CalendarDate) => {
+  const handleStartDateChange = (date: DateValue) => {
     if (date > endDate) {
       setEndDate(date);
     }
     setStartDate(date);
   };
 
-  const handleEndDateChange = (date: CalendarDate) => {
+  const handleEndDateChange = (date: DateValue) => {
     if (date < startDate) {
       setStartDate(date);
     }
@@ -88,9 +93,7 @@ export default function ReportContent({ account }: { account: Address }) {
 
   // Filter assets based on search query
   const filteredAssets = useMemo(() => {
-    return uniqueAssets.filter((asset) =>
-      asset.symbol.toLowerCase().includes(query.toLowerCase()),
-    );
+    return uniqueAssets.filter((asset) => asset.symbol.toLowerCase().includes(query.toLowerCase()));
   }, [uniqueAssets, query]);
 
   // Close dropdown when clicking outside
@@ -159,115 +162,129 @@ export default function ReportContent({ account }: { account: Address }) {
           </div>
         ) : (
           <div className="mt-4 space-y-6">
-            <div className="flex flex-col space-y-4 sm:flex-row sm:items-end sm:space-x-4 sm:space-y-0">
-              {/* Asset Selector Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="flex h-[56px] cursor-pointer items-center justify-between rounded-md border border-gray-300 bg-white px-4"
-                  onClick={() => setIsOpen(!isOpen)}
-                >
-                  {selectedAsset ? (
-                    <div className="flex items-center gap-2">
-                      {selectedAsset.img && (
-                        <Image
-                          src={selectedAsset.img}
-                          alt={selectedAsset.symbol}
-                          width={20}
-                          height={20}
-                        />
-                      )}
-                      <span>{selectedAsset.symbol}</span>
-                      <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-700">
-                        <NetworkIcon networkId={selectedAsset.chainId} />
-                        <span className="text-xs text-gray-600 dark:text-gray-300">
-                          {getNetworkName(selectedAsset.chainId)}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-gray-500">Select Asset</span>
-                  )}
-                  <ChevronDownIcon className="ml-2" />
-                </div>
-
-                {isOpen && (
-                  <div className="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg">
-                    <input
-                      type="text"
-                      className="w-full border-b border-gray-300 p-2"
-                      placeholder="Search assets..."
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <div className="max-h-60 overflow-auto">
-                      {filteredAssets.map((asset) => (
-                        <div
-                          key={`${asset.symbol}-${asset.chainId}`}
-                          className="flex cursor-pointer items-center gap-2 p-2 hover:bg-gray-100"
-                          onClick={() => {
-                            setSelectedAsset(asset);
-                            setIsOpen(false);
-                            setQuery('');
-                          }}
-                        >
-                          {asset.img && (
-                            <Image src={asset.img} alt={asset.symbol} width={20} height={20} />
+            {/* Controls Row */}
+            <div className="flex items-center justify-between">
+              {/* Left side controls group */}
+              <div className="flex items-center gap-4">
+                {/* Asset Selector */}
+                <div className="relative h-14" ref={dropdownRef}>
+                  <div
+                    className={`bg-surface h-full min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+                      isOpen ? 'bg-surface-dark' : ''
+                    }`}
+                    onClick={() => setIsOpen(!isOpen)}
+                  >
+                    <span className="absolute left-2 top-2 px-1 text-xs">Asset</span>
+                    <div className="flex h-full items-center justify-between pt-4">
+                      {selectedAsset ? (
+                        <div className="flex items-center gap-2 p-1">
+                          {selectedAsset.img && (
+                            <Image
+                              src={selectedAsset.img}
+                              alt={selectedAsset.symbol}
+                              width={20}
+                              height={20}
+                              className="rounded-full"
+                            />
                           )}
-                          <span>{asset.symbol}</span>
-                          <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-700">
-                            <NetworkIcon networkId={asset.chainId} />
-                            <span className="text-xs text-gray-600 dark:text-gray-300">
-                              {getNetworkName(asset.chainId)}
+                          <span className="font-medium">{selectedAsset.symbol}</span>
+                          <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
+                            <NetworkIcon networkId={selectedAsset.chainId} />
+                            <span className="text-gray-600 dark:text-gray-300">
+                              {getNetworkName(selectedAsset.chainId)}
                             </span>
                           </div>
                         </div>
-                      ))}
+                      ) : (
+                        <span className="p-1 text-gray-500">Select Asset</span>
+                      )}
+                      <ChevronDownIcon className="ml-2 h-4 w-4 text-gray-500" />
                     </div>
                   </div>
-                )}
+
+                  {isOpen && (
+                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+                      <div className="border-b border-gray-200 p-2 dark:border-gray-700">
+                        <input
+                          type="text"
+                          className="w-full bg-transparent p-1 text-sm outline-none placeholder:text-gray-500"
+                          placeholder="Search assets..."
+                          value={query}
+                          onChange={(e) => setQuery(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        {filteredAssets.map((asset) => (
+                          <div
+                            key={`${asset.symbol}-${asset.chainId}`}
+                            className="flex cursor-pointer items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => {
+                              setSelectedAsset(asset);
+                              setIsOpen(false);
+                              setQuery('');
+                            }}
+                          >
+                            {asset.img && (
+                              <Image src={asset.img} alt={asset.symbol} width={20} height={20} />
+                            )}
+                            <span className="font-medium">{asset.symbol}</span>
+                            <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
+                              <NetworkIcon networkId={asset.chainId} />
+                              <span className="text-gray-600 dark:text-gray-300">
+                                {getNetworkName(asset.chainId)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Date Pickers */}
+                <DatePicker
+                  label="Start Date"
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  minValue={minDate}
+                  maxValue={maxDate}
+                />
+
+                <DatePicker
+                  label="End Date"
+                  value={endDate}
+                  onChange={handleEndDateChange}
+                  minValue={minDate}
+                  maxValue={maxDate}
+                />
               </div>
 
-              <DatePicker
-                label="Start Date"
-                value={startDate}
-                onChange={handleStartDateChange}
-                className="w-[284px] rounded-sm"
-              />
-
-              <DatePicker
-                label="End Date"
-                value={endDate}
-                onChange={handleEndDateChange}
-                className="w-[284px] rounded-sm"
-                minValue={startDate}
-                maxValue={maxDate}
-              />
-
+              {/* Generate Button */}
               <Button
-                variant="solid"
-                color="primary"
-                className="h-[56px] px-6 font-zen rounded-sm"
-                size="lg"
                 onClick={handleGenerateReport}
-                disabled={!startDate || !endDate || !selectedAsset || isGenerating}
+                isDisabled={!selectedAsset || isGenerating}
+                className="h-14 justify-center"
+                variant="cta"
+                endContent={isGenerating && <Spinner size={20}/>}
               >
-                Generate Report
+                {'Generate'}
               </Button>
             </div>
 
-            <p className="text-default-500 text-sm">
+            {/* Report Content */}
+            <p className="text-sm text-default-500">
               Selected date range:{' '}
               {startDate && endDate
                 ? formatter.formatRange(
                     startDate.toDate(getLocalTimeZone()),
-                    endDate.toDate(getLocalTimeZone())
+                    endDate.toDate(getLocalTimeZone()),
                   )
                 : '--'}
             </p>
 
             {isGenerating && <LoadingScreen message="Generating Report..." />}
-            
+
             {report && selectedToken && <ReportTable report={report} asset={selectedToken} />}
           </div>
         )}
