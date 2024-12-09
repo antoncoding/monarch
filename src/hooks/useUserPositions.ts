@@ -19,16 +19,17 @@ export function calculateEarningsFromSnapshot(
   currentBalance: bigint,
   snapshotBalance: bigint,
   transactions: UserTransaction[],
-  timestamp: number,
+  start: number,
+  end: number = Math.floor(Date.now() / 1000),
 ): string {
   // Get transactions after snapshot timestamp
-  const txsAfterSnapshot = transactions.filter((tx) => Number(tx.timestamp) > timestamp);
+  const txsWithinPeriod = transactions.filter((tx) => Number(tx.timestamp) > start && Number(tx.timestamp) < end);
 
-  const depositsAfter = txsAfterSnapshot
+  const depositsAfter = txsWithinPeriod
     .filter((tx) => tx.type === UserTxTypes.MarketSupply)
     .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
-  const withdrawsAfter = txsAfterSnapshot
+  const withdrawsAfter = txsWithinPeriod
     .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
     .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
 
@@ -36,7 +37,7 @@ export function calculateEarningsFromSnapshot(
   return earned.toString();
 }
 
-const useUserPositions = (user: string | undefined) => {
+const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [data, setData] = useState<MarketPosition[]>([]);
@@ -57,17 +58,6 @@ const useUserPositions = (user: string | undefined) => {
     // Filter transactions for this specific market
     const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
 
-    // Calculate lifetime earnings using all transactions
-    const totalDeposits = marketTxs
-      .filter((tx) => tx.type === UserTxTypes.MarketSupply)
-      .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
-
-    const totalWithdraws = marketTxs
-      .filter((tx) => tx.type === UserTxTypes.MarketWithdraw)
-      .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);
-
-    const lifetimeEarned = currentBalance + totalWithdraws - totalDeposits;
-
     // Get historical snapshots
     const now = Math.floor(Date.now() / 1000);
     const snapshots = await Promise.all([
@@ -79,7 +69,12 @@ const useUserPositions = (user: string | undefined) => {
     const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
     return {
-      lifetimeEarned: lifetimeEarned.toString(),
+      lifetimeEarned: calculateEarningsFromSnapshot(
+        currentBalance,
+        0n, // genesis snapshot: 0 balance
+        marketTxs,
+        0,
+      ),
       last24hEarned: snapshot24h
         ? calculateEarningsFromSnapshot(
             currentBalance,
@@ -178,7 +173,7 @@ const useUserPositions = (user: string | undefined) => {
         // Process positions and calculate earnings
         const enhancedPositions = await Promise.all(
           marketPositions
-            .filter((position: MarketPosition) => position.supplyShares.toString() !== '0')
+            .filter((position: MarketPosition) => showEmpty || position.supplyShares.toString() !== '0')
             .map(async (position: MarketPosition) => {
               const earnings = await calculateEarningsFromPeriod(
                 position,
@@ -208,7 +203,7 @@ const useUserPositions = (user: string | undefined) => {
         setIsRefetching(false);
       }
     },
-    [user, fetchPositionSnapshot],
+    [user, fetchPositionSnapshot, showEmpty],
   );
 
   useEffect(() => {
@@ -222,7 +217,7 @@ const useUserPositions = (user: string | undefined) => {
     [fetchData],
   );
 
-  return { loading, isRefetching, data, history, error, refetch };
+  return { loading, isRefetching, data, history, error, refetch, calculateEarningsFromPeriod };
 };
 
 export default useUserPositions;
