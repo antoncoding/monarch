@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Address } from 'viem';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
-import useUserPositions from './useUserPositions';
-import { usePositionSnapshot } from './usePositionSnapshot';
 import {
   MarketPosition,
   MarketPositionWithEarnings,
   PositionEarnings,
   UserTransaction,
 } from '@/utils/types';
+import { usePositionSnapshot } from './usePositionSnapshot';
+import useUserPositions from './useUserPositions';
 
 const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false) => {
   const {

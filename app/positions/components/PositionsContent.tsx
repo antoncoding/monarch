@@ -13,9 +13,9 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
+import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);

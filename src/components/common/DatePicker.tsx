@@ -6,7 +6,11 @@ function StyledDatePicker(props: DatePickerProps) {
   };
 
   const stylesDateInput = {
+    base: 'h-[88px]', // Reserve space for error message
     inputWrapper: ['bg-surface', 'rounded-sm', 'w-64', 'h-14'],
+    label: 'text-xs text-gray-500',
+    input: 'text-sm',
+    errorMessage: 'text-xs text-red-500 absolute bottom-0 left-0',
   };
 
   return (
@@ -19,6 +23,8 @@ function StyledDatePicker(props: DatePickerProps) {
       minValue={props.minValue}
       maxValue={props.maxValue}
       onChange={props.onChange}
+      isInvalid={props.isInvalid}
+      errorMessage={props.errorMessage}
     />
   );
 }

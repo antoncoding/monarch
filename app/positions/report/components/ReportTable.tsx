@@ -1,26 +1,45 @@
 'use client';
 
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
-import { formatUnits } from 'viem';
-import { formatReadable } from '@/utils/balance';
-import Image from 'next/image';
-import type { ReportSummary } from '@/hooks/usePositionReport';
-import { ERC20Token } from '@/utils/tokens';
-import { actionTypeToText } from '@/utils/morpho';
-import moment from 'moment';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { getExplorerTxURL } from '@/utils/external';
-import Link from 'next/link';
 import { useState } from 'react';
+import { getLocalTimeZone } from '@internationalized/date';
+import { DateValue } from '@nextui-org/react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { useDateFormatter } from '@react-aria/i18n';
+import moment from 'moment';
 import { Badge } from '@/components/common/Badge';
+import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { TokenIcon } from '@/components/TokenIcon';
+import { formatReadable } from '@/utils/balance';
+import { getExplorerTxURL } from '@/utils/external';
+import { actionTypeToText } from '@/utils/morpho';
+import { getNetworkName } from '@/utils/networks';
+import { ERC20Token } from '@/utils/tokens';
+import Link from 'next/link';
+import { formatUnits } from 'viem';
+
+import { ReportSummary } from '@/hooks/usePositionReport'
+import { Market } from '@/utils/types';
+import { parseOracleVendors } from '@/utils/oracle';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
+
+type MarketInfoBlockProps = {
+  market: Market
+  interestEarned: bigint;
+  amount: bigint;
+  decimals: number;
+  symbol: string;
+};
 
 type ReportTableProps = {
   report: ReportSummary;
   asset: ERC20Token;
+  startDate: DateValue;
+  endDate: DateValue;
+  chainId: number;
 };
 
-function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: any) {
+function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: MarketInfoBlockProps) {
   const hasActivePosition = BigInt(amount) > 0n;
 
   return (
@@ -43,7 +62,8 @@ function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: a
             )} */}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Oracle: {market.oracle.data.name}</span>
+            <span className="text-xs text-gray-500">Oracle:  </span>
+            <OracleVendorBadge oracleData={market.oracle.data} />
           </div>
         </div>
       </div>
@@ -59,8 +79,10 @@ function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: a
   );
 }
 
-export function ReportTable({ report, asset }: ReportTableProps) {
+export function ReportTable({ report, asset, startDate, endDate, chainId }: ReportTableProps) {
   const [expandedMarkets, setExpandedMarkets] = useState<Set<string>>(new Set());
+
+  const formatter = useDateFormatter({ dateStyle: 'long' });
 
   const toggleMarket = (marketKey: string) => {
     const newExpanded = new Set(expandedMarkets);
@@ -91,7 +113,26 @@ export function ReportTable({ report, asset }: ReportTableProps) {
   return (
     <div className="space-y-6">
       {/* Summary Section */}
-      <div className="rounded bg-gray-50 p-6 dark:bg-gray-800">
+      <div className="rounded border border-gray-200 bg-gray-50 p-6 dark:bg-gray-800">
+        <div className="mb-8 ">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">
+                Generated for{' '}
+                <span className="font-medium text-gray-700 dark:text-gray-300">{asset.symbol}</span>{' '}
+                from {formatter.format(startDate.toDate(getLocalTimeZone()))} to{' '}
+                {formatter.format(endDate.toDate(getLocalTimeZone()))}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <NetworkIcon networkId={chainId} />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {getNetworkName(chainId)}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-6">
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Period</h3>
@@ -131,7 +172,11 @@ export function ReportTable({ report, asset }: ReportTableProps) {
 
             return (
               <div key={marketKey} className="overflow-hidden rounded border dark:border-gray-700">
-                <button onClick={() => toggleMarket(marketKey)} className="w-full text-left">
+                <button
+                  type="button"
+                  onClick={() => toggleMarket(marketKey)}
+                  className="w-full text-left"
+                >
                   <MarketInfoBlock
                     market={marketReport.market}
                     interestEarned={marketReport.interestEarned}
@@ -244,7 +289,11 @@ export function ReportTable({ report, asset }: ReportTableProps) {
                   key={marketKey}
                   className="overflow-hidden rounded border dark:border-gray-700"
                 >
-                  <button onClick={() => toggleMarket(marketKey)} className="w-full text-left">
+                  <button
+                    type="button"
+                    onClick={() => toggleMarket(marketKey)}
+                    className="w-full text-left"
+                  >
                     <MarketInfoBlock
                       market={marketReport.market}
                       interestEarned={marketReport.interestEarned}

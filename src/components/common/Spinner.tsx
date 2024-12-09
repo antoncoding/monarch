@@ -15,22 +15,18 @@ const rotateCSS = `
   }
 `;
 
-interface LoadingSpinnerProps {
+type LoadingSpinnerProps = {
   size?: number;
   width?: number;
   color?: string;
 }
 
-export function Spinner({
-  size = 32,
-  width = 3,
-  color = 'primary',
-}: LoadingSpinnerProps) {
+export function Spinner({ size = 32, width = 3, color = 'primary' }: LoadingSpinnerProps) {
   return (
-    <div className="flex flex-col items-center justify-center">
+    <div className="inline-flex items-center justify-center">
       <style>{rotateCSS}</style>
       <div className="flex items-center justify-center" style={{ width: size, height: size }}>
-        <div className="relative p-2" style={{ width: size, height: size }}>
+        <div className="relative" style={{ width: size, height: size }}>
           {/* Background circle */}
           <div
             className="absolute rounded-full"
@@ -49,10 +45,7 @@ export function Spinner({
               width: size,
               height: size,
               borderWidth: width,
-              borderTopColor: color,
-              borderRightColor: 'transparent',
-              borderBottomColor: 'transparent',
-              borderLeftColor: 'transparent',
+              borderColor: `${color} transparent transparent transparent`,
             }}
           />
         </div>

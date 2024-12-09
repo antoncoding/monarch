@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
-import ReportContent from '../components/ReportContent';
 import { Address } from 'viem';
+import ReportContent from '../components/ReportContent';
 
 export const metadata: Metadata = {
   title: 'Position Report | Monarch',
