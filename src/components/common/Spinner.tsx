@@ -19,7 +19,7 @@ type LoadingSpinnerProps = {
   size?: number;
   width?: number;
   color?: string;
-}
+};
 
 export function Spinner({ size = 32, width = 3, color = 'primary' }: LoadingSpinnerProps) {
   return (

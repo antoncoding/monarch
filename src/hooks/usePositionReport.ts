@@ -100,14 +100,20 @@ export const usePositionReport = (
       )
     ).filter((report) => report !== null);
 
-    const totalInterestEarned = marketReports
-      .reduce((sum, report) => sum + BigInt(report.interestEarned), 0n)
+    const totalInterestEarned = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.interestEarned),
+      0n,
+    );
 
-    const totalDeposits = marketReports
-      .reduce((sum, report) => sum + BigInt(report.totalDeposits), 0n)
+    const totalDeposits = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.totalDeposits),
+      0n,
+    );
 
-    const totalWithdraws = marketReports
-      .reduce((sum, report) => sum + BigInt(report.totalWithdraws), 0n)
+    const totalWithdraws = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.totalWithdraws),
+      0n,
+    );
 
     return {
       totalInterestEarned,

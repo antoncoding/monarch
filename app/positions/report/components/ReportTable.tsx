@@ -7,24 +7,23 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { useDateFormatter } from '@react-aria/i18n';
 import moment from 'moment';
+import Link from 'next/link';
+import { formatUnits } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
+import { ReportSummary } from '@/hooks/usePositionReport';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkName } from '@/utils/networks';
 import { ERC20Token } from '@/utils/tokens';
-import Link from 'next/link';
-import { formatUnits } from 'viem';
 
-import { ReportSummary } from '@/hooks/usePositionReport'
 import { Market } from '@/utils/types';
-import { parseOracleVendors } from '@/utils/oracle';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
 
 type MarketInfoBlockProps = {
-  market: Market
+  market: Market;
   interestEarned: bigint;
   amount: bigint;
   decimals: number;
@@ -39,11 +38,22 @@ type ReportTableProps = {
   chainId: number;
 };
 
-function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: MarketInfoBlockProps) {
+// Helper function to format numbers consistently
+const formatNumber = (value: bigint, decimals: number) => {
+  return formatReadable(formatUnits(value, decimals), 4);
+};
+
+function MarketInfoBlock({
+  market,
+  interestEarned,
+  amount,
+  decimals,
+  symbol,
+}: MarketInfoBlockProps) {
   const hasActivePosition = BigInt(amount) > 0n;
 
   return (
-    <div className="flex items-center justify-between rounded-sm border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50">
+    <div className="bg-surface flex items-center justify-between rounded-sm border-gray-100 p-3">
       <div className="flex items-start gap-4">
         <TokenIcon
           address={market.collateralAsset.address}
@@ -62,16 +72,16 @@ function MarketInfoBlock({ market, interestEarned, amount, decimals, symbol }: M
             )} */}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Oracle:  </span>
+            <span className="text-xs text-gray-500">Oracle: </span>
             <OracleVendorBadge oracleData={market.oracle.data} />
           </div>
         </div>
       </div>
       <div className="text-right">
         <div
-          className={`font-mono text-lg ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}
+          className={`text-md font-mono ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}
         >
-          {formatReadable(formatUnits(BigInt(interestEarned), decimals))} {symbol}
+          {formatNumber(interestEarned, decimals)} {symbol}
         </div>
         <div className="text-xs text-gray-500">Interest Earned</div>
       </div>
@@ -143,18 +153,15 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
               Total Interest Earned
             </h3>
             <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
-              {formatReadable(formatUnits(BigInt(report.totalInterestEarned), asset.decimals))}{' '}
-              {asset.symbol}
+              {formatNumber(BigInt(report.totalInterestEarned), asset.decimals)} {asset.symbol}
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Flow</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Position</h3>
             <p className="mt-1 text-lg font-semibold">
-              {formatReadable(
-                formatUnits(
-                  BigInt(report.totalDeposits) - BigInt(report.totalWithdraws),
-                  asset.decimals,
-                ),
+              {formatNumber(
+                BigInt(report.totalDeposits) - BigInt(report.totalWithdraws),
+                asset.decimals,
               )}{' '}
               {asset.symbol}
             </p>
@@ -188,36 +195,30 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
 
                 {/* Expandable Content */}
                 {isExpanded && (
-                  <div className="border-t dark:border-gray-700">
+                  <div className="bg-surface border-t">
                     {/* Market Stats */}
                     <div className="grid grid-cols-3 gap-4 p-4">
                       <div>
                         <div className="text-sm text-gray-500">Start Balance</div>
                         <div className="font-medium">
-                          {formatReadable(
-                            formatUnits(BigInt(marketReport.startBalance), asset.decimals),
-                          )}{' '}
+                          {formatNumber(BigInt(marketReport.startBalance), asset.decimals)}{' '}
                           {asset.symbol}
                         </div>
                       </div>
                       <div>
                         <div className="text-sm text-gray-500">End Balance</div>
                         <div className="font-medium">
-                          {formatReadable(
-                            formatUnits(BigInt(marketReport.endBalance), asset.decimals),
-                          )}{' '}
+                          {formatNumber(BigInt(marketReport.endBalance), asset.decimals)}{' '}
                           {asset.symbol}
                         </div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-500">Net Flow</div>
+                        <div className="text-sm text-gray-500">Net Change</div>
                         <div className="font-medium">
-                          {formatReadable(
-                            formatUnits(
-                              BigInt(marketReport.totalDeposits) -
-                                BigInt(marketReport.totalWithdraws),
-                              asset.decimals,
-                            ),
+                          {formatNumber(
+                            BigInt(marketReport.totalDeposits) -
+                              BigInt(marketReport.totalWithdraws),
+                            asset.decimals,
                           )}{' '}
                           {asset.symbol}
                         </div>
@@ -225,9 +226,12 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                     </div>
 
                     {/* Transactions Table */}
-                    <div className="border-t dark:border-gray-700">
-                      <Table aria-label="Market transactions" className="rounded-none">
-                        <TableHeader>
+                    <div className="bg-surface">
+                      <Table
+                        aria-label="Market transactions"
+                        className="rounded-none border-none shadow-none"
+                      >
+                        <TableHeader className="rounded-none shadow-none">
                           <TableColumn>TYPE</TableColumn>
                           <TableColumn>DATE</TableColumn>
                           <TableColumn>AMOUNT</TableColumn>
@@ -243,9 +247,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                                 {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
                               </TableCell>
                               <TableCell>
-                                {formatReadable(
-                                  formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals),
-                                )}{' '}
+                                {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
                                 {asset.symbol}
                               </TableCell>
                               <TableCell>
@@ -324,9 +326,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                                 {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
                               </TableCell>
                               <TableCell>
-                                {formatReadable(
-                                  formatUnits(BigInt(tx.data?.assets || '0'), asset.decimals),
-                                )}{' '}
+                                {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
                                 {asset.symbol}
                               </TableCell>
                               <TableCell>

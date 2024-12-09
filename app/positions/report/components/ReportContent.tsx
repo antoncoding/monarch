@@ -1,31 +1,22 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { parseDate, getLocalTimeZone, today } from '@internationalized/date';
 import { DateValue } from '@nextui-org/react';
-import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useDateFormatter } from '@react-aria/i18n';
-import Image from 'next/image';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import DatePicker from '@/components/common/DatePicker';
-import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { Spinner } from '@/components/common/Spinner';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { usePositionReport } from '@/hooks/usePositionReport';
+import { ReportSummary } from '@/hooks/usePositionReport';
 import useUserPositions from '@/hooks/useUserPositions';
 import { getMorphoGensisDate } from '@/utils/morpho';
-import { getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { ReportTable, ReportSummary } from './ReportTable';
-
-type AssetKey = {
-  symbol: string;
-  address: Address;
-  chainId: number;
-  img?: string;
-};
+import { AssetSelector, type AssetKey } from './AssetSelector';
+import { ReportTable } from './ReportTable';
 
 type ReportState = {
   asset: AssetKey;
@@ -37,14 +28,19 @@ type ReportState = {
 export default function ReportContent({ account }: { account: Address }) {
   const { loading, data: positions, history } = useUserPositions(account, true);
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
-  const [startDate, setStartDate] = useState<DateValue>(parseDate('2024-05-04'));
-  const [endDate, setEndDate] = useState<DateValue>(parseDate('2024-12-01'));
+
+  // Get today's date and 2 months ago
+  const todayDate = today(getLocalTimeZone());
+  const twoMonthsAgo = useMemo(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 2);
+    return parseDate(date.toISOString().split('T')[0]);
+  }, []);
+
+  const [startDate, setStartDate] = useState<DateValue>(twoMonthsAgo);
+  const [endDate, setEndDate] = useState<DateValue>(todayDate);
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportState, setReportState] = useState<ReportState | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const formatter = useDateFormatter({ dateStyle: 'long' });
 
   // Calculate minimum allowed date based on selected chain's genesis
@@ -85,8 +81,6 @@ export default function ReportContent({ account }: { account: Address }) {
   // Handle input changes
   const handleAssetChange = (asset: AssetKey) => {
     setSelectedAsset(asset);
-    setIsOpen(false);
-    setQuery('');
   };
 
   const handleStartDateChange = (date: DateValue) => {
@@ -102,44 +96,6 @@ export default function ReportContent({ account }: { account: Address }) {
     }
     setEndDate(date);
   };
-
-  // Get unique assets with their chain IDs
-  const uniqueAssets = useMemo(() => {
-    if (!positions) return [];
-    const assetMap = new Map<string, AssetKey>();
-    positions.forEach((position) => {
-      const key = `${position.market.loanAsset.symbol}-${position.market.morphoBlue.chain.id}`;
-      if (!assetMap.has(key)) {
-        const token = findToken(
-          position.market.loanAsset.address,
-          position.market.morphoBlue.chain.id,
-        );
-        assetMap.set(key, {
-          symbol: position.market.loanAsset.symbol,
-          address: position.market.loanAsset.address as Address,
-          chainId: position.market.morphoBlue.chain.id,
-          img: token?.img,
-        });
-      }
-    });
-    return Array.from(assetMap.values());
-  }, [positions]);
-
-  // Filter assets based on search query
-  const filteredAssets = useMemo(() => {
-    return uniqueAssets.filter((asset) => asset.symbol.toLowerCase().includes(query.toLowerCase()));
-  }, [uniqueAssets, query]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const { generateReport } = usePositionReport(
     positions || [],
@@ -200,6 +156,28 @@ export default function ReportContent({ account }: { account: Address }) {
   const startDateError = useMemo(() => getDateError(startDate, true), [getDateError, startDate]);
   const endDateError = useMemo(() => getDateError(endDate, false), [getDateError, endDate]);
 
+  const uniqueAssets = useMemo(() => {
+    const assetMap = new Map<string, AssetKey>();
+
+    positions.forEach((position) => {
+      const key = `${position.market.loanAsset.address}-${position.market.morphoBlue.chain.id}`;
+      if (!assetMap.has(key)) {
+        const token = findToken(
+          position.market.loanAsset.address as Address,
+          position.market.morphoBlue.chain.id,
+        );
+        assetMap.set(key, {
+          symbol: position.market.loanAsset.symbol,
+          address: position.market.loanAsset.address as Address,
+          chainId: position.market.morphoBlue.chain.id,
+          img: token?.img,
+        });
+      }
+    });
+
+    return Array.from(assetMap.values());
+  }, [positions]);
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -219,93 +197,11 @@ export default function ReportContent({ account }: { account: Address }) {
               {/* Left side controls group */}
               <div className="flex items-start gap-4">
                 {/* Asset Selector */}
-                <div className="relative h-14 min-w-[200px]" ref={dropdownRef}>
-                  <button
-                    className="flex h-14 items-center gap-2 rounded border border-gray-200 bg-white px-4 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 min-w-[200px]"
-                    onClick={() => setIsOpen(!isOpen)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        setIsOpen(!isOpen);
-                      }
-                    }}
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-haspopup="listbox"
-                  >
-                    {selectedAsset && (
-                      <div
-                        className="flex items-center gap-2"
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsOpen(!isOpen);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.stopPropagation();
-                            setIsOpen(!isOpen);
-                          }
-                        }}
-                      >
-                        {selectedAsset.img && (
-                          <Image
-                            src={selectedAsset.img}
-                            alt={selectedAsset.symbol}
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                          />
-                        )}
-                        <span>{selectedAsset.symbol}</span>
-                        <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
-                          <NetworkIcon networkId={selectedAsset.chainId} />
-                          <span className="text-gray-600 dark:text-gray-300">
-                            {getNetworkName(selectedAsset.chainId)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    <ChevronDownIcon className="ml-2 h-4 w-4" />
-                  </button>
-
-                  {isOpen && (
-                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                      <div className="border-b border-gray-200 p-2 dark:border-gray-700">
-                        <input
-                          type="text"
-                          className="w-full bg-transparent p-1 text-sm outline-none placeholder:text-gray-500"
-                          placeholder="Search assets..."
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {filteredAssets.map((asset) => (
-                          <div
-                            key={`${asset.symbol}-${asset.chainId}`}
-                            className="flex cursor-pointer items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                            onClick={() => {
-                              handleAssetChange(asset);
-                            }}
-                          >
-                            {asset.img && (
-                              <Image src={asset.img} alt={asset.symbol} width={20} height={20} />
-                            )}
-                            <span className="font-medium">{asset.symbol}</span>
-                            <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
-                              <NetworkIcon networkId={asset.chainId} />
-                              <span className="text-gray-600 dark:text-gray-300">
-                                {getNetworkName(asset.chainId)}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <AssetSelector
+                  selectedAsset={selectedAsset}
+                  assets={uniqueAssets}
+                  onSelect={handleAssetChange}
+                />
 
                 {/* Date Pickers */}
                 <DatePicker
@@ -349,7 +245,7 @@ export default function ReportContent({ account }: { account: Address }) {
             </div>
 
             {/* Report Content */}
-            {reportState && (
+            {reportState?.report && (
               <ReportTable
                 startDate={reportState.startDate}
                 endDate={reportState.endDate}
