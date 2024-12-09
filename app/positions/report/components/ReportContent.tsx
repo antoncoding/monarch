@@ -14,6 +14,7 @@ import { findToken } from '@/utils/tokens';
 import { usePositionReport } from '@/hooks/usePositionReport';
 import { ReportTable } from './ReportTable';
 import { Address } from 'viem';
+import { getNetworkImg, getNetworkName } from '@/utils/networks';
 
 type AssetKey = {
   symbol: string;
@@ -131,6 +132,19 @@ export default function ReportContent({ account }: { account: Address }) {
     return findToken(selectedAsset.address, selectedAsset.chainId);
   }, [selectedAsset]);
 
+  const NetworkIcon = ({ networkId }: { networkId: number }) => {
+    const url = getNetworkImg(networkId);
+    return (
+      <Image
+        src={url as string}
+        alt={`networkId-${networkId}`}
+        width={16}
+        height={16}
+        className="rounded-full"
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -163,6 +177,12 @@ export default function ReportContent({ account }: { account: Address }) {
                         />
                       )}
                       <span>{selectedAsset.symbol}</span>
+                      <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-700">
+                        <NetworkIcon networkId={selectedAsset.chainId} />
+                        <span className="text-xs text-gray-600 dark:text-gray-300">
+                          {getNetworkName(selectedAsset.chainId)}
+                        </span>
+                      </div>
                     </div>
                   ) : (
                     <span className="text-gray-500">Select Asset</span>
@@ -195,6 +215,12 @@ export default function ReportContent({ account }: { account: Address }) {
                             <Image src={asset.img} alt={asset.symbol} width={20} height={20} />
                           )}
                           <span>{asset.symbol}</span>
+                          <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-700">
+                            <NetworkIcon networkId={asset.chainId} />
+                            <span className="text-xs text-gray-600 dark:text-gray-300">
+                              {getNetworkName(asset.chainId)}
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -206,15 +232,14 @@ export default function ReportContent({ account }: { account: Address }) {
                 label="Start Date"
                 value={startDate}
                 onChange={handleStartDateChange}
-                className="w-[284px]"
-                maxValue={maxDate}
+                className="w-[284px] rounded-sm"
               />
 
               <DatePicker
                 label="End Date"
                 value={endDate}
                 onChange={handleEndDateChange}
-                className="w-[284px]"
+                className="w-[284px] rounded-sm"
                 minValue={startDate}
                 maxValue={maxDate}
               />
@@ -222,7 +247,7 @@ export default function ReportContent({ account }: { account: Address }) {
               <Button
                 variant="solid"
                 color="primary"
-                className="h-[56px] px-6 font-zen"
+                className="h-[56px] px-6 font-zen rounded-sm"
                 size="lg"
                 onClick={handleGenerateReport}
                 disabled={!startDate || !endDate || !selectedAsset || isGenerating}

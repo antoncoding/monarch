@@ -1,122 +1,93 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Address } from 'viem';
-import { MarketPosition, MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
-import { usePositionSnapshot } from './usePositionSnapshot';
 import useUserPositions from './useUserPositions';
+import { usePositionSnapshot } from './usePositionSnapshot';
+import { MarketPosition, MarketPositionWithEarnings, PositionEarnings, UserTransaction } from '@/utils/types';
 
-/**
- * @dev get position + 1day, 1week, 1month interest earning data
- */
 const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false) => {
-  
-  const [data, setData] = useState<MarketPositionWithEarnings[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { data: marketPositions, history: transactions, loading: loadingPositions, refetch, isRefetching } = useUserPositions(user, showEmpty);
-
+  const { loading, isRefetching, data: positions, history, error, refetch } = useUserPositions(user, showEmpty);
   const { fetchPositionSnapshot } = usePositionSnapshot();
+  const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>([]);
 
-  const calculateEarningsFromPeriod = async (
-    position: MarketPosition,
-    transactions: UserTransaction[],
-    userAddress: Address,
-    chainId: number,
-  ) => {
-    const currentBalance = BigInt(position.supplyAssets);
-    const marketId = position.market.uniqueKey;
+  const calculateEarningsFromPeriod = useCallback(
+    async (position: MarketPosition, transactions: UserTransaction[], userAddress: Address, chainId: number) => {
+      const currentBalance = BigInt(position.supplyAssets);
+      const marketId = position.market.uniqueKey;
 
-    // Filter transactions for this specific market
-    const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
+      // Filter transactions for this specific market
+      const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
 
-    // Get historical snapshots
-    const now = Math.floor(Date.now() / 1000);
-    const snapshots = await Promise.all([
-      fetchPositionSnapshot(marketId, userAddress, chainId, now - 24 * 60 * 60), // 24h ago
-      fetchPositionSnapshot(marketId, userAddress, chainId, now - 7 * 24 * 60 * 60), // 7d ago
-      fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60), // 30d ago
-    ]);
+      // Get historical snapshots
+      const now = Math.floor(Date.now() / 1000);
+      const snapshots = await Promise.all([
+        fetchPositionSnapshot(marketId, userAddress, chainId, now - 24 * 60 * 60), // 24h ago
+        fetchPositionSnapshot(marketId, userAddress, chainId, now - 7 * 24 * 60 * 60), // 7d ago
+        fetchPositionSnapshot(marketId, userAddress, chainId, now - 30 * 24 * 60 * 60), // 30d ago
+      ]);
 
-    const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
+      const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
-    return {
-      lifetimeEarned: calculateEarningsFromSnapshot(
-        currentBalance,
-        0n, // genesis snapshot: 0 balance
-        marketTxs,
-        0,
-      ),
-      last24hEarned: snapshot24h
-        ? calculateEarningsFromSnapshot(
-            currentBalance,
-            BigInt(snapshot24h.supplyAssets),
-            marketTxs,
-            now - 24 * 60 * 60,
-          )
-        : null,
-      last7dEarned: snapshot7d
-        ? calculateEarningsFromSnapshot(
-            currentBalance,
-            BigInt(snapshot7d.supplyAssets),
-            marketTxs,
-            now - 7 * 24 * 60 * 60,
-          )
-        : null,
-      last30dEarned: snapshot30d
+      const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0);
+      const last24hEarnings = snapshot24h
+        ? calculateEarningsFromSnapshot(currentBalance, BigInt(snapshot24h.supplyAssets), marketTxs, now - 24 * 60 * 60)
+        : null;
+      const last7dEarnings = snapshot7d
+        ? calculateEarningsFromSnapshot(currentBalance, BigInt(snapshot7d.supplyAssets), marketTxs, now - 7 * 24 * 60 * 60)
+        : null;
+      const last30dEarnings = snapshot30d
         ? calculateEarningsFromSnapshot(
             currentBalance,
             BigInt(snapshot30d.supplyAssets),
             marketTxs,
             now - 30 * 24 * 60 * 60,
           )
-        : null,
-    };
-  };
+        : null;
 
-  const calculateAndAppendEarnings = useCallback(
-    async (positions: MarketPosition[]) => {
-      const enhancedPositions = await Promise.all(
-        positions
-          .filter((position: MarketPosition) => showEmpty || position.supplyShares.toString() !== '0')
-          .map(async (position: MarketPosition) => {
-            const earnings = await calculateEarningsFromPeriod(
-              position,
-              transactions,
-              user as Address,
-              position.market.morphoBlue.chain.id,
-            );
-
-            return {
-              ...position,
-              market: {
-                ...position.market,
-                warningsWithDetail: getMarketWarningsWithDetail(position.market),
-              },
-              earned: earnings,
-            };
-          }),
-      );
-      return enhancedPositions;
+      return {
+        lifetimeEarned: lifetimeEarnings.earned.toString(),
+        last24hEarned: last24hEarnings?.earned.toString() ?? null,
+        last7dEarned: last7dEarnings?.earned.toString() ?? null,
+        last30dEarned: last30dEarnings?.earned.toString() ?? null,
+      } as PositionEarnings;
     },
-    [transactions, user, showEmpty],
+    [fetchPositionSnapshot],
   );
 
-  // calculate earnings and attach to positions
   useEffect(() => {
-    const addEarning = async () => {
-      setLoading(true);
-      const enhancedPositions = await calculateAndAppendEarnings(marketPositions);
-      setData(enhancedPositions);
-      setLoading(false);
+    const updatePositionsWithEarnings = async () => {
+      if (!positions || !user) return;
+
+      const positionsWithEarningsData = await Promise.all(
+        positions.map(async (position) => {
+          const earnings = await calculateEarningsFromPeriod(
+            position,
+            history,
+            user as Address,
+            position.market.morphoBlue.chain.id,
+          );
+
+          return {
+            ...position,
+            earned: earnings,
+          };
+        }),
+      );
+
+      setPositionsWithEarnings(positionsWithEarningsData);
     };
 
-    addEarning();
+    void updatePositionsWithEarnings();
+  }, [positions, user, history, calculateEarningsFromPeriod]);
 
-  }, [marketPositions]);
-
-  return { loading: loading || loadingPositions, calculateEarningsFromPeriod, data, refetch, isRefetching };
+  return {
+    loading,
+    isRefetching,
+    data: positionsWithEarnings,
+    history,
+    error,
+    refetch,
+  };
 };
 
 export default useUserPositionsWithEarning;

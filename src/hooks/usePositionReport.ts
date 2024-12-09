@@ -1,13 +1,13 @@
-import { MarketPosition, UserTransaction } from '@/utils/types';
+import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
 import { Address } from 'viem';
-import { calculateEarningsFromSnapshot } from '@/utils/interest';
+import { calculateEarningsFromSnapshot, filterTransactionsInPeriod } from '@/utils/interest';
 
 export type PositionReport = {
-  marketId: string;
-  symbol: string;
-  chainId: number;
+  market: Market;
   interestEarned: string;
+  totalDeposits: string;
+  totalWithdraws: string;
   startBalance: string;
   endBalance: string;
   transactions: UserTransaction[];
@@ -15,6 +15,8 @@ export type PositionReport = {
 
 export type ReportSummary = {
   totalInterestEarned: string;
+  totalDeposits: string;
+  totalWithdraws: string;
   periodInDays: number;
   marketReports: PositionReport[];
 };
@@ -30,16 +32,6 @@ export const usePositionReport = (
   const { fetchPositionSnapshot } = usePositionSnapshot();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
-
-    console.log('generateReport', {
-      positions,
-      history,
-      account,
-      selectedAsset,
-      startDate,
-      endDate,
-    })
-
     if (!startDate || !endDate || !selectedAsset) return null;
 
     if (endDate.getTime() > Date.now()) {
@@ -55,8 +47,6 @@ export const usePositionReport = (
         position.market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase() &&
         position.market.morphoBlue.chain.id === selectedAsset.chainId,
     );
-
-    console.log('relevantPositions', relevantPositions)
 
     const marketReports = (await Promise.all(
       relevantPositions.map(async (position) => {
@@ -77,16 +67,18 @@ export const usePositionReport = (
           return null;
         }
 
-        const marketTransactions = history.filter(
-          (tx) =>
-            tx.data?.market?.uniqueKey === position.market.uniqueKey &&
-            Number(tx.timestamp) >= startTimestamp &&
-            Number(tx.timestamp) <= endTimestamp,
+        const marketTransactions = filterTransactionsInPeriod(
+          history.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),
+          startTimestamp,
+          endTimestamp,
         );
 
-        console.log('marketTransactions', marketTransactions)
+        // Skip markets with no transactions in the period
+        if (marketTransactions.length === 0) {
+          return null;
+        }
 
-        const interestEarned = calculateEarningsFromSnapshot(
+        const earnings = calculateEarningsFromSnapshot(
           BigInt(endSnapshot.supplyAssets),
           BigInt(startSnapshot.supplyAssets),
           marketTransactions,
@@ -94,13 +86,11 @@ export const usePositionReport = (
           endTimestamp,
         );
 
-        console.log('interestEarned', interestEarned)
-
         return {
-          marketId: position.market.id,
-          symbol: position.market.loanAsset.symbol,
-          chainId: position.market.morphoBlue.chain.id,
-          interestEarned,
+          market: position.market,
+          interestEarned: earnings.earned.toString(),
+          totalDeposits: earnings.totalDeposits.toString(),
+          totalWithdraws: earnings.totalWithdraws.toString(),
           startBalance: startSnapshot.supplyAssets,
           endBalance: endSnapshot.supplyAssets,
           transactions: marketTransactions,
@@ -112,8 +102,18 @@ export const usePositionReport = (
       .reduce((sum, report) => sum + BigInt(report.interestEarned), 0n)
       .toString();
 
+    const totalDeposits = marketReports
+      .reduce((sum, report) => sum + BigInt(report.totalDeposits), 0n)
+      .toString();
+
+    const totalWithdraws = marketReports
+      .reduce((sum, report) => sum + BigInt(report.totalWithdraws), 0n)
+      .toString();
+
     return {
       totalInterestEarned,
+      totalDeposits,
+      totalWithdraws,
       periodInDays,
       marketReports,
     };
