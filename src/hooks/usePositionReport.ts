@@ -1,7 +1,7 @@
 import { MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
 import { Address } from 'viem';
-import { calculateEarningsFromSnapshot } from './useUserPositions';
+import { calculateEarningsFromSnapshot } from '@/utils/interest';
 
 export type PositionReport = {
   marketId: string;

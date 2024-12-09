@@ -6,7 +6,10 @@ export type MarketPosition = {
   borrowAssets: string;
   borrowAssetsUsd: number;
   market: Market; // Now using the full Market type
-  earned?: PositionEarnings;
+};
+
+export type MarketPositionWithEarnings = MarketPosition & {
+  earned: PositionEarnings;
 };
 
 export enum UserTxTypes {
@@ -219,7 +222,7 @@ export type GroupedPosition = {
     symbol: string;
     amount: number;
   }[];
-  markets: MarketPosition[];
+  markets: MarketPositionWithEarnings[];
   processedCollaterals: {
     address: string;
     symbol: string;

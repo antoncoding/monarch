@@ -10,7 +10,7 @@ import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { MarketPosition, GroupedPosition, WarningWithDetail } from '@/utils/types';
+import { MarketPosition, GroupedPosition, WarningWithDetail, MarketPositionWithEarnings } from '@/utils/types';
 import {
   MarketAssetIndicator,
   MarketOracleIndicator,
@@ -28,7 +28,7 @@ export enum EarningsPeriod {
 
 type PositionsSummaryTableProps = {
   account: string;
-  marketPositions: MarketPosition[];
+  marketPositions: MarketPositionWithEarnings[];
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
@@ -58,7 +58,7 @@ export function PositionsSummaryTable({
     return account === address;
   }, [marketPositions, address]);
 
-  const getEarningsForPeriod = (position: MarketPosition) => {
+  const getEarningsForPeriod = (position: MarketPositionWithEarnings) => {
     if (!position.earned) return '0';
 
     switch (earningsPeriod) {
