@@ -45,7 +45,7 @@ export function calculateEarningsFromSnapshot(
 
     if (movingSupply > 0 && timeElapsed > 0) {
       effectiveTime += timeElapsed;
-      weightedSuppliedAssets += BigInt(tx.data?.assets || '0') * BigInt(timeElapsed);
+      weightedSuppliedAssets += movingSupply * BigInt(timeElapsed);
     }
 
     if (tx.type === UserTxTypes.MarketSupply) {
