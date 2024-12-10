@@ -168,14 +168,14 @@ export async function GET(request: NextRequest) {
 
     if (!blockNumber || !marketId || !userAddress) {
       console.error('Missing required parameters:', {
-        timestamp: !!blockNumber,
+        blockNumber: !!blockNumber,
         marketId: !!marketId,
         userAddress: !!userAddress,
       });
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    // Get position data at the specified timestamp
+    // Get position data at the specified blockNumber
     const position = await getPositionAtBlock(marketId, userAddress, blockNumber, chainId);
 
     console.log(`Successfully retrieved historical position data:`, {

@@ -40,7 +40,7 @@ export const usePositionReport = (
 
     if (endDate.getTime() > Date.now()) {
       console.log('setting end date to now');
-      endDate = new Date(Date.now());
+      endDate = new Date();
     }
 
     // fetch block number at start and end date
@@ -80,7 +80,7 @@ export const usePositionReport = (
           );
 
           if (!startSnapshot || !endSnapshot) {
-            return null;
+            return;
           }
 
           const marketTransactions = filterTransactionsInPeriod(
@@ -111,7 +111,9 @@ export const usePositionReport = (
           };
         }),
       )
-    ).filter((report) => report !== null) as PositionReport[];
+    )
+      .filter((report) => report !== null && report !== undefined)
+      .filter(Boolean);
 
     const totalInterestEarned = marketReports.reduce(
       (sum, report) => sum + BigInt(report.interestEarned),

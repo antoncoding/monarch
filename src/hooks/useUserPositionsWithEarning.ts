@@ -149,9 +149,9 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
 
       return {
         lifetimeEarned: lifetimeEarnings.earned.toString(),
-        last24hEarned: last24hEarnings?.earned.toString() ?? null,
-        last7dEarned: last7dEarnings?.earned.toString() ?? null,
-        last30dEarned: last30dEarnings?.earned.toString() ?? null,
+        last24hEarned: last24hEarnings ? last24hEarnings.earned.toString() : null,
+        last7dEarned: last7dEarnings ? last7dEarnings.earned.toString() : null,
+        last30dEarned: last30dEarnings ? last30dEarnings.earned.toString() : null,
       } as PositionEarnings;
     },
     [fetchPositionSnapshot, blockNums],

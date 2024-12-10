@@ -46,6 +46,16 @@ const formatNumber = (value: bigint, decimals: number) => {
   return formatReadable(formatUnits(value, decimals), 4);
 };
 
+const formatDays = (seconds: number) => {
+  const days = seconds / 86400;
+  // If it's a whole number, return it as is
+  if (Math.floor(days) === days) {
+    return days.toString();
+  }
+  // Otherwise, round to 2 decimal places and remove trailing zeros
+  return days.toFixed(2);
+};
+
 function MarketInfoBlock({
   market,
   interestEarned,
@@ -136,9 +146,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Duration
-            </h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</h3>
             <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
               {report.periodInDays} Days
             </p>
@@ -229,7 +237,9 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                         </div>
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Duration</div>
-                          <div className="font-mono">{marketReport.effectiveTime / 86400} days</div>
+                          <div className="font-mono">
+                            {formatDays(Number(marketReport.effectiveTime))} days
+                          </div>
                         </div>
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Average Capital</div>

@@ -43,11 +43,9 @@ export default function ReportContent({ account }: { account: Address }) {
   }, []);
 
   const twoMonthsAgo = useMemo(() => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 2);
-    date.setMinutes(0);
-    date.setSeconds(0);
-    return parseAbsoluteToLocal(date.toISOString());
+    const date = now(getLocalTimeZone()).subtract({ months: 2 });
+    date.set({ minute: 0, second: 0 });
+    return date;
   }, []);
 
   const [startDate, setStartDate] = useState<ZonedDateTime>(twoMonthsAgo);
@@ -72,8 +70,8 @@ export default function ReportContent({ account }: { account: Address }) {
     return (
       reportState.asset.address === selectedAsset.address &&
       reportState.asset.chainId === selectedAsset.chainId &&
-      reportState.startDate === startDate &&
-      reportState.endDate === endDate
+      reportState.startDate.compare(startDate) === 0 &&
+      reportState.endDate.compare(endDate) === 0
     );
   }, [reportState, selectedAsset, startDate, endDate]);
 
@@ -152,15 +150,14 @@ export default function ReportContent({ account }: { account: Address }) {
   // Validate dates
   const getDateError = useCallback(
     (date: DateValue, isStart: boolean) => {
-      if (!date) return 'Date is required';
-      if (date > maxDate) return 'Cannot select future date';
-      if (isStart && date > endDate) return 'Start date cannot be after end date';
-      if (!isStart && date < startDate) return 'End date cannot be before start date';
+      if (date.compare(maxDate) > 0) return 'Cannot select future date';
+      if (isStart && date.compare(endDate) > 0) return 'Start date cannot be after end date';
+      if (!isStart && date.compare(startDate) < 0) return 'End date cannot be before start date';
       if (selectedAsset) {
         const genesisDate = parseDate(
           getMorphoGensisDate(selectedAsset.chainId).toISOString().split('T')[0],
         );
-        if (date < genesisDate)
+        if (date.compare(genesisDate) < 0)
           return `Date cannot be before ${formatter.format(
             genesisDate.toDate(getLocalTimeZone()),
           )}`;
