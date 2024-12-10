@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Address } from 'viem';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
+import { SupportedNetworks } from '@/utils/networks';
+import { estimatedBlockNumber } from '@/utils/rpc';
 import {
   MarketPosition,
   MarketPositionWithEarnings,
@@ -9,8 +11,6 @@ import {
 } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
 import useUserPositions from './useUserPositions';
-import { estimatedBlockNumber } from '@/utils/rpc';
-import { SupportedNetworks } from '@/utils/networks';
 
 type BlockNumbers = {
   day: number;
@@ -24,55 +24,68 @@ type ChainBlockNumbers = {
 
 const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false) => {
   const {
-    loading,
+    loading: positionsLoading,
     isRefetching,
     data: positions,
     history,
-    error,
+    error: positionsError,
     refetch,
   } = useUserPositions(user, showEmpty);
+
   const { fetchPositionSnapshot } = usePositionSnapshot();
   const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>(
     [],
   );
-
   const [blockNums, setBlockNums] = useState<ChainBlockNumbers>();
+  const [isLoadingBlockNums, setIsLoadingBlockNums] = useState(false);
+  const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  console.log('blockNums', blockNums)
+  // Loading state that combines all loading states
+  const isLoading = positionsLoading || isLoadingBlockNums || isLoadingEarnings;
 
   useEffect(() => {
     const fetchBlockNums = async () => {
-      const now = Date.now() / 1000;
-      const DAY = 86400;
-      const timestamps = {
-        day: now - DAY,
-        week: now - 7 * DAY,
-        month: now - 30 * DAY,
-      };
+      try {
+        setIsLoadingBlockNums(true);
+        setError(null);
 
-      const newBlockNums = {} as ChainBlockNumbers;
+        const now = Date.now() / 1000;
+        const DAY = 86400;
+        const timestamps = {
+          day: now - DAY,
+          week: now - 7 * DAY,
+          month: now - 30 * DAY,
+        };
 
-      // Get block numbers for each network and timestamp
-      await Promise.all(
-        Object.values(SupportedNetworks)
-          .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number')
-          .map(async (chainId) => {
-            const [day, week, month] = await Promise.all([
-              estimatedBlockNumber(chainId, timestamps.day),
-              estimatedBlockNumber(chainId, timestamps.week),
-              estimatedBlockNumber(chainId, timestamps.month),
-            ]);
+        const newBlockNums = {} as ChainBlockNumbers;
 
-            if (day && week && month) {
-              newBlockNums[chainId] = { day, week, month };
-            }
-          }),
-      );
+        // Get block numbers for each network and timestamp
+        await Promise.all(
+          Object.values(SupportedNetworks)
+            .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number')
+            .map(async (chainId) => {
+              const [day, week, month] = await Promise.all([
+                estimatedBlockNumber(chainId, timestamps.day),
+                estimatedBlockNumber(chainId, timestamps.week),
+                estimatedBlockNumber(chainId, timestamps.month),
+              ]);
 
-      setBlockNums(newBlockNums);
+              if (day && week && month) {
+                newBlockNums[chainId] = { day, week, month };
+              }
+            }),
+        );
+
+        setBlockNums(newBlockNums);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch block numbers'));
+      } finally {
+        setIsLoadingBlockNums(false);
+      }
     };
 
-    fetchBlockNums();
+    void fetchBlockNums();
   }, []);
 
   const calculateEarningsFromPeriod = useCallback(
@@ -82,42 +95,37 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
       userAddress: Address,
       chainId: SupportedNetworks,
     ) => {
-
       if (!blockNums?.[chainId]) {
         return {
-            lifetimeEarned: '0',
-            last24hEarned: '0',
-            last7dEarned: '0',
-            last30dEarned: '0',
-        }
+          lifetimeEarned: '0',
+          last24hEarned: '0',
+          last7dEarned: '0',
+          last30dEarned: '0',
+        };
       }
 
       const currentBalance = BigInt(position.supplyAssets);
       const marketId = position.market.uniqueKey;
-
-      // Filter transactions for this specific market
       const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
-
-      // Get historical snapshots
       const now = Math.floor(Date.now() / 1000);
-
-      const blockNum = blockNums?.[chainId];
+      const blockNum = blockNums[chainId];
 
       const snapshots = await Promise.all([
-        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum?.day), // 24h ago
-        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum?.week), // 7d ago
-        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum?.month), // 30d ago
+        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum.day),
+        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum.week),
+        fetchPositionSnapshot(marketId, userAddress, chainId, blockNum.month),
       ]);
 
       const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
-      const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0);
+      const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0, now);
       const last24hEarnings = snapshot24h
         ? calculateEarningsFromSnapshot(
             currentBalance,
             BigInt(snapshot24h.supplyAssets),
             marketTxs,
             now - 24 * 60 * 60,
+            now,
           )
         : null;
       const last7dEarnings = snapshot7d
@@ -126,6 +134,7 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
             BigInt(snapshot7d.supplyAssets),
             marketTxs,
             now - 7 * 24 * 60 * 60,
+            now,
           )
         : null;
       const last30dEarnings = snapshot30d
@@ -134,6 +143,7 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
             BigInt(snapshot30d.supplyAssets),
             marketTxs,
             now - 30 * 24 * 60 * 60,
+            now,
           )
         : null;
 
@@ -149,36 +159,43 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
 
   useEffect(() => {
     const updatePositionsWithEarnings = async () => {
-      if (!positions || !user || !blockNums) return;
+      try {
+        if (!positions || !user || !blockNums) return;
 
-      const positionsWithEarningsData = await Promise.all(
-        positions.map(async (position) => {
-          const earnings = await calculateEarningsFromPeriod(
-            position,
-            history,
-            user as Address,
-            position.market.morphoBlue.chain.id,
-          );
+        setIsLoadingEarnings(true);
+        setError(null);
 
-          return {
-            ...position,
-            earned: earnings,
-          };
-        }),
-      );
+        const positionsWithEarningsData = await Promise.all(
+          positions.map(async (position) => {
+            const earned = await calculateEarningsFromPeriod(
+              position,
+              history,
+              user as Address,
+              position.market.morphoBlue.chain.id as SupportedNetworks,
+            );
+            return {
+              ...position,
+              earned,
+            };
+          }),
+        );
 
-      setPositionsWithEarnings(positionsWithEarningsData);
+        setPositionsWithEarnings(positionsWithEarningsData);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to calculate earnings'));
+      } finally {
+        setIsLoadingEarnings(false);
+      }
     };
 
     void updatePositionsWithEarnings();
-  }, [positions, user, history, calculateEarningsFromPeriod]);
+  }, [positions, user, blockNums, history, calculateEarningsFromPeriod]);
 
   return {
-    loading,
+    positions: positionsWithEarnings,
+    isLoading,
     isRefetching,
-    data: positionsWithEarnings,
-    history,
-    error,
+    error: error ?? positionsError,
     refetch,
   };
 };

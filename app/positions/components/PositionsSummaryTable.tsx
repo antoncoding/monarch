@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
@@ -81,6 +82,13 @@ export function PositionsSummaryTable({
   };
 
   const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
+    console.log('gruping earnings from', groupedPosition.markets.length, 'positions');
+
+    for (const position of groupedPosition.markets) {
+      const earnings = getEarningsForPeriod(position);
+      console.log('position', position.market.uniqueKey, 'earnings', earnings);
+    }
+
     return (
       groupedPosition.markets
         .reduce(
@@ -265,15 +273,24 @@ export function PositionsSummaryTable({
       <div className="bg-surface overflow-hidden rounded">
         <table className="responsive w-full min-w-[640px] font-zen">
           <thead className="table-header">
-            <tr className="text-secondary">
+            <tr className="w-full justify-center text-secondary">
               <th className="w-10" />
               <th className="w-10">Network</th>
-              <th>Size</th>
-              <th>APY (now)</th>
-              <th>Interest Accrued ({earningsPeriod})</th>
-              <th>Collateral</th>
-              <th>Warnings</th>
-              <th>Actions</th>
+              <th className="text-center">Size</th>
+              <th className="text-center">APY (now)</th>
+              <th className="text-center">
+                <span className="inline-flex items-center gap-1">
+                  Interest Accrued ({earningsPeriod})
+                  <Tooltip content="Interest accrued by opened positions">
+                    <div className="cursor-help">
+                      <BsQuestionCircle size={14} className="text-gray-400" />
+                    </div>
+                  </Tooltip>
+                </span>
+              </th>
+              <th className="text-center">Collateral</th>
+              <th className="text-center">Warnings</th>
+              <th className="text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="table-body text-sm">

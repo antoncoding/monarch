@@ -1,5 +1,4 @@
-import { estimatedBlockNumber } from '@/utils/rpc';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Address } from 'viem';
 
 export type PositionSnapshot = {
@@ -8,7 +7,6 @@ export type PositionSnapshot = {
   borrowAssets: string;
   borrowShares: string;
 };
-
 
 type PositionResponse = {
   position: {
@@ -20,8 +18,6 @@ type PositionResponse = {
 };
 
 export function usePositionSnapshot() {
-
-
   const fetchPositionSnapshot = useCallback(
     async (
       marketId: string,
@@ -30,7 +26,6 @@ export function usePositionSnapshot() {
       blockNumber: number,
     ): Promise<PositionSnapshot | null> => {
       try {
-
         // Then, fetch the position at that block number
         const positionResponse = await fetch(
           `/api/positions/historical?` +

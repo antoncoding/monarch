@@ -23,7 +23,6 @@ export const GENESIS_BLOCK = {
   [SupportedNetworks.Base]: 13977148, // Base
 } as const;
 
-
 type BlockResponse = {
   blockNumber: string;
   timestamp: number;

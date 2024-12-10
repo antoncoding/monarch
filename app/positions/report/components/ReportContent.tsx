@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { parseDate, getLocalTimeZone, today } from '@internationalized/date';
+import {
+  parseDate,
+  getLocalTimeZone,
+  today,
+  parseAbsoluteToLocal,
+  ZonedDateTime,
+  now,
+} from '@internationalized/date';
 import { DateValue } from '@nextui-org/react';
 import { useDateFormatter } from '@react-aria/i18n';
 import { Address } from 'viem';
@@ -30,15 +37,15 @@ export default function ReportContent({ account }: { account: Address }) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago
-  const todayDate = today(getLocalTimeZone());
+  const todayDate = now(getLocalTimeZone());
   const twoMonthsAgo = useMemo(() => {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
-    return parseDate(date.toISOString().split('T')[0]);
+    return parseAbsoluteToLocal(date.toISOString());
   }, []);
 
-  const [startDate, setStartDate] = useState<DateValue>(twoMonthsAgo);
-  const [endDate, setEndDate] = useState<DateValue>(todayDate);
+  const [startDate, setStartDate] = useState<ZonedDateTime>(twoMonthsAgo);
+  const [endDate, setEndDate] = useState<ZonedDateTime>(todayDate);
   const [isGenerating, setIsGenerating] = useState(false);
   const [reportState, setReportState] = useState<ReportState | null>(null);
   const formatter = useDateFormatter({ dateStyle: 'long' });
@@ -46,12 +53,12 @@ export default function ReportContent({ account }: { account: Address }) {
   // Calculate minimum allowed date based on selected chain's genesis
   const minDate = useMemo(() => {
     return selectedAsset
-      ? parseDate(getMorphoGensisDate(selectedAsset.chainId).toISOString().split('T')[0])
+      ? parseAbsoluteToLocal(getMorphoGensisDate(selectedAsset.chainId).toISOString())
       : today(getLocalTimeZone());
   }, [selectedAsset]);
 
   // Calculate maximum allowed date (today)
-  const maxDate = today(getLocalTimeZone());
+  const maxDate = useMemo(() => now(getLocalTimeZone()), []);
 
   // Check if current inputs match the report state
   const isReportCurrent = useMemo(() => {
@@ -83,14 +90,14 @@ export default function ReportContent({ account }: { account: Address }) {
     setSelectedAsset(asset);
   };
 
-  const handleStartDateChange = (date: DateValue) => {
+  const handleStartDateChange = (date: ZonedDateTime) => {
     if (date > endDate) {
       setEndDate(date);
     }
     setStartDate(date);
   };
 
-  const handleEndDateChange = (date: DateValue) => {
+  const handleEndDateChange = (date: ZonedDateTime) => {
     if (date < startDate) {
       setStartDate(date);
     }
@@ -102,8 +109,8 @@ export default function ReportContent({ account }: { account: Address }) {
     history || [],
     account,
     selectedAsset,
-    startDate ? new Date(startDate.toDate(getLocalTimeZone())) : undefined,
-    endDate ? new Date(endDate.toDate(getLocalTimeZone())) : undefined,
+    startDate.toDate(),
+    endDate.toDate(),
   );
 
   // Generate report
@@ -207,21 +214,25 @@ export default function ReportContent({ account }: { account: Address }) {
                 <DatePicker
                   label="Start Date"
                   value={startDate}
-                  onChange={handleStartDateChange}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  onChange={handleStartDateChange as any}
                   minValue={minDate}
                   maxValue={maxDate}
                   isInvalid={!!startDateError}
                   errorMessage={startDateError}
+                  granularity="hour"
                 />
 
                 <DatePicker
                   label="End Date"
                   value={endDate}
-                  onChange={handleEndDateChange}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  onChange={handleEndDateChange as any}
                   minValue={minDate}
                   maxValue={maxDate}
                   isInvalid={!!endDateError}
                   errorMessage={endDateError}
+                  granularity="hour"
                 />
               </div>
 

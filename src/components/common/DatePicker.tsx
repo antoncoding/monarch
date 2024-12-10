@@ -25,6 +25,7 @@ function StyledDatePicker(props: DatePickerProps) {
       onChange={props.onChange}
       isInvalid={props.isInvalid}
       errorMessage={props.errorMessage}
+      granularity={props.granularity}
     />
   );
 }

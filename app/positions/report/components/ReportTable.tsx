@@ -201,27 +201,25 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                     <div className="bg-surface border-t">
                       {/* Market Stats */}
                       <div className="grid grid-cols-4 gap-4 p-4">
-                        <div className="text-center text-sm flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Start Balance</div>
                           <div className="font-mono">
                             {formatNumber(BigInt(marketReport.startBalance), asset.decimals)}{' '}
                             {asset.symbol}
                           </div>
                         </div>
-                        <div className="text-center text-sm flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">End Balance</div>
                           <div className="font-mono">
                             {formatNumber(BigInt(marketReport.endBalance), asset.decimals)}{' '}
                             {asset.symbol}
                           </div>
                         </div>
-                        <div className="text-center text-sm flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Duration</div>
-                          <div className="font-mono">
-                            {(marketReport.effectiveTime / 86400)} days
-                          </div>
+                          <div className="font-mono">{marketReport.effectiveTime / 86400} days</div>
                         </div>
-                        <div className="text-center text-sm flex flex-col gap-2">
+                        <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Average Capital</div>
                           <div className="font-mono">
                             {formatNumber(BigInt(marketReport.avgCapital), asset.decimals)}{' '}
