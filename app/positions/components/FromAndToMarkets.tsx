@@ -163,7 +163,7 @@ export function FromAndToMarkets({
                         {formatUnits(BigInt(marketPosition.market.lltv), 16)}%
                       </td>
                       <td className="px-4 py-2">
-                        {formatReadable(marketPosition.market.dailyApys.netSupplyApy * 100)}%
+                        {formatReadable(marketPosition.market.state.supplyApy * 100)}%
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2">

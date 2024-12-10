@@ -1,5 +1,9 @@
 import { Address } from 'viem';
-import { calculateEarningsFromSnapshot, filterTransactionsInPeriod } from '@/utils/interest';
+import {
+  calculateEarningsFromSnapshot,
+  EarningsCalculation,
+  filterTransactionsInPeriod,
+} from '@/utils/interest';
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
@@ -21,8 +25,9 @@ export type ReportSummary = {
   totalInterestEarned: bigint;
   totalDeposits: bigint;
   totalWithdraws: bigint;
-  periodInDays: number;
+  period: number;
   marketReports: PositionReport[];
+  groupedEarnings: EarningsCalculation;
 };
 
 export const usePositionReport = (
@@ -55,12 +60,17 @@ export const usePositionReport = (
 
     let startTimestamp = Math.floor(startDate.getTime() / 1000);
     let endTimestamp = Math.floor(endDate.getTime() / 1000);
-    const periodInDays = (endTimestamp - startTimestamp) / (24 * 60 * 60);
+    const period = endTimestamp - startTimestamp;
 
     const relevantPositions = positions.filter(
       (position) =>
         position.market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase() &&
         position.market.morphoBlue.chain.id === selectedAsset.chainId,
+    );
+
+    const relevantTxs = history.filter(
+      (tx) =>
+        tx.data?.market?.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase(),
     );
 
     const marketReports = (
@@ -130,12 +140,28 @@ export const usePositionReport = (
       0n,
     );
 
+    const startBalance = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.startBalance),
+      0n,
+    );
+
+    const endBalance = marketReports.reduce((sum, report) => sum + BigInt(report.endBalance), 0n);
+
+    const groupedEarnings = calculateEarningsFromSnapshot(
+      endBalance,
+      startBalance,
+      relevantTxs,
+      startTimestamp,
+      endTimestamp,
+    );
+
     return {
       totalInterestEarned,
       totalDeposits,
       totalWithdraws,
-      periodInDays,
+      period,
       marketReports,
+      groupedEarnings,
     };
   };
 
