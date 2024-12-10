@@ -2,6 +2,7 @@ import { Address } from 'viem';
 import { calculateEarningsFromSnapshot, filterTransactionsInPeriod } from '@/utils/interest';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
+import { estimatedBlockNumber } from '@/utils/rpc';
 
 export type PositionReport = {
   market: Market;
@@ -41,6 +42,10 @@ export const usePositionReport = (
       endDate = new Date(Date.now());
     }
 
+    // fetch block number at start and end date
+    const startBlockNumber = await estimatedBlockNumber(selectedAsset.chainId, startDate.getTime() / 1000);
+    const endBlockNumber = await estimatedBlockNumber(selectedAsset.chainId, endDate.getTime() / 1000);
+
     let startTimestamp = Math.floor(startDate.getTime() / 1000);
     let endTimestamp = Math.floor(endDate.getTime() / 1000);
     const periodInDays = (endTimestamp - startTimestamp) / (24 * 60 * 60);
@@ -58,22 +63,18 @@ export const usePositionReport = (
             position.market.uniqueKey,
             account,
             position.market.morphoBlue.chain.id,
-            startTimestamp,
+            startBlockNumber,
           );
           const endSnapshot = await fetchPositionSnapshot(
             position.market.uniqueKey,
             account,
             position.market.morphoBlue.chain.id,
-            endTimestamp,
+            endBlockNumber,
           );
 
           if (!startSnapshot || !endSnapshot) {
             return null;
           }
-
-          // use timestamp from snapshot to be accurate
-          startTimestamp = startSnapshot.timestamp;
-          endTimestamp = endSnapshot.timestamp;
 
           const marketTransactions = filterTransactionsInPeriod(
             history.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),

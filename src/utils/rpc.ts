@@ -22,3 +22,30 @@ export const GENESIS_BLOCK = {
   [SupportedNetworks.Mainnet]: 18883124, // Ethereum mainnet
   [SupportedNetworks.Base]: 13977148, // Base
 } as const;
+
+
+type BlockResponse = {
+  blockNumber: string;
+  timestamp: number;
+  approximateBlockTime: number;
+};
+
+export async function estimatedBlockNumber(chainId: SupportedNetworks, timestamp: number) {
+  // First, get the nearest block number for the timestamp
+  const blockResponse = await fetch(
+    `/api/block?` +
+      `timestamp=${encodeURIComponent(timestamp)}` +
+      `&chainId=${encodeURIComponent(chainId)}`,
+  );
+
+  if (!blockResponse.ok) {
+    const errorData = (await blockResponse.json()) as { error?: string };
+    console.error('Failed to find nearest block:', errorData);
+    throw new Error('Failed to find nearest block');
+  }
+
+  const blockData = (await blockResponse.json()) as BlockResponse;
+  console.log('Found nearest block:', blockData);
+
+  return Number(blockData.blockNumber);
+}
