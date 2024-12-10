@@ -38,8 +38,6 @@ const config: Config = {
       colors: {
         primary: '#f45f2d',
         'monarch-primary': '#f45f2d',
-        'footer-light-gray': '#8a919e',
-        'boat-color-gray-900': '#191918',
       },
       fontFamily: {
         inter: ['var(--font-inter)'],

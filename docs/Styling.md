@@ -43,22 +43,6 @@ import { Button } from '@/components/common/Button';
   - Use for: Tertiary actions, subtle navigation
   - Example: "Refresh" buttons, utility actions
 
-#### Size Guidelines
-
-- `sm`: Compact buttons (h-8)
-
-  - Use for: Table actions, tight spaces
-  - Default padding: px-3 py-1.5
-
-- `md`: Standard buttons (h-10)
-
-  - Use for: Most general actions
-  - Default padding: px-4 py-2
-
-- `lg`: Large buttons (h-12)
-  - Use for: Primary CTAs, important actions
-  - Default padding: px-6 py-3
-
 #### Common Classes
 
 - Font: `font-zen` for consistent typography
@@ -96,13 +80,7 @@ import { Button } from '@/components/common/Button';
 </Button>
 ```
 
-2. Modals:
+## Background, Border
 
-   - Always use `rounded-lg`
-   - Standard padding: `p-6`
-   - Consistent max-width: `max-w-lg`
-
-3. Cards:
-   - Use `rounded-base`
-   - Consistent padding: `p-4`
-   - Standard shadow: `shadow-base`
+- Use `bg-surface` first layer components
+- Use `bg-hovered` for hoverable elements or components on "bg-surface"

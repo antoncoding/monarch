@@ -43,9 +43,18 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
       <button
         className="bg-surface relative flex h-14 w-full flex-col items-start justify-center rounded rounded-sm px-4 shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          } else if (e.key === 'Escape' && isOpen) {
+            setIsOpen(false);
+          }
+        }}
         type="button"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
+        aria-controls="asset-selector-dropdown"
       >
         <span className="absolute left-4 top-2 text-xs text-gray-500">Select Asset</span>
         <div className="flex w-full items-center justify-between pt-4">
@@ -62,9 +71,9 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                   />
                 )}
                 <span>{selectedAsset.symbol}</span>
-                <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
+                <div className="badge">
                   <NetworkIcon networkId={selectedAsset.chainId} />
-                  <span className="text-gray-600 dark:text-gray-300">
+                  <span>
                     {getNetworkName(selectedAsset.chainId)}
                   </span>
                 </div>
@@ -76,7 +85,12 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-sm border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+        <div
+          id="asset-selector-dropdown"
+          role="listbox"
+          className="bg-surface absolute z-10 mt-1 w-full overflow-hidden rounded-sm border shadow-lg dark:border-gray-800"
+          tabIndex={-1}
+        >
           <div className="border-b border-gray-200 p-2 dark:border-gray-700">
             <input
               type="text"
@@ -84,30 +98,49 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
               placeholder="Search assets..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                }
+              }}
             />
           </div>
           <div className="max-h-64 overflow-y-auto">
             {filteredAssets.map((asset) => (
-              <div
+              <button
+                type="button"
                 key={`${asset.symbol}-${asset.chainId}`}
-                className="flex cursor-pointer items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                role="option"
+                aria-selected={
+                  selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
+                }
+                className={`flex w-full items-center gap-2 p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                  selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
+                    ? 'bg-gray-50 dark:bg-gray-900'
+                    : ''
+                }`}
                 onClick={() => {
                   onSelect(asset);
                   setIsOpen(false);
                 }}
-                role="button"
-                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect(asset);
+                    setIsOpen(false);
+                  }
+                }}
               >
                 {asset.img && <Image src={asset.img} alt={asset.symbol} width={20} height={20} />}
                 <span className="font-medium">{asset.symbol}</span>
-                <div className="flex items-center gap-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs dark:bg-gray-800">
+                <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />
-                  <span className="text-gray-600 dark:text-gray-300">
+                  <span>
                     {getNetworkName(asset.chainId)}
                   </span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -53,7 +53,7 @@ function MarketInfoBlock({
   const hasActivePosition = BigInt(amount) > 0n;
 
   return (
-    <div className="bg-surface flex items-center justify-between rounded-sm border-gray-100 p-3">
+    <div className="bg-surface flex items-center justify-between rounded-sm border-gray-100 p-3 dark:border-gray-700">
       <div className="flex items-start gap-4">
         <TokenIcon
           address={market.collateralAsset.address}
@@ -123,7 +123,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
   return (
     <div className="space-y-6">
       {/* Summary Section */}
-      <div className="rounded border border-gray-200 bg-gray-50 p-6 dark:bg-gray-800">
+      <div className="rounded border border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800">
         <div className="mb-8 ">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
