@@ -60,7 +60,7 @@ export const actionTypeToText = (type: UserTxTypes) => {
 const MAINNET_GENESIS_DATE = new Date('2023-12-28T09:09:23.000Z');
 const BASE_GENESIS_DATE = new Date('2024-05-03T13:40:43.000Z');
 
-export function getMorphoGensisDate(chainId: number): Date {
+export function getMorphoGenesisDate(chainId: number): Date {
   switch (chainId) {
     case 1: // mainnet
       return MAINNET_GENESIS_DATE;

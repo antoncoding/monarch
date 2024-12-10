@@ -20,7 +20,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { usePositionReport } from '@/hooks/usePositionReport';
 import { ReportSummary } from '@/hooks/usePositionReport';
 import useUserPositions from '@/hooks/useUserPositions';
-import { getMorphoGensisDate } from '@/utils/morpho';
+import { getMorphoGenesisDate } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { AssetSelector, type AssetKey } from './AssetSelector';
 import { ReportTable } from './ReportTable';
@@ -57,7 +57,7 @@ export default function ReportContent({ account }: { account: Address }) {
   // Calculate minimum allowed date based on selected chain's genesis
   const minDate = useMemo(() => {
     return selectedAsset
-      ? parseAbsoluteToLocal(getMorphoGensisDate(selectedAsset.chainId).toISOString())
+      ? parseAbsoluteToLocal(getMorphoGenesisDate(selectedAsset.chainId).toISOString())
       : today(getLocalTimeZone());
   }, [selectedAsset]);
 
@@ -155,7 +155,7 @@ export default function ReportContent({ account }: { account: Address }) {
       if (!isStart && date.compare(startDate) < 0) return 'End date cannot be before start date';
       if (selectedAsset) {
         const genesisDate = parseDate(
-          getMorphoGensisDate(selectedAsset.chainId).toISOString().split('T')[0],
+          getMorphoGenesisDate(selectedAsset.chainId).toISOString().split('T')[0],
         );
         if (date.compare(genesisDate) < 0)
           return `Date cannot be before ${formatter.format(
