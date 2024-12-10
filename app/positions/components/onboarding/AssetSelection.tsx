@@ -137,9 +137,7 @@ export function AssetSelection() {
                     </p>
                     <div className="badge">
                       <NetworkIcon networkId={token.network} />
-                      <span>
-                        {getNetworkName(token.network)}
-                      </span>
+                      <span>{getNetworkName(token.network)}</span>
                     </div>
                   </div>
                 </div>

@@ -28,6 +28,9 @@ type MarketInfoBlockProps = {
   amount: bigint;
   decimals: number;
   symbol: string;
+  apy: number;
+  avgCapital: bigint;
+  hasActivePosition: boolean;
 };
 
 type ReportTableProps = {
@@ -46,30 +49,26 @@ const formatNumber = (value: bigint, decimals: number) => {
 function MarketInfoBlock({
   market,
   interestEarned,
-  amount,
   decimals,
   symbol,
+  apy,
+  hasActivePosition,
 }: MarketInfoBlockProps) {
-  const hasActivePosition = BigInt(amount) > 0n;
-
   return (
     <div className="bg-surface flex items-center justify-between rounded-sm border-gray-100 p-3 dark:border-gray-700">
-      <div className="flex items-start gap-4">
-        <TokenIcon
-          address={market.collateralAsset.address}
-          chainId={market.morphoBlue.chain.id}
-          width={24}
-          height={24}
-        />
-        <div className="flex flex-col">
+      <div className="flex items-center gap-4">
+        <div className="relative">
+          <TokenIcon
+            address={market.collateralAsset.address}
+            chainId={market.morphoBlue.chain.id}
+            width={24}
+            height={24}
+          />
+        </div>
+        <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Badge size="sm">{market.collateralAsset.symbol}</Badge>
             <Badge size="sm">{formatUnits(BigInt(market.lltv), 16)}% LTV</Badge>
-            {/* {hasActivePosition && (
-              <Badge
-                className="h-2 w-2 bg-green-500"
-              />
-            )} */}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Oracle: </span>
@@ -77,13 +76,21 @@ function MarketInfoBlock({
           </div>
         </div>
       </div>
-      <div className="text-right">
-        <div
-          className={`text-md font-mono ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}
-        >
-          {formatNumber(interestEarned, decimals)} {symbol}
+      <div className="flex items-center gap-8">
+        <div className="flex flex-col items-end gap-1">
+          <div className="text-md font-mono text-gray-400">{(apy * 100).toFixed(2)}%</div>
+          <div className="text-xs text-gray-500">APY</div>
         </div>
-        <div className="text-xs text-gray-500">Interest Earned</div>
+        <div className="flex flex-col items-end gap-1">
+          <div
+            className={`text-md font-mono ${
+              hasActivePosition ? 'text-green-600' : 'text-gray-400'
+            }`}
+          >
+            {formatNumber(interestEarned, decimals)} {symbol}
+          </div>
+          <div className="text-xs text-gray-500">Interest Earned</div>
+        </div>
       </div>
     </div>
   );
@@ -103,22 +110,6 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
     }
     setExpandedMarkets(newExpanded);
   };
-
-  // Separate markets into active and inactive
-  const { activeMarkets, inactiveMarkets } = report.marketReports.reduce(
-    (acc, market) => {
-      if (BigInt(market.endBalance) > 0n) {
-        acc.activeMarkets.push(market);
-      } else {
-        acc.inactiveMarkets.push(market);
-      }
-      return acc;
-    },
-    { activeMarkets: [], inactiveMarkets: [] } as {
-      activeMarkets: typeof report.marketReports;
-      inactiveMarkets: typeof report.marketReports;
-    },
-  );
 
   return (
     <div className="space-y-6">
@@ -143,11 +134,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Period</h3>
-            <p className="mt-1 text-lg font-semibold">{report.periodInDays.toFixed(1)} days</p>
-          </div>
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Total Interest Earned
@@ -169,132 +156,33 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
         </div>
       </div>
 
-      {/* Active Markets */}
-      <div className="space-y-2">
-        <h3 className="px-1 text-sm font-medium text-gray-500">Active Markets</h3>
-        <div className="space-y-2">
-          {activeMarkets.map((marketReport) => {
-            const marketKey = marketReport.market.uniqueKey;
-            const isExpanded = expandedMarkets.has(marketKey);
-
-            return (
-              <div key={marketKey} className="overflow-hidden rounded border dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => toggleMarket(marketKey)}
-                  className="w-full text-left"
-                >
-                  <MarketInfoBlock
-                    market={marketReport.market}
-                    interestEarned={marketReport.interestEarned}
-                    amount={marketReport.endBalance}
-                    decimals={asset.decimals}
-                    symbol={asset.symbol}
-                  />
-                </button>
-
-                {/* Expandable Content */}
-                {isExpanded && (
-                  <div className="bg-surface border-t">
-                    {/* Market Stats */}
-                    <div className="grid grid-cols-3 gap-4 p-4">
-                      <div>
-                        <div className="text-sm text-gray-500">Start Balance</div>
-                        <div className="font-medium">
-                          {formatNumber(BigInt(marketReport.startBalance), asset.decimals)}{' '}
-                          {asset.symbol}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">End Balance</div>
-                        <div className="font-medium">
-                          {formatNumber(BigInt(marketReport.endBalance), asset.decimals)}{' '}
-                          {asset.symbol}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-500">Net Change</div>
-                        <div className="font-medium">
-                          {formatNumber(
-                            BigInt(marketReport.totalDeposits) -
-                              BigInt(marketReport.totalWithdraws),
-                            asset.decimals,
-                          )}{' '}
-                          {asset.symbol}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Transactions Table */}
-                    <div className="bg-surface">
-                      <Table
-                        aria-label="Market transactions"
-                        className="rounded-none border-none shadow-none"
-                      >
-                        <TableHeader className="rounded-none shadow-none">
-                          <TableColumn>TYPE</TableColumn>
-                          <TableColumn>DATE</TableColumn>
-                          <TableColumn>AMOUNT</TableColumn>
-                          <TableColumn>TX</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                          {marketReport.transactions.map((tx) => (
-                            <TableRow key={tx.hash}>
-                              <TableCell>
-                                <span className="capitalize">{actionTypeToText(tx.type)}</span>
-                              </TableCell>
-                              <TableCell>
-                                {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
-                              </TableCell>
-                              <TableCell>
-                                {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
-                                {asset.symbol}
-                              </TableCell>
-                              <TableCell>
-                                <Link
-                                  href={getExplorerTxURL(
-                                    tx.hash,
-                                    marketReport.market.morphoBlue.chain.id,
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-blue-500 hover:text-blue-600"
-                                >
-                                  {tx.hash.slice(0, 6)}...{tx.hash.slice(-4)}
-                                  <ExternalLinkIcon />
-                                </Link>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Inactive Markets */}
-      {inactiveMarkets.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="px-1 text-sm font-medium text-gray-500">Past Markets</h3>
-          <div className="space-y-2">
-            {inactiveMarkets.map((marketReport) => {
+      {/* Markets Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Markets</h3>
+        <div className="space-y-4">
+          {report.marketReports
+            .slice()
+            .sort((a, b) => {
+              // First sort by active status
+              const aActive = BigInt(a.endBalance) > 0n;
+              const bActive = BigInt(b.endBalance) > 0n;
+              if (aActive !== bActive) {
+                return bActive ? 1 : -1;
+              }
+              // Then sort by interest earned
+              return Number(b.interestEarned - a.interestEarned);
+            })
+            .map((marketReport) => {
               const marketKey = marketReport.market.uniqueKey;
               const isExpanded = expandedMarkets.has(marketKey);
+              const hasActivePosition = BigInt(marketReport.endBalance) > 0n;
 
               return (
-                <div
-                  key={marketKey}
-                  className="overflow-hidden rounded border dark:border-gray-700"
-                >
+                <div key={marketKey} className="rounded-lg border dark:border-gray-700">
                   <button
                     type="button"
+                    className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
                     onClick={() => toggleMarket(marketKey)}
-                    className="w-full text-left"
                   >
                     <MarketInfoBlock
                       market={marketReport.market}
@@ -302,59 +190,95 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                       amount={marketReport.endBalance}
                       decimals={asset.decimals}
                       symbol={asset.symbol}
+                      apy={marketReport.apy}
+                      avgCapital={marketReport.avgCapital}
+                      hasActivePosition={hasActivePosition}
                     />
                   </button>
 
                   {/* Expandable Content */}
                   {isExpanded && (
-                    <div className="border-t dark:border-gray-700">
+                    <div className="bg-surface border-t">
+                      {/* Market Stats */}
+                      <div className="grid grid-cols-4 gap-4 p-4">
+                        <div className="text-center text-sm flex flex-col gap-2">
+                          <div className="text-gray-500">Start Balance</div>
+                          <div className="font-mono">
+                            {formatNumber(BigInt(marketReport.startBalance), asset.decimals)}{' '}
+                            {asset.symbol}
+                          </div>
+                        </div>
+                        <div className="text-center text-sm flex flex-col gap-2">
+                          <div className="text-gray-500">End Balance</div>
+                          <div className="font-mono">
+                            {formatNumber(BigInt(marketReport.endBalance), asset.decimals)}{' '}
+                            {asset.symbol}
+                          </div>
+                        </div>
+                        <div className="text-center text-sm flex flex-col gap-2">
+                          <div className="text-gray-500">Duration</div>
+                          <div className="font-mono">
+                            {(marketReport.effectiveTime / 86400)} days
+                          </div>
+                        </div>
+                        <div className="text-center text-sm flex flex-col gap-2">
+                          <div className="text-gray-500">Average Capital</div>
+                          <div className="font-mono">
+                            {formatNumber(BigInt(marketReport.avgCapital), asset.decimals)}{' '}
+                            {asset.symbol}
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Transactions Table */}
-                      <Table aria-label="Market transactions" className="rounded-none">
-                        <TableHeader>
-                          <TableColumn>TYPE</TableColumn>
-                          <TableColumn>DATE</TableColumn>
-                          <TableColumn>AMOUNT</TableColumn>
-                          <TableColumn>TX</TableColumn>
-                        </TableHeader>
-                        <TableBody>
-                          {marketReport.transactions.map((tx) => (
-                            <TableRow key={tx.hash}>
-                              <TableCell>
-                                <span className="capitalize">{actionTypeToText(tx.type)}</span>
-                              </TableCell>
-                              <TableCell>
-                                {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
-                              </TableCell>
-                              <TableCell>
-                                {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
-                                {asset.symbol}
-                              </TableCell>
-                              <TableCell>
-                                <Link
-                                  href={getExplorerTxURL(
-                                    tx.hash,
-                                    marketReport.market.morphoBlue.chain.id,
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1 text-blue-500 hover:text-blue-600"
-                                >
-                                  {tx.hash.slice(0, 6)}...{tx.hash.slice(-4)}
-                                  <ExternalLinkIcon />
-                                </Link>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="bg-surface">
+                        <Table
+                          aria-label="Market transactions"
+                          className="rounded-none border-none shadow-none"
+                        >
+                          <TableHeader className="rounded-none shadow-none">
+                            <TableColumn>TYPE</TableColumn>
+                            <TableColumn>DATE</TableColumn>
+                            <TableColumn>AMOUNT</TableColumn>
+                            <TableColumn>TX</TableColumn>
+                          </TableHeader>
+                          <TableBody>
+                            {marketReport.transactions.map((tx) => (
+                              <TableRow key={tx.hash}>
+                                <TableCell>
+                                  <Badge>{actionTypeToText(tx.type)}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
+                                </TableCell>
+                                <TableCell>
+                                  {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
+                                  {asset.symbol}
+                                </TableCell>
+                                <TableCell>
+                                  <Link
+                                    href={getExplorerTxURL(
+                                      tx.hash,
+                                      marketReport.market.morphoBlue.chain.id,
+                                    )}
+                                    target="_blank"
+                                    className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                                  >
+                                    <ExternalLinkIcon />
+                                  </Link>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   )}
                 </div>
               );
             })}
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,30 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPublicClient, http, Address } from 'viem';
-import { mainnet, base } from 'viem/chains';
+import { Address } from 'viem';
 import morphoABI from '@/abis/morpho';
 import { MORPHO } from '@/utils/morpho';
+import { SupportedNetworks } from '@/utils/networks';
+import { baseClient, mainnetClient } from '@/utils/rpc';
 
-// Initialize Alchemy clients for each chain
-const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
-
-const baseClient = createPublicClient({
-  chain: base,
-  transport: http(`https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
-
-const BLOCK_TIME = {
-  1: 12, // Ethereum mainnet: 12 seconds
-  8453: 2, // Base: 2 seconds
-} as const;
-
-const GENSIS_BLOCK = {
-  1: 18883124, // Ethereum mainnet: 13000000
-  8453: 13977148, // Base: 0
-} as const;
-
+// Types
 type Position = {
   supplyShares: bigint;
   borrowShares: bigint;
@@ -40,6 +21,7 @@ type Market = {
   fee: bigint;
 };
 
+// Helper functions
 function arrayToPosition(arr: readonly bigint[]): Position {
   return {
     supplyShares: arr[0],
@@ -64,78 +46,23 @@ function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares:
   return (shares * totalAssets) / totalShares;
 }
 
-async function getBlockNumberFromTimestamp(timestamp: number, chainId: number): Promise<number> {
-  const client = chainId === 1 ? mainnetClient : baseClient;
-
-  // Get current block and its timestamp
-  const currentBlock = await client.getBlockNumber();
-  const currentBlockData = await client.getBlock({ blockNumber: currentBlock });
-  const currentTimestamp = Number(currentBlockData.timestamp);
-
-  // Calculate blocks ago based on timestamp difference and block time
-  const timestampDiff = currentTimestamp - timestamp;
-  const blockTime = BLOCK_TIME[chainId as keyof typeof BLOCK_TIME] ?? 12;
-  const blocksAgo = Math.floor(timestampDiff / blockTime);
-
-  // Calculate target block number
-  const targetBlockNumber = Number(currentBlock) - blocksAgo;
-
-  console.log('Block number calculation:', {
-    currentBlock: Number(currentBlock),
-    currentTimestamp,
-    targetTimestamp: timestamp,
-    timestampDiff,
-    blockTime,
-    blocksAgo,
-    targetBlockNumber,
-  });
-
-  return Math.max(0, targetBlockNumber);
-}
-
 async function getPositionAtBlock(
   marketId: string,
   userAddress: string,
-  timestamp: number,
+  blockNumber: number,
   chainId: number,
 ) {
-  console.log(`Processing position request for timestamp ${timestamp}`, {
+  console.log(`Processing position request for blockNumber ${blockNumber}`, {
     marketId,
     userAddress,
-    timestamp,
+    blockNumber,
     chainId,
   });
 
-  // Convert timestamp to block number
-  const blockNumber = await getBlockNumberFromTimestamp(timestamp, chainId);
-  console.log(`Estimated block number: ${blockNumber} for timestamp ${timestamp}`);
-
-  const client = chainId === 1 ? mainnetClient : baseClient;
+  const client = chainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
+  if (!client) throw new Error(`Unsupported chain ID: ${chainId}`);
 
   try {
-    // Get the actual block to get its precise timestamp
-    const block = await client.getBlock({ blockNumber: BigInt(blockNumber) });
-    console.log(`Retrieved block ${blockNumber}:`, {
-      timestamp: Number(block.timestamp),
-      hash: block.hash,
-    });
-
-    if (block.number < GENSIS_BLOCK[chainId as keyof typeof GENSIS_BLOCK]) {
-      console.log(
-        `Block number ${block.number} is before genesis block ${
-          GENSIS_BLOCK[chainId as keyof typeof GENSIS_BLOCK]
-        }`,
-      );
-      return {
-        supplyShares: '0',
-        supplyAssets: '0',
-        borrowShares: '0',
-        borrowAssets: '0',
-        collateral: '0',
-        timestamp: Number(block.timestamp),
-      };
-    }
-
     // First get the position data
     const positionArray = (await client.readContract({
       address: MORPHO,
@@ -161,7 +88,6 @@ async function getPositionAtBlock(
         borrowShares: '0',
         borrowAssets: '0',
         collateral: '0',
-        timestamp: Number(block.timestamp),
       };
     }
 
@@ -194,7 +120,6 @@ async function getPositionAtBlock(
       marketId,
       userAddress,
       blockNumber,
-      timestamp: Number(block.timestamp),
       supplyShares: position.supplyShares.toString(),
       supplyAssets: supplyAssets.toString(),
       borrowShares: position.borrowShares.toString(),
@@ -214,14 +139,12 @@ async function getPositionAtBlock(
       borrowShares: position.borrowShares.toString(),
       borrowAssets: borrowAssets.toString(),
       collateral: position.collateral.toString(),
-      timestamp: Number(block.timestamp),
     };
   } catch (error) {
     console.error(`Error reading position:`, {
       marketId,
       userAddress,
       blockNumber,
-      timestamp,
       error,
     });
     throw error;
@@ -231,21 +154,21 @@ async function getPositionAtBlock(
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const timestamp = parseInt(searchParams.get('timestamp') ?? '0');
+    const blockNumber = parseInt(searchParams.get('blockNumber') ?? '0');
     const marketId = searchParams.get('marketId');
     const userAddress = searchParams.get('userAddress');
     const chainId = parseInt(searchParams.get('chainId') ?? '1');
 
     console.log(`Historical position request:`, {
-      timestamp,
+      blockNumber,
       marketId,
       userAddress,
       chainId,
     });
 
-    if (!timestamp || !marketId || !userAddress) {
+    if (!blockNumber || !marketId || !userAddress) {
       console.error('Missing required parameters:', {
-        timestamp: !!timestamp,
+        timestamp: !!blockNumber,
         marketId: !!marketId,
         userAddress: !!userAddress,
       });
@@ -253,10 +176,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get position data at the specified timestamp
-    const position = await getPositionAtBlock(marketId, userAddress, timestamp, chainId);
+    const position = await getPositionAtBlock(marketId, userAddress, blockNumber, chainId);
 
     console.log(`Successfully retrieved historical position data:`, {
-      timestamp,
+      blockNumber,
       marketId,
       userAddress,
       chainId,

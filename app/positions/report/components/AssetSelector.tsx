@@ -73,9 +73,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                 <span>{selectedAsset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={selectedAsset.chainId} />
-                  <span>
-                    {getNetworkName(selectedAsset.chainId)}
-                  </span>
+                  <span>{getNetworkName(selectedAsset.chainId)}</span>
                 </div>
               </>
             )}
@@ -136,9 +134,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                 <span className="font-medium">{asset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />
-                  <span>
-                    {getNetworkName(asset.chainId)}
-                  </span>
+                  <span>{getNetworkName(asset.chainId)}</span>
                 </div>
               </button>
             ))}

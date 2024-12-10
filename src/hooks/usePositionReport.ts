@@ -10,6 +10,9 @@ export type PositionReport = {
   totalWithdraws: bigint;
   startBalance: bigint;
   endBalance: bigint;
+  avgCapital: bigint;
+  apy: number;
+  effectiveTime: number;
   transactions: UserTransaction[];
 };
 
@@ -38,8 +41,8 @@ export const usePositionReport = (
       endDate = new Date(Date.now());
     }
 
-    const startTimestamp = Math.floor(startDate.getTime() / 1000);
-    const endTimestamp = Math.floor(endDate.getTime() / 1000);
+    let startTimestamp = Math.floor(startDate.getTime() / 1000);
+    let endTimestamp = Math.floor(endDate.getTime() / 1000);
     const periodInDays = (endTimestamp - startTimestamp) / (24 * 60 * 60);
 
     const relevantPositions = positions.filter(
@@ -68,16 +71,15 @@ export const usePositionReport = (
             return null;
           }
 
+          // use timestamp from snapshot to be accurate
+          startTimestamp = startSnapshot.timestamp;
+          endTimestamp = endSnapshot.timestamp;
+
           const marketTransactions = filterTransactionsInPeriod(
             history.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),
             startTimestamp,
             endTimestamp,
           );
-
-          // Skip markets with no transactions in the period
-          if (marketTransactions.length === 0) {
-            return null;
-          }
 
           const earnings = calculateEarningsFromSnapshot(
             BigInt(endSnapshot.supplyAssets),
@@ -92,6 +94,9 @@ export const usePositionReport = (
             interestEarned: earnings.earned,
             totalDeposits: earnings.totalDeposits,
             totalWithdraws: earnings.totalWithdraws,
+            apy: earnings.apy,
+            avgCapital: earnings.avgCapital,
+            effectiveTime: earnings.effectiveTime,
             startBalance: BigInt(startSnapshot.supplyAssets),
             endBalance: BigInt(endSnapshot.supplyAssets),
             transactions: marketTransactions,
