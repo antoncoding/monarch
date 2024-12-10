@@ -134,7 +134,15 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Duration
+            </h3>
+            <p className="mt-1 text-lg font-semibold text-green-600 dark:text-green-400">
+              {report.periodInDays} Days
+            </p>
+          </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
               Total Interest Earned
@@ -144,7 +152,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Position</h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Flow</h3>
             <p className="mt-1 text-lg font-semibold">
               {formatNumber(
                 BigInt(report.totalDeposits) - BigInt(report.totalWithdraws),
@@ -171,6 +179,10 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
               }
               // Then sort by interest earned
               return Number(b.interestEarned - a.interestEarned);
+            })
+            .filter((marketReport) => {
+              // filter markets with no supply + no activity in this timeframe
+              return marketReport.effectiveTime !== 0;
             })
             .map((marketReport) => {
               const marketKey = marketReport.market.uniqueKey;

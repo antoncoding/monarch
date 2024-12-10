@@ -37,10 +37,16 @@ export default function ReportContent({ account }: { account: Address }) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago
-  const todayDate = now(getLocalTimeZone());
+  const todayDate = useMemo(() => {
+    const currentDate = now(getLocalTimeZone());
+    return currentDate.set({ minute: 0, second: 0 });
+  }, []);
+
   const twoMonthsAgo = useMemo(() => {
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
+    date.setMinutes(0);
+    date.setSeconds(0);
     return parseAbsoluteToLocal(date.toISOString());
   }, []);
 
@@ -91,17 +97,21 @@ export default function ReportContent({ account }: { account: Address }) {
   };
 
   const handleStartDateChange = (date: ZonedDateTime) => {
-    if (date > endDate) {
-      setEndDate(date);
+    // Ensure time is set to exact hour
+    const exactHourDate = date.set({ minute: 0, second: 0 });
+    if (exactHourDate > endDate) {
+      setEndDate(exactHourDate);
     }
-    setStartDate(date);
+    setStartDate(exactHourDate);
   };
 
   const handleEndDateChange = (date: ZonedDateTime) => {
-    if (date < startDate) {
-      setStartDate(date);
+    // Ensure time is set to exact hour
+    const exactHourDate = date.set({ minute: 0, second: 0 });
+    if (exactHourDate < startDate) {
+      setStartDate(exactHourDate);
     }
-    setEndDate(date);
+    setEndDate(exactHourDate);
   };
 
   const { generateReport } = usePositionReport(
