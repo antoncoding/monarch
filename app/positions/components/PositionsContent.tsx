@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import { Name } from '@coinbase/onchainkit/identity';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FaHistory, FaGift, FaPlus, FaCircle } from 'react-icons/fa';
+import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { TbReport } from 'react-icons/tb';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Button } from '@/components/common/Button';
@@ -13,7 +14,7 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
-import useUserPositions from '@/hooks/useUserPositions';
+import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 import { MarketPosition } from '@/utils/types';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -30,7 +31,12 @@ export default function Positions() {
     return account === address;
   }, [account, address]);
 
-  const { loading, isRefetching, data: marketPositions, refetch } = useUserPositions(account);
+  const {
+    isLoading,
+    isRefetching,
+    positions: marketPositions,
+    refetch,
+  } = useUserPositionsWithEarning(account, false);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
@@ -71,10 +77,10 @@ export default function Positions() {
                 History
               </Button>
             </Link>
-            <Link href={`/rewards/${account}`}>
+            <Link href={`/positions/report/${account}`}>
               <Button size="md" className="font-zen text-secondary">
-                <FaGift size={14} className="mr-2" />
-                Rewards
+                <TbReport size={15} className="mr-2" />
+                Report
               </Button>
             </Link>
             {isOwner && (
@@ -115,7 +121,7 @@ export default function Positions() {
           />
         )}
 
-        {loading ? (
+        {isLoading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
           <div className="flex flex-col items-center gap-8">

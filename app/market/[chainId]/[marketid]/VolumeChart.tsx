@@ -2,7 +2,6 @@
 
 import React, { useCallback, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
-import { Spinner } from '@nextui-org/spinner';
 import {
   AreaChart,
   Area,
@@ -15,6 +14,7 @@ import {
 } from 'recharts';
 import { formatUnits } from 'viem';
 import ButtonGroup from '@/components/ButtonGroup';
+import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import {
@@ -205,8 +205,8 @@ function VolumeChart({
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="md:col-span-2">
             {isLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <Spinner size="lg" />
+              <div className="flex h-64 items-center justify-center text-primary">
+                <Spinner size={30} />
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400} id="volume-chart">
@@ -346,8 +346,8 @@ function VolumeChart({
                   <span className="font-normal text-gray-500">({volumeTimeframe})</span>
                 </h3>
                 {isLoading ? (
-                  <div className="flex min-h-48 justify-center">
-                    <Spinner size="sm" />
+                  <div className="flex min-h-48 justify-center text-primary">
+                    <Spinner size={24} />
                   </div>
                 ) : (
                   <>

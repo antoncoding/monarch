@@ -135,11 +135,9 @@ export function AssetSelection() {
                     <p className="font-medium transition-colors duration-300 group-hover:text-primary">
                       {token.symbol}
                     </p>
-                    <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                    <div className="badge">
                       <NetworkIcon networkId={token.network} />
-                      <span className="text-xs text-gray-600 dark:text-gray-300">
-                        {getNetworkName(token.network)}
-                      </span>
+                      <span>{getNetworkName(token.network)}</span>
                     </div>
                   </div>
                 </div>

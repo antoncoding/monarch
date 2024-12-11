@@ -2,13 +2,13 @@
 
 import { useState, useCallback } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
-import { Spinner } from '@nextui-org/spinner';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common';
+import { Spinner } from '@/components/common/Spinner';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -93,7 +93,7 @@ function MarketContent() {
   if (isMarketLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Spinner size="lg" />
+        <Spinner size={24} />
       </div>
     );
   }

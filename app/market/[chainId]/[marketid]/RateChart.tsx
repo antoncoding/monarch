@@ -3,7 +3,6 @@
 import React, { useCallback, useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Progress } from '@nextui-org/progress';
-import { Spinner } from '@nextui-org/spinner';
 import {
   AreaChart,
   Area,
@@ -15,6 +14,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import ButtonGroup from '@/components/ButtonGroup';
+import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import {
   TimeseriesDataPoint,
@@ -136,7 +136,7 @@ function RateChart({
           <div className="md:col-span-2">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
-                <Spinner size="lg" />
+                <Spinner size={30} />
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400} id="rate-chart">
@@ -288,8 +288,8 @@ function RateChart({
                   <span className="font-normal text-gray-500">({apyTimeframe})</span>
                 </h3>
                 {isLoading ? (
-                  <div className="flex min-h-48 justify-center">
-                    <Spinner size="sm" />
+                  <div className="flex min-h-48 justify-center text-primary">
+                    <Spinner size={24} />
                   </div>
                 ) : (
                   <>

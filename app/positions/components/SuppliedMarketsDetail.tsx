@@ -184,7 +184,7 @@ export function SuppliedMarketsDetail({
                     {formatBalance(position.market.lltv, 16)}%
                   </td>
                   <td data-label="APY" className="text-center">
-                    {formatReadable(position.market.dailyApys.netSupplyApy * 100)}%
+                    {formatReadable(position.market.state.supplyApy * 100)}%
                   </td>
                   <td data-label="Supplied" className="text-center">
                     {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
