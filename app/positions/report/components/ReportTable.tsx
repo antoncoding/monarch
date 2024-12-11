@@ -79,6 +79,13 @@ function MarketInfoBlock({
           <div className="flex items-center gap-2">
             <Badge size="sm">{market.collateralAsset.symbol}</Badge>
             <Badge size="sm">{formatUnits(BigInt(market.lltv), 16)}% LTV</Badge>
+            <Link
+              href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+              className="no-underline"
+              target="_blank"
+            >
+              <div className="badge text-xs hover:underline">{market.uniqueKey.slice(2, 8)}</div>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Oracle: </span>
@@ -200,7 +207,10 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
               const hasActivePosition = BigInt(marketReport.endBalance) > 0n;
 
               return (
-                <div key={marketKey} className="rounded-lg border dark:border-gray-700">
+                <div
+                  key={marketKey}
+                  className="bg-surface rounded border border-gray-200 dark:border-gray-700"
+                >
                   <button
                     type="button"
                     className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -253,47 +263,54 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                       </div>
 
                       {/* Transactions Table */}
-                      <div className="bg-surface">
-                        <Table
-                          aria-label="Market transactions"
-                          className="rounded-none border-none shadow-none"
-                        >
-                          <TableHeader className="rounded-none shadow-none">
-                            <TableColumn>TYPE</TableColumn>
-                            <TableColumn>DATE</TableColumn>
-                            <TableColumn>AMOUNT</TableColumn>
-                            <TableColumn>TX</TableColumn>
-                          </TableHeader>
-                          <TableBody>
-                            {marketReport.transactions.map((tx) => (
-                              <TableRow key={tx.hash}>
-                                <TableCell>
-                                  <Badge>{actionTypeToText(tx.type)}</Badge>
-                                </TableCell>
-                                <TableCell>
-                                  {moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}
-                                </TableCell>
-                                <TableCell>
-                                  {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
-                                  {asset.symbol}
-                                </TableCell>
-                                <TableCell>
-                                  <Link
-                                    href={getExplorerTxURL(
-                                      tx.hash,
-                                      marketReport.market.morphoBlue.chain.id,
+                      {marketReport.transactions.length > 0 && (
+                        <div className="bg-surface">
+                          <Table
+                            aria-label="Market transactions"
+                            classNames={{
+                              th: 'bg-surface',
+                              wrapper: 'rounded-none shadow-none bg-surface',
+                            }}
+                          >
+                            <TableHeader>
+                              <TableColumn>TYPE</TableColumn>
+                              <TableColumn>DATE</TableColumn>
+                              <TableColumn>AMOUNT</TableColumn>
+                              <TableColumn>TX</TableColumn>
+                            </TableHeader>
+                            <TableBody>
+                              {marketReport.transactions.map((tx) => (
+                                <TableRow key={tx.hash}>
+                                  <TableCell>
+                                    <Badge>{actionTypeToText(tx.type)}</Badge>
+                                  </TableCell>
+                                  <TableCell>
+                                    {moment(Number(tx.timestamp) * 1000).format(
+                                      'MMM D, YYYY HH:mm',
                                     )}
-                                    target="_blank"
-                                    className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
-                                  >
-                                    <ExternalLinkIcon />
-                                  </Link>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
+                                    {asset.symbol}
+                                  </TableCell>
+                                  <TableCell>
+                                    <Link
+                                      href={getExplorerTxURL(
+                                        tx.hash,
+                                        marketReport.market.morphoBlue.chain.id,
+                                      )}
+                                      target="_blank"
+                                      className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
+                                    >
+                                      <ExternalLinkIcon />
+                                    </Link>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

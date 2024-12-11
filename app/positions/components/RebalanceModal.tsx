@@ -1,17 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Spinner,
-} from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { toast } from 'react-toastify';
 import { parseUnits, formatUnits } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
+import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -276,7 +270,7 @@ export function RebalanceModal({
           <ModalHeader className="flex items-center justify-between px-8 font-zen text-2xl">
             <div className="flex items-center gap-2 text-2xl">
               Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
-              {isRefetching && <Spinner size="sm" />}
+              {isRefetching && <Spinner size={20} />}
             </div>
             <Button
               variant="light"

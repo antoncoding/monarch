@@ -121,8 +121,7 @@ export const usePositionReport = (
           };
         }),
       )
-    )
-      .filter((report) => report !== null && report !== undefined) as PositionReport[];
+    ).filter((report) => report !== null && report !== undefined) as PositionReport[];
 
     const totalInterestEarned = marketReports.reduce(
       (sum, report) => sum + BigInt(report.interestEarned),

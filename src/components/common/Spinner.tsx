@@ -21,31 +21,33 @@ type LoadingSpinnerProps = {
   color?: string;
 };
 
-export function Spinner({ size = 32, width = 3, color = 'primary' }: LoadingSpinnerProps) {
+export function Spinner({ size = 32, width = 3, color }: LoadingSpinnerProps) {
   return (
     <div className="inline-flex items-center justify-center">
       <style>{rotateCSS}</style>
       <div className="flex items-center justify-center" style={{ width: size, height: size }}>
-        <div className="relative" style={{ width: size, height: size }}>
+        <div
+          className={`relative ${color ?? 'text-primary'}`}
+          style={{ width: size, height: size }}
+        >
           {/* Background circle */}
           <div
-            className="absolute rounded-full"
+            className="absolute rounded-full border-current"
             style={{
               width: size,
               height: size,
               borderWidth: width,
-              borderColor: color,
-              opacity: 0.1,
+              opacity: 0.2,
             }}
           />
           {/* Spinning element */}
           <div
-            className="RotateElement absolute rounded-full"
+            className="RotateElement absolute rounded-full border-current"
             style={{
               width: size,
               height: size,
               borderWidth: width,
-              borderColor: `${color} transparent transparent transparent`,
+              borderColor: 'currentColor transparent transparent transparent',
             }}
           />
         </div>
