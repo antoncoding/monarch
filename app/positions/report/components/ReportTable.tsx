@@ -186,6 +186,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
         <h3 className="text-lg font-medium">Markets</h3>
         <div className="space-y-4">
           {report.marketReports
+            .filter(m => m.market.collateralAsset !== null)
             .slice()
             .sort((a, b) => {
               // First sort by active status
