@@ -130,15 +130,13 @@ export function RiskSelection() {
 
       <div>
         <p className="mt-2 text-gray-400">Choose markets you want to trust</p>
-        <p className="mt-2 text-gray-400 text-sm">
-          selected markets: {selectedMarkets.size}
-        </p>
+        <p className="mt-2 text-sm text-gray-400">selected markets: {selectedMarkets.size}</p>
       </div>
 
       {/* Markets List - Scrollable Section */}
       <div className="mt-6 flex-1 overflow-hidden">
-        <div className="scrollbar-hide h-[calc(100vh-460px)] overflow-y-auto px-2">
-          <div className="flex flex-col space-y-4 -mx-2">
+        <div className="h-[calc(100vh-460px)] overflow-y-auto px-2 scrollbar-hide">
+          <div className="-mx-2 flex flex-col space-y-4">
             {filteredMarkets.map((market, index) => {
               const collateralToken = findToken(
                 market.collateralAsset.address,
@@ -152,16 +150,16 @@ export function RiskSelection() {
                 <div
                   key={market.uniqueKey}
                   onClick={() => toggleMarketSelection(market)}
-                  className={`relative cursor-pointer group mx-1 transition-all duration-200 ease-in-out ${
+                  className={`group relative mx-1 cursor-pointer transition-all duration-200 ease-in-out ${
                     isSelected ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900' : ''
                   } ${index === 0 ? 'mt-2' : ''}`}
                 >
-                  <div className="flex items-center justify-between bg-surface p-2 w-full">
-                    <div className="flex-shrink-0 min-w-[300px]">
+                  <div className="bg-surface flex w-full items-center justify-between pr-2">
+                    <div className="min-w-[300px] flex-shrink-0">
                       <MarketInfoBlock market={market} />
                     </div>
-                    
-                    <div className="flex items-center gap-8 flex-1 justify-end">
+
+                    <div className="flex flex-1 items-center justify-end gap-8">
                       {/* Risk Indicators */}
                       <div className="flex gap-2">
                         <MarketAssetIndicator market={market} />
@@ -175,7 +173,10 @@ export function RiskSelection() {
                         <div className="font-mono">
                           {formatReadable(
                             Number(
-                              formatUnits(BigInt(market.state.supplyAssets), market.loanAsset.decimals),
+                              formatUnits(
+                                BigInt(market.state.supplyAssets),
+                                market.loanAsset.decimals,
+                              ),
                             ),
                           )}{' '}
                           {market.loanAsset.symbol}
@@ -195,6 +196,7 @@ export function RiskSelection() {
                         onClick={(e) => handleMarketDetails(market, e)}
                         variant="interactive"
                         className="ml-4"
+                        size="sm"
                       >
                         Details
                       </Button>
