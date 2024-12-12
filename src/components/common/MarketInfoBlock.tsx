@@ -6,7 +6,7 @@ import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 
-type MarketAmountBlockProps = {
+type MarketInfoBlockProps = {
   market: Market;
   amount?: bigint;
   lltv?: string;
@@ -14,7 +14,7 @@ type MarketAmountBlockProps = {
   className?: string;
 };
 
-export function MarketAmountBlock({ market, amount }: MarketAmountBlockProps): JSX.Element {
+export function MarketInfoBlock({ market, amount }: MarketInfoBlockProps): JSX.Element {
   const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
 
   return (

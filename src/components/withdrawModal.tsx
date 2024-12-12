@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
-import { MarketAmountBlock } from '@/components/common/MarketInfoBlock';
+import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -128,7 +128,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
         </p>
 
         <div className="mb-2">
-          <MarketAmountBlock market={position.market} />
+          <MarketInfoBlock market={position.market} />
           <div className="my-2 flex items-start justify-between">
             <p className="font-inter text-sm opacity-50">Available Liquidity:</p>
 

@@ -19,7 +19,7 @@ import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
-import { MarketAmountBlock } from './common/MarketInfoBlock';
+import { MarketInfoBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
@@ -341,7 +341,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </p>
 
             <div className="my-2">
-              <MarketAmountBlock market={market} />
+              <MarketInfoBlock market={market} />
 
               <div className="my-2">Details</div>
 

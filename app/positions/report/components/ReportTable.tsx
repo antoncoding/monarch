@@ -56,7 +56,7 @@ const formatDays = (seconds: number) => {
   return days.toFixed(2);
 };
 
-function MarketInfoBlock({
+function MarketSummaryBlock({
   market,
   interestEarned,
   decimals,
@@ -186,7 +186,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
         <h3 className="text-lg font-medium">Markets</h3>
         <div className="space-y-4">
           {report.marketReports
-            .filter(m => m.market.collateralAsset !== null)
+            .filter((m) => m.market.collateralAsset !== null)
             .slice()
             .sort((a, b) => {
               // First sort by active status
@@ -217,7 +217,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                     className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
                     onClick={() => toggleMarket(marketKey)}
                   >
-                    <MarketInfoBlock
+                    <MarketSummaryBlock
                       market={marketReport.market}
                       interestEarned={marketReport.interestEarned}
                       amount={marketReport.endBalance}

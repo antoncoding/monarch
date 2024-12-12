@@ -1,0 +1,210 @@
+export default [
+  {
+    inputs: [{ internalType: 'address', name: '_morphoBlue', type: 'address' }],
+    stateMutability: 'nonpayable',
+    type: 'constructor',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'bytes32', name: 'marketId', type: 'bytes32' },
+      { indexed: false, internalType: 'uint256', name: 'cap', type: 'uint256' },
+    ],
+    name: 'MarketConfigured',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'token', type: 'address' },
+      {
+        components: [
+          {
+            components: [
+              { internalType: 'address', name: 'loanToken', type: 'address' },
+              { internalType: 'address', name: 'collateralToken', type: 'address' },
+              { internalType: 'address', name: 'oracle', type: 'address' },
+              { internalType: 'address', name: 'irm', type: 'address' },
+              { internalType: 'uint256', name: 'lltv', type: 'uint256' },
+            ],
+            internalType: 'struct MarketParams',
+            name: 'market',
+            type: 'tuple',
+          },
+          { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          { internalType: 'uint256', name: 'shares', type: 'uint256' },
+        ],
+        indexed: false,
+        internalType: 'struct RebalanceMarketParams[]',
+        name: 'fromMarkets',
+        type: 'tuple[]',
+      },
+      {
+        components: [
+          {
+            components: [
+              { internalType: 'address', name: 'loanToken', type: 'address' },
+              { internalType: 'address', name: 'collateralToken', type: 'address' },
+              { internalType: 'address', name: 'oracle', type: 'address' },
+              { internalType: 'address', name: 'irm', type: 'address' },
+              { internalType: 'uint256', name: 'lltv', type: 'uint256' },
+            ],
+            internalType: 'struct MarketParams',
+            name: 'market',
+            type: 'tuple',
+          },
+          { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          { internalType: 'uint256', name: 'shares', type: 'uint256' },
+        ],
+        indexed: false,
+        internalType: 'struct RebalanceMarketParams[]',
+        name: 'toMarkets',
+        type: 'tuple[]',
+      },
+    ],
+    name: 'Rebalance',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'rebalancer', type: 'address' },
+    ],
+    name: 'RebalancerSet',
+    type: 'event',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'rebalancer', type: 'address' }],
+    name: 'authorize',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'bytes32[]', name: 'marketIds', type: 'bytes32[]' },
+      { internalType: 'uint256[]', name: 'caps', type: 'uint256[]' },
+    ],
+    name: 'batchConfigMarkets',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'user', type: 'address' },
+      { internalType: 'bytes32', name: 'marketId', type: 'bytes32' },
+    ],
+    name: 'marketCap',
+    outputs: [{ internalType: 'uint256', name: 'cap', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'morphoBlue',
+    outputs: [{ internalType: 'contract IMorpho', name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'bytes[]', name: 'data', type: 'bytes[]' }],
+    name: 'multicall',
+    outputs: [{ internalType: 'bytes[]', name: 'results', type: 'bytes[]' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'onBehalf', type: 'address' },
+      { internalType: 'address', name: 'token', type: 'address' },
+      {
+        components: [
+          {
+            components: [
+              { internalType: 'address', name: 'loanToken', type: 'address' },
+              { internalType: 'address', name: 'collateralToken', type: 'address' },
+              { internalType: 'address', name: 'oracle', type: 'address' },
+              { internalType: 'address', name: 'irm', type: 'address' },
+              { internalType: 'uint256', name: 'lltv', type: 'uint256' },
+            ],
+            internalType: 'struct MarketParams',
+            name: 'market',
+            type: 'tuple',
+          },
+          { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          { internalType: 'uint256', name: 'shares', type: 'uint256' },
+        ],
+        internalType: 'struct RebalanceMarketParams[]',
+        name: 'fromMarkets',
+        type: 'tuple[]',
+      },
+      {
+        components: [
+          {
+            components: [
+              { internalType: 'address', name: 'loanToken', type: 'address' },
+              { internalType: 'address', name: 'collateralToken', type: 'address' },
+              { internalType: 'address', name: 'oracle', type: 'address' },
+              { internalType: 'address', name: 'irm', type: 'address' },
+              { internalType: 'uint256', name: 'lltv', type: 'uint256' },
+            ],
+            internalType: 'struct MarketParams',
+            name: 'market',
+            type: 'tuple',
+          },
+          { internalType: 'uint256', name: 'assets', type: 'uint256' },
+          { internalType: 'uint256', name: 'shares', type: 'uint256' },
+        ],
+        internalType: 'struct RebalanceMarketParams[]',
+        name: 'toMarkets',
+        type: 'tuple[]',
+      },
+    ],
+    name: 'rebalance',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'user', type: 'address' }],
+    name: 'rebalancers',
+    outputs: [{ internalType: 'address', name: 'rebalancer', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  { inputs: [], name: 'revoke', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  {
+    inputs: [
+      {
+        components: [
+          { internalType: 'address', name: 'authorizer', type: 'address' },
+          { internalType: 'address', name: 'authorized', type: 'address' },
+          { internalType: 'bool', name: 'isAuthorized', type: 'bool' },
+          { internalType: 'uint256', name: 'nonce', type: 'uint256' },
+          { internalType: 'uint256', name: 'deadline', type: 'uint256' },
+        ],
+        internalType: 'struct Authorization',
+        name: 'authorization',
+        type: 'tuple',
+      },
+      {
+        components: [
+          { internalType: 'uint8', name: 'v', type: 'uint8' },
+          { internalType: 'bytes32', name: 'r', type: 'bytes32' },
+          { internalType: 'bytes32', name: 's', type: 'bytes32' },
+        ],
+        internalType: 'struct Signature',
+        name: 'signature',
+        type: 'tuple',
+      },
+    ],
+    name: 'setMorphoAuthorization',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;

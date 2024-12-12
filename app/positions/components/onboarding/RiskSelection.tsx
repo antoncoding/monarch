@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@nextui-org/react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
@@ -16,6 +15,8 @@ import {
   MarketAssetIndicator,
   MarketOracleIndicator,
 } from 'app/markets/components/RiskIndicator';
+import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
+import { Button } from '@/components/common';
 import { useOnboarding } from './OnboardingContext';
 
 export function RiskSelection() {
@@ -111,7 +112,7 @@ export function RiskSelection() {
       </div>
 
       {/* Input Section */}
-      <div className="mt-6 flex gap-4 pb-6">
+      <div className="mt-6 flex gap-4">
         <div className="flex-1">
           <AssetFilter
             label="Collateral Assets"
@@ -129,142 +130,85 @@ export function RiskSelection() {
 
       <div>
         <p className="mt-2 text-gray-400">Choose markets you want to trust</p>
+        <p className="mt-2 text-gray-400 text-sm">
+          selected markets: {selectedMarkets.size}
+        </p>
       </div>
 
-      {/* Markets Table */}
-      <div className="mt-6 min-h-0 flex-1">
-        <div className="h-[calc(100vh-500px)] overflow-auto">
-          <table className="responsive w-full rounded-md font-zen">
-            <thead className="table-header sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
-              <tr>
-                <th className="whitespace-nowrap px-4 py-2 text-left font-normal">Market</th>
-                <th className="whitespace-nowrap px-4 py-2 text-center font-normal">Oracle</th>
-                <th className="whitespace-nowrap px-4 py-2 text-center font-normal">Warnings</th>
-                <th className="whitespace-nowrap px-4 py-2 text-right font-normal">LLTV</th>
-                <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Supply APY</th>
-                <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Total Supply</th>
-                <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Utilization</th>
-                <th className="whitespace-nowrap px-4 py-2 text-right font-normal">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="table-body text-sm">
-              {filteredMarkets.map((market) => {
-                const collateralToken = findToken(
-                  market.collateralAsset.address,
-                  market.morphoBlue.chain.id,
-                );
-                if (!collateralToken) return null;
+      {/* Markets List - Scrollable Section */}
+      <div className="mt-6 flex-1 overflow-hidden">
+        <div className="scrollbar-hide h-[calc(100vh-460px)] overflow-y-auto px-2">
+          <div className="flex flex-col space-y-4 -mx-2">
+            {filteredMarkets.map((market, index) => {
+              const collateralToken = findToken(
+                market.collateralAsset.address,
+                market.morphoBlue.chain.id,
+              );
+              if (!collateralToken) return null;
 
-                const isSelected = selectedMarkets.has(market.uniqueKey);
-                const { vendors } = parseOracleVendors(market.oracle.data);
+              const isSelected = selectedMarkets.has(market.uniqueKey);
 
-                return (
-                  <tr
-                    key={market.uniqueKey}
-                    onClick={() => toggleMarketSelection(market)}
-                    className={`cursor-pointer transition-all duration-200 ease-in-out hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 ${
-                      isSelected ? 'bg-primary-50 dark:bg-primary-900/20' : ''
-                    }`}
-                  >
-                    <td className="whitespace-nowrap px-4 py-2">
-                      <div className="flex items-center gap-2 px-4">
-                        {collateralToken?.img && (
-                          <div
-                            className={`overflow-hidden rounded-full transition-all duration-200 ease-in-out ${
-                              isSelected
-                                ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900'
-                                : ''
-                            }`}
-                          >
-                            <Image
-                              src={collateralToken.img}
-                              alt={market.collateralAsset.symbol}
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={getAssetURL(
-                                market.collateralAsset.address,
-                                market.morphoBlue.chain.id,
-                              )}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 no-underline hover:underline"
-                            >
-                              {market.collateralAsset.symbol}
-                            </a>
-                            <button
-                              onClick={(e) => handleMarketDetails(market, e)}
-                              className="text-xs text-gray-400 hover:text-gray-300"
-                              type="button"
-                            >
-                              {market.uniqueKey.slice(2, 8)}
-                            </button>
-                          </div>
-                          <span className="text-xs text-gray-400">as collateral</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2">
-                      <div className="flex flex-wrap justify-center gap-1">
-                        {vendors.map((vendor) => (
-                          <OracleVendorBadge
-                            key={vendor}
-                            oracleData={market.oracle.data}
-                            showText={false}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2">
-                      <div className="flex justify-center gap-2">
+              return (
+                <div
+                  key={market.uniqueKey}
+                  onClick={() => toggleMarketSelection(market)}
+                  className={`relative cursor-pointer group mx-1 transition-all duration-200 ease-in-out ${
+                    isSelected ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900' : ''
+                  } ${index === 0 ? 'mt-2' : ''}`}
+                >
+                  <div className="flex items-center justify-between bg-surface p-2 w-full">
+                    <div className="flex-shrink-0 min-w-[300px]">
+                      <MarketInfoBlock market={market} />
+                    </div>
+                    
+                    <div className="flex items-center gap-8 flex-1 justify-end">
+                      {/* Risk Indicators */}
+                      <div className="flex gap-2">
                         <MarketAssetIndicator market={market} />
                         <MarketOracleIndicator market={market} />
                         <MarketDebtIndicator market={market} />
                       </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right font-mono">
-                      {formatUnits(BigInt(market.lltv), 16)}%
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right font-mono">
-                      {formatReadable(market.state.supplyApy * 100)}%
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right font-mono">
-                      {formatReadable(
-                        Number(
-                          formatUnits(BigInt(market.state.supplyAssets), market.loanAsset.decimals),
-                        ),
-                      )}{' '}
-                      {market.loanAsset.symbol}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right font-mono">
-                      {formatReadable(market.state.utilization * 100)}%
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-2 text-right">
-                      <button
+
+                      {/* Total Supply */}
+                      <div className="text-sm text-gray-500">
+                        <span>Total Supply:</span>
+                        <div className="font-mono">
+                          {formatReadable(
+                            Number(
+                              formatUnits(BigInt(market.state.supplyAssets), market.loanAsset.decimals),
+                            ),
+                          )}{' '}
+                          {market.loanAsset.symbol}
+                        </div>
+                      </div>
+
+                      {/* Utilization Rate */}
+                      <div className="text-sm text-gray-500">
+                        <span>Utilization:</span>
+                        <div className="font-mono">
+                          {formatReadable(market.state.utilization * 100)}%
+                        </div>
+                      </div>
+
+                      {/* Details Button */}
+                      <Button
                         onClick={(e) => handleMarketDetails(market, e)}
-                        className="text-sm transition-colors hover:text-gray-300"
-                        type="button"
+                        variant="interactive"
+                        className="ml-4"
                       >
                         Details
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between pt-4">
+      <div className="mt-6 flex items-center justify-between">
         <Button
           variant="light"
           className="min-w-[120px] rounded"
@@ -273,7 +217,7 @@ export function RiskSelection() {
           Back
         </Button>
         <Button
-          color="primary"
+          variant="cta"
           className="min-w-[120px] rounded"
           onClick={handleNext}
           disabled={selectedMarkets.size === 0}

@@ -3,7 +3,7 @@ import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { Market } from '@/utils/types';
-import { MarketAmountBlock } from './common/MarketInfoBlock';
+import { MarketInfoBlock } from './common/MarketInfoBlock';
 
 type MarketSupply = {
   market: Market;
@@ -120,7 +120,7 @@ export function SupplyProcessModal({
             <div className="mt-4 space-y-3">
               {supplies.map((supply) => {
                 return (
-                  <MarketAmountBlock
+                  <MarketInfoBlock
                     market={supply.market}
                     amount={supply.amount}
                     key={supply.market.uniqueKey}
