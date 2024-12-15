@@ -17,7 +17,6 @@ import { Button } from '@/components/common';
 import { useOnboarding } from './OnboardingContext';
 
 export function RiskSelection() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedToken, selectedMarkets, setSelectedMarkets } = useOnboarding();
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
@@ -91,9 +90,8 @@ export function RiskSelection() {
 
   return (
     <div className="flex h-full flex-col">
-      
       {/* Input Section */}
-      <div className="mt-6 flex gap-4">
+      <div className="mt-2 flex gap-4">
         <div className="flex-1">
           <AssetFilter
             label="Collateral Assets"
@@ -131,13 +129,11 @@ export function RiskSelection() {
                 <div
                   key={market.uniqueKey}
                   onClick={() => toggleMarketSelection(market)}
-                  className={`group relative mx-1 cursor-pointer transition-all duration-200 ease-in-out ${
-                    isSelected ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900' : ''
-                  } ${index === 0 ? 'mt-2' : ''}`}
+                  className={`rounded relative cursor-pointer transition-all duration-200 ease-in-out p-1 ${index === 0 ? 'mt-2' : ''} ${isSelected ? 'border-2 bg-hovered' : ''}`}
                 >
-                  <div className="bg-surface flex w-full items-center justify-between pr-2">
-                    <div className="min-w-[300px] flex-shrink-0">
-                      <MarketInfoBlock market={market} />
+                  <div className="flex w-full items-center justify-between pr-2">
+                    <div className="min-w-[300px] pr-4">
+                      <MarketInfoBlock market={market} className={`border-none ${isSelected ? 'bg-hovered' : 'bg-surface'} `} />
                     </div>
 
                     <div className="flex flex-1 items-center justify-end gap-8">
@@ -149,7 +145,7 @@ export function RiskSelection() {
                       </div>
 
                       {/* Total Supply */}
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         <span>Total Supply:</span>
                         <div className="font-mono">
                           {formatReadable(
@@ -165,7 +161,7 @@ export function RiskSelection() {
                       </div>
 
                       {/* Utilization Rate */}
-                      <div className="text-sm text-gray-500">
+                      <div className="text-xs text-gray-500">
                         <span>Utilization:</span>
                         <div className="font-mono">
                           {formatReadable(market.state.utilization * 100)}%
