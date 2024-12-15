@@ -6,20 +6,19 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { parseOracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
+import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 
 export function SetupPositions() {
   const router = useRouter();
   const chainId = useChainId();
-  const { selectedToken, selectedMarkets } = useOnboarding();
+  const { selectedToken, selectedMarkets, goToNextStep } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
@@ -37,16 +36,6 @@ export function SetupPositions() {
 
   const { switchChain } = useSwitchChain();
 
-  // Redirect if no token selected
-  useEffect(() => {
-    if (!selectedToken) {
-      router.push('/positions/onboarding?step=asset-selection');
-      return;
-    }
-    if (!selectedMarkets || selectedMarkets.length === 0) {
-      router.push('/positions/onboarding?step=risk-selection');
-    }
-  }, [router, selectedToken, selectedMarkets]);
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -253,7 +242,7 @@ export function SetupPositions() {
     try {
       const success = await approveAndSupply();
       if (success) {
-        router.push('/positions/onboarding?step=success');
+        goToNextStep();
       }
     } catch (supplyError) {
       console.error('Supply failed:', supplyError);
@@ -316,10 +305,7 @@ export function SetupPositions() {
           <table className="w-full font-zen">
             <thead className="sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
               <tr>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market ID</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Collateral</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market Params</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Supply APY</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market</th>
                 <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Distribution</th>
               </tr>
             </thead>
@@ -331,59 +317,23 @@ export function SetupPositions() {
                 );
                 if (!collateralToken) return null;
 
-                const { vendors } = parseOracleVendors(market.oracle.data);
                 const currentPercentage = percentages[market.uniqueKey] ?? 0;
                 const isLocked = lockedAmounts.has(market.uniqueKey);
 
                 return (
                   <tr key={market.uniqueKey}>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                    <td className="whitespace-nowrap font-mono text-xs">
                       <a
                         href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-400"
+                        className="no-underline"
                       >
-                        {market.uniqueKey.slice(2, 8)}
+                        <MarketInfoBlock
+                          market={market}
+                          className="bg-surface border-none no-underline max-w-[300px]"
+                        />
                       </a>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {collateralToken?.img && (
-                          <div className="overflow-hidden rounded-full">
-                            <Image
-                              src={collateralToken.img}
-                              alt={market.collateralAsset.symbol}
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex flex-col">
-                          <span>{market.collateralAsset.symbol}</span>
-                          <span className="text-xs text-gray-400">as collateral</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          {vendors.map((vendor) => (
-                            <OracleVendorBadge
-                              key={vendor}
-                              oracleData={market.oracle.data}
-                              showText={false}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {formatUnits(BigInt(market.lltv), 16)}% LTV
-                        </span>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
-                      {formatReadable(market.state.supplyApy * 100)}%
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-4">

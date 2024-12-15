@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Button, Tooltip } from '@nextui-org/react';
+import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Button } from '@/components/common/Button';
 import { useRouter } from 'next/navigation';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalances } from '@/hooks/useUserBalances';
@@ -10,6 +11,7 @@ import { formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
+import { Spinner } from '@/components/common/Spinner';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
@@ -27,8 +29,7 @@ function NetworkIcon({ networkId }: { networkId: number }) {
 export function AssetSelection() {
   const { balances, loading: balancesLoading } = useUserBalances();
   const { markets, loading: marketsLoading } = useMarkets();
-  const { setSelectedToken, setSelectedMarkets } = useOnboarding();
-  const router = useRouter();
+  const { setSelectedToken, setSelectedMarkets, goToNextStep } = useOnboarding();
 
   const tokensWithMarkets = useMemo(() => {
     if (!balances || !markets) return [];
@@ -72,19 +73,20 @@ export function AssetSelection() {
   const handleTokenSelect = (token: TokenWithMarkets) => {
     setSelectedToken(token);
     setSelectedMarkets([]); // Reset selected markets when changing token
-    router.push('/positions/onboarding?step=risk-selection');
+    goToNextStep();
+    
   };
 
   if (balancesLoading || marketsLoading) {
     return (
-      <div className="flexflex-col">
-        <div className="mt-6">Loading...</div>
+      <div className="flex-col">
+        <div className="min-h-[400px] flex items-center justify-center"> <Spinner /> </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       
       {tokensWithMarkets.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded border border-gray-200 p-8 text-center dark:border-gray-700">

@@ -1,31 +1,44 @@
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-} from '@nextui-org/modal';
+import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
 import { CrossCircledIcon } from '@radix-ui/react-icons';
-import { Button } from '@/components/common/Button';
-import { useOnboarding, ONBOARDING_STEPS } from './OnboardingContext';
+import { useOnboarding } from './OnboardingContext';
 import { AssetSelection } from './AssetSelection';
 import { RiskSelection } from './RiskSelection';
 import { SetupPositions } from './SetupPositions';
-
-type Props = {
-  isOpen: boolean;
-  onClose: () => void;
-};
+import { ONBOARDING_STEPS } from './OnboardingContext';
+import { SuccessPage } from './SuccessPage';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
   'risk-selection': RiskSelection,
   'setup': SetupPositions,
-  'success': () => <div>Success!</div>,
+  'success': () => SuccessPage
 } as const;
 
-export function OnboardingModal({ isOpen, onClose }: Props) {
-  const { step, canGoNext, goToNextStep, goToPrevStep } = useOnboarding();
+function StepIndicator({ currentStep }: { currentStep: string }) {
+  const currentIndex = ONBOARDING_STEPS.findIndex(s => s.id === currentStep);
+  
+  return (
+    <div className="flex w-full items-center justify-center gap-2 px-4">
+      {ONBOARDING_STEPS.map((step, index) => {
+        const isPast = index < currentIndex;
+        const isCurrent = index === currentIndex;
+        
+        return (
+          <div key={step.id} className="flex items-center">
+            <div 
+              className={`h-[6px] w-8 transition-colors duration-300 gap-2 rounded ${
+                isCurrent ? 'bg-primary' : isPast ? 'bg-primary bg-opacity-50' : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { step } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
   const CurrentStepComponent = StepComponents[step];
 
@@ -41,14 +54,14 @@ export function OnboardingModal({ isOpen, onClose }: Props) {
         closeButton: "hidden",
       }}
     >
-      <ModalContent className='p-4' >
+      <ModalContent className='p-4'>
         {/* Header */}
         <ModalHeader className='flex justify-between'>
           <div>
-            <h2 className="font-zen text-2xl font-formal">
+            <h2 className="font-zen text-2xl font-normal">
               {ONBOARDING_STEPS[currentStepIndex].title}
             </h2>
-            <p className="text-secondary mt-1 text-sm font-formal">
+            <p className="font-zen mt-1 text-sm text-secondary font-normal">
               {ONBOARDING_STEPS[currentStepIndex].description}
             </p>
           </div>
@@ -63,42 +76,15 @@ export function OnboardingModal({ isOpen, onClose }: Props) {
 
         {/* Content */}
         <div className="flex-1 overflow-hidden px-6">
-          <div className="h-full overflow-y-auto">
+          <div className="h-full overflow-y-auto font-zen">
             <CurrentStepComponent />
           </div>
         </div>
 
-        {/* Footer */}
-        <ModalFooter>
-          <div className="flex gap-2">
-            {currentStepIndex > 0 && (
-              <Button
-                variant="ghost"
-                onClick={goToPrevStep}
-              >
-                Back
-              </Button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            {currentStepIndex < ONBOARDING_STEPS.length - 1 ? (
-              <Button
-                variant="cta"
-                onClick={goToNextStep}
-                isDisabled={!canGoNext}
-              >
-                Continue
-              </Button>
-            ) : (
-              <Button
-                variant="cta"
-                onClick={onClose}
-              >
-                Close
-              </Button>
-            )}
-          </div>
-        </ModalFooter>
+        {/* Footer with Step Indicator */}
+        <div className="mt-6 pt-4">
+          <StepIndicator currentStep={step} />
+        </div>
       </ModalContent>
     </Modal>
   );

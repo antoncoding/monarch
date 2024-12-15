@@ -2,11 +2,12 @@ import { createContext, useContext, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
+import { RiskSelection } from './RiskSelection';
 
 export const ONBOARDING_STEPS = [
   { id: 'asset-selection', title: 'Select Asset', description: 'Choose the asset you want to supply' },
   { id: 'risk-selection', title: 'Select Markets', description: 'Set your risk preferences' },
-  { id: 'setup', title: 'Position Setup', description: 'Configure your position' },
+  { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
 
@@ -28,17 +29,17 @@ const OnboardingContext = createContext<OnboardingContextType | null>(null);
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const currentStep = (searchParams.get('step') as OnboardingStep) || 'asset-selection';
-
+  
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
   
-  const setStep = (newStep: OnboardingStep) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('step', newStep);
-    router.push(`/positions/onboarding?${params.toString()}`);
-  };
+  const defaultStep = useMemo(() => {
+    if (!selectedToken) return 'asset-selection';
+    if (selectedMarkets.length === 0) return 'risk-selection';
+    return 'setup';
+  }, [selectedToken, selectedMarkets]);
+  
+  const [currentStep, setStep] = useState<OnboardingStep>(defaultStep);
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
