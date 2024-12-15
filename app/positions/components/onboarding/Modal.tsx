@@ -11,7 +11,7 @@ const StepComponents = {
   'asset-selection': AssetSelection,
   'risk-selection': RiskSelection,
   'setup': SetupPositions,
-  'success': () => SuccessPage
+  'success': SuccessPage
 } as const;
 
 function StepIndicator({ currentStep }: { currentStep: string }) {
