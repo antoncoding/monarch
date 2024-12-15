@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { OnboardingContent } from '../components/onboarding/OnboardingContent';
+import OnboardingContent from '../components/onboarding/content';
 
 export const metadata: Metadata = {
   title: 'New Position | Monarch',
@@ -7,5 +7,6 @@ export const metadata: Metadata = {
 };
 
 export default function OnboardingPage() {
-  return <OnboardingContent />;
+  return (<OnboardingContent/>)
+
 }

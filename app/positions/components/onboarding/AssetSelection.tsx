@@ -77,23 +77,15 @@ export function AssetSelection() {
 
   if (balancesLoading || marketsLoading) {
     return (
-      <div className="flex h-full flex-col">
-        <div>
-          <h2 className="font-zen text-2xl">Select an Asset</h2>
-          <p className="mt-2 text-gray-400">Choose which asset you want to supply</p>
-        </div>
+      <div className="flexflex-col">
         <div className="mt-6">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div>
-        <h2 className="font-zen text-2xl">Select an Asset</h2>
-        <p className="mt-2 text-gray-400">Choose which asset you want to supply</p>
-      </div>
-
+    <div className="flex flex-col">
+      
       {tokensWithMarkets.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded border border-gray-200 p-8 text-center dark:border-gray-700">
           <p className="text-lg">No assets available</p>
@@ -107,7 +99,7 @@ export function AssetSelection() {
           </Link>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2">
           {tokensWithMarkets.map((token) => (
             <motion.button
               aria-label={`Select ${token.symbol} on ${getNetworkName(token.network)}`}
@@ -115,7 +107,6 @@ export function AssetSelection() {
               key={`${token.symbol}-${token.network}`}
               onClick={() => handleTokenSelect(token)}
               className="group relative flex items-start gap-4 rounded border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
-              whileHover={{ scale: 1.02 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition-transform duration-300 group-hover:scale-110 dark:bg-gray-700">

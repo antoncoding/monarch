@@ -126,12 +126,6 @@ export default function Positions() {
         ) : !hasSuppliedMarkets ? (
           <div className="flex flex-col items-center gap-8">
             <EmptyScreen message="No open supplies. Start lending now!" />
-            <Link href="/positions/onboarding">
-              <Button variant="solid" color="primary" size="lg" className="font-zen">
-                <FaPlus size={14} className="mr-2" />
-                Start Lending
-              </Button>
-            </Link>
           </div>
         ) : (
           <div className="mt-4">

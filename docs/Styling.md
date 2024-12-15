@@ -11,6 +11,9 @@ Use these shared components instead of raw HTML elements:
 
 ## Component Guidelines
 
+- Use `rounded` for tables, cards or bigger components
+- Use `rounded-sm` for buttons, inputs
+
 ### Button Component
 
 ```typescript
@@ -43,11 +46,6 @@ import { Button } from '@/components/common/Button';
   - Use for: Tertiary actions, subtle navigation
   - Example: "Refresh" buttons, utility actions
 
-#### Common Classes
-
-- Font: `font-zen` for consistent typography
-- Icons: Use `mr-2` for icon spacing when icons are present
-- Transitions: Built into variants, no need to add transition classes
 
 #### Examples
 
