@@ -1,10 +1,7 @@
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { formatReadable } from '@/utils/balance';
-import { getAssetURL } from '@/utils/external';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import { findToken, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -22,10 +19,9 @@ import { useOnboarding } from './OnboardingContext';
 export function RiskSelection() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { selectedToken, setSelectedMarkets } = useOnboarding();
+  const { selectedToken, selectedMarkets, setSelectedMarkets } = useOnboarding();
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
   const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
-  const [selectedMarkets, setSelectedMarketsLocal] = useState<Set<string>>(new Set());
 
   const collateralTokens = useMemo(() => {
     if (!selectedToken?.markets) return [];
@@ -73,17 +69,6 @@ export function RiskSelection() {
       });
   }, [selectedToken, selectedCollaterals, selectedOracles]);
 
-  const handleNext = () => {
-    if (selectedMarkets.size > 0) {
-      const selectedMarketsArray = Array.from(selectedMarkets)
-        .map((key) => filteredMarkets.find((m) => m.uniqueKey === key))
-        .filter((m): m is Market => m !== undefined);
-
-      setSelectedMarkets(selectedMarketsArray);
-      router.push('/positions/onboarding?step=setup');
-    }
-  };
-
   const handleMarketDetails = (market: Market, e: React.MouseEvent) => {
     e.stopPropagation();
     const currentParams = searchParams.toString();
@@ -95,22 +80,18 @@ export function RiskSelection() {
   };
 
   const toggleMarketSelection = (market: Market) => {
-    const newSelection = new Set(selectedMarkets);
-    if (selectedMarkets.has(market.uniqueKey)) {
-      newSelection.delete(market.uniqueKey);
+    const ids = selectedMarkets.map((m) => m.uniqueKey);
+    
+    if (ids.includes(market.uniqueKey)) {
+      setSelectedMarkets(selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey));
     } else {
-      newSelection.add(market.uniqueKey);
+      setSelectedMarkets([...selectedMarkets, market]);
     }
-    setSelectedMarketsLocal(newSelection);
   };
 
   return (
     <div className="flex h-full flex-col">
-      <div>
-        <h2 className="font-zen text-2xl">Select Your Risk Preference</h2>
-        <p className="mt-2 text-gray-400">Choose which assets and oracles you want to trust</p>
-      </div>
-
+      
       {/* Input Section */}
       <div className="mt-6 flex gap-4">
         <div className="flex-1">
@@ -130,7 +111,7 @@ export function RiskSelection() {
 
       <div>
         <p className="mt-2 text-gray-400">Choose markets you want to trust</p>
-        <p className="mt-2 text-sm text-gray-400">selected markets: {selectedMarkets.size}</p>
+        <p className="mt-2 text-sm text-gray-400">selected markets: {selectedMarkets.length}</p>
       </div>
 
       {/* Markets List - Scrollable Section */}
@@ -144,7 +125,7 @@ export function RiskSelection() {
               );
               if (!collateralToken) return null;
 
-              const isSelected = selectedMarkets.has(market.uniqueKey);
+              const isSelected = selectedMarkets.some((m) => m.uniqueKey === market.uniqueKey);
 
               return (
                 <div
@@ -207,25 +188,6 @@ export function RiskSelection() {
             })}
           </div>
         </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between">
-        <Button
-          variant="light"
-          className="min-w-[120px] rounded"
-          onClick={() => router.push('/positions/onboarding?step=asset-selection')}
-        >
-          Back
-        </Button>
-        <Button
-          variant="cta"
-          className="min-w-[120px] rounded"
-          onClick={handleNext}
-          disabled={selectedMarkets.size === 0}
-        >
-          Next
-        </Button>
       </div>
     </div>
   );

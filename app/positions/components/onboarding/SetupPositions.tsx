@@ -269,14 +269,6 @@ export function SetupPositions() {
 
   return (
     <div className="flex h-full flex-col">
-      <div>
-        <h2 className="font-zen text-2xl">Setup Your Positions</h2>
-        <p className="mt-2 text-gray-400">
-          Choose how much {selectedToken.symbol} you want to supply in total and distribute it
-          across markets
-        </p>
-      </div>
-
       {/* Total Amount Section */}
       <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-700">
         <div className="flex items-center justify-between gap-4">

@@ -5,7 +5,7 @@ import { TokenWithMarkets } from './types';
 
 export const ONBOARDING_STEPS = [
   { id: 'asset-selection', title: 'Select Asset', description: 'Choose the asset you want to supply' },
-  { id: 'risk-selection', title: 'Risk Parameters', description: 'Set your risk preferences' },
+  { id: 'risk-selection', title: 'Select Markets', description: 'Set your risk preferences' },
   { id: 'setup', title: 'Position Setup', description: 'Configure your position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
@@ -33,7 +33,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
-
+  
   const setStep = (newStep: OnboardingStep) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('step', newStep);
@@ -69,6 +69,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setStep(prevStep.id);
     }
   };
+
+  console.log('can go next', currentStep, canGoNext);
 
   const contextValue = useMemo(
     () => ({

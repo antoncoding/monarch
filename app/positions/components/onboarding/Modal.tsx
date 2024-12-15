@@ -45,7 +45,7 @@ export function OnboardingModal({ isOpen, onClose }: Props) {
         {/* Header */}
         <ModalHeader className='flex justify-between'>
           <div>
-            <h2 className="text-2xl font-formal">
+            <h2 className="font-zen text-2xl font-formal">
               {ONBOARDING_STEPS[currentStepIndex].title}
             </h2>
             <p className="text-secondary mt-1 text-sm font-formal">
@@ -85,7 +85,7 @@ export function OnboardingModal({ isOpen, onClose }: Props) {
               <Button
                 variant="cta"
                 onClick={goToNextStep}
-                disabled={!canGoNext}
+                isDisabled={!canGoNext}
               >
                 Continue
               </Button>
