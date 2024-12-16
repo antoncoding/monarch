@@ -122,12 +122,10 @@ export default function Positions() {
           />
         )}
 
-        {showOnboardingModal && (
-          <OnboardingModal
-            isOpen={showOnboardingModal}
-            onClose={() => setShowOnboardingModal(false)}
-          />
-        )}
+        <OnboardingModal
+          isOpen={showOnboardingModal}
+          onClose={() => setShowOnboardingModal(false)}
+        />
 
         {isLoading ? (
           <LoadingScreen message="Loading Supplies..." />

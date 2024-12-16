@@ -84,9 +84,7 @@ export function RiskSelection() {
   };
 
   const toggleMarketSelection = (market: Market) => {
-    const ids = selectedMarkets.map((m) => m.uniqueKey);
-
-    if (ids.includes(market.uniqueKey)) {
+    if (selectedMarkets.some((m) => m.uniqueKey === market.uniqueKey)) {
       setSelectedMarkets(selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey));
     } else {
       setSelectedMarkets([...selectedMarkets, market]);
@@ -227,7 +225,7 @@ export function RiskSelection() {
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between gap-4">
-        <Button variant="ghost" onPress={goToPrevStep} className="min-w-[120px]">
+        <Button variant="light" onPress={goToPrevStep} className="min-w-[120px]">
           Back
         </Button>
         <Button

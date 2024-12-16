@@ -71,7 +71,7 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             </p>
           </div>
           <Button isIconOnly onClick={onClose} className="bg-surface">
-            <RxCross2 scale={2} />
+            <RxCross2 size={16} />
           </Button>
         </ModalHeader>
 

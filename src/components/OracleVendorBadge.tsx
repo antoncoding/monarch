@@ -28,7 +28,7 @@ function OracleVendorBadge({
   const noFeeds = vendors.length === 0;
 
   const content = (
-    <div className={`flex items-center space-x-1 ${useTooltip ? '' : 'rounded p-1'}`}>
+    <div className="flex items-center space-x-1 rounded p-1">
       {showText && (
         <span className="mr-1 text-xs font-medium">
           {noFeeds ? 'No Oracle' : vendors.join(', ')}

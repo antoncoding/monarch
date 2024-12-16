@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Button, Slider } from '@nextui-org/react';
+import { Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -16,9 +16,8 @@ import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
-  const router = useRouter();
   const chainId = useChainId();
-  const { selectedToken, selectedMarkets, goToNextStep } = useOnboarding();
+  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
@@ -411,19 +410,15 @@ export function SetupPositions() {
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
-        <Button
-          variant="light"
-          className="min-w-[120px] rounded"
-          onPress={() => router.push('/positions/onboarding?step=risk-selection')}
-        >
+        <Button variant="light" className="min-w-[120px]" onPress={goToPrevStep}>
           Back
         </Button>
         <Button
-          color="primary"
+          variant="cta"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
           onPress={() => void handleSupply()}
-          className="min-w-[120px] rounded"
+          className="min-w-[120px]"
         >
           Execute
         </Button>

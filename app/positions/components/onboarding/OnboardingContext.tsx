@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
 
@@ -25,6 +25,7 @@ type OnboardingContextType = {
   canGoNext: boolean;
   goToNextStep: () => void;
   goToPrevStep: () => void;
+  resetOnboarding: () => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -33,13 +34,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
 
-  const defaultStep = useMemo(() => {
-    if (!selectedToken) return 'asset-selection';
-    if (selectedMarkets.length === 0) return 'risk-selection';
-    return 'setup';
-  }, [selectedToken, selectedMarkets]);
-
-  const [currentStep, setStep] = useState<OnboardingStep>(defaultStep);
+  const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
@@ -70,7 +65,11 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   };
 
-  console.log('can go next', currentStep, canGoNext);
+  const resetOnboarding = useCallback(() => {
+    setSelectedToken(null);
+    setSelectedMarkets([]);
+    setStep('asset-selection');
+  }, [setSelectedToken, setSelectedMarkets, setStep]);
 
   const contextValue = useMemo(
     () => ({
@@ -86,6 +85,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       canGoNext,
       goToNextStep,
       goToPrevStep,
+      resetOnboarding,
     }),
     [selectedToken, selectedMarkets, currentStep, canGoNext],
   );

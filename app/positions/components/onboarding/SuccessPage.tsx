@@ -7,7 +7,7 @@ import { useOnboarding } from './OnboardingContext';
 // import { SupportedNetworks } from '@/utils/networks';
 
 export function SuccessPage({ onClose }: { onClose: () => void }) {
-  const { selectedToken, setSelectedToken, setSelectedMarkets, setStep } = useOnboarding();
+  const { selectedToken, resetOnboarding } = useOnboarding();
   const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
@@ -18,9 +18,7 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
 
   const handleFinished = () => {
     onClose();
-    setStep('asset-selection');
-    setSelectedToken(null);
-    setSelectedMarkets([]);
+    resetOnboarding();
   };
 
   return (
