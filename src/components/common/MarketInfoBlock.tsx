@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { formatUnits } from 'viem';
+import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -39,7 +39,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
               {formatUnits(BigInt(market.lltv), 16)}% LTV
             </span>
           </div>
-          {amount ? (
+          {amount && (amount !== maxUint256) ? (
             <span className="text-xs text-gray-500">
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
