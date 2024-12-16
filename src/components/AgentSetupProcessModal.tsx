@@ -2,7 +2,6 @@ import React from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { MarketInfoBlock } from './common/MarketInfoBlock';
 import { AuthorizeAgentStep, MarketCap } from '@/hooks/useAuthorizeAgent';
 
 type AgentSetupModalProps = {
@@ -70,19 +69,6 @@ export function AgentSetupProcessModal({
             <p className="mt-1 text-sm text-gray-500">
               Setup Rebalance market caps
             </p>
-
-            {/* Market details */}
-            <div className="mt-4 space-y-3">
-              {caps.map((supply) => {
-                return (
-                  <MarketInfoBlock
-                    market={supply.market}
-                    amount={supply.amount}
-                    key={supply.market.uniqueKey}
-                  />
-                );
-              })}
-            </div>
 
             {/* Steps */}
             <div className="mt-6 space-y-4">

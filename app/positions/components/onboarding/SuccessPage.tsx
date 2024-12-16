@@ -7,11 +7,11 @@ import { useOnboarding } from './OnboardingContext';
 import { SupportedNetworks } from '@/utils/networks';
 
 export function SuccessPage({ onClose }: { onClose: () => void }) {
-  const { selectedToken, resetOnboarding } = useOnboarding();
+  const { selectedToken, resetOnboarding, goToAgentSetup } = useOnboarding();
   const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
-    return selectedToken?.network === SupportedNetworks.Base;
+    return selectedToken?.network === SupportedNetworks.Base
   }, [selectedToken?.network]);
 
   const handleFinished = () => {
@@ -28,20 +28,21 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
         </div>
         <p className="max-w-md text-gray-600 dark:text-gray-300">
           Your {selectedToken?.symbol} has been successfully supplied to Morpho.{' '}
-          {allowAgentSetting && 'You can set Monarch Agent to automate reallocate your positions.'}
+          {allowAgentSetting &&
+            'You can set Monarch Agent to automate reallocate your positions.'}
         </p>
       </div>
 
       <div className="mt-4 flex gap-4">
-        <Button variant="secondary" className="min-w-[120px] rounded" onClick={handleFinished}>
+        <Button variant="secondary" className="min-w-[120px]" onClick={handleFinished}>
           Close
         </Button>
         {allowAgentSetting && (
-          <Link href={`/positions/${address}`} className="no-underline">
-            <Button variant="cta" className="min-w-[120px] rounded">
-              Set Monarch Agent
-            </Button>
-          </Link>
+          
+          <Button variant="cta" className="min-w-[120px]" onClick={goToAgentSetup}>
+            Set Monarch Agent
+          </Button>
+          
         )}
       </div>
     </div>

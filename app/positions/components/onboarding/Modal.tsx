@@ -7,6 +7,8 @@ import { ONBOARDING_STEPS } from './OnboardingContext';
 import { RiskSelection } from './RiskSelection';
 import { SetupPositions } from './SetupPositions';
 import { SuccessPage } from './SuccessPage';
+import { SetupAgent } from './SetupAgent';
+import { MarketPosition } from '@/utils/types';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
@@ -27,13 +29,12 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
         return (
           <div key={step.id} className="flex items-center">
             <div
-              className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${
-                isCurrent
+              className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${isCurrent
                   ? 'bg-primary'
                   : isPast
-                  ? 'bg-primary bg-opacity-50'
-                  : 'bg-gray-200 dark:bg-gray-700'
-              }`}
+                    ? 'bg-primary bg-opacity-50'
+                    : 'bg-gray-200 dark:bg-gray-700'
+                }`}
             />
           </div>
         );
@@ -42,8 +43,8 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
   );
 }
 
-export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { step } = useOnboarding();
+export function OnboardingModal({ isOpen, onClose, positions }: { isOpen: boolean; onClose: () => void; positions?: MarketPosition[] }) {
+  const { step, showMonarchAgentSetup, selectedMarkets } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
   const CurrentStepComponent = StepComponents[step];
 
@@ -86,14 +87,16 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              <CurrentStepComponent onClose={onClose} />
+              {showMonarchAgentSetup ?
+                <SetupAgent onClose={onClose} defaultMarkets={selectedMarkets} />
+                : <CurrentStepComponent onClose={onClose} />}
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Footer with Step Indicator */}
         <div className="mt-6 pt-4">
-          <StepIndicator currentStep={step} />
+          {!showMonarchAgentSetup && <StepIndicator currentStep={step} />}
         </div>
       </ModalContent>
     </Modal>

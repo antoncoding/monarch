@@ -125,6 +125,7 @@ export default function Positions() {
         <OnboardingModal
           isOpen={showOnboardingModal}
           onClose={() => setShowOnboardingModal(false)}
+          positions={marketPositions}
         />
 
         {isLoading ? (

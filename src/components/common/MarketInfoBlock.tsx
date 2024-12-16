@@ -55,3 +55,45 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
     </div>
   );
 }
+
+
+export function MarketInfoBlockCompact({ market, amount, className }: MarketInfoBlockProps): JSX.Element {
+  const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
+
+  return (
+    <div
+      key={market.uniqueKey}
+      className={`flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 transition-all duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-900/50 ${className}`}
+    >
+      <div className="flex items-center gap-3">
+        {collateralToken?.img && (
+          <div className="overflow-hidden rounded-full">
+            <Image
+              src={collateralToken.img}
+              alt={market.collateralAsset.symbol}
+              width={24}
+              height={24}
+              className="h-8 w-8 rounded-full object-cover"
+            />
+          </div>
+        )}
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{market.collateralAsset.symbol}</span>
+            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+              {formatUnits(BigInt(market.lltv), 16)}% LTV
+            </span>
+          </div>
+
+        </div>
+      </div>
+      {amount && (amount !== maxUint256) ? (
+        <span className="text-xs text-gray-500">
+          {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
+        </span>
+      ) : (
+        <OracleVendorBadge showText oracleData={market.oracle.data} useTooltip={false} />
+      )}
+    </div>
+  );
+}
