@@ -46,7 +46,6 @@ import { Button } from '@/components/common/Button';
   - Use for: Tertiary actions, subtle navigation
   - Example: "Refresh" buttons, utility actions
 
-
 #### Examples
 
 ```tsx

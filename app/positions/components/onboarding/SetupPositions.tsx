@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
+import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { formatBalance, formatReadable } from '@/utils/balance';
+import { formatBalance } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
-import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 
 export function SetupPositions() {
   const router = useRouter();
@@ -35,7 +35,6 @@ export function SetupPositions() {
   );
 
   const { switchChain } = useSwitchChain();
-
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -218,7 +217,7 @@ export function SetupPositions() {
     isLoadingPermit2,
     approveAndSupply,
     supplyPending,
-  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting);
+  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting, goToNextStep);
 
   const handleSupply = async () => {
     if (isSupplying) {
@@ -240,10 +239,8 @@ export function SetupPositions() {
     setIsSupplying(true);
 
     try {
-      const success = await approveAndSupply();
-      if (success) {
-        goToNextStep();
-      }
+      // trigger the tx. goToNextStep() be called as a `onSuccess` callback
+      await approveAndSupply();
     } catch (supplyError) {
       console.error('Supply failed:', supplyError);
       // Error toast is already shown in useMultiMarketSupply
@@ -331,7 +328,7 @@ export function SetupPositions() {
                       >
                         <MarketInfoBlock
                           market={market}
-                          className="bg-surface border-none no-underline max-w-[300px]"
+                          className="bg-surface max-w-[300px] border-none no-underline"
                         />
                       </a>
                     </td>

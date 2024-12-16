@@ -1,17 +1,15 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
-import { useRouter } from 'next/navigation';
+import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { formatBalance } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
-import { Spinner } from '@/components/common/Spinner';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
@@ -74,20 +72,21 @@ export function AssetSelection() {
     setSelectedToken(token);
     setSelectedMarkets([]); // Reset selected markets when changing token
     goToNextStep();
-    
   };
 
   if (balancesLoading || marketsLoading) {
     return (
       <div className="flex-col">
-        <div className="min-h-[400px] flex items-center justify-center"> <Spinner /> </div>
+        <div className="flex min-h-[400px] items-center justify-center">
+          {' '}
+          <Spinner />{' '}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-full flex-col">
-      
       {tokensWithMarkets.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded border border-gray-200 p-8 text-center dark:border-gray-700">
           <p className="text-lg">No assets available</p>
@@ -135,29 +134,30 @@ export function AssetSelection() {
 
                     {/* if base network, show agent badge */}
                     {token.network === SupportedNetworks.Base && (
-                      <Tooltip
-                        content={
-                          <div className="flex flex-col gap-2 p-2 font-zen">
-                            <div className="text-base">Monarch Autopilot 🎉</div>
-                            <div className="text-sm">
-                              Monarch Autopilot is now in beta on Base! Setup the agent to start
-                              automating your reallocations.
-                            </div>
-                          </div>
-                        }
-                      >
-                        <div className="flex gap-2 rounded bg-primary bg-opacity-50 px-1.5 py-0.5 text-xs text-gray-100">
-                          🤖
-                          <span className="opacity-100">beta</span>
-                        </div>
-                      </Tooltip>
+                      // <Tooltip
+                      //   content={
+                      //     <div className="flex flex-col gap-2 p-2 font-zen">
+                      //       <div className="text-base">Monarch Autopilot 🎉</div>
+                      //       <div className="text-sm">
+                      //         Monarch Autopilot is now in beta on Base! Setup the agent to start
+                      //         automating your reallocations.
+                      //       </div>
+                      //     </div>
+                      //   }
+                      // >
+                      //   <div className="flex gap-2 rounded bg-primary bg-opacity-50 px-1.5 py-0.5 text-xs text-gray-100">
+                      //     🤖
+                      //     <span className="opacity-100">beta</span>
+                      //   </div>
+                      // </Tooltip>
+                      <div />
                     )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400 transition-opacity duration-300 group-hover:opacity-80">
-                    Balance: {formatBalance(token.balance, token.decimals)} {token.symbol}
+                    Balance: {formatUnits(BigInt(token.balance), token.decimals)} {token.symbol}
                   </p>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">

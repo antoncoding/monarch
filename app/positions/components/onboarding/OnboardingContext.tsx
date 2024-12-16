@@ -1,17 +1,19 @@
 import { createContext, useContext, useState, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
-import { RiskSelection } from './RiskSelection';
 
 export const ONBOARDING_STEPS = [
-  { id: 'asset-selection', title: 'Select Asset', description: 'Choose the asset you want to supply' },
+  {
+    id: 'asset-selection',
+    title: 'Select Asset',
+    description: 'Choose the asset you want to supply',
+  },
   { id: 'risk-selection', title: 'Select Markets', description: 'Set your risk preferences' },
   { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
 
-export type OnboardingStep = typeof ONBOARDING_STEPS[number]['id'];
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]['id'];
 
 type OnboardingContextType = {
   selectedToken: TokenWithMarkets | null;
@@ -28,17 +30,15 @@ type OnboardingContextType = {
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
-  
+
   const defaultStep = useMemo(() => {
     if (!selectedToken) return 'asset-selection';
     if (selectedMarkets.length === 0) return 'risk-selection';
     return 'setup';
   }, [selectedToken, selectedMarkets]);
-  
+
   const [currentStep, setStep] = useState<OnboardingStep>(defaultStep);
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
@@ -50,14 +50,13 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       case 'risk-selection':
         return selectedMarkets.length > 0;
       case 'setup':
-        return true; 
+        return true;
       default:
         return false;
     }
   }, [currentStep, selectedToken, selectedMarkets]);
 
   const goToNextStep = () => {
-    if (!canGoNext) return;
     const nextStep = ONBOARDING_STEPS[currentStepIndex + 1];
     if (nextStep) {
       setStep(nextStep.id);

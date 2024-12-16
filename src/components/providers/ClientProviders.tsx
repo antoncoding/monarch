@@ -13,8 +13,8 @@ export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <MarketsProvider>
       <OnboardingProvider>
-      {children}
-      <ToastContainer position="bottom-right" bodyClassName="font-zen" />
+        {children}
+        <ToastContainer position="bottom-right" bodyClassName="font-zen" />
       </OnboardingProvider>
     </MarketsProvider>
   );

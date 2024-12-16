@@ -240,7 +240,10 @@ const supportedTokens = [
     symbol: 'lBTC',
     img: require('../imgs/tokens/lbtc.webp') as string,
     decimals: 8,
-    networks: [{ chain: mainnet, address: '0x8236a87084f8B84306f72007F36F2618A5634494' }],
+    networks: [
+      { chain: mainnet, address: '0x8236a87084f8B84306f72007F36F2618A5634494' },
+      { chain: base, address: '0xecAc9C5F704e954931349Da37F60E39f515c11c1' },
+    ],
   },
   {
     symbol: 'rsETH',
@@ -381,6 +384,18 @@ const supportedTokens = [
     img: require('../imgs/tokens/wsuperOETHb.png') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0x7FcD174E80f264448ebeE8c88a7C4476AAF58Ea6' }],
+  },
+  {
+    symbol: 'uSOL',
+    img: require('../imgs/tokens/usol.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x9B8Df6E244526ab5F6e6400d331DB28C8fdDdb55' }],
+  },
+  {
+    symbol: 'uSui',
+    img: require('../imgs/tokens/usui.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0xb0505e5a99abd03d94a1169e638B78EDfEd26ea4' }],
   },
 ];
 
