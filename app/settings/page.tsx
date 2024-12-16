@@ -15,13 +15,13 @@ export default function SettingsPage() {
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
+      <div className="container h-full gap-8 px-[5%]">
         <h1 className="py-8 font-zen">Settings</h1>
 
         <div className="flex flex-col gap-6">
           {/* Transaction Settings Section */}
           <div className="flex flex-col gap-4">
-            <h2 className="font-monospace text-lg text-secondary">Transaction Settings</h2>
+            <h2 className="font-monospace text text-secondary">Transaction Settings</h2>
 
             <div className="bg-surface rounded p-6">
               <div className="flex items-center justify-between">
@@ -48,8 +48,8 @@ export default function SettingsPage() {
           </div>
 
           {/* Filter Settings Section */}
-          <div className="flex flex-col gap-4">
-            <h2 className="font-monospace text-lg text-secondary">Filter Settings</h2>
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="font-monospace text text-secondary">Filter Settings</h2>
 
             <div className="bg-surface flex flex-col gap-6 rounded p-6">
               {/* Group related settings with a subtle separator */}

@@ -321,7 +321,7 @@ export default function Markets() {
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
+      <div className="container h-full gap-8 px-[5%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && (
