@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import { ToastContainer } from 'react-toastify';
 import { MarketsProvider } from '@/contexts/MarketsContext';
+import { OnboardingProvider } from 'app/positions/components/onboarding/OnboardingContext';
 
 type ClientProvidersProps = {
   children: ReactNode;
@@ -11,8 +12,10 @@ type ClientProvidersProps = {
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <MarketsProvider>
-      {children}
-      <ToastContainer position="bottom-right" bodyClassName="font-zen" />
+      <OnboardingProvider>
+        {children}
+        <ToastContainer position="bottom-right" bodyClassName="font-zen" />
+      </OnboardingProvider>
     </MarketsProvider>
   );
 }

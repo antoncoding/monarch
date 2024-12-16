@@ -1,25 +1,23 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Button, Slider } from '@nextui-org/react';
+import { Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { Button } from '@/components/common';
+import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { formatBalance, formatReadable } from '@/utils/balance';
-import { parseOracleVendors } from '@/utils/oracle';
+import { formatBalance } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
-  const router = useRouter();
   const chainId = useChainId();
-  const { selectedToken, selectedMarkets } = useOnboarding();
+  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
@@ -36,17 +34,6 @@ export function SetupPositions() {
   );
 
   const { switchChain } = useSwitchChain();
-
-  // Redirect if no token selected
-  useEffect(() => {
-    if (!selectedToken) {
-      router.push('/positions/onboarding?step=asset-selection');
-      return;
-    }
-    if (!selectedMarkets || selectedMarkets.length === 0) {
-      router.push('/positions/onboarding?step=risk-selection');
-    }
-  }, [router, selectedToken, selectedMarkets]);
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -229,7 +216,7 @@ export function SetupPositions() {
     isLoadingPermit2,
     approveAndSupply,
     supplyPending,
-  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting);
+  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting, goToNextStep);
 
   const handleSupply = async () => {
     if (isSupplying) {
@@ -251,10 +238,8 @@ export function SetupPositions() {
     setIsSupplying(true);
 
     try {
-      const success = await approveAndSupply();
-      if (success) {
-        router.push('/positions/onboarding?step=success');
-      }
+      // trigger the tx. goToNextStep() be called as a `onSuccess` callback
+      await approveAndSupply();
     } catch (supplyError) {
       console.error('Supply failed:', supplyError);
       // Error toast is already shown in useMultiMarketSupply
@@ -269,14 +254,6 @@ export function SetupPositions() {
 
   return (
     <div className="flex h-full flex-col">
-      <div>
-        <h2 className="font-zen text-2xl">Setup Your Positions</h2>
-        <p className="mt-2 text-gray-400">
-          Choose how much {selectedToken.symbol} you want to supply in total and distribute it
-          across markets
-        </p>
-      </div>
-
       {/* Total Amount Section */}
       <div className="mt-6 rounded border border-gray-200 p-4 dark:border-gray-700">
         <div className="flex items-center justify-between gap-4">
@@ -324,10 +301,7 @@ export function SetupPositions() {
           <table className="w-full font-zen">
             <thead className="sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
               <tr>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market ID</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Collateral</th>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market Params</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Supply APY</th>
+                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market</th>
                 <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Distribution</th>
               </tr>
             </thead>
@@ -339,59 +313,23 @@ export function SetupPositions() {
                 );
                 if (!collateralToken) return null;
 
-                const { vendors } = parseOracleVendors(market.oracle.data);
                 const currentPercentage = percentages[market.uniqueKey] ?? 0;
                 const isLocked = lockedAmounts.has(market.uniqueKey);
 
                 return (
                   <tr key={market.uniqueKey}>
-                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">
+                    <td className="whitespace-nowrap font-mono text-xs">
                       <a
                         href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:text-primary-400"
+                        className="no-underline"
                       >
-                        {market.uniqueKey.slice(2, 8)}
+                        <MarketInfoBlock
+                          market={market}
+                          className="bg-surface max-w-[300px] border-none no-underline"
+                        />
                       </a>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {collateralToken?.img && (
-                          <div className="overflow-hidden rounded-full">
-                            <Image
-                              src={collateralToken.img}
-                              alt={market.collateralAsset.symbol}
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex flex-col">
-                          <span>{market.collateralAsset.symbol}</span>
-                          <span className="text-xs text-gray-400">as collateral</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-1">
-                          {vendors.map((vendor) => (
-                            <OracleVendorBadge
-                              key={vendor}
-                              oracleData={market.oracle.data}
-                              showText={false}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-gray-400">
-                          {formatUnits(BigInt(market.lltv), 16)}% LTV
-                        </span>
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-right font-mono">
-                      {formatReadable(market.state.supplyApy * 100)}%
                     </td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <div className="flex items-center gap-4">
@@ -472,19 +410,15 @@ export function SetupPositions() {
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
-        <Button
-          variant="light"
-          className="min-w-[120px] rounded"
-          onPress={() => router.push('/positions/onboarding?step=risk-selection')}
-        >
+        <Button variant="light" className="min-w-[120px]" onPress={goToPrevStep}>
           Back
         </Button>
         <Button
-          color="primary"
+          variant="cta"
           isDisabled={error !== null || !totalAmount || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
           onPress={() => void handleSupply()}
-          className="min-w-[120px] rounded"
+          className="min-w-[120px]"
         >
           Execute
         </Button>

@@ -16,11 +16,13 @@ import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 import { MarketPosition } from '@/utils/types';
+import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
+  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
@@ -84,18 +86,17 @@ export default function Positions() {
               </Button>
             </Link>
             {isOwner && (
-              <Link href="/positions/onboarding">
-                <Button
-                  variant="solid"
-                  color="primary"
-                  size="md"
-                  className="font-zen"
-                  disabled={account !== address}
-                >
-                  <FaPlus size={14} className="mr-2" />
-                  New Position
-                </Button>
-              </Link>
+              <Button
+                variant="solid"
+                color="primary"
+                size="md"
+                className="font-zen"
+                isDisabled={account !== address}
+                onClick={() => setShowOnboardingModal(true)}
+              >
+                <FaPlus size={14} className="mr-2" />
+                New Position
+              </Button>
             )}
           </div>
         </div>
@@ -121,17 +122,16 @@ export default function Positions() {
           />
         )}
 
+        <OnboardingModal
+          isOpen={showOnboardingModal}
+          onClose={() => setShowOnboardingModal(false)}
+        />
+
         {isLoading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
           <div className="flex flex-col items-center gap-8">
             <EmptyScreen message="No open supplies. Start lending now!" />
-            <Link href="/positions/onboarding">
-              <Button variant="solid" color="primary" size="lg" className="font-zen">
-                <FaPlus size={14} className="mr-2" />
-                Start Lending
-              </Button>
-            </Link>
           </div>
         ) : (
           <div className="mt-4">

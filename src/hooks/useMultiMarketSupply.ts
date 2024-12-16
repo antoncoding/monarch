@@ -22,6 +22,7 @@ export function useMultiMarketSupply(
   supplies: MarketSupply[],
   useEth: boolean,
   usePermit2Setting: boolean,
+  onSuccess?: () => void,
 ) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState(false);
@@ -66,6 +67,7 @@ export function useMultiMarketSupply(
     successDescription: `Successfully supplied to ${supplies.length} market${
       supplies.length > 1 ? 's' : ''
     }`,
+    onSuccess,
   });
 
   const executeSupplyTransaction = useCallback(async () => {

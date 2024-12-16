@@ -37,6 +37,8 @@ export function useTransactionWithToast({
     hash,
   });
 
+  console.log('isConfirmed', isConfirmed, toastId, hash);
+
   const onClick = useCallback(() => {
     if (hash) {
       // if chainId is not supported, use 1

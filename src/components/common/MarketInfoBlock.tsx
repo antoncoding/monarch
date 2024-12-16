@@ -6,21 +6,19 @@ import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 
-type MarketAmountBlockProps = {
+type MarketInfoBlockProps = {
   market: Market;
   amount?: bigint;
-  lltv?: string;
-  apy?: string;
   className?: string;
 };
 
-export function MarketAmountBlock({ market, amount }: MarketAmountBlockProps): JSX.Element {
+export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockProps): JSX.Element {
   const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
 
   return (
     <div
       key={market.uniqueKey}
-      className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+      className={`flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 transition-all duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-900/50 ${className}`}
     >
       <div className="flex items-center gap-3">
         {collateralToken?.img && (
@@ -46,7 +44,7 @@ export function MarketAmountBlock({ market, amount }: MarketAmountBlockProps): J
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
           ) : (
-            <OracleVendorBadge showText oracleData={market.oracle.data} />
+            <OracleVendorBadge showText oracleData={market.oracle.data} useTooltip={false} />
           )}
         </div>
       </div>
