@@ -7,6 +7,8 @@ import {
   safeWallet,
   argentWallet,
   injectedWallet,
+  trustWallet,
+  ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet } from 'wagmi/chains';
@@ -27,12 +29,14 @@ export function createWagmiConfig(projectId: string) {
       {
         groupName: 'Other Wallets',
         wallets: [
+          metaMaskWallet,
           rainbowWallet,
           coinbaseWallet,
-          metaMaskWallet,
           safeWallet,
           argentWallet,
           injectedWallet,
+          trustWallet,
+          ledgerWallet,
         ],
       },
     ],

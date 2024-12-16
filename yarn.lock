@@ -1516,21 +1516,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coinbase/onchainkit@npm:0.10.0":
-  version: 0.10.0
-  resolution: "@coinbase/onchainkit@npm:0.10.0"
-  peerDependencies:
-    "@tanstack/react-query": ^5
-    "@xmtp/frames-validator": ^0.5.0
-    graphql: ^14
-    graphql-request: ^6
-    react: ^18
-    react-dom: ^18
-    viem: ^2.7.0
-  checksum: 10c0/f1b3bb3d805703c3fcb5e28821971efbaa098cd7729995ac8a8502cdec38395cbcbcac81442f8ce45a30c333ecafaaeaa368fce77ca69732f045c88ec93342e8
-  languageName: node
-  linkType: hard
-
 "@coinbase/wallet-sdk@npm:4.0.4":
   version: 4.0.4
   resolution: "@coinbase/wallet-sdk@npm:4.0.4"
@@ -15227,7 +15212,6 @@ __metadata:
     "@babel/preset-env": "npm:^7.23.5"
     "@babel/preset-react": "npm:^7.23.3"
     "@babel/preset-typescript": "npm:^7.23.3"
-    "@coinbase/onchainkit": "npm:0.10.0"
     "@coinbase/wallet-sdk": "npm:^3.9.1"
     "@jest/globals": "npm:^29.7.0"
     "@nextui-org/accordion": "npm:^2.0.35"

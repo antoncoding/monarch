@@ -1,5 +1,6 @@
+'use client';
+
 import { useCallback, useState } from 'react';
-import { Name } from '@coinbase/onchainkit/identity';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ExitIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
@@ -8,6 +9,7 @@ import { usePathname } from 'next/navigation';
 import { FiSettings } from 'react-icons/fi';
 import { useAccount, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { Name } from '@/components/common/Name';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Name } from '@coinbase/onchainkit/identity';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
@@ -9,6 +8,7 @@ import { TbReport } from 'react-icons/tb';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Button } from '@/components/common/Button';
+import { Name } from '@/components/common/Name';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -45,9 +45,9 @@ export default function Positions() {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <div className="container gap-8" style={{ padding: '0 5%' }}>
-        <div className="mb-4 flex items-center">
-          <h1 className="font-zen text-2xl">Portfolio</h1>
+      <div className="container h-full gap-8 px-[5%]">
+        <div className="pb-4">
+          <h1 className="font-zen">Portfolio</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
           <div className="flex items-start gap-4">

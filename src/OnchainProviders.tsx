@@ -20,19 +20,22 @@ if (!projectId) {
 
 const wagmiConfig = createWagmiConfig(projectId);
 
-/**
- * Monarch
- * TODO Docs ~~~
- */
 function OnchainProviders({ children }: Props) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={{
-            lightMode: lightTheme(),
-            darkMode: darkTheme(),
+            lightMode: lightTheme({
+              accentColor: '#f45f2d',
+              borderRadius: 'small',
+            }),
+            darkMode: darkTheme({
+              accentColor: '#f45f2d',
+              borderRadius: 'small',
+            }),
           }}
+          modalSize="compact"
         >
           {children}
         </RainbowKitProvider>

@@ -25,14 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
       <body>
-        <ClientProviders>
-          <Providers>
+        <Providers>
+          <ClientProviders>
             <OnchainProviders>
               {children}
               <RiskNotificationModal />
             </OnchainProviders>
-          </Providers>
-        </ClientProviders>
+          </ClientProviders>
+        </Providers>
       </body>
       <GoogleAnalytics />
     </html>

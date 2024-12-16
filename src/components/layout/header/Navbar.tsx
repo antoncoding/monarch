@@ -1,11 +1,14 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { FaRegMoon, FaSun } from 'react-icons/fa';
+import { FaRegMoon } from 'react-icons/fa';
+import { LuSunMedium } from 'react-icons/lu';
+
 import { useAccount } from 'wagmi';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -62,6 +65,15 @@ export function NavbarTitle() {
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <nav className="bg-surface flex h-full w-full items-center justify-between rounded px-4 font-zen">
@@ -74,17 +86,16 @@ export function Navbar() {
           <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="/rewards">
             Rewards
           </NavbarLink>
-          {/* <NavbarLink href="/settings/faq">FAQ</NavbarLink> */}
         </div>
 
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="hover:bg-hover flex h-10 w-10 items-center justify-center rounded-full"
+            onClick={toggleTheme}
+            className="flex h-10 w-10 items-center justify-center rounded-full"
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? <FaSun size={20} /> : <FaRegMoon size={20} />}
+            {mounted && (theme === 'dark' ? <LuSunMedium size={24} /> : <FaRegMoon size={20} />)}
           </button>
           <AccountConnect />
         </div>
