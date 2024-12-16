@@ -14,21 +14,21 @@ const steps = [
   {
     key: AuthorizeAgentStep.Authorize,
     label: 'Authorize Monarch Agent',
-    detail: 'Sign a signature to authorize the Monarch Agent contract to reallocate your positions.',
+    detail:
+      'Sign a signature to authorize the Monarch Agent contract to reallocate your positions.',
   },
   {
     key: AuthorizeAgentStep.Execute,
     label: 'Execute Transaction',
     detail: 'Confirm transaction in wallet to complete the setup',
   },
-]
+];
 
 export function AgentSetupProcessModal({
   caps,
   currentStep,
   onClose,
 }: AgentSetupModalProps): JSX.Element {
-  
   const getStepStatus = (stepKey: string) => {
     const currentIndex = steps.findIndex((step) => step.key === currentStep);
     const stepIndex = steps.findIndex((step) => step.key === stepKey);
@@ -66,9 +66,7 @@ export function AgentSetupProcessModal({
 
           <div className="p-6">
             <h3 className="font-zen text-xl"> Setup Monarch Agent </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Setup Rebalance market caps
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Setup Rebalance market caps</p>
 
             {/* Steps */}
             <div className="mt-6 space-y-4">

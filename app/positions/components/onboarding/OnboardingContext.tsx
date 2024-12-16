@@ -108,7 +108,17 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       finishAgentSetup,
       showMonarchAgentSetup,
     }),
-    [selectedToken, selectedMarkets, currentStep, canGoNext, goToNextStep, goToPrevStep, resetOnboarding, goToAgentSetup, finishAgentSetup],
+    [
+      selectedToken,
+      selectedMarkets,
+      currentStep,
+      canGoNext,
+      goToNextStep,
+      goToPrevStep,
+      resetOnboarding,
+      goToAgentSetup,
+      finishAgentSetup,
+    ],
   );
 
   return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;

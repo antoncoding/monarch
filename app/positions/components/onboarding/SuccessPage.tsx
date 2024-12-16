@@ -11,7 +11,7 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
   const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
-    return selectedToken?.network === SupportedNetworks.Base
+    return selectedToken?.network === SupportedNetworks.Base;
   }, [selectedToken?.network]);
 
   const handleFinished = () => {
@@ -28,8 +28,7 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
         </div>
         <p className="max-w-md text-gray-600 dark:text-gray-300">
           Your {selectedToken?.symbol} has been successfully supplied to Morpho.{' '}
-          {allowAgentSetting &&
-            'You can set Monarch Agent to automate reallocate your positions.'}
+          {allowAgentSetting && 'You can set Monarch Agent to automate reallocate your positions.'}
         </p>
       </div>
 
@@ -38,11 +37,9 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
           Close
         </Button>
         {allowAgentSetting && (
-          
           <Button variant="cta" className="min-w-[120px]" onClick={goToAgentSetup}>
             Set Monarch Agent
           </Button>
-          
         )}
       </div>
     </div>

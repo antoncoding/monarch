@@ -9,6 +9,7 @@ import { SetupPositions } from './SetupPositions';
 import { SuccessPage } from './SuccessPage';
 import { SetupAgent } from './SetupAgent';
 import { MarketPosition } from '@/utils/types';
+import { useMemo } from 'react';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
@@ -29,12 +30,13 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
         return (
           <div key={step.id} className="flex items-center">
             <div
-              className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${isCurrent
+              className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${
+                isCurrent
                   ? 'bg-primary'
                   : isPast
-                    ? 'bg-primary bg-opacity-50'
-                    : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                  ? 'bg-primary bg-opacity-50'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
             />
           </div>
         );
@@ -43,10 +45,30 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
   );
 }
 
-export function OnboardingModal({ isOpen, onClose, positions }: { isOpen: boolean; onClose: () => void; positions?: MarketPosition[] }) {
+export function OnboardingModal({
+  isOpen,
+  onClose,
+  positions,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  positions?: MarketPosition[];
+}) {
   const { step, showMonarchAgentSetup, selectedMarkets } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
   const CurrentStepComponent = StepComponents[step];
+
+  const defaultMarketsForAgent = useMemo(() => {
+    const marketsInUse = positions?.map((p) => p.market) ?? [];
+    const allMarkets = [...selectedMarkets, ...marketsInUse];
+
+    // Deduplicate based on uniqueKey
+    const uniqueMarkets = allMarkets.filter(
+      (market, index, self) => index === self.findIndex((m) => m.uniqueKey === market.uniqueKey),
+    );
+
+    return uniqueMarkets;
+  }, [selectedMarkets, positions]);
 
   return (
     <Modal
@@ -65,10 +87,14 @@ export function OnboardingModal({ isOpen, onClose, positions }: { isOpen: boolea
         <ModalHeader className="flex justify-between">
           <div>
             <h2 className="font-zen text-2xl font-normal">
-              {ONBOARDING_STEPS[currentStepIndex].title}
+              {showMonarchAgentSetup
+                ? 'Monarch Agent Setup'
+                : ONBOARDING_STEPS[currentStepIndex].title}
             </h2>
             <p className="mt-1 font-zen text-sm font-normal text-secondary">
-              {ONBOARDING_STEPS[currentStepIndex].description}
+              {showMonarchAgentSetup
+                ? 'Try out the Monarch Agent feature on Base!'
+                : ONBOARDING_STEPS[currentStepIndex].description}
             </p>
           </div>
           <Button isIconOnly onClick={onClose} className="bg-surface">
@@ -87,9 +113,11 @@ export function OnboardingModal({ isOpen, onClose, positions }: { isOpen: boolea
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              {showMonarchAgentSetup ?
-                <SetupAgent onClose={onClose} defaultMarkets={selectedMarkets} />
-                : <CurrentStepComponent onClose={onClose} />}
+              {showMonarchAgentSetup ? (
+                <SetupAgent onClose={onClose} defaultMarkets={defaultMarketsForAgent} />
+              ) : (
+                <CurrentStepComponent onClose={onClose} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

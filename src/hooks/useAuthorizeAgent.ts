@@ -19,7 +19,7 @@ export enum AuthorizeAgentStep {
 export type MarketCap = {
   market: Market;
   amount: bigint;
-}
+};
 
 /**
  * This hook should only be used on Base
