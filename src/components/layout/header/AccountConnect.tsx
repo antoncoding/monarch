@@ -1,5 +1,6 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
+import { Button } from '@/components/common';
 import { AccountDropdown } from './AccountDropdown';
 
 /**
@@ -34,13 +35,9 @@ function AccountConnect() {
             {(() => {
               if (!connected) {
                 return (
-                  <button
-                    onClick={openConnectModal}
-                    type="button"
-                    className="inline-flex h-10 flex-grow items-center justify-center gap-2 rounded bg-white px-4 py-2"
-                  >
-                    <div className="text-sm font-medium leading-normal text-black">Connect</div>
-                  </button>
+                  <Button onClick={openConnectModal} type="button" variant="cta">
+                    Connect
+                  </Button>
                 );
               }
 

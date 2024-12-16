@@ -24,8 +24,6 @@ export default function Rewards() {
   const { loading, markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
-  console.log('distributions', distributions);
-
   const marketRewards = useMemo(() => filterMarketRewards(rewards), [rewards]);
   const uniformRewards = useMemo(() => filterUniformRewards(rewards), [rewards]);
 
@@ -53,11 +51,10 @@ export default function Rewards() {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-
-      <div className="container mt-4 gap-8" style={{ padding: '0 5%' }}>
-        <div className="pb-8">
-          <div className="font-zen text-3xl">Rewards</div>
-          <div className="pt-4 text-base text-gray-500">
+      <div className="container h-full gap-8" style={{ padding: '0 5%' }}>
+        <div className="pb-4">
+          <h1 className="font-zen">Reward</h1>
+          <div className="pt-4 text-secondary">
             Morpho offers multiple reward programs to incentivize user participation. Choose a
             program type below to see more details.
           </div>

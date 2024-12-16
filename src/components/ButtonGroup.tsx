@@ -26,7 +26,6 @@ const sizeClasses = {
 const variantStyles = {
   default: (isSelected: boolean) => [
     isSelected ? 'bg-hovered hover:bg-surface z-10' : 'bg-surface hover:bg-hovered',
-    'border border-divider',
     'shadow-sm',
   ],
   primary: (isSelected: boolean) => [
