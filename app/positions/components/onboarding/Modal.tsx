@@ -1,7 +1,6 @@
 import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
-import { MarketPosition } from '@/utils/types';
 import { AssetSelection } from './AssetSelection';
 import { useOnboarding } from './OnboardingContext';
 import { ONBOARDING_STEPS } from './OnboardingContext';
@@ -50,7 +49,6 @@ export function OnboardingModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  positions?: MarketPosition[];
   goToAgentSetup: () => void;
 }) {
   const { step } = useOnboarding();

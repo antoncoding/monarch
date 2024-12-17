@@ -22,6 +22,12 @@ export function SuccessPage({
     resetOnboarding();
   };
 
+  const handleGoToAgent = () => {
+    onClose();
+    resetOnboarding();
+    goToAgentSetup();
+  };
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-8 p-8">
       <div className="flex flex-col items-center gap-4 text-center">
@@ -40,7 +46,7 @@ export function SuccessPage({
           Close
         </Button>
         {allowAgentSetting && (
-          <Button variant="cta" className="min-w-[120px]" onClick={goToAgentSetup}>
+          <Button variant="cta" className="min-w-[120px]" onClick={handleGoToAgent}>
             Set Monarch Agent
           </Button>
         )}

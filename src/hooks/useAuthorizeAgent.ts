@@ -192,7 +192,7 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
         setCurrentStep(AuthorizeAgentStep.Idle);
       }
     },
-    [account, isAuthorized, nonce, signTypedDataAsync, sendTransactionAsync],
+    [account, isAuthorized, nonce, signTypedDataAsync, sendTransactionAsync, marketCaps, rebalancerAddress],
   );
 
   return {

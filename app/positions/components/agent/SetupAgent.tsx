@@ -68,6 +68,7 @@ export function SetupAgent({
   onBack,
   onNext,
 }: SetupAgentProps) {
+  const [hasPreselected, setHasPreselected] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [showAllMarkets, setShowAllMarkets] = useState(false);
   const [showProcessModal, setShowProcessModal] = useState(false);
@@ -122,16 +123,19 @@ export function SetupAgent({
     return Object.values(groups);
   }, [allMarkets, positions]);
 
-  // Pre-select active markets
+  // Pre-select active markets only once when component mounts
   useEffect(() => {
-    groupedMarkets.forEach((group) => {
-      group.activeMarkets.forEach((market) => {
-        if (!isMarketSelected(market)) {
-          onAddMarket(market);
-        }
+    if (!hasPreselected && groupedMarkets.length > 0) {
+      groupedMarkets.forEach((group) => {
+        group.activeMarkets.forEach((market) => {
+          if (!isMarketSelected(market)) {
+            onAddMarket(market);
+          }
+        });
       });
-    });
-  }, [groupedMarkets]);
+      setHasPreselected(true);
+    }
+  }, [hasPreselected, groupedMarkets, isMarketSelected, onAddMarket]);
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) =>

@@ -96,6 +96,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
+      setSelectedToken,
+      setSelectedMarkets,
+      setStep,
     ],
   );
 

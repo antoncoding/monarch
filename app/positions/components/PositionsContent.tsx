@@ -148,7 +148,7 @@ export default function Positions() {
           isOpen={showOnboardingModal}
           onClose={() => setShowOnboardingModal(false)}
           goToAgentSetup={() => {
-            setShowSetupAgentModal(false);
+            setShowSetupAgentModal(true);
           }}
         />
 
