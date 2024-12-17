@@ -1,9 +1,8 @@
-import { Button } from '@/components/common';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { FaCheckCircle } from 'react-icons/fa';
+import Image from 'next/image';
+import { Button } from '@/components/common';
 
-const img = require('../../../../src/imgs/agent/agent.png');
+const img = require('../../../../src/imgs/agent/agent.png') as string;
 
 type SuccessProps = {
   onClose: () => void;
@@ -17,25 +16,23 @@ export function Success({ onClose }: SuccessProps) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-      
-      <div className="space-y-4">
-        <h3 className="font-monospace font-medium">Beep boop... Command processed!</h3>
+        <div className="space-y-4">
+          <h3 className="font-monospace font-medium">Beep boop... Command processed!</h3>
 
-        <Image
-          src={img}
-          alt="Monarch Agent"
-          width={180}
-          height={180}
-          className="mx-auto rounded-full"
-        />
-        
-        <p className="mx-auto max-w-lg text-gray-400 text-sm">
-          Monarch Agent is now ready to help optimize your positions. You can monitor its activity and performance in the Portfolio dashboard.
-        </p>
-      </div>
+          <Image
+            src={img}
+            alt="Monarch Agent"
+            width={180}
+            height={180}
+            className="mx-auto rounded-full"
+          />
 
+          <p className="mx-auto max-w-lg text-sm text-gray-400">
+            Monarch Agent is now ready to help optimize your positions. You can monitor its activity
+            and performance in the Portfolio dashboard.
+          </p>
+        </div>
       </motion.div>
-
 
       <Button onPress={onClose} variant="solid" className="mt-4">
         Done

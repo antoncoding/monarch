@@ -1,7 +1,5 @@
 import { useMemo } from 'react';
-import Link from 'next/link';
 import { FaCheckCircle } from 'react-icons/fa';
-import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
@@ -14,7 +12,6 @@ export function SuccessPage({
   goToAgentSetup: () => void;
 }) {
   const { selectedToken, resetOnboarding } = useOnboarding();
-  const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
     return selectedToken?.network === SupportedNetworks.Base;

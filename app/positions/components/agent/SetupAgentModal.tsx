@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RxCross2 } from 'react-icons/rx';
 import { Address, maxUint256 } from 'viem';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
+import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { SetupAgent } from './SetupAgent';
-import { Success } from './Success';
-import { Welcome } from './Welcome';
-import { SupportedNetworks } from '@/utils/networks';
+import { Success as SuccessContent } from './Success';
+import { Welcome as WelcomeContent } from './Welcome';
 
 export enum SetupStep {
   Welcome = 'welcome',
@@ -159,7 +158,7 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
               className="p-6"
             >
               {/* Step Content */}
-              {currentStep === SetupStep.Welcome && <Welcome onNext={handleNext} />}
+              {currentStep === SetupStep.Welcome && <WelcomeContent onNext={handleNext} />}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
@@ -173,7 +172,7 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
                   onBack={handleBack}
                 />
               )}
-              {currentStep === SetupStep.Success && <Success onClose={onClose} />}
+              {currentStep === SetupStep.Success && <SuccessContent onClose={onClose} />}
             </motion.div>
           </AnimatePresence>
         </div>

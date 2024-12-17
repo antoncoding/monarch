@@ -2,7 +2,6 @@ import React from 'react';
 import Image from 'next/image';
 import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance } from '@/utils/balance';
-import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';

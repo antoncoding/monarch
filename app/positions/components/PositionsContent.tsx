@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
@@ -16,12 +17,11 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
+import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import { SupportedNetworks } from '@/utils/networks';
-import { RiRobot2Line } from 'react-icons/ri';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);

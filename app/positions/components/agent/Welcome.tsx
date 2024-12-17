@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Button } from '@/components/common';
 
-const img = require('../../../../src/imgs/agent/agent-detailed.png');
+const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
 
 type WelcomeProps = {
   onNext: () => void;

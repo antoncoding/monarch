@@ -1,17 +1,17 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { Checkbox } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Checkbox } from '@nextui-org/react';
+import Image from 'next/image';
+import { formatUnits } from 'viem';
+import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
 import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
-import { Market, MarketPosition } from '@/utils/types';
-import { formatUnits } from 'viem';
-import { findToken } from '@/utils/tokens';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
-import Image from 'next/image';
-import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
+import { findToken } from '@/utils/tokens';
+import { Market, MarketPosition } from '@/utils/types';
 
 type MarketGroup = {
   loanAsset: {
@@ -32,6 +32,32 @@ type SetupAgentProps = {
   onBack: () => void;
   onNext: () => void;
 };
+
+// Helper component for market rows
+function MarketRow({
+  market,
+  isSelected,
+  onToggle,
+}: {
+  market: Market;
+  isSelected: boolean;
+  onToggle: (selected: boolean) => void;
+}) {
+  return (
+    <div className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2">
+      <div className="flex flex-1 items-center gap-3">
+        <Checkbox
+          isSelected={isSelected}
+          onValueChange={onToggle}
+          size="sm"
+          color="primary"
+          className="mr-0"
+        />
+        <MarketInfoBlockCompact market={market} className="flex-1" />
+      </div>
+    </div>
+  );
+}
 
 export function SetupAgent({
   positions,
@@ -97,7 +123,7 @@ export function SetupAgent({
   }, [allMarkets, positions]);
 
   // Pre-select active markets
-  useMemo(() => {
+  useEffect(() => {
     groupedMarkets.forEach((group) => {
       group.activeMarkets.forEach((market) => {
         if (!isMarketSelected(market)) {
@@ -113,25 +139,11 @@ export function SetupAgent({
     );
   };
 
-  if (groupedMarkets.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-center text-gray-400">
-          No active positions found. Please supply to some markets first before setting up the
-          Monarch Agent.
-        </p>
-        <Button variant="light" onPress={onBack} className="mt-4">
-          Back
-        </Button>
-      </div>
-    );
-  }
-
   const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(selectedCaps, onNext);
 
   const handleExecute = useCallback(() => {
     setShowProcessModal(true);
-    executeBatchSetupAgent(() => setShowProcessModal(false));
+    void executeBatchSetupAgent(() => setShowProcessModal(false));
   }, [executeBatchSetupAgent]);
 
   return (
@@ -279,32 +291,6 @@ export function SetupAgent({
         >
           Execute
         </Button>
-      </div>
-    </div>
-  );
-}
-
-// Helper component for market rows
-function MarketRow({
-  market,
-  isSelected,
-  onToggle,
-}: {
-  market: Market;
-  isSelected: boolean;
-  onToggle: (selected: boolean) => void;
-}) {
-  return (
-    <div className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2">
-      <div className="flex flex-1 items-center gap-3">
-        <Checkbox
-          isSelected={isSelected}
-          onValueChange={onToggle}
-          size="sm"
-          color="primary"
-          className="mr-0"
-        />
-        <MarketInfoBlockCompact market={market} className="flex-1" />
       </div>
     </div>
   );
