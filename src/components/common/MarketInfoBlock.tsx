@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance } from '@/utils/balance';
+import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
@@ -69,7 +70,7 @@ export function MarketInfoBlockCompact({
       className={`flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 transition-all duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-900/50 ${className}`}
     >
       <div className="flex items-center gap-3">
-        {collateralToken?.img && (
+        {collateralToken?.img ? (
           <div className="overflow-hidden rounded-full">
             <Image
               src={collateralToken.img}
@@ -78,6 +79,13 @@ export function MarketInfoBlockCompact({
               height={20}
               className="h-8 w-8 rounded-full object-cover"
             />
+          </div>
+        ) : (
+          <div
+            key={market.collateralAsset.address}
+            className="flex h-[32px] w-[32px] items-center justify-center rounded-full bg-gray-200 text-lg dark:bg-gray-700"
+          >
+            ?
           </div>
         )}
         <div className="flex flex-col">

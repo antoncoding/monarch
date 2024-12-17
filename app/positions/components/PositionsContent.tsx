@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
 import { TbReport } from 'react-icons/tb';
+import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Button } from '@/components/common/Button';
@@ -16,16 +17,17 @@ import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 import { MarketPosition } from '@/utils/types';
+import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import { SetupAgentModal } from './agent/SetupAgentModal';
-import { Address } from 'viem';
+import { SupportedNetworks } from '@/utils/networks';
+import { RiRobot2Line } from 'react-icons/ri';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
-  const [showSetupAgentModal, setShowSetupAgentModal] = useState<boolean>(true);
+  const [showSetupAgentModal, setShowSetupAgentModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
@@ -44,6 +46,10 @@ export default function Positions() {
   } = useUserPositionsWithEarning(account, false);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
+
+  const hasActivePositionOnBase = marketPositions?.some((position) => {
+    return position.market.morphoBlue.chain.id === SupportedNetworks.Base;
+  });
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -99,6 +105,19 @@ export default function Positions() {
               >
                 <FaPlus size={14} className="mr-2" />
                 New Position
+              </Button>
+            )}
+            {isOwner && hasActivePositionOnBase && (
+              <Button
+                variant="solid"
+                color="primary"
+                size="md"
+                className="font-zen"
+                isDisabled={account !== address}
+                onClick={() => setShowSetupAgentModal(true)}
+              >
+                <RiRobot2Line size={14} className="mr-2" />
+                Monarch Agent
               </Button>
             )}
           </div>

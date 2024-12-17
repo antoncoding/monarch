@@ -1,13 +1,10 @@
 import React from 'react';
-import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { AuthorizeAgentStep, MarketCap } from '@/hooks/useAuthorizeAgent';
+import { AuthorizeAgentStep } from '@/hooks/useAuthorizeAgent';
 
 type AgentSetupModalProps = {
-  caps: MarketCap[];
   currentStep: AuthorizeAgentStep;
-  onClose: () => void;
 };
 
 const steps = [
@@ -24,11 +21,7 @@ const steps = [
   },
 ];
 
-export function AgentSetupProcessModal({
-  caps,
-  currentStep,
-  onClose,
-}: AgentSetupModalProps): JSX.Element {
+export function AgentSetupProcessModal({ currentStep }: AgentSetupModalProps): JSX.Element {
   const getStepStatus = (stepKey: string) => {
     const currentIndex = steps.findIndex((step) => step.key === currentStep);
     const stepIndex = steps.findIndex((step) => step.key === stepKey);
@@ -56,14 +49,6 @@ export function AgentSetupProcessModal({
           exit={{ scale: 0.95 }}
           className="relative w-full max-w-lg rounded bg-white p-4 shadow-xl dark:bg-gray-900"
         >
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            <Cross1Icon className="h-4 w-4" />
-          </button>
-
           <div className="p-6">
             <h3 className="font-zen text-xl"> Setup Monarch Agent </h3>
             <p className="mt-1 text-sm text-gray-500">Setup Rebalance market caps</p>

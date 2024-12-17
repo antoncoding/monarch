@@ -3,10 +3,16 @@ import Link from 'next/link';
 import { FaCheckCircle } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
-import { useOnboarding } from './OnboardingContext';
 import { SupportedNetworks } from '@/utils/networks';
+import { useOnboarding } from './OnboardingContext';
 
-export function SuccessPage({ onClose, goToAgentSetup }: { onClose: () => void, goToAgentSetup: () => void }) {
+export function SuccessPage({
+  onClose,
+  goToAgentSetup,
+}: {
+  onClose: () => void;
+  goToAgentSetup: () => void;
+}) {
   const { selectedToken, resetOnboarding } = useOnboarding();
   const { address } = useAccount();
 

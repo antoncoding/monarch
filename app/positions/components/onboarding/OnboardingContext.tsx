@@ -37,7 +37,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
-  
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
   const canGoNext = useMemo(() => {

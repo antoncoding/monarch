@@ -1,13 +1,13 @@
 import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
+import { MarketPosition } from '@/utils/types';
 import { AssetSelection } from './AssetSelection';
 import { useOnboarding } from './OnboardingContext';
 import { ONBOARDING_STEPS } from './OnboardingContext';
 import { RiskSelection } from './RiskSelection';
 import { SetupPositions } from './SetupPositions';
 import { SuccessPage } from './SuccessPage';
-import { MarketPosition } from '@/utils/types';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
@@ -46,12 +46,12 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
 export function OnboardingModal({
   isOpen,
   onClose,
-  goToAgentSetup
+  goToAgentSetup,
 }: {
   isOpen: boolean;
   onClose: () => void;
   positions?: MarketPosition[];
-  goToAgentSetup: () => void
+  goToAgentSetup: () => void;
 }) {
   const { step } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
@@ -97,7 +97,7 @@ export function OnboardingModal({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              <CurrentStepComponent onClose={onClose} goToAgentSetup={goToAgentSetup}/>
+              <CurrentStepComponent onClose={onClose} goToAgentSetup={goToAgentSetup} />
             </motion.div>
           </AnimatePresence>
         </div>

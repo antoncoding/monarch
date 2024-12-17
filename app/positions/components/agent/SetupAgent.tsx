@@ -1,18 +1,26 @@
-import { useState, useMemo } from 'react';
-import { Button } from '@nextui-org/react';
-import { Market, MarketPosition } from '@/utils/types';
-import { MarketCap } from '@/hooks/useAuthorizeAgent';
-import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
+import { useState, useMemo, useCallback } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Checkbox } from '@nextui-org/react';
+import { Button } from '@/components/common/Button';
+import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
+import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
+import { Market, MarketPosition } from '@/utils/types';
+import { formatUnits } from 'viem';
+import { findToken } from '@/utils/tokens';
+import { SupportedNetworks } from '@/utils/networks';
+import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
+import Image from 'next/image';
+import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 
 type MarketGroup = {
   loanAsset: {
-    symbol: string;
     address: string;
+    symbol: string;
   };
-  chainId: number;
-  markets: Market[];
+  activeMarkets: Market[];
+  historicalMarkets: Market[];
+  otherMarkets: Market[];
 };
 
 type SetupAgentProps = {
@@ -21,8 +29,8 @@ type SetupAgentProps = {
   selectedCaps: MarketCap[];
   onAddMarket: (market: Market) => void;
   onRemoveMarket: (market: Market) => void;
-  onNext: () => void;
   onBack: () => void;
+  onNext: () => void;
 };
 
 export function SetupAgent({
@@ -31,119 +39,153 @@ export function SetupAgent({
   selectedCaps,
   onAddMarket,
   onRemoveMarket,
-  onNext,
   onBack,
+  onNext,
 }: SetupAgentProps) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-
-  // Get active positions (with positive supply)
-  const activePositions = useMemo(() => {
-    return positions?.filter((p) => BigInt(p.supplyShares) > 0) ?? [];
-  }, [positions]);
-
-  // Get unique loan assets from active positions
-  const activeLoanAssets = useMemo(() => {
-    const assets = new Set<string>();
-    activePositions.forEach((position) => {
-      assets.add(position.market.loanAsset.address.toLowerCase());
-    });
-    return Array.from(assets);
-  }, [activePositions]);
-
-  // Group markets by loan asset and chain, but only for active loan assets
-  const groupedMarkets = useMemo(() => {
-    const groups: { [key: string]: MarketGroup } = {};
-
-    allMarkets.forEach((market) => {
-      // Only include markets with loan assets that user has positions in
-      if (!activeLoanAssets.includes(market.loanAsset.address.toLowerCase())) {
-        return;
-      }
-
-      const key = `${market.loanAsset.address}-${market.morphoBlue.chain.id}`;
-      if (!groups[key]) {
-        groups[key] = {
-          loanAsset: market.loanAsset,
-          chainId: market.morphoBlue.chain.id,
-          markets: [],
-        };
-      }
-      groups[key].markets.push(market);
-    });
-
-    return Object.values(groups);
-  }, [allMarkets, activeLoanAssets]);
-
-  const toggleGroup = (key: string) => {
-    setExpandedGroups((prev) =>
-      prev.includes(key)
-        ? prev.filter((k) => k !== key)
-        : [...prev, key]
-    );
-  };
+  const [showAllMarkets, setShowAllMarkets] = useState(false);
+  const [showProcessModal, setShowProcessModal] = useState(false);
 
   const isMarketSelected = (market: Market) =>
     selectedCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey);
 
+  // Group markets by loan asset and categorize them
+  const groupedMarkets = useMemo(() => {
+    const groups: Record<string, MarketGroup> = {};
+
+    // First, identify active loan assets from positions
+    const activeLoanAssets = new Set<string>();
+    positions.forEach((position) => {
+      const supply = parseFloat(
+        formatUnits(BigInt(position.supplyAssets), position.market.loanAsset.decimals),
+      );
+      if (supply > 0) {
+        activeLoanAssets.add(position.market.loanAsset.address.toLowerCase());
+      }
+    });
+
+    // Only process markets for active loan assets
+    allMarkets.forEach((market) => {
+      const loanAssetKey = market.loanAsset.address.toLowerCase();
+      if (!activeLoanAssets.has(loanAssetKey)) return;
+
+      if (!groups[loanAssetKey]) {
+        groups[loanAssetKey] = {
+          loanAsset: market.loanAsset,
+          activeMarkets: [],
+          historicalMarkets: [],
+          otherMarkets: [],
+        };
+      }
+
+      const position = positions.find((p) => p.market.uniqueKey === market.uniqueKey);
+      if (position) {
+        const supply = parseFloat(
+          formatUnits(BigInt(position.supplyAssets), position.market.loanAsset.decimals),
+        );
+        if (supply > 0) {
+          groups[loanAssetKey].activeMarkets.push(market);
+        } else {
+          groups[loanAssetKey].historicalMarkets.push(market);
+        }
+      } else {
+        groups[loanAssetKey].otherMarkets.push(market);
+      }
+    });
+
+    return Object.values(groups);
+  }, [allMarkets, positions]);
+
+  // Pre-select active markets
+  useMemo(() => {
+    groupedMarkets.forEach((group) => {
+      group.activeMarkets.forEach((market) => {
+        if (!isMarketSelected(market)) {
+          onAddMarket(market);
+        }
+      });
+    });
+  }, [groupedMarkets]);
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
+
   if (groupedMarkets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-gray-400 text-center">
-          No active positions found. Please supply to some markets first before setting up the Monarch Agent.
+        <p className="text-center text-gray-400">
+          No active positions found. Please supply to some markets first before setting up the
+          Monarch Agent.
         </p>
-        <Button
-          variant="light"
-          onPress={onBack}
-          className="mt-4"
-        >
+        <Button variant="light" onPress={onBack} className="mt-4">
           Back
         </Button>
       </div>
     );
   }
 
+  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(selectedCaps, onNext);
+
+  const handleExecute = useCallback(() => {
+    setShowProcessModal(true);
+    executeBatchSetupAgent(() => setShowProcessModal(false));
+  }, [executeBatchSetupAgent]);
+
   return (
     <div className="flex flex-col gap-6">
-      {/* Groups */}
-      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 
-        scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-100 
-        dark:scrollbar-thumb-gray-500 dark:scrollbar-track-gray-800
-        hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-400">
+      <div className="flex items-center justify-between font-zen text-sm">
+        Monarch Agent can only reallocate your positions to markets you authorize it to!
+      </div>
+
+      <div
+        className="scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-100 
+        dark:scrollbar-thumb-gray-500 dark:scrollbar-track-gray-800 
+        hover:scrollbar-thumb-gray-500 dark:hover:scrollbar-thumb-gray-400 
+        max-h-[400px] space-y-4 overflow-y-auto pr-2"
+      >
         {groupedMarkets.map((group) => {
-          const groupKey = `${group.loanAsset.address}-${group.chainId}`;
+          const groupKey = group.loanAsset.address;
           const isExpanded = expandedGroups.includes(groupKey);
-          const selectedMarketsInGroup = group.markets.filter(isMarketSelected);
+          const selectedMarketsCount = [
+            ...group.activeMarkets,
+            ...group.historicalMarkets,
+            ...group.otherMarkets,
+          ].filter(isMarketSelected).length;
+
+          const loanAsset = findToken(group.loanAsset.address, SupportedNetworks.Base);
+          const loanAssetImg = loanAsset?.img ?? OracleVendorIcons[OracleVendors.Unknown];
 
           return (
             <div
               key={groupKey}
-              className="rounded-lg border border-divider bg-content1 overflow-hidden"
+              className="overflow-hidden rounded border border-divider bg-content1"
             >
-              {/* Group Header */}
+              {showProcessModal && <AgentSetupProcessModal currentStep={currentStep} />}
               <button
+                type="button"
                 onClick={() => toggleGroup(groupKey)}
-                className="w-full px-4 py-3 flex items-center justify-between hover:bg-content2 transition-colors"
+                className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-content2"
               >
                 <div className="flex items-center gap-4">
-                  <span className="font-medium">
-                    {group.loanAsset.symbol} Markets
-                  </span>
+                  <Image
+                    src={loanAssetImg}
+                    alt={group.loanAsset.symbol}
+                    width={24}
+                    height={24}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                  <span className="font-zen">{group.loanAsset.symbol} Markets</span>
                   <span className="text-sm text-gray-500">
-                    Chain ID: {group.chainId}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {selectedMarketsInGroup.length} market
-                    {selectedMarketsInGroup.length !== 1 ? 's' : ''} monitored
+                    Total selected: {selectedMarketsCount} market
+                    {selectedMarketsCount !== 1 ? 's' : ''}
                   </span>
                 </div>
-                {isExpanded ? (
-                  <ChevronUpIcon className="h-5 w-5" />
-                ) : (
-                  <ChevronDownIcon className="h-5 w-5" />
-                )}
+                {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
               </button>
 
-              {/* Expanded Content */}
               <AnimatePresence>
                 {isExpanded && (
                   <motion.div
@@ -153,34 +195,68 @@ export function SetupAgent({
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="px-4 py-3 space-y-2 bg-background/50">
-                      {group.markets.map((market) => {
-                        const isSelected = isMarketSelected(market);
-                        return (
-                          <div
-                            key={market.uniqueKey}
-                            className="flex items-center justify-between"
-                          >
-                            <MarketInfoBlockCompact
+                    <div className="space-y-4 bg-background/50 px-4 py-3">
+                      {/* Active Markets */}
+                      {group.activeMarkets.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-primary">Active Markets</h4>
+                          {group.activeMarkets.map((market) => (
+                            <MarketRow
+                              key={market.uniqueKey}
                               market={market}
-                              className="flex-1"
-                            />
-                            <Button
-                              variant={isSelected ? "bordered" : "solid"}
-                              color={isSelected ? "danger" : "primary"}
-                              size="sm"
-                              className="ml-4"
-                              onClick={() =>
-                                isSelected
-                                  ? onRemoveMarket(market)
-                                  : onAddMarket(market)
+                              isSelected={isMarketSelected(market)}
+                              onToggle={(selected) =>
+                                selected ? onAddMarket(market) : onRemoveMarket(market)
                               }
-                            >
-                              {isSelected ? "Remove" : "Add"}
-                            </Button>
-                          </div>
-                        );
-                      })}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Historical Markets */}
+                      {group.historicalMarkets.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-secondary">Previously Used</h4>
+                          {group.historicalMarkets.map((market) => (
+                            <MarketRow
+                              key={market.uniqueKey}
+                              market={market}
+                              isSelected={isMarketSelected(market)}
+                              onToggle={(selected) =>
+                                selected ? onAddMarket(market) : onRemoveMarket(market)
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Other Markets */}
+                      {group.otherMarkets.length > 0 && !showAllMarkets && (
+                        <Button
+                          variant="light"
+                          size="sm"
+                          onClick={() => setShowAllMarkets(true)}
+                          className="w-full"
+                        >
+                          Show More Markets
+                        </Button>
+                      )}
+
+                      {showAllMarkets && group.otherMarkets.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-gray-500">Other Available</h4>
+                          {group.otherMarkets.map((market) => (
+                            <MarketRow
+                              key={market.uniqueKey}
+                              market={market}
+                              isSelected={isMarketSelected(market)}
+                              onToggle={(selected) =>
+                                selected ? onAddMarket(market) : onRemoveMarket(market)
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -190,19 +266,45 @@ export function SetupAgent({
         })}
       </div>
 
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between">
+      {/* Footer */}
+      <div className="flex justify-between">
         <Button variant="light" onPress={onBack}>
           Back
         </Button>
         <Button
           variant="solid"
           color="primary"
-          onPress={onNext}
+          onPress={handleExecute}
           isDisabled={selectedCaps.length === 0}
         >
-          Next
+          Execute
         </Button>
+      </div>
+    </div>
+  );
+}
+
+// Helper component for market rows
+function MarketRow({
+  market,
+  isSelected,
+  onToggle,
+}: {
+  market: Market;
+  isSelected: boolean;
+  onToggle: (selected: boolean) => void;
+}) {
+  return (
+    <div className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2">
+      <div className="flex flex-1 items-center gap-3">
+        <Checkbox
+          isSelected={isSelected}
+          onValueChange={onToggle}
+          size="sm"
+          color="primary"
+          className="mr-0"
+        />
+        <MarketInfoBlockCompact market={market} className="flex-1" />
       </div>
     </div>
   );

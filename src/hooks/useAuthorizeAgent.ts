@@ -5,10 +5,10 @@ import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import monarchAgentAbi from '@/abis/monarch-agent-v1';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
-import { Market } from '@/utils/types';
 import { AGENT_CONTRACT, rebalancer } from '@/utils/monarch-agent';
+import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
+import { Market } from '@/utils/types';
 
 export enum AuthorizeAgentStep {
   Idle = 'idle',
@@ -68,128 +68,132 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
     onSuccess,
   });
 
-  const executeBatchSetupAgent = useCallback(async () => {
-    if (!account) {
-      return;
-    }
-    setIsConfirming(true);
+  const executeBatchSetupAgent = useCallback(
+    async (onError?: () => void) => {
+      if (!account) {
+        return;
+      }
+      setIsConfirming(true);
 
-    // multicall transactions
-    const transactions: `0x${string}`[] = [];
+      // multicall transactions
+      const transactions: `0x${string}`[] = [];
 
-    try {
-      // Step 2: Sign and authorize bundler if needed
-      setCurrentStep(AuthorizeAgentStep.Authorize);
-      if (isAuthorized === false) {
-        const domain = {
-          chainId: SupportedNetworks.Base,
-          verifyingContract: MORPHO as Address,
-        };
+      try {
+        // Step 2: Sign and authorize bundler if needed
+        setCurrentStep(AuthorizeAgentStep.Authorize);
+        if (isAuthorized === false) {
+          const domain = {
+            chainId: SupportedNetworks.Base,
+            verifyingContract: MORPHO as Address,
+          };
 
-        const types = {
-          Authorization: [
-            { name: 'authorizer', type: 'address' },
-            { name: 'authorized', type: 'address' },
-            { name: 'isAuthorized', type: 'bool' },
-            { name: 'nonce', type: 'uint256' },
-            { name: 'deadline', type: 'uint256' },
-          ],
-        };
+          const types = {
+            Authorization: [
+              { name: 'authorizer', type: 'address' },
+              { name: 'authorized', type: 'address' },
+              { name: 'isAuthorized', type: 'bool' },
+              { name: 'nonce', type: 'uint256' },
+              { name: 'deadline', type: 'uint256' },
+            ],
+          };
 
-        const deadline = Math.floor(Date.now() / 1000) + 3600;
+          const deadline = Math.floor(Date.now() / 1000) + 3600;
 
-        const value = {
-          authorizer: account,
-          authorized: AGENT_CONTRACT,
-          isAuthorized: true,
-          nonce: nonce,
-          deadline: BigInt(deadline),
-        };
+          const value = {
+            authorizer: account,
+            authorized: AGENT_CONTRACT,
+            isAuthorized: true,
+            nonce: nonce,
+            deadline: BigInt(deadline),
+          };
 
-        let signatureRaw;
-        try {
-          signatureRaw = await signTypedDataAsync({
-            domain,
-            types,
-            primaryType: 'Authorization',
-            message: value,
+          let signatureRaw;
+          try {
+            signatureRaw = await signTypedDataAsync({
+              domain,
+              types,
+              primaryType: 'Authorization',
+              message: value,
+            });
+          } catch (error) {
+            toast.error('Signature request was rejected or failed. Please try again.');
+            return;
+          }
+          const signature = parseSignature(signatureRaw);
+
+          const authorizationTx = encodeFunctionData({
+            abi: monarchAgentAbi,
+            functionName: 'setMorphoAuthorization',
+            args: [
+              {
+                authorizer: account as Address,
+                authorized: AGENT_CONTRACT,
+                isAuthorized: true,
+                nonce: BigInt(nonce ?? 0),
+                deadline: BigInt(deadline),
+              },
+              {
+                v: Number(signature.v),
+                r: signature.r,
+                s: signature.s,
+              },
+            ],
           });
-        } catch (error) {
-          toast.error('Signature request was rejected or failed. Please try again.');
-          return;
+
+          transactions.push(authorizationTx);
+
+          // wait 800ms to avoid rabby wallet issue
+          await new Promise((resolve) => setTimeout(resolve, 800));
         }
-        const signature = parseSignature(signatureRaw);
 
-        const authorizationTx = encodeFunctionData({
+        // Step 3: Execute multicall on MonarchAgentV1
+        setCurrentStep(AuthorizeAgentStep.Execute);
+
+        // add rebalancer if not set yet
+        if (rebalancerAddress !== rebalancer) {
+          const rebalancerTx = encodeFunctionData({
+            abi: monarchAgentAbi,
+            functionName: 'authorize',
+            args: [rebalancer],
+          });
+          transactions.push(rebalancerTx);
+        }
+
+        // batch config markets
+        const marketIds = marketCaps.map((market) => market.market.uniqueKey as `0x${string}`);
+        const caps = marketCaps.map((market) => market.amount);
+        const batchConfigData = encodeFunctionData({
           abi: monarchAgentAbi,
-          functionName: 'setMorphoAuthorization',
-          args: [
-            {
-              authorizer: account as Address,
-              authorized: AGENT_CONTRACT,
-              isAuthorized: true,
-              nonce: BigInt(nonce ?? 0),
-              deadline: BigInt(deadline),
-            },
-            {
-              v: Number(signature.v),
-              r: signature.r,
-              s: signature.s,
-            },
-          ],
+          functionName: 'batchConfigMarkets',
+          args: [marketIds, caps],
         });
+        transactions.push(batchConfigData);
 
-        transactions.push(authorizationTx);
-
-        // wait 800ms to avoid rabby wallet issue
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      }
-
-      // Step 3: Execute multicall on MonarchAgentV1
-      setCurrentStep(AuthorizeAgentStep.Execute);
-
-      // add rebalancer if not set yet
-      if (rebalancerAddress !== rebalancer) {
-        const rebalancerTx = encodeFunctionData({
+        // Execute all transactions
+        const multicallTx = (encodeFunctionData({
           abi: monarchAgentAbi,
-          functionName: 'authorize',
-          args: [rebalancer],
+          functionName: 'multicall',
+          args: [transactions],
+        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`;
+
+        await sendTransactionAsync({
+          account,
+          to: AGENT_CONTRACT,
+          data: multicallTx,
+          chainId: SupportedNetworks.Base,
         });
-        transactions.push(rebalancerTx);
+      } catch (error) {
+        console.error('Error during agent setup:', error);
+        onError?.();
+        toast.error('An error occurred during agent setup. Please try again.');
+        throw error;
+      } finally {
+        setIsConfirming(false);
+        setCurrentStep(AuthorizeAgentStep.Idle);
       }
-
-      // batch config markets
-      const marketIds = marketCaps.map((market) => market.market.uniqueKey as `0x${string}`);
-      const caps = marketCaps.map((market) => market.amount);
-      const batchConfigData = encodeFunctionData({
-        abi: monarchAgentAbi,
-        functionName: 'batchConfigMarkets',
-        args: [marketIds, caps],
-      });
-      transactions.push(batchConfigData);
-
-      // Execute all transactions
-      const multicallTx = (encodeFunctionData({
-        abi: monarchAgentAbi,
-        functionName: 'multicall',
-        args: [transactions],
-      }) + MONARCH_TX_IDENTIFIER) as `0x${string}`;
-
-      await sendTransactionAsync({
-        account,
-        to: AGENT_CONTRACT,
-        data: multicallTx,
-        chainId: SupportedNetworks.Base,
-      });
-    } catch (error) {
-      console.error('Error during rebalance:', error);
-      toast.error('An error occurred during rebalance. Please try again.');
-      throw error;
-    } finally {
-      setIsConfirming(false);
-      setCurrentStep(AuthorizeAgentStep.Idle);
-    }
-  }, [account, isAuthorized, nonce, signTypedDataAsync, sendTransactionAsync]);
+    },
+    [account, isAuthorized, nonce, signTypedDataAsync, sendTransactionAsync],
+  );
 
   return {
     executeBatchSetupAgent,

@@ -1,31 +1,36 @@
+import { useState } from 'react';
 import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
-import { useState } from 'react';
-import { Market, MarketPosition } from '@/utils/types';
-import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import { Address, maxUint256 } from 'viem';
-import { Success } from './Success';
-import { SetupAgent } from './SetupAgent';
-import { Welcome } from './Welcome';
-import useUserPositions from '@/hooks/useUserPositions';
 import { useMarkets } from '@/contexts/MarketsContext';
+import { MarketCap } from '@/hooks/useAuthorizeAgent';
+import useUserPositions from '@/hooks/useUserPositions';
+import { Market } from '@/utils/types';
+import { SetupAgent } from './SetupAgent';
+import { Success } from './Success';
+import { Welcome } from './Welcome';
+import { SupportedNetworks } from '@/utils/networks';
 
-type SetupStep = 'welcome' | 'setup' | 'success';
+export enum SetupStep {
+  Welcome = 'welcome',
+  Setup = 'setup',
+  Success = 'success',
+}
 
 const SETUP_STEPS = [
   {
-    id: 'welcome',
+    id: SetupStep.Welcome,
     title: 'Welcome to Monarch Agent',
-    description: 'Learn how Monarch Agent can help automate your positions',
+    description: 'Bee-bee-bee, Monarch Agent is here!',
   },
   {
-    id: 'setup',
+    id: SetupStep.Setup,
     title: 'Setup Markets',
     description: 'Choose which markets you want Monarch Agent to monitor',
   },
   {
-    id: 'success',
+    id: SetupStep.Success,
     title: 'Setup Complete',
     description: 'Your Monarch Agent is ready to go',
   },
@@ -36,8 +41,7 @@ function StepIndicator({ currentStep }: { currentStep: SetupStep }) {
     <div className="flex items-center justify-center gap-2">
       {SETUP_STEPS.map((step, index) => {
         const isCurrent = step.id === currentStep;
-        const isPast =
-          SETUP_STEPS.findIndex((s) => s.id === currentStep) > index;
+        const isPast = SETUP_STEPS.findIndex((s) => s.id === currentStep) > index;
 
         return (
           <div key={step.id} className="flex items-center">
@@ -63,17 +67,13 @@ type SetupAgentModalProps = {
   onClose: () => void;
 };
 
-export function SetupAgentModal({
-  account,
-  isOpen,
-  onClose,
-}: SetupAgentModalProps) {
-  const [currentStep, setCurrentStep] = useState<SetupStep>('welcome');
+export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalProps) {
+  const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Welcome);
   const [selectedCaps, setSelectedCaps] = useState<MarketCap[]>([]);
 
   const { data: positions } = useUserPositions(account, true);
 
-  const { markets: allMarkets } = useMarkets()
+  const { markets: allMarkets } = useMarkets();
 
   const currentStepIndex = SETUP_STEPS.findIndex((s) => s.id === currentStep);
 
@@ -102,9 +102,7 @@ export function SetupAgentModal({
   };
 
   const handleRemoveMarket = (market: Market) => {
-    setSelectedCaps((prev) =>
-      prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey)
-    );
+    setSelectedCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
 
   return (
@@ -138,23 +136,19 @@ export function SetupAgentModal({
           },
         },
       }}
+      closeButton={false}
     >
-      <ModalContent>
+      <ModalContent className="p-2">
         <ModalHeader className="flex justify-between">
           <div>
-            <h2 className="font-zen text-2xl font-normal">
-              {SETUP_STEPS[currentStepIndex].title}
-            </h2>
+            <h2 className="font-zen text-2xl font-normal">{SETUP_STEPS[currentStepIndex].title}</h2>
             <p className="mt-1 font-zen text-sm font-normal text-secondary">
               {SETUP_STEPS[currentStepIndex].description}
             </p>
           </div>
-          <Button isIconOnly onClick={onClose} className="bg-surface">
-            <RxCross2 />
-          </Button>
         </ModalHeader>
 
-        <div className="relative flex flex-col">
+        <div className="relative flex flex-col font-zen">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -165,13 +159,13 @@ export function SetupAgentModal({
               className="p-6"
             >
               {/* Step Content */}
-              {currentStep === 'welcome' && (
-                <Welcome onNext={handleNext} />
-              )}
-              {currentStep === 'setup' && (
+              {currentStep === SetupStep.Welcome && <Welcome onNext={handleNext} />}
+              {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
-                  allMarkets={allMarkets}
+                  allMarkets={allMarkets.filter(
+                    (m) => m.morphoBlue.chain.id === SupportedNetworks.Base,
+                  )}
                   selectedCaps={selectedCaps}
                   onAddMarket={handleAddMarket}
                   onRemoveMarket={handleRemoveMarket}
@@ -179,15 +173,13 @@ export function SetupAgentModal({
                   onBack={handleBack}
                 />
               )}
-              {currentStep === 'success' && (
-                <Success onClose={onClose} />
-              )}
+              {currentStep === SetupStep.Success && <Success onClose={onClose} />}
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Footer with Step Indicator */}
-        <div className="mt-6 pt-4 px-6 pb-6">
+        <div className="mt-6 px-6 pb-6 pt-4">
           <StepIndicator currentStep={currentStep} />
         </div>
       </ModalContent>
