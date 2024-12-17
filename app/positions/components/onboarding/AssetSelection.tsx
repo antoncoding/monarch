@@ -11,6 +11,7 @@ import { useUserBalances } from '@/hooks/useUserBalances';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
+import { Badge } from '@/components/common/Badge';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
@@ -146,10 +147,10 @@ export function AssetSelection() {
                           </div>
                         }
                       >
-                        <div className="flex gap-2 rounded bg-primary bg-opacity-50 px-1.5 py-0.5 text-xs text-gray-100">
+                        <Badge variant="success" className="gap-1">
                           🤖
-                          <span className="opacity-100">beta</span>
-                        </div>
+                          <span className="opacity-100">Agent Live</span>
+                        </Badge>
                       </Tooltip>
                     )}
                   </div>

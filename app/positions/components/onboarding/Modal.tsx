@@ -63,7 +63,7 @@ export function OnboardingModal({
       size="3xl"
       scrollBehavior="inside"
       classNames={{
-        base: 'bg-background',
+        base: 'bg-background dark:border border-gray-700 ',
         body: 'py-6',
         closeButton: 'hidden',
       }}

@@ -110,9 +110,9 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
       onClose={onClose}
       size="2xl"
       classNames={{
-        base: 'bg-background text-foreground',
+        base: 'bg-background text-foreground dark:border border-gray-700',
         header: 'border-b border-divider',
-        body: 'p-0',
+        body: 'p-4',
         closeButton: 'hover:bg-default-100',
       }}
       motionProps={{
@@ -137,7 +137,7 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
       }}
       closeButton={false}
     >
-      <ModalContent className="p-2">
+      <ModalContent className="p-4">
         <ModalHeader className="flex justify-between">
           <div>
             <h2 className="font-zen text-2xl font-normal">{SETUP_STEPS[currentStepIndex].title}</h2>

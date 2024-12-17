@@ -9,6 +9,7 @@ import { TbReport } from 'react-icons/tb';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Name } from '@/components/common/Name';
 import Header from '@/components/layout/header/Header';
@@ -94,10 +95,20 @@ export default function Positions() {
                 Report
               </Button>
             </Link>
+            {isOwner && hasActivePositionOnBase && (
+              <Button
+                size="md"
+                className="font-zen"
+                isDisabled={account !== address}
+                onClick={() => setShowSetupAgentModal(true)}
+              >
+                <RiRobot2Line size={14} className="mr-2" />
+                Monarch Agent <Badge variant="success">New</Badge>
+              </Button>
+            )}
             {isOwner && (
               <Button
-                variant="solid"
-                color="primary"
+                variant="cta"
                 size="md"
                 className="font-zen"
                 isDisabled={account !== address}
@@ -105,19 +116,6 @@ export default function Positions() {
               >
                 <FaPlus size={14} className="mr-2" />
                 New Position
-              </Button>
-            )}
-            {isOwner && hasActivePositionOnBase && (
-              <Button
-                variant="solid"
-                color="primary"
-                size="md"
-                className="font-zen"
-                isDisabled={account !== address}
-                onClick={() => setShowSetupAgentModal(true)}
-              >
-                <RiRobot2Line size={14} className="mr-2" />
-                Monarch Agent
               </Button>
             )}
           </div>
