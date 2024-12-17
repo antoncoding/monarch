@@ -99,7 +99,6 @@ export default function Positions() {
               <Button
                 size="md"
                 className="font-zen"
-                isDisabled={account !== address}
                 onClick={() => setShowSetupAgentModal(true)}
               >
                 <RiRobot2Line size={14} className="mr-2" />
@@ -111,7 +110,6 @@ export default function Positions() {
                 variant="cta"
                 size="md"
                 className="font-zen"
-                isDisabled={account !== address}
                 onClick={() => setShowOnboardingModal(true)}
               >
                 <FaPlus size={14} className="mr-2" />
