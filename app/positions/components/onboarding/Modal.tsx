@@ -7,9 +7,7 @@ import { ONBOARDING_STEPS } from './OnboardingContext';
 import { RiskSelection } from './RiskSelection';
 import { SetupPositions } from './SetupPositions';
 import { SuccessPage } from './SuccessPage';
-import { SetupAgent } from './SetupAgent';
 import { MarketPosition } from '@/utils/types';
-import { useMemo } from 'react';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
@@ -48,27 +46,17 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
 export function OnboardingModal({
   isOpen,
   onClose,
-  positions,
+  goToAgentSetup
 }: {
   isOpen: boolean;
   onClose: () => void;
   positions?: MarketPosition[];
+  goToAgentSetup: () => void
 }) {
-  const { step, showMonarchAgentSetup, selectedMarkets } = useOnboarding();
+  const { step } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
+
   const CurrentStepComponent = StepComponents[step];
-
-  const defaultMarketsForAgent = useMemo(() => {
-    const marketsInUse = positions?.map((p) => p.market) ?? [];
-    const allMarkets = [...selectedMarkets, ...marketsInUse];
-
-    // Deduplicate based on uniqueKey
-    const uniqueMarkets = allMarkets.filter(
-      (market, index, self) => index === self.findIndex((m) => m.uniqueKey === market.uniqueKey),
-    );
-
-    return uniqueMarkets;
-  }, [selectedMarkets, positions]);
 
   return (
     <Modal
@@ -87,14 +75,10 @@ export function OnboardingModal({
         <ModalHeader className="flex justify-between">
           <div>
             <h2 className="font-zen text-2xl font-normal">
-              {showMonarchAgentSetup
-                ? 'Monarch Agent Setup'
-                : ONBOARDING_STEPS[currentStepIndex].title}
+              {ONBOARDING_STEPS[currentStepIndex].title}
             </h2>
             <p className="mt-1 font-zen text-sm font-normal text-secondary">
-              {showMonarchAgentSetup
-                ? 'Try out the Monarch Agent feature on Base!'
-                : ONBOARDING_STEPS[currentStepIndex].description}
+              {ONBOARDING_STEPS[currentStepIndex].description}
             </p>
           </div>
           <Button isIconOnly onClick={onClose} className="bg-surface">
@@ -113,18 +97,14 @@ export function OnboardingModal({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              {showMonarchAgentSetup ? (
-                <SetupAgent onClose={onClose} defaultMarkets={defaultMarketsForAgent} />
-              ) : (
-                <CurrentStepComponent onClose={onClose} />
-              )}
+              <CurrentStepComponent onClose={onClose} goToAgentSetup={goToAgentSetup}/>
             </motion.div>
           </AnimatePresence>
         </div>
 
         {/* Footer with Step Indicator */}
         <div className="mt-6 pt-4">
-          {!showMonarchAgentSetup && <StepIndicator currentStep={step} />}
+          <StepIndicator currentStep={step} />
         </div>
       </ModalContent>
     </Modal>

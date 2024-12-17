@@ -22,14 +22,11 @@ type OnboardingContextType = {
   setSelectedMarkets: (markets: Market[]) => void;
   step: OnboardingStep;
   setStep: (step: OnboardingStep) => void;
-  showMonarchAgentSetup: boolean;
 
   canGoNext: boolean;
   goToNextStep: () => void;
   goToPrevStep: () => void;
   resetOnboarding: () => void;
-  goToAgentSetup: () => void;
-  finishAgentSetup: () => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -40,9 +37,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
-  // use a separate state to control if we should show the monarch agent setup content
-  const [showMonarchAgentSetup, setShowMonarchAgentSetup] = useState(false);
-
+  
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
   const canGoNext = useMemo(() => {
@@ -78,17 +73,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setStep('asset-selection');
   }, [setSelectedToken, setSelectedMarkets, setStep]);
 
-  const goToAgentSetup = useCallback(() => {
-    setShowMonarchAgentSetup(true);
-  }, [setShowMonarchAgentSetup]);
-
-  const finishAgentSetup = useCallback(() => {
-    setShowMonarchAgentSetup(false);
-    setSelectedToken(null);
-    setSelectedMarkets([]);
-    setStep('asset-selection');
-  }, [setShowMonarchAgentSetup]);
-
   const contextValue = useMemo(
     () => ({
       selectedToken,
@@ -104,9 +88,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
-      goToAgentSetup,
-      finishAgentSetup,
-      showMonarchAgentSetup,
     }),
     [
       selectedToken,
@@ -116,8 +97,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
-      goToAgentSetup,
-      finishAgentSetup,
     ],
   );
 

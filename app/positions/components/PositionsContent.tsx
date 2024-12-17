@@ -18,11 +18,14 @@ import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
 import { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
+import { SetupAgentModal } from './agent/SetupAgentModal';
+import { Address } from 'viem';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
+  const [showSetupAgentModal, setShowSetupAgentModal] = useState<boolean>(true);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
@@ -125,7 +128,15 @@ export default function Positions() {
         <OnboardingModal
           isOpen={showOnboardingModal}
           onClose={() => setShowOnboardingModal(false)}
-          positions={marketPositions}
+          goToAgentSetup={() => {
+            setShowSetupAgentModal(false);
+          }}
+        />
+
+        <SetupAgentModal
+          isOpen={showSetupAgentModal}
+          onClose={() => setShowSetupAgentModal(false)}
+          account={account as Address}
         />
 
         {isLoading ? (

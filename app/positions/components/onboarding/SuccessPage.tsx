@@ -6,8 +6,8 @@ import { Button } from '@/components/common/Button';
 import { useOnboarding } from './OnboardingContext';
 import { SupportedNetworks } from '@/utils/networks';
 
-export function SuccessPage({ onClose }: { onClose: () => void }) {
-  const { selectedToken, resetOnboarding, goToAgentSetup } = useOnboarding();
+export function SuccessPage({ onClose, goToAgentSetup }: { onClose: () => void, goToAgentSetup: () => void }) {
+  const { selectedToken, resetOnboarding } = useOnboarding();
   const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
