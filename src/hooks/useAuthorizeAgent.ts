@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { Address, encodeFunctionData, parseSignature } from 'viem';
-import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
+import { useAccount, useReadContract, useSignTypedData, useSwitchChain } from 'wagmi';
 import monarchAgentAbi from '@/abis/monarch-agent-v1';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -32,7 +32,9 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentStep, setCurrentStep] = useState<AuthorizeAgentStep>(AuthorizeAgentStep.Idle);
 
-  const { address: account } = useAccount();
+  const { switchChainAsync } = useSwitchChain()
+
+  const { address: account, chainId } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
 
   const { data: isAuthorized } = useReadContract({
@@ -73,6 +75,11 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
       if (!account) {
         return;
       }
+
+      if (chainId !== SupportedNetworks.Base) {
+        await switchChainAsync({ chainId: SupportedNetworks.Base });
+      }
+
       setIsConfirming(true);
 
       // multicall transactions
@@ -116,6 +123,7 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
               message: value,
             });
           } catch (error) {
+            console.log('Failed to sign authorization:', error);
             toast.error('Signature request was rejected or failed. Please try again.');
             return;
           }
@@ -200,6 +208,8 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
       sendTransactionAsync,
       marketCaps,
       rebalancerAddress,
+      chainId,
+      switchChainAsync,
     ],
   );
 
