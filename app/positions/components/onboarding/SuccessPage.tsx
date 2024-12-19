@@ -1,24 +1,31 @@
 import { useMemo } from 'react';
-import Link from 'next/link';
 import { FaCheckCircle } from 'react-icons/fa';
-import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
+import { SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
-// import { SupportedNetworks } from '@/utils/networks';
 
-export function SuccessPage({ onClose }: { onClose: () => void }) {
+export function SuccessPage({
+  onClose,
+  goToAgentSetup,
+}: {
+  onClose: () => void;
+  goToAgentSetup: () => void;
+}) {
   const { selectedToken, resetOnboarding } = useOnboarding();
-  const { address } = useAccount();
 
   const allowAgentSetting = useMemo(() => {
-    return false;
-    // TODO: enable for next release with agent
-    // return selectedToken?.network === SupportedNetworks.Base
+    return selectedToken?.network === SupportedNetworks.Base;
   }, [selectedToken?.network]);
 
   const handleFinished = () => {
     onClose();
     resetOnboarding();
+  };
+
+  const handleGoToAgent = () => {
+    onClose();
+    resetOnboarding();
+    goToAgentSetup();
   };
 
   return (
@@ -30,21 +37,18 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
         </div>
         <p className="max-w-md text-gray-600 dark:text-gray-300">
           Your {selectedToken?.symbol} has been successfully supplied to Morpho.{' '}
-          {allowAgentSetting &&
-            'You can set Monarch AutoPilot to automate reallocate your positions.'}
+          {allowAgentSetting && 'You can set Monarch Agent to automate reallocate your positions.'}
         </p>
       </div>
 
       <div className="mt-4 flex gap-4">
-        <Button variant="secondary" className="min-w-[120px] rounded" onClick={handleFinished}>
+        <Button variant="secondary" className="min-w-[120px]" onClick={handleFinished}>
           Close
         </Button>
         {allowAgentSetting && (
-          <Link href={`/positions/${address}`} className="no-underline">
-            <Button variant="cta" className="min-w-[120px] rounded">
-              Set AutoPilot
-            </Button>
-          </Link>
+          <Button variant="cta" className="min-w-[120px]" onClick={handleGoToAgent}>
+            Set Monarch Agent
+          </Button>
         )}
       </div>
     </div>

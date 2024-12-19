@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-// import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@nextui-org/tooltip';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
+import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -135,23 +136,22 @@ export function AssetSelection() {
 
                     {/* if base network, show agent badge */}
                     {token.network === SupportedNetworks.Base && (
-                      // <Tooltip
-                      //   content={
-                      //     <div className="flex flex-col gap-2 p-2 font-zen">
-                      //       <div className="text-base">Monarch Autopilot 🎉</div>
-                      //       <div className="text-sm">
-                      //         Monarch Autopilot is now in beta on Base! Setup the agent to start
-                      //         automating your reallocations.
-                      //       </div>
-                      //     </div>
-                      //   }
-                      // >
-                      //   <div className="flex gap-2 rounded bg-primary bg-opacity-50 px-1.5 py-0.5 text-xs text-gray-100">
-                      //     🤖
-                      //     <span className="opacity-100">beta</span>
-                      //   </div>
-                      // </Tooltip>
-                      <div />
+                      <Tooltip
+                        content={
+                          <div className="flex flex-col gap-2 p-2 font-zen">
+                            <div className="text-base">Monarch Autopilot 🎉</div>
+                            <div className="text-sm">
+                              Monarch Autopilot is now in beta on Base! Auto-reallocation enabled
+                              for positions created with this token.
+                            </div>
+                          </div>
+                        }
+                      >
+                        <Badge variant="success" className="gap-1">
+                          🤖
+                          <span className="opacity-100">Agent Live</span>
+                        </Badge>
+                      </Tooltip>
                     )}
                   </div>
                 </div>

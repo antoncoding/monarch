@@ -4,9 +4,12 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
+import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Name } from '@/components/common/Name';
 import Header from '@/components/layout/header/Header';
@@ -15,7 +18,9 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
+import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
+import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -23,6 +28,7 @@ export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
+  const [showSetupAgentModal, setShowSetupAgentModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
@@ -41,6 +47,10 @@ export default function Positions() {
   } = useUserPositionsWithEarning(account, false);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
+
+  const hasActivePositionOnBase = marketPositions?.some((position) => {
+    return position.market.morphoBlue.chain.id === SupportedNetworks.Base;
+  });
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -85,13 +95,21 @@ export default function Positions() {
                 Report
               </Button>
             </Link>
-            {isOwner && (
+            {isOwner && hasActivePositionOnBase && (
               <Button
-                variant="solid"
-                color="primary"
                 size="md"
                 className="font-zen"
-                isDisabled={account !== address}
+                onClick={() => setShowSetupAgentModal(true)}
+              >
+                <RiRobot2Line size={14} className="mr-2" />
+                Monarch Agent <Badge variant="success">New</Badge>
+              </Button>
+            )}
+            {isOwner && (
+              <Button
+                variant="cta"
+                size="md"
+                className="font-zen"
                 onClick={() => setShowOnboardingModal(true)}
               >
                 <FaPlus size={14} className="mr-2" />
@@ -125,6 +143,15 @@ export default function Positions() {
         <OnboardingModal
           isOpen={showOnboardingModal}
           onClose={() => setShowOnboardingModal(false)}
+          goToAgentSetup={() => {
+            setShowSetupAgentModal(true);
+          }}
+        />
+
+        <SetupAgentModal
+          isOpen={showSetupAgentModal}
+          onClose={() => setShowSetupAgentModal(false)}
+          account={account as Address}
         />
 
         {isLoading ? (

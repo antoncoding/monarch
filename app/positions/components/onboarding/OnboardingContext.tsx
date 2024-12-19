@@ -22,6 +22,7 @@ type OnboardingContextType = {
   setSelectedMarkets: (markets: Market[]) => void;
   step: OnboardingStep;
   setStep: (step: OnboardingStep) => void;
+
   canGoNext: boolean;
   goToNextStep: () => void;
   goToPrevStep: () => void;
@@ -87,7 +88,18 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToPrevStep,
       resetOnboarding,
     }),
-    [selectedToken, selectedMarkets, currentStep, canGoNext],
+    [
+      selectedToken,
+      selectedMarkets,
+      currentStep,
+      canGoNext,
+      goToNextStep,
+      goToPrevStep,
+      resetOnboarding,
+      setSelectedToken,
+      setSelectedMarkets,
+      setStep,
+    ],
   );
 
   return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;
