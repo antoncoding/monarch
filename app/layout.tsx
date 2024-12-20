@@ -28,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ClientProviders>
             <OnchainProviders>
-              {children}
+              <div className="pt-[120px]">
+                {children}
+              </div>
               <RiskNotificationModal />
             </OnchainProviders>
           </ClientProviders>
