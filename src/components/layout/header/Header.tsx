@@ -31,7 +31,11 @@ function Header({ ghost }: HeaderProps) {
   }, [ghost]);
 
   return (
-    <header data-scroll-state={scrollState} className="flex h-[120px] justify-center pt-8">
+    <header 
+      data-scroll-state={scrollState} 
+      className="fixed top-0 left-0 right-0 flex h-[120px] justify-center bg-main pt-8"
+      style={{ zIndex: 9999 }}
+    >
       <Menu />
     </header>
   );

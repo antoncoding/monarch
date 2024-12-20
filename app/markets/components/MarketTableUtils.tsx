@@ -88,8 +88,8 @@ export function TDTotalSupplyOrBorrow({
 }) {
   return (
     <td data-label={dataLabel} className="z-50">
-      <p>${formatReadable(Number(assetsUSD)) + '   '} </p>
-      <p className="opacity-70">{formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}</p>
+      <p className="z-50">${formatReadable(Number(assetsUSD)) + '   '} </p>
+      <p className="opacity-70 z-50">{formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}</p>
     </td>
   );
 }
