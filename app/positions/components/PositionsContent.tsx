@@ -96,11 +96,7 @@ export default function Positions() {
               </Button>
             </Link>
             {isOwner && hasActivePositionOnBase && (
-              <Button
-                size="md"
-                className="font-zen"
-                onClick={() => setShowSetupAgentModal(true)}
-              >
+              <Button size="md" className="font-zen" onClick={() => setShowSetupAgentModal(true)}>
                 <RiRobot2Line size={14} className="mr-2" />
                 Monarch Agent <Badge variant="success">New</Badge>
               </Button>

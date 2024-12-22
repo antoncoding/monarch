@@ -374,14 +374,17 @@ export function PositionsSummaryTable({
                         <MarketAssetIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                         <MarketOracleIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                         <MarketDebtIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                       </div>
                     </td>

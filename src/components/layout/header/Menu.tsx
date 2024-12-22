@@ -7,7 +7,7 @@ function Menu() {
       <div className="h-[72px] md:hidden">
         <NavbarMobile />
       </div>
-      <div className="container h-[72px] hidden md:block">
+      <div className="container hidden h-[72px] md:block">
         <Navbar />
       </div>
     </>

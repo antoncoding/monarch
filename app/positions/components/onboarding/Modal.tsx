@@ -66,8 +66,8 @@ export function OnboardingModal({
         base: 'bg-background dark:border border-gray-700',
         body: 'py-6',
         closeButton: 'hidden',
-        wrapper: 'z-50',  // Higher than header
-        backdrop: 'z-[45] bg-black/50',  // Between header and modal
+        wrapper: 'z-50', // Higher than header
+        backdrop: 'z-[45] bg-black/50', // Between header and modal
       }}
     >
       <ModalContent className="p-4">

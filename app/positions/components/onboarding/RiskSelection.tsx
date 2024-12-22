@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Checkbox } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
@@ -9,7 +10,6 @@ import { findToken, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import AssetFilter from 'app/markets/components/AssetFilter';
 import OracleFilter from 'app/markets/components/OracleFilter';
-import { Checkbox } from '@nextui-org/react';
 import {
   MarketDebtIndicator,
   MarketAssetIndicator,
@@ -161,23 +161,22 @@ export function RiskSelection() {
                           if (checked) {
                             setSelectedMarkets([...selectedMarkets, market]);
                           } else {
-                            setSelectedMarkets(selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey));
+                            setSelectedMarkets(
+                              selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey),
+                            );
                           }
                         }}
                       />
                       <div className="w-[280px]">
-                        <MarketInfoBlock
-                          market={market}
-                          className="border-none bg-transparent"
-                        />
+                        <MarketInfoBlock market={market} className="border-none bg-transparent" />
                       </div>
 
                       <div className="flex flex-1 items-center justify-end gap-4">
                         {/* Risk Indicators */}
                         <div className="flex w-[80px] justify-end gap-1">
-                          <MarketAssetIndicator market={market} />
-                          <MarketOracleIndicator market={market} />
-                          <MarketDebtIndicator market={market} />
+                          <MarketAssetIndicator market={market} mode="complex" />
+                          <MarketOracleIndicator market={market} mode="complex" />
+                          <MarketDebtIndicator market={market} mode="complex" />
                         </div>
 
                         {/* Total Supply */}

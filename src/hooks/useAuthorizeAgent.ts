@@ -32,7 +32,7 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentStep, setCurrentStep] = useState<AuthorizeAgentStep>(AuthorizeAgentStep.Idle);
 
-  const { switchChainAsync } = useSwitchChain()
+  const { switchChainAsync } = useSwitchChain();
 
   const { address: account, chainId } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
