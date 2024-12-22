@@ -279,3 +279,17 @@ export const marketHistoricalDataQuery = `
     }
   }
 `;
+
+export const userRebalancerInfoQuery = `
+  query UserRebalancerInfo($id: String!) {
+    user(id: $id) {
+      rebalancer
+      marketCaps {
+        nodes {
+          marketId
+          cap
+        }
+      }
+    }
+  }
+`;

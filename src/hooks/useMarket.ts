@@ -5,6 +5,7 @@ import { MORPHOTokenAddress } from '@/utils/tokens';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
+import { URLS } from '@/utils/urls';
 
 type GraphQLResponse = {
   data: {
@@ -17,7 +18,7 @@ const graphqlFetcher = async (
   query: string,
   variables: Record<string, unknown>,
 ): Promise<GraphQLResponse> => {
-  const response = await fetch('https://blue-api.morpho.org/graphql', {
+  const response = await fetch(URLS.MORPHO_BLUE_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),

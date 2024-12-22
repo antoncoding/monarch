@@ -363,3 +363,13 @@ export type MarketHistoricalData = {
   rates: MarketRates;
   volumes: MarketVolumes;
 };
+
+export interface MarketCap {
+  marketId: string;
+  cap: string;
+}
+
+export interface UserRebalancerInfo {
+  rebalancer: string;
+  marketCaps: MarketCap[];
+}

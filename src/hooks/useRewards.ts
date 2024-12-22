@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';
 import { RewardResponseType } from '@/utils/types';
+import { URLS } from '@/utils/urls';
 
 export type DistributionResponseType = {
   user: Address;
@@ -30,13 +31,13 @@ const useUserRewards = (user: string | undefined) => {
       try {
         setLoading(true);
         const [totalRewardsRes, distributionRes] = await Promise.all([
-          fetch(`https://rewards.morpho.org/v1/users/${user}/rewards`, {
+          fetch(`${URLS.MORPHO_REWARDS_API}/users/${user}/rewards`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
           }),
-          fetch(`https://rewards.morpho.org/v1/users/${user}/distributions`, {
+          fetch(`${URLS.MORPHO_REWARDS_API}/users/${user}/distributions`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',

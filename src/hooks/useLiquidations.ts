@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { URLS } from '@/utils/urls';
 
 const liquidationsQuery = `
   query getLiquidations($first: Int, $skip: Int) {
@@ -85,7 +86,7 @@ const useLiquidations = () => {
       let totalCount = 0;
 
       do {
-        const response = await fetch('https://blue-api.morpho.org/graphql', {
+        const response = await fetch(URLS.MORPHO_BLUE_API, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -18,6 +18,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
+import {useUserRebalancerInfo} from '@/hooks/useUserRebalancerInfo';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
@@ -33,6 +34,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
   const { address, isConnected } = useAccount();
+  const { rebalancerInfo } = useUserRebalancerInfo(address);
 
   const isOwner = useMemo(() => {
     if (!account) return false;
