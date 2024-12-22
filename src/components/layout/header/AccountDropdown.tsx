@@ -46,7 +46,7 @@ export function AccountDropdown() {
           className={clsx(
             'h-42 inline-flex w-60 flex-col items-start justify-start',
             'bg-surface rounded bg-opacity-90 px-6 pb-2 pt-6 shadow backdrop-blur-2xl',
-            'animate-in fade-in slide-in-from-right duration-300',
+            'animate-in fade-in slide-in-from-right duration-300 z-[100]',
           )}
           style={DropdownMenuContentStyle}
         >
