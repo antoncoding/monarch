@@ -143,8 +143,6 @@ export function SetupAgent({
     return Object.values(groups);
   }, [allMarkets, positions, userRebalancerInfo]);
 
-  console.log('groups', groupedMarkets)
-
   // Pre-select active markets only once when component mounts
   useEffect(() => {
     if (!hasPreselected && groupedMarkets.length > 0) {

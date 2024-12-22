@@ -24,6 +24,8 @@ import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
+import { IoRefreshOutline } from 'react-icons/io5';
+import { toast } from 'react-toastify';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
@@ -53,6 +55,10 @@ export default function Positions() {
   const hasActivePositionOnBase = marketPositions?.some((position) => {
     return position.market.morphoBlue.chain.id === SupportedNetworks.Base;
   });
+
+  const handleRefetch = () => {
+    refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
+  };
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -156,8 +162,21 @@ export default function Positions() {
         {isLoading ? (
           <LoadingScreen message="Loading Supplies..." />
         ) : !hasSuppliedMarkets ? (
-          <div className="flex flex-col items-center gap-8">
-            <EmptyScreen message="No open supplies. Start lending now!" />
+          <div className="container flex flex-col">
+            <div className="flex w-full justify-end">
+              <Button
+                variant="light"
+                size="sm"
+                onClick={handleRefetch}
+                className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                <IoRefreshOutline className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
+            </div>
+            <div className="flex justify-center">
+              <EmptyScreen message="No open supplies. Start lending now!" className='mt-2'/>
+            </div>
           </div>
         ) : (
           <div className="mt-4">
