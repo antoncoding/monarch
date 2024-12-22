@@ -1,3 +1,5 @@
+import { Address } from "viem";
+
 export type MarketPosition = {
   supplyShares: string;
   supplyAssets: string;
@@ -370,6 +372,6 @@ export interface MarketCap {
 }
 
 export interface UserRebalancerInfo {
-  rebalancer: string;
+  rebalancer: Address;
   marketCaps: MarketCap[];
 }

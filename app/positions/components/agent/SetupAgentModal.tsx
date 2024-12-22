@@ -6,7 +6,7 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
 import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import { Market, UserRebalancerInfo } from '@/utils/types';
 import { SetupAgent } from './SetupAgent';
 import { Success as SuccessContent } from './Success';
 import { Welcome as WelcomeContent } from './Welcome';
@@ -64,11 +64,12 @@ type SetupAgentModalProps = {
   account?: Address;
   isOpen: boolean;
   onClose: () => void;
+  userRebalancerInfo?: UserRebalancerInfo
 };
 
-export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalProps) {
+export function SetupAgentModal({ account, isOpen, onClose, userRebalancerInfo }: SetupAgentModalProps) {
   const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Welcome);
-  const [selectedCaps, setSelectedCaps] = useState<MarketCap[]>([]);
+  const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
 
   const { data: positions } = useUserPositions(account, true);
 
@@ -90,19 +91,22 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
     }
   };
 
-  const handleAddMarket = (market: Market) => {
-    setSelectedCaps((prev) => [
+
+  const addToPendingCaps = (market: Market, cap: bigint) => {
+    setPendingCaps((prev) => [
       ...prev,
       {
         market,
-        amount: maxUint256,
+        amount: cap,
       },
     ]);
   };
 
-  const handleRemoveMarket = (market: Market) => {
-    setSelectedCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
+  const removeFromCaps = (market: Market) => {
+      setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
+
+  console.log('pendingCaps', pendingCaps)
 
   return (
     <Modal
@@ -165,11 +169,12 @@ export function SetupAgentModal({ account, isOpen, onClose }: SetupAgentModalPro
                   allMarkets={allMarkets.filter(
                     (m) => m.morphoBlue.chain.id === SupportedNetworks.Base,
                   )}
-                  selectedCaps={selectedCaps}
-                  onAddMarket={handleAddMarket}
-                  onRemoveMarket={handleRemoveMarket}
+                  pendingCaps={pendingCaps}
+                  addToPendingCaps={addToPendingCaps}
+                  removeFromPendingCaps={removeFromCaps}
                   onNext={handleNext}
                   onBack={handleBack}
+                  userRebalancerInfo={userRebalancerInfo}
                 />
               )}
               {currentStep === SetupStep.Success && <SuccessContent onClose={onClose} />}

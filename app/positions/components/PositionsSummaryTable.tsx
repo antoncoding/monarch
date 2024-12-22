@@ -16,6 +16,7 @@ import {
   GroupedPosition,
   WarningWithDetail,
   MarketPositionWithEarnings,
+  UserRebalancerInfo,
 } from '@/utils/types';
 import {
   MarketAssetIndicator,
@@ -24,6 +25,7 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+import { RiRobot2Line } from 'react-icons/ri';
 
 export enum EarningsPeriod {
   All = 'all',
@@ -40,6 +42,7 @@ type PositionsSummaryTableProps = {
   setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
+  rebalancerInfo: UserRebalancerInfo | undefined;
 };
 
 export function PositionsSummaryTable({
@@ -50,12 +53,14 @@ export function PositionsSummaryTable({
   refetch,
   isRefetching,
   account,
+  rebalancerInfo
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
+
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
   const { address } = useAccount();
 
@@ -137,6 +142,14 @@ export function PositionsSummaryTable({
           acc.push(groupedPosition);
         }
 
+        // only push if the position has > 0 supply, earning or is in rebalancer info
+        if (
+          Number(position.supplyShares) === 0 &&
+          !rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
+        ) {
+          return acc;
+        }
+
         groupedPosition.markets.push(position);
 
         groupedPosition.allWarnings = [
@@ -174,8 +187,9 @@ export function PositionsSummaryTable({
 
         return acc;
       }, [])
+      .filter((groupedPosition) => groupedPosition.totalSupply > 0)
       .sort((a, b) => b.totalSupply - a.totalSupply);
-  }, [marketPositions]);
+  }, [marketPositions, rebalancerInfo]);
 
   const processedPositions = useMemo(() => {
     return groupedPositions.map((position) => {
@@ -355,13 +369,16 @@ export function PositionsSummaryTable({
                     <td data-label="Collateral">
                       <div className="flex items-center justify-center gap-1">
                         {groupedPosition.collaterals.length > 0 ? (
-                          groupedPosition.collaterals.map((collateral, index) => (
+                          groupedPosition.collaterals
+                            .sort((a, b) => b.amount - a.amount)
+                            .map((collateral, index) => (
                             <TokenIcon
                               key={`${collateral.address}-${index}`}
                               address={collateral.address}
                               chainId={groupedPosition.chainId}
                               width={20}
                               height={20}
+                              opacity={collateral.amount > 0 ? 1 : 0.5}
                             />
                           ))
                         ) : (

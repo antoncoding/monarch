@@ -3,7 +3,7 @@ import { Checkbox } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { formatUnits } from 'viem';
+import { formatUnits, maxUint256 } from 'viem';
 import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
@@ -11,13 +11,17 @@ import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
-import { Market, MarketPosition } from '@/utils/types';
+import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
 
 type MarketGroup = {
   loanAsset: {
     address: string;
     symbol: string;
   };
+
+  // setup already: this includes markets that have been authorized for agent
+  authorizedMarkets: Market[];
+  // have not setup yet, but currently acitve so should be consider priority
   activeMarkets: Market[];
   historicalMarkets: Market[];
   otherMarkets: Market[];
@@ -26,9 +30,10 @@ type MarketGroup = {
 type SetupAgentProps = {
   positions: MarketPosition[];
   allMarkets: Market[];
-  selectedCaps: MarketCap[];
-  onAddMarket: (market: Market) => void;
-  onRemoveMarket: (market: Market) => void;
+  userRebalancerInfo?: UserRebalancerInfo;
+  pendingCaps: MarketCap[];
+  addToPendingCaps: (market: Market, cap: bigint) => void;
+  removeFromPendingCaps: (market: Market) => void;
   onBack: () => void;
   onNext: () => void;
 };
@@ -62,9 +67,10 @@ function MarketRow({
 export function SetupAgent({
   positions,
   allMarkets,
-  selectedCaps,
-  onAddMarket,
-  onRemoveMarket,
+  userRebalancerInfo,
+  pendingCaps,
+  addToPendingCaps,
+  removeFromPendingCaps,
   onBack,
   onNext,
 }: SetupAgentProps) {
@@ -73,8 +79,12 @@ export function SetupAgent({
   const [showAllMarkets, setShowAllMarkets] = useState(false);
   const [showProcessModal, setShowProcessModal] = useState(false);
 
-  const isMarketSelected = (market: Market) =>
-    selectedCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey);
+  const isInPending = (market: Market) =>
+    pendingCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount > 0);
+
+  // determine if a pre-authorized market is in pending remove
+  const isInPendingRemove = (market: Market) =>
+    pendingCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount === BigInt(0));
 
   // Group markets by loan asset and categorize them
   const groupedMarkets = useMemo(() => {
@@ -99,12 +109,22 @@ export function SetupAgent({
       if (!groups[loanAssetKey]) {
         groups[loanAssetKey] = {
           loanAsset: market.loanAsset,
+          authorizedMarkets: [],
           activeMarkets: [],
           historicalMarkets: [],
           otherMarkets: [],
         };
       }
 
+      const authorized = userRebalancerInfo?.marketCaps.find(
+        (c) => c.marketId.toLowerCase() === market.uniqueKey.toLowerCase(),
+      )?.cap;
+      if (authorized) {
+        groups[loanAssetKey].authorizedMarkets.push(market);
+        return;
+      }
+
+      // only process un-authorized markets
       const position = positions.find((p) => p.market.uniqueKey === market.uniqueKey);
       if (position) {
         const supply = parseFloat(
@@ -121,21 +141,24 @@ export function SetupAgent({
     });
 
     return Object.values(groups);
-  }, [allMarkets, positions]);
+  }, [allMarkets, positions, userRebalancerInfo]);
+
+  console.log('groups', groupedMarkets)
 
   // Pre-select active markets only once when component mounts
   useEffect(() => {
     if (!hasPreselected && groupedMarkets.length > 0) {
       groupedMarkets.forEach((group) => {
+        // pre-select active markets but not already authorized
         group.activeMarkets.forEach((market) => {
-          if (!isMarketSelected(market)) {
-            onAddMarket(market);
+          if (!isInPending(market)) {
+            addToPendingCaps(market, maxUint256);
           }
         });
       });
       setHasPreselected(true);
     }
-  }, [hasPreselected, groupedMarkets, isMarketSelected, onAddMarket]);
+  }, [hasPreselected, groupedMarkets, isInPending, addToPendingCaps]);
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) =>
@@ -143,7 +166,7 @@ export function SetupAgent({
     );
   };
 
-  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(selectedCaps, onNext);
+  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(pendingCaps, onNext);
 
   const handleExecute = useCallback(() => {
     setShowProcessModal(true);
@@ -153,7 +176,7 @@ export function SetupAgent({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between font-zen text-sm">
-        Monarch Agent can only reallocate your positions to markets you authorize it to!
+        Monarch Agent can only reallocate funds among markets you authorize it to!
       </div>
 
       <div
@@ -165,11 +188,14 @@ export function SetupAgent({
         {groupedMarkets.map((group) => {
           const groupKey = group.loanAsset.address;
           const isExpanded = expandedGroups.includes(groupKey);
-          const selectedMarketsCount = [
+          
+          const numMarketsToAdd = [
             ...group.activeMarkets,
             ...group.historicalMarkets,
             ...group.otherMarkets,
-          ].filter(isMarketSelected).length;
+          ].filter(isInPending).length;
+
+          const numMarketsToRemove = group.authorizedMarkets.filter(isInPending).length;
 
           const loanAsset = findToken(group.loanAsset.address, SupportedNetworks.Base);
           const loanAssetImg = loanAsset?.img ?? OracleVendorIcons[OracleVendors.Unknown];
@@ -195,8 +221,8 @@ export function SetupAgent({
                   />
                   <span className="font-zen">{group.loanAsset.symbol} Markets</span>
                   <span className="text-sm text-gray-500">
-                    Total selected: {selectedMarketsCount} market
-                    {selectedMarketsCount !== 1 ? 's' : ''}
+                    Total selected: {numMarketsToAdd} market
+                    {numMarketsToAdd !== 1 ? 's' : ''}
                   </span>
                 </div>
                 {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -212,6 +238,24 @@ export function SetupAgent({
                     className="overflow-hidden"
                   >
                     <div className="space-y-4 bg-background/50 px-4 py-3">
+
+                      {/* Authorized markets Markets */}
+                      {group.authorizedMarkets.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-secondary">Authorized</h4>
+                          {group.authorizedMarkets.map((market) => (
+                            <MarketRow
+                              key={market.uniqueKey}
+                              market={market}
+                              isSelected={!isInPendingRemove(market)}
+                              onToggle={(selected) =>
+                                selected ? removeFromPendingCaps(market) : addToPendingCaps(market, BigInt(0))
+                              }
+                            />
+                          ))}
+                        </div>
+                      )}
+
                       {/* Active Markets */}
                       {group.activeMarkets.length > 0 && (
                         <div className="space-y-2">
@@ -220,9 +264,9 @@ export function SetupAgent({
                             <MarketRow
                               key={market.uniqueKey}
                               market={market}
-                              isSelected={isMarketSelected(market)}
+                              isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? onAddMarket(market) : onRemoveMarket(market)
+                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
                               }
                             />
                           ))}
@@ -237,9 +281,9 @@ export function SetupAgent({
                             <MarketRow
                               key={market.uniqueKey}
                               market={market}
-                              isSelected={isMarketSelected(market)}
+                              isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? onAddMarket(market) : onRemoveMarket(market)
+                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
                               }
                             />
                           ))}
@@ -265,9 +309,9 @@ export function SetupAgent({
                             <MarketRow
                               key={market.uniqueKey}
                               market={market}
-                              isSelected={isMarketSelected(market)}
+                              isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? onAddMarket(market) : onRemoveMarket(market)
+                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
                               }
                             />
                           ))}
@@ -291,7 +335,7 @@ export function SetupAgent({
           variant="solid"
           color="primary"
           onPress={handleExecute}
-          isDisabled={selectedCaps.length === 0}
+          isDisabled={pendingCaps.length === 0}
         >
           Execute
         </Button>

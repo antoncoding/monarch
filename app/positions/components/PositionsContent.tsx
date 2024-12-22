@@ -17,7 +17,7 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
-import useUserPositionsWithEarning from '@/hooks/useUserPositionsWithEarning';
+import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import {useUserRebalancerInfo} from '@/hooks/useUserRebalancerInfo';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
@@ -46,7 +46,7 @@ export default function Positions() {
     isRefetching,
     positions: marketPositions,
     refetch,
-  } = useUserPositionsWithEarning(account, false);
+  } = useUserPositionsSummaryData(account);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
@@ -150,6 +150,7 @@ export default function Positions() {
           isOpen={showSetupAgentModal}
           onClose={() => setShowSetupAgentModal(false)}
           account={account as Address}
+          userRebalancerInfo={rebalancerInfo}
         />
 
         {isLoading ? (
@@ -168,6 +169,7 @@ export default function Positions() {
               setSelectedPosition={setSelectedPosition}
               refetch={refetch}
               isRefetching={isRefetching}
+              rebalancerInfo={rebalancerInfo}
             />
           </div>
         )}
