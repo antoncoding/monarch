@@ -39,7 +39,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
             </Link>
           ) : (
             <div style={{ maxWidth: 250 }} className="flex justify-center">
-              <AccountConnect />
+              <AccountConnect onConnectPath={path} />
             </div>
           )}
         </div>

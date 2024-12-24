@@ -94,10 +94,7 @@ export const sections = [
           />
           <Card
             title="Considerations"
-            items={[
-              'Requires market risk knowledge',
-              'Higher complexity',
-            ]}
+            items={['Requires market risk knowledge', 'Higher complexity']}
           />
         </div>
       </>
@@ -113,7 +110,8 @@ export const sections = [
         <p>
           <span className="text-xl font-bold">Introducing Monarch Agent</span>
           <br />
-          The Monarch Agent is your personal companion that helps optimize your lending strategy across Morpho Blue markets.
+          The Monarch Agent is your personal companion that helps optimize your lending strategy
+          across Morpho Blue markets.
         </p>
         <div className="mt-4 flex flex-col gap-4 md:flex-row">
           <Card
@@ -122,7 +120,7 @@ export const sections = [
               'Automated position rebalancing',
               'Customizable market caps',
               'Granular market authorization',
-              'Risk-controlled automation'
+              'Risk-controlled automation',
             ]}
           />
           <Card
@@ -131,7 +129,7 @@ export const sections = [
               'Select markets to authorize',
               'Set maximum allocation caps',
               'Agent optimizes within limits',
-              'Modify permissions anytime'
+              'Modify permissions anytime',
             ]}
           />
         </div>

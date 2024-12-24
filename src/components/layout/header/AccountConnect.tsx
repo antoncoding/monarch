@@ -1,15 +1,30 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { useAccountEffect } from 'wagmi';
 import { Button } from '@/components/common';
 import { AccountDropdown } from './AccountDropdown';
 
 /**
- * AccountConnect
- *  - Connects to the wallet
- *  - Disconnects from the wallet
- *  - Displays the wallet network
+ *
+ * @returns
  */
-function AccountConnect() {
+function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
+  const router = useRouter();
+
+  useAccountEffect({
+    onConnect: ({ address, isReconnected }) => {
+      console.log('isReconnected', isReconnected, onConnectPath);
+
+      // Your on-connect logic here
+      if (onConnectPath && !isReconnected) {
+        toast.success('Address connected, redirecting...', { toastId: 'address-connected' });
+        router.push(`/${onConnectPath}/${address}`);
+      }
+    },
+  });
+
   return (
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, authenticationStatus, mounted }) => {

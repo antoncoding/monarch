@@ -63,7 +63,7 @@ export default function NavbarMobile() {
             </li>
           </ul>
           <div className="mx-2 mt-4">
-            <AccountConnect />
+            <AccountConnect onConnectPath="positions" />
           </div>
         </div>
       </nav>
