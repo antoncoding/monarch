@@ -120,7 +120,7 @@ export function PositionsSummaryTable({
         (position) =>
           BigInt(position.supplyShares) > 0 ||
           rebalancerInfo?.marketCaps.some(
-            (c) => c.marketId === position.market.uniqueKey && BigInt(c.cap) > 0,
+            (c) => c.marketId === position.market.uniqueKey,
           ),
       )
       .reduce((acc: GroupedPosition[], position) => {
