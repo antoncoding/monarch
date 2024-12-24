@@ -284,11 +284,9 @@ export const userRebalancerInfoQuery = `
   query UserRebalancerInfo($id: String!) {
     user(id: $id) {
       rebalancer
-      marketCaps {
-        nodes {
-          marketId
-          cap
-        }
+      marketCaps (where: {cap_gt: 0}) {
+        marketId
+        cap
       }
     }
   }

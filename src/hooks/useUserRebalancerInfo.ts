@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { UserRebalancerInfo } from '@/utils/types';
 import { URLS } from '@/utils/urls';
+import { userRebalancerInfoQuery } from '@/graphql/queries';
 
 export function useUserRebalancerInfo(account: string | undefined) {
   const [loading, setLoading] = useState(true);
@@ -21,17 +22,8 @@ export function useUserRebalancerInfo(account: string | undefined) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: `
-            query {
-              user(id: "${account}") {
-                rebalancer
-                marketCaps (where: {cap_gt: 0}) {
-                  marketId
-                  cap
-                }
-              }
-            }
-          `,
+          query: userRebalancerInfoQuery,
+          variables: { id: account.toLowerCase() },
         }),
       });
 
