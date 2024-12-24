@@ -110,8 +110,6 @@ export function SetupAgentModal({
     setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
 
-  console.log('pendingCaps', pendingCaps);
-
   return (
     <Modal
       isOpen={isOpen}

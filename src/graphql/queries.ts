@@ -288,6 +288,9 @@ export const userRebalancerInfoQuery = `
         marketId
         cap
       }
+      transactions {
+        transactionHash
+      }
     }
   }
 `;

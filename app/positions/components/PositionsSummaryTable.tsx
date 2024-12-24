@@ -119,9 +119,7 @@ export function PositionsSummaryTable({
       .filter(
         (position) =>
           BigInt(position.supplyShares) > 0 ||
-          rebalancerInfo?.marketCaps.some(
-            (c) => c.marketId === position.market.uniqueKey,
-          ),
+          rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey),
       )
       .reduce((acc: GroupedPosition[], position) => {
         const loanAssetAddress = position.market.loanAsset.address;

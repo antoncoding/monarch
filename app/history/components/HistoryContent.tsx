@@ -5,10 +5,13 @@ import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserPositions from '@/hooks/useUserPositions';
+import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { HistoryTable } from './HistoryTable';
 
 export default function HistoryContent({ account }: { account: string }) {
   const { loading, history } = useUserPositions(account);
+
+  const { rebalancerInfo } = useUserRebalancerInfo(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -24,7 +27,7 @@ export default function HistoryContent({ account }: { account: string }) {
           </div>
         ) : (
           <div className="mt-4">
-            <HistoryTable history={history} />
+            <HistoryTable history={history} rebalancerInfo={rebalancerInfo} />
           </div>
         )}
 

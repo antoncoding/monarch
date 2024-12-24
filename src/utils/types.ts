@@ -374,4 +374,7 @@ export type MarketCap = {
 export type UserRebalancerInfo = {
   rebalancer: Address;
   marketCaps: MarketCap[];
+  transactions: {
+    transactionHash: string;
+  }[];
 };

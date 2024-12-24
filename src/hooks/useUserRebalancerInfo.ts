@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { userRebalancerInfoQuery } from '@/graphql/queries';
 import { UserRebalancerInfo } from '@/utils/types';
 import { URLS } from '@/utils/urls';
-import { userRebalancerInfoQuery } from '@/graphql/queries';
 
 export function useUserRebalancerInfo(account: string | undefined) {
   const [loading, setLoading] = useState(true);
