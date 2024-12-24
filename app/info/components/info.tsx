@@ -6,9 +6,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@nextui-org/react';
 import Image from 'next/image';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Badge } from '@/components/common/Badge';
 import Header from '@/components/layout/header/Header';
 import { sections } from './sectionData';
-import { Badge } from '@/components/common/Badge';
 
 function InfoPage() {
   const [currentSection, setCurrentSection] = useState(0);

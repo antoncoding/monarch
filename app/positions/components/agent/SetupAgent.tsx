@@ -145,6 +145,7 @@ export function SetupAgent({
 
   // Pre-select active markets only once when component mounts
   useEffect(() => {
+    let mounted = true;
     if (!hasPreselected && groupedMarkets.length > 0) {
       groupedMarkets.forEach((group) => {
         // pre-select active markets but not already authorized
@@ -154,8 +155,14 @@ export function SetupAgent({
           }
         });
       });
-      setHasPreselected(true);
+      if (mounted) {
+        setHasPreselected(true);
+      }
     }
+
+    return () => {
+      mounted = false;
+    };
   }, [hasPreselected, groupedMarkets, isInPending, addToPendingCaps]);
 
   const toggleGroup = (key: string) => {
