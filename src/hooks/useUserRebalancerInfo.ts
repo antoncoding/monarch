@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { URLS } from '@/utils/urls';
 import { UserRebalancerInfo } from '@/utils/types';
+import { URLS } from '@/utils/urls';
 
 export function useUserRebalancerInfo(account: string | undefined) {
   const [loading, setLoading] = useState(true);
@@ -25,11 +25,9 @@ export function useUserRebalancerInfo(account: string | undefined) {
             query {
               user(id: "${account}") {
                 rebalancer
-                marketCaps {
-                  nodes {
-                    marketId
-                    cap
-                  }
+                marketCaps (where: {cap_gt: 0}) {
+                  marketId
+                  cap
                 }
               }
             }
@@ -37,13 +35,10 @@ export function useUserRebalancerInfo(account: string | undefined) {
         }),
       });
 
-      const json = await response.json();
-      
+      const json = (await response.json()) as { data?: { user?: UserRebalancerInfo } };
+
       if (json.data?.user) {
-        setData({
-          rebalancer: json.data.user.rebalancer,
-          marketCaps: json.data.user.marketCaps.nodes,
-        });
+        setData(json.data.user);
       }
       setError(null);
     } catch (err) {

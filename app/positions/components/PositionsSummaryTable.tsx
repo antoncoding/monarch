@@ -25,7 +25,6 @@ import {
 } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
-import { RiRobot2Line } from 'react-icons/ri';
 
 export enum EarningsPeriod {
   All = 'all',
@@ -53,7 +52,7 @@ export function PositionsSummaryTable({
   refetch,
   isRefetching,
   account,
-  rebalancerInfo
+  rebalancerInfo,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -117,6 +116,13 @@ export function PositionsSummaryTable({
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions
+      .filter(
+        (position) =>
+          BigInt(position.supplyShares) > 0 ||
+          rebalancerInfo?.marketCaps.some(
+            (c) => c.marketId === position.market.uniqueKey && BigInt(c.cap) > 0,
+          ),
+      )
       .reduce((acc: GroupedPosition[], position) => {
         const loanAssetAddress = position.market.loanAsset.address;
         const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -372,15 +378,15 @@ export function PositionsSummaryTable({
                           groupedPosition.collaterals
                             .sort((a, b) => b.amount - a.amount)
                             .map((collateral, index) => (
-                            <TokenIcon
-                              key={`${collateral.address}-${index}`}
-                              address={collateral.address}
-                              chainId={groupedPosition.chainId}
-                              width={20}
-                              height={20}
-                              opacity={collateral.amount > 0 ? 1 : 0.5}
-                            />
-                          ))
+                              <TokenIcon
+                                key={`${collateral.address}-${index}`}
+                                address={collateral.address}
+                                chainId={groupedPosition.chainId}
+                                width={20}
+                                height={20}
+                                opacity={collateral.amount > 0 ? 1 : 0.5}
+                              />
+                            ))
                         ) : (
                           <span className="text-sm text-gray-500">No known collaterals</span>
                         )}

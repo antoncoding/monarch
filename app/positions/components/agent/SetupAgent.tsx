@@ -84,7 +84,9 @@ export function SetupAgent({
 
   // determine if a pre-authorized market is in pending remove
   const isInPendingRemove = (market: Market) =>
-    pendingCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount === BigInt(0));
+    pendingCaps.some(
+      (cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount === BigInt(0),
+    );
 
   // Group markets by loan asset and categorize them
   const groupedMarkets = useMemo(() => {
@@ -92,11 +94,9 @@ export function SetupAgent({
 
     // First, identify active loan assets from positions
     const activeLoanAssets = new Set<string>();
+
     positions.forEach((position) => {
-      const supply = parseFloat(
-        formatUnits(BigInt(position.supplyAssets), position.market.loanAsset.decimals),
-      );
-      if (supply > 0) {
+      if (BigInt(position.supplyShares) > 0) {
         activeLoanAssets.add(position.market.loanAsset.address.toLowerCase());
       }
     });
@@ -186,14 +186,14 @@ export function SetupAgent({
         {groupedMarkets.map((group) => {
           const groupKey = group.loanAsset.address;
           const isExpanded = expandedGroups.includes(groupKey);
-          
+
           const numMarketsToAdd = [
             ...group.activeMarkets,
             ...group.historicalMarkets,
             ...group.otherMarkets,
           ].filter(isInPending).length;
 
-          const numMarketsToRemove = group.authorizedMarkets.filter(isInPending).length;
+          const numMarketsToRemove = group.authorizedMarkets.filter(isInPendingRemove).length;
 
           const loanAsset = findToken(group.loanAsset.address, SupportedNetworks.Base);
           const loanAssetImg = loanAsset?.img ?? OracleVendorIcons[OracleVendors.Unknown];
@@ -219,8 +219,19 @@ export function SetupAgent({
                   />
                   <span className="font-zen">{group.loanAsset.symbol} Markets</span>
                   <span className="text-sm text-gray-500">
-                    Total selected: {numMarketsToAdd} market
-                    {numMarketsToAdd !== 1 ? 's' : ''}
+                    Authorized: {group.authorizedMarkets.length}{' '}
+                    {numMarketsToAdd > 0 && (
+                      <span className="text-sm text-green-700 dark:text-green-300">
+                        (+ {numMarketsToAdd})
+                      </span>
+                    )}
+                    {numMarketsToRemove > 0 && (
+                      <span className="text-sm text-red-700 dark:text-red-300">
+                        (- {numMarketsToRemove})
+                      </span>
+                    )}{' '}
+                    market
+                    {group.authorizedMarkets.length !== 1 ? 's' : ''}
                   </span>
                 </div>
                 {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
@@ -236,7 +247,6 @@ export function SetupAgent({
                     className="overflow-hidden"
                   >
                     <div className="space-y-4 bg-background/50 px-4 py-3">
-
                       {/* Authorized markets Markets */}
                       {group.authorizedMarkets.length > 0 && (
                         <div className="space-y-2">
@@ -247,7 +257,9 @@ export function SetupAgent({
                               market={market}
                               isSelected={!isInPendingRemove(market)}
                               onToggle={(selected) =>
-                                selected ? removeFromPendingCaps(market) : addToPendingCaps(market, BigInt(0))
+                                selected
+                                  ? removeFromPendingCaps(market)
+                                  : addToPendingCaps(market, BigInt(0))
                               }
                             />
                           ))}
@@ -264,7 +276,9 @@ export function SetupAgent({
                               market={market}
                               isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
+                                selected
+                                  ? addToPendingCaps(market, maxUint256)
+                                  : removeFromPendingCaps(market)
                               }
                             />
                           ))}
@@ -281,7 +295,9 @@ export function SetupAgent({
                               market={market}
                               isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
+                                selected
+                                  ? addToPendingCaps(market, maxUint256)
+                                  : removeFromPendingCaps(market)
                               }
                             />
                           ))}
@@ -309,7 +325,9 @@ export function SetupAgent({
                               market={market}
                               isSelected={isInPending(market)}
                               onToggle={(selected) =>
-                                selected ? addToPendingCaps(market, maxUint256) : removeFromPendingCaps(market)
+                                selected
+                                  ? addToPendingCaps(market, maxUint256)
+                                  : removeFromPendingCaps(market)
                               }
                             />
                           ))}

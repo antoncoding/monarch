@@ -1,4 +1,4 @@
-import { Address } from "viem";
+import { Address } from 'viem';
 
 export type MarketPosition = {
   supplyShares: string;
@@ -366,12 +366,12 @@ export type MarketHistoricalData = {
   volumes: MarketVolumes;
 };
 
-export interface MarketCap {
+export type MarketCap = {
   marketId: string;
   cap: string;
-}
+};
 
-export interface UserRebalancerInfo {
+export type UserRebalancerInfo = {
   rebalancer: Address;
   marketCaps: MarketCap[];
-}
+};

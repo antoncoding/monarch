@@ -17,5 +17,13 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
     return <div className="rounded-full bg-gray-300" style={{ width, height }} />;
   }
 
-  return <Image src={token.img} alt={token.symbol || 'Token'} width={width} height={height} style={{ opacity }} />;
+  return (
+    <Image
+      src={token.img}
+      alt={token.symbol || 'Token'}
+      width={width}
+      height={height}
+      style={{ opacity }}
+    />
+  );
 }

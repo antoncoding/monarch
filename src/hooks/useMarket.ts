@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
+import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
-import { URLS } from '@/utils/urls';
 
 type GraphQLResponse = {
   data: {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, ModalContent, ModalHeader } from '@nextui-org/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Address, maxUint256 } from 'viem';
+import { Address } from 'viem';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
@@ -64,10 +64,15 @@ type SetupAgentModalProps = {
   account?: Address;
   isOpen: boolean;
   onClose: () => void;
-  userRebalancerInfo?: UserRebalancerInfo
+  userRebalancerInfo?: UserRebalancerInfo;
 };
 
-export function SetupAgentModal({ account, isOpen, onClose, userRebalancerInfo }: SetupAgentModalProps) {
+export function SetupAgentModal({
+  account,
+  isOpen,
+  onClose,
+  userRebalancerInfo,
+}: SetupAgentModalProps) {
   const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Welcome);
   const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
 
@@ -91,7 +96,6 @@ export function SetupAgentModal({ account, isOpen, onClose, userRebalancerInfo }
     }
   };
 
-
   const addToPendingCaps = (market: Market, cap: bigint) => {
     setPendingCaps((prev) => [
       ...prev,
@@ -103,10 +107,10 @@ export function SetupAgentModal({ account, isOpen, onClose, userRebalancerInfo }
   };
 
   const removeFromCaps = (market: Market) => {
-      setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
+    setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
 
-  console.log('pendingCaps', pendingCaps)
+  console.log('pendingCaps', pendingCaps);
 
   return (
     <Modal

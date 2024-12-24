@@ -4,8 +4,10 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { IoRefreshOutline } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
+import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
@@ -18,14 +20,12 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
 import { WithdrawModal } from '@/components/withdrawModal';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
-import {useUserRebalancerInfo} from '@/hooks/useUserRebalancerInfo';
+import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import { IoRefreshOutline } from 'react-icons/io5';
-import { toast } from 'react-toastify';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
@@ -53,7 +53,10 @@ export default function Positions() {
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
   const hasActivePositionOnBase = marketPositions?.some((position) => {
-    return position.market.morphoBlue.chain.id === SupportedNetworks.Base;
+    return (
+      position.market.morphoBlue.chain.id === SupportedNetworks.Base &&
+      BigInt(position.supplyShares) > 0
+    );
   });
 
   const handleRefetch = () => {
@@ -160,7 +163,7 @@ export default function Positions() {
         />
 
         {isLoading ? (
-          <LoadingScreen message="Loading Supplies..." />
+          <LoadingScreen message="Loading Supplies..." className="mt-10" />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
@@ -175,7 +178,7 @@ export default function Positions() {
               </Button>
             </div>
             <div className="flex justify-center">
-              <EmptyScreen message="No open supplies. Start lending now!" className='mt-2'/>
+              <EmptyScreen message="No open supplies. Start lending now!" className="mt-2" />
             </div>
           </div>
         ) : (

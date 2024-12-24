@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { URLS } from '@/utils/urls';
+import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [loading, setLoading] = useState(true);
