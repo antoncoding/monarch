@@ -74,8 +74,8 @@ export function MarketInfoBlockCompact({
             <Image
               src={collateralToken.img}
               alt={market.collateralAsset.symbol}
-              width={20}
-              height={20}
+              width={18}
+              height={18}
               className="h-8 w-8 rounded-full object-cover"
             />
           </div>
@@ -89,7 +89,7 @@ export function MarketInfoBlockCompact({
         )}
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="min-w-[100px] font-medium">{market.collateralAsset.symbol}</span>
+            <span className="font-sm min-w-[100px]">{market.collateralAsset.symbol}</span>
             <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
               {formatUnits(BigInt(market.lltv), 16)}% LTV
             </span>

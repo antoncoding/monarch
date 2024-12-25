@@ -1,14 +1,17 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalances } from '@/hooks/useUserBalances';
+import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
@@ -109,7 +112,7 @@ export function AssetSelection() {
               role="button"
               key={`${token.symbol}-${token.network}`}
               onClick={() => handleTokenSelect(token)}
-              className="group relative flex items-start gap-4 rounded border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary hover:shadow-lg dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
+              className="group relative flex items-start gap-4 rounded border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition-transform duration-300 group-hover:scale-110 dark:bg-gray-700">
@@ -137,20 +140,18 @@ export function AssetSelection() {
                     {/* if base network, show agent badge */}
                     {token.network === SupportedNetworks.Base && (
                       <Tooltip
+                        className="max-w-[400px] rounded-sm"
                         content={
-                          <div className="flex flex-col gap-2 p-2 font-zen">
-                            <div className="text-base">Monarch Autopilot 🎉</div>
-                            <div className="text-sm">
-                              Monarch Autopilot is now in beta on Base! Auto-reallocation enabled
-                              for positions created with this token.
-                            </div>
-                          </div>
+                          <TooltipContent
+                            icon={<RiRobot2Line size={16} />}
+                            title="Monarch Agents"
+                            detail="Monarch agents is now in beta on Base! Auto-reallocation enabled for positions created with this token."
+                          />
                         }
                       >
-                        <Badge variant="success" className="gap-1">
-                          🤖
-                          <span className="opacity-100">Agent Live</span>
-                        </Badge>
+                        <span className="flex items-center">
+                          <Badge variant="success">🤖 beta</Badge>
+                        </span>
                       </Tooltip>
                     )}
                   </div>
@@ -158,7 +159,8 @@ export function AssetSelection() {
 
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400 transition-opacity duration-300 group-hover:opacity-80">
-                    Balance: {formatUnits(BigInt(token.balance), token.decimals)} {token.symbol}
+                    Balance: {formatReadable(formatUnits(BigInt(token.balance), token.decimals))}{' '}
+                    {token.symbol}
                   </p>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">

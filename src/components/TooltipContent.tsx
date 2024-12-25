@@ -23,7 +23,7 @@ export function TooltipContent({ icon, title, detail, className = '' }: TooltipC
   // Complex tooltip with additional details
   return (
     <div className={`flex rounded-sm p-4 opacity-80 ${className}`}>
-      <div className="flex w-full gap-2">
+      <div className="flex w-full gap-4">
         {icon && <div className="flex-shrink-0 self-center">{icon}</div>}
         <div className="flex flex-col gap-1">
           {title && <div className="font-zen font-bold">{title}</div>}

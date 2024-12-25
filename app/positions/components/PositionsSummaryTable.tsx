@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
+import { PiHandCoins } from 'react-icons/pi';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
+import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import {
@@ -299,7 +301,16 @@ export function PositionsSummaryTable({
               <th className="text-center">
                 <span className="inline-flex items-center gap-1">
                   Interest Accrued ({earningsPeriod})
-                  <Tooltip content="Interest accrued by opened positions">
+                  <Tooltip
+                    className="max-w-[500px] rounded-sm"
+                    content={
+                      <TooltipContent
+                        title="Interest Accrued"
+                        detail="This amount is the sum of interest accrued from all active positions for the selected period. If you want a detailed breakdown including closed positions, go to Report"
+                        icon={<PiHandCoins size={16} />}
+                      />
+                    }
+                  >
                     <div className="cursor-help">
                       <BsQuestionCircle size={14} className="text-gray-400" />
                     </div>
