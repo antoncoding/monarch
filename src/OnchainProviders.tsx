@@ -25,25 +25,23 @@ function OnchainProviders({ children }: Props) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider
-            theme={{
-              lightMode: lightTheme({
-                accentColor: '#f45f2d',
-                borderRadius: 'small',
-              }),
-              darkMode: darkTheme({
-                accentColor: '#f45f2d',
-                borderRadius: 'small',
-              }),
-            }}
-            modalSize="compact"
-          >
-            <ConnectRedirectProvider>
-              {children}
-            </ConnectRedirectProvider>
-          </RainbowKitProvider>
-        </QueryClientProvider>
-      </WagmiProvider>
+        <RainbowKitProvider
+          theme={{
+            lightMode: lightTheme({
+              accentColor: '#f45f2d',
+              borderRadius: 'small',
+            }),
+            darkMode: darkTheme({
+              accentColor: '#f45f2d',
+              borderRadius: 'small',
+            }),
+          }}
+          modalSize="compact"
+        >
+          <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 }
 

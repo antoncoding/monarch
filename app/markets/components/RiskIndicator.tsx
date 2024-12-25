@@ -1,9 +1,9 @@
 import { Tooltip } from '@nextui-org/tooltip';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
+import { TooltipContent } from '@/components/TooltipContent';
 import { WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
-import { TooltipContent } from '@/components/TooltipContent';
 
 type RiskFlagProps = {
   level: 'green' | 'yellow' | 'red';

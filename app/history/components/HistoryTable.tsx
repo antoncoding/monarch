@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMemo, useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Chip, Link, Pagination, Tooltip } from '@nextui-org/react';
+import { Chip, Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
@@ -369,15 +369,9 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                       {tx.data.market.loanAsset.symbol}
                     </span>
                     {isAgent && (
-                      <Tooltip
-                        content={
-                          <div className="p-4 ">This transaction was executed by Monarch Agent</div>
-                        }
-                      >
-                        <Badge size="sm">
-                          <RiRobot2Line />
-                        </Badge>
-                      </Tooltip>
+                      <Badge size="sm">
+                        <RiRobot2Line />
+                      </Badge>
                     )}
                   </div>
                 </TableCell>

@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
@@ -347,13 +346,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
               <div className="flex items-start justify-between">
                 <p className="font-zen text-sm opacity-50">Market ID:</p>
-                <a className='group flex items-center gap-1 no-underline hover:underline pr-1' 
-                  href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`} 
-                  target='_blank'
+                <a
+                  className="group flex items-center gap-1 pr-1 no-underline hover:underline"
+                  href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                  target="_blank"
                 >
-                  <p className="text-right text-sm">
-                    {market.uniqueKey.slice(2, 8)}
-                  </p>
+                  <p className="text-right text-sm">{market.uniqueKey.slice(2, 8)}</p>
                   <ExternalLinkIcon />
                 </a>
               </div>
@@ -371,7 +369,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               <div className="flex items-start justify-between">
                 <p className="font-zen text-sm opacity-50">IRM:</p>
                 <a
-                  className="group flex items-center gap-1 no-underline hover:underline pr-1"
+                  className="group flex items-center gap-1 pr-1 no-underline hover:underline"
                   href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
                   target="_blank"
                 >
@@ -386,19 +384,20 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
               <div className="flex items-start justify-between">
                 <p className="font-zen text-sm opacity-50">Total Supply:</p>
-                
+
                 <p className="text-right text-sm">
-                  {formatReadable(formatBalance(
-                    market.state.supplyAssets,
-                    market.loanAsset.decimals,
-                  ))}
+                  {formatReadable(
+                    formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
+                  )}
                 </p>
               </div>
-            
+
               <div className="flex items-start justify-between">
                 <p className="font-zen text-sm opacity-50">Liquidity:</p>
                 <p className="text-right font-zen text-sm">
-                  {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+                  {formatReadable(
+                    formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
+                  )}
                 </p>
               </div>
 

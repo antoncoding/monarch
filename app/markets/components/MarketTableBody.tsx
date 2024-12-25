@@ -6,6 +6,7 @@ import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { Button } from '@/components/common/Button';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -148,7 +149,14 @@ export function MarketTableBody({
                     </Tooltip>
                   )}
                   {item.isProtectedByLiquidationBots && (
-                    <Tooltip content="This market has on-chain liquidation events performed by liquidation bots">
+                    <Tooltip
+                      content={
+                        <TooltipContent
+                          icon={<FaShieldAlt size={16} className="text-primary text-opacity-50" />}
+                          detail="This market has on-chain liquidation events performed by liquidation bots"
+                        />
+                      }
+                    >
                       <div>
                         <FaShieldAlt size={16} className="text-primary text-opacity-50" />
                       </div>
