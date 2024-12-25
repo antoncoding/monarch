@@ -3,6 +3,7 @@ import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { WarningWithDetail } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
+import { TooltipContent } from '@/components/TooltipContent';
 
 type RiskFlagProps = {
   level: 'green' | 'yellow' | 'red';
@@ -49,33 +50,19 @@ export function RiskIndicator({
   warningDetail,
 }: RiskFlagProps) {
   const styles = levelToStyle(level);
+  const icon = levelToIcon(level);
 
-  const simpleContent = (
-    <div className={`flex items-center gap-2 rounded-sm ${styles.text} p-2`}>
-      {levelToIcon(level)}
-      <span>{description}</span>
-    </div>
-  );
-
-  const complexContent = warningDetail ? (
-    <div className={`flex items-center rounded-sm ${styles.text} p-4 opacity-80`}>
-      <div className="flex items-start gap-2">
-        {levelToIcon(level)}
-        <div>
-          {description && <div className="font-zen font-medium">{description}</div>}
-          <div className="font-zen text-sm">{warningDetail.description}</div>
-        </div>
-      </div>
-    </div>
-  ) : (
-    simpleContent
+  const tooltipContent = (
+    <TooltipContent
+      icon={icon}
+      title={description}
+      detail={mode === 'complex' ? warningDetail?.description : undefined}
+      className={styles.text}
+    />
   );
 
   return (
-    <Tooltip
-      content={mode === 'complex' ? complexContent : simpleContent}
-      className="max-w-[300px] rounded-sm"
-    >
+    <Tooltip content={tooltipContent} className="max-w-[300px] rounded-sm">
       <div className="gap flex">
         <div className={`h-4 w-[4px] ${styles.bar}`} />
       </div>
