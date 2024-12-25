@@ -16,8 +16,8 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
   useAccountEffect({
     onConnect: ({ address, isReconnected }) => {
       if (redirectPath && !isReconnected) {
-        toast.success('Address connected, redirecting...', { toastId: 'address-connected' });
         router.push(`/${redirectPath}/${address}`);
+        toast.success('Address connected, redirecting...', { toastId: 'address-connected' })
         // Reset the path after redirect
         setRedirectPath(undefined);
       }

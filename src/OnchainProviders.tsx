@@ -25,7 +25,6 @@ function OnchainProviders({ children }: Props) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <ConnectRedirectProvider>
           <RainbowKitProvider
             theme={{
               lightMode: lightTheme({
@@ -39,11 +38,12 @@ function OnchainProviders({ children }: Props) {
             }}
             modalSize="compact"
           >
-            {children}
+            <ConnectRedirectProvider>
+              {children}
+            </ConnectRedirectProvider>
           </RainbowKitProvider>
-        </ConnectRedirectProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
   );
 }
 
