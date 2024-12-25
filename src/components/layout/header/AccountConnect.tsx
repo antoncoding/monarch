@@ -1,9 +1,7 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
-import { useAccountEffect } from 'wagmi';
 import { Button } from '@/components/common';
+import { useConnectRedirect } from '@/components/providers/ConnectRedirectProvider';
 import { AccountDropdown } from './AccountDropdown';
 
 /**
@@ -11,19 +9,7 @@ import { AccountDropdown } from './AccountDropdown';
  * @returns
  */
 function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
-  const router = useRouter();
-
-  useAccountEffect({
-    onConnect: ({ address, isReconnected }) => {
-      console.log('isReconnected', isReconnected, onConnectPath);
-
-      // Your on-connect logic here
-      if (onConnectPath && !isReconnected) {
-        toast.success('Address connected, redirecting...', { toastId: 'address-connected' });
-        router.push(`/${onConnectPath}/${address}`);
-      }
-    },
-  });
+  const { setRedirectPath } = useConnectRedirect();
 
   return (
     <ConnectButton.Custom>
@@ -34,6 +20,11 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
           account &&
           chain &&
           (!authenticationStatus || authenticationStatus === 'authenticated');
+
+        const handleClicked = () => {
+          setRedirectPath(onConnectPath);
+          openConnectModal();
+        };
 
         return (
           <div
@@ -50,7 +41,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
             {(() => {
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal} type="button" variant="cta">
+                  <Button onClick={handleClicked} type="button" variant="cta">
                     Connect
                   </Button>
                 );

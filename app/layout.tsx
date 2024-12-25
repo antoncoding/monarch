@@ -6,8 +6,8 @@ import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
+import { ThemeProviders } from '../src/components/providers/ThemeProvider';
 import { inter, zen, monospace } from './fonts';
-import { Providers } from './providers';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -25,14 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
       <body>
-        <Providers>
-          <ClientProviders>
-            <OnchainProviders>
+        <ThemeProviders>
+          <OnchainProviders>
+            <ClientProviders>
               {children}
               <RiskNotificationModal />
-            </OnchainProviders>
-          </ClientProviders>
-        </Providers>
+            </ClientProviders>
+          </OnchainProviders>
+        </ThemeProviders>
       </body>
       <GoogleAnalytics />
     </html>
