@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition, UserTransaction } from '@/utils/types';
+import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
@@ -31,7 +32,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
 
         // Fetch position data from both networks
         const [responseMainnet, responseBase] = await Promise.all([
-          fetch('https://blue-api.morpho.org/graphql', {
+          fetch(URLS.MORPHO_BLUE_API, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -44,7 +45,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
               },
             }),
           }),
-          fetch('https://blue-api.morpho.org/graphql', {
+          fetch(URLS.MORPHO_BLUE_API, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -39,7 +39,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
             </Link>
           ) : (
             <div style={{ maxWidth: 250 }} className="flex justify-center">
-              <AccountConnect />
+              <AccountConnect onConnectPath={path} />
             </div>
           )}
         </div>
@@ -70,7 +70,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
                   toast.error('Invalid address');
                 }
               }}
-              className="bg-monarch-orange justify-center p-6 text-center text-sm duration-300 ease-in-out hover:scale-110 hover:opacity-100"
+              className="bg-monarch-orange justify-center p-6 text-center text-sm duration-100 ease-in-out hover:opacity-100"
             >
               <ArrowRightIcon />{' '}
             </button>

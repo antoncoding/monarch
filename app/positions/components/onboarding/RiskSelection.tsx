@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Checkbox } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
@@ -83,14 +84,6 @@ export function RiskSelection() {
     window.open(marketPath, '_blank');
   };
 
-  const toggleMarketSelection = (market: Market) => {
-    if (selectedMarkets.some((m) => m.uniqueKey === market.uniqueKey)) {
-      setSelectedMarkets(selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey));
-    } else {
-      setSelectedMarkets([...selectedMarkets, market]);
-    }
-  };
-
   return (
     <div className="flex h-full flex-col">
       {/* Input Section */}
@@ -159,29 +152,35 @@ export function RiskSelection() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    onClick={() => toggleMarketSelection(market)}
-                    className={`relative cursor-pointer rounded p-1 transition-all duration-200 ease-in-out ${
-                      index === 0 ? 'mt-2' : ''
-                    } ${isSelected ? 'bg-hovered border-2' : ''}`}
+                    className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2"
                   >
-                    <div className="flex w-full items-center justify-between pr-2">
-                      <div className="min-w-[300px] pr-4">
-                        <MarketInfoBlock
-                          market={market}
-                          className={`border-none ${isSelected ? 'bg-hovered' : 'bg-surface'} `}
-                        />
+                    <div className="flex flex-1 items-center gap-3">
+                      <Checkbox
+                        isSelected={isSelected}
+                        onValueChange={(checked) => {
+                          if (checked) {
+                            setSelectedMarkets([...selectedMarkets, market]);
+                          } else {
+                            setSelectedMarkets(
+                              selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey),
+                            );
+                          }
+                        }}
+                      />
+                      <div className="w-[280px]">
+                        <MarketInfoBlock market={market} className="border-none bg-transparent" />
                       </div>
 
-                      <div className="flex flex-1 items-center justify-end gap-8">
+                      <div className="flex flex-1 items-center justify-end gap-4">
                         {/* Risk Indicators */}
-                        <div className="flex gap-2">
-                          <MarketAssetIndicator market={market} />
-                          <MarketOracleIndicator market={market} />
-                          <MarketDebtIndicator market={market} />
+                        <div className="flex w-[80px] justify-end gap-1">
+                          <MarketAssetIndicator market={market} mode="complex" />
+                          <MarketOracleIndicator market={market} mode="complex" />
+                          <MarketDebtIndicator market={market} mode="complex" />
                         </div>
 
                         {/* Total Supply */}
-                        <div className="text-xs text-gray-500">
+                        <div className="w-[140px] text-right text-xs text-gray-500">
                           <span>Total Supply:</span>
                           <div className="font-mono">
                             {formatReadable(
@@ -196,19 +195,11 @@ export function RiskSelection() {
                           </div>
                         </div>
 
-                        {/* Utilization Rate */}
-                        <div className="text-xs text-gray-500">
-                          <span>Utilization:</span>
-                          <div className="font-mono">
-                            {formatReadable(market.state.utilization * 100)}%
-                          </div>
-                        </div>
-
                         {/* Details Button */}
                         <Button
                           onClick={(e) => handleMarketDetails(market, e)}
                           variant="interactive"
-                          className="ml-4"
+                          className="w-[80px]"
                           size="sm"
                         >
                           Details

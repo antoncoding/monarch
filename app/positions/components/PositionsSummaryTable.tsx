@@ -5,10 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
+import { PiHandCoins } from 'react-icons/pi';
 import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
+import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import {
@@ -16,6 +18,7 @@ import {
   GroupedPosition,
   WarningWithDetail,
   MarketPositionWithEarnings,
+  UserRebalancerInfo,
 } from '@/utils/types';
 import {
   MarketAssetIndicator,
@@ -40,6 +43,7 @@ type PositionsSummaryTableProps = {
   setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
+  rebalancerInfo: UserRebalancerInfo | undefined;
 };
 
 export function PositionsSummaryTable({
@@ -50,12 +54,14 @@ export function PositionsSummaryTable({
   refetch,
   isRefetching,
   account,
+  rebalancerInfo,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
+
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
   const { address } = useAccount();
 
@@ -112,6 +118,11 @@ export function PositionsSummaryTable({
 
   const groupedPositions: GroupedPosition[] = useMemo(() => {
     return marketPositions
+      .filter(
+        (position) =>
+          BigInt(position.supplyShares) > 0 ||
+          rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey),
+      )
       .reduce((acc: GroupedPosition[], position) => {
         const loanAssetAddress = position.market.loanAsset.address;
         const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -135,6 +146,14 @@ export function PositionsSummaryTable({
             allWarnings: [],
           };
           acc.push(groupedPosition);
+        }
+
+        // only push if the position has > 0 supply, earning or is in rebalancer info
+        if (
+          Number(position.supplyShares) === 0 &&
+          !rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
+        ) {
+          return acc;
         }
 
         groupedPosition.markets.push(position);
@@ -174,8 +193,9 @@ export function PositionsSummaryTable({
 
         return acc;
       }, [])
+      .filter((groupedPosition) => groupedPosition.totalSupply > 0)
       .sort((a, b) => b.totalSupply - a.totalSupply);
-  }, [marketPositions]);
+  }, [marketPositions, rebalancerInfo]);
 
   const processedPositions = useMemo(() => {
     return groupedPositions.map((position) => {
@@ -281,7 +301,16 @@ export function PositionsSummaryTable({
               <th className="text-center">
                 <span className="inline-flex items-center gap-1">
                   Interest Accrued ({earningsPeriod})
-                  <Tooltip content="Interest accrued by opened positions">
+                  <Tooltip
+                    className="max-w-[500px] rounded-sm"
+                    content={
+                      <TooltipContent
+                        title="Interest Accrued"
+                        detail="This amount is the sum of interest accrued from all active positions for the selected period. If you want a detailed breakdown including closed positions, go to Report"
+                        icon={<PiHandCoins size={16} />}
+                      />
+                    }
+                  >
                     <div className="cursor-help">
                       <BsQuestionCircle size={14} className="text-gray-400" />
                     </div>
@@ -355,15 +384,18 @@ export function PositionsSummaryTable({
                     <td data-label="Collateral">
                       <div className="flex items-center justify-center gap-1">
                         {groupedPosition.collaterals.length > 0 ? (
-                          groupedPosition.collaterals.map((collateral, index) => (
-                            <TokenIcon
-                              key={`${collateral.address}-${index}`}
-                              address={collateral.address}
-                              chainId={groupedPosition.chainId}
-                              width={20}
-                              height={20}
-                            />
-                          ))
+                          groupedPosition.collaterals
+                            .sort((a, b) => b.amount - a.amount)
+                            .map((collateral, index) => (
+                              <TokenIcon
+                                key={`${collateral.address}-${index}`}
+                                address={collateral.address}
+                                chainId={groupedPosition.chainId}
+                                width={20}
+                                height={20}
+                                opacity={collateral.amount > 0 ? 1 : 0.5}
+                              />
+                            ))
                         ) : (
                           <span className="text-sm text-gray-500">No known collaterals</span>
                         )}
@@ -374,14 +406,17 @@ export function PositionsSummaryTable({
                         <MarketAssetIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                         <MarketOracleIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                         <MarketDebtIndicator
                           market={{ warningsWithDetail: groupedPosition.allWarnings }}
                           isBatched
+                          mode="complex"
                         />
                       </div>
                     </td>

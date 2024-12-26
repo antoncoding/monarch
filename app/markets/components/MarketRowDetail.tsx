@@ -3,6 +3,7 @@ import { ExternalLinkIcon, QuestionMarkCircledIcon } from '@radix-ui/react-icons
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
@@ -40,8 +41,14 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
             <div className="mb-1 flex items-center">
               <p className="text-left font-inter text-sm opacity-80">Feed Routes:</p>
               <Tooltip
-                content="Feed routes show how asset prices are derived from different oracle providers"
-                className="rounded-sm p-2"
+                content={
+                  <TooltipContent
+                    icon={<QuestionMarkCircledIcon className="h-4 w-4" />}
+                    title="Feed Routes"
+                    detail="Feed routes show how asset prices are derived from different oracle providers"
+                  />
+                }
+                className="max-w-[400px] rounded-sm p-2"
               >
                 <QuestionMarkCircledIcon className="ml-2 h-4 w-4 cursor-help text-secondary" />
               </Tooltip>

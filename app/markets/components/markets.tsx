@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { Tooltip } from '@nextui-org/react';
+import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -11,6 +12,7 @@ import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -348,54 +350,49 @@ export default function Markets() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           {/* left section: asset filters */}
           <div className="flex flex-col gap-4 lg:flex-row">
-            <Tooltip
-              content="Can't find what you're looking for? Check the settings page for additional filter options."
-              placement="bottom"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row">
-                <NetworkFilter
-                  selectedNetwork={selectedNetwork}
-                  setSelectedNetwork={(network) => {
-                    setSelectedNetwork(network);
-                    updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-                  }}
-                />
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <NetworkFilter
+                selectedNetwork={selectedNetwork}
+                setSelectedNetwork={(network) => {
+                  setSelectedNetwork(network);
+                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+                }}
+              />
 
-                <AssetFilter
-                  label="Loan Asset"
-                  placeholder="All loan asset"
-                  selectedAssets={selectedLoanAssets}
-                  setSelectedAssets={(assets) => {
-                    setSelectedLoanAssets(assets);
-                    updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-                  }}
-                  items={uniqueLoanAssets}
-                  loading={loading}
-                  updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-                />
+              <AssetFilter
+                label="Loan Asset"
+                placeholder="All loan asset"
+                selectedAssets={selectedLoanAssets}
+                setSelectedAssets={(assets) => {
+                  setSelectedLoanAssets(assets);
+                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
+                }}
+                items={uniqueLoanAssets}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+              />
 
-                <AssetFilter
-                  label="Collateral"
-                  placeholder="All collateral"
-                  selectedAssets={selectedCollaterals}
-                  setSelectedAssets={(assets) => {
-                    setSelectedCollaterals(assets);
-                    updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-                  }}
-                  items={uniqueCollaterals}
-                  loading={loading}
-                  updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-                />
+              <AssetFilter
+                label="Collateral"
+                placeholder="All collateral"
+                selectedAssets={selectedCollaterals}
+                setSelectedAssets={(assets) => {
+                  setSelectedCollaterals(assets);
+                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
+                }}
+                items={uniqueCollaterals}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+              />
 
-                <OracleFilter
-                  selectedOracles={selectedOracles}
-                  setSelectedOracles={setSelectedOracles}
-                />
-              </div>
-            </Tooltip>
+              <OracleFilter
+                selectedOracles={selectedOracles}
+                setSelectedOracles={setSelectedOracles}
+              />
+            </div>
           </div>
 
-          <div className="mt-4 flex gap-2 lg:mt-0">
+          <div className="mt-4 flex items-center justify-end gap-2 lg:mt-0">
             <Button
               disabled={loading || isRefetching}
               variant="light"
@@ -406,6 +403,19 @@ export default function Markets() {
               <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
               Refresh
             </Button>
+
+            <Tooltip
+              content={
+                <TooltipContent
+                  icon={<QuestionMarkCircledIcon />}
+                  title="Can't find a particular market?"
+                  detail="Some markets are hidden by default. Check the settings page for advanced filter options."
+                />
+              }
+              className="max-w-[400px] rounded-sm"
+            >
+              <QuestionMarkCircledIcon className="ml-2 h-4 w-4 cursor-help text-secondary" />
+            </Tooltip>
           </div>
         </div>
 

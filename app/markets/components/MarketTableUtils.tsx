@@ -1,4 +1,3 @@
-import { Tooltip } from '@nextui-org/tooltip';
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -11,7 +10,6 @@ type HTSortableProps = {
   targetColumn: SortColumn;
   titleOnclick: (column: number) => void;
   sortDirection: number;
-  toolTip?: string;
   showDirection?: boolean;
 };
 
@@ -21,7 +19,6 @@ export function HTSortable({
   titleOnclick,
   sortDirection,
   targetColumn,
-  toolTip,
   showDirection = true,
 }: HTSortableProps) {
   const sortingCurrent = sortColumn === targetColumn;
@@ -32,7 +29,7 @@ export function HTSortable({
       onClick={() => titleOnclick(targetColumn)}
     >
       <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer">
-        {toolTip ? <Tooltip content={toolTip}>{label}</Tooltip> : <div>{label}</div>}
+        <div>{label}</div>
         {showDirection &&
           (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}
       </div>
@@ -88,8 +85,10 @@ export function TDTotalSupplyOrBorrow({
 }) {
   return (
     <td data-label={dataLabel} className="z-50">
-      <p>${formatReadable(Number(assetsUSD)) + '   '} </p>
-      <p className="opacity-70">{formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}</p>
+      <p className="z-50">${formatReadable(Number(assetsUSD)) + '   '} </p>
+      <p className="z-50 opacity-70">
+        {formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}
+      </p>
     </td>
   );
 }

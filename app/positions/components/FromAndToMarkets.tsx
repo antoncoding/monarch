@@ -314,9 +314,9 @@ export function FromAndToMarkets({
                       <td className="px-4 py-2">
                         {completeMarket && (
                           <div className="flex items-center justify-center gap-1">
-                            <MarketAssetIndicator market={completeMarket} />
-                            <MarketOracleIndicator market={completeMarket} />
-                            <MarketDebtIndicator market={completeMarket} />
+                            <MarketAssetIndicator market={completeMarket} mode="complex" />
+                            <MarketOracleIndicator market={completeMarket} mode="complex" />
+                            <MarketDebtIndicator market={completeMarket} mode="complex" />
                           </div>
                         )}
                       </td>

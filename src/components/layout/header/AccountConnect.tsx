@@ -1,15 +1,16 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import { Button } from '@/components/common';
+import { useConnectRedirect } from '@/components/providers/ConnectRedirectProvider';
 import { AccountDropdown } from './AccountDropdown';
 
 /**
- * AccountConnect
- *  - Connects to the wallet
- *  - Disconnects from the wallet
- *  - Displays the wallet network
+ *
+ * @returns
  */
-function AccountConnect() {
+function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
+  const { setRedirectPath } = useConnectRedirect();
+
   return (
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, authenticationStatus, mounted }) => {
@@ -19,6 +20,11 @@ function AccountConnect() {
           account &&
           chain &&
           (!authenticationStatus || authenticationStatus === 'authenticated');
+
+        const handleClicked = () => {
+          setRedirectPath(onConnectPath);
+          openConnectModal();
+        };
 
         return (
           <div
@@ -35,7 +41,7 @@ function AccountConnect() {
             {(() => {
               if (!connected) {
                 return (
-                  <Button onClick={openConnectModal} type="button" variant="cta">
+                  <Button onClick={handleClicked} type="button" variant="cta">
                     Connect
                   </Button>
                 );

@@ -81,3 +81,19 @@ import { Button } from '@/components/common/Button';
 
 - Use `bg-surface` first layer components
 - Use `bg-hovered` for hoverable elements or components on "bg-surface"
+
+## Tooltip
+
+Use the nextui tooltip with <TooltipContent>  component for consistnet styling
+
+```
+<Tooltip 
+  className="rounded-sm" // for consistent styling
+  content={<TooltipContent
+    icon={<GrStatusGood />}
+    title="Tooltip Title"
+    detail="Tooltip Detail"
+  />}
+
+>
+```

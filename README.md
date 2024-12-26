@@ -25,4 +25,3 @@ Monarch is an unofficial user interface designed for composing custom lending st
 📊 **Performance Report**: Generate detailed earnings reports from any selected period, aggregating all market positions into a single view
 
 🤖 **Automation** (Beta): Delegate operations to [Monarch Agents](https://github.com/monarch-xyz/monarch-agents) to automate reallocations
-

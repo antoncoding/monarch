@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
@@ -106,9 +105,7 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.SupplyAPY}
               />
-              <th className="font-normal">
-                <Tooltip content="Risks associated with Asset, Oracle and others">Risk</Tooltip>
-              </th>
+              <th className="font-normal"> Risk </th>
               <th className="font-normal"> Indicators </th>
               <th className="font-normal"> Actions </th>
             </tr>

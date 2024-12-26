@@ -1,3 +1,5 @@
+import { Address } from 'viem';
+
 export type MarketPosition = {
   supplyShares: string;
   supplyAssets: string;
@@ -362,4 +364,17 @@ export type MarketDetail = Market & {
 export type MarketHistoricalData = {
   rates: MarketRates;
   volumes: MarketVolumes;
+};
+
+export type MarketCap = {
+  marketId: string;
+  cap: string;
+};
+
+export type UserRebalancerInfo = {
+  rebalancer: Address;
+  marketCaps: MarketCap[];
+  transactions: {
+    transactionHash: string;
+  }[];
 };

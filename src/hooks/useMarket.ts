@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getRewardPer1000USD } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHOTokenAddress } from '@/utils/tokens';
+import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
@@ -17,7 +18,7 @@ const graphqlFetcher = async (
   query: string,
   variables: Record<string, unknown>,
 ): Promise<GraphQLResponse> => {
-  const response = await fetch('https://blue-api.morpho.org/graphql', {
+  const response = await fetch(URLS.MORPHO_BLUE_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),

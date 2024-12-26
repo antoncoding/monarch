@@ -97,7 +97,7 @@ export function Navbar() {
           >
             {mounted && (theme === 'dark' ? <LuSunMedium size={24} /> : <FaRegMoon size={20} />)}
           </button>
-          <AccountConnect />
+          <AccountConnect onConnectPath="positions" />
         </div>
       </div>
     </nav>

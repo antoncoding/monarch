@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
@@ -13,7 +12,7 @@ import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { formatBalance } from '@/utils/balance';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
@@ -340,22 +339,25 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               You are supplying {market.loanAsset.symbol} to the following market:{' '}
             </p>
 
+            <MarketInfoBlock market={market} />
+
             <div className="my-2">
-              <MarketInfoBlock market={market} />
+              <div className="mt-4 py-2">Market Config</div>
 
-              <div className="my-2">Details</div>
-
-              <div className="my-1 flex items-start justify-between">
-                <p className="font-inter text-sm opacity-50">Market ID:</p>
-                <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
-                  <p className="text-right font-monospace text-sm">
-                    {market.uniqueKey.slice(2, 8)}
-                  </p>
-                </Link>
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">Market ID:</p>
+                <a
+                  className="group flex items-center gap-1 pr-1 no-underline hover:underline"
+                  href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                  target="_blank"
+                >
+                  <p className="text-right text-sm">{market.uniqueKey.slice(2, 8)}</p>
+                  <ExternalLinkIcon />
+                </a>
               </div>
 
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-sm opacity-50">Oracle:</p>
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">Oracle:</p>
                 <a
                   className="group flex items-center gap-1 no-underline hover:underline"
                   href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
@@ -364,16 +366,46 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
                 </a>
               </div>
-              <div className="mb-1 flex items-start justify-between">
-                <p className="font-inter text-sm opacity-50">IRM:</p>
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">IRM:</p>
                 <a
-                  className="group flex items-center gap-1 no-underline hover:underline"
+                  className="group flex items-center gap-1 pr-1 no-underline hover:underline"
                   href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
                   target="_blank"
                 >
                   <p className="text-right font-zen text-sm">{getIRMTitle(market.irmAddress)}</p>
                   <ExternalLinkIcon />
                 </a>
+              </div>
+            </div>
+
+            <div className="my-2">
+              <div className="mt-4 py-2">Market State</div>
+
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">Total Supply:</p>
+
+                <p className="text-right text-sm">
+                  {formatReadable(
+                    formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">Liquidity:</p>
+                <p className="text-right font-zen text-sm">
+                  {formatReadable(
+                    formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-start justify-between">
+                <p className="font-zen text-sm opacity-50">Utilization:</p>
+                <p className="text-right text-sm">
+                  {formatReadable(market.state.utilization * 100)}%
+                </p>
               </div>
             </div>
 

@@ -23,7 +23,7 @@ function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
         const categoryWarnings = warnings.filter((w) => w.category === category);
         if (categoryWarnings.length === 0) return null;
         return (
-          <div key={category} className="mb-2">
+          <div key={category} className="mb-2 flex flex-col gap-2">
             <h4 className="font-bold capitalize">{category}</h4>
             <ul className="list-none pl-0">
               {categoryWarnings.map((warning, index) => (
@@ -136,6 +136,7 @@ export function SuppliedMarketsDetail({
                       <div className="mr-1 w-4">
                         {position.market.warningsWithDetail.length > 0 ? (
                           <Tooltip
+                            className="rounded-sm"
                             content={
                               <WarningTooltip warnings={position.market.warningsWithDetail} />
                             }

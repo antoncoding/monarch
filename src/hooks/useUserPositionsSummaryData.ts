@@ -22,7 +22,7 @@ type ChainBlockNumbers = {
   [K in SupportedNetworks]: BlockNumbers;
 };
 
-const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false) => {
+const useUserPositionsSummaryData = (user: string | undefined) => {
   const {
     loading: positionsLoading,
     isRefetching,
@@ -30,7 +30,7 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
     history,
     error: positionsError,
     refetch,
-  } = useUserPositions(user, showEmpty);
+  } = useUserPositions(user, true);
 
   const { fetchPositionSnapshot } = usePositionSnapshot();
   const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>(
@@ -200,4 +200,4 @@ const useUserPositionsWithEarning = (user: string | undefined, showEmpty = false
   };
 };
 
-export default useUserPositionsWithEarning;
+export default useUserPositionsSummaryData;

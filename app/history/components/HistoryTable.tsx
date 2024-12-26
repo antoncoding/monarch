@@ -5,17 +5,20 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';
+import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 
+import { Badge } from '@/components/common/Badge';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { UserTransaction, UserTxTypes } from '@/utils/types';
+import { UserTransaction, UserTxTypes, UserRebalancerInfo } from '@/utils/types';
 
 type HistoryTableProps = {
   history: UserTransaction[];
+  rebalancerInfo?: UserRebalancerInfo;
 };
 
 type AssetKey = {
@@ -24,9 +27,9 @@ type AssetKey = {
   img?: string;
 };
 
-export function HistoryTable({ history }: HistoryTableProps) {
+export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
   const [page, setPage] = useState(1);
-  const rowsPerPage = 5;
+  const rowsPerPage = 6;
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -243,7 +246,7 @@ export function HistoryTable({ history }: HistoryTableProps) {
       <Table
         classNames={{
           th: 'bg-surface',
-          wrapper: 'rounded-none shadow-none bg-surface',
+          wrapper: 'rounded-none shadow-none bg-surface p-6',
         }}
         bottomContent={
           <div className="flex w-full justify-center">
@@ -251,7 +254,6 @@ export function HistoryTable({ history }: HistoryTableProps) {
               className="text-black"
               isCompact
               showControls
-              variant="light"
               color="default"
               page={page}
               total={pages}
@@ -282,6 +284,10 @@ export function HistoryTable({ history }: HistoryTableProps) {
             const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
             const lltv = Number(formatUnits(BigInt(tx.data.market.lltv), 18)) * 100;
 
+            const isAgent = rebalancerInfo?.transactions.some(
+              (agentTx) => agentTx.transactionHash === tx.hash,
+            );
+
             return (
               <TableRow key={index.toFixed()}>
                 {/* Network & Asset */}
@@ -292,8 +298,8 @@ export function HistoryTable({ history }: HistoryTableProps) {
                         <Image
                           src={loanToken.img}
                           alt={tx.data.market.loanAsset.symbol}
-                          width="24"
-                          height="24"
+                          width="20"
+                          height="20"
                           className="rounded-full"
                         />
                       )}
@@ -362,6 +368,11 @@ export function HistoryTable({ history }: HistoryTableProps) {
                       )}{' '}
                       {tx.data.market.loanAsset.symbol}
                     </span>
+                    {isAgent && (
+                      <Badge size="sm">
+                        <RiRobot2Line />
+                      </Badge>
+                    )}
                   </div>
                 </TableCell>
 

@@ -303,10 +303,12 @@ export function RebalanceModal({
 
             <FromAndToMarkets
               eligibleMarkets={eligibleMarkets}
-              fromMarkets={groupedPosition.markets.map((market) => ({
-                ...market,
-                pendingDelta: getPendingDelta(market.market.uniqueKey),
-              }))}
+              fromMarkets={groupedPosition.markets
+                .filter((p) => BigInt(p.supplyShares) > 0)
+                .map((market) => ({
+                  ...market,
+                  pendingDelta: getPendingDelta(market.market.uniqueKey),
+                }))}
               toMarkets={eligibleMarkets}
               fromFilter={fromMarketFilter}
               toFilter={toMarketFilter}
@@ -317,7 +319,10 @@ export function RebalanceModal({
               onSelectMax={handleMaxSelect}
               fromPagination={{
                 currentPage: fromPagination.currentPage,
-                totalPages: Math.ceil(groupedPosition.markets.length / PER_PAGE),
+                totalPages: Math.ceil(
+                  groupedPosition.markets.filter((p) => BigInt(p.supplyShares) > 0).length /
+                    PER_PAGE,
+                ),
                 onPageChange: fromPagination.setCurrentPage,
               }}
               toPagination={{

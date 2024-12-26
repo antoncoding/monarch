@@ -108,7 +108,7 @@ export default function HomePage() {
           <div className="mt-8 flex w-full justify-center gap-4 px-4 sm:w-auto sm:flex-row">
             <Link href="/info" className="block w-full sm:w-auto">
               <Button variant="default" className="w-full px-10 py-4 font-zen" size="lg">
-                Why Monarch
+                Learn More
               </Button>
             </Link>
             <Link href={`/positions/${address ?? ''}`} className="block w-full sm:w-auto">

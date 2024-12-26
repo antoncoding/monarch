@@ -1,5 +1,5 @@
 import React from 'react';
-import logoImage from '../../../src/components/imgs/logo.png';
+import monarchAgentImg from '../../../src/imgs/agent/agent.png';
 import monarchImage from '../../../src/imgs/intro/direct-supply.png';
 import morphoImage from '../../../src/imgs/intro/morpho.png';
 import vaultsImage from '../../../src/imgs/intro/vaults.png';
@@ -94,36 +94,45 @@ export const sections = [
           />
           <Card
             title="Considerations"
-            items={[
-              'Requires market risk knowledge',
-              'Manual rebalancing needed',
-              'Higher complexity',
-            ]}
+            items={['Requires market risk knowledge', 'Higher complexity']}
           />
         </div>
       </>
     ),
   },
   {
-    mainTitle: 'The Future of Monarch',
-    subTitle: 'Automation and Beyond',
-    image: logoImage,
+    mainTitle: 'Monarch Agent',
+    subTitle: 'Automated Position Management',
+    image: monarchAgentImg,
+    isNew: true,
     content: (
       <>
         <p>
-          <span className="text-xl font-bold">Coming Soon: Monarch Auto</span>
+          <span className="text-xl font-bold">Introducing Monarch Agent</span>
           <br />
-          We're developing "Monarch Auto" to automate the rebalancing process with custom
-          strategies.
+          The Monarch Agent is your personal companion that helps optimize your lending strategy
+          across Morpho Blue markets.
         </p>
-        <p className="mt-4">
-          <span className="font-bold">What's in Progress:</span>
-          <ul className="mt-2 list-inside list-disc">
-            <li>Automated rebalancing strategies</li>
-            <li>Enhanced risk management tools</li>
-            <li>Improved user interface</li>
-          </ul>
-        </p>
+        <div className="mt-4 flex flex-col gap-4 md:flex-row">
+          <Card
+            title="Key Features"
+            items={[
+              'Automated position rebalancing',
+              'Customizable market caps',
+              'Granular market authorization',
+              'Risk-controlled automation',
+            ]}
+          />
+          <Card
+            title="How It Works"
+            items={[
+              'Select markets to authorize',
+              'Set maximum allocation caps',
+              'Agent optimizes within limits',
+              'Modify permissions anytime',
+            ]}
+          />
+        </div>
         <p className="mt-4">
           <span className="font-bold">We Value Your Feedback!</span>
           <br />

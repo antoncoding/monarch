@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@nextui-org/react';
 import Image from 'next/image';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { Badge } from '@/components/common/Badge';
 import Header from '@/components/layout/header/Header';
 import { sections } from './sectionData';
 
@@ -109,9 +110,17 @@ function InfoPage() {
             {sections.map((section, index) => (
               <div key={`section-${index}`} className="w-full flex-shrink-0 px-4 md:px-8 lg:px-16">
                 <div className="bg-surface mx-auto max-w-3xl rounded px-4 py-6 shadow-lg sm:px-8 sm:py-8 md:px-12">
-                  <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
-                    {section.mainTitle}
-                  </h1>
+                  <div className="flex items-center justify-center gap-2">
+                    <h1 className="mb-2 text-center text-3xl font-bold sm:text-4xl">
+                      {section.mainTitle}
+                    </h1>
+                    {section.isNew && (
+                      <Badge variant="success" size="lg">
+                        {' '}
+                        New{' '}
+                      </Badge>
+                    )}
+                  </div>
                   <h2 className="mb-4 text-center text-lg text-secondary sm:mb-6 sm:text-xl">
                     {section.subTitle}
                   </h2>
