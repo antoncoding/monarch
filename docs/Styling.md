@@ -84,10 +84,10 @@ import { Button } from '@/components/common/Button';
 
 ## Tooltip
 
-Use the nextui tooltip with <TooltipContent>  component for consistnet styling
+Use the nextui tooltip with <TooltipContent> component for consistnet styling
 
 ```
-<Tooltip 
+<Tooltip
   className="rounded-sm" // for consistent styling
   content={<TooltipContent
     icon={<GrStatusGood />}

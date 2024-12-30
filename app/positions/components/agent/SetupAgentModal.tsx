@@ -5,21 +5,23 @@ import { Address } from 'viem';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
+import { findAgent } from '@/utils/monarch-agent';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market, UserRebalancerInfo } from '@/utils/types';
+import { Main as MainContent } from './Main';
 import { SetupAgent } from './SetupAgent';
 import { Success as SuccessContent } from './Success';
 import { Welcome as WelcomeContent } from './Welcome';
 
 export enum SetupStep {
-  Welcome = 'welcome',
+  Main = 'main',
   Setup = 'setup',
   Success = 'success',
 }
 
 const SETUP_STEPS = [
   {
-    id: SetupStep.Welcome,
+    id: SetupStep.Main,
     title: 'Welcome to Monarch Agent',
     description: 'Bee-bee-bee, Monarch Agent is here!',
   },
@@ -73,10 +75,10 @@ export function SetupAgentModal({
   onClose,
   userRebalancerInfo,
 }: SetupAgentModalProps) {
-  const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Welcome);
+  const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Main);
   const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
 
-  const { data: positions } = useUserPositions(account, true);
+  const { data: positions, history } = useUserPositions(account, true);
 
   const { markets: allMarkets } = useMarkets();
 
@@ -109,6 +111,9 @@ export function SetupAgentModal({
   const removeFromCaps = (market: Market) => {
     setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
+
+  const hasSetupAgent =
+    !!userRebalancerInfo && findAgent(userRebalancerInfo.rebalancer) !== undefined;
 
   return (
     <Modal
@@ -164,7 +169,17 @@ export function SetupAgentModal({
               className="p-6"
             >
               {/* Step Content */}
-              {currentStep === SetupStep.Welcome && <WelcomeContent onNext={handleNext} />}
+              {currentStep === SetupStep.Main && !hasSetupAgent && (
+                <WelcomeContent onNext={handleNext} />
+              )}
+              {currentStep === SetupStep.Main && hasSetupAgent && (
+                <MainContent
+                  onNext={handleNext}
+                  account={account}
+                  userRebalancerInfo={userRebalancerInfo}
+                  history={history}
+                />
+              )}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}

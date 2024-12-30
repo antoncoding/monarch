@@ -12,6 +12,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
+import { KnownAgents } from '@/utils/monarch-agent';
 
 type MarketGroup = {
   loanAsset: {
@@ -171,7 +172,7 @@ export function SetupAgent({
     );
   };
 
-  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(pendingCaps, onNext);
+  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(KnownAgents.MAX_APY, pendingCaps, onNext);
 
   const handleExecute = useCallback(() => {
     setShowProcessModal(true);

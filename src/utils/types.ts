@@ -378,3 +378,9 @@ export type UserRebalancerInfo = {
     transactionHash: string;
   }[];
 };
+
+export type AgentMetadata = {
+  address: Address;
+  name: string;
+  strategyDescription: string;
+};

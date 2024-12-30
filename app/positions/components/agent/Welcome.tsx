@@ -29,7 +29,7 @@ export function Welcome({ onNext }: WelcomeProps) {
       </div>
 
       <Button size="lg" variant="cta" onPress={onNext}>
-        Get Started
+        Setup Agent
       </Button>
     </div>
   );
