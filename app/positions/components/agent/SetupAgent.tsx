@@ -198,7 +198,7 @@ export function SetupAgent({
         </div>
       )}
       <div className="flex items-center justify-between font-zen text-sm">
-        The agent can only reallocate funds among markets you authorize it to!
+        The agent can only reallocate funds among your approved markets.
       </div>
 
       <div
