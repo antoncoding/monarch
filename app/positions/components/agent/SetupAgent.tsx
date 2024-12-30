@@ -8,11 +8,11 @@ import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
 import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
+import { findAgent, KnownAgents } from '@/utils/monarch-agent';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
 import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
-import { KnownAgents } from '@/utils/monarch-agent';
 
 type MarketGroup = {
   loanAsset: {
@@ -172,7 +172,16 @@ export function SetupAgent({
     );
   };
 
-  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(KnownAgents.MAX_APY, pendingCaps, onNext);
+  const hasSetupAgent = userRebalancerInfo?.rebalancer.toLowerCase() === KnownAgents.MAX_APY.toLowerCase();
+
+  // todo: search user agent after
+  const agent = findAgent(KnownAgents.MAX_APY ?? '');
+
+  const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(
+    KnownAgents.MAX_APY,
+    pendingCaps,
+    onNext,
+  );
 
   const handleExecute = useCallback(() => {
     setShowProcessModal(true);
@@ -181,8 +190,14 @@ export function SetupAgent({
 
   return (
     <div className="flex flex-col gap-6">
+      {!hasSetupAgent && agent && (
+        <div className="rounded border border-divider bg-content1 p-4">
+          <h3 className="font-monospace text-sm">{agent.name}</h3>
+          <p className="mt-2 font-zen text-secondary text-sm">{agent.strategyDescription}</p>
+        </div>
+      )}
       <div className="flex items-center justify-between font-zen text-sm">
-        Monarch Agent can only reallocate funds among markets you authorize it to!
+        The agent can only reallocate funds among markets you authorize it to!
       </div>
 
       <div
@@ -211,7 +226,7 @@ export function SetupAgent({
               key={groupKey}
               className="overflow-hidden rounded border border-divider bg-content1"
             >
-              {showProcessModal && <AgentSetupProcessModal currentStep={currentStep} />}
+              {showProcessModal && <AgentSetupProcessModal currentStep={currentStep} onClose={() => setShowProcessModal(false)} />}
               <button
                 type="button"
                 onClick={() => toggleGroup(groupKey)}

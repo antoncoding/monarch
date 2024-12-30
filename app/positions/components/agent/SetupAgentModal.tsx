@@ -85,17 +85,31 @@ export function SetupAgentModal({
   const currentStepIndex = SETUP_STEPS.findIndex((s) => s.id === currentStep);
 
   const handleNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < SETUP_STEPS.length) {
-      setCurrentStep(SETUP_STEPS[nextIndex].id);
-    }
+    setCurrentStep((prev) => {
+      const currentIndex = SETUP_STEPS.findIndex((step) => step.id === prev);
+      const nextStep = SETUP_STEPS[currentIndex + 1];
+      return nextStep?.id || prev;
+    });
   };
 
   const handleBack = () => {
-    const prevIndex = currentStepIndex - 1;
-    if (prevIndex >= 0) {
-      setCurrentStep(SETUP_STEPS[prevIndex].id);
-    }
+    setCurrentStep((prev) => {
+      const currentIndex = SETUP_STEPS.findIndex((step) => step.id === prev);
+      const prevStep = SETUP_STEPS[currentIndex - 1];
+      return prevStep?.id || prev;
+    });
+  };
+
+  const handleReset = () => {
+    setCurrentStep(SetupStep.Main);
+  };
+
+  const handleClose = () => {
+    onClose();
+    // Reset step after modal is closed
+    setTimeout(() => {
+      setCurrentStep(SetupStep.Main);
+    }, 300);
   };
 
   const addToPendingCaps = (market: Market, cap: bigint) => {
@@ -118,7 +132,7 @@ export function SetupAgentModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       size="2xl"
       classNames={{
         base: 'bg-background text-foreground dark:border border-gray-700',
@@ -194,7 +208,9 @@ export function SetupAgentModal({
                   userRebalancerInfo={userRebalancerInfo}
                 />
               )}
-              {currentStep === SetupStep.Success && <SuccessContent onClose={onClose} />}
+              {currentStep === SetupStep.Success && (
+                <SuccessContent onClose={handleClose} onDone={handleReset} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

@@ -28,7 +28,11 @@ export type MarketCap = {
  * @param onSuccess
  * @returns
  */
-export const useAuthorizeAgent = (agent: Address,marketCaps: MarketCap[], onSuccess?: () => void) => {
+export const useAuthorizeAgent = (
+  agent: Address,
+  marketCaps: MarketCap[],
+  onSuccess?: () => void,
+) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentStep, setCurrentStep] = useState<AuthorizeAgentStep>(AuthorizeAgentStep.Idle);
 

@@ -110,7 +110,7 @@ export function Main({ account, onNext, userRebalancerInfo, history }: MainProps
           <div className="space-y-2">
             <h4 className="text-xs font-medium text-secondary">Monitoring Positions</h4>
             <div className="flex flex-wrap gap-3">
-              {Object.values(loanAssetGroups).map(({ address, chainId, markets }) => {
+              {Object.values(loanAssetGroups).map(({ address, chainId, markets: authorizedMarkets }) => {
                 const token = findToken(address, chainId);
                 return (
                   <div
@@ -127,7 +127,7 @@ export function Main({ account, onNext, userRebalancerInfo, history }: MainProps
                       />
                     )}
                     <span className="text-sm">
-                      {token?.symbol || 'Unknown'} ({markets.length})
+                      {token?.symbol ?? 'Unknown'} ({authorizedMarkets.length})
                     </span>
                   </div>
                 );
@@ -161,7 +161,7 @@ export function Main({ account, onNext, userRebalancerInfo, history }: MainProps
                     rel="noopener noreferrer"
                     className="bg-surface flex items-center gap-2 rounded px-3 py-2 text-sm no-underline"
                   >
-                    <span> View All ({userRebalancerInfo.transactions?.length || 0})</span>
+                    <span> View All ({userRebalancerInfo.transactions?.length ?? 0})</span>
                   </Link>
                 </>
               )}
