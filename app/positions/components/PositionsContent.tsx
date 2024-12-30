@@ -36,7 +36,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
   const { address, isConnected } = useAccount();
-  const { rebalancerInfo } = useUserRebalancerInfo(address);
+  const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(address);
 
   const isOwner = useMemo(() => {
     if (!account) return false;
@@ -157,7 +157,10 @@ export default function Positions() {
 
         <SetupAgentModal
           isOpen={showSetupAgentModal}
-          onClose={() => setShowSetupAgentModal(false)}
+          onClose={() => {
+            void refetchRebalancerInfo();
+            setShowSetupAgentModal(false);
+          }}
           account={account as Address}
           userRebalancerInfo={rebalancerInfo}
         />

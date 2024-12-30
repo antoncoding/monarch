@@ -5,21 +5,23 @@ import { Address } from 'viem';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
+import { findAgent } from '@/utils/monarch-agent';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market, UserRebalancerInfo } from '@/utils/types';
+import { Main as MainContent } from './Main';
 import { SetupAgent } from './SetupAgent';
 import { Success as SuccessContent } from './Success';
 import { Welcome as WelcomeContent } from './Welcome';
 
 export enum SetupStep {
-  Welcome = 'welcome',
+  Main = 'main',
   Setup = 'setup',
   Success = 'success',
 }
 
 const SETUP_STEPS = [
   {
-    id: SetupStep.Welcome,
+    id: SetupStep.Main,
     title: 'Welcome to Monarch Agent',
     description: 'Bee-bee-bee, Monarch Agent is here!',
   },
@@ -73,27 +75,41 @@ export function SetupAgentModal({
   onClose,
   userRebalancerInfo,
 }: SetupAgentModalProps) {
-  const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Welcome);
+  const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Main);
   const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
 
-  const { data: positions } = useUserPositions(account, true);
+  const { data: positions, history } = useUserPositions(account, true);
 
   const { markets: allMarkets } = useMarkets();
 
   const currentStepIndex = SETUP_STEPS.findIndex((s) => s.id === currentStep);
 
   const handleNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < SETUP_STEPS.length) {
-      setCurrentStep(SETUP_STEPS[nextIndex].id);
-    }
+    setCurrentStep((prev) => {
+      const currentIndex = SETUP_STEPS.findIndex((step) => step.id === prev);
+      const nextStep = SETUP_STEPS[currentIndex + 1];
+      return nextStep?.id || prev;
+    });
   };
 
   const handleBack = () => {
-    const prevIndex = currentStepIndex - 1;
-    if (prevIndex >= 0) {
-      setCurrentStep(SETUP_STEPS[prevIndex].id);
-    }
+    setCurrentStep((prev) => {
+      const currentIndex = SETUP_STEPS.findIndex((step) => step.id === prev);
+      const prevStep = SETUP_STEPS[currentIndex - 1];
+      return prevStep?.id || prev;
+    });
+  };
+
+  const handleReset = () => {
+    setCurrentStep(SetupStep.Main);
+  };
+
+  const handleClose = () => {
+    onClose();
+    // Reset step after modal is closed
+    setTimeout(() => {
+      setCurrentStep(SetupStep.Main);
+    }, 300);
   };
 
   const addToPendingCaps = (market: Market, cap: bigint) => {
@@ -110,10 +126,13 @@ export function SetupAgentModal({
     setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
 
+  const hasSetupAgent =
+    !!userRebalancerInfo && findAgent(userRebalancerInfo.rebalancer) !== undefined;
+
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       size="2xl"
       classNames={{
         base: 'bg-background text-foreground dark:border border-gray-700',
@@ -164,7 +183,17 @@ export function SetupAgentModal({
               className="p-6"
             >
               {/* Step Content */}
-              {currentStep === SetupStep.Welcome && <WelcomeContent onNext={handleNext} />}
+              {currentStep === SetupStep.Main && !hasSetupAgent && (
+                <WelcomeContent onNext={handleNext} />
+              )}
+              {currentStep === SetupStep.Main && hasSetupAgent && (
+                <MainContent
+                  onNext={handleNext}
+                  account={account}
+                  userRebalancerInfo={userRebalancerInfo}
+                  history={history}
+                />
+              )}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
@@ -179,7 +208,9 @@ export function SetupAgentModal({
                   userRebalancerInfo={userRebalancerInfo}
                 />
               )}
-              {currentStep === SetupStep.Success && <SuccessContent onClose={onClose} />}
+              {currentStep === SetupStep.Success && (
+                <SuccessContent onClose={handleClose} onDone={handleReset} />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

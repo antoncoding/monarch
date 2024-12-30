@@ -5,7 +5,7 @@ import { useAccount, useReadContract, useSignTypedData, useSwitchChain } from 'w
 import monarchAgentAbi from '@/abis/monarch-agent-v1';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { AGENT_CONTRACT, rebalancer } from '@/utils/monarch-agent';
+import { AGENT_CONTRACT } from '@/utils/monarch-agent';
 import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
@@ -28,7 +28,11 @@ export type MarketCap = {
  * @param onSuccess
  * @returns
  */
-export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => void) => {
+export const useAuthorizeAgent = (
+  agent: Address,
+  marketCaps: MarketCap[],
+  onSuccess?: () => void,
+) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [currentStep, setCurrentStep] = useState<AuthorizeAgentStep>(AuthorizeAgentStep.Idle);
 
@@ -158,11 +162,11 @@ export const useAuthorizeAgent = (marketCaps: MarketCap[], onSuccess?: () => voi
         setCurrentStep(AuthorizeAgentStep.Execute);
 
         // add rebalancer if not set yet
-        if (rebalancerAddress !== rebalancer) {
+        if (rebalancerAddress !== agent) {
           const rebalancerTx = encodeFunctionData({
             abi: monarchAgentAbi,
             functionName: 'authorize',
-            args: [rebalancer],
+            args: [agent],
           });
           transactions.push(rebalancerTx);
         }
