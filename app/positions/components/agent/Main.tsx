@@ -110,28 +110,30 @@ export function Main({ account, onNext, userRebalancerInfo, history }: MainProps
           <div className="space-y-2">
             <h4 className="text-xs font-medium text-secondary">Monitoring Positions</h4>
             <div className="flex flex-wrap gap-3">
-              {Object.values(loanAssetGroups).map(({ address, chainId, markets: authorizedMarkets }) => {
-                const token = findToken(address, chainId);
-                return (
-                  <div
-                    key={address}
-                    className="bg-surface flex items-center gap-2 rounded px-3 py-2"
-                  >
-                    {token?.img && (
-                      <Image
-                        src={token.img}
-                        alt={token.symbol}
-                        width={20}
-                        height={20}
-                        className="rounded-full"
-                      />
-                    )}
-                    <span className="text-sm">
-                      {token?.symbol ?? 'Unknown'} ({authorizedMarkets.length})
-                    </span>
-                  </div>
-                );
-              })}
+              {Object.values(loanAssetGroups).map(
+                ({ address, chainId, markets: marketsForLoanAsset }) => {
+                  const token = findToken(address, chainId);
+                  return (
+                    <div
+                      key={address}
+                      className="bg-surface flex items-center gap-2 rounded px-3 py-2"
+                    >
+                      {token?.img && (
+                        <Image
+                          src={token.img}
+                          alt={token.symbol}
+                          width={20}
+                          height={20}
+                          className="rounded-full"
+                        />
+                      )}
+                      <span className="text-sm">
+                        {token?.symbol ?? 'Unknown'} ({marketsForLoanAsset.length})
+                      </span>
+                    </div>
+                  );
+                },
+              )}
             </div>
           </div>
 

@@ -172,7 +172,8 @@ export function SetupAgent({
     );
   };
 
-  const hasSetupAgent = userRebalancerInfo?.rebalancer.toLowerCase() === KnownAgents.MAX_APY.toLowerCase();
+  const hasSetupAgent =
+    userRebalancerInfo?.rebalancer.toLowerCase() === KnownAgents.MAX_APY.toLowerCase();
 
   // todo: search user agent after
   const agent = findAgent(KnownAgents.MAX_APY ?? '');
@@ -193,7 +194,7 @@ export function SetupAgent({
       {!hasSetupAgent && agent && (
         <div className="rounded border border-divider bg-content1 p-4">
           <h3 className="font-monospace text-sm">{agent.name}</h3>
-          <p className="mt-2 font-zen text-secondary text-sm">{agent.strategyDescription}</p>
+          <p className="mt-2 font-zen text-sm text-secondary">{agent.strategyDescription}</p>
         </div>
       )}
       <div className="flex items-center justify-between font-zen text-sm">
@@ -226,7 +227,12 @@ export function SetupAgent({
               key={groupKey}
               className="overflow-hidden rounded border border-divider bg-content1"
             >
-              {showProcessModal && <AgentSetupProcessModal currentStep={currentStep} onClose={() => setShowProcessModal(false)} />}
+              {showProcessModal && (
+                <AgentSetupProcessModal
+                  currentStep={currentStep}
+                  onClose={() => setShowProcessModal(false)}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => toggleGroup(groupKey)}

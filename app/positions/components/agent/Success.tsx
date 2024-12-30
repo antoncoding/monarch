@@ -28,8 +28,8 @@ export function Success({ onClose, onDone }: SuccessProps) {
       <div className="space-y-4">
         <h3 className="font-zen text-2xl">Setup Complete!</h3>
         <p className="mx-auto max-w-lg font-zen text-secondary">
-          Your Monarch Agent is now ready to manage your positions. You can always update your settings
-          later.
+          Your Monarch Agent is now ready to manage your positions. You can always update your
+          settings later.
         </p>
       </div>
 

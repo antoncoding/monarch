@@ -1,7 +1,7 @@
 import React from 'react';
+import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { Cross1Icon } from '@radix-ui/react-icons';
 import { AuthorizeAgentStep } from '@/hooks/useAuthorizeAgent';
 
 type AgentSetupModalProps = {
@@ -23,7 +23,10 @@ const steps = [
   },
 ];
 
-export function AgentSetupProcessModal({ currentStep, onClose }: AgentSetupModalProps): JSX.Element {
+export function AgentSetupProcessModal({
+  currentStep,
+  onClose,
+}: AgentSetupModalProps): JSX.Element {
   const getStepStatus = (stepKey: string) => {
     const currentIndex = steps.findIndex((step) => step.key === currentStep);
     const stepIndex = steps.findIndex((step) => step.key === stepKey);
@@ -52,8 +55,9 @@ export function AgentSetupProcessModal({ currentStep, onClose }: AgentSetupModal
           className="relative w-full max-w-lg rounded bg-white p-4 shadow-xl dark:bg-gray-900"
         >
           <button
+            type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full p-2 text-secondary hover:bg-surface"
+            className="hover:bg-surface absolute right-4 top-4 rounded-full p-2 text-secondary"
           >
             <Cross1Icon className="h-4 w-4" />
           </button>

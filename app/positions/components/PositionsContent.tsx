@@ -158,8 +158,8 @@ export default function Positions() {
         <SetupAgentModal
           isOpen={showSetupAgentModal}
           onClose={() => {
-            refetchRebalancerInfo()
-            setShowSetupAgentModal(false)
+            void refetchRebalancerInfo();
+            setShowSetupAgentModal(false);
           }}
           account={account as Address}
           userRebalancerInfo={rebalancerInfo}
