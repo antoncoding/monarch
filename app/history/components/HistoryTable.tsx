@@ -89,6 +89,21 @@ export function HistoryTable({
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
+  // Filter transactions based on selected asset
+  const filteredHistory = useMemo(() => {
+    if (!selectedAsset) return history;
+    
+    return history.filter((tx) => {
+      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
+      if (!market) return false;
+
+      return (
+        market.loanAsset.symbol === selectedAsset.symbol &&
+        market.morphoBlue.chain.id === selectedAsset.chainId
+      );
+    });
+  }, [history, selectedAsset, markets]);
+
   return (
     <div className="space-y-4">
       <div className="relative w-full" ref={dropdownRef}>
@@ -255,8 +270,8 @@ export function HistoryTable({
           <TableColumn className="text-center">Time</TableColumn>
           <TableColumn className="text-center">Transaction</TableColumn>
         </TableHeader>
-        <TableBody>
-          {history.map((tx, index) => {
+        <TableBody emptyContent="No transactions found">
+          {filteredHistory.map((tx, index) => {
             // safely cast here because we only fetch txs for unique id in "markets"
             const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 

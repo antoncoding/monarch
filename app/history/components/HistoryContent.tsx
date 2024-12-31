@@ -13,6 +13,7 @@ export default function HistoryContent({ account }: { account: string }) {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
   const pageSize = 10;
 
   const { loading, error, fetchTransactions } = useUserTransactions();
@@ -32,6 +33,7 @@ export default function HistoryContent({ account }: { account: string }) {
         setTransactions(result.items);
         setTotalCount(result.pageInfo.countTotal);
       }
+      setIsInitialized(true);
     };
 
     void loadTransactions();
@@ -60,7 +62,7 @@ export default function HistoryContent({ account }: { account: string }) {
       <div className="container gap-8 px-[5%]">
         <h1 className="py-4 font-zen text-2xl">Transaction History</h1>
 
-        {loading ? (
+        {loading || !isInitialized ? (
           <LoadingScreen message="Loading History..." />
         ) : transactions.length === 0 ? (
           <div className="w-full items-center rounded-md p-12 text-center text-secondary">

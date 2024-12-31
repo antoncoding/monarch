@@ -56,13 +56,16 @@ const useUserTransactions = () => {
           }),
         });
 
-        const result = await response.json();
+        const result = (await response.json()) as {
+          data?: { transactions?: TransactionResponse };
+          errors?: { message: string }[];
+        };
 
         if (result.errors) {
           throw new Error(result.errors[0].message);
         }
 
-        return result.data.transactions as TransactionResponse;
+        return result.data?.transactions as TransactionResponse;
       } catch (err) {
         console.error('Error fetching transactions:', err);
         setError(err);

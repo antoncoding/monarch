@@ -169,7 +169,6 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
         const positionsWithEarningsData = await Promise.all(
           positions.map(async (position) => {
-
             const history = await fetchTransactions({
               userAddress: [user],
               marketUniqueKeys: [position.market.uniqueKey],
@@ -197,7 +196,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     };
 
     void updatePositionsWithEarnings();
-  }, [positions, user, blockNums, history, calculateEarningsFromPeriod]);
+  }, [positions, user, blockNums, calculateEarningsFromPeriod]);
 
   return {
     positions: positionsWithEarnings,

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
@@ -7,11 +8,10 @@ import { GrStatusGood } from 'react-icons/gr';
 import { Button } from '@/components/common';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/contexts/MarketsContext';
+import useUserTransactions from '@/hooks/useUserTransactions';
 import { findAgent } from '@/utils/monarch-agent';
 import { findToken } from '@/utils/tokens';
 import { UserRebalancerInfo, UserTransaction } from '@/utils/types';
-import useUserTransactions from '@/hooks/useUserTransactions';
-import { useMemo, useState, useEffect } from 'react';
 
 const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
 
