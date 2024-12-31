@@ -78,7 +78,7 @@ export function SetupAgentModal({
   const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Main);
   const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
 
-  const { data: positions, history } = useUserPositions(account, true);
+  const { data: positions } = useUserPositions(account, true);
 
   const { markets: allMarkets } = useMarkets();
 
@@ -191,7 +191,6 @@ export function SetupAgentModal({
                   onNext={handleNext}
                   account={account}
                   userRebalancerInfo={userRebalancerInfo}
-                  history={history}
                 />
               )}
               {currentStep === SetupStep.Setup && (

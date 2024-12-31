@@ -10,6 +10,8 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import { findAgent } from '@/utils/monarch-agent';
 import { findToken } from '@/utils/tokens';
 import { UserRebalancerInfo, UserTransaction } from '@/utils/types';
+import useUserTransactions from '@/hooks/useUserTransactions';
+import { useMemo, useState, useEffect } from 'react';
 
 const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
 
@@ -17,12 +19,36 @@ type MainProps = {
   account?: string;
   onNext: () => void;
   userRebalancerInfo: UserRebalancerInfo;
-  history: UserTransaction[];
 };
 
-export function Main({ account, onNext, userRebalancerInfo, history }: MainProps) {
+export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
   const agent = findAgent(userRebalancerInfo.rebalancer);
   const { markets } = useMarkets();
+  const { fetchTransactions } = useUserTransactions();
+  const [lastTx, setLastTx] = useState<UserTransaction | null>(null);
+
+  useEffect(() => {
+    const fetchLastTransaction = async () => {
+      if (!account) return;
+
+      // Get the most recent bot transaction hash
+      const lastBotTxHash = userRebalancerInfo.transactions.at(0)?.transactionHash;
+
+      if (lastBotTxHash) {
+        const result = await fetchTransactions({
+          userAddress: [account],
+          hash: lastBotTxHash,
+          first: 1,
+        });
+
+        if (result?.items.length > 0) {
+          setLastTx(result.items[0]);
+        }
+      }
+    };
+
+    void fetchLastTransaction();
+  }, [userRebalancerInfo.transactions, fetchTransactions, account]);
 
   if (!agent) {
     return null;
@@ -51,15 +77,6 @@ export function Main({ account, onNext, userRebalancerInfo, history }: MainProps
     },
     {} as Record<string, { address: string; chainId: number; markets: typeof authorizedMarkets }>,
   );
-
-  // sort from newest to oldest
-  const lastTx = history
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .find((tx) =>
-      userRebalancerInfo.transactions.find(
-        (t) => t.transactionHash.toLowerCase() === tx.hash.toLowerCase(),
-      ),
-    );
 
   return (
     <div className="flex min-h-0 flex-col items-center gap-8">

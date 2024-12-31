@@ -8,7 +8,6 @@ import { estimatedBlockNumber } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
 import useUserTransactions from './useUserTransactions';
-import { useMarkets } from './useMarkets';
 
 export type PositionReport = {
   market: Market;
@@ -125,7 +124,9 @@ export const usePositionReport = (
           }
 
           const marketTransactions = filterTransactionsInPeriod(
-            allTransactions.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),
+            allTransactions.filter(
+              (tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey,
+            ),
             startTimestamp,
             endTimestamp,
           );

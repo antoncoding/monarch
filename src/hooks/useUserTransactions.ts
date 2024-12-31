@@ -1,17 +1,18 @@
 import { useState, useCallback } from 'react';
 import { userTransactionsQuery } from '@/graphql/queries';
+import { SupportedNetworks } from '@/utils/networks';
 import { UserTransaction } from '@/utils/types';
 import { URLS } from '@/utils/urls';
-import { SupportedNetworks } from '@/utils/networks';
 
 export type TransactionFilters = {
-  userAddress?: string[];
+  userAddress: string[];
   marketUniqueKeys?: string[];
   chainIds?: number[];
   timestampGte?: number;
   timestampLte?: number;
   skip?: number;
   first?: number;
+  hash?: string;
 };
 
 export type TransactionResponse = {
@@ -20,6 +21,7 @@ export type TransactionResponse = {
     count: number;
     countTotal: number;
   };
+  error: string | null;
 };
 
 const useUserTransactions = () => {
@@ -27,12 +29,7 @@ const useUserTransactions = () => {
   const [error, setError] = useState<unknown | null>(null);
 
   const fetchTransactions = useCallback(
-    async (filters: TransactionFilters): Promise<TransactionResponse | null> => {
-      if (!filters.userAddress?.length) {
-        console.error('Missing user address');
-        return null;
-      }
-
+    async (filters: TransactionFilters): Promise<TransactionResponse> => {
       try {
         setLoading(true);
         setError(null);
@@ -51,6 +48,7 @@ const useUserTransactions = () => {
                 chainId_in: filters.chainIds ?? [SupportedNetworks.Base, SupportedNetworks.Mainnet],
                 timestamp_gte: filters.timestampGte ?? null,
                 timestamp_lte: filters.timestampLte ?? null,
+                hash: filters.hash ?? null,
               },
               first: filters.first ?? 1000,
               skip: filters.skip ?? 0,
@@ -68,7 +66,11 @@ const useUserTransactions = () => {
       } catch (err) {
         console.error('Error fetching transactions:', err);
         setError(err);
-        return null;
+        return {
+          items: [],
+          pageInfo: { count: 0, countTotal: 0 },
+          error: err instanceof Error ? err.message : 'Unknown error occurred',
+        };
       } finally {
         setLoading(false);
       }

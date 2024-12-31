@@ -9,13 +9,13 @@ import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 
 import { Badge } from '@/components/common/Badge';
+import { useMarkets } from '@/contexts/MarketsContext';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { UserTransaction, UserTxTypes, UserRebalancerInfo, Market } from '@/utils/types';
-import { useMarkets } from '@/contexts/MarketsContext';
 
 type HistoryTableProps = {
   history: UserTransaction[];
@@ -31,12 +31,12 @@ type AssetKey = {
   img?: string;
 };
 
-export function HistoryTable({ 
-  history, 
-  rebalancerInfo, 
-  currentPage, 
+export function HistoryTable({
+  history,
+  rebalancerInfo,
+  currentPage,
   totalPages,
-  onPageChange 
+  onPageChange,
 }: HistoryTableProps) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -48,15 +48,12 @@ export function HistoryTable({
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
     history.forEach((tx) => {
-      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey); 
+      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
       if (!market) return;
 
       const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
-        const token = findToken(
-          market.loanAsset.address,
-          market.morphoBlue.chain.id,
-        );
+        const token = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
         assetMap.set(key, {
           symbol: market.loanAsset.symbol,
           chainId: market.morphoBlue.chain.id,
@@ -86,28 +83,9 @@ export function HistoryTable({
     }
   };
 
-  // Filter transactions based on selected asset
-  const items = useMemo(() => {
-    return history.filter((tx) => {
-      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
-      if (!market) return false;
-
-      if (!selectedAsset) return true;
-
-      return (
-        market.loanAsset.symbol === selectedAsset.symbol &&
-        market.morphoBlue.chain.id === selectedAsset.chainId
-      );
-    });
-  }, [history, selectedAsset, markets]);
-
   const filteredAssets = uniqueAssets.filter((asset) =>
     asset.symbol.toLowerCase().includes(query.toLowerCase()),
   );
-
-  const start = (currentPage - 1) * 6;
-  const end = start + 6;
-  const paginatedItems = items.slice(start, end);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
@@ -279,14 +257,10 @@ export function HistoryTable({
         </TableHeader>
         <TableBody>
           {history.map((tx, index) => {
-
             // safely cast here because we only fetch txs for unique id in "markets"
             const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
-            const loanToken = findToken(
-              market.loanAsset.address,
-              market.morphoBlue.chain.id,
-            );
+            const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
             const collateralToken = findToken(
               market.collateralAsset.address,
               market.morphoBlue.chain.id,
@@ -374,11 +348,9 @@ export function HistoryTable({
                     >
                       {sign}
                       {formatReadable(
-                        Number(
-                          formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals),
-                        ),
+                        Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)),
                       )}{' '}
-                      {market.loanAsset.symbol} 
+                      {market.loanAsset.symbol}
                     </span>
                     {isAgent && (
                       <Badge size="sm">

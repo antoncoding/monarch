@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
-import useUserTransactions from '@/hooks/useUserTransactions';
+import { useMarkets } from '@/contexts/MarketsContext';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
+import useUserTransactions from '@/hooks/useUserTransactions';
 import { UserTransaction } from '@/utils/types';
 import { HistoryTable } from './HistoryTable';
-import { useMarkets } from '@/contexts/MarketsContext';
 
 export default function HistoryContent({ account }: { account: string }) {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
@@ -17,7 +17,7 @@ export default function HistoryContent({ account }: { account: string }) {
 
   const { loading, error, fetchTransactions } = useUserTransactions();
   const { rebalancerInfo } = useUserRebalancerInfo(account);
-  const { markets } = useMarkets()
+  const { markets } = useMarkets();
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -68,9 +68,9 @@ export default function HistoryContent({ account }: { account: string }) {
           </div>
         ) : (
           <div className="mt-4">
-            <HistoryTable 
-              history={transactions} 
-              rebalancerInfo={rebalancerInfo} 
+            <HistoryTable
+              history={transactions}
+              rebalancerInfo={rebalancerInfo}
               currentPage={currentPage}
               totalPages={Math.ceil(totalCount / pageSize)}
               onPageChange={handlePageChange}
