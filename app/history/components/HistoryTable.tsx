@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo, useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Chip, Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
@@ -20,6 +20,9 @@ import { useMarkets } from '@/contexts/MarketsContext';
 type HistoryTableProps = {
   history: UserTransaction[];
   rebalancerInfo?: UserRebalancerInfo;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 };
 
 type AssetKey = {
@@ -28,9 +31,13 @@ type AssetKey = {
   img?: string;
 };
 
-export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
-  const [page, setPage] = useState(1);
-  const rowsPerPage = 6;
+export function HistoryTable({ 
+  history, 
+  rebalancerInfo, 
+  currentPage, 
+  totalPages,
+  onPageChange 
+}: HistoryTableProps) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -73,24 +80,17 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
     };
   }, []);
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      toggleDropdown();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
     }
   };
 
-  const filteredAssets = uniqueAssets.filter((asset) =>
-    asset.symbol.toLowerCase().includes(query.toLowerCase()),
-  );
-
-  // Filter and sort transactions
+  // Filter transactions based on selected asset
   const items = useMemo(() => {
-    const filtered = history.filter((tx) => {
+    return history.filter((tx) => {
       const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
       if (!market) return false;
-
 
       if (!selectedAsset) return true;
 
@@ -99,25 +99,17 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
         market.morphoBlue.chain.id === selectedAsset.chainId
       );
     });
-    const sorted = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return sorted.slice(start, end);
-  }, [history, selectedAsset, page, rowsPerPage, markets]);
+  }, [history, selectedAsset, markets]);
 
-  const pages = Math.ceil(
-    history.filter((tx) => {
-      if (!selectedAsset) return true;
-
-      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
-      if (!market) return false;
-
-      return (
-        market.loanAsset.symbol === selectedAsset.symbol &&
-        market.morphoBlue.chain.id === selectedAsset.chainId
-      );
-    }).length / rowsPerPage,
+  const filteredAssets = uniqueAssets.filter((asset) =>
+    asset.symbol.toLowerCase().includes(query.toLowerCase()),
   );
+
+  const start = (currentPage - 1) * 6;
+  const end = start + 6;
+  const paginatedItems = items.slice(start, end);
+
+  const toggleDropdown = () => setIsOpen(!isOpen);
 
   return (
     <div className="space-y-4">
@@ -192,7 +184,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                       setSelectedAsset(asset);
                       setIsOpen(false);
                       setQuery('');
-                      setPage(1);
+                      onPageChange(1);
                     }}
                     role="option"
                     aria-selected={
@@ -206,7 +198,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                         setSelectedAsset(asset);
                         setIsOpen(false);
                         setQuery('');
-                        setPage(1);
+                        onPageChange(1);
                       }
                     }}
                   >
@@ -244,7 +236,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                     setSelectedAsset(null);
                     setQuery('');
                     setIsOpen(false);
-                    setPage(1);
+                    onPageChange(1);
                   }}
                   type="button"
                 >
@@ -269,9 +261,9 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
               isCompact
               showControls
               color="default"
-              page={page}
-              total={pages}
-              onChange={(_page: number) => setPage(_page)}
+              page={currentPage}
+              total={totalPages}
+              onChange={onPageChange}
             />
           </div>
         }
@@ -284,7 +276,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
           <TableColumn className="text-center">Transaction</TableColumn>
         </TableHeader>
         <TableBody>
-          {items.map((tx, index) => {
+          {paginatedItems.map((tx, index) => {
             const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
             const loanToken = findToken(

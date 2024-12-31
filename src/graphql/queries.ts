@@ -266,3 +266,30 @@ export const userRebalancerInfoQuery = `
     }
   }
 `;
+
+export const userTransactionsQuery = `
+  query getUserTransactions($where: TransactionFilters) {
+    transactions(where: $where) {
+      items {
+        id
+        hash
+        timestamp
+        type
+        data {
+          __typename
+          ... on MarketTransferTransactionData {
+            shares
+            assets
+            market {
+              uniqueKey
+            }
+          }
+        }
+      }
+      pageInfo {
+        count
+        countTotal
+      }
+    }
+  }
+`;
