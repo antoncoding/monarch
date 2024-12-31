@@ -14,7 +14,8 @@ import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { UserTransaction, UserTxTypes, UserRebalancerInfo } from '@/utils/types';
+import { UserTransaction, UserTxTypes, UserRebalancerInfo, Market } from '@/utils/types';
+import { useMarkets } from '@/contexts/MarketsContext';
 
 type HistoryTableProps = {
   history: UserTransaction[];
@@ -34,26 +35,30 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { markets } = useMarkets();
 
   // Get unique assets with their chain IDs
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
     history.forEach((tx) => {
-      const key = `${tx.data.market.loanAsset.symbol}-${tx.data.market.morphoBlue.chain.id}`;
+      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey); 
+      if (!market) return;
+
+      const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
         const token = findToken(
-          tx.data.market.loanAsset.address,
-          tx.data.market.morphoBlue.chain.id,
+          market.loanAsset.address,
+          market.morphoBlue.chain.id,
         );
         assetMap.set(key, {
-          symbol: tx.data.market.loanAsset.symbol,
-          chainId: tx.data.market.morphoBlue.chain.id,
+          symbol: market.loanAsset.symbol,
+          chainId: market.morphoBlue.chain.id,
           img: token?.img,
         });
       }
     });
     return Array.from(assetMap.values());
-  }, [history]);
+  }, [history, markets]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -83,24 +88,33 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
   // Filter and sort transactions
   const items = useMemo(() => {
     const filtered = history.filter((tx) => {
+      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
+      if (!market) return false;
+
+
       if (!selectedAsset) return true;
+
       return (
-        tx.data.market.loanAsset.symbol === selectedAsset.symbol &&
-        tx.data.market.morphoBlue.chain.id === selectedAsset.chainId
+        market.loanAsset.symbol === selectedAsset.symbol &&
+        market.morphoBlue.chain.id === selectedAsset.chainId
       );
     });
     const sorted = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     return sorted.slice(start, end);
-  }, [history, selectedAsset, page]);
+  }, [history, selectedAsset, page, rowsPerPage, markets]);
 
   const pages = Math.ceil(
     history.filter((tx) => {
       if (!selectedAsset) return true;
+
+      const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey);
+      if (!market) return false;
+
       return (
-        tx.data.market.loanAsset.symbol === selectedAsset.symbol &&
-        tx.data.market.morphoBlue.chain.id === selectedAsset.chainId
+        market.loanAsset.symbol === selectedAsset.symbol &&
+        market.morphoBlue.chain.id === selectedAsset.chainId
       );
     }).length / rowsPerPage,
   );
@@ -271,18 +285,20 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
         </TableHeader>
         <TableBody>
           {items.map((tx, index) => {
+            const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
+
             const loanToken = findToken(
-              tx.data.market.loanAsset.address,
-              tx.data.market.morphoBlue.chain.id,
+              market.loanAsset.address,
+              market.morphoBlue.chain.id,
             );
             const collateralToken = findToken(
-              tx.data.market.collateralAsset.address,
-              tx.data.market.morphoBlue.chain.id,
+              market.collateralAsset.address,
+              market.morphoBlue.chain.id,
             );
-            const networkImg = getNetworkImg(tx.data.market.morphoBlue.chain.id);
-            const networkName = getNetworkName(tx.data.market.morphoBlue.chain.id);
+            const networkImg = getNetworkImg(market.morphoBlue.chain.id);
+            const networkName = getNetworkName(market.morphoBlue.chain.id);
             const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-            const lltv = Number(formatUnits(BigInt(tx.data.market.lltv), 18)) * 100;
+            const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
 
             const isAgent = rebalancerInfo?.transactions.some(
               (agentTx) => agentTx.transactionHash === tx.hash,
@@ -297,13 +313,13 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                       {loanToken?.img && (
                         <Image
                           src={loanToken.img}
-                          alt={tx.data.market.loanAsset.symbol}
+                          alt={market.loanAsset.symbol}
                           width="20"
                           height="20"
                           className="rounded-full"
                         />
                       )}
-                      <span className="text-default-600">{tx.data.market.loanAsset.symbol}</span>
+                      <span className="text-default-600">{market.loanAsset.symbol}</span>
                     </div>
                     <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
                       {networkImg && (
@@ -326,10 +342,10 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Link
-                      href={`/market/${tx.data.market.morphoBlue.chain.id}/${tx.data.market.uniqueKey}`}
+                      href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
                       className="font-monospace text-xs hover:underline"
                     >
-                      {tx.data.market.uniqueKey.slice(2, 8)}
+                      {market.uniqueKey.slice(2, 8)}
                     </Link>
                     <div className="flex items-center gap-1">
                       {collateralToken?.img && (
@@ -342,7 +358,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                         />
                       )}
                       <span className="text-sm text-default-500">
-                        {tx.data.market.collateralAsset.symbol}
+                        {market.collateralAsset.symbol}
                       </span>
                     </div>
                     <Chip size="sm" variant="flat" className="bg-default-100 text-xs" radius="sm">
@@ -363,10 +379,10 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                       {sign}
                       {formatReadable(
                         Number(
-                          formatUnits(BigInt(tx.data.assets), tx.data.market.loanAsset.decimals),
+                          formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals),
                         ),
                       )}{' '}
-                      {tx.data.market.loanAsset.symbol}
+                      {market.loanAsset.symbol} 
                     </span>
                     {isAgent && (
                       <Badge size="sm">
@@ -387,7 +403,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                 <TableCell>
                   <div className="flex justify-center">
                     <Link
-                      href={getExplorerTxURL(tx.hash, tx.data.market.morphoBlue.chain.id)}
+                      href={getExplorerTxURL(tx.hash, market.morphoBlue.chain.id)}
                       target="_blank"
                       className="flex items-center gap-1 text-sm hover:underline"
                     >

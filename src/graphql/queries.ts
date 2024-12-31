@@ -165,6 +165,15 @@ export const userPositionsQuery = `
           ...MarketFields
         }
       }
+      
+    }
+  }
+  ${marketFragment}
+`;
+
+export const useHistoryQuery = `
+  query getUserHistory($address: String!, $chainId: Int) {
+    userByAddress(address: $address, chainId: $chainId) {
       transactions {
         hash
         timestamp
@@ -176,51 +185,14 @@ export const userPositionsQuery = `
             shares
             assets
             market {
-              id
               uniqueKey
-              morphoBlue {
-                chain {
-                  id
-                }
-              }
-              lltv
-              collateralAsset {
-                id
-                address
-                decimals
-              }
-              loanAsset {
-                id
-                address
-                decimals
-                symbol
-              } 
-              oracle {
-                data {
-                  ... on MorphoChainlinkOracleData {
-                    baseFeedOne {
-                      vendor
-                    }
-                    baseFeedTwo {
-                      vendor
-                    }
-                    quoteFeedOne {
-                      vendor
-                    }
-                    quoteFeedTwo {
-                      vendor
-                    }
-                  }
-                }
-              }
             }
           }
         }
       }
     }
   }
-  ${marketFragment}
-`;
+`
 
 export const marketDetailQuery = `
   query getMarketDetail($uniqueKey: String!, $chainId: Int) {

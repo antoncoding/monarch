@@ -7,6 +7,7 @@ import {
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
+import { useMarkets } from './useMarkets';
 
 export type PositionReport = {
   market: Market;
@@ -39,6 +40,7 @@ export const usePositionReport = (
   endDate?: Date,
 ) => {
   const { fetchPositionSnapshot } = usePositionSnapshot();
+  const { markets } = useMarkets();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
     if (!startDate || !endDate || !selectedAsset) return null;
@@ -69,8 +71,11 @@ export const usePositionReport = (
     );
 
     const relevantTxs = history.filter(
-      (tx) =>
-        tx.data?.market?.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase(),
+      (tx) => {
+        const market = markets.find((m) => m.uniqueKey === tx.data?.market?.uniqueKey);
+        if (!market) return false;
+        return market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase()
+      }
     );
 
     const marketReports = (
