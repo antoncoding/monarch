@@ -33,7 +33,7 @@ type ReportState = {
 };
 
 export default function ReportContent({ account }: { account: Address }) {
-  const { loading, data: positions, history } = useUserPositions(account, true);
+  const { loading, data: positions } = useUserPositions(account, true);
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago
@@ -114,7 +114,6 @@ export default function ReportContent({ account }: { account: Address }) {
 
   const { generateReport } = usePositionReport(
     positions || [],
-    history || [],
     account,
     selectedAsset,
     startDate.toDate(),

@@ -1,131 +1,198 @@
-import { useCallback } from 'react';
-import { Token } from '@/utils/tokens';
+import { Address } from 'viem';
+import {
+  calculateEarningsFromSnapshot,
+  EarningsCalculation,
+  filterTransactionsInPeriod,
+} from '@/utils/interest';
 import { estimatedBlockNumber } from '@/utils/rpc';
-import { Market, MarketPosition } from '@/utils/types';
+import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
-import { useMarkets } from './useMarkets';
 import useUserTransactions from './useUserTransactions';
+import { useMarkets } from './useMarkets';
 
 export type PositionReport = {
   market: Market;
-  position: MarketPosition;
-  earnings: {
-    total: number;
-    startTimestamp: number;
-    endTimestamp: number;
-    startPosition: MarketPosition;
-    endPosition: MarketPosition;
-  };
+  interestEarned: bigint;
+  totalDeposits: bigint;
+  totalWithdraws: bigint;
+  startBalance: bigint;
+  endBalance: bigint;
+  avgCapital: bigint;
+  apy: number;
+  effectiveTime: number;
+  transactions: UserTransaction[];
 };
 
 export type ReportSummary = {
-  positions: PositionReport[];
-  totalEarnings: number;
-  startTimestamp: number;
-  endTimestamp: number;
+  totalInterestEarned: bigint;
+  totalDeposits: bigint;
+  totalWithdraws: bigint;
+  period: number;
+  marketReports: PositionReport[];
+  groupedEarnings: EarningsCalculation;
 };
 
 export const usePositionReport = (
-  account: string | undefined,
-  selectedAsset: Token | undefined,
+  positions: MarketPosition[],
+  account: Address,
+  selectedAsset: { address: string; chainId: number } | null,
   startDate?: Date,
   endDate?: Date,
 ) => {
   const { fetchPositionSnapshot } = usePositionSnapshot();
-  const { markets } = useMarkets();
   const { fetchTransactions } = useUserTransactions();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
     if (!startDate || !endDate || !selectedAsset) return null;
 
+    if (endDate.getTime() > Date.now()) {
+      console.log('setting end date to now');
+      endDate = new Date();
+    }
+
+    // fetch block number at start and end date
+    const startBlockNumber = await estimatedBlockNumber(
+      selectedAsset.chainId,
+      startDate.getTime() / 1000,
+    );
+    const endBlockNumber = await estimatedBlockNumber(
+      selectedAsset.chainId,
+      endDate.getTime() / 1000,
+    );
+
     const startTimestamp = Math.floor(startDate.getTime() / 1000);
     const endTimestamp = Math.floor(endDate.getTime() / 1000);
+    const period = endTimestamp - startTimestamp;
 
-    // Get block numbers for the timestamps
-    const [startBlock, endBlock] = await Promise.all([
-      estimatedBlockNumber(startTimestamp),
-      estimatedBlockNumber(endTimestamp),
-    ]);
+    const relevantPositions = positions.filter(
+      (position) =>
+        position.market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase() &&
+        position.market.morphoBlue.chain.id === selectedAsset.chainId,
+    );
 
-    // Get position snapshots
-    const [startSnapshot, endSnapshot] = await Promise.all([
-      fetchPositionSnapshot(account || '', startBlock),
-      fetchPositionSnapshot(account || '', endBlock),
-    ]);
+    // Fetch all transactions with pagination
+    const PAGE_SIZE = 100;
+    let allTransactions: UserTransaction[] = [];
+    let hasMore = true;
+    let skip = 0;
 
-    if (!startSnapshot || !endSnapshot) {
-      throw new Error('Failed to fetch position snapshots');
+    while (hasMore) {
+      const transactionResult = await fetchTransactions({
+        userAddress: [account],
+        chainIds: [selectedAsset.chainId],
+        timestampGte: startTimestamp,
+        timestampLte: endTimestamp,
+        marketUniqueKeys: relevantPositions.map((position) => position.market.uniqueKey),
+        first: PAGE_SIZE,
+        skip,
+      });
+
+      if (!transactionResult) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      allTransactions = [...allTransactions, ...transactionResult.items];
+
+      // Check if we've fetched all transactions
+      hasMore = transactionResult.items.length === PAGE_SIZE;
+      skip += PAGE_SIZE;
+
+      // Safety check to prevent infinite loops
+      if (skip > PAGE_SIZE * 100) {
+        console.warn('Reached maximum skip limit, some transactions might be missing');
+        break;
+      }
     }
-
-    // Get all transactions within the time range
-    const result = await fetchTransactions({
-      userAddress: [account || ''],
-      timestampGte: startTimestamp,
-      timestampLte: endTimestamp,
-    });
-
-    if (!result) {
-      throw new Error('Failed to fetch transactions');
-    }
-
-    const relevantTxs = result.items.filter((tx) => {
-      const market = markets.find((m) => m.uniqueKey === tx.data?.market?.uniqueKey);
-      if (!market) return false;
-      return market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase();
-    });
 
     const marketReports = (
       await Promise.all(
-        markets
-          .filter((market) => market.loanAsset.address === selectedAsset.address)
-          .map(async (market) => {
-            const startPosition = startSnapshot.find(
-              (pos) => pos.market.uniqueKey === market.uniqueKey,
-            );
-            const endPosition = endSnapshot.find((pos) => pos.market.uniqueKey === market.uniqueKey);
+        relevantPositions.map(async (position) => {
+          const startSnapshot = await fetchPositionSnapshot(
+            position.market.uniqueKey,
+            account,
+            position.market.morphoBlue.chain.id,
+            startBlockNumber,
+          );
+          const endSnapshot = await fetchPositionSnapshot(
+            position.market.uniqueKey,
+            account,
+            position.market.morphoBlue.chain.id,
+            endBlockNumber,
+          );
 
-            if (!startPosition || !endPosition) return null;
+          if (!startSnapshot || !endSnapshot) {
+            return;
+          }
 
-            const earnings = calculateEarnings(startPosition, endPosition);
+          const marketTransactions = filterTransactionsInPeriod(
+            allTransactions.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),
+            startTimestamp,
+            endTimestamp,
+          );
 
-            return {
-              market,
-              position: endPosition,
-              earnings: {
-                total: earnings,
-                startTimestamp,
-                endTimestamp,
-                startPosition,
-                endPosition,
-              },
-            };
-          }),
+          const earnings = calculateEarningsFromSnapshot(
+            BigInt(endSnapshot.supplyAssets),
+            BigInt(startSnapshot.supplyAssets),
+            marketTransactions,
+            startTimestamp,
+            endTimestamp,
+          );
+
+          return {
+            market: position.market,
+            interestEarned: earnings.earned,
+            totalDeposits: earnings.totalDeposits,
+            totalWithdraws: earnings.totalWithdraws,
+            apy: earnings.apy,
+            avgCapital: earnings.avgCapital,
+            effectiveTime: earnings.effectiveTime,
+            startBalance: BigInt(startSnapshot.supplyAssets),
+            endBalance: BigInt(endSnapshot.supplyAssets),
+            transactions: marketTransactions,
+          };
+        }),
       )
-    ).filter((report): report is PositionReport => report !== null);
+    ).filter((report) => report !== null && report !== undefined) as PositionReport[];
 
-    const totalEarnings = marketReports.reduce((sum, report) => sum + report.earnings.total, 0);
+    const totalInterestEarned = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.interestEarned),
+      0n,
+    );
 
-    return {
-      positions: marketReports,
-      totalEarnings,
+    const totalDeposits = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.totalDeposits),
+      0n,
+    );
+
+    const totalWithdraws = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.totalWithdraws),
+      0n,
+    );
+
+    const startBalance = marketReports.reduce(
+      (sum, report) => sum + BigInt(report.startBalance),
+      0n,
+    );
+
+    const endBalance = marketReports.reduce((sum, report) => sum + BigInt(report.endBalance), 0n);
+
+    const groupedEarnings = calculateEarningsFromSnapshot(
+      endBalance,
+      startBalance,
+      allTransactions,
       startTimestamp,
       endTimestamp,
+    );
+
+    return {
+      totalInterestEarned,
+      totalDeposits,
+      totalWithdraws,
+      period,
+      marketReports,
+      groupedEarnings,
     };
   };
 
-  return {
-    generateReport: useCallback(generateReport, [
-      account,
-      selectedAsset,
-      startDate,
-      endDate,
-      fetchPositionSnapshot,
-      fetchTransactions,
-      markets,
-    ]),
-  };
+  return { generateReport };
 };
-
-function calculateEarnings(startPosition: MarketPosition, endPosition: MarketPosition): number {
-  return 0; // TODO: Implement earnings calculation
-}

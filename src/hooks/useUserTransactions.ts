@@ -10,8 +10,8 @@ export type TransactionFilters = {
   chainIds?: number[];
   timestampGte?: number;
   timestampLte?: number;
-  page?: number;
-  pageSize?: number;
+  skip?: number;
+  first?: number;
 };
 
 export type TransactionResponse = {
@@ -52,10 +52,8 @@ const useUserTransactions = () => {
                 timestamp_gte: filters.timestampGte ?? null,
                 timestamp_lte: filters.timestampLte ?? null,
               },
-              pagination: {
-                page: filters.page || 1,
-                pageSize: filters.pageSize || 10,
-              },
+              first: filters.first ?? 1000,
+              skip: filters.skip ?? 0,
             },
           }),
         });

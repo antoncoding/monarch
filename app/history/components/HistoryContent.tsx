@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { UserTransaction } from '@/utils/types';
 import { HistoryTable } from './HistoryTable';
+import { useMarkets } from '@/contexts/MarketsContext';
 
 export default function HistoryContent({ account }: { account: string }) {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
@@ -18,13 +17,15 @@ export default function HistoryContent({ account }: { account: string }) {
 
   const { loading, error, fetchTransactions } = useUserTransactions();
   const { rebalancerInfo } = useUserRebalancerInfo(account);
+  const { markets } = useMarkets()
 
   useEffect(() => {
     const loadTransactions = async () => {
       const result = await fetchTransactions({
         userAddress: [account],
-        page: currentPage,
-        pageSize,
+        first: pageSize,
+        skip: (currentPage - 1) * pageSize,
+        marketUniqueKeys: markets.map((market) => market.uniqueKey),
       });
 
       if (result) {
@@ -34,7 +35,7 @@ export default function HistoryContent({ account }: { account: string }) {
     };
 
     void loadTransactions();
-  }, [account, currentPage, fetchTransactions]);
+  }, [markets, account, currentPage, fetchTransactions]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -76,14 +77,6 @@ export default function HistoryContent({ account }: { account: string }) {
             />
           </div>
         )}
-
-        <div className="flex justify-center pt-14">
-          <Link href={`/positions/${account}`}>
-            <Button variant="solid" color="primary" className="px-10 py-4 font-zen" size="lg">
-              Back to Portfolio
-            </Button>
-          </Link>
-        </div>
       </div>
     </div>
   );

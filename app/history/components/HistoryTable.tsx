@@ -255,17 +255,19 @@ export function HistoryTable({
           wrapper: 'rounded-none shadow-none bg-surface p-6',
         }}
         bottomContent={
-          <div className="flex w-full justify-center">
-            <Pagination
-              className="text-black"
-              isCompact
-              showControls
-              color="default"
-              page={currentPage}
-              total={totalPages}
-              onChange={onPageChange}
-            />
-          </div>
+          totalPages > 1 ? (
+            <div className="flex w-full justify-center">
+              <Pagination
+                className="text-black"
+                isCompact
+                showControls
+                color="default"
+                page={currentPage}
+                total={totalPages}
+                onChange={onPageChange}
+              />
+            </div>
+          ) : null
         }
       >
         <TableHeader className="table-header">
@@ -276,7 +278,9 @@ export function HistoryTable({
           <TableColumn className="text-center">Transaction</TableColumn>
         </TableHeader>
         <TableBody>
-          {paginatedItems.map((tx, index) => {
+          {history.map((tx, index) => {
+
+            // safely cast here because we only fetch txs for unique id in "markets"
             const market = markets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
             const loanToken = findToken(

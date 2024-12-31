@@ -171,28 +171,6 @@ export const userPositionsQuery = `
   ${marketFragment}
 `;
 
-export const useHistoryQuery = `
-  query getUserHistory($address: String!, $chainId: Int) {
-    userByAddress(address: $address, chainId: $chainId) {
-      transactions {
-        hash
-        timestamp
-        type
-        data {
-          __typename
-          ... on MarketTransferTransactionData {
-            assetsUsd
-            shares
-            assets
-            market {
-              uniqueKey
-            }
-          }
-        }
-      }
-    }
-  }
-`
 
 export const marketDetailQuery = `
   query getMarketDetail($uniqueKey: String!, $chainId: Int) {
@@ -268,8 +246,8 @@ export const userRebalancerInfoQuery = `
 `;
 
 export const userTransactionsQuery = `
-  query getUserTransactions($where: TransactionFilters) {
-    transactions(where: $where) {
+  query getUserTransactions($where: TransactionFilters, $first: Int, $skip: Int) {
+    transactions(where: $where, first: $first, skip: $skip) {
       items {
         id
         hash
