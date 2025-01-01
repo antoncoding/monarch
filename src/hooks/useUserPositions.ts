@@ -14,7 +14,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [positionsError, setPositionsError] = useState<unknown | null>(null);
 
   const fetchData = useCallback(
-    async (isRefetch = false) => {
+    async (isRefetch = false, onSuccess?: () => void) => {
       if (!user) {
         console.error('Missing user address');
         setLoading(false);
@@ -93,6 +93,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         );
 
         setData(enhancedPositions);
+        onSuccess?.();
       } catch (err) {
         console.error('Error fetching positions:', err);
         setPositionsError(err);
@@ -113,7 +114,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     loading,
     isRefetching,
     positionsError,
-    refetch: () => void fetchData(true),
+    refetch: (onSuccess?: () => void) => void fetchData(true, onSuccess),
   };
 };
 
