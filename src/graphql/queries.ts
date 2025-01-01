@@ -165,58 +165,7 @@ export const userPositionsQuery = `
           ...MarketFields
         }
       }
-      transactions {
-        hash
-        timestamp
-        type
-        data {
-          __typename
-          ... on MarketTransferTransactionData {
-            assetsUsd
-            shares
-            assets
-            market {
-              id
-              uniqueKey
-              morphoBlue {
-                chain {
-                  id
-                }
-              }
-              lltv
-              collateralAsset {
-                id
-                address
-                decimals
-              }
-              loanAsset {
-                id
-                address
-                decimals
-                symbol
-              } 
-              oracle {
-                data {
-                  ... on MorphoChainlinkOracleData {
-                    baseFeedOne {
-                      vendor
-                    }
-                    baseFeedTwo {
-                      vendor
-                    }
-                    quoteFeedOne {
-                      vendor
-                    }
-                    quoteFeedTwo {
-                      vendor
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      
     }
   }
   ${marketFragment}
@@ -290,6 +239,33 @@ export const userRebalancerInfoQuery = `
       }
       transactions {
         transactionHash
+      }
+    }
+  }
+`;
+
+export const userTransactionsQuery = `
+  query getUserTransactions($where: TransactionFilters, $first: Int, $skip: Int) {
+    transactions(where: $where, first: $first, skip: $skip) {
+      items {
+        id
+        hash
+        timestamp
+        type
+        data {
+          __typename
+          ... on MarketTransferTransactionData {
+            shares
+            assets
+            market {
+              uniqueKey
+            }
+          }
+        }
+      }
+      pageInfo {
+        count
+        countTotal
       }
     }
   }

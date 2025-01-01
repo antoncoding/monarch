@@ -1,5 +1,5 @@
 import React from 'react';
-import { useMemo, useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { Chip, Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
@@ -7,17 +7,26 @@ import moment from 'moment';
 import Image from 'next/image';
 import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
-
 import { Badge } from '@/components/common/Badge';
+import LoadingScreen from '@/components/Status/LoadingScreen';
+import { useMarkets } from '@/contexts/MarketsContext';
+import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { UserTransaction, UserTxTypes, UserRebalancerInfo } from '@/utils/types';
+import {
+  UserTxTypes,
+  UserRebalancerInfo,
+  Market,
+  MarketPosition,
+  UserTransaction,
+} from '@/utils/types';
 
 type HistoryTableProps = {
-  history: UserTransaction[];
+  account: string | undefined;
+  positions: MarketPosition[];
   rebalancerInfo?: UserRebalancerInfo;
 };
 
@@ -27,33 +36,73 @@ type AssetKey = {
   img?: string;
 };
 
-export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
-  const [page, setPage] = useState(1);
-  const rowsPerPage = 6;
+export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTableProps) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { markets } = useMarkets();
+
+  const { loading, fetchTransactions } = useUserTransactions();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [history, setHistory] = useState<UserTransaction[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 10;
 
   // Get unique assets with their chain IDs
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
-    history.forEach((tx) => {
-      const key = `${tx.data.market.loanAsset.symbol}-${tx.data.market.morphoBlue.chain.id}`;
+    positions.forEach((pos) => {
+      const market = markets.find((m) => m.uniqueKey === pos.market.uniqueKey);
+      if (!market) return;
+
+      const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
-        const token = findToken(
-          tx.data.market.loanAsset.address,
-          tx.data.market.morphoBlue.chain.id,
-        );
+        const token = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
         assetMap.set(key, {
-          symbol: tx.data.market.loanAsset.symbol,
-          chainId: tx.data.market.morphoBlue.chain.id,
+          symbol: market.loanAsset.symbol,
+          chainId: market.morphoBlue.chain.id,
           img: token?.img,
         });
       }
     });
     return Array.from(assetMap.values());
-  }, [history]);
+  }, [positions, markets]);
+
+  // Get filtered market IDs based on selected asset
+  const filteredMarketIds = useMemo(() => {
+    if (!selectedAsset) return markets.map((m) => m.uniqueKey);
+
+    return markets
+      .filter(
+        (m) =>
+          m.loanAsset.symbol === selectedAsset.symbol &&
+          m.morphoBlue.chain.id === selectedAsset.chainId,
+      )
+      .map((m) => m.uniqueKey);
+  }, [selectedAsset, markets]);
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      if (!account || !fetchTransactions) return;
+
+      const result = await fetchTransactions({
+        userAddress: [account],
+        first: pageSize,
+        skip: (currentPage - 1) * pageSize,
+        marketUniqueKeys: filteredMarketIds,
+      });
+
+      if (result) {
+        setHistory(result.items);
+        setTotalPages(Math.ceil(result.pageInfo.countTotal / pageSize));
+      }
+      setIsInitialized(true);
+    };
+
+    void loadTransactions();
+  }, [markets, account, currentPage, fetchTransactions, filteredMarketIds]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -68,11 +117,9 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
     };
   }, []);
 
-  const toggleDropdown = () => setIsOpen(!isOpen);
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      toggleDropdown();
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      setIsOpen(false);
     }
   };
 
@@ -80,30 +127,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
     asset.symbol.toLowerCase().includes(query.toLowerCase()),
   );
 
-  // Filter and sort transactions
-  const items = useMemo(() => {
-    const filtered = history.filter((tx) => {
-      if (!selectedAsset) return true;
-      return (
-        tx.data.market.loanAsset.symbol === selectedAsset.symbol &&
-        tx.data.market.morphoBlue.chain.id === selectedAsset.chainId
-      );
-    });
-    const sorted = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    return sorted.slice(start, end);
-  }, [history, selectedAsset, page]);
-
-  const pages = Math.ceil(
-    history.filter((tx) => {
-      if (!selectedAsset) return true;
-      return (
-        tx.data.market.loanAsset.symbol === selectedAsset.symbol &&
-        tx.data.market.morphoBlue.chain.id === selectedAsset.chainId
-      );
-    }).length / rowsPerPage,
-  );
+  const toggleDropdown = () => setIsOpen(!isOpen);
 
   return (
     <div className="space-y-4">
@@ -178,7 +202,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                       setSelectedAsset(asset);
                       setIsOpen(false);
                       setQuery('');
-                      setPage(1);
+                      setCurrentPage(1);
                     }}
                     role="option"
                     aria-selected={
@@ -192,7 +216,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                         setSelectedAsset(asset);
                         setIsOpen(false);
                         setQuery('');
-                        setPage(1);
+                        setCurrentPage(1);
                       }
                     }}
                   >
@@ -230,7 +254,7 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
                     setSelectedAsset(null);
                     setQuery('');
                     setIsOpen(false);
-                    setPage(1);
+                    setCurrentPage(1);
                   }}
                   type="button"
                 >
@@ -243,164 +267,170 @@ export function HistoryTable({ history, rebalancerInfo }: HistoryTableProps) {
         )}
       </div>
 
-      <Table
-        classNames={{
-          th: 'bg-surface',
-          wrapper: 'rounded-none shadow-none bg-surface p-6',
-        }}
-        bottomContent={
-          <div className="flex w-full justify-center">
-            <Pagination
-              className="text-black"
-              isCompact
-              showControls
-              color="default"
-              page={page}
-              total={pages}
-              onChange={(_page: number) => setPage(_page)}
-            />
-          </div>
-        }
-      >
-        <TableHeader className="table-header">
-          <TableColumn className="text-left">Asset & Network</TableColumn>
-          <TableColumn className="text-left">Market Details</TableColumn>
-          <TableColumn className="text-center">Action & Amount</TableColumn>
-          <TableColumn className="text-center">Time</TableColumn>
-          <TableColumn className="text-center">Transaction</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {items.map((tx, index) => {
-            const loanToken = findToken(
-              tx.data.market.loanAsset.address,
-              tx.data.market.morphoBlue.chain.id,
-            );
-            const collateralToken = findToken(
-              tx.data.market.collateralAsset.address,
-              tx.data.market.morphoBlue.chain.id,
-            );
-            const networkImg = getNetworkImg(tx.data.market.morphoBlue.chain.id);
-            const networkName = getNetworkName(tx.data.market.morphoBlue.chain.id);
-            const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-            const lltv = Number(formatUnits(BigInt(tx.data.market.lltv), 18)) * 100;
+      {!isInitialized || loading ? (
+        <LoadingScreen message="Loading transactions..." />
+      ) : (
+        <Table
+          classNames={{
+            th: 'bg-surface',
+            wrapper: 'rounded-none shadow-none bg-surface p-6',
+          }}
+          bottomContent={
+            totalPages > 1 ? (
+              <div className="flex w-full justify-center">
+                <Pagination
+                  className="text-black"
+                  isCompact
+                  showControls
+                  color="default"
+                  page={currentPage}
+                  total={totalPages}
+                  onChange={setCurrentPage}
+                />
+              </div>
+            ) : null
+          }
+        >
+          <TableHeader className="table-header">
+            <TableColumn className="text-left">Asset & Network</TableColumn>
+            <TableColumn className="text-left">Market Details</TableColumn>
+            <TableColumn className="text-center">Action & Amount</TableColumn>
+            <TableColumn className="text-center">Time</TableColumn>
+            <TableColumn className="text-center">Transaction</TableColumn>
+          </TableHeader>
+          <TableBody emptyContent="No transactions found">
+            {history.map((tx, index) => {
+              // safely cast here because we only fetch txs for unique id in "markets"
+              const market = markets.find(
+                (m) => m.uniqueKey === tx.data.market.uniqueKey,
+              ) as Market;
 
-            const isAgent = rebalancerInfo?.transactions.some(
-              (agentTx) => agentTx.transactionHash === tx.hash,
-            );
+              const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
+              const collateralToken = findToken(
+                market.collateralAsset.address,
+                market.morphoBlue.chain.id,
+              );
+              const networkImg = getNetworkImg(market.morphoBlue.chain.id);
+              const networkName = getNetworkName(market.morphoBlue.chain.id);
+              const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
+              const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
 
-            return (
-              <TableRow key={index.toFixed()}>
-                {/* Network & Asset */}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      {loanToken?.img && (
-                        <Image
-                          src={loanToken.img}
-                          alt={tx.data.market.loanAsset.symbol}
-                          width="20"
-                          height="20"
-                          className="rounded-full"
-                        />
-                      )}
-                      <span className="text-default-600">{tx.data.market.loanAsset.symbol}</span>
+              const isAgent = rebalancerInfo?.transactions.some(
+                (agentTx) => agentTx.transactionHash === tx.hash,
+              );
+
+              return (
+                <TableRow key={index.toFixed()}>
+                  {/* Network & Asset */}
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {loanToken?.img && (
+                          <Image
+                            src={loanToken.img}
+                            alt={market.loanAsset.symbol}
+                            width="20"
+                            height="20"
+                            className="rounded-full"
+                          />
+                        )}
+                        <span className="text-default-600">{market.loanAsset.symbol}</span>
+                      </div>
+                      <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                        {networkImg && (
+                          <Image
+                            src={networkImg}
+                            alt="network"
+                            width="16"
+                            height="16"
+                            className="rounded-full"
+                          />
+                        )}
+                        <span className="text-xs text-gray-600 dark:text-gray-300">
+                          {networkName}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                      {networkImg && (
-                        <Image
-                          src={networkImg}
-                          alt="network"
-                          width="16"
-                          height="16"
-                          className="rounded-full"
-                        />
-                      )}
-                      <span className="text-xs text-gray-600 dark:text-gray-300">
-                        {networkName}
+                  </TableCell>
+
+                  {/* Market Details */}
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                        className="font-monospace text-xs hover:underline"
+                      >
+                        {market.uniqueKey.slice(2, 8)}
+                      </Link>
+                      <div className="flex items-center gap-1">
+                        {collateralToken?.img && (
+                          <Image
+                            src={collateralToken.img}
+                            alt="collateral"
+                            width="16"
+                            height="16"
+                            className="rounded-full"
+                          />
+                        )}
+                        <span className="text-sm text-default-500">
+                          {market.collateralAsset.symbol}
+                        </span>
+                      </div>
+                      <Chip size="sm" variant="flat" className="bg-default-100 text-xs" radius="sm">
+                        {formatReadable(lltv)}%
+                      </Chip>
+                    </div>
+                  </TableCell>
+
+                  {/* Action & Amount */}
+                  <TableCell>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-medium">{actionTypeToText(tx.type)}</span>
+                      <span
+                        className={
+                          tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'
+                        }
+                      >
+                        {sign}
+                        {formatReadable(
+                          Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)),
+                        )}{' '}
+                        {market.loanAsset.symbol}
                       </span>
-                    </div>
-                  </div>
-                </TableCell>
-
-                {/* Market Details */}
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/market/${tx.data.market.morphoBlue.chain.id}/${tx.data.market.uniqueKey}`}
-                      className="font-monospace text-xs hover:underline"
-                    >
-                      {tx.data.market.uniqueKey.slice(2, 8)}
-                    </Link>
-                    <div className="flex items-center gap-1">
-                      {collateralToken?.img && (
-                        <Image
-                          src={collateralToken.img}
-                          alt="collateral"
-                          width="16"
-                          height="16"
-                          className="rounded-full"
-                        />
+                      {isAgent && (
+                        <Badge size="sm">
+                          <RiRobot2Line />
+                        </Badge>
                       )}
-                      <span className="text-sm text-default-500">
-                        {tx.data.market.collateralAsset.symbol}
-                      </span>
                     </div>
-                    <Chip size="sm" variant="flat" className="bg-default-100 text-xs" radius="sm">
-                      {formatReadable(lltv)}%
-                    </Chip>
-                  </div>
-                </TableCell>
+                  </TableCell>
 
-                {/* Action & Amount */}
-                <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="font-medium">{actionTypeToText(tx.type)}</span>
-                    <span
-                      className={
-                        tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'
-                      }
-                    >
-                      {sign}
-                      {formatReadable(
-                        Number(
-                          formatUnits(BigInt(tx.data.assets), tx.data.market.loanAsset.decimals),
-                        ),
-                      )}{' '}
-                      {tx.data.market.loanAsset.symbol}
-                    </span>
-                    {isAgent && (
-                      <Badge size="sm">
-                        <RiRobot2Line />
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
+                  {/* Time */}
+                  <TableCell>
+                    <div className="flex justify-center text-sm text-default-500">
+                      {moment.unix(tx.timestamp).fromNow()}
+                    </div>
+                  </TableCell>
 
-                {/* Time */}
-                <TableCell>
-                  <div className="flex justify-center text-sm text-default-500">
-                    {moment.unix(tx.timestamp).fromNow()}
-                  </div>
-                </TableCell>
-
-                {/* Transaction */}
-                <TableCell>
-                  <div className="flex justify-center">
-                    <Link
-                      href={getExplorerTxURL(tx.hash, tx.data.market.morphoBlue.chain.id)}
-                      target="_blank"
-                      className="flex items-center gap-1 text-sm hover:underline"
-                    >
-                      {tx.hash.slice(0, 6)}...{tx.hash.slice(-4)}
-                      <ExternalLinkIcon />
-                    </Link>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                  {/* Transaction */}
+                  <TableCell>
+                    <div className="flex justify-center">
+                      <Link
+                        href={getExplorerTxURL(tx.hash, market.morphoBlue.chain.id)}
+                        target="_blank"
+                        className="flex items-center gap-1 text-sm hover:underline"
+                      >
+                        {tx.hash.slice(0, 6)}...{tx.hash.slice(-4)}
+                        <ExternalLinkIcon />
+                      </Link>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }

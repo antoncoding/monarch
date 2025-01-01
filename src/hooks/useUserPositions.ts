@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
-import { MarketPosition, UserTransaction } from '@/utils/types';
+import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
@@ -11,11 +11,10 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [data, setData] = useState<MarketPosition[]>([]);
-  const [history, setHistory] = useState<UserTransaction[]>([]);
-  const [error, setError] = useState<unknown | null>(null);
+  const [positionsError, setPositionsError] = useState<unknown | null>(null);
 
   const fetchData = useCallback(
-    async (isRefetch = false) => {
+    async (isRefetch = false, onSuccess?: () => void) => {
       if (!user) {
         console.error('Missing user address');
         setLoading(false);
@@ -29,6 +28,8 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         } else {
           setLoading(true);
         }
+
+        setPositionsError(null);
 
         // Fetch position data from both networks
         const [responseMainnet, responseBase] = await Promise.all([
@@ -64,23 +65,15 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         const result2 = await responseBase.json();
 
         const marketPositions: MarketPosition[] = [];
-        const transactions: UserTransaction[] = [];
 
-        // Collect positions and transactions
+        // Collect positions
         for (const result of [result1, result2]) {
           if (result.data?.userByAddress) {
             marketPositions.push(
               ...(result.data.userByAddress.marketPositions as MarketPosition[]),
             );
-            const parsableTxs = (
-              result.data.userByAddress.transactions as UserTransaction[]
-            ).filter((t) => t.data?.market);
-            transactions.push(...parsableTxs);
           }
         }
-
-        // Sort transactions by timestamp (newest first)
-        transactions.sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
 
         // Process positions and calculate earnings
         const enhancedPositions = await Promise.all(
@@ -99,11 +92,11 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
             }),
         );
 
-        setHistory(transactions);
         setData(enhancedPositions);
-      } catch (_error) {
-        console.error('Error fetching positions:', _error);
-        setError(_error);
+        onSuccess?.();
+      } catch (err) {
+        console.error('Error fetching positions:', err);
+        setPositionsError(err);
       } finally {
         setLoading(false);
         setIsRefetching(false);
@@ -113,17 +106,16 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   );
 
   useEffect(() => {
-    fetchData().catch(console.error);
+    void fetchData();
   }, [fetchData]);
 
-  const refetch = useCallback(
-    (onSuccess?: () => void) => {
-      fetchData(true).then(onSuccess).catch(console.error);
-    },
-    [fetchData],
-  );
-
-  return { loading, isRefetching, data, history, error, refetch };
+  return {
+    data,
+    loading,
+    isRefetching,
+    positionsError,
+    refetch: (onSuccess?: () => void) => void fetchData(true, onSuccess),
+  };
 };
 
 export default useUserPositions;

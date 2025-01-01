@@ -11,6 +11,7 @@ import {
 } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
 import useUserPositions from './useUserPositions';
+import useUserTransactions from './useUserTransactions';
 
 type BlockNumbers = {
   day: number;
@@ -27,12 +28,13 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     loading: positionsLoading,
     isRefetching,
     data: positions,
-    history,
-    error: positionsError,
+    positionsError,
     refetch,
   } = useUserPositions(user, true);
 
   const { fetchPositionSnapshot } = usePositionSnapshot();
+  const { fetchTransactions } = useUserTransactions();
+
   const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>(
     [],
   );
@@ -167,9 +169,14 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
         const positionsWithEarningsData = await Promise.all(
           positions.map(async (position) => {
+            const history = await fetchTransactions({
+              userAddress: [user],
+              marketUniqueKeys: [position.market.uniqueKey],
+            });
+
             const earned = await calculateEarningsFromPeriod(
               position,
-              history,
+              history.items,
               user as Address,
               position.market.morphoBlue.chain.id as SupportedNetworks,
             );
@@ -189,7 +196,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     };
 
     void updatePositionsWithEarnings();
-  }, [positions, user, blockNums, history, calculateEarningsFromPeriod]);
+  }, [positions, user, blockNums, calculateEarningsFromPeriod]);
 
   return {
     positions: positionsWithEarnings,

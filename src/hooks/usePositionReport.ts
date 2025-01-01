@@ -7,6 +7,7 @@ import {
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { usePositionSnapshot } from './usePositionSnapshot';
+import useUserTransactions from './useUserTransactions';
 
 export type PositionReport = {
   market: Market;
@@ -32,13 +33,13 @@ export type ReportSummary = {
 
 export const usePositionReport = (
   positions: MarketPosition[],
-  history: UserTransaction[],
   account: Address,
   selectedAsset: { address: string; chainId: number } | null,
   startDate?: Date,
   endDate?: Date,
 ) => {
   const { fetchPositionSnapshot } = usePositionSnapshot();
+  const { fetchTransactions } = useUserTransactions();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
     if (!startDate || !endDate || !selectedAsset) return null;
@@ -58,8 +59,8 @@ export const usePositionReport = (
       endDate.getTime() / 1000,
     );
 
-    let startTimestamp = Math.floor(startDate.getTime() / 1000);
-    let endTimestamp = Math.floor(endDate.getTime() / 1000);
+    const startTimestamp = Math.floor(startDate.getTime() / 1000);
+    const endTimestamp = Math.floor(endDate.getTime() / 1000);
     const period = endTimestamp - startTimestamp;
 
     const relevantPositions = positions.filter(
@@ -68,10 +69,39 @@ export const usePositionReport = (
         position.market.morphoBlue.chain.id === selectedAsset.chainId,
     );
 
-    const relevantTxs = history.filter(
-      (tx) =>
-        tx.data?.market?.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase(),
-    );
+    // Fetch all transactions with pagination
+    const PAGE_SIZE = 100;
+    let allTransactions: UserTransaction[] = [];
+    let hasMore = true;
+    let skip = 0;
+
+    while (hasMore) {
+      const transactionResult = await fetchTransactions({
+        userAddress: [account],
+        chainIds: [selectedAsset.chainId],
+        timestampGte: startTimestamp,
+        timestampLte: endTimestamp,
+        marketUniqueKeys: relevantPositions.map((position) => position.market.uniqueKey),
+        first: PAGE_SIZE,
+        skip,
+      });
+
+      if (!transactionResult) {
+        throw new Error('Failed to fetch transactions');
+      }
+
+      allTransactions = [...allTransactions, ...transactionResult.items];
+
+      // Check if we've fetched all transactions
+      hasMore = transactionResult.items.length === PAGE_SIZE;
+      skip += PAGE_SIZE;
+
+      // Safety check to prevent infinite loops
+      if (skip > PAGE_SIZE * 100) {
+        console.warn('Reached maximum skip limit, some transactions might be missing');
+        break;
+      }
+    }
 
     const marketReports = (
       await Promise.all(
@@ -94,7 +124,9 @@ export const usePositionReport = (
           }
 
           const marketTransactions = filterTransactionsInPeriod(
-            history.filter((tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey),
+            allTransactions.filter(
+              (tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey,
+            ),
             startTimestamp,
             endTimestamp,
           );
@@ -148,7 +180,7 @@ export const usePositionReport = (
     const groupedEarnings = calculateEarningsFromSnapshot(
       endBalance,
       startBalance,
-      relevantTxs,
+      allTransactions,
       startTimestamp,
       endTimestamp,
     );
