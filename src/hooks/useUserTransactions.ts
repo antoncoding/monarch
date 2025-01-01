@@ -13,6 +13,7 @@ export type TransactionFilters = {
   skip?: number;
   first?: number;
   hash?: string;
+  assetIds?: string[];
 };
 
 export type TransactionResponse = {
@@ -49,6 +50,7 @@ const useUserTransactions = () => {
                 timestamp_gte: filters.timestampGte ?? null,
                 timestamp_lte: filters.timestampLte ?? null,
                 hash: filters.hash ?? null,
+                assetId_in: filters.assetIds ?? null,
               },
               first: filters.first ?? 1000,
               skip: filters.skip ?? 0,

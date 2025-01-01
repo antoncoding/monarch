@@ -32,7 +32,7 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
       if (!account) return;
 
       // Get the most recent bot transaction hash
-      const lastBotTxHash = userRebalancerInfo.transactions.at(0)?.transactionHash;
+      const lastBotTxHash = userRebalancerInfo.transactions.at(-1)?.transactionHash;
 
       if (lastBotTxHash) {
         const result = await fetchTransactions({
