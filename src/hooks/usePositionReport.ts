@@ -50,17 +50,15 @@ export const usePositionReport = (
     }
 
     // fetch block number at start and end date
-    const startBlockNumber = await estimatedBlockNumber(
+    const { blockNumber: startBlockNumber, timestamp: startTimestamp } = await estimatedBlockNumber(
       selectedAsset.chainId,
       startDate.getTime() / 1000,
     );
-    const endBlockNumber = await estimatedBlockNumber(
+    const { blockNumber: endBlockNumber, timestamp: endTimestamp } = await estimatedBlockNumber(
       selectedAsset.chainId,
       endDate.getTime() / 1000,
     );
 
-    const startTimestamp = Math.floor(startDate.getTime() / 1000);
-    const endTimestamp = Math.floor(endDate.getTime() / 1000);
     const period = endTimestamp - startTimestamp;
 
     const relevantPositions = positions.filter(

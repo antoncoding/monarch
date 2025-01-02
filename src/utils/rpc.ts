@@ -29,7 +29,10 @@ type BlockResponse = {
   approximateBlockTime: number;
 };
 
-export async function estimatedBlockNumber(chainId: SupportedNetworks, timestamp: number) {
+export async function estimatedBlockNumber(chainId: SupportedNetworks, timestamp: number): Promise<{
+  blockNumber: number;
+  timestamp: number;
+}> {
   // First, get the nearest block number for the timestamp
   const blockResponse = await fetch(
     `/api/block?` +
@@ -46,5 +49,8 @@ export async function estimatedBlockNumber(chainId: SupportedNetworks, timestamp
   const blockData = (await blockResponse.json()) as BlockResponse;
   console.log('Found nearest block:', blockData);
 
-  return Number(blockData.blockNumber);
+  return {
+    blockNumber: Number(blockData.blockNumber),
+    timestamp: Number(blockData.timestamp),
+  };
 }
