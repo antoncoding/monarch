@@ -350,6 +350,15 @@ const supportedTokens = [
     networks: [{ chain: mainnet, address: '0x136471a34f6ef19fE571EFFC1CA711fdb8E49f2b' }],
   },
   {
+    symbol: 'USDz',
+    img: require('../imgs/tokens/usdz.png') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: '0xA469B7Ee9ee773642b3e93E842e5D9b5BaA10067' },
+      { chain: base, address: '0x04D5ddf5f3a8939889F11E97f8c4BB48317F1938' },
+    ],
+  },
+  {
     symbol: 'pufETH',
     img: require('../imgs/tokens/pufETH.webp') as string,
     decimals: 18,
