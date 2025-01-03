@@ -28,7 +28,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
 
         return (
           <div
-            className="flex flex-grow opacity-80 transition-all duration-300 ease-in-out hover:opacity-100"
+            className="flex flex-grow transition-all duration-300 ease-in-out hover:opacity-80"
             {...(!ready && {
               'aria-hidden': true,
               style: {

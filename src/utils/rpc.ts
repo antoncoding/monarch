@@ -29,7 +29,10 @@ type BlockResponse = {
   approximateBlockTime: number;
 };
 
-export async function estimatedBlockNumber(chainId: SupportedNetworks, timestamp: number): Promise<{
+export async function estimatedBlockNumber(
+  chainId: SupportedNetworks,
+  timestamp: number,
+): Promise<{
   blockNumber: number;
   timestamp: number;
 }> {

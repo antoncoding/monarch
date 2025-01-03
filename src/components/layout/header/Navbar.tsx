@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
+import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 
 import { useAccount } from 'wagmi';
@@ -88,15 +90,21 @@ export function Navbar() {
           </NavbarLink>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full"
+            className="flex h-10 items-center justify-center rounded-full"
             aria-label="Toggle theme"
           >
-            {mounted && (theme === 'dark' ? <LuSunMedium size={24} /> : <FaRegMoon size={20} />)}
+            {mounted && (theme === 'dark' ? <LuSunMedium size={20} /> : <FaRegMoon size={18} />)}
           </button>
+          <Link
+            href="/settings"
+            className="inline-flex items-center justify-between self-stretch no-underline"
+          >
+            <FiSettings className="relative" size={18} />
+          </Link>
           <AccountConnect onConnectPath="positions" />
         </div>
       </div>

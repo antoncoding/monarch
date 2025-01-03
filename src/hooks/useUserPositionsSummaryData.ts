@@ -74,7 +74,11 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
               ]);
 
               if (day && week && month) {
-                newBlockNums[chainId] = { day: day.blockNumber, week: week.blockNumber, month: month.blockNumber };
+                newBlockNums[chainId] = {
+                  day: day.blockNumber,
+                  week: week.blockNumber,
+                  month: month.blockNumber,
+                };
               }
             }),
         );
