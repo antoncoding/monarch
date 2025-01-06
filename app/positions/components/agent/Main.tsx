@@ -1,17 +1,14 @@
-import { useState, useEffect } from 'react';
 import { Tooltip } from '@nextui-org/react';
 import { motion } from 'framer-motion';
-import moment from 'moment';
 import Image from 'next/image';
 import Link from 'next/link';
 import { GrStatusGood } from 'react-icons/gr';
 import { Button } from '@/components/common';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/contexts/MarketsContext';
-import useUserTransactions from '@/hooks/useUserTransactions';
 import { findAgent } from '@/utils/monarch-agent';
 import { findToken } from '@/utils/tokens';
-import { UserRebalancerInfo, UserTransaction } from '@/utils/types';
+import { UserRebalancerInfo } from '@/utils/types';
 
 const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
 
@@ -24,31 +21,6 @@ type MainProps = {
 export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
   const agent = findAgent(userRebalancerInfo.rebalancer);
   const { markets } = useMarkets();
-  const { fetchTransactions } = useUserTransactions();
-  const [lastTx, setLastTx] = useState<UserTransaction | null>(null);
-
-  useEffect(() => {
-    const fetchLastTransaction = async () => {
-      if (!account) return;
-
-      // Get the most recent bot transaction hash
-      const lastBotTxHash = userRebalancerInfo.transactions.at(-1)?.transactionHash;
-
-      if (lastBotTxHash) {
-        const result = await fetchTransactions({
-          userAddress: [account],
-          hash: lastBotTxHash,
-          first: 1,
-        });
-
-        if (result?.items.length > 0) {
-          setLastTx(result.items[0]);
-        }
-      }
-    };
-
-    void fetchLastTransaction();
-  }, [userRebalancerInfo.transactions, fetchTransactions, account]);
 
   if (!agent) {
     return null;
@@ -155,35 +127,16 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
           </div>
 
           <div className="space-y-2">
-            <h4 className="text-xs font-medium text-secondary">Last Action</h4>
-            <div className="flex items-center gap-4 text-sm">
-              {lastTx && (
-                <>
-                  <Link
-                    href={`https://basescan.org/tx/${lastTx.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-surface flex items-center gap-2 rounded px-3 py-2 text-sm no-underline"
-                  >
-                    <span>
-                      {' '}
-                      {lastTx.hash.slice(0, 6) + '...' + lastTx.hash.slice(-4)}{' '}
-                      <span className="text-xs text-secondary">
-                        {' '}
-                        {moment.unix(lastTx.timestamp).fromNow()}{' '}
-                      </span>{' '}
-                    </span>
-                  </Link>
-                  <Link
-                    href={`/history/${account}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-surface flex items-center gap-2 rounded px-3 py-2 text-sm no-underline"
-                  >
-                    <span> View All ({userRebalancerInfo.transactions?.length ?? 0})</span>
-                  </Link>
-                </>
-              )}
+            <h4 className="text-xs font-medium text-secondary">Automations</h4>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href={`/history/${account}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-surface hover:bg-hovered flex items-center gap-2 rounded px-3 py-2 text-sm no-underline"
+              >
+                View All ({userRebalancerInfo.transactions?.length ?? 0})
+              </Link>
             </div>
           </div>
         </div>
