@@ -1,7 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import { formatUnits, maxUint256 } from 'viem';
-import { formatBalance } from '@/utils/balance';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
@@ -95,6 +95,14 @@ export function MarketInfoBlockCompact({
             </span>
             <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
               {`${market.uniqueKey.slice(2, 8)}`}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="min-w-[100px] text-xs text-gray-500">
+              APY: {(market.state.supplyApy * 100).toFixed(2)}%
+            </span>
+            <span className="text-xs text-gray-500">
+              Liquidity: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))} {market.loanAsset.symbol}
             </span>
           </div>
         </div>
