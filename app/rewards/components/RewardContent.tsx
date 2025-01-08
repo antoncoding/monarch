@@ -15,22 +15,29 @@ import useUserRewards from '@/hooks/useRewards';
 import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers';
 import MarketProgram from './MarketProgram';
 import UniformProgram from './UniformProgram';
+import VaultProgram from './VaultProgram';
 
 const PROGRAM_INFO = {
   market: {
     title: 'Market Program',
     tooltip: {
-      title: 'Market Program Rewards',
+      title: 'Market Program',
       detail:
-        'Market Program Rewards are incentives tailored to specific markets on Morpho. These rewards encourage particular actions within each market, such as supplying, borrowing, or providing collateral. The program may include additional incentives designed to stimulate activity in targeted markets.',
+        'Rewards for supplying, borrowing, or using assets as collateral in Morpho Blue markets.',
     },
   },
   uniform: {
     title: 'Uniform Program',
     tooltip: {
-      title: 'Uniform Program Rewards',
-      detail:
-        'The Uniform Program is a new reward system that applies to all users who supply to Morpho, regardless of the specific market. It provides a consistent reward rate for each dollar supplied across eligible markets, promoting broader participation in the Morpho ecosystem.',
+      title: 'Uniform Program',
+      detail: 'Rewards distributed uniformly to all users based on their activity.',
+    },
+  },
+  vault: {
+    title: 'Vault Program',
+    tooltip: {
+      title: 'Vault Program',
+      detail: 'Rewards for depositing assets in Morpho vaults.',
     },
   },
 };
@@ -42,9 +49,11 @@ export default function Rewards() {
 
   const marketRewards = useMemo(() => filterMarketRewards(rewards), [rewards]);
   const uniformRewards = useMemo(() => filterUniformRewards(rewards), [rewards]);
+  const vaultRewards = useMemo(() => rewards.filter((r) => r.type === 'vault-reward'), [rewards]);
 
   const [showMarketPending, setShowMarketPending] = useState(false);
   const [showUniformPending, setShowUniformPending] = useState(false);
+  const [showVaultPending, setShowVaultPending] = useState(false);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -52,9 +61,6 @@ export default function Rewards() {
       <div className="container h-full gap-8 px-[5%]">
         <div className="pb-4">
           <h1 className="font-zen">Reward</h1>
-          <div className="pt-4 text-secondary">
-            Morpho offers multiple reward programs to incentivize user participation.
-          </div>
         </div>
 
         {loading || loadingRewards ? (
@@ -135,6 +141,43 @@ export default function Rewards() {
                 uniformRewards={uniformRewards}
                 distributions={distributions}
                 showPending={showUniformPending}
+              />
+            </section>
+
+            <section>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-zen text-xl">{PROGRAM_INFO.vault.title}</h2>
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        className="max-w-[400px]"
+                        title={PROGRAM_INFO.vault.tooltip.title}
+                        detail={PROGRAM_INFO.vault.tooltip.detail}
+                      />
+                    }
+                    placement="right"
+                  >
+                    <div>
+                      <BsQuestionCircle className="cursor-help text-secondary" />
+                    </div>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-secondary">Show Pending</span>
+                  <Switch
+                    size="sm"
+                    isSelected={showVaultPending}
+                    onValueChange={setShowVaultPending}
+                    aria-label="Show pending vault rewards"
+                  />
+                </div>
+              </div>
+              <VaultProgram
+                account={account}
+                vaultRewards={vaultRewards}
+                showPending={showVaultPending}
+                distributions={distributions}
               />
             </section>
           </div>

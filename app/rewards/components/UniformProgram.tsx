@@ -96,7 +96,7 @@ export default function UniformProgram({
                     href={getAssetURL(reward.asset.address, reward.asset.chain_id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 hover:opacity-80 no-underline"
+                    className="flex items-center justify-center gap-2 no-underline hover:opacity-80"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <p>{reward.token?.symbol ?? 'Unknown'}</p>

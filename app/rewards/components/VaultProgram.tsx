@@ -2,53 +2,45 @@
 
 import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
-import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
-import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/common';
 import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { formatReadable, formatBalance } from '@/utils/balance';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
-import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { Market, MarketProgramType } from '@/utils/types';
+import { VaultRewardType } from '@/utils/types';
 
-type MarketProgramProps = {
-  account: string;
-  markets: Market[];
-  marketRewards: MarketProgramType[];
-  distributions: DistributionResponseType[];
+type VaultProgramProps = {
+  account?: string;
+  vaultRewards: VaultRewardType[];
   showPending: boolean;
-};
+  distributions: DistributionResponseType[];
+}
 
-export default function MarketProgram({
-  marketRewards,
-  markets,
+export default function VaultProgram({
   distributions,
-  account,
+  vaultRewards,
   showPending,
-}: MarketProgramProps) {
-  const { chainId } = useAccount();
+}: VaultProgramProps) {
+  const { chainId, address: account } = useAccount();
   const { switchChain } = useSwitchChain();
-  const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [selectedVault, setSelectedVault] = useState<string | null>(null);
 
   const { sendTransaction } = useTransactionWithToast({
-    toastId: 'claim',
-    pendingText: 'Claiming Market Reward...',
-    successText: 'Market Reward Claimed!',
-    errorText: 'Failed to claim market rewards',
+    toastId: 'claim-vault',
+    pendingText: 'Claiming vault rewards...',
+    errorText: 'Something went wrong',
+    successText: 'Reward Claimed',
+    successDescription: 'Successfully claimed vault rewards',
     chainId,
-    pendingDescription: `Claiming market rewards`,
-    successDescription: `Successfully claimed market rewards`,
   });
 
   const allRewardTokens = useMemo(() => {
     // First, group rewards by asset address and chain ID
-    const groupedRewards = marketRewards.reduce(
+    const groupedRewards = vaultRewards.reduce(
       (acc, reward) => {
         const key = `${reward.asset.address.toLowerCase()}-${reward.asset.chain_id}`;
         if (!acc[key]) {
@@ -67,7 +59,7 @@ export default function MarketProgram({
       {} as Record<
         string,
         {
-          rewards: MarketProgramType[];
+          rewards: VaultRewardType[];
           token: string;
           chainId: number;
           distribution?: DistributionResponseType;
@@ -78,38 +70,22 @@ export default function MarketProgram({
     // Then, calculate totals for each group
     return Object.values(groupedRewards).map((group) => {
       const claimable = group.rewards.reduce(
-        (sum, reward) =>
-          sum +
-          BigInt(reward.for_supply?.claimable_now ?? '0') +
-          BigInt(reward.for_borrow?.claimable_now ?? '0') +
-          BigInt(reward.for_collateral?.claimable_now ?? '0'),
+        (sum, reward) => sum + BigInt(reward.for_supply?.claimable_now ?? '0'),
         BigInt(0),
       );
 
       const pending = group.rewards.reduce(
-        (sum, reward) =>
-          sum +
-          BigInt(reward.for_supply?.claimable_next ?? '0') +
-          BigInt(reward.for_borrow?.claimable_next ?? '0') +
-          BigInt(reward.for_collateral?.claimable_next ?? '0'),
-        BigInt(0),
-      );
-
-      const total = group.rewards.reduce(
-        (sum, reward) =>
-          sum +
-          BigInt(reward.for_supply?.total ?? '0') +
-          BigInt(reward.for_borrow?.total ?? '0') +
-          BigInt(reward.for_collateral?.total ?? '0'),
+        (sum, reward) => sum + BigInt(reward.for_supply?.claimable_next ?? '0'),
         BigInt(0),
       );
 
       const claimed = group.rewards.reduce(
-        (sum, reward) =>
-          sum +
-          BigInt(reward.for_supply?.claimed ?? '0') +
-          BigInt(reward.for_borrow?.claimed ?? '0') +
-          BigInt(reward.for_collateral?.claimed ?? '0'),
+        (sum, reward) => sum + BigInt(reward.for_supply?.claimed ?? '0'),
+        BigInt(0),
+      );
+
+      const total = group.rewards.reduce(
+        (sum, reward) => sum + BigInt(reward.for_supply?.total ?? '0'),
         BigInt(0),
       );
 
@@ -121,10 +97,10 @@ export default function MarketProgram({
         pending,
         total,
         claimed,
-        rewards: group.rewards, // Keep original rewards for detail view
+        rewards: group.rewards,
       };
     });
-  }, [marketRewards, distributions]);
+  }, [vaultRewards, distributions]);
 
   const filteredRewardTokens = useMemo(
     () => allRewardTokens.filter((tokenReward) => showPending || tokenReward.claimable > BigInt(0)),
@@ -132,14 +108,14 @@ export default function MarketProgram({
   );
 
   const handleRowClick = (token: string) => {
-    setSelectedToken((prevToken) => (prevToken === token ? null : token));
+    setSelectedVault((prevVault) => (prevVault === token ? null : token));
   };
 
   return (
     <div className="mt-4 gap-8">
       <div className="bg-surface mb-6 mt-2">
         <Table
-          aria-label="Market Program Rewards Table"
+          aria-label="Vault Program Rewards Table"
           classNames={{
             th: 'bg-surface text-center',
             td: 'text-center',
@@ -169,7 +145,7 @@ export default function MarketProgram({
                   <TableRow
                     key={index}
                     className={`cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                      selectedToken === tokenReward.token ? 'bg-gray-200 dark:bg-gray-700' : ''
+                      selectedVault === tokenReward.token ? 'bg-gray-200 dark:bg-gray-700' : ''
                     }`}
                     onClick={() => handleRowClick(tokenReward.token)}
                   >
@@ -185,18 +161,18 @@ export default function MarketProgram({
                         <TokenIcon
                           address={tokenReward.token}
                           chainId={tokenReward.chainId}
-                          width={20}
-                          height={20}
+                          width={16}
+                          height={16}
                         />
                       </Link>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
-                        <Image
-                          src={getNetworkImg(tokenReward.chainId) ?? ''}
-                          alt={`Chain ${tokenReward.chainId}`}
-                          width={20}
-                          height={20}
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={16}
+                          height={16}
                         />
                       </div>
                     </TableCell>
@@ -258,8 +234,8 @@ export default function MarketProgram({
                         />
                       </div>
                     </TableCell>
-                    <TableCell align="center">
-                      <div className="flex justify-center">
+                    <TableCell>
+                      <div className="flex items-center justify-end">
                         <Button
                           variant="interactive"
                           size="sm"
@@ -269,28 +245,19 @@ export default function MarketProgram({
                           }
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!account) {
-                              toast.error('Connect wallet');
-                              return;
-                            }
-                            if (!tokenReward.distribution) {
-                              toast.error('No claim data');
-                              return;
-                            }
-                            if (chainId !== tokenReward.distribution.distributor.chain_id) {
+                            if (tokenReward.chainId !== chainId) {
                               switchChain({ chainId: tokenReward.chainId });
-                              toast('Click on claim again after switching network');
                               return;
                             }
+                            // Send claim transaction
                             sendTransaction({
                               account: account as Address,
                               to: tokenReward.distribution.distributor.address as Address,
                               data: tokenReward.distribution.tx_data as `0x${string}`,
-                              chainId: tokenReward.distribution.distributor.chain_id,
                             });
                           }}
                         >
-                          Claim
+                          {tokenReward.chainId !== chainId ? 'Switch Network' : 'Claim'}
                         </Button>
                       </div>
                     </TableCell>
@@ -300,116 +267,6 @@ export default function MarketProgram({
           </TableBody>
         </Table>
       </div>
-
-      {selectedToken && (
-        <div className="bg-surface mt-8 p-4">
-          <h3 className="mb-4 text-lg font-semibold">
-            {' '}
-            Reward Breakdown for{' '}
-            {
-              findToken(
-                selectedToken,
-                allRewardTokens.find((t) => t.token === selectedToken)?.chainId ?? 1,
-              )?.symbol
-            }
-          </h3>
-          <Table aria-label="Reward Breakdown">
-            <TableHeader>
-              <TableColumn>Market ID</TableColumn>
-              <TableColumn>Loan Asset</TableColumn>
-              <TableColumn>Collateral</TableColumn>
-              <TableColumn>LLTV</TableColumn>
-              <TableColumn>Claimable</TableColumn>
-              <TableColumn>Pending</TableColumn>
-              <TableColumn>Claimed</TableColumn>
-              <TableColumn>Total</TableColumn>
-            </TableHeader>
-            <TableBody>
-              {markets
-                .filter((m) =>
-                  marketRewards.find(
-                    (r) =>
-                      r.program &&
-                      r.program.market_id.toLowerCase() === m.uniqueKey.toLowerCase() &&
-                      r.program.asset.address.toLowerCase() === selectedToken.toLowerCase(),
-                  ),
-                )
-                .map((market, idx) => {
-                  const tokenRewardsForMarket = marketRewards.filter((reward) => {
-                    if (!reward.program) return false;
-                    return (
-                      reward.program.market_id === market.uniqueKey &&
-                      reward.program.asset.address.toLowerCase() === selectedToken.toLowerCase()
-                    );
-                  });
-
-                  const claimable = tokenRewardsForMarket.reduce(
-                    (sum, reward) =>
-                      sum +
-                      BigInt(reward.for_supply?.claimable_now ?? '0') +
-                      BigInt(reward.for_borrow?.claimable_now ?? '0') +
-                      BigInt(reward.for_collateral?.claimable_now ?? '0'),
-                    BigInt(0),
-                  );
-
-                  const pending = tokenRewardsForMarket.reduce(
-                    (sum, reward) =>
-                      sum +
-                      BigInt(reward.for_supply?.claimable_next ?? '0') +
-                      BigInt(reward.for_borrow?.claimable_next ?? '0') +
-                      BigInt(reward.for_collateral?.claimable_next ?? '0'),
-                    BigInt(0),
-                  );
-
-                  const claimed = tokenRewardsForMarket.reduce(
-                    (sum, reward) =>
-                      sum +
-                      BigInt(reward.for_supply?.claimed ?? '0') +
-                      BigInt(reward.for_borrow?.claimed ?? '0') +
-                      BigInt(reward.for_collateral?.claimed ?? '0'),
-                    BigInt(0),
-                  );
-
-                  const total = tokenRewardsForMarket.reduce(
-                    (sum, reward) =>
-                      sum +
-                      BigInt(reward.for_supply?.total ?? '0') +
-                      BigInt(reward.for_borrow?.total ?? '0') +
-                      BigInt(reward.for_collateral?.total ?? '0'),
-                    BigInt(0),
-                  );
-
-                  const matchedToken = findToken(selectedToken, market.morphoBlue.chain.id);
-
-                  return (
-                    <TableRow key={idx}>
-                      <TableCell className="font-monospace no-underline">
-                        <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}>
-                          {market.uniqueKey.slice(2, 8)}
-                        </Link>
-                      </TableCell>
-                      <TableCell>{market.loanAsset.symbol}</TableCell>
-                      <TableCell>{market.collateralAsset.symbol}</TableCell>
-                      <TableCell>{formatBalance(market.lltv, 16)}%</TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(claimable, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(pending, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(claimed, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(total, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
     </div>
   );
 }

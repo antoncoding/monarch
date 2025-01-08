@@ -434,6 +434,12 @@ const supportedTokens = [
     networks: [{ chain: base, address: '0x3eE5e23eEE121094f1cFc0Ccc79d6C809Ebd22e5' }],
   },
   {
+    symbol: 'PYTH',
+    img: require('../imgs/oracles/pyth.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x4c5d8A75F3762c1561D96f177694f67378705E98' }],
+  },
+  {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,
     decimals: 18,

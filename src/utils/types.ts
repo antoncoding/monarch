@@ -141,8 +141,36 @@ export type UniformRewardType = {
   user: string;
 };
 
+export type VaultProgramType = {
+  vault: string;
+  chain_id: number;
+  rate_per_year: string;
+  asset: AssetType;
+  distributor: AssetType;
+  creator: string;
+  blacklist: string[];
+  start: string;
+  end: string;
+  created_at: string;
+  type: 'vault-reward';
+  id: string;
+}
+
+export type VaultRewardType = {
+  user: string;
+  type: 'vault-reward';
+  asset: AssetType;
+  program: VaultProgramType;
+  for_supply: {
+    total: string;
+    claimable_now: string;
+    claimable_next: string;
+    claimed: string;
+  };
+}
+
 // Combined RewardResponseType
-export type RewardResponseType = MarketProgramType | UniformRewardType;
+export type RewardResponseType = MarketProgramType | UniformRewardType | VaultRewardType;
 
 export type RebalanceAction = {
   fromMarket: {
