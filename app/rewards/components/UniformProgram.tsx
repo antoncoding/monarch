@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { Switch } from '@nextui-org/react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
@@ -13,9 +13,9 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
+import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { getAssetURL } from '@/utils/external';
 import { UniformRewardType } from '@/utils/types';
 
 type UniformProgramProps = {
@@ -65,12 +65,12 @@ export default function UniformProgram({
 
   const filteredRewardsData = useMemo(
     () => rewardsData.filter((reward) => showPending || reward.claimable > BigInt(0)),
-    [rewardsData, showPending]
+    [rewardsData, showPending],
   );
 
   return (
     <div className="mt-4 gap-8">
-      <div className="flex justify-end items-center gap-2 mb-4">
+      <div className="mb-4 flex items-center justify-end gap-2">
         <span className="text-sm text-secondary">Show Pending</span>
         <Switch
           size="sm"
@@ -101,7 +101,7 @@ export default function UniformProgram({
             {filteredRewardsData.map((reward, index) => (
               <TableRow key={index}>
                 <TableCell>
-                  <Link 
+                  <Link
                     href={getAssetURL(reward.asset.address, reward.asset.chain_id)}
                     target="_blank"
                     rel="noopener noreferrer"

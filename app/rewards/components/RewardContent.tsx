@@ -1,17 +1,17 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useParams } from 'next/navigation';
-import { BsQuestionCircle } from "react-icons/bs";
-
 import { Tooltip } from '@nextui-org/react';
+import { useParams } from 'next/navigation';
+import { BsQuestionCircle } from 'react-icons/bs';
+
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
 import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers';
-import { TooltipContent } from '@/components/TooltipContent';
 import MarketProgram from './MarketProgram';
 import UniformProgram from './UniformProgram';
 
@@ -20,16 +20,18 @@ const PROGRAM_INFO = {
     title: 'Market Program',
     tooltip: {
       title: 'Market Program Rewards',
-      detail: 'Market Program Rewards are incentives tailored to specific markets on Morpho. These rewards encourage particular actions within each market, such as supplying, borrowing, or providing collateral. The program may include additional incentives designed to stimulate activity in targeted markets.'
-    }
+      detail:
+        'Market Program Rewards are incentives tailored to specific markets on Morpho. These rewards encourage particular actions within each market, such as supplying, borrowing, or providing collateral. The program may include additional incentives designed to stimulate activity in targeted markets.',
+    },
   },
   uniform: {
     title: 'Uniform Program',
     tooltip: {
       title: 'Uniform Program Rewards',
-      detail: 'The Uniform Program is a new reward system that applies to all users who supply to Morpho, regardless of the specific market. It provides a consistent reward rate for each dollar supplied across eligible markets, promoting broader participation in the Morpho ecosystem.'
-    }
-  }
+      detail:
+        'The Uniform Program is a new reward system that applies to all users who supply to Morpho, regardless of the specific market. It provides a consistent reward rate for each dollar supplied across eligible markets, promoting broader participation in the Morpho ecosystem.',
+    },
+  },
 };
 
 export default function Rewards() {
@@ -58,16 +60,17 @@ export default function Rewards() {
         ) : (
           <div className="space-y-8">
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-zen">{PROGRAM_INFO.market.title}</h2>
-                <Tooltip 
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="font-zen text-xl">{PROGRAM_INFO.market.title}</h2>
+                <Tooltip
                   content={
                     <TooltipContent
-                      className='max-w-[400px]'
+                      className="max-w-[400px]"
                       title={PROGRAM_INFO.market.tooltip.title}
                       detail={PROGRAM_INFO.market.tooltip.detail}
                     />
                   }
+                  placement="right"
                 >
                   <BsQuestionCircle className="text-secondary" />
                 </Tooltip>
@@ -81,16 +84,17 @@ export default function Rewards() {
             </section>
 
             <section>
-              <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-xl font-zen">{PROGRAM_INFO.uniform.title}</h2>
-                <Tooltip 
+              <div className="mb-4 flex items-center gap-2">
+                <h2 className="font-zen text-xl">{PROGRAM_INFO.uniform.title}</h2>
+                <Tooltip
                   content={
                     <TooltipContent
-                      className='max-w-[400px]'
+                      className="max-w-[400px]"
                       title={PROGRAM_INFO.uniform.tooltip.title}
                       detail={PROGRAM_INFO.uniform.tooltip.detail}
                     />
                   }
+                  placement="right"
                 >
                   <BsQuestionCircle className="text-secondary" />
                 </Tooltip>

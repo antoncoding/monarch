@@ -447,7 +447,7 @@ const supportedTokens = [
         chain: base,
       },
     ],
-  }
+  },
 ];
 
 const isWhitelisted = (address: string, chainId: number) => {
