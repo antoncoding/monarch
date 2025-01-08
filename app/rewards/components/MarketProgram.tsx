@@ -319,18 +319,10 @@ export default function MarketProgram({
               <TableColumn>Loan Asset</TableColumn>
               <TableColumn>Collateral</TableColumn>
               <TableColumn>LLTV</TableColumn>
-              <TableColumn>Supply Claimable</TableColumn>
-              <TableColumn>Supply Pending</TableColumn>
-              <TableColumn>Supply Claimed</TableColumn>
-              <TableColumn>Supply Total</TableColumn>
-              <TableColumn>Borrow Claimable</TableColumn>
-              <TableColumn>Borrow Pending</TableColumn>
-              <TableColumn>Borrow Claimed</TableColumn>
-              <TableColumn>Borrow Total</TableColumn>
-              <TableColumn>Collateral Claimable</TableColumn>
-              <TableColumn>Collateral Pending</TableColumn>
-              <TableColumn>Collateral Claimed</TableColumn>
-              <TableColumn>Collateral Total</TableColumn>
+              <TableColumn>Claimable</TableColumn>
+              <TableColumn>Pending</TableColumn>
+              <TableColumn>Claimed</TableColumn>
+              <TableColumn>Total</TableColumn>
             </TableHeader>
             <TableBody>
               {markets
@@ -351,44 +343,41 @@ export default function MarketProgram({
                     );
                   });
 
-                  const supplyClaimable = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_supply?.claimable_now ?? '0');
-                  }, BigInt(0));
-                  const supplyPending = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_supply?.claimable_next ?? '0');
-                  }, BigInt(0));
-                  const supplyTotal = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_supply?.total ?? '0');
-                  }, BigInt(0));
-                  const supplyClaimed = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_supply?.claimed ?? '0');
-                  }, BigInt(0));
+                  const claimable = tokenRewardsForMarket.reduce(
+                    (sum, reward) =>
+                      sum +
+                      BigInt(reward.for_supply?.claimable_now ?? '0') +
+                      BigInt(reward.for_borrow?.claimable_now ?? '0') +
+                      BigInt(reward.for_collateral?.claimable_now ?? '0'),
+                    BigInt(0),
+                  );
 
-                  const borrowClaimable = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_borrow?.claimable_now ?? '0');
-                  }, BigInt(0));
-                  const borrowPending = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_borrow?.claimable_next ?? '0');
-                  }, BigInt(0));
-                  const borrowTotal = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_borrow?.total ?? '0');
-                  }, BigInt(0));
-                  const borrowClaimed = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_borrow?.claimed ?? '0');
-                  }, BigInt(0));
+                  const pending = tokenRewardsForMarket.reduce(
+                    (sum, reward) =>
+                      sum +
+                      BigInt(reward.for_supply?.claimable_next ?? '0') +
+                      BigInt(reward.for_borrow?.claimable_next ?? '0') +
+                      BigInt(reward.for_collateral?.claimable_next ?? '0'),
+                    BigInt(0),
+                  );
 
-                  const collateralClaimable = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_collateral?.claimable_now ?? '0');
-                  }, BigInt(0));
-                  const collateralPending = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_collateral?.claimable_next ?? '0');
-                  }, BigInt(0));
-                  const collateralTotal = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_collateral?.total ?? '0');
-                  }, BigInt(0));
-                  const collateralClaimed = tokenRewardsForMarket.reduce((a: bigint, b) => {
-                    return a + BigInt(b.for_collateral?.claimed ?? '0');
-                  }, BigInt(0));
+                  const claimed = tokenRewardsForMarket.reduce(
+                    (sum, reward) =>
+                      sum +
+                      BigInt(reward.for_supply?.claimed ?? '0') +
+                      BigInt(reward.for_borrow?.claimed ?? '0') +
+                      BigInt(reward.for_collateral?.claimed ?? '0'),
+                    BigInt(0),
+                  );
+
+                  const total = tokenRewardsForMarket.reduce(
+                    (sum, reward) =>
+                      sum +
+                      BigInt(reward.for_supply?.total ?? '0') +
+                      BigInt(reward.for_borrow?.total ?? '0') +
+                      BigInt(reward.for_collateral?.total ?? '0'),
+                    BigInt(0),
+                  );
 
                   const matchedToken = findToken(selectedToken, market.morphoBlue.chain.id);
 
@@ -403,52 +392,16 @@ export default function MarketProgram({
                       <TableCell>{market.collateralAsset.symbol}</TableCell>
                       <TableCell>{formatBalance(market.lltv, 16)}%</TableCell>
                       <TableCell>
-                        {formatReadable(
-                          formatBalance(supplyClaimable, matchedToken?.decimals ?? 18),
-                        )}
+                        {formatReadable(formatBalance(claimable, matchedToken?.decimals ?? 18))}
                       </TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(supplyPending, matchedToken?.decimals ?? 18))}
+                        {formatReadable(formatBalance(pending, matchedToken?.decimals ?? 18))}
                       </TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(supplyClaimed, matchedToken?.decimals ?? 18))}
+                        {formatReadable(formatBalance(claimed, matchedToken?.decimals ?? 18))}
                       </TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(supplyTotal, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(
-                          formatBalance(borrowClaimable, matchedToken?.decimals ?? 18),
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(borrowPending, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(borrowClaimed, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(formatBalance(borrowTotal, matchedToken?.decimals ?? 18))}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(
-                          formatBalance(collateralClaimable, matchedToken?.decimals ?? 18),
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(
-                          formatBalance(collateralPending, matchedToken?.decimals ?? 18),
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(
-                          formatBalance(collateralClaimed, matchedToken?.decimals ?? 18),
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {formatReadable(
-                          formatBalance(collateralTotal, matchedToken?.decimals ?? 18),
-                        )}
+                        {formatReadable(formatBalance(total, matchedToken?.decimals ?? 18))}
                       </TableCell>
                     </TableRow>
                   );
