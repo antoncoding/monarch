@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Switch } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +22,7 @@ type MarketProgramProps = {
   markets: Market[];
   marketRewards: MarketProgramType[];
   distributions: DistributionResponseType[];
+  showPending: boolean;
 };
 
 export default function MarketProgram({
@@ -30,11 +30,11 @@ export default function MarketProgram({
   markets,
   distributions,
   account,
+  showPending,
 }: MarketProgramProps) {
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
-  const [showPending, setShowPending] = useState(false);
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
@@ -46,10 +46,10 @@ export default function MarketProgram({
     successDescription: `Successfully claimed market rewards`,
   });
 
-  const allRewardTokens = useMemo(
-    () => {
-      // First, group rewards by asset address and chain ID
-      const groupedRewards = marketRewards.reduce((acc, reward) => {
+  const allRewardTokens = useMemo(() => {
+    // First, group rewards by asset address and chain ID
+    const groupedRewards = marketRewards.reduce(
+      (acc, reward) => {
         const key = `${reward.asset.address.toLowerCase()}-${reward.asset.chain_id}`;
         if (!acc[key]) {
           acc[key] = {
@@ -63,60 +63,68 @@ export default function MarketProgram({
         }
         acc[key].rewards.push(reward);
         return acc;
-      }, {} as Record<string, { rewards: MarketProgramType[]; token: string; chainId: number; distribution?: DistributionResponseType }>);
+      },
+      {} as Record<
+        string,
+        {
+          rewards: MarketProgramType[];
+          token: string;
+          chainId: number;
+          distribution?: DistributionResponseType;
+        }
+      >,
+    );
 
-      // Then, calculate totals for each group
-      return Object.values(groupedRewards).map((group) => {
-        const claimable = group.rewards.reduce(
-          (sum, reward) =>
-            sum +
-            BigInt(reward.for_supply?.claimable_now ?? '0') +
-            BigInt(reward.for_borrow?.claimable_now ?? '0') +
-            BigInt(reward.for_collateral?.claimable_now ?? '0'),
-          BigInt(0),
-        );
+    // Then, calculate totals for each group
+    return Object.values(groupedRewards).map((group) => {
+      const claimable = group.rewards.reduce(
+        (sum, reward) =>
+          sum +
+          BigInt(reward.for_supply?.claimable_now ?? '0') +
+          BigInt(reward.for_borrow?.claimable_now ?? '0') +
+          BigInt(reward.for_collateral?.claimable_now ?? '0'),
+        BigInt(0),
+      );
 
-        const pending = group.rewards.reduce(
-          (sum, reward) =>
-            sum +
-            BigInt(reward.for_supply?.claimable_next ?? '0') +
-            BigInt(reward.for_borrow?.claimable_next ?? '0') +
-            BigInt(reward.for_collateral?.claimable_next ?? '0'),
-          BigInt(0),
-        );
+      const pending = group.rewards.reduce(
+        (sum, reward) =>
+          sum +
+          BigInt(reward.for_supply?.claimable_next ?? '0') +
+          BigInt(reward.for_borrow?.claimable_next ?? '0') +
+          BigInt(reward.for_collateral?.claimable_next ?? '0'),
+        BigInt(0),
+      );
 
-        const total = group.rewards.reduce(
-          (sum, reward) =>
-            sum +
-            BigInt(reward.for_supply?.total ?? '0') +
-            BigInt(reward.for_borrow?.total ?? '0') +
-            BigInt(reward.for_collateral?.total ?? '0'),
-          BigInt(0),
-        );
+      const total = group.rewards.reduce(
+        (sum, reward) =>
+          sum +
+          BigInt(reward.for_supply?.total ?? '0') +
+          BigInt(reward.for_borrow?.total ?? '0') +
+          BigInt(reward.for_collateral?.total ?? '0'),
+        BigInt(0),
+      );
 
-        const claimed = group.rewards.reduce(
-          (sum, reward) =>
-            sum +
-            BigInt(reward.for_supply?.claimed ?? '0') +
-            BigInt(reward.for_borrow?.claimed ?? '0') +
-            BigInt(reward.for_collateral?.claimed ?? '0'),
-          BigInt(0),
-        );
+      const claimed = group.rewards.reduce(
+        (sum, reward) =>
+          sum +
+          BigInt(reward.for_supply?.claimed ?? '0') +
+          BigInt(reward.for_borrow?.claimed ?? '0') +
+          BigInt(reward.for_collateral?.claimed ?? '0'),
+        BigInt(0),
+      );
 
-        return {
-          token: group.token,
-          chainId: group.chainId,
-          distribution: group.distribution,
-          claimable,
-          pending,
-          total,
-          claimed,
-          rewards: group.rewards, // Keep original rewards for detail view
-        };
-      });
-    },
-    [marketRewards, distributions],
-  );
+      return {
+        token: group.token,
+        chainId: group.chainId,
+        distribution: group.distribution,
+        claimable,
+        pending,
+        total,
+        claimed,
+        rewards: group.rewards, // Keep original rewards for detail view
+      };
+    });
+  }, [marketRewards, distributions]);
 
   const filteredRewardTokens = useMemo(
     () => allRewardTokens.filter((tokenReward) => showPending || tokenReward.claimable > BigInt(0)),
@@ -129,15 +137,6 @@ export default function MarketProgram({
 
   return (
     <div className="mt-4 gap-8">
-      <div className="mb-4 flex items-center justify-end gap-2">
-        <span className="text-sm text-secondary">Show Pending</span>
-        <Switch
-          size="sm"
-          isSelected={showPending}
-          onValueChange={setShowPending}
-          aria-label="Show pending rewards"
-        />
-      </div>
       <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Market Program Rewards Table"
@@ -204,7 +203,9 @@ export default function MarketProgram({
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>
-                          {formatReadable(formatBalance(tokenReward.claimable, matchedToken.decimals))}
+                          {formatReadable(
+                            formatBalance(tokenReward.claimable, matchedToken.decimals),
+                          )}
                         </p>
                         <TokenIcon
                           address={tokenReward.token}
@@ -217,7 +218,9 @@ export default function MarketProgram({
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>
-                          {formatReadable(formatBalance(tokenReward.pending, matchedToken.decimals))}
+                          {formatReadable(
+                            formatBalance(tokenReward.pending, matchedToken.decimals),
+                          )}
                         </p>
                         <TokenIcon
                           address={tokenReward.token}
@@ -230,7 +233,9 @@ export default function MarketProgram({
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>
-                          {formatReadable(formatBalance(tokenReward.claimed, matchedToken.decimals))}
+                          {formatReadable(
+                            formatBalance(tokenReward.claimed, matchedToken.decimals),
+                          )}
                         </p>
                         <TokenIcon
                           address={tokenReward.token}
@@ -242,7 +247,9 @@ export default function MarketProgram({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <p>{formatReadable(formatBalance(tokenReward.total, matchedToken.decimals))}</p>
+                        <p>
+                          {formatReadable(formatBalance(tokenReward.total, matchedToken.decimals))}
+                        </p>
                         <TokenIcon
                           address={tokenReward.token}
                           chainId={tokenReward.chainId}
@@ -257,7 +264,8 @@ export default function MarketProgram({
                           variant="interactive"
                           size="sm"
                           isDisabled={
-                            tokenReward.claimable === BigInt(0) || tokenReward.distribution === undefined
+                            tokenReward.claimable === BigInt(0) ||
+                            tokenReward.distribution === undefined
                           }
                           onClick={(e) => {
                             e.stopPropagation();
@@ -395,7 +403,9 @@ export default function MarketProgram({
                       <TableCell>{market.collateralAsset.symbol}</TableCell>
                       <TableCell>{formatBalance(market.lltv, 16)}%</TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(supplyClaimable, matchedToken?.decimals ?? 18))}
+                        {formatReadable(
+                          formatBalance(supplyClaimable, matchedToken?.decimals ?? 18),
+                        )}
                       </TableCell>
                       <TableCell>
                         {formatReadable(formatBalance(supplyPending, matchedToken?.decimals ?? 18))}
@@ -407,7 +417,9 @@ export default function MarketProgram({
                         {formatReadable(formatBalance(supplyTotal, matchedToken?.decimals ?? 18))}
                       </TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(borrowClaimable, matchedToken?.decimals ?? 18))}
+                        {formatReadable(
+                          formatBalance(borrowClaimable, matchedToken?.decimals ?? 18),
+                        )}
                       </TableCell>
                       <TableCell>
                         {formatReadable(formatBalance(borrowPending, matchedToken?.decimals ?? 18))}
@@ -434,7 +446,9 @@ export default function MarketProgram({
                         )}
                       </TableCell>
                       <TableCell>
-                        {formatReadable(formatBalance(collateralTotal, matchedToken?.decimals ?? 18))}
+                        {formatReadable(
+                          formatBalance(collateralTotal, matchedToken?.decimals ?? 18),
+                        )}
                       </TableCell>
                     </TableRow>
                   );

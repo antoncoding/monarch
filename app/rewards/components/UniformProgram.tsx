@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Switch } from '@nextui-org/react';
+import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,16 +21,17 @@ type UniformProgramProps = {
   account: string;
   uniformRewards: UniformRewardType[];
   distributions: DistributionResponseType[];
+  showPending: boolean;
 };
 
 export default function UniformProgram({
   account,
   uniformRewards,
   distributions,
+  showPending,
 }: UniformProgramProps) {
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
-  const [showPending, setShowPending] = useState(false);
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim-uniform',
@@ -70,15 +70,6 @@ export default function UniformProgram({
 
   return (
     <div className="mt-4 gap-8">
-      <div className="mb-4 flex items-center justify-end gap-2">
-        <span className="text-sm text-secondary">Show Pending</span>
-        <Switch
-          size="sm"
-          isSelected={showPending}
-          onValueChange={setShowPending}
-          aria-label="Show pending rewards"
-        />
-      </div>
       <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Uniform Program Rewards Table"

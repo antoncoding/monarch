@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Tooltip } from '@nextui-org/react';
+import { Switch } from '@nextui-org/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 
@@ -42,6 +43,9 @@ export default function Rewards() {
   const marketRewards = useMemo(() => filterMarketRewards(rewards), [rewards]);
   const uniformRewards = useMemo(() => filterUniformRewards(rewards), [rewards]);
 
+  const [showMarketPending, setShowMarketPending] = useState(false);
+  const [showUniformPending, setShowUniformPending] = useState(false);
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -60,49 +64,77 @@ export default function Rewards() {
         ) : (
           <div className="space-y-8">
             <section>
-              <div className="mb-4 flex items-center gap-2">
-                <h2 className="font-zen text-xl">{PROGRAM_INFO.market.title}</h2>
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      className="max-w-[400px]"
-                      title={PROGRAM_INFO.market.tooltip.title}
-                      detail={PROGRAM_INFO.market.tooltip.detail}
-                    />
-                  }
-                  placement="right"
-                >
-                  <BsQuestionCircle className="text-secondary" />
-                </Tooltip>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-zen text-xl">{PROGRAM_INFO.market.title}</h2>
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        className="max-w-[400px]"
+                        title={PROGRAM_INFO.market.tooltip.title}
+                        detail={PROGRAM_INFO.market.tooltip.detail}
+                      />
+                    }
+                    placement="right"
+                  >
+                    <div>
+                      <BsQuestionCircle className="cursor-help text-secondary" />
+                    </div>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-secondary">Show Pending</span>
+                  <Switch
+                    size="sm"
+                    isSelected={showMarketPending}
+                    onValueChange={setShowMarketPending}
+                    aria-label="Show pending market rewards"
+                  />
+                </div>
               </div>
               <MarketProgram
                 account={account}
                 marketRewards={marketRewards}
                 markets={markets}
                 distributions={distributions}
+                showPending={showMarketPending}
               />
             </section>
 
             <section>
-              <div className="mb-4 flex items-center gap-2">
-                <h2 className="font-zen text-xl">{PROGRAM_INFO.uniform.title}</h2>
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      className="max-w-[400px]"
-                      title={PROGRAM_INFO.uniform.tooltip.title}
-                      detail={PROGRAM_INFO.uniform.tooltip.detail}
-                    />
-                  }
-                  placement="right"
-                >
-                  <BsQuestionCircle className="text-secondary" />
-                </Tooltip>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-zen text-xl">{PROGRAM_INFO.uniform.title}</h2>
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        className="max-w-[400px]"
+                        title={PROGRAM_INFO.uniform.tooltip.title}
+                        detail={PROGRAM_INFO.uniform.tooltip.detail}
+                      />
+                    }
+                    placement="right"
+                  >
+                    <div>
+                      <BsQuestionCircle className="cursor-help text-secondary" />
+                    </div>
+                  </Tooltip>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-secondary">Show Pending</span>
+                  <Switch
+                    size="sm"
+                    isSelected={showUniformPending}
+                    onValueChange={setShowUniformPending}
+                    aria-label="Show pending uniform rewards"
+                  />
+                </div>
               </div>
               <UniformProgram
                 account={account}
                 uniformRewards={uniformRewards}
                 distributions={distributions}
+                showPending={showUniformPending}
               />
             </section>
           </div>
