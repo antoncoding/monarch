@@ -2,19 +2,21 @@
 
 import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { Switch } from '@nextui-org/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common/Button';
+import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { Market } from '@/utils/types';
-import { MarketProgramType } from '@/utils/types';
+import { getAssetURL } from '@/utils/external';
+import { Market, MarketProgramType } from '@/utils/types';
 
 type MarketProgramProps = {
   account: string;
@@ -32,6 +34,7 @@ export default function MarketProgram({
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
   const [selectedToken, setSelectedToken] = useState<string | null>(null);
+  const [showPending, setShowPending] = useState(false);
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
@@ -85,20 +88,26 @@ export default function MarketProgram({
     [marketRewards],
   );
 
+  const filteredRewardTokens = useMemo(
+    () => allRewardTokens.filter((tokenReward) => showPending || tokenReward.claimable > BigInt(0)),
+    [allRewardTokens, showPending]
+  );
+
   const handleRowClick = (token: string) => {
     setSelectedToken((prevToken) => (prevToken === token ? null : token));
   };
 
   return (
     <div className="mt-4 gap-8">
-      <div className="px-4 py-2 font-zen text-xl">Market Program Rewards</div>
-      <p className="px-4 pb-8 text-sm text-gray-500">
-        Market Program Rewards are incentives tailored to specific markets on Morpho. These rewards
-        encourage particular actions within each market, such as supplying, borrowing, or providing
-        collateral. The program may include additional incentives designed to stimulate activity in
-        targeted markets.
-      </p>
-
+      <div className="flex justify-end items-center gap-2 mb-4">
+        <span className="text-sm text-secondary">Show Pending</span>
+        <Switch
+          size="sm"
+          isSelected={showPending}
+          onValueChange={setShowPending}
+          aria-label="Show pending rewards"
+        />
+      </div>
       <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Market Program Rewards Table"
@@ -118,7 +127,7 @@ export default function MarketProgram({
             <TableColumn align="end">Action</TableColumn>
           </TableHeader>
           <TableBody>
-            {allRewardTokens
+            {filteredRewardTokens
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
                 const matchedToken = findToken(tokenReward.token, tokenReward.chainId) ?? {
@@ -139,12 +148,21 @@ export default function MarketProgram({
                     onClick={() => handleRowClick(tokenReward.token)}
                   >
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
+                      <Link
+                        href={getAssetURL(tokenReward.token, tokenReward.chainId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-center gap-2 hover:opacity-80"
+                      >
                         <p>{matchedToken.symbol}</p>
-                        {matchedToken.img && (
-                          <Image src={matchedToken.img} alt="token icon" width="20" height="20" />
-                        )}
-                      </div>
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={20}
+                          height={20}
+                        />
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
@@ -163,9 +181,12 @@ export default function MarketProgram({
                             formatBalance(tokenReward.claimable, matchedToken.decimals),
                           )}
                         </p>
-                        {matchedToken.img && (
-                          <Image src={matchedToken.img} alt="token icon" width="16" height="16" />
-                        )}
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -175,19 +196,27 @@ export default function MarketProgram({
                             formatBalance(tokenReward.pending, matchedToken.decimals),
                           )}
                         </p>
-                        {matchedToken.img && (
-                          <Image src={matchedToken.img} alt="token icon" width="16" height="16" />
-                        )}
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-1">
                         <p>
-                          {formatReadable(formatBalance(tokenReward.total, matchedToken.decimals))}
+                          {formatReadable(
+                            formatBalance(tokenReward.total, matchedToken.decimals),
+                          )}
                         </p>
-                        {matchedToken.img && (
-                          <Image src={matchedToken.img} alt="token icon" width="16" height="16" />
-                        )}
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
@@ -197,9 +226,12 @@ export default function MarketProgram({
                             formatBalance(tokenReward.claimed, matchedToken.decimals),
                           )}
                         </p>
-                        {matchedToken.img && (
-                          <Image src={matchedToken.img} alt="token icon" width="16" height="16" />
-                        )}
+                        <TokenIcon
+                          address={tokenReward.token}
+                          chainId={tokenReward.chainId}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell align="center">

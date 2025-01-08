@@ -1,17 +1,21 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { Switch } from '@nextui-org/react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common/Button';
+import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
+import { getAssetURL } from '@/utils/external';
 import { UniformRewardType } from '@/utils/types';
 
 type UniformProgramProps = {
@@ -27,6 +31,7 @@ export default function UniformProgram({
 }: UniformProgramProps) {
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
+  const [showPending, setShowPending] = useState(false);
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim-uniform',
@@ -58,25 +63,22 @@ export default function UniformProgram({
     [uniformRewards, distributions],
   );
 
+  const filteredRewardsData = useMemo(
+    () => rewardsData.filter((reward) => showPending || reward.claimable > BigInt(0)),
+    [rewardsData, showPending]
+  );
+
   return (
     <div className="mt-4 gap-8">
-      <div className="px-4 py-2 font-zen text-xl">Uniform Program Rewards</div>
-      <p className="px-4 pb-8 text-sm text-gray-500">
-        The Uniform Program is a new reward system that applies to all users who supply to Morpho,
-        regardless of the specific market. It provides a consistent reward rate for each dollar
-        supplied across eligible markets, promoting broader participation in the Morpho ecosystem.
-        For more details, check the{' '}
-        <a
-          href="https://forum.morpho.org/t/mip65-new-scalable-rewards-model/617"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
-        >
-          forum post here
-        </a>
-        .
-      </p>
-
+      <div className="flex justify-end items-center gap-2 mb-4">
+        <span className="text-sm text-secondary">Show Pending</span>
+        <Switch
+          size="sm"
+          isSelected={showPending}
+          onValueChange={setShowPending}
+          aria-label="Show pending rewards"
+        />
+      </div>
       <div className="bg-surface mb-6 mt-2">
         <Table
           aria-label="Uniform Program Rewards Table"
@@ -96,15 +98,23 @@ export default function UniformProgram({
             <TableColumn align="center">Action</TableColumn>
           </TableHeader>
           <TableBody>
-            {rewardsData.map((reward, index) => (
+            {filteredRewardsData.map((reward, index) => (
               <TableRow key={index}>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-2">
-                    <p>{reward.token?.symbol}</p>
-                    {reward.token?.img && (
-                      <Image src={reward.token.img} alt="token icon" width="20" height="20" />
-                    )}
-                  </div>
+                  <Link 
+                    href={getAssetURL(reward.asset.address, reward.asset.chain_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 hover:opacity-80"
+                  >
+                    <p>{reward.token?.symbol ?? 'Unknown'}</p>
+                    <TokenIcon
+                      address={reward.asset.address}
+                      chainId={reward.asset.chain_id}
+                      width={20}
+                      height={20}
+                    />
+                  </Link>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center">
@@ -117,45 +127,57 @@ export default function UniformProgram({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-center gap-2">
                     <p>
                       {formatReadable(
                         formatBalance(reward.claimable, reward.token?.decimals ?? 18),
                       )}
                     </p>
-                    {reward.token?.img && (
-                      <Image src={reward.token.img} alt="token icon" width="16" height="16" />
-                    )}
+                    <TokenIcon
+                      address={reward.asset.address}
+                      chainId={reward.asset.chain_id}
+                      width={16}
+                      height={16}
+                    />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-center gap-2">
                     <p>
                       {formatReadable(formatBalance(reward.pending, reward.token?.decimals ?? 18))}
                     </p>
-                    {reward.token?.img && (
-                      <Image src={reward.token.img} alt="token icon" width="16" height="16" />
-                    )}
+                    <TokenIcon
+                      address={reward.asset.address}
+                      chainId={reward.asset.chain_id}
+                      width={16}
+                      height={16}
+                    />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-center gap-2">
                     <p>
                       {formatReadable(formatBalance(reward.claimed, reward.token?.decimals ?? 18))}
                     </p>
-                    {reward.token?.img && (
-                      <Image src={reward.token.img} alt="token icon" width="16" height="16" />
-                    )}
+                    <TokenIcon
+                      address={reward.asset.address}
+                      chainId={reward.asset.chain_id}
+                      width={16}
+                      height={16}
+                    />
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-center gap-1">
+                  <div className="flex items-center justify-center gap-2">
                     <p>
                       {formatReadable(formatBalance(reward.total, reward.token?.decimals ?? 18))}
                     </p>
-                    {reward.token?.img && (
-                      <Image src={reward.token.img} alt="token icon" width="16" height="16" />
-                    )}
+                    <TokenIcon
+                      address={reward.asset.address}
+                      chainId={reward.asset.chain_id}
+                      width={16}
+                      height={16}
+                    />
                   </div>
                 </TableCell>
                 <TableCell align="center">

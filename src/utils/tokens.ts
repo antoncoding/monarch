@@ -420,6 +420,34 @@ const supportedTokens = [
     decimals: 18,
     networks: [{ chain: base, address: '0xb0505e5a99abd03d94a1169e638B78EDfEd26ea4' }],
   },
+  // rewards
+  {
+    symbol: 'WELL',
+    img: require('../imgs/tokens/well.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0xA88594D404727625A9437C3f886C7643872296AE' }],
+  },
+  {
+    symbol: 'ION',
+    img: require('../imgs/tokens/ionic.png') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x3eE5e23eEE121094f1cFc0Ccc79d6C809Ebd22e5' }],
+  },
+  {
+    symbol: 'MORPHO',
+    img: require('../imgs/tokens/morpho.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0x58D97B57BB95320F9a05dC918Aef65434969c2B2',
+        chain: mainnet,
+      },
+      {
+        address: '0xBAa5CC21fd487B8Fcc2F632f3F4E8D37262a0842',
+        chain: base,
+      },
+    ],
+  }
 ];
 
 const isWhitelisted = (address: string, chainId: number) => {
