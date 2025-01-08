@@ -47,7 +47,7 @@ export function useTransactionWithToast({
 
   const renderToastContent = useCallback(
     (title: string, description?: string) => (
-      <div className="p-2">
+      <div className="p-2 font-zen">
         <div>{title}</div>
         {description && <div className="mb-2 mt-1 text-sm">{description}</div>}
         <TxHashDisplay hash={hash} />
