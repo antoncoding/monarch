@@ -178,7 +178,7 @@ export default function MarketProgram({
                         href={getAssetURL(tokenReward.token, tokenReward.chainId)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 hover:opacity-80"
+                        className="flex items-center justify-center gap-2 hover:opacity-80 no-underline"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <p>{matchedToken.symbol}</p>
