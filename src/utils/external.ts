@@ -31,3 +31,9 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
       return `https://etherscan.io/tx/${hash}`;
   }
 };
+
+export const EXTERNAL_LINKS = {
+  docs: 'https://docs.morpho.org',
+  discord: 'https://discord.gg/Ur4dwN3aPS',
+  github: 'https://github.com/monarch-xyz',
+} as const;
