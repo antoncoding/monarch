@@ -200,7 +200,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     };
 
     void updatePositionsWithEarnings();
-  }, [positions, user, blockNums, calculateEarningsFromPeriod]);
+  }, [positions, user, blockNums, calculateEarningsFromPeriod, fetchTransactions]);
 
   return {
     positions: positionsWithEarnings,

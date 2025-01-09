@@ -97,6 +97,10 @@ export function Navbar() {
                   'px-2 py-1 text-center font-zen text-base font-normal text-primary',
                   'border-none transition-all duration-200',
                   'inline-flex items-center gap-1',
+                  'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0',
+                  'active:outline-none active:ring-0',
+                  'bg-transparent hover:bg-transparent active:bg-transparent',
+                  '[&:not(:focus-visible)]:outline-none',
                 )}
               >
                 More
