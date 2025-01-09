@@ -80,7 +80,7 @@ export default function AssetFilter({
   }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div className="relative z-50 w-full" ref={dropdownRef}>
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-surface-dark' : ''
@@ -132,7 +132,7 @@ export default function AssetFilter({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg"
+            className="bg-surface absolute z-50 mt-1 w-full rounded-sm shadow-lg"
           >
             <input
               type="text"
