@@ -12,8 +12,6 @@ import { FaRegMoon } from 'react-icons/fa';
 import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
-
-import { toast } from 'react-toastify';
 import { useAccount } from 'wagmi';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
@@ -125,11 +123,7 @@ export function Navbar() {
               <DropdownItem
                 key="docs"
                 endContent={<RiBookLine className="h-4 w-4" />}
-                onClick={
-                  () =>
-                    toast.info('Docs coming soon', { icon: <span>🚀</span>, className: 'font-zen' })
-                  // () => window.open(EXTERNAL_LINKS.docs, '_blank')
-                }
+                onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
               >
                 Docs
               </DropdownItem>
