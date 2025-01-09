@@ -383,6 +383,20 @@ const supportedTokens = [
     networks: [{ chain: base, address: '0x940181a94A35A4569E4529A3CDfB74e38FD98631' }],
   },
   {
+    // Resolv
+    symbol: 'RLP',
+    img: require('../imgs/tokens/rlp.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x4956b52aE2fF65D74CA2d61207523288e4528f96' }],
+  },
+  {
+    // Resolv
+    symbol: 'USR',
+    img: require('../imgs/tokens/usr.svg') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x66a1E37c9b0eAddca17d3662D6c05F4DECf3e110' }],
+  },
+  {
     symbol: 'EIGEN',
     img: require('../imgs/tokens/eigen.png') as string,
     decimals: 18,
