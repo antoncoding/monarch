@@ -17,6 +17,7 @@ import { useAccount } from 'wagmi';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
+import { toast } from 'react-toastify';
 
 export function NavbarLink({
   children,
@@ -124,7 +125,10 @@ export function Navbar() {
               <DropdownItem
                 key="docs"
                 endContent={<RiBookLine className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
+                onClick={() =>
+                  toast.info('Docs coming soon', { icon: <span>🚀</span> , className: 'font-zen'})
+                  // () => window.open(EXTERNAL_LINKS.docs, '_blank')
+                }
               >
                 Docs
               </DropdownItem>
