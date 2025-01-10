@@ -56,7 +56,8 @@
 html {
   height: 100%;
   scroll-behavior: smooth;
-  /* Reserve space for scrollbar to prevent layout shifts */
+  scrollbar-gutter: stable;
+  overflow-y: scroll; /* Always show vertical scrollbar */
 }
 
 body {
@@ -67,8 +68,6 @@ body {
   color: var(--color-text);
   font-family: Inter, sans-serif;
   overflow-x: hidden;
-  /* Add padding to account for scrollbar width in modern browsers */
-  padding-right: calc(100vw - 100%);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
