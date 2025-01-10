@@ -80,7 +80,7 @@ export default function AssetFilter({
   }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
-    <div className="relative z-50 w-full" ref={dropdownRef}>
+    <div className="relative z-30 w-full" ref={dropdownRef}>
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-surface-dark' : ''

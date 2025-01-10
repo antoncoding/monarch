@@ -300,28 +300,28 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   }, [account, executeSupplyTransaction]);
 
   return (
-    <div>
-      {showProcessModal && (
-        <SupplyProcessModal
-          supplies={[
-            {
-              market,
-              amount: supplyAmount,
-            },
-          ]}
-          currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
-          tokenSymbol={market.loanAsset.symbol}
-          useEth={useEth}
-          usePermit2={usePermit2Setting}
-        />
-      )}
-      {!showProcessModal && (
-        <div className="fixed left-0 top-0 z-50 flex h-full w-full items-center justify-center bg-black bg-opacity-50 font-zen">
-          <div
-            style={{ width: '600px' }}
-            className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
-          >
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/50"
+      style={{ zIndex: 50 }}
+    >
+      <div className="bg-surface relative w-full max-w-lg rounded-lg p-6">
+        {showProcessModal && (
+          <SupplyProcessModal
+            supplies={[
+              {
+                market,
+                amount: supplyAmount,
+              },
+            ]}
+            currentStep={currentStep}
+            onClose={() => setShowProcessModal(false)}
+            tokenSymbol={market.loanAsset.symbol}
+            useEth={useEth}
+            usePermit2={usePermit2Setting}
+          />
+        )}
+        {!showProcessModal && (
+          <div className="flex flex-col">
             <button
               type="button"
               className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
@@ -506,8 +506,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
