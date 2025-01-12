@@ -61,6 +61,7 @@ export function useTransactionWithToast({
       toast.loading(renderToastContent(pendingText, pendingDescription), {
         toastId,
         onClick,
+        closeButton: true,
       });
     }
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, renderToastContent]);
@@ -73,6 +74,7 @@ export function useTransactionWithToast({
         isLoading: false,
         autoClose: 5000,
         onClick,
+        closeButton: true,
       });
       if (onSuccess) {
         onSuccess();
@@ -90,6 +92,7 @@ export function useTransactionWithToast({
         isLoading: false,
         autoClose: 5000,
         onClick,
+        closeButton: true,
       });
     }
   }, [

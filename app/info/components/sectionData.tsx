@@ -1,4 +1,5 @@
 import React from 'react';
+import { EXTERNAL_LINKS } from '@/utils/external';
 import monarchAgentImg from '../../../src/imgs/agent/agent.png';
 import monarchImage from '../../../src/imgs/intro/direct-supply.png';
 import morphoImage from '../../../src/imgs/intro/morpho.png';
@@ -137,8 +138,8 @@ export const sections = [
           <span className="font-bold">We Value Your Feedback!</span>
           <br />
           Your input is crucial in shaping Monarch's future. Share your thoughts in our{' '}
-          <a href="https://t.me/+kM48_lzD9gQ3NzRl" className="underline">
-            Telegram chat
+          <a href={EXTERNAL_LINKS.discord} className="underline" target="_blank">
+            Discord
           </a>
           .
         </p>
