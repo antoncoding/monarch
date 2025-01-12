@@ -313,7 +313,7 @@ export default function Markets() {
 
     // If we have query params, append them to the market detail URL
     const targetPath = currentParams ? `${marketPath}?${currentParams}` : marketPath;
-    router.push(targetPath);
+    window.open(targetPath, '_blank');
   };
 
   const handleRefresh = () => {
