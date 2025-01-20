@@ -80,7 +80,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
         const processedMarkets = filtered.map((market) => {
-          
           const warningsWithDetail = getMarketWarningsWithDetail(market);
           const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 

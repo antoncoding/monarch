@@ -3,18 +3,16 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
-import { Avatar } from '@/components/Avatar/Avatar';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
-import { Name } from '@/components/common/Name';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -36,7 +34,7 @@ export default function Positions() {
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(address);
 
   const isOwner = useMemo(() => {

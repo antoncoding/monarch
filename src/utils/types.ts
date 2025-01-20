@@ -181,7 +181,7 @@ export type AggregatedRewardType = {
     claimed: bigint;
   };
   programs: ('vault-reward' | 'market-reward' | 'uniform-reward')[];
-}
+};
 
 export type RebalanceAction = {
   fromMarket: {

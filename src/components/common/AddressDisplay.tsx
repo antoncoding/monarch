@@ -9,7 +9,7 @@ import { Name } from '@/components/common/Name';
 
 type AddressDisplayProps = {
   address: Address;
-}
+};
 
 export function AddressDisplay({ address }: AddressDisplayProps) {
   const { address: connectedAddress, isConnected } = useAccount();

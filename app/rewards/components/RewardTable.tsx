@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -11,7 +11,7 @@ import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { formatReadable, formatBalance, formatSimple } from '@/utils/balance';
+import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -32,7 +32,7 @@ export default function RewardTable({
 }: RewardTableProps) {
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
-  
+
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
     pendingText: 'Claiming Reward...',
@@ -72,21 +72,28 @@ export default function RewardTable({
             {filteredRewardTokens
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
-                const matchedToken = findToken(tokenReward.asset.address, tokenReward.asset.chain_id) ?? {
+                const matchedToken = findToken(
+                  tokenReward.asset.address,
+                  tokenReward.asset.chain_id,
+                ) ?? {
                   symbol: 'Unknown',
                   img: undefined,
                   decimals: 18,
                 };
 
-                const total = tokenReward.total.claimable + tokenReward.total.pendingAmount + tokenReward.total.claimed;
+                const total =
+                  tokenReward.total.claimable +
+                  tokenReward.total.pendingAmount +
+                  tokenReward.total.claimed;
 
-                const distribution = distributions.find(d => d.asset.address.toLowerCase() === tokenReward.asset.address.toLowerCase() && d.asset.chain_id === tokenReward.asset.chain_id);
+                const distribution = distributions.find(
+                  (d) =>
+                    d.asset.address.toLowerCase() === tokenReward.asset.address.toLowerCase() &&
+                    d.asset.chain_id === tokenReward.asset.chain_id,
+                );
 
                 return (
-                  <TableRow
-                    key={index}
-                    className='hover:bg-gray-100 dark:hover:bg-gray-800'
-                  >
+                  <TableRow key={index} className="hover:bg-gray-100 dark:hover:bg-gray-800">
                     <TableCell>
                       <Link
                         href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
@@ -176,8 +183,7 @@ export default function RewardTable({
                           variant="interactive"
                           size="sm"
                           isDisabled={
-                            tokenReward.total.claimable === BigInt(0) ||
-                            distribution === undefined
+                            tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
                           onClick={(e) => {
                             e.stopPropagation();
