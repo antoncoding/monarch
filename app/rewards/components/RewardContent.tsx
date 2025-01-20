@@ -48,8 +48,11 @@ export default function Rewards() {
   });
 
   const morphoBalance = useMemo(
-    () => (morphoBalanceMainnet?.value ?? 0n) + (morphoBalanceBase?.value ?? 0n),
-    [morphoBalanceMainnet, morphoBalanceBase],
+    () =>
+      (morphoBalanceMainnet?.value ?? 0n) +
+      (morphoBalanceBase?.value ?? 0n) +
+      (morphoBalanceLegacy?.value ?? 0n),
+    [morphoBalanceMainnet, morphoBalanceBase, morphoBalanceLegacy],
   );
 
   const allRewards = useMemo(() => {
@@ -132,11 +135,10 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = true;
-  // useMemo(
-  //   () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
-  //   [morphoBalanceLegacy],
-  // );
+  const showLegacy = useMemo(
+    () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
+    [morphoBalanceLegacy],
+  );
 
   const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(
     morphoBalanceLegacy?.value ?? 0n,
@@ -269,7 +271,7 @@ export default function Rewards() {
                   size="sm"
                   isSelected={showClaimed}
                   onValueChange={setShowClaimed}
-                  aria-label="Show pending market rewards"
+                  aria-label="Show claimed rewards"
                 />
               </div>
             </div>
