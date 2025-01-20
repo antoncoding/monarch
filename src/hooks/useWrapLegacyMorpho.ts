@@ -3,11 +3,11 @@ import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 
+import wrapperABI from '@/abis/morpho-wrapper';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_WRAPPER } from '@/utils/tokens';
 import { useERC20Approval } from './useERC20Approval';
-import wrapperABI from '@/abis/morpho-wrapper';
 
 export type WrapStep = 'approve' | 'wrap';
 
@@ -52,11 +52,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       setShowProcessModal(true);
       if (!isApproved) {
         setCurrentStep('approve');
-        await approve().catch((err) => {
-          toast.error('Failed to approve MORPHO: ' + (err.message || 'Unknown error'));
-          setShowProcessModal(false);
-          throw err;
-        });
+        await approve();
       }
 
       setCurrentStep('wrap');

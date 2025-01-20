@@ -21,14 +21,14 @@ type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
   distributions: DistributionResponseType[];
-  showPending: boolean;
+  showClaimed: boolean;
 };
 
 export default function RewardTable({
   rewards,
   distributions,
   account,
-  showPending,
+  showClaimed,
 }: RewardTableProps) {
   const { chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -44,8 +44,17 @@ export default function RewardTable({
   });
 
   const filteredRewardTokens = useMemo(
-    () => rewards.filter((tokenReward) => showPending || tokenReward.total.claimable > BigInt(0)),
-    [rewards, showPending],
+    () =>
+      rewards.filter((tokenReward) => {
+        if (showClaimed) return true;
+
+        // if showClaimed is not turned on, only show tokens that are claimable or have pending
+        if (tokenReward.total.claimable === 0n && tokenReward.total.pendingAmount === 0n)
+          return false;
+
+        return true;
+      }),
+    [rewards, showClaimed],
   );
 
   return (

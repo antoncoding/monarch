@@ -12,22 +12,22 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
+import { WrapProcessModal } from '@/components/WrapProcessModal';
 import useUserRewards from '@/hooks/useRewards';
 
+import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
 import { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
 import InfoCard from './InfoCard';
 import RewardTable from './RewardTable';
-import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
-import { WrapProcessModal } from '@/components/WrapProcessModal';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
   const { rewards, distributions, loading: loadingRewards, refresh } = useUserRewards(account);
 
-  const [showPending, setShowPending] = useState(false);
+  const [showClaimed, setShowClaimed] = useState(false);
 
   const { data: morphoBalanceMainnet } = useBalance({
     token: MORPHO_TOKEN_MAINNET,
@@ -132,13 +132,16 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n, [morphoBalanceLegacy])
+  const showLegacy = useMemo(
+    () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
+    [morphoBalanceLegacy],
+  );
 
   const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(
     morphoBalanceLegacy?.value ?? 0n,
     () => {
       // Refresh rewards data after successful wrap
-      refresh();
+      void refresh();
     },
   );
 
@@ -233,7 +236,9 @@ export default function Rewards() {
                   button={{
                     text: 'Wrap Now',
                     variant: 'success',
-                    onClick: wrap,
+                    onClick: () => {
+                      void wrap();
+                    },
                     disabled: showProcessModal,
                   }}
                 >
@@ -258,11 +263,11 @@ export default function Rewards() {
                 <h2 className="font-zen text-xl"> All Rewards </h2>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary">Show Pending</span>
+                <span className="text-sm text-secondary">Show Claimed</span>
                 <Switch
                   size="sm"
-                  isSelected={showPending}
-                  onValueChange={setShowPending}
+                  isSelected={showClaimed}
+                  onValueChange={setShowClaimed}
                   aria-label="Show pending market rewards"
                 />
               </div>
@@ -276,7 +281,7 @@ export default function Rewards() {
                 account={account}
                 rewards={allRewards}
                 distributions={distributions}
-                showPending={showPending}
+                showClaimed={showClaimed}
               />
             )}
           </section>

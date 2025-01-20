@@ -69,7 +69,7 @@ const useUserRewards = (user: string | undefined) => {
   }, [user]);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, [fetchData]);
 
   return {

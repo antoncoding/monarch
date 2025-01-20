@@ -43,6 +43,7 @@ export function WrapProcessModal({
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-medium">Wrapping {formatBalance(amount, 18)} MORPHO</h2>
           <button
+            type="button"
             onClick={onClose}
             className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
           >
@@ -72,9 +73,7 @@ export function WrapProcessModal({
                       <FaCheckCircle className="text-lg text-success" />
                     ) : (
                       <FaCircle
-                        className={`text-lg ${
-                          isActive ? 'text-primary' : 'text-gray-300'
-                        }`}
+                        className={`text-lg ${isActive ? 'text-primary' : 'text-gray-300'}`}
                       />
                     )}
                   </div>

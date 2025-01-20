@@ -28,6 +28,73 @@ type InfoCardProps = {
   className?: string;
 };
 
+function BadgeButton({
+  text,
+  variant,
+  disabled,
+  handleClick,
+  tooltip,
+}: {
+  text: string;
+  variant?: 'success' | 'warning' | 'danger' | 'primary' | 'default';
+  disabled?: boolean;
+  handleClick: () => void;
+  tooltip?: TooltipInfo;
+}) {
+  const ButtonComponent = (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      className="disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <Badge variant={variant ?? 'success'}>{text}</Badge>
+    </button>
+  );
+
+  if (tooltip) {
+    return (
+      <Tooltip
+        content={
+          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
+        }
+        placement="top"
+      >
+        {ButtonComponent}
+      </Tooltip>
+    );
+  }
+
+  return ButtonComponent;
+}
+
+function BadgeComponent({
+  text,
+  variant,
+  tooltip,
+}: {
+  text: string;
+  variant?: 'success' | 'warning' | 'danger' | 'primary' | 'default';
+  tooltip?: TooltipInfo;
+}) {
+  const BadgeElement = <Badge variant={variant ?? 'success'}>{text}</Badge>;
+
+  if (tooltip) {
+    return (
+      <Tooltip
+        content={
+          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
+        }
+        placement="top"
+      >
+        <div>{BadgeElement}</div>
+      </Tooltip>
+    );
+  }
+
+  return BadgeElement;
+}
+
 export default function InfoCard({
   title,
   children,
@@ -36,66 +103,6 @@ export default function InfoCard({
   button,
   className = '',
 }: InfoCardProps) {
-  const ActionComponent = () => {
-    if (button) {
-      const ButtonComponent = (
-        <button 
-          onClick={button.onClick} 
-          disabled={button.disabled}
-          className="disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Badge variant={button.variant ?? 'success'}>
-            {button.text}
-          </Badge>
-        </button>
-      );
-
-      if (button.tooltip) {
-        return (
-          <Tooltip
-            content={
-              <TooltipContent
-                className="max-w-[400px]"
-                title={button.tooltip.title}
-                detail={button.tooltip.detail}
-              />
-            }
-            placement="top"
-          >
-            {ButtonComponent}
-          </Tooltip>
-        );
-      }
-
-      return ButtonComponent;
-    }
-
-    if (badge) {
-      if (badge.tooltip) {
-        return (
-          <Tooltip
-            content={
-              <TooltipContent
-                className="max-w-[400px]"
-                title={badge.tooltip.title}
-                detail={badge.tooltip.detail}
-              />
-            }
-            placement="top"
-          >
-            <div>
-              <Badge variant={badge.variant ?? 'success'}>{badge.text}</Badge>
-            </div>
-          </Tooltip>
-        );
-      }
-
-      return <Badge variant={badge.variant ?? 'success'}>{badge.text}</Badge>;
-    }
-
-    return null;
-  };
-
   return (
     <div className={`bg-surface w-full rounded-sm p-4 shadow-sm ${className}`}>
       <div className="flex items-center justify-between px-2 pb-2 text-sm text-secondary">
@@ -118,7 +125,19 @@ export default function InfoCard({
             </Tooltip>
           )}
         </div>
-        <ActionComponent />
+        <div>
+          {button ? (
+            <BadgeButton
+              text={button.text}
+              variant={button.variant}
+              disabled={button.disabled}
+              handleClick={button.onClick}
+              tooltip={button.tooltip}
+            />
+          ) : badge ? (
+            <BadgeComponent text={badge.text} variant={badge.variant} tooltip={badge.tooltip} />
+          ) : null}
+        </div>
       </div>
       <div className="flex items-center justify-center px-2 py-2">{children}</div>
     </div>

@@ -14,7 +14,7 @@ export function useERC20Approval({
   spender: Address;
   amount: bigint;
   tokenSymbol: string;
-  chainId?: number
+  chainId?: number;
 }) {
   const { address: account } = useAccount();
   const currentChain = useChainId();
@@ -29,7 +29,7 @@ export function useERC20Approval({
     query: {
       enabled: !!account,
     },
-    chainId: chainIdToUse
+    chainId: chainIdToUse,
   });
 
   const isApproved = useMemo(() => {
@@ -42,7 +42,7 @@ export function useERC20Approval({
     pendingText: `Approving ${tokenSymbol}`,
     successText: `${tokenSymbol} Approved`,
     errorText: 'Failed to approve',
-   chainId: chainIdToUse,
+    chainId: chainIdToUse,
     pendingDescription: `Approving ${tokenSymbol} for spender ${spender.slice(2, 8)}...`,
     successDescription: `Successfully approved ${tokenSymbol} for spender ${spender.slice(2, 8)}`,
   });
