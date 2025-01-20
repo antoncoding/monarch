@@ -16,6 +16,8 @@ import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers
 import MarketProgram from './MarketProgram';
 import UniformProgram from './UniformProgram';
 import VaultProgram from './VaultProgram';
+import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { Address } from 'viem';
 
 const PROGRAM_INFO = {
   market: {
@@ -57,10 +59,14 @@ export default function Rewards() {
 
   return (
     <div className="flex flex-col justify-between font-zen">
-      <Header />
+      <Header/>
+        
       <div className="container h-full gap-8 px-[5%]">
         <div className="pb-4">
           <h1 className="font-zen">Reward</h1>
+        </div>
+        <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
+          <AddressDisplay address={account as Address} />
         </div>
 
         {loading || loadingRewards ? (
