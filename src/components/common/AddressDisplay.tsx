@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
+import { FaCircle } from 'react-icons/fa';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
-import { Badge } from '@/components/common/Badge';
 import { Name } from '@/components/common/Name';
-import { FaCircle } from 'react-icons/fa';
 
-interface AddressDisplayProps {
+type AddressDisplayProps = {
   address: Address;
 }
 
@@ -35,9 +34,7 @@ export function AddressDisplay({ address }: AddressDisplayProps) {
         <Name
           address={address as `0x${string}`}
           className={`rounded p-2 font-monospace text-sm ${
-            isOwner && isConnected
-              ? 'bg-green-500/10 text-green-500'
-              : 'bg-hovered'
+            isOwner && isConnected ? 'bg-green-500/10 text-green-500' : 'bg-hovered'
           }`}
         />
       </div>

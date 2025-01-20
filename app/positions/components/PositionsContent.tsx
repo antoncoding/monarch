@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Name } from '@/components/common/Name';
@@ -26,7 +27,6 @@ import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);

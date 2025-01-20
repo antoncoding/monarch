@@ -15,12 +15,12 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { Market, MarketProgramType } from '@/utils/types';
+import { Market, MarketRewardType } from '@/utils/types';
 
 type MarketProgramProps = {
   account: string;
   markets: Market[];
-  marketRewards: MarketProgramType[];
+  marketRewards: MarketRewardType[];
   distributions: DistributionResponseType[];
   showPending: boolean;
 };
@@ -67,7 +67,7 @@ export default function MarketProgram({
       {} as Record<
         string,
         {
-          rewards: MarketProgramType[];
+          rewards: MarketRewardType[];
           token: string;
           chainId: number;
           distribution?: DistributionResponseType;

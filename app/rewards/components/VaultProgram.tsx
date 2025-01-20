@@ -18,7 +18,7 @@ type VaultProgramProps = {
   vaultRewards: VaultRewardType[];
   showPending: boolean;
   distributions: DistributionResponseType[];
-}
+};
 
 export default function VaultProgram({
   distributions,

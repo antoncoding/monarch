@@ -6,18 +6,17 @@ import { Switch } from '@nextui-org/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 
+import { Address } from 'viem';
+import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserRewards from '@/hooks/useRewards';
-import { filterMarketRewards, filterUniformRewards } from '@/utils/rewardHelpers';
 import MarketProgram from './MarketProgram';
 import UniformProgram from './UniformProgram';
 import VaultProgram from './VaultProgram';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
-import { Address } from 'viem';
 
 const PROGRAM_INFO = {
   market: {
@@ -49,8 +48,8 @@ export default function Rewards() {
   const { loading, markets } = useMarkets();
   const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
 
-  const marketRewards = useMemo(() => filterMarketRewards(rewards), [rewards]);
-  const uniformRewards = useMemo(() => filterUniformRewards(rewards), [rewards]);
+  const marketRewards = useMemo(() => rewards.filter((r) => r.type === 'market-reward'), [rewards]);
+  const uniformRewards = useMemo(() => rewards.filter((r) => r.type === 'uniform-reward'), [rewards]);
   const vaultRewards = useMemo(() => rewards.filter((r) => r.type === 'vault-reward'), [rewards]);
 
   const [showMarketPending, setShowMarketPending] = useState(false);
@@ -59,8 +58,8 @@ export default function Rewards() {
 
   return (
     <div className="flex flex-col justify-between font-zen">
-      <Header/>
-        
+      <Header />
+
       <div className="container h-full gap-8 px-[5%]">
         <div className="pb-4">
           <h1 className="font-zen">Reward</h1>

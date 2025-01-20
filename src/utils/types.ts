@@ -114,9 +114,12 @@ type RewardAmount = {
 };
 
 // Market Program Type
-export type MarketProgramType = {
+export type MarketRewardType = {
+  // shared
   type: 'market-reward';
   asset: AssetType;
+  user: string;
+  // specific
   for_borrow: RewardAmount | null;
   for_collateral: RewardAmount | null;
   for_supply: RewardAmount | null;
@@ -129,48 +132,46 @@ export type MarketProgramType = {
     market_id: string;
     asset: AssetType;
   };
-  user: string;
 };
 
 // Uniform Reward Type
 export type UniformRewardType = {
+  // shared
   type: 'uniform-reward';
-  amount: RewardAmount;
   asset: AssetType;
-  program_id: string;
   user: string;
+  // specific
+  amount: RewardAmount;
+  program_id: string;
+};
+
+export type VaultRewardType = {
+  // shared
+  type: 'vault-reward';
+  asset: AssetType;
+  user: string;
+  // specific
+  program: VaultProgramType;
+  for_supply: RewardAmount | null;
 };
 
 export type VaultProgramType = {
+  type: 'vault-reward';
+  asset: AssetType;
   vault: string;
   chain_id: number;
   rate_per_year: string;
-  asset: AssetType;
   distributor: AssetType;
   creator: string;
   blacklist: string[];
   start: string;
   end: string;
   created_at: string;
-  type: 'vault-reward';
   id: string;
-}
-
-export type VaultRewardType = {
-  user: string;
-  type: 'vault-reward';
-  asset: AssetType;
-  program: VaultProgramType;
-  for_supply: {
-    total: string;
-    claimable_now: string;
-    claimable_next: string;
-    claimed: string;
-  };
-}
+};
 
 // Combined RewardResponseType
-export type RewardResponseType = MarketProgramType | UniformRewardType | VaultRewardType;
+export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
 
 export type RebalanceAction = {
   fromMarket: {
