@@ -11,7 +11,6 @@ export const sortProperties = {
   [SortColumn.LoanAsset]: 'loanAsset.name',
   [SortColumn.CollateralAsset]: 'collateralAsset.name',
   [SortColumn.LLTV]: 'lltv',
-  [SortColumn.Reward]: (item: Market) => Number(item.rewardPer1000USD ?? '0'),
   [SortColumn.Supply]: 'state.supplyAssetsUsd',
   [SortColumn.Borrow]: 'state.borrowAssetsUsd',
   [SortColumn.SupplyAPY]: 'state.supplyApy',

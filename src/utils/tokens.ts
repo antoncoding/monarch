@@ -19,24 +19,11 @@ export type UnknownERC20Token = {
   isUnknown?: boolean;
 };
 
-const MORPHOTokenAddress = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
+const MORPHO_TOKEN_BASE = '0xBAa5CC21fd487B8Fcc2F632f3F4E8D37262a0842';
+const MORPHO_TOKEN_MAINNET = '0x58D97B57BB95320F9a05dC918Aef65434969c2B2';
+const MORPHO_LEGACY = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
 
 const supportedTokens = [
-  {
-    symbol: 'MORPHO',
-    img: require('../imgs/tokens/morpho.svg') as string,
-    decimals: 18,
-    networks: [
-      {
-        address: '0x9994E35Db50125E0DF82e4c2dde62496CE330999',
-        chain: mainnet,
-      },
-      {
-        address: '0x9994E35Db50125E0DF82e4c2dde62496CE330999',
-        chain: base,
-      },
-    ],
-  },
   {
     symbol: 'USDC',
     img: require('../imgs/tokens/usdc.webp') as string,
@@ -445,12 +432,23 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       {
-        address: '0x58D97B57BB95320F9a05dC918Aef65434969c2B2',
+        address: MORPHO_TOKEN_MAINNET,
         chain: mainnet,
       },
       {
-        address: '0xBAa5CC21fd487B8Fcc2F632f3F4E8D37262a0842',
+        address: MORPHO_TOKEN_BASE,
         chain: base,
+      },
+    ],
+  },
+  {
+    symbol: 'MORPHO*',
+    img: require('../imgs/tokens/morpho.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: MORPHO_LEGACY,
+        chain: mainnet,
       },
     ],
   },
@@ -503,9 +501,12 @@ const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
 export {
   supportedTokens,
   isWhitelisted,
-  MORPHOTokenAddress,
   findTokenWithKey,
   findToken,
   getUniqueTokens,
   infoToKey,
+  MORPHO_TOKEN_BASE,
+  MORPHO_TOKEN_MAINNET,
+  MORPHO_LEGACY,
+
 };

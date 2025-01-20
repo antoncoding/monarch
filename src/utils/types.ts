@@ -106,7 +106,7 @@ type AssetType = {
   chain_id: number;
 };
 
-type RewardAmount = {
+export type RewardAmount = {
   total: string;
   claimable_now: string;
   claimable_next: string;
@@ -172,6 +172,16 @@ export type VaultProgramType = {
 
 // Combined RewardResponseType
 export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
+
+export type AggregatedRewardType = {
+  asset: AssetType;
+  total: {
+    claimable: bigint;
+    pendingAmount: bigint;
+    claimed: bigint;
+  };
+  programs: ('vault-reward' | 'market-reward' | 'uniform-reward')[];
+}
 
 export type RebalanceAction = {
   fromMarket: {
@@ -315,7 +325,6 @@ export type Market = {
   };
 
   // appended by us
-  rewardPer1000USD?: string;
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
   oracle: {

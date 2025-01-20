@@ -1,7 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getRewardPer1000USD } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
-import { MORPHOTokenAddress } from '@/utils/tokens';
 import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
@@ -38,21 +36,10 @@ const graphqlFetcher = async (
 };
 
 const processMarketData = (market: Market): MarketDetail => {
-  const entry = market.state.rewards.find(
-    (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress?.toLowerCase(),
-  );
-
   const warningsWithDetail = getMarketWarningsWithDetail(market);
-
-  let rewardPer1000USD: string | undefined;
-  if (entry) {
-    const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
-    rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
-  }
 
   return {
     ...market,
-    rewardPer1000USD,
     warningsWithDetail,
     isProtectedByLiquidationBots: false, // NOT needed for now, might implement later
     historicalState: {

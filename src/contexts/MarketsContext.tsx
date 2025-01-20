@@ -11,9 +11,7 @@ import {
 } from 'react';
 import { marketsQuery } from '@/graphql/queries';
 import useLiquidations from '@/hooks/useLiquidations';
-import { getRewardPer1000USD } from '@/utils/morpho';
 import { isSupportedChain } from '@/utils/networks';
-import { MORPHOTokenAddress } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
@@ -82,28 +80,12 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
 
         const processedMarkets = filtered.map((market) => {
-          const entry = market.state.rewards.find(
-            (reward) => reward.asset.address.toLowerCase() === MORPHOTokenAddress.toLowerCase(),
-          );
-
+          
           const warningsWithDetail = getMarketWarningsWithDetail(market);
           const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
 
-          if (!entry) {
-            return {
-              ...market,
-              rewardPer1000USD: undefined,
-              warningsWithDetail,
-              isProtectedByLiquidationBots,
-            };
-          }
-
-          const supplyAssetUSD = Number(market.state.supplyAssetsUsd);
-          const rewardPer1000USD = getRewardPer1000USD(entry.yearlySupplyTokens, supplyAssetUSD);
-
           return {
             ...market,
-            rewardPer1000USD,
             warningsWithDetail,
             isProtectedByLiquidationBots,
           };
