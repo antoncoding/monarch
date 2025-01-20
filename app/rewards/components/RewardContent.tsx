@@ -132,10 +132,11 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = useMemo(
-    () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
-    [morphoBalanceLegacy],
-  );
+  const showLegacy = true;
+  // useMemo(
+  //   () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
+  //   [morphoBalanceLegacy],
+  // );
 
   const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(
     morphoBalanceLegacy?.value ?? 0n,

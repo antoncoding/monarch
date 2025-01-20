@@ -35,17 +35,22 @@ export function WrapProcessModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative w-full max-w-lg rounded-lg bg-background p-6 shadow-lg"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-medium">Wrapping {formatBalance(amount, 18)} MORPHO</h2>
+          <h2 id="modal-title" className="text-lg font-medium">
+            Wrapping {formatBalance(amount, 18)} MORPHO
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+            className="rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-400"
           >
             <Cross1Icon />
           </button>
@@ -65,7 +70,7 @@ export function WrapProcessModal({
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
                   className={`flex items-start gap-4 rounded-lg p-4 ${
-                    isActive ? 'bg-gray-50' : ''
+                    isActive ? 'bg-gray-50 dark:bg-gray-800' : ''
                   }`}
                 >
                   <div className="mt-1">
