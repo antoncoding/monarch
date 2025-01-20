@@ -20,10 +20,12 @@ import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/
 import { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
 import InfoCard from './InfoCard';
 import RewardTable from './RewardTable';
+import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
+import { WrapProcessModal } from '@/components/WrapProcessModal';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
-  const { rewards, distributions, loading: loadingRewards } = useUserRewards(account);
+  const { rewards, distributions, loading: loadingRewards, refresh } = useUserRewards(account);
 
   const [showPending, setShowPending] = useState(false);
 
@@ -130,6 +132,16 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
+  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n, [morphoBalanceLegacy])
+
+  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(
+    morphoBalanceLegacy?.value ?? 0n,
+    () => {
+      // Refresh rewards data after successful wrap
+      refresh();
+    },
+  );
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -211,26 +223,24 @@ export default function Rewards() {
                 </div>
               </InfoCard>
 
-              {/* only show this if legacy balance is not 0 => need wrapping */}
-              {morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n && (
+              {showLegacy && (
                 <InfoCard
                   title="Legacy MORPHO"
                   tooltip={{
                     title: 'Legacy MORPHO',
                     detail: 'Your legacy MORPHO tokens that need to be wrapped to the new token',
                   }}
-                  badge={{
+                  button={{
                     text: 'Wrap Now',
-                    variant: 'warning',
-                    tooltip: {
-                      title: 'Action Required',
-                      detail:
-                        'Your MORPHO tokens need to be wrapped to the new version. Click to proceed with wrapping.',
-                    },
+                    variant: 'success',
+                    onClick: wrap,
+                    disabled: showProcessModal,
                   }}
                 >
                   <div className="flex items-center gap-2 text-base">
-                    <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>
+                    {morphoBalanceLegacy && (
+                      <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>
+                    )}
                     <TokenIcon
                       address={MORPHO_TOKEN_MAINNET}
                       chainId={SupportedNetworks.Mainnet}
@@ -272,6 +282,13 @@ export default function Rewards() {
           </section>
         </div>
       </div>
+      {showProcessModal && (
+        <WrapProcessModal
+          amount={morphoBalanceLegacy?.value ?? 0n}
+          currentStep={currentStep}
+          onClose={() => setShowProcessModal(false)}
+        />
+      )}
     </div>
   );
 }
