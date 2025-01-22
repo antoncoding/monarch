@@ -3,17 +3,16 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { FaHistory, FaPlus, FaCircle } from 'react-icons/fa';
+import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
-import { Avatar } from '@/components/Avatar/Avatar';
+import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
-import { Name } from '@/components/common/Name';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -35,7 +34,7 @@ export default function Positions() {
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(address);
 
   const isOwner = useMemo(() => {
@@ -71,28 +70,7 @@ export default function Positions() {
           <h1 className="font-zen">Portfolio</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
-          <div className="flex items-start gap-4">
-            <div className="relative overflow-hidden rounded">
-              <Avatar address={account as `0x${string}`} size={36} rounded={false} />
-              {isConnected && account === address && (
-                <div className="absolute bottom-0 right-0 h-4 w-full bg-gradient-to-r from-green-500/20 to-green-500/40 backdrop-blur-sm">
-                  <div className="absolute bottom-1 right-1">
-                    <FaCircle size={8} className="text-green-500" />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <Name
-                address={account as `0x${string}`}
-                className={`rounded p-2 font-monospace text-sm ${
-                  isConnected && account === address
-                    ? 'bg-green-500/10 text-green-500'
-                    : 'bg-hovered'
-                }`}
-              />
-            </div>
-          </div>
+          <AddressDisplay address={account as Address} />
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
               <Button size="md" className="font-zen text-secondary">

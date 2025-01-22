@@ -106,7 +106,7 @@ type AssetType = {
   chain_id: number;
 };
 
-type RewardAmount = {
+export type RewardAmount = {
   total: string;
   claimable_now: string;
   claimable_next: string;
@@ -114,9 +114,12 @@ type RewardAmount = {
 };
 
 // Market Program Type
-export type MarketProgramType = {
+export type MarketRewardType = {
+  // shared
   type: 'market-reward';
   asset: AssetType;
+  user: string;
+  // specific
   for_borrow: RewardAmount | null;
   for_collateral: RewardAmount | null;
   for_supply: RewardAmount | null;
@@ -129,20 +132,56 @@ export type MarketProgramType = {
     market_id: string;
     asset: AssetType;
   };
-  user: string;
 };
 
 // Uniform Reward Type
 export type UniformRewardType = {
+  // shared
   type: 'uniform-reward';
-  amount: RewardAmount;
   asset: AssetType;
-  program_id: string;
   user: string;
+  // specific
+  amount: RewardAmount;
+  program_id: string;
+};
+
+export type VaultRewardType = {
+  // shared
+  type: 'vault-reward';
+  asset: AssetType;
+  user: string;
+  // specific
+  program: VaultProgramType;
+  for_supply: RewardAmount | null;
+};
+
+export type VaultProgramType = {
+  type: 'vault-reward';
+  asset: AssetType;
+  vault: string;
+  chain_id: number;
+  rate_per_year: string;
+  distributor: AssetType;
+  creator: string;
+  blacklist: string[];
+  start: string;
+  end: string;
+  created_at: string;
+  id: string;
 };
 
 // Combined RewardResponseType
-export type RewardResponseType = MarketProgramType | UniformRewardType;
+export type RewardResponseType = MarketRewardType | UniformRewardType | VaultRewardType;
+
+export type AggregatedRewardType = {
+  asset: AssetType;
+  total: {
+    claimable: bigint;
+    pendingAmount: bigint;
+    claimed: bigint;
+  };
+  programs: ('vault-reward' | 'market-reward' | 'uniform-reward')[];
+};
 
 export type RebalanceAction = {
   fromMarket: {
@@ -286,7 +325,6 @@ export type Market = {
   };
 
   // appended by us
-  rewardPer1000USD?: string;
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
   oracle: {

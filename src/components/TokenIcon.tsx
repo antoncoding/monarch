@@ -19,6 +19,7 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
 
   return (
     <Image
+      className="rounded-full"
       src={token.img}
       alt={token.symbol || 'Token'}
       width={width}

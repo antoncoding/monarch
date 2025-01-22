@@ -8,14 +8,18 @@ export function useERC20Approval({
   spender,
   amount,
   tokenSymbol,
+  chainId,
 }: {
   token: Address;
   spender: Address;
   amount: bigint;
   tokenSymbol: string;
+  chainId?: number;
 }) {
   const { address: account } = useAccount();
-  const chainId = useChainId();
+  const currentChain = useChainId();
+
+  const chainIdToUse = chainId ?? currentChain;
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: token,
@@ -25,6 +29,7 @@ export function useERC20Approval({
     query: {
       enabled: !!account,
     },
+    chainId: chainIdToUse,
   });
 
   const isApproved = useMemo(() => {
@@ -37,7 +42,7 @@ export function useERC20Approval({
     pendingText: `Approving ${tokenSymbol}`,
     successText: `${tokenSymbol} Approved`,
     errorText: 'Failed to approve',
-    chainId,
+    chainId: chainIdToUse,
     pendingDescription: `Approving ${tokenSymbol} for spender ${spender.slice(2, 8)}...`,
     successDescription: `Successfully approved ${tokenSymbol} for spender ${spender.slice(2, 8)}`,
   });
