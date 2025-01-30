@@ -44,7 +44,7 @@ export class SmartBlockFinder {
 
     // Calculate initial guess based on average block time
     const timeDiff = latestTimestamp - targetTimestamp;
-    const estimatedBlocksBack = Math.floor(timeDiff / this.averageBlockTime);
+    const estimatedBlocksBack = Math.max(Math.floor(timeDiff / this.averageBlockTime), 0);
     const initialGuess = latestBlock.number - BigInt(estimatedBlocksBack);
 
     // Get initial block
