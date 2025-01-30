@@ -52,12 +52,7 @@ async function getPositionAtBlock(
   blockNumber: number,
   chainId: number,
 ) {
-  console.log(`Processing position request for blockNumber ${blockNumber}`, {
-    marketId,
-    userAddress,
-    blockNumber,
-    chainId,
-  });
+  console.log(`Get user position ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
 
   const client = chainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
   if (!client) throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -81,7 +76,7 @@ async function getPositionAtBlock(
       position.borrowShares === 0n &&
       position.collateral === 0n
     ) {
-      console.log('Position has no shares, returning zeros');
+      // console.log('Position has no shares, returning zeros');
       return {
         supplyShares: '0',
         supplyAssets: '0',
@@ -116,22 +111,22 @@ async function getPositionAtBlock(
       market.totalBorrowShares,
     );
 
-    console.log(`Successfully retrieved position data:`, {
-      marketId,
-      userAddress,
-      blockNumber,
-      supplyShares: position.supplyShares.toString(),
-      supplyAssets: supplyAssets.toString(),
-      borrowShares: position.borrowShares.toString(),
-      borrowAssets: borrowAssets.toString(),
-      collateral: position.collateral.toString(),
-      market: {
-        totalSupplyAssets: market.totalSupplyAssets.toString(),
-        totalSupplyShares: market.totalSupplyShares.toString(),
-        totalBorrowAssets: market.totalBorrowAssets.toString(),
-        totalBorrowShares: market.totalBorrowShares.toString(),
-      },
-    });
+    // console.log(`Successfully retrieved position data:`, {
+    //   marketId,
+    //   userAddress,
+    //   blockNumber,
+    //   supplyShares: position.supplyShares.toString(),
+    //   supplyAssets: supplyAssets.toString(),
+    //   borrowShares: position.borrowShares.toString(),
+    //   borrowAssets: borrowAssets.toString(),
+    //   collateral: position.collateral.toString(),
+    //   market: {
+    //     totalSupplyAssets: market.totalSupplyAssets.toString(),
+    //     totalSupplyShares: market.totalSupplyShares.toString(),
+    //     totalBorrowAssets: market.totalBorrowAssets.toString(),
+    //     totalBorrowShares: market.totalBorrowShares.toString(),
+    //   },
+    // });
 
     return {
       supplyShares: position.supplyShares.toString(),
@@ -159,12 +154,12 @@ export async function GET(request: NextRequest) {
     const userAddress = searchParams.get('userAddress');
     const chainId = parseInt(searchParams.get('chainId') ?? '1');
 
-    console.log(`Historical position request:`, {
-      blockNumber,
-      marketId,
-      userAddress,
-      chainId,
-    });
+    // console.log(`Historical position request:`, {
+    //   blockNumber,
+    //   marketId,
+    //   userAddress,
+    //   chainId,
+    // });
 
     if (!blockNumber || !marketId || !userAddress) {
       console.error('Missing required parameters:', {
@@ -178,13 +173,13 @@ export async function GET(request: NextRequest) {
     // Get position data at the specified blockNumber
     const position = await getPositionAtBlock(marketId, userAddress, blockNumber, chainId);
 
-    console.log(`Successfully retrieved historical position data:`, {
-      blockNumber,
-      marketId,
-      userAddress,
-      chainId,
-      position,
-    });
+    // console.log(`Successfully retrieved historical position data:`, {
+    //   blockNumber,
+    //   marketId,
+    //   userAddress,
+    //   chainId,
+    //   position,
+    // });
 
     return NextResponse.json({
       position,

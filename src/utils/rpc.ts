@@ -23,6 +23,11 @@ export const GENESIS_BLOCK = {
   [SupportedNetworks.Base]: 13977148, // Base
 } as const;
 
+export const LATEST_BLOCK_DELAY = {
+  [SupportedNetworks.Mainnet]: 0, // Ethereum mainnet
+  [SupportedNetworks.Base]: 20, // Base
+};
+
 type BlockResponse = {
   blockNumber: string;
   timestamp: number;
@@ -36,24 +41,33 @@ export async function estimatedBlockNumber(
   blockNumber: number;
   timestamp: number;
 }> {
-  // First, get the nearest block number for the timestamp
-  const blockResponse = await fetch(
-    `/api/block?` +
-      `timestamp=${encodeURIComponent(timestamp)}` +
-      `&chainId=${encodeURIComponent(chainId)}`,
-  );
+  const fetchBlock = async () => {
+    const blockResponse = await fetch(
+      `/api/block?` +
+        `timestamp=${encodeURIComponent(timestamp)}` +
+        `&chainId=${encodeURIComponent(chainId)}`,
+    );
 
-  if (!blockResponse.ok) {
-    const errorData = (await blockResponse.json()) as { error?: string };
-    console.error('Failed to find nearest block:', errorData);
-    throw new Error('Failed to find nearest block');
-  }
+    if (!blockResponse.ok) {
+      const errorData = (await blockResponse.json()) as { error?: string };
+      console.error('Failed to find nearest block:', errorData);
+      throw new Error('Failed to find nearest block');
+    }
 
-  const blockData = (await blockResponse.json()) as BlockResponse;
-  console.log('Found nearest block:', blockData);
+    const blockData = (await blockResponse.json()) as BlockResponse;
+    console.log('Found nearest block:', blockData);
 
-  return {
-    blockNumber: Number(blockData.blockNumber),
-    timestamp: Number(blockData.timestamp),
+    return {
+      blockNumber: Number(blockData.blockNumber),
+      timestamp: Number(blockData.timestamp),
+    };
   };
+
+  try {
+    return await fetchBlock();
+  } catch (error) {
+    console.log('First attempt failed, retrying in 2 seconds...');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    return await fetchBlock();
+  }
 }

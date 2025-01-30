@@ -1,6 +1,6 @@
 import { type PublicClient } from 'viem';
 import { SupportedNetworks } from './networks';
-import { BLOCK_TIME } from './rpc';
+import { BLOCK_TIME, LATEST_BLOCK_DELAY } from './rpc';
 
 type BlockInfo = {
   number: bigint;
@@ -12,19 +12,32 @@ export class SmartBlockFinder {
 
   private averageBlockTime: number;
 
+  private latestBlockDelay: number;
+
   private readonly TOLERANCE_SECONDS = 10;
 
   constructor(client: PublicClient, chainId: SupportedNetworks) {
     this.client = client;
-    this.averageBlockTime = BLOCK_TIME[chainId] || 12; // default to 12 seconds if chain not found
+    this.averageBlockTime = BLOCK_TIME[chainId] || 12;
+    this.latestBlockDelay = LATEST_BLOCK_DELAY[chainId] || 0;
   }
 
   private async getBlock(blockNumber: bigint): Promise<BlockInfo> {
-    const block = await this.client.getBlock({ blockNumber });
-    return {
-      number: block.number,
-      timestamp: block.timestamp,
-    };
+    try {
+      const block = await this.client.getBlock({ blockNumber });
+      return {
+        number: block.number,
+        timestamp: block.timestamp,
+      };
+    } catch (error) {
+      // await 1 second
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const block = await this.client.getBlock({ blockNumber: blockNumber - 1n });
+      return {
+        number: block.number,
+        timestamp: block.timestamp,
+      };
+    }
   }
 
   private isWithinTolerance(blockTimestamp: bigint, targetTimestamp: number): boolean {
@@ -33,8 +46,11 @@ export class SmartBlockFinder {
   }
 
   async findNearestBlock(targetTimestamp: number): Promise<BlockInfo> {
-    // Get current block as upper bound
-    const latestBlock = await this.getBlock(await this.client.getBlockNumber());
+    // Get current block as upper bound, buffer with 3 blocks
+
+    const lastestBlockNumber = (await this.client.getBlockNumber()) - BigInt(this.latestBlockDelay);
+    const latestBlock = await this.getBlock(lastestBlockNumber);
+
     const latestTimestamp = Number(latestBlock.timestamp);
 
     // If target is in the future, return latest block
@@ -45,6 +61,7 @@ export class SmartBlockFinder {
     // Calculate initial guess based on average block time
     const timeDiff = latestTimestamp - targetTimestamp;
     const estimatedBlocksBack = Math.max(Math.floor(timeDiff / this.averageBlockTime), 0);
+
     const initialGuess = latestBlock.number - BigInt(estimatedBlocksBack);
 
     // Get initial block
@@ -63,7 +80,13 @@ export class SmartBlockFinder {
 
     while (left <= right) {
       const mid = left + (right - left) / 2n;
-      const block = await this.getBlock(mid);
+
+      if (mid > latestBlock.number) {
+        console.log('errorr  .....');
+      }
+
+      const toQuery = mid > latestBlock.number ? latestBlock.number : mid;
+      const block = await this.getBlock(toQuery);
       const blockTimestamp = Number(block.timestamp);
 
       // If within tolerance, return immediately

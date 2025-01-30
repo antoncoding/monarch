@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     }
 
     const finder = new SmartBlockFinder(client as any as PublicClient, numericChainId);
+
+    console.log('GET functino trying to find nearest block', timestamp);
     const block = await finder.findNearestBlock(parseInt(timestamp));
 
     return NextResponse.json({
