@@ -10,10 +10,13 @@ import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
+import { useStyledToast } from '@/hooks/useStyledToast';
 
 export function AccountDropdown() {
   const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
+
+  const toast = useStyledToast();
 
   const handleDisconnectWallet = useCallback(() => {
     disconnect();
@@ -22,7 +25,7 @@ export function AccountDropdown() {
   const handleCopyAddress = useCallback(() => {
     if (address) {
       void navigator.clipboard.writeText(address).then(() => {
-        toast.success('Address copied to clipboard!', { toastId: 'address-copied' });
+        toast.success('Address copied', 'Address copied to clipboard');
       });
     }
   }, [address]);
