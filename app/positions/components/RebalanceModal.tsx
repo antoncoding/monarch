@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { parseUnits, formatUnits } from 'viem';
-import { useAccount, useCall, useSwitchChain } from 'wagmi';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -63,17 +63,20 @@ export function RebalanceModal({
     );
   }, [allMarkets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
-  const getPendingDelta = useCallback((marketUniqueKey: string) => {
-    return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
-      if (action.fromMarket.uniqueKey === marketUniqueKey) {
-        return acc - Number(action.amount);
-      }
-      if (action.toMarket.uniqueKey === marketUniqueKey) {
-        return acc + Number(action.amount);
-      }
-      return acc;
-    }, 0);
-  }, [rebalanceActions]);
+  const getPendingDelta = useCallback(
+    (marketUniqueKey: string) => {
+      return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
+        if (action.fromMarket.uniqueKey === marketUniqueKey) {
+          return acc - Number(action.amount);
+        }
+        if (action.toMarket.uniqueKey === marketUniqueKey) {
+          return acc + Number(action.amount);
+        }
+        return acc;
+      }, 0);
+    },
+    [rebalanceActions],
+  );
 
   const validateInputs = useCallback(() => {
     if (!selectedFromMarketUniqueKey || !selectedToMarketUniqueKey || !amount) {
@@ -93,7 +96,13 @@ export function RebalanceModal({
       return false;
     }
     return true;
-  }, [selectedFromMarketUniqueKey, selectedToMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, toast]);
+  }, [
+    selectedFromMarketUniqueKey,
+    selectedToMarketUniqueKey,
+    amount,
+    groupedPosition.loanAssetDecimals,
+    toast,
+  ]);
 
   const getMarkets = useCallback(() => {
     const fromMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedFromMarketUniqueKey);
@@ -126,35 +135,44 @@ export function RebalanceModal({
       return false;
     }
     return true;
-  }, [selectedFromMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, getPendingDelta, toast]);
+  }, [
+    selectedFromMarketUniqueKey,
+    amount,
+    groupedPosition.loanAssetDecimals,
+    getPendingDelta,
+    toast,
+  ]);
 
-  const createAction = useCallback((
-    fromMarket: Market,
-    toMarket: Market,
-    actionAmount: bigint,
-    isMax: boolean,
-  ): RebalanceAction => {
-    return {
-      fromMarket: {
-        loanToken: fromMarket.loanAsset.address,
-        collateralToken: fromMarket.collateralAsset.address,
-        oracle: fromMarket.oracleAddress,
-        irm: fromMarket.irmAddress,
-        lltv: fromMarket.lltv,
-        uniqueKey: fromMarket.uniqueKey,
-      },
-      toMarket: {
-        loanToken: toMarket.loanAsset.address,
-        collateralToken: toMarket.collateralAsset.address,
-        oracle: toMarket.oracleAddress,
-        irm: toMarket.irmAddress,
-        lltv: toMarket.lltv,
-        uniqueKey: toMarket.uniqueKey,
-      },
-      amount: actionAmount,
-      isMax,
-    };
-  }, []);
+  const createAction = useCallback(
+    (
+      fromMarket: Market,
+      toMarket: Market,
+      actionAmount: bigint,
+      isMax: boolean,
+    ): RebalanceAction => {
+      return {
+        fromMarket: {
+          loanToken: fromMarket.loanAsset.address,
+          collateralToken: fromMarket.collateralAsset.address,
+          oracle: fromMarket.oracleAddress,
+          irm: fromMarket.irmAddress,
+          lltv: fromMarket.lltv,
+          uniqueKey: fromMarket.uniqueKey,
+        },
+        toMarket: {
+          loanToken: toMarket.loanAsset.address,
+          collateralToken: toMarket.collateralAsset.address,
+          oracle: toMarket.oracleAddress,
+          irm: toMarket.irmAddress,
+          lltv: toMarket.lltv,
+          uniqueKey: toMarket.uniqueKey,
+        },
+        amount: actionAmount,
+        isMax,
+      };
+    },
+    [],
+  );
 
   const resetSelections = useCallback(() => {
     setSelectedFromMarketUniqueKey('');

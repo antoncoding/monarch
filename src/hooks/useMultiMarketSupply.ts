@@ -181,7 +181,7 @@ export function useMultiMarketSupply(
     usePermit2Setting,
     chainId,
     loanAsset,
-    toast
+    toast,
   ]);
 
   const approveAndSupply = useCallback(async () => {
