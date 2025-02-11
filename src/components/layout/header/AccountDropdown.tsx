@@ -4,13 +4,12 @@ import { useCallback } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-org/react';
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
-import { toast } from 'react-toastify';
 import { useAccount, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
-import { useStyledToast } from '@/hooks/useStyledToast';
 
 export function AccountDropdown() {
   const { address, chainId } = useAccount();
@@ -28,7 +27,7 @@ export function AccountDropdown() {
         toast.success('Address copied', 'Address copied to clipboard');
       });
     }
-  }, [address]);
+  }, [address, toast]);
 
   if (!address) return null;
 

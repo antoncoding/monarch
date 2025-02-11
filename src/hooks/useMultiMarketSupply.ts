@@ -26,7 +26,7 @@ export function useMultiMarketSupply(
 ) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState(false);
-  const toast = useStyledToast()
+  const toast = useStyledToast();
 
   const { address: account } = useAccount();
   const chainId = loanAsset?.network;
@@ -181,6 +181,7 @@ export function useMultiMarketSupply(
     usePermit2Setting,
     chainId,
     loanAsset,
+    toast
   ]);
 
   const approveAndSupply = useCallback(async () => {
@@ -251,6 +252,7 @@ export function useMultiMarketSupply(
     approve,
     useEth,
     executeSupplyTransaction,
+    toast,
   ]);
 
   return {

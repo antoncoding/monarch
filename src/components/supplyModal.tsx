@@ -10,6 +10,7 @@ import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
@@ -20,7 +21,6 @@ import { Button } from './common';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
-import { useStyledToast } from '@/hooks/useStyledToast';
 type SupplyModalProps = {
   market: Market;
   onClose: () => void;
@@ -187,6 +187,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     useEth,
     signForBundlers,
     usePermit2Setting,
+    toast,
   ]);
 
   const approveAndSupply = useCallback(async () => {
@@ -269,6 +270,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     usePermit2Setting,
     isApproved,
     approve,
+    toast,
   ]);
 
   const signAndSupply = useCallback(async () => {
@@ -294,7 +296,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeSupplyTransaction]);
+  }, [account, executeSupplyTransaction, toast]);
 
   return (
     <div

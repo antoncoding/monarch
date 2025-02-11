@@ -2,12 +2,13 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { parseUnits, formatUnits } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount, useCall, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
@@ -15,7 +16,6 @@ import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
-import { useStyledToast } from '@/hooks/useStyledToast';
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
@@ -63,7 +63,7 @@ export function RebalanceModal({
     );
   }, [allMarkets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
-  const getPendingDelta = (marketUniqueKey: string) => {
+  const getPendingDelta = useCallback((marketUniqueKey: string) => {
     return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
       if (action.fromMarket.uniqueKey === marketUniqueKey) {
         return acc - Number(action.amount);
@@ -73,9 +73,9 @@ export function RebalanceModal({
       }
       return acc;
     }, 0);
-  };
+  }, [rebalanceActions]);
 
-  const validateInputs = () => {
+  const validateInputs = useCallback(() => {
     if (!selectedFromMarketUniqueKey || !selectedToMarketUniqueKey || !amount) {
       const missingFields = [];
       if (!selectedFromMarketUniqueKey) missingFields.push('"From Market"');
@@ -93,24 +93,26 @@ export function RebalanceModal({
       return false;
     }
     return true;
-  };
+  }, [selectedFromMarketUniqueKey, selectedToMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, toast]);
 
-  const getMarkets = () => {
+  const getMarkets = useCallback(() => {
     const fromMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedFromMarketUniqueKey);
 
     const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
     if (!fromMarket || !toMarket) {
-      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${!toMarket ? '"To" Market' : ''}`;
+      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${
+        !toMarket ? '"To" Market' : ''
+      }`;
 
       toast.error('Invalid market selection', errorMessage);
       return null;
     }
 
     return { fromMarket, toMarket };
-  };
+  }, [eligibleMarkets, selectedFromMarketUniqueKey, selectedToMarketUniqueKey, toast]);
 
-  const checkBalance = () => {
+  const checkBalance = useCallback(() => {
     const oldBalance = groupedPosition.markets.find(
       (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
     )?.supplyAssets;
@@ -120,13 +122,13 @@ export function RebalanceModal({
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount > pendingBalance) {
-      toast.error('Insufficient balance', 'You don\'t have enough balance to perform this action');
+      toast.error('Insufficient balance', "You don't have enough balance to perform this action");
       return false;
     }
     return true;
-  };
+  }, [selectedFromMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, getPendingDelta, toast]);
 
-  const createAction = (
+  const createAction = useCallback((
     fromMarket: Market,
     toMarket: Market,
     actionAmount: bigint,
@@ -152,13 +154,13 @@ export function RebalanceModal({
       amount: actionAmount,
       isMax,
     };
-  };
+  }, []);
 
-  const resetSelections = () => {
+  const resetSelections = useCallback(() => {
     setSelectedFromMarketUniqueKey('');
     setSelectedToMarketUniqueKey('');
     setAmount('0');
-  };
+  }, []);
 
   const handleMaxSelect = useCallback(
     (marketUniqueKey: string, maxAmount: number) => {
@@ -200,7 +202,6 @@ export function RebalanceModal({
     const isMaxAmount =
       selectedPosition !== undefined &&
       BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
-
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
@@ -250,7 +251,7 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId]);
+  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId, toast]);
 
   const handleManualRefresh = () => {
     refetch(() => {

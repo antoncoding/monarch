@@ -66,7 +66,10 @@ export default function SearchOrConnect({ path }: { path: string }) {
                 if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
                   window.location.href = `/${path}/${inputAddress}`;
                 } else {
-                  toast.error('Invalid address', `The address you enter ${inputAddress} is not valid.`);
+                  toast.error(
+                    'Invalid address',
+                    `The address you enter ${inputAddress} is not valid.`,
+                  );
                 }
               }}
               className="bg-monarch-orange justify-center p-6 text-center text-sm duration-100 ease-in-out hover:opacity-100"

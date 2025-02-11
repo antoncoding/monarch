@@ -6,11 +6,11 @@ import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
-import { useStyledToast } from '@/hooks/useStyledToast';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import {
@@ -70,7 +70,7 @@ export function PositionsSummaryTable({
   const isOwner = useMemo(() => {
     if (!account) return false;
     return account === address;
-  }, [marketPositions, address]);
+  }, [account, address]);
 
   const getEarningsForPeriod = (position: MarketPositionWithEarnings) => {
     if (!position.earned) return '0';
@@ -430,7 +430,10 @@ export function PositionsSummaryTable({
                           className="text-xs"
                           onClick={() => {
                             if (!isOwner) {
-                              toast.error('No authorization', 'You can only rebalance your own positions');
+                              toast.error(
+                                'No authorization',
+                                'You can only rebalance your own positions',
+                              );
                               return;
                             }
                             setSelectedGroupedPosition(groupedPosition);

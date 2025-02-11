@@ -307,6 +307,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     sendTransactionAsync,
     groupedPosition.loanAssetAddress,
     totalAmount,
+    toast,
   ]);
 
   return {

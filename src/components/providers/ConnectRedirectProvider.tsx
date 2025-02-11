@@ -1,6 +1,5 @@
 import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { useAccountEffect } from 'wagmi';
 
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -21,7 +20,9 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
     onConnect: ({ address, isReconnected }) => {
       if (redirectPath && !isReconnected) {
         router.push(`/${redirectPath}/${address}`);
-        toast.success('Address connected', 'Redirecting to portfolio...', { toastId: 'address-connected' });
+        toast.success('Address connected', 'Redirecting to portfolio...', {
+          toastId: 'address-connected',
+        });
         // Reset the path after redirect
         setRedirectPath(undefined);
       }

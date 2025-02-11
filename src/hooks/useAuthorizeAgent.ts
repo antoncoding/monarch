@@ -3,12 +3,12 @@ import { Address, encodeFunctionData, parseSignature } from 'viem';
 import { useAccount, useReadContract, useSignTypedData, useSwitchChain } from 'wagmi';
 import monarchAgentAbi from '@/abis/monarch-agent-v1';
 import morphoAbi from '@/abis/morpho';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { AGENT_CONTRACT } from '@/utils/monarch-agent';
 import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
-import { useStyledToast } from '@/hooks/useStyledToast';
 export enum AuthorizeAgentStep {
   Idle = 'idle',
   Authorize = 'authorize',
@@ -128,7 +128,10 @@ export const useAuthorizeAgent = (
             });
           } catch (error) {
             console.log('Failed to sign authorization:', error);
-            toast.error('Signature Request Failed', 'Signature request was rejected or failed. Please try again.');
+            toast.error(
+              'Signature Request Failed',
+              'Signature request was rejected or failed. Please try again.',
+            );
             return;
           }
           const signature = parseSignature(signatureRaw);
@@ -197,7 +200,10 @@ export const useAuthorizeAgent = (
       } catch (error) {
         console.error('Error during agent setup:', error);
         onError?.();
-        toast.error('Agent Setup Failed', 'An error occurred during agent setup. Please try again.');
+        toast.error(
+          'Agent Setup Failed',
+          'An error occurred during agent setup. Please try again.',
+        );
         throw error;
       } finally {
         setIsConfirming(false);

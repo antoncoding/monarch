@@ -9,13 +9,13 @@ import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { AggregatedRewardType } from '@/utils/types';
-import { useStyledToast } from '@/hooks/useStyledToast';
 type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
@@ -193,25 +193,35 @@ export default function RewardTable({
                           isDisabled={
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
-                          onClick={async(e) => {
-                            e.stopPropagation();
-                            if (!account) {
-                              toast.error('No account connected', 'Please connect your wallet to continue.');
-                              return;
-                            }
-                            if (!distribution) {
-                              toast.error('No claim data', 'No claim data found for this reward please try again later.');
-                              return;
-                            }
-                            if (chainId !== distribution.distributor.chain_id) {
-                              await switchChainAsync({ chainId: distribution.distributor.chain_id });
-                            }
-                            sendTransaction({
-                              account: account as Address,
-                              to: distribution.distributor.address as Address,
-                              data: distribution.tx_data as `0x${string}`,
-                              chainId: distribution.distributor.chain_id,
-                            });
+                          onClick={(e) => {
+                            void (async () => {
+                              e.stopPropagation();
+                              if (!account) {
+                                toast.error(
+                                  'No account connected',
+                                  'Please connect your wallet to continue.',
+                                );
+                                return;
+                              }
+                              if (!distribution) {
+                                toast.error(
+                                  'No claim data',
+                                  'No claim data found for this reward please try again later.',
+                                );
+                                return;
+                              }
+                              if (chainId !== distribution.distributor.chain_id) {
+                                await switchChainAsync({
+                                  chainId: distribution.distributor.chain_id,
+                                });
+                              }
+                              sendTransaction({
+                                account: account as Address,
+                                to: distribution.distributor.address as Address,
+                                data: distribution.tx_data as `0x${string}`,
+                                chainId: distribution.distributor.chain_id,
+                              });
+                            })();
                           }}
                         >
                           Claim

@@ -9,12 +9,12 @@ import morphoAbi from '@/abis/morpho';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
-import { useStyledToast } from '@/hooks/useStyledToast';
 
 type ModalProps = {
   position: MarketPosition;
@@ -102,6 +102,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     sendTransaction,
     position.supplyAssets,
     position.supplyShares,
+    toast,
   ]);
 
   return (

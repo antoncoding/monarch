@@ -4,9 +4,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { StyledToast } from '../components/common/StyledToast';
 
 export function useStyledToast() {
-
   const success = useCallback((title: string, message?: string, options?: ToastOptions) => {
-    toast.success(<StyledToast title={title} message={message}/>, options);
+    toast.success(<StyledToast title={title} message={message} />, options);
   }, []);
 
   const error = useCallback((title: string, message?: string, options?: ToastOptions) => {

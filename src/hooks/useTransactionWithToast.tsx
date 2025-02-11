@@ -2,10 +2,9 @@ import React, { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { TxHashDisplay } from '../components/TxHashDisplay';
+import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
 import { getExplorerTxURL } from '../utils/external';
 import { SupportedNetworks } from '../utils/networks';
-import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
 
 type UseTransactionWithToastProps = {
   toastId: string;
@@ -46,21 +45,29 @@ export function useTransactionWithToast({
     }
   }, [hash, chainId]);
 
-
   useEffect(() => {
     if (isConfirming) {
-      toast.loading(<TransactionToast title={pendingText} description={pendingDescription} hash={hash} />, {
-        toastId,
-        onClick,
-        closeButton: true,
-      });
+      toast.loading(
+        <TransactionToast title={pendingText} description={pendingDescription} hash={hash} />,
+        {
+          toastId,
+          onClick,
+          closeButton: true,
+        },
+      );
     }
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick]);
 
   useEffect(() => {
     if (isConfirmed) {
       toast.update(toastId, {
-        render: <TransactionToast title={`${successText} 🎉`} description={successDescription} hash={hash} />,
+        render: (
+          <TransactionToast
+            title={`${successText} 🎉`}
+            description={successDescription}
+            hash={hash}
+          />
+        ),
         type: 'success',
         isLoading: false,
         autoClose: 5000,
@@ -73,9 +80,7 @@ export function useTransactionWithToast({
     }
     if (txError) {
       toast.update(toastId, {
-        render: (
-          <StyledToast title={errorText} message={txError.message} />
-        ),
+        render: <StyledToast title={errorText} message={txError.message} />,
         type: 'error',
         isLoading: false,
         autoClose: 5000,
@@ -92,6 +97,8 @@ export function useTransactionWithToast({
     toastId,
     onClick,
     onSuccess,
+    toast,
+    hash,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
