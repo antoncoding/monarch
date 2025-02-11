@@ -4,7 +4,7 @@ export function StyledToast({ title, message }: { title: string; message?: strin
   return (
     <div className="p-2">
       <div className="font-zen">{title}</div>
-      {message && <div className="py-2 font-inter text-xs hover:underline">{message}</div>}
+      {message && <div className="py-2 font-inter text-xs">{message}</div>}
     </div>
   );
 }
