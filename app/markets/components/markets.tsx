@@ -6,7 +6,6 @@ import { Chain } from '@rainbow-me/rainbowkit';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
-import { toast } from 'react-toastify';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -16,6 +15,7 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
@@ -41,6 +41,8 @@ const defaultStaredMarkets = JSON.parse(
 export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const toast = useStyledToast();
 
   const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
 
@@ -108,18 +110,18 @@ export default function Markets() {
     (id: string) => {
       setStaredIds([...staredIds, id]);
       storage.setItem(keys.MarketFavoritesKey, JSON.stringify([...staredIds, id]));
-      toast.success('Market starred', { icon: <span>🌟</span> });
+      toast.success('Market starred', 'Market added to favorites', { icon: <span>🌟</span> });
     },
-    [staredIds],
+    [staredIds, toast],
   );
 
   const unstarMarket = useCallback(
     (id: string) => {
       setStaredIds(staredIds.filter((i) => i !== id));
       storage.setItem(keys.MarketFavoritesKey, JSON.stringify(staredIds.filter((i) => i !== id)));
-      toast.success('Market unstarred', { icon: <span>🌟</span> });
+      toast.success('Market unstarred', 'Market removed from favorites', { icon: <span>🌟</span> });
     },
-    [staredIds],
+    [staredIds, toast],
   );
 
   useEffect(() => {
@@ -317,7 +319,7 @@ export default function Markets() {
   };
 
   const handleRefresh = () => {
-    refetch(() => toast.success('Markets refreshed'));
+    refetch(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   };
 
   return (

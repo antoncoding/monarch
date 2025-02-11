@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
-import { toast } from 'react-toastify';
 import { parseUnits, formatUnits } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
@@ -9,6 +8,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
@@ -16,7 +16,6 @@ import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
-
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
@@ -40,6 +39,7 @@ export function RebalanceModal({
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const toast = useStyledToast();
 
   const { markets: allMarkets } = useMarkets();
   const {
@@ -63,45 +63,65 @@ export function RebalanceModal({
     );
   }, [allMarkets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
-  const getPendingDelta = (marketUniqueKey: string) => {
-    return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
-      if (action.fromMarket.uniqueKey === marketUniqueKey) {
-        return acc - Number(action.amount);
-      }
-      if (action.toMarket.uniqueKey === marketUniqueKey) {
-        return acc + Number(action.amount);
-      }
-      return acc;
-    }, 0);
-  };
+  const getPendingDelta = useCallback(
+    (marketUniqueKey: string) => {
+      return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
+        if (action.fromMarket.uniqueKey === marketUniqueKey) {
+          return acc - Number(action.amount);
+        }
+        if (action.toMarket.uniqueKey === marketUniqueKey) {
+          return acc + Number(action.amount);
+        }
+        return acc;
+      }, 0);
+    },
+    [rebalanceActions],
+  );
 
-  const validateInputs = () => {
+  const validateInputs = useCallback(() => {
     if (!selectedFromMarketUniqueKey || !selectedToMarketUniqueKey || !amount) {
-      toast.error('Please fill in all fields');
+      const missingFields = [];
+      if (!selectedFromMarketUniqueKey) missingFields.push('"From Market"');
+      if (!selectedToMarketUniqueKey) missingFields.push('"To Market"');
+      if (!amount) missingFields.push('"Amount"');
+
+      const errorMessage = `Missing fields: ${missingFields.join(', ')}`;
+
+      toast.error('Missing fields', errorMessage);
       return false;
     }
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount <= 0) {
-      toast.error('Amount must be greater than zero');
+      toast.error('Invalid amount', 'Amount must be greater than zero');
       return false;
     }
     return true;
-  };
+  }, [
+    selectedFromMarketUniqueKey,
+    selectedToMarketUniqueKey,
+    amount,
+    groupedPosition.loanAssetDecimals,
+    toast,
+  ]);
 
-  const getMarkets = () => {
+  const getMarkets = useCallback(() => {
     const fromMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedFromMarketUniqueKey);
 
     const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
     if (!fromMarket || !toMarket) {
-      toast.error('Invalid market selection');
+      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${
+        !toMarket ? '"To" Market' : ''
+      }`;
+
+      toast.error('Invalid market selection', errorMessage);
       return null;
     }
 
     return { fromMarket, toMarket };
-  };
+  }, [eligibleMarkets, selectedFromMarketUniqueKey, selectedToMarketUniqueKey, toast]);
 
-  const checkBalance = () => {
+  const checkBalance = useCallback(() => {
     const oldBalance = groupedPosition.markets.find(
       (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
     )?.supplyAssets;
@@ -111,45 +131,54 @@ export function RebalanceModal({
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount > pendingBalance) {
-      toast.error('Insufficient balance for this action');
+      toast.error('Insufficient balance', "You don't have enough balance to perform this action");
       return false;
     }
     return true;
-  };
+  }, [
+    selectedFromMarketUniqueKey,
+    amount,
+    groupedPosition.loanAssetDecimals,
+    getPendingDelta,
+    toast,
+  ]);
 
-  const createAction = (
-    fromMarket: Market,
-    toMarket: Market,
-    actionAmount: bigint,
-    isMax: boolean,
-  ): RebalanceAction => {
-    return {
-      fromMarket: {
-        loanToken: fromMarket.loanAsset.address,
-        collateralToken: fromMarket.collateralAsset.address,
-        oracle: fromMarket.oracleAddress,
-        irm: fromMarket.irmAddress,
-        lltv: fromMarket.lltv,
-        uniqueKey: fromMarket.uniqueKey,
-      },
-      toMarket: {
-        loanToken: toMarket.loanAsset.address,
-        collateralToken: toMarket.collateralAsset.address,
-        oracle: toMarket.oracleAddress,
-        irm: toMarket.irmAddress,
-        lltv: toMarket.lltv,
-        uniqueKey: toMarket.uniqueKey,
-      },
-      amount: actionAmount,
-      isMax,
-    };
-  };
+  const createAction = useCallback(
+    (
+      fromMarket: Market,
+      toMarket: Market,
+      actionAmount: bigint,
+      isMax: boolean,
+    ): RebalanceAction => {
+      return {
+        fromMarket: {
+          loanToken: fromMarket.loanAsset.address,
+          collateralToken: fromMarket.collateralAsset.address,
+          oracle: fromMarket.oracleAddress,
+          irm: fromMarket.irmAddress,
+          lltv: fromMarket.lltv,
+          uniqueKey: fromMarket.uniqueKey,
+        },
+        toMarket: {
+          loanToken: toMarket.loanAsset.address,
+          collateralToken: toMarket.collateralAsset.address,
+          oracle: toMarket.oracleAddress,
+          irm: toMarket.irmAddress,
+          lltv: toMarket.lltv,
+          uniqueKey: toMarket.uniqueKey,
+        },
+        amount: actionAmount,
+        isMax,
+      };
+    },
+    [],
+  );
 
-  const resetSelections = () => {
+  const resetSelections = useCallback(() => {
     setSelectedFromMarketUniqueKey('');
     setSelectedToMarketUniqueKey('');
     setAmount('0');
-  };
+  }, []);
 
   const handleMaxSelect = useCallback(
     (marketUniqueKey: string, maxAmount: number) => {
@@ -171,11 +200,8 @@ export function RebalanceModal({
   const handleAddAction = useCallback(() => {
     if (!validateInputs()) return;
 
-    console.log('handleAddAction');
-
     const markets = getMarkets();
     if (!markets) {
-      toast.error('Invalid markets selected');
       return;
     }
 
@@ -194,9 +220,6 @@ export function RebalanceModal({
     const isMaxAmount =
       selectedPosition !== undefined &&
       BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
-
-    console.log('isMaxAmount', isMaxAmount);
-    console.log('pendingDelta', pendingDelta.toString());
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
@@ -232,7 +255,7 @@ export function RebalanceModal({
         return;
       } catch (error) {
         console.error('Failed to switch network:', error);
-        toast.error('Failed to switch network');
+        toast.error('Something went wrong', 'Failed to switch network. Please try again');
         return;
       }
     }
@@ -246,11 +269,11 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId]);
+  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId, toast]);
 
   const handleManualRefresh = () => {
     refetch(() => {
-      toast.info('Data refreshed', { icon: <span>🚀</span> });
+      toast.info('Data refreshed', 'Position data updated', { icon: <span>🚀</span> });
     });
   };
 

@@ -1,7 +1,8 @@
 import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
 import { useAccountEffect } from 'wagmi';
+
+import { useStyledToast } from '@/hooks/useStyledToast';
 
 type ConnectRedirectContextType = {
   setRedirectPath: (path: string | undefined) => void;
@@ -13,11 +14,15 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [redirectPath, setRedirectPath] = useState<string | undefined>();
 
+  const toast = useStyledToast();
+
   useAccountEffect({
     onConnect: ({ address, isReconnected }) => {
       if (redirectPath && !isReconnected) {
         router.push(`/${redirectPath}/${address}`);
-        toast.success('Address connected, redirecting...', { toastId: 'address-connected' });
+        toast.success('Address connected', 'Redirecting to portfolio...', {
+          toastId: 'address-connected',
+        });
         // Reset the path after redirect
         setRedirectPath(undefined);
       }

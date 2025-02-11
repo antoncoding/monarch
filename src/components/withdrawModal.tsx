@@ -3,13 +3,13 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
@@ -24,6 +24,7 @@ type ModalProps = {
 
 export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.Element {
   // Add state for the supply amount
+  const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
 
@@ -63,7 +64,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
 
   const withdraw = useCallback(async () => {
     if (!account) {
-      toast.error('Please connect your wallet');
+      toast.info('No account connected', 'Please connect your wallet to continue.');
       return;
     }
 
@@ -101,6 +102,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     sendTransaction,
     position.supplyAssets,
     position.supplyShares,
+    toast,
   ]);
 
   return (

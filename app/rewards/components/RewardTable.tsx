@@ -4,19 +4,18 @@ import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { DistributionResponseType } from '@/hooks/useRewards';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { AggregatedRewardType } from '@/utils/types';
-
 type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
@@ -31,8 +30,8 @@ export default function RewardTable({
   showClaimed,
 }: RewardTableProps) {
   const { chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
-
+  const { switchChainAsync } = useSwitchChain();
+  const toast = useStyledToast();
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
     pendingText: 'Claiming Reward...',
@@ -195,26 +194,34 @@ export default function RewardTable({
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
                           onClick={(e) => {
-                            e.stopPropagation();
-                            if (!account) {
-                              toast.error('Connect wallet');
-                              return;
-                            }
-                            if (!distribution) {
-                              toast.error('No claim data');
-                              return;
-                            }
-                            if (chainId !== distribution.distributor.chain_id) {
-                              switchChain({ chainId: distribution.distributor.chain_id });
-                              toast('Click on claim again after switching network');
-                              return;
-                            }
-                            sendTransaction({
-                              account: account as Address,
-                              to: distribution.distributor.address as Address,
-                              data: distribution.tx_data as `0x${string}`,
-                              chainId: distribution.distributor.chain_id,
-                            });
+                            void (async () => {
+                              e.stopPropagation();
+                              if (!account) {
+                                toast.error(
+                                  'No account connected',
+                                  'Please connect your wallet to continue.',
+                                );
+                                return;
+                              }
+                              if (!distribution) {
+                                toast.error(
+                                  'No claim data',
+                                  'No claim data found for this reward please try again later.',
+                                );
+                                return;
+                              }
+                              if (chainId !== distribution.distributor.chain_id) {
+                                await switchChainAsync({
+                                  chainId: distribution.distributor.chain_id,
+                                });
+                              }
+                              sendTransaction({
+                                account: account as Address,
+                                to: distribution.distributor.address as Address,
+                                data: distribution.tx_data as `0x${string}`,
+                                chainId: distribution.distributor.chain_id,
+                              });
+                            })();
                           }}
                         >
                           Claim

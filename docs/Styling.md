@@ -97,3 +97,16 @@ Use the nextui tooltip with <TooltipContent> component for consistnet styling
 
 >
 ```
+
+## Toast
+
+Use `useStyledToast` hook to create toasts.
+
+```typescript
+import { useStyledToast } from '@/hooks/useStyledToast';
+
+const { success, error } = useStyledToast();
+
+success('Success', 'Detail of the success');
+error('Error', 'Detail of the error');
+```

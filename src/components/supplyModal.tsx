@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -11,6 +10,7 @@ import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
@@ -21,7 +21,6 @@ import { Button } from './common';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
-
 type SupplyModalProps = {
   market: Market;
   onClose: () => void;
@@ -41,6 +40,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
   const { switchChain } = useSwitchChain();
+
+  const toast = useStyledToast();
 
   const { data: tokenBalance } = useBalance({
     token: market.loanAsset.address as `0x${string}`,
@@ -176,11 +177,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       setShowProcessModal(false);
     } catch (error: unknown) {
       setShowProcessModal(false);
-      if (error instanceof Error) {
-        toast.error('An error occurred. Please try again.');
-      } else {
-        toast.error('An unexpected error occurred');
-      }
+      toast.error('Supply failed', 'Supply to market failed or cancelled');
     }
   }, [
     account,
@@ -190,11 +187,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     useEth,
     signForBundlers,
     usePermit2Setting,
+    toast,
   ]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
-      toast.error('Please connect your wallet');
+      toast.info('No account connected', 'Please connect your wallet to continue.');
       return;
     }
 
@@ -222,12 +220,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           console.error('Error in Permit2 flow:', error);
           if (error instanceof Error) {
             if (error.message.includes('User rejected')) {
-              toast.error('Transaction rejected by user');
+              toast.error('Transaction rejected', 'Transaction rejected by user');
             } else {
-              toast.error('Failed to process Permit2 transaction');
+              toast.error('Error', 'Failed to process Permit2 transaction');
             }
           } else {
-            toast.error('An unexpected error occurred');
+            toast.error('Error', 'An unexpected error occurred');
           }
           throw error;
         }
@@ -246,12 +244,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
           console.error('Error in approval:', error);
           if (error instanceof Error) {
             if (error.message.includes('User rejected')) {
-              toast.error('Approval rejected by user');
+              toast.error('Transaction rejected', 'Approval rejected by user');
             } else {
-              toast.error('Failed to approve token');
+              toast.error('Transaction Error', 'Failed to approve token');
             }
           } else {
-            toast.error('An unexpected error occurred during approval');
+            toast.error('Transaction Error', 'An unexpected error occurred during approval');
           }
           throw error;
         }
@@ -272,11 +270,12 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     usePermit2Setting,
     isApproved,
     approve,
+    toast,
   ]);
 
   const signAndSupply = useCallback(async () => {
     if (!account) {
-      toast.error('Please connect your wallet');
+      toast.info('No account connected', 'Please connect your wallet to continue.');
       return;
     }
 
@@ -289,15 +288,15 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       setShowProcessModal(false);
       if (error instanceof Error) {
         if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected by user');
+          toast.error('Transaction rejected', 'Transaction rejected by user');
         } else {
-          toast.error('Failed to process transaction');
+          toast.error('Transaction Error', 'Failed to process transaction');
         }
       } else {
-        toast.error('An unexpected error occurred');
+        toast.error('Transaction Error', 'An unexpected error occurred');
       }
     }
-  }, [account, executeSupplyTransaction]);
+  }, [account, executeSupplyTransaction, toast]);
 
   return (
     <div

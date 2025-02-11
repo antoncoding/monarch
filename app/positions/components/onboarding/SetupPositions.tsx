@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { toast } from 'react-toastify';
 import { formatUnits, parseUnits } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
@@ -10,12 +9,14 @@ import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
+  const toast = useStyledToast();
   const chainId = useChainId();
   const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
   const { balances } = useUserBalances();
@@ -33,7 +34,7 @@ export function SetupPositions() {
     [chainId, selectedToken],
   );
 
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -220,18 +221,15 @@ export function SetupPositions() {
 
   const handleSupply = async () => {
     if (isSupplying) {
-      toast.info('Supplying in progress');
+      toast.info('Loading', 'Supplying in progress');
       return;
     }
 
     if (needSwitchChain && selectedToken) {
       try {
-        switchChain({ chainId: selectedToken.network });
-        toast.info('Network changed, please click again to execute');
-        return;
+        await switchChainAsync({ chainId: selectedToken.network });
       } catch (switchError) {
-        console.error('Failed to switch network:', switchError);
-        toast.error('Failed to switch network');
+        toast.error('Failed to switch network', 'Please try again');
         return;
       }
     }
