@@ -239,8 +239,6 @@ export function SetupPositions() {
       // trigger the tx. goToNextStep() be called as a `onSuccess` callback
       await approveAndSupply();
     } catch (supplyError) {
-      console.error('Supply failed:', supplyError);
-      // Error toast is already shown in useMultiMarketSupply
     } finally {
       setIsSupplying(false);
     }

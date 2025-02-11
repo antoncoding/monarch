@@ -19,6 +19,7 @@ export const marketFragment = `
     irmAddress
     oracleAddress
     collateralPrice
+    whitelisted
     morphoBlue {
       id
       address

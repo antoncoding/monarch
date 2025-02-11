@@ -51,6 +51,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     refetch: refetchLiquidations,
   } = useLiquidations();
 
+  console.log('markets', markets);
+
   const fetchMarkets = useCallback(
     async (isRefetch = false) => {
       try {
