@@ -14,7 +14,7 @@ export function StyledToast({ title, message }: { title: string, message?: strin
 export function TransactionToast({ title, description, hash }: { title: string, hash?: string, description?: string }) {
   return (
     <div className="p-2 font-zen">
-        <div className="text-sm">{title}</div>
+        <div className="text">{title}</div>
         {description && <div className="mb-2 mt-1 text-sm">{description}</div>}
         <TxHashDisplay hash={hash} />
       </div>

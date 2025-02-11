@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common/Button';
@@ -16,7 +15,7 @@ import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { AggregatedRewardType } from '@/utils/types';
-
+import { useStyledToast } from '@/hooks/useStyledToast';
 type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
@@ -31,8 +30,8 @@ export default function RewardTable({
   showClaimed,
 }: RewardTableProps) {
   const { chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
-
+  const { switchChainAsync } = useSwitchChain();
+  const toast = useStyledToast();
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
     pendingText: 'Claiming Reward...',
@@ -194,20 +193,18 @@ export default function RewardTable({
                           isDisabled={
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
-                          onClick={(e) => {
+                          onClick={async(e) => {
                             e.stopPropagation();
                             if (!account) {
-                              toast.error('Connect wallet');
+                              toast.error('No account connected', 'Please connect your wallet to continue.');
                               return;
                             }
                             if (!distribution) {
-                              toast.error('No claim data');
+                              toast.error('No claim data', 'No claim data found for this reward please try again later.');
                               return;
                             }
                             if (chainId !== distribution.distributor.chain_id) {
-                              switchChain({ chainId: distribution.distributor.chain_id });
-                              toast('Click on claim again after switching network');
-                              return;
+                              await switchChainAsync({ chainId: distribution.distributor.chain_id });
                             }
                             sendTransaction({
                               account: account as Address,

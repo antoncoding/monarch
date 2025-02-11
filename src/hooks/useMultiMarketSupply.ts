@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -11,6 +10,7 @@ import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
+import { useStyledToast } from './useStyledToast';
 
 export type MarketSupply = {
   market: Market;
@@ -26,6 +26,7 @@ export function useMultiMarketSupply(
 ) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const toast = useStyledToast()
 
   const { address: account } = useAccount();
   const chainId = loanAsset?.network;
@@ -164,9 +165,9 @@ export function useMultiMarketSupply(
       console.error('Error in executeSupplyTransaction:', error);
       setShowProcessModal(false);
       if (error instanceof Error) {
-        toast.error('Transaction failed or cancelled');
+        toast.error('Transaction failed', error.message);
       } else {
-        toast.error('Transaction failed');
+        toast.error('Transaction failed', 'Transaction failed or cancled');
       }
       throw error; // Re-throw to be caught by approveAndSupply
     }
@@ -184,7 +185,7 @@ export function useMultiMarketSupply(
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
-      toast.error('Please connect your wallet');
+      toast.error('No account connected', 'Please connect your wallet to continue.');
       return false;
     }
 
@@ -223,7 +224,7 @@ export function useMultiMarketSupply(
           setShowProcessModal(false);
           if (error instanceof Error) {
             if (error.message.includes('User rejected')) {
-              toast.error('Approval rejected by user');
+              toast.error('Approval rejected', 'Token approval rejected by the user');
             } else {
               toast.error('Failed to approve token');
             }

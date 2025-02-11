@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
-import { toast } from 'react-toastify';
 import { parseUnits, formatUnits } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
@@ -16,7 +15,7 @@ import { FromAndToMarkets } from './FromAndToMarkets';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
-
+import { useStyledToast } from '@/hooks/useStyledToast';
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
@@ -40,6 +39,7 @@ export function RebalanceModal({
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const toast = useStyledToast();
 
   const { markets: allMarkets } = useMarkets();
   const {
@@ -77,12 +77,19 @@ export function RebalanceModal({
 
   const validateInputs = () => {
     if (!selectedFromMarketUniqueKey || !selectedToMarketUniqueKey || !amount) {
-      toast.error('Please fill in all fields');
+      const missingFields = [];
+      if (!selectedFromMarketUniqueKey) missingFields.push('"From Market"');
+      if (!selectedToMarketUniqueKey) missingFields.push('"To Market"');
+      if (!amount) missingFields.push('"Amount"');
+
+      const errorMessage = `Missing fields: ${missingFields.join(', ')}`;
+
+      toast.error('Missing fields', errorMessage);
       return false;
     }
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount <= 0) {
-      toast.error('Amount must be greater than zero');
+      toast.error('Invalid amount', 'Amount must be greater than zero');
       return false;
     }
     return true;
@@ -94,7 +101,9 @@ export function RebalanceModal({
     const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
     if (!fromMarket || !toMarket) {
-      toast.error('Invalid market selection');
+      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${!toMarket ? '"To" Market' : ''}`;
+
+      toast.error('Invalid market selection', errorMessage);
       return null;
     }
 
@@ -111,7 +120,7 @@ export function RebalanceModal({
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount > pendingBalance) {
-      toast.error('Insufficient balance for this action');
+      toast.error('Insufficient balance', 'You don\'t have enough balance to perform this action');
       return false;
     }
     return true;
@@ -171,11 +180,8 @@ export function RebalanceModal({
   const handleAddAction = useCallback(() => {
     if (!validateInputs()) return;
 
-    console.log('handleAddAction');
-
     const markets = getMarkets();
     if (!markets) {
-      toast.error('Invalid markets selected');
       return;
     }
 
@@ -195,8 +201,6 @@ export function RebalanceModal({
       selectedPosition !== undefined &&
       BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
 
-    console.log('isMaxAmount', isMaxAmount);
-    console.log('pendingDelta', pendingDelta.toString());
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
@@ -232,7 +236,7 @@ export function RebalanceModal({
         return;
       } catch (error) {
         console.error('Failed to switch network:', error);
-        toast.error('Failed to switch network');
+        toast.error('Something went wrong', 'Failed to switch network. Please try again');
         return;
       }
     }
@@ -250,7 +254,7 @@ export function RebalanceModal({
 
   const handleManualRefresh = () => {
     refetch(() => {
-      toast.info('Data refreshed', { icon: <span>🚀</span> });
+      toast.info('Data refreshed', 'Position data updated', { icon: <span>🚀</span> });
     });
   };
 

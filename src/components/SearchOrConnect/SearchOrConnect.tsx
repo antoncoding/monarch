@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
-import { toast } from 'react-toastify';
 import { isAddress } from 'viem';
 import { useAccount } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
+import { useStyledToast } from '@/hooks/useStyledToast';
 
 export default function SearchOrConnect({ path }: { path: string }) {
   const { address } = useAccount();
-
+  const toast = useStyledToast();
   const [inputAddress, setInputAddress] = useState<string>('');
 
   return (
@@ -66,8 +66,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
                 if (isAddress(inputAddress.toLowerCase(), { strict: false })) {
                   window.location.href = `/${path}/${inputAddress}`;
                 } else {
-                  console.log('inputAddress', inputAddress);
-                  toast.error('Invalid address');
+                  toast.error('Invalid address', `The address you enter ${inputAddress} is not valid.`);
                 }
               }}
               className="bg-monarch-orange justify-center p-6 text-center text-sm duration-100 ease-in-out hover:opacity-100"

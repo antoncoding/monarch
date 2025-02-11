@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { toast } from 'react-toastify';
 import { Address, encodeFunctionData, maxUint256, parseSignature } from 'viem';
 import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
@@ -8,6 +7,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { usePermit2 } from './usePermit2';
+import { useStyledToast } from './useStyledToast';
 
 export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
@@ -19,7 +19,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const { address: account } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
-
+  const toast = useStyledToast();
   const { data: isAuthorized } = useReadContract({
     address: MORPHO,
     abi: morphoAbi,
@@ -121,7 +121,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
             message: value,
           });
         } catch (error) {
-          toast.error('Signature request was rejected or failed. Please try again.');
+          const errorMessage = 'Signature request was rejected or failed. Please try again.';
+          toast.error('Signature request failed', errorMessage);
           return;
         }
         const signature = parseSignature(signatureRaw);

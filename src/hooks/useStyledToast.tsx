@@ -13,5 +13,9 @@ export function useStyledToast() {
     toast.error(<StyledToast title={title} message={message} />, options);
   }, []);
 
-  return { success, error };
+  const info = useCallback((title: string, message?: string, options?: ToastOptions) => {
+    toast.info(<StyledToast title={title} message={message} />, options);
+  }, []);
+
+  return { success, error, info };
 }
