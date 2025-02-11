@@ -177,7 +177,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
       setShowProcessModal(false);
     } catch (error: unknown) {
       setShowProcessModal(false);
-      toast.error('Supply failed', 'Supply to market failed or cancelled');
+      toast.error('Supply Failed', 'Supply to market failed or cancelled');
     }
   }, [
     account,

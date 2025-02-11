@@ -12,6 +12,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { SupplyModal } from '@/components/supplyModal';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
@@ -30,6 +31,8 @@ function MarketContent() {
 
   const network = Number(chainId as string) as SupportedNetworks;
   const networkImg = getNetworkImg(network);
+
+  const [showSupplyModal, setShowSupplyModal] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -129,17 +132,24 @@ function MarketContent() {
             Back to Markets
           </Button>
 
-          <Button
-            size="md"
-            className="mb-4"
-            onClick={() =>
-              window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank')
-            }
-          >
-            View on Morpho Blue
-            <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowSupplyModal(true)}>Supply</Button>
+            <Button
+              size="md"
+              className="mb-4"
+              onClick={() =>
+                window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank')
+              }
+            >
+              View on Morpho
+              <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
+            </Button>
+          </div>
         </div>
+
+        {showSupplyModal && (
+          <SupplyModal market={market} onClose={() => setShowSupplyModal(false)} />
+        )}
 
         <h1 className="mb-8 text-center text-3xl">
           {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
