@@ -85,7 +85,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!account || !fetchTransactions) return;
+      if (!account || !fetchTransactions || filteredMarketIds.length === 0) return;
 
       const result = await fetchTransactions({
         userAddress: [account],
@@ -102,7 +102,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
     };
 
     void loadTransactions();
-  }, [markets, account, currentPage, fetchTransactions, filteredMarketIds]);
+  }, [account, currentPage, fetchTransactions, filteredMarketIds]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
