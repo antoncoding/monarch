@@ -57,8 +57,6 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
       const market = markets.find((m) => m.uniqueKey === pos.market.uniqueKey);
       if (!market) return;
 
-      console.log('market in uniqueAset find', market);
-
       const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
         const token = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
@@ -306,8 +304,6 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
               const market = markets.find(
                 (m) => m.uniqueKey === tx.data.market.uniqueKey,
               ) as Market;
-
-              console.log('market in history', tx.data);
 
               const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
               const collateralToken = findToken(

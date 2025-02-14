@@ -78,7 +78,6 @@ const useUserTransactions = () => {
           error: err instanceof Error ? err.message : 'Unknown error occurred',
         };
       } finally {
-        console.log('finally => set loading');
         setLoading(false);
       }
     },
