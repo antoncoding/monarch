@@ -67,7 +67,8 @@ const useUserTransactions = () => {
           throw new Error(result.errors[0].message);
         }
 
-        return result.data?.transactions as TransactionResponse;
+        const transactions = result.data?.transactions as TransactionResponse;
+        return transactions;
       } catch (err) {
         console.error('Error fetching transactions:', err);
         setError(err);
@@ -77,6 +78,7 @@ const useUserTransactions = () => {
           error: err instanceof Error ? err.message : 'Unknown error occurred',
         };
       } finally {
+        console.log('finally => set loading');
         setLoading(false);
       }
     },

@@ -240,7 +240,7 @@ export function RebalanceModal({
   ]);
 
   const { chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
 
   const needSwitchChain = useMemo(
     () => chainId !== groupedPosition.chainId,
@@ -250,17 +250,13 @@ export function RebalanceModal({
   const handleExecuteRebalance = useCallback(async () => {
     if (needSwitchChain) {
       try {
-        switchChain({ chainId: groupedPosition.chainId });
-        // The actual execution will happen after network switch through useEffect
-        return;
+        await switchChainAsync({ chainId: groupedPosition.chainId });
       } catch (error) {
-        console.error('Failed to switch network:', error);
         toast.error('Something went wrong', 'Failed to switch network. Please try again');
         return;
       }
     }
 
-    console.log('executeRebalance');
     setShowProcessModal(true);
     try {
       await executeRebalance();
@@ -269,7 +265,7 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance, needSwitchChain, switchChain, groupedPosition.chainId, toast]);
+  }, [executeRebalance, needSwitchChain, switchChainAsync, groupedPosition.chainId, toast]);
 
   const handleManualRefresh = () => {
     refetch(() => {
