@@ -9,6 +9,7 @@ import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
 import { MarketLiquidationTransaction } from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 
 // Helper functions to format data
 const formatAddress = (address: string) => {
@@ -20,7 +21,7 @@ type LiquidationsTableProps = {
   liquidations: MarketLiquidationTransaction[];
   loading: boolean;
   error: string | null;
-  market: any; // Using any for now, would be better to type this properly
+  market: Market;
 };
 
 export function LiquidationsTable({
@@ -114,14 +115,14 @@ export function LiquidationsTable({
               <TableCell className="text-right">
                 {formatUnits(
                   BigInt(liquidation.data.repaidAssets),
-                  market?.loanAsset?.decimals || 6,
+                  loanToken?.decimals || 6,
                 )}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     {loanToken?.img && (
                       <Image
                         src={loanToken.img}
-                        alt={market.loanAsset.symbol}
+                        alt={market.loanAsset.symbol || ''}
                         width={16}
                         height={16}
                         className="rounded-full"
@@ -133,14 +134,14 @@ export function LiquidationsTable({
               <TableCell className="text-right">
                 {formatUnits(
                   BigInt(liquidation.data.seizedAssets),
-                  market?.collateralAsset?.decimals || 18,
+                  collateralToken?.decimals || 18,
                 )}
                 {market?.collateralAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     {collateralToken?.img && (
                       <Image
                         src={collateralToken.img}
-                        alt={market.collateralAsset.symbol}
+                        alt={market.collateralAsset.symbol || ''}
                         width={16}
                         height={16}
                         className="rounded-full"

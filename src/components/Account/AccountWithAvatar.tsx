@@ -4,7 +4,7 @@ import { getSlicedAddress } from '@/utils/address';
 
 type AccountWithAvatarProps = {
   address: Address;
-}
+};
 
 function AccountWithSmallAvatar({ address }: AccountWithAvatarProps) {
   return (

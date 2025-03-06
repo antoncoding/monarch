@@ -52,7 +52,9 @@ const useMarketLiquidations = (marketUniqueKey: string | undefined) => {
         throw new Error('Failed to fetch market liquidations');
       }
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        data: { transactions: { items: MarketLiquidationTransaction[] } };
+      };
 
       if (result.data?.transactions?.items) {
         setLiquidations(result.data.transactions.items);
@@ -68,7 +70,7 @@ const useMarketLiquidations = (marketUniqueKey: string | undefined) => {
   }, [marketUniqueKey]);
 
   useEffect(() => {
-    fetchLiquidations();
+    void fetchLiquidations();
   }, [fetchLiquidations]);
 
   return {

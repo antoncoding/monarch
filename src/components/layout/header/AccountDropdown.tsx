@@ -7,9 +7,7 @@ import { clsx } from 'clsx';
 import { useAccount, useDisconnect } from 'wagmi';
 import AccountWithENS from '@/components/Account/AccountWithENS';
 import { Avatar } from '@/components/Avatar/Avatar';
-import { Name } from '@/components/common/Name';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 
 export function AccountDropdown() {
