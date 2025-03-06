@@ -84,7 +84,7 @@ export function LiquidationsTable({
       >
         <TableHeader>
           <TableColumn>Liquidator</TableColumn>
-          <TableColumn align="end">Repaid ({market?.loanAsset?.symbol || 'USDC'})</TableColumn>
+          <TableColumn align="end">Repaid ({market?.loanAsset?.symbol ?? 'USDC'})</TableColumn>
           <TableColumn align="end">
             Seized{' '}
             {market?.collateralAsset?.symbol && (
@@ -113,10 +113,7 @@ export function LiquidationsTable({
                 </Link>
               </TableCell>
               <TableCell className="text-right">
-                {formatUnits(
-                  BigInt(liquidation.data.repaidAssets),
-                  loanToken?.decimals || 6,
-                )}
+                {formatUnits(BigInt(liquidation.data.repaidAssets), loanToken?.decimals ?? 6)}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     {loanToken?.img && (
@@ -134,14 +131,14 @@ export function LiquidationsTable({
               <TableCell className="text-right">
                 {formatUnits(
                   BigInt(liquidation.data.seizedAssets),
-                  collateralToken?.decimals || 18,
+                  collateralToken?.decimals ?? 18,
                 )}
                 {market?.collateralAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     {collateralToken?.img && (
                       <Image
                         src={collateralToken.img}
-                        alt={market.collateralAsset.symbol || ''}
+                        alt={market.collateralAsset.symbol}
                         width={16}
                         height={16}
                         className="rounded-full"
