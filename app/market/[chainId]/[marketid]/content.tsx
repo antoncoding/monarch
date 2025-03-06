@@ -14,12 +14,14 @@ import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModal } from '@/components/supplyModal';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
+import useMarketLiquidations from '@/hooks/useMarketLiquidations';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
+import { LiquidationsTable } from './components/LiquidationsTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
@@ -55,11 +57,18 @@ function MarketContent() {
     isLoading: isMarketLoading,
     error: marketError,
   } = useMarket(marketid as string, network);
+
   const {
     data: historicalData,
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
   } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
+
+  const {
+    liquidations,
+    loading: liquidationsLoading,
+    error: liquidationsError,
+  } = useMarketLiquidations(market?.uniqueKey);
 
   const setTimeRangeAndRefetch = useCallback(
     (days: number, type: 'rate' | 'volume') => {
@@ -320,6 +329,14 @@ function MarketContent() {
           apyTimeframe={apyTimeframe}
           setApyTimeframe={setApyTimeframe}
           setTimeRangeAndRefetch={setTimeRangeAndRefetch}
+        />
+
+        <LiquidationsTable
+          chainId={network}
+          liquidations={liquidations || []}
+          loading={liquidationsLoading}
+          error={liquidationsError}
+          market={market}
         />
       </div>
     </>

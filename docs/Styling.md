@@ -7,7 +7,6 @@ Use these shared components instead of raw HTML elements:
 - `Button`: Import from `@/components/common/Button` for all clickable actions
 - `Modal`: For all modal dialogs
 - `Card`: For contained content sections
-- `Typography`: For text elements
 
 ## Component Guidelines
 

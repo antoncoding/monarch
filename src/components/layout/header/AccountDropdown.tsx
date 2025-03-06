@@ -5,6 +5,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@nextui-o
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import { useAccount, useDisconnect } from 'wagmi';
+import AccountWithENS from '@/components/Account/AccountWithENS';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -56,17 +57,7 @@ export function AccountDropdown() {
       >
         <DropdownItem className="border-b border-primary/10 pb-4" isReadOnly showDivider={false}>
           <div className="flex w-full flex-col gap-2">
-            <div className="inline-flex items-center justify-start gap-2">
-              <Avatar address={address} />
-              <div className="inline-flex flex-col items-start justify-center gap-1">
-                <div className="font-inter text-sm font-medium text-primary">
-                  <Name address={address} />
-                </div>
-                <span className="font-inter text-xs font-medium text-zinc-400">
-                  {getSlicedAddress(address)}
-                </span>
-              </div>
-            </div>
+            <AccountWithENS address={address} />
           </div>
         </DropdownItem>
 

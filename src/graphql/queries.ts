@@ -271,3 +271,35 @@ export const userTransactionsQuery = `
     }
   }
 `;
+
+export const marketLiquidationsQuery = `
+  query getMarketLiquidations($uniqueKey: String!, $first: Int, $skip: Int) {
+  transactions (where: {
+    marketUniqueKey_in: [$uniqueKey],
+    type_in: [MarketLiquidation]
+  },
+  first: $first,
+  skip: $skip
+  ) {
+      items {
+        hash
+        timestamp
+        type
+        data {
+          ... on MarketLiquidationTransactionData {
+            repaidAssets
+            seizedAssets
+            liquidator
+          }
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }   
+  }
+
+`;
