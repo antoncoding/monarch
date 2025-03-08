@@ -91,6 +91,7 @@ export function LiquidationsTable({
               <span className="inline-flex items-center">{market.collateralAsset.symbol}</span>
             )}
           </TableColumn>
+          <TableColumn align="end">Bad Debt</TableColumn>
           <TableColumn>Time</TableColumn>
           <TableColumn className="font-mono">Transaction</TableColumn>
         </TableHeader>
@@ -99,68 +100,97 @@ export function LiquidationsTable({
           emptyContent={loading ? 'Loading...' : 'No liquidations found for this market'}
           isLoading={loading}
         >
-          {paginatedLiquidations.map((liquidation) => (
-            <TableRow key={liquidation.hash}>
-              <TableCell>
-                <Link
-                  href={getExplorerURL(liquidation.data.liquidator, chainId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-primary"
-                >
-                  <AccountWithAvatar address={liquidation.data.liquidator as Address} />
-                  <ExternalLinkIcon className="ml-1" />
-                </Link>
-              </TableCell>
-              <TableCell className="text-right">
-                {formatUnits(BigInt(liquidation.data.repaidAssets), loanToken?.decimals ?? 6)}
-                {market?.loanAsset?.symbol && (
-                  <span className="ml-1 inline-flex items-center">
-                    {loanToken?.img && (
-                      <Image
-                        src={loanToken.img}
-                        alt={market.loanAsset.symbol || ''}
-                        width={16}
-                        height={16}
-                        className="rounded-full"
-                      />
-                    )}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                {formatUnits(
-                  BigInt(liquidation.data.seizedAssets),
-                  collateralToken?.decimals ?? 18,
-                )}
-                {market?.collateralAsset?.symbol && (
-                  <span className="ml-1 inline-flex items-center">
-                    {collateralToken?.img && (
-                      <Image
-                        src={collateralToken.img}
-                        alt={market.collateralAsset.symbol}
-                        width={16}
-                        height={16}
-                        className="rounded-full"
-                      />
-                    )}
-                  </span>
-                )}
-              </TableCell>
-              <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-              <TableCell className="font-zen ">
-                <Link
-                  href={getExplorerTxURL(liquidation.hash, chainId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-sm text-secondary"
-                >
-                  {formatAddress(liquidation.hash)}
-                  <ExternalLinkIcon className="ml-1" />
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
+          {paginatedLiquidations.map((liquidation) => {
+            const hasBadDebt = BigInt(liquidation.data.badDebtAssets) !== BigInt(0);
+
+            return (
+              <TableRow key={liquidation.hash}>
+                <TableCell>
+                  <Link
+                    href={getExplorerURL(liquidation.data.liquidator, chainId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-primary"
+                  >
+                    <AccountWithAvatar address={liquidation.data.liquidator as Address} />
+                    <ExternalLinkIcon className="ml-1" />
+                  </Link>
+                </TableCell>
+                <TableCell className="text-right">
+                  {formatUnits(BigInt(liquidation.data.repaidAssets), loanToken?.decimals ?? 6)}
+                  {market?.loanAsset?.symbol && (
+                    <span className="ml-1 inline-flex items-center">
+                      {loanToken?.img && (
+                        <Image
+                          src={loanToken.img}
+                          alt={market.loanAsset.symbol || ''}
+                          width={16}
+                          height={16}
+                          className="rounded-full"
+                        />
+                      )}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {formatUnits(
+                    BigInt(liquidation.data.seizedAssets),
+                    collateralToken?.decimals ?? 18,
+                  )}
+                  {market?.collateralAsset?.symbol && (
+                    <span className="ml-1 inline-flex items-center">
+                      {collateralToken?.img && (
+                        <Image
+                          src={collateralToken.img}
+                          alt={market.collateralAsset.symbol}
+                          width={16}
+                          height={16}
+                          className="rounded-full"
+                        />
+                      )}
+                    </span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {hasBadDebt ? (
+                    <>
+                      {formatUnits(
+                        BigInt(liquidation.data.badDebtAssets),
+                        loanToken?.decimals ?? 6,
+                      )}
+                      {market?.loanAsset?.symbol && (
+                        <span className="ml-1 inline-flex items-center">
+                          {loanToken?.img && (
+                            <Image
+                              src={loanToken.img}
+                              alt={market.loanAsset.symbol || ''}
+                              width={16}
+                              height={16}
+                              className="rounded-full"
+                            />
+                          )}
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    ' - '
+                  )}
+                </TableCell>
+                <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
+                <TableCell className="font-zen ">
+                  <Link
+                    href={getExplorerTxURL(liquidation.hash, chainId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center text-sm text-secondary"
+                  >
+                    {formatAddress(liquidation.hash)}
+                    <ExternalLinkIcon className="ml-1" />
+                  </Link>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

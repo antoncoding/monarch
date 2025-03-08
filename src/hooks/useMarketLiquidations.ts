@@ -10,6 +10,7 @@ export type MarketLiquidationTransaction = {
     repaidAssets: string;
     seizedAssets: string;
     liquidator: string;
+    badDebtAssets: string;
   };
 };
 

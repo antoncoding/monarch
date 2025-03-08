@@ -290,6 +290,7 @@ export const marketLiquidationsQuery = `
             repaidAssets
             seizedAssets
             liquidator
+            badDebtAssets
           }
         }
       }
