@@ -384,7 +384,10 @@ const supportedTokens = [
     symbol: 'USR',
     img: require('../imgs/tokens/usr.svg') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x66a1E37c9b0eAddca17d3662D6c05F4DECf3e110' }],
+    networks: [
+      { chain: mainnet, address: '0x66a1E37c9b0eAddca17d3662D6c05F4DECf3e110' },
+      { chain: base, address: '0x35E5dB674D8e93a03d814FA0ADa70731efe8a4b9' },
+    ],
   },
   {
     symbol: 'EIGEN',
