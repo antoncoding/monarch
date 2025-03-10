@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
+import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
@@ -35,7 +36,7 @@ function MarketContent() {
   const networkImg = getNetworkImg(network);
 
   const [showSupplyModal, setShowSupplyModal] = useState(false);
-
+  const [showBorrowModal, setShowBorrowModal] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
@@ -143,6 +144,7 @@ function MarketContent() {
 
           <div className="flex gap-2">
             <Button onClick={() => setShowSupplyModal(true)}>Supply</Button>
+            <Button onClick={() => setShowBorrowModal(true)}>Borrow</Button>
             <Button
               size="md"
               className="mb-4"
@@ -158,6 +160,10 @@ function MarketContent() {
 
         {showSupplyModal && (
           <SupplyModal market={market} onClose={() => setShowSupplyModal(false)} />
+        )}
+
+        {showBorrowModal && (
+          <BorrowModal market={market} onClose={() => setShowBorrowModal(false)} />
         )}
 
         <h1 className="mb-8 text-center text-3xl">
