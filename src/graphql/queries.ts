@@ -162,6 +162,8 @@ export const userPositionsQuery = `
         borrowShares
         borrowAssets
         borrowAssetsUsd
+        collateral
+        collateralUsd
         market {
           ...MarketFields
         }
