@@ -138,8 +138,8 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
   // Calculate LTV color based on proximity to liquidation threshold
   const getLTVColor = (ltv: bigint) => {
     if (ltv === BigInt(0)) return 'text-gray-500';
-    if (ltv >= lltv * BigInt(90) / BigInt(100)) return 'text-red-500';
-    if (ltv >= lltv * BigInt(75) / BigInt(100)) return 'text-orange-500';
+    if (ltv >= lltv * BigInt(80) / BigInt(100)) return 'text-red-500';
+    if (ltv >= lltv * BigInt(70) / BigInt(100)) return 'text-orange-500';
     return 'text-green-500';
   };
 
