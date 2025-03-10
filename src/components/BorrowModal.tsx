@@ -21,6 +21,25 @@ type BorrowModalProps = {
   onClose: () => void;
 };
 
+const LTV_THRESHOLDS = {
+  DANGER: {
+    value: 0.9,
+    colorClass: 'red-500',
+  },
+  WARNING: {
+    value: 0.75,
+    colorClass: 'orange-400',
+  },
+  SAFE: {
+    value: 0,
+    colorClass: 'emerald-500',
+  },
+} as const;
+
+type LTVStatus = {
+  colorClass: string;
+};
+
 export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element {
   // State for collateral and borrow amounts
   const [collateralAmount, setCollateralAmount] = useState<bigint>(BigInt(0));
@@ -142,13 +161,19 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     return formatBalance(adjusted, 36);
   }, [oraclePrice]);
 
-  // Calculate LTV color based on proximity to liquidation threshold
-  const getLTVColor = (ltv: bigint) => {
-    if (ltv === BigInt(0)) return 'text-gray-500';
-    if (ltv >= (lltv * BigInt(80)) / BigInt(100)) return 'text-red-500';
-    if (ltv >= (lltv * BigInt(70)) / BigInt(100)) return 'text-orange-500';
-    return 'text-green-500';
+  // Get LTV status and colors
+  const getLTVStatus = (ltv: bigint, maxLtv: bigint): LTVStatus => {
+    if (ltv === BigInt(0)) return { colorClass: 'gray-500' };
+    const ratio = Number(ltv) / Number(maxLtv);
+
+    if (ratio >= LTV_THRESHOLDS.DANGER.value) return LTV_THRESHOLDS.DANGER;
+    if (ratio >= LTV_THRESHOLDS.WARNING.value) return LTV_THRESHOLDS.WARNING;
+    return LTV_THRESHOLDS.SAFE;
   };
+
+  // Helper function to get color classes
+  const getLTVColor = (ltv: bigint) => `text-${getLTVStatus(ltv, lltv).colorClass}`;
+  const getLTVProgressColor = (ltv: bigint) => `bg-${getLTVStatus(ltv, lltv).colorClass}/80`;
 
   // Function to refresh position data
   const handleRefreshPosition = () => {
@@ -282,16 +307,11 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
                     )}
                   </div>
                 </div>
-                <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
+                <div className="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-800">
                   <div
-                    className={`h-2 rounded-full transition-all duration-500 ease-in-out ${
-                      (borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / lltv > 0.9
-                        ? 'bg-red-500'
-                        : (borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / lltv >
-                          0.75
-                        ? 'bg-orange-500'
-                        : 'bg-green-500'
-                    }`}
+                    className={`h-2 rounded-full transition-all duration-500 ease-in-out ${getLTVProgressColor(
+                      borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV,
+                    )}`}
                     style={{
                       width: `${Math.min(
                         100,
@@ -303,7 +323,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
                   />
                 </div>
                 <div className="mt-2 flex justify-end">
-                  <p className="font-zen text-xs text-red-500">
+                  <p className="font-zen text-xs text-secondary">
                     Max LTV: {formatBalance(lltv, 16)}%
                   </p>
                 </div>
