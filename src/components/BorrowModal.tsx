@@ -125,8 +125,6 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
 
     const newCollateralValueInLoan = (newCollateral * oraclePrice) / BigInt(10 ** 36);
 
-    console.log('newCollateralValueInLoan', newCollateralValueInLoan);
-
     if (newCollateralValueInLoan > 0) {
       const ltv = (newBorrow * BigInt(10 ** 18)) / newCollateralValueInLoan;
       setNewLTV(ltv);
@@ -134,6 +132,11 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
       setNewLTV(BigInt(0));
     }
   }, [currentPosition, collateralAmount, borrowAmount, market, oraclePrice]);
+
+  const formattedOraclePrice = useMemo(() => {
+    const adjusted = oraclePrice * BigInt(10 ** market.collateralAsset.decimals) / BigInt(10 ** market.loanAsset.decimals);
+    return formatBalance(adjusted, 36);
+  }, [oraclePrice]);
 
   // Calculate LTV color based on proximity to liquidation threshold
   const getLTVColor = (ltv: bigint) => {
@@ -294,7 +297,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
             <div className="bg-hovered my-3 rounded-lg p-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="opacity-70">Oracle Price: {market.collateralAsset.symbol}/{market.loanAsset.symbol}</span>
-                <span>{formatBalance(oraclePrice, 36)} {market.loanAsset.symbol}</span>
+                <span className='text-base' >{formatReadable(formattedOraclePrice,4 )} {market.loanAsset.symbol}</span>
               </div>
             </div>
 
@@ -316,13 +319,16 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
                   </div>
                   
                   {collateralToken?.symbol === 'WETH' && (
-                    <div className="flex items-center justify-end mb-2">
+                    <div className="flex items-center justify-end mb-2 mt-1">
                       <div className="font-inter text-xs opacity-50 mr-2">Use ETH instead</div>
                       <Switch
                         size="sm"
                         isSelected={useEth}
                         onValueChange={setUseEth}
-                        className="h-4 w-4"
+                        classNames={{
+                          wrapper: "w-8 h-4",
+                          thumb: "w-3 h-3"
+                        }}
                       />
                     </div>
                   )}
