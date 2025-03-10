@@ -2,20 +2,20 @@ import { useCallback, useState } from 'react';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
-import { useLocalStorage } from './useLocalStorage';
-import { usePermit2 } from './usePermit2';
-import { useERC20Approval } from './useERC20Approval';
-import { useTransactionWithToast } from './useTransactionWithToast';
-import { useStyledToast } from './useStyledToast';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { Market } from '@/utils/types';
+import { useERC20Approval } from './useERC20Approval';
+import { useLocalStorage } from './useLocalStorage';
+import { usePermit2 } from './usePermit2';
+import { useStyledToast } from './useStyledToast';
+import { useTransactionWithToast } from './useTransactionWithToast';
 
-interface UseBorrowTransactionProps {
+type UseBorrowTransactionProps = {
   market: Market;
   collateralAmount: bigint;
   borrowAmount: bigint;
-}
+};
 
 export function useBorrowTransaction({
   market,
@@ -26,7 +26,7 @@ export function useBorrowTransaction({
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [useEth, setUseEth] = useState<boolean>(false);
-  
+
   const { address: account, chainId } = useAccount();
   const toast = useStyledToast();
 
@@ -301,9 +301,9 @@ export function useBorrowTransaction({
     isApproved,
     permit2Authorized,
     borrowPending,
-    
+
     // Actions
     approveAndBorrow,
-    signAndBorrow
+    signAndBorrow,
   };
-} 
+}

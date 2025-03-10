@@ -1,12 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { useState, useEffect, useCallback } from 'react';
 import { userPositionForMarketQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
-const useUserPositions = (user: string | undefined, chainId: SupportedNetworks, marketKey: string) => {
+const useUserPositions = (
+  user: string | undefined,
+  chainId: SupportedNetworks,
+  marketKey: string,
+) => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [position, setPosition] = useState<MarketPosition | null>(null);
@@ -44,10 +46,9 @@ const useUserPositions = (user: string | undefined, chainId: SupportedNetworks, 
               marketKey,
             },
           }),
-        })
+        });
 
-        const data = await res.json() as {data: {marketPosition: MarketPosition}};
-    
+        const data = (await res.json()) as { data: { marketPosition: MarketPosition } };
 
         setPosition(data.data.marketPosition);
         onSuccess?.();

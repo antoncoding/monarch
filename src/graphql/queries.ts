@@ -193,7 +193,6 @@ export const userPositionForMarketQuery = `
   ${marketFragment}
 `;
 
-
 export const marketDetailQuery = `
   query getMarketDetail($uniqueKey: String!, $chainId: Int) {
     marketByUniqueKey(uniqueKey: $uniqueKey, chainId: $chainId) {
