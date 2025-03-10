@@ -297,7 +297,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
             <div className="bg-hovered my-3 rounded-lg p-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="opacity-70">Oracle Price: {market.collateralAsset.symbol}/{market.loanAsset.symbol}</span>
-                <span className='text-base' >{formatReadable(formattedOraclePrice,4 )} {market.loanAsset.symbol}</span>
+                <span className='text-base' >{formattedOraclePrice.toFixed(4)} {market.loanAsset.symbol}</span>
               </div>
             </div>
 
