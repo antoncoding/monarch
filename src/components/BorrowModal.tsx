@@ -21,6 +21,7 @@ import { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from './BorrowProcessModal';
 import { Button } from './common';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
+import useUserPosition from '@/hooks/useUserPosition';
 
 type BorrowModalProps = {
   market: Market;
@@ -41,15 +42,10 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
   const { address: account, isConnected, chainId } = useAccount();
 
   // Get user positions to calculate current LTV
-  const { data: userPositions } = useUserPositions(account);
+  const { position: currentPosition } = useUserPosition(account, market.morphoBlue.chain.id, market.uniqueKey);
 
-  // Find current position in this market
-  const currentPosition = useMemo(() => {
-    if (!userPositions || userPositions.length === 0) return null;
-    return userPositions.find(
-      (position: MarketPosition) => position.market.id === market.uniqueKey,
-    );
-  }, [userPositions, market]);
+
+  console.log('currentPosition', currentPosition)
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);
@@ -431,98 +427,104 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
             </button>
 
             <div className="mb-2 flex items-center gap-2 py-2 text-2xl">
-              Borrow {loanToken ? loanToken.symbol : market.loanAsset.symbol}
               {loanToken?.img && (
-                <Image src={loanToken.img} height={18} width={18} alt={loanToken.symbol} />
+                <Image src={loanToken.img} height={24} width={24} alt={loanToken.symbol} />
               )}
+              {loanToken ? loanToken.symbol : market.loanAsset.symbol} Position
             </div>
 
-            <p className="py-4 opacity-80">
-              You are borrowing {market.loanAsset.symbol} from the following market:{' '}
-            </p>
-
-            <MarketInfoBlock market={market} />
-
-            <div className="my-2">
-              <div className="mt-2 py-2">Market State</div>
-
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">Total Supply:</p>
-
-                <p className="text-right text-sm">
-                  {formatReadable(
-                    formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                  )}
-                </p>
+            {/* Position Overview Box with dynamic LTV */}
+            <div className="bg-hovered mb-5 rounded-lg p-4">
+              <div className="mb-3 font-zen text-base">Position Overview</div>
+              
+              {/* Current Position Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="font-zen text-xs opacity-50 mb-1">Total Collateral</p>
+                  <div className="flex items-center">
+                    {collateralToken?.img && (
+                      <Image src={collateralToken.img} height={16} width={16} alt={collateralToken.symbol} className="mr-1" />
+                    )}
+                    <p className="font-zen text-sm">
+                      {formatBalance(BigInt(currentPosition?.collateral ?? 0), market.collateralAsset.decimals)} {market.collateralAsset.symbol}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-zen text-xs opacity-50 mb-1">Total Borrowed</p>
+                  <div className="flex items-center">
+                    {loanToken?.img && (
+                      <Image src={loanToken.img} height={16} width={16} alt={loanToken.symbol} className="mr-1" />
+                    )}
+                    <p className="font-zen text-sm">
+                      {formatBalance(BigInt(currentPosition?.borrowAssets ?? 0), market.loanAsset.decimals)} {market.loanAsset.symbol}
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">Liquidity:</p>
-                <p className="text-right font-zen text-sm">
-                  {formatReadable(
-                    formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                  )}
-                </p>
+              
+              {/* LTV Indicator - Shows both current and projected */}
+              <div className="mt-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-zen text-sm opacity-50">Loan to Value (LTV)</p>
+                  <div className="font-zen text-sm">
+                    {(borrowAmount > 0 || collateralAmount > 0) && currentLTV > 0 ? (
+                      <>
+                        <span className="line-through text-gray-400">
+                          {formatBalance(currentLTV, 16).toPrecision(4)}%
+                        </span>
+                        <span className={`ml-2 ${getLTVColor(newLTV)}`}>
+                          {formatBalance(newLTV, 16).toPrecision(4)}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className={getLTVColor(currentLTV)}>
+                        {formatBalance(currentLTV, 16).toPrecision(4)}%
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2 h-2 w-full rounded-full bg-gray-700">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-500 ease-in-out ${
+                      (borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / lltv > 0.9
+                        ? 'bg-red-500'
+                        : (borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / lltv > 0.75
+                        ? 'bg-orange-500'
+                        : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (Number(borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / Number(lltv)) * 100)}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <p className="font-zen text-xs text-red-500">Max LTV: {formatBalance(lltv, 16)}%</p>
+                </div>
               </div>
+            </div>
 
-              <div className="flex items-start justify-between">
+            {/* Market Stats */}
+            <div className="bg-hovered mb-4 rounded-lg p-4">
+              <div className="font-zen text-base mb-3">Market Stats</div>
+              
+              <div className="grid grid-cols-2 gap-y-2">
+                <p className="font-zen text-sm opacity-50">APY:</p>
+                <p className="font-zen text-sm text-right">{(market.state.borrowApy * 100).toFixed(2)}%</p>
+                
+                <p className="font-zen text-sm opacity-50">Available Liquidity:</p>
+                <p className="font-zen text-sm text-right">
+                  {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+                </p>
+                
                 <p className="font-zen text-sm opacity-50">Utilization:</p>
-                <p className="text-right text-sm">
-                  {formatReadable(market.state.utilization * 100)}%
-                </p>
+                <p className="font-zen text-sm text-right">{formatReadable(market.state.utilization * 100)}%</p>
               </div>
             </div>
 
-            {/* Live Price Section */}
-            <div className="bg-hovered my-2 rounded-sm p-3">
-              <div className="mb-2 font-zen text-sm">Live Price</div>
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">
-                  {market.collateralAsset.symbol}/{market.loanAsset.symbol}:
-                </p>
-                <p className="text-right font-zen text-sm">
-                  {formatBalance(oraclePrice, 36)} {market.loanAsset.symbol}
-                </p>
-              </div>
-            </div>
-
-            {/* LTV Section */}
-            <div className="bg-hovered my-2 rounded-sm p-3">
-              <div className="mb-2 font-zen text-sm">Loan to Value (LTV)</div>
-
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">Current LTV:</p>
-                <p className={`text-right font-zen text-sm ${getLTVColor(currentLTV)}`}>
-                  {formatBalance(currentLTV, 16).toPrecision(4)}%
-                </p>
-              </div>
-
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">New LTV:</p>
-                <p className={`text-right font-zen text-sm ${getLTVColor(newLTV)}`}>
-                  {formatBalance(newLTV, 16).toPrecision(4)}%
-                </p>
-              </div>
-
-              <div className="flex items-start justify-between">
-                <p className="font-zen text-sm opacity-50">Liquidation LTV:</p>
-                <p className="text-right font-zen text-sm text-red-500">
-                  {formatBalance(lltv, 16)}%
-                </p>
-              </div>
-
-              {/* LTV Progress Bar */}
-              <div className="mt-3 h-2 w-full rounded-full bg-gray-700">
-                <div
-                  className={`h-2 rounded-full ${
-                    newLTV / lltv > 0.9
-                      ? 'bg-red-500'
-                      : newLTV / lltv > 0.75
-                      ? 'bg-orange-500'
-                      : 'bg-green-500'
-                  }`}
-                  style={{ width: `${Math.min(100, (Number(newLTV) / Number(lltv)) * 100)}%` }}
-                />
+            {/* Oracle Price - compact format */}
+            <div className="bg-hovered my-3 rounded-lg p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="opacity-70">Oracle Price: {market.collateralAsset.symbol}/{market.loanAsset.symbol}</span>
+                <span>{formatBalance(oraclePrice, 36)} {market.loanAsset.symbol}</span>
               </div>
             </div>
 
@@ -530,111 +532,80 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               <>
                 {/* Collateral Input Section */}
                 <div className="mb-1 mt-8">
-                  <div className="flex items-start justify-between">
-                    <p className="font-inter text-sm opacity-50">Collateral Balance:</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <p className="text-right font-zen">
-                        {useEth
-                          ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
-                          : formatBalance(
-                              collateralTokenBalance?.value ? collateralTokenBalance.value : '0',
-                              market.collateralAsset.decimals,
-                            )}
-                      </p>
-                      <p className="text-right font-zen">
-                        {useEth ? 'ETH' : market.collateralAsset.symbol}{' '}
-                      </p>
-                      <div>
-                        {collateralToken?.img && (
-                          <Image
-                            src={collateralToken.img}
-                            height={16}
-                            width={16}
-                            alt={collateralToken.symbol}
-                          />
-                        )}{' '}
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="font-inter text-sm">Add Collateral</p>
+                    <p className="font-inter text-xs opacity-50">
+                      Balance: {useEth
+                        ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
+                        : formatBalance(
+                            collateralTokenBalance?.value ? collateralTokenBalance.value : '0',
+                            market.collateralAsset.decimals,
+                          )
+                      } {useEth ? 'ETH' : market.collateralAsset.symbol}
+                    </p>
                   </div>
+                  
                   {collateralToken?.symbol === 'WETH' && (
-                    <div className="mx-6 flex items-start justify-between">
-                      <div />
-                      <div className="mt-4 flex items-center">
-                        <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
-                        <Switch
-                          size="sm"
-                          isSelected={useEth}
-                          onValueChange={setUseEth}
-                          className="h-4 w-4"
-                        />
-                      </div>
+                    <div className="flex items-center justify-end mb-2">
+                      <div className="font-inter text-xs opacity-50 mr-2">Use ETH instead</div>
+                      <Switch
+                        size="sm"
+                        isSelected={useEth}
+                        onValueChange={setUseEth}
+                        className="h-4 w-4"
+                      />
                     </div>
                   )}
-                </div>
 
-                <div className="block py-2 opacity-80">Collateral amount</div>
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="relative flex-grow">
-                    <Input
-                      decimals={market.collateralAsset.decimals}
-                      max={
-                        useEth
-                          ? ethBalance?.value
-                            ? ethBalance.value
+                  <div className="mb-4 flex items-start justify-between">
+                    <div className="relative flex-grow">
+                      <Input
+                        decimals={market.collateralAsset.decimals}
+                        max={
+                          useEth
+                            ? ethBalance?.value
+                              ? ethBalance.value
+                              : BigInt(0)
+                            : collateralTokenBalance?.value
+                            ? collateralTokenBalance.value
                             : BigInt(0)
-                          : collateralTokenBalance?.value
-                          ? collateralTokenBalance.value
-                          : BigInt(0)
-                      }
-                      setValue={setCollateralAmount}
-                      setError={setCollateralInputError}
-                      exceedMaxErrMessage="Insufficient Balance"
-                    />
-                    {collateralInputError && (
-                      <p className="p-1 text-sm text-red-500">{collateralInputError}</p>
-                    )}
+                        }
+                        setValue={setCollateralAmount}
+                        setError={setCollateralInputError}
+                        exceedMaxErrMessage="Insufficient Balance"
+                      />
+                      {collateralInputError && (
+                        <p className="p-1 text-sm text-red-500">{collateralInputError}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 {/* Borrow Input Section */}
                 <div className="mb-1">
-                  <div className="flex items-start justify-between">
-                    <p className="font-inter text-sm opacity-50">Loan Balance:</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <p className="text-right font-zen">
-                        {formatBalance(
-                          loanTokenBalance?.value ? loanTokenBalance.value : '0',
-                          market.loanAsset.decimals,
-                        )}
-                      </p>
-                      <p className="text-right font-zen">{market.loanAsset.symbol}</p>
-                      <div>
-                        {loanToken?.img && (
-                          <Image
-                            src={loanToken.img}
-                            height={16}
-                            width={16}
-                            alt={loanToken.symbol}
-                          />
-                        )}
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="font-inter text-sm">Borrow </p>
+                    <p className="font-inter text-xs opacity-50">
+                      Balance: {formatBalance(
+                        loanTokenBalance?.value ? loanTokenBalance.value : '0',
+                        market.loanAsset.decimals,
+                      )} {market.loanAsset.symbol}
+                    </p>
                   </div>
-                </div>
 
-                <div className="block py-2 opacity-80">Borrow amount</div>
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="relative flex-grow">
-                    <Input
-                      decimals={market.loanAsset.decimals}
-                      max={BigInt(market.state.liquidityAssets)}
-                      setValue={setBorrowAmount}
-                      setError={setBorrowInputError}
-                      exceedMaxErrMessage="Exceeds available liquidity"
-                    />
-                    {borrowInputError && (
-                      <p className="p-1 text-sm text-red-500">{borrowInputError}</p>
-                    )}
+                  <div className="mb-4 flex items-start justify-between">
+                    <div className="relative flex-grow">
+                      <Input
+                        decimals={market.loanAsset.decimals}
+                        max={BigInt(market.state.liquidityAssets)}
+                        setValue={setBorrowAmount}
+                        setError={setBorrowInputError}
+                        exceedMaxErrMessage="Exceeds available liquidity"
+                      />
+                      {borrowInputError && (
+                        <p className="p-1 text-sm text-red-500">{borrowInputError}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </>
