@@ -1,27 +1,21 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Switch } from '@nextui-org/react';
-import { Cross1Icon } from '@radix-ui/react-icons';
+import { Cross1Icon, ReloadIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { Address, encodeFunctionData } from 'viem';
+import { Address } from 'viem';
 import { useAccount, useBalance, useSwitchChain } from 'wagmi';
-import morphoBundlerAbi from '@/abis/bundlerV2';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
-import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
-import { usePermit2 } from '@/hooks/usePermit2';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import useUserPositions from '@/hooks/useUserPositions';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
-import { Market, MarketPosition } from '@/utils/types';
+import { Market } from '@/utils/types';
 import { BorrowProcessModal } from './BorrowProcessModal';
 import { Button } from './common';
-import { MarketInfoBlock } from './common/MarketInfoBlock';
 import useUserPosition from '@/hooks/useUserPosition';
+import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
 
 type BorrowModalProps = {
   market: Market;
@@ -34,18 +28,15 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
   const [borrowAmount, setBorrowAmount] = useState<bigint>(BigInt(0));
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
-  const [useEth, setUseEth] = useState<boolean>(false);
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'borrowing'>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const { address: account, isConnected, chainId } = useAccount();
 
+  // Add a loading state for the refresh button
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
   // Get user positions to calculate current LTV
-  const { position: currentPosition } = useUserPosition(account, market.morphoBlue.chain.id, market.uniqueKey);
-
-
-  console.log('currentPosition', currentPosition)
+  const { position: currentPosition, refetch: refetchPosition } = useUserPosition(account, market.morphoBlue.chain.id, market.uniqueKey);
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);
@@ -79,27 +70,23 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     chainId: market.morphoBlue.chain.id,
   });
 
-  // Get approval for collateral token
+  // Use the new hook for borrow transaction logic
   const {
-    authorizePermit2,
+    currentStep,
+    showProcessModal,
+    setShowProcessModal,
+    useEth,
+    setUseEth,
+    isLoadingPermit2,
+    isApproved,
     permit2Authorized,
-    isLoading: isLoadingPermit2,
-    signForBundlers,
-  } = usePermit2({
-    user: account as `0x${string}`,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
-    token: market.collateralAsset.address as `0x${string}`,
-    refetchInterval: 10000,
-    chainId: market.morphoBlue.chain.id,
-    tokenSymbol: market.collateralAsset.symbol,
-    amount: collateralAmount,
-  });
-
-  const { isApproved, approve } = useERC20Approval({
-    token: market.collateralAsset.address as Address,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
-    amount: collateralAmount,
-    tokenSymbol: market.collateralAsset.symbol,
+    borrowPending,
+    approveAndBorrow,
+    signAndBorrow
+  } = useBorrowTransaction({
+    market,
+    collateralAmount,
+    borrowAmount
   });
 
   const needSwitchChain = useMemo(
@@ -146,254 +133,27 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     } else {
       setNewLTV(BigInt(0));
     }
-  }, [currentPosition, collateralAmount, borrowAmount, market]);
-
-  const { isConfirming: borrowPending, sendTransactionAsync } = useTransactionWithToast({
-    toastId: 'borrow',
-    pendingText: `Borrowing ${formatBalance(borrowAmount, market.loanAsset.decimals)} ${
-      market.loanAsset.symbol
-    }`,
-    successText: `${market.loanAsset.symbol} Borrowed`,
-    errorText: 'Failed to borrow',
-    chainId,
-    pendingDescription: `Borrowing from market ${market.uniqueKey.slice(2, 8)}...`,
-    successDescription: `Successfully borrowed from market ${market.uniqueKey.slice(2, 8)}`,
-  });
-
-  const executeBorrowTransaction = useCallback(async () => {
-    const minSharesToBorrow =
-      (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) - 1n;
-
-    try {
-      const txs: `0x${string}`[] = [];
-
-      if (useEth) {
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'wrapNative',
-            args: [collateralAmount],
-          }),
-        );
-      } else if (usePermit2Setting) {
-        const { sigs, permitSingle } = await signForBundlers();
-        console.log('Signed for bundlers:', { sigs, permitSingle });
-
-        const tx1 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'approve2',
-          args: [permitSingle, sigs, false],
-        });
-
-        // transferFrom with permit2
-        const tx2 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'transferFrom2',
-          args: [market.collateralAsset.address as Address, collateralAmount],
-        });
-
-        txs.push(tx1);
-        txs.push(tx2);
-      } else {
-        // For standard ERC20 flow, we only need to transfer the tokens
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20TransferFrom',
-            args: [market.collateralAsset.address as Address, collateralAmount],
-          }),
-        );
-      }
-
-      setCurrentStep('borrowing');
-
-      // Add the borrow transaction
-      const morphoAddCollat = encodeFunctionData({
-        abi: morphoBundlerAbi,
-        functionName: 'morphoSupplyCollateral',
-        args: [
-          {
-            loanToken: market.loanAsset.address as Address,
-            collateralToken: market.collateralAsset.address as Address,
-            oracle: market.oracleAddress as Address,
-            irm: market.irmAddress as Address,
-            lltv: BigInt(market.lltv),
-          },
-
-          collateralAmount,
-          account as Address,
-          '0x',
-        ],
-      });
-
-      const morphoBorrowTx = encodeFunctionData({
-        abi: morphoBundlerAbi,
-        functionName: 'morphoBorrow',
-        args: [
-          {
-            loanToken: market.loanAsset.address as Address,
-            collateralToken: market.collateralAsset.address as Address,
-            oracle: market.oracleAddress as Address,
-            irm: market.irmAddress as Address,
-            lltv: BigInt(market.lltv),
-          },
-          borrowAmount, // asset to borrow
-          0n, // shares to mint (0), we always use `assets` as param
-          minSharesToBorrow, // slippageAmount: min borrow shares
-          account as Address,
-        ],
-      });
-
-      txs.push(morphoAddCollat);
-      txs.push(morphoBorrowTx);
-
-      // add timeout here to prevent rabby reverting
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      await sendTransactionAsync({
-        account,
-        to: getBundlerV2(market.morphoBlue.chain.id),
-        data: (encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'multicall',
-          args: [txs],
-        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-        value: useEth ? collateralAmount : 0n,
-      });
-
-      // come back to main borrow page
-      setShowProcessModal(false);
-    } catch (error: unknown) {
-      setShowProcessModal(false);
-      toast.error('Borrow Failed', 'Borrow from market failed or cancelled');
-    }
-  }, [
-    account,
-    market,
-    collateralAmount,
-    borrowAmount,
-    sendTransactionAsync,
-    useEth,
-    signForBundlers,
-    usePermit2Setting,
-    toast,
-  ]);
-
-  const approveAndBorrow = useCallback(async () => {
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet to continue.');
-      return;
-    }
-
-    try {
-      setShowProcessModal(true);
-      setCurrentStep('approve');
-
-      if (useEth) {
-        setCurrentStep('borrowing');
-        await executeBorrowTransaction();
-        return;
-      }
-
-      if (usePermit2Setting) {
-        // Permit2 flow
-        try {
-          await authorizePermit2();
-          setCurrentStep('signing');
-
-          // Small delay to prevent UI glitches
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          await executeBorrowTransaction();
-        } catch (error: unknown) {
-          console.error('Error in Permit2 flow:', error);
-          if (error instanceof Error) {
-            if (error.message.includes('User rejected')) {
-              toast.error('Transaction rejected', 'Transaction rejected by user');
-            } else {
-              toast.error('Error', 'Failed to process Permit2 transaction');
-            }
-          } else {
-            toast.error('Error', 'An unexpected error occurred');
-          }
-          throw error;
-        }
-        return;
-      }
-
-      // Standard ERC20 flow
-      if (!isApproved) {
-        try {
-          await approve();
-          setCurrentStep('borrowing');
-
-          // Small delay to prevent UI glitches
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (error: unknown) {
-          console.error('Error in approval:', error);
-          if (error instanceof Error) {
-            if (error.message.includes('User rejected')) {
-              toast.error('Transaction rejected', 'Approval rejected by user');
-            } else {
-              toast.error('Transaction Error', 'Failed to approve token');
-            }
-          } else {
-            toast.error('Transaction Error', 'An unexpected error occurred during approval');
-          }
-          throw error;
-        }
-      } else {
-        setCurrentStep('borrowing');
-      }
-
-      await executeBorrowTransaction();
-    } catch (error: unknown) {
-      console.error('Error in approveAndBorrow:', error);
-      setShowProcessModal(false);
-    }
-  }, [
-    account,
-    authorizePermit2,
-    executeBorrowTransaction,
-    useEth,
-    usePermit2Setting,
-    isApproved,
-    approve,
-    toast,
-  ]);
-
-  const signAndBorrow = useCallback(async () => {
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet to continue.');
-      return;
-    }
-
-    try {
-      setShowProcessModal(true);
-      setCurrentStep('signing');
-      await executeBorrowTransaction();
-    } catch (error: unknown) {
-      console.error('Error in signAndBorrow:', error);
-      setShowProcessModal(false);
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Transaction Error', 'Failed to process transaction');
-        }
-      } else {
-        toast.error('Transaction Error', 'An unexpected error occurred');
-      }
-    }
-  }, [account, executeBorrowTransaction, toast]);
+  }, [currentPosition, collateralAmount, borrowAmount, market, oraclePrice]);
 
   // Calculate LTV color based on proximity to liquidation threshold
   const getLTVColor = (ltv: bigint) => {
     if (ltv === BigInt(0)) return 'text-gray-500';
-    const ratio = ltv / lltv;
-    if (ratio > 0.9) return 'text-red-500';
-    if (ratio > 0.75) return 'text-orange-500';
+    if (ltv >= lltv * BigInt(90) / BigInt(100)) return 'text-red-500';
+    if (ltv >= lltv * BigInt(75) / BigInt(100)) return 'text-orange-500';
     return 'text-green-500';
+  };
+
+  // Function to refresh position data
+  const handleRefreshPosition = async () => {
+    setIsRefreshing(true);
+    try {
+      refetchPosition(()=> {
+        setIsRefreshing(false);
+      });
+    } catch (error) {
+      console.error('Failed to refresh position:', error);
+      setIsRefreshing(false);
+    }
   };
 
   return (
@@ -435,7 +195,17 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
 
             {/* Position Overview Box with dynamic LTV */}
             <div className="bg-hovered mb-5 rounded-lg p-4">
-              <div className="mb-3 font-zen text-base">Position Overview</div>
+              <div className="mb-3 font-zen text-base flex items-center justify-between">
+                <span>Position Overview</span>
+                <button 
+                  onClick={handleRefreshPosition} 
+                  className="p-1 rounded-full hover:opacity-70 transition-opacity"
+                  disabled={isRefreshing}
+                  aria-label="Refresh position data"
+                >
+                  <ReloadIcon className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
               
               {/* Current Position Stats */}
               <div className="grid grid-cols-2 gap-4 mb-4">
