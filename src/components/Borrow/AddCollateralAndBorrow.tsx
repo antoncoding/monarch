@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Address } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
+import { LTVWarning } from '@/components/common/LTVWarning';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
@@ -383,54 +384,64 @@ export function AddCollateralAndBorrow({
           )}
 
           {/* Action Button */}
-          <div className="mt-4 flex justify-end">
-            {!isConnected ? (
-              <div>
-                <AccountConnect />
-              </div>
-            ) : needSwitchChain ? (
-              <Button
-                onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-                className="min-w-32"
-                variant="solid"
-              >
-                Switch Chain
-              </Button>
-            ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-              <Button
-                disabled={
-                  !isConnected ||
-                  isLoadingPermit2 ||
-                  borrowPending ||
-                  collateralInputError !== null ||
-                  borrowInputError !== null ||
-                  collateralAmount === BigInt(0) ||
-                  borrowAmount === BigInt(0) ||
-                  newLTV >= lltv
-                }
-                onClick={() => void approveAndBorrow()}
-                className="min-w-32"
-                variant="cta"
-              >
-                Approve and Borrow
-              </Button>
-            ) : (
-              <Button
-                disabled={
-                  !isConnected ||
-                  borrowPending ||
-                  collateralInputError !== null ||
-                  borrowInputError !== null ||
-                  collateralAmount === BigInt(0) ||
-                  borrowAmount === BigInt(0) ||
-                  newLTV >= lltv
-                }
-                onClick={() => void signAndBorrow()}
-                className="min-w-32"
-                variant="cta"
-              >
-                {useEth ? 'Borrow' : 'Sign and Borrow'}
-              </Button>
+          <div className="mt-4">
+            <div className="flex justify-end">
+              {!isConnected ? (
+                <div>
+                  <AccountConnect />
+                </div>
+              ) : needSwitchChain ? (
+                <Button
+                  onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
+                  className="min-w-32"
+                  variant="solid"
+                >
+                  Switch Chain
+                </Button>
+              ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
+                <Button
+                  isDisabled={
+                    !isConnected ||
+                    isLoadingPermit2 ||
+                    borrowPending ||
+                    collateralInputError !== null ||
+                    borrowInputError !== null ||
+                    collateralAmount === BigInt(0) ||
+                    borrowAmount === BigInt(0) ||
+                    newLTV >= lltv
+                  }
+                  onClick={() => void approveAndBorrow()}
+                  className="min-w-32"
+                  variant="cta"
+                >
+                  Approve and Borrow
+                </Button>
+              ) : (
+                <Button
+                  isDisabled={
+                    !isConnected ||
+                    borrowPending ||
+                    collateralInputError !== null ||
+                    borrowInputError !== null ||
+                    collateralAmount === BigInt(0) ||
+                    borrowAmount === BigInt(0) ||
+                    newLTV >= lltv
+                  }
+                  onClick={() => void signAndBorrow()}
+                  className="min-w-32"
+                  variant="cta"
+                >
+                  {useEth ? 'Borrow' : 'Sign and Borrow'}
+                </Button>
+              )}
+            </div>
+            {(borrowAmount > 0n || collateralAmount > 0n) && (
+              <>
+                {newLTV >= lltv && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="error" />}
+                {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && (
+                  <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="danger" />
+                )}
+              </>
             )}
           </div>
         </div>

@@ -3,6 +3,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
+import { LTVWarning } from '@/components/common/LTVWarning';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { RepayProcessModal } from '@/components/RepayProcessModal';
@@ -366,48 +367,58 @@ export function WithdrawCollateralAndRepay({
         )}
 
         {/* Action Button */}
-        <div className="mt-4 flex justify-end" style={{ zIndex: 1 }}>
-          {!isConnected ? (
-            <div>
-              <AccountConnect />
-            </div>
-          ) : needSwitchChain ? (
-            <Button
-              onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-              className="min-w-32"
-              variant="solid"
-            >
-              Switch Chain
-            </Button>
-          ) : (
-            <Button
-              disabled={
-                !isConnected ||
-                repayPending ||
-                withdrawInputError !== null ||
-                repayInputError !== null ||
-                (withdrawAmount === BigInt(0) && repayAssets === BigInt(0)) ||
-                newLTV >= lltv ||
-                isLoadingPermit2
-              }
-              onClick={() => {
-                if (!isApproved && !permit2Authorized) {
-                  void approveAndRepay();
-                } else {
-                  void signAndRepay();
+        <div className="mt-4">
+          <div className="flex justify-end" style={{ zIndex: 1 }}>
+            {!isConnected ? (
+              <div>
+                <AccountConnect />
+              </div>
+            ) : needSwitchChain ? (
+              <Button
+                onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
+                className="min-w-32"
+                variant="solid"
+              >
+                Switch Chain
+              </Button>
+            ) : (
+              <Button
+                isDisabled={
+                  !isConnected ||
+                  repayPending ||
+                  withdrawInputError !== null ||
+                  repayInputError !== null ||
+                  (withdrawAmount === BigInt(0) && repayAssets === BigInt(0)) ||
+                  newLTV >= lltv ||
+                  isLoadingPermit2
                 }
-              }}
-              className="min-w-32"
-              variant="cta"
-            >
-              {isLoadingPermit2
-                ? 'Loading...'
-                : !isApproved && !permit2Authorized
-                ? 'Approve & Repay'
-                : withdrawAmount > 0
-                ? 'Withdraw & Repay'
-                : 'Repay'}
-            </Button>
+                onClick={() => {
+                  if (!isApproved && !permit2Authorized) {
+                    void approveAndRepay();
+                  } else {
+                    void signAndRepay();
+                  }
+                }}
+                className="min-w-32"
+                variant="cta"
+              >
+                {isLoadingPermit2
+                  ? 'Loading...'
+                  : !isApproved && !permit2Authorized
+                  ? 'Approve & Repay'
+                  : withdrawAmount > 0
+                  ? 'Withdraw & Repay'
+                  : 'Repay'}
+              </Button>
+            )}
+          </div>
+          {(withdrawAmount > 0n || repayAssets > 0n) && (
+            <>
+              {newLTV >= lltv && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="error" />}
+              {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && (
+                <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="danger" />
+              )}
+            </>
           )}
         </div>
       </div>

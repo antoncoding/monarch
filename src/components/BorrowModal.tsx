@@ -49,8 +49,8 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
   });
 
   const modeOptions = [
-    { key: 'borrow', label: 'Add / Borrow', value: 'borrow' },
-    { key: 'repay', label: 'Withdraw / Repay', value: 'repay' },
+    { key: 'borrow', label: 'Borrow', value: 'borrow' },
+    { key: 'repay', label: 'Repay', value: 'repay' },
   ];
 
   return (
@@ -68,14 +68,14 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
             <Cross1Icon />
           </button>
 
-          <div className="mb-2 flex items-center gap-2 py-2 text-2xl">
-            {loanToken?.img && (
-              <Image src={loanToken.img} height={24} width={24} alt={loanToken.symbol} />
-            )}
-            {loanToken ? loanToken.symbol : market.loanAsset.symbol} Position
-          </div>
+          <div className="mb-6 mr-2 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-2xl">
+              {loanToken?.img && (
+                <Image src={loanToken.img} height={24} width={24} alt={loanToken.symbol} />
+              )}
+              {loanToken ? loanToken.symbol : market.loanAsset.symbol} Position
+            </div>
 
-          <div className="mb-6 flex justify-center">
             <ButtonGroup
               options={modeOptions}
               value={mode}
