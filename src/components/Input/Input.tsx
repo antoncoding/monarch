@@ -10,6 +10,7 @@ type InputProps = {
   setError?: React.Dispatch<React.SetStateAction<string | null>>;
   exceedMaxErrMessage?: string;
   allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
+  onMaxClick?: () => void;
 };
 
 export default function Input({
@@ -19,6 +20,7 @@ export default function Input({
   setError,
   exceedMaxErrMessage,
   allowExceedMax = false,
+  onMaxClick,
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>('0');
@@ -59,7 +61,8 @@ export default function Input({
       // set readable input
       setInputAmount(formatBalance(max, decimals).toString());
     }
-  }, [max, decimals, setInputAmount, setValue]);
+    if (onMaxClick) onMaxClick();
+  }, [max, decimals, setInputAmount, setValue, onMaxClick]);
 
   return (
     <div className="relative flex-grow">
