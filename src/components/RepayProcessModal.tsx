@@ -107,10 +107,7 @@ export function RepayProcessModal({
 
             {/* Market details */}
             <div className="mt-4">
-              <MarketInfoBlock
-                market={market}
-                amount={repayAmount}
-              />
+              <MarketInfoBlock market={market} amount={repayAmount} />
             </div>
 
             {/* Steps */}
@@ -148,4 +145,4 @@ export function RepayProcessModal({
       </motion.div>
     </AnimatePresence>
   );
-} 
+}

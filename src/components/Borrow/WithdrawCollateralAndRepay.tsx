@@ -2,16 +2,16 @@ import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { useAccount, useSwitchChain } from 'wagmi';
+import { Button } from '@/components/common';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { RepayProcessModal } from '@/components/RepayProcessModal';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { ERC20Token } from '@/utils/tokens';
 import { Market, MarketPosition } from '@/utils/types';
-import { Button } from '@/components/common';
 import { getLTVColor, getLTVProgressColor } from './helpers';
-import { RepayProcessModal } from '@/components/RepayProcessModal';
 
 type WithdrawCollateralAndRepayProps = {
   market: Market;
@@ -29,18 +29,18 @@ export function WithdrawCollateralAndRepay({
   currentPosition,
   refetchPosition,
   loanToken,
-  collateralToken
+  collateralToken,
 }: WithdrawCollateralAndRepayProps): JSX.Element {
   // State for withdraw and repay amounts
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
-  
+
   const [repayAssets, setRepayAssets] = useState<bigint>(BigInt(0));
   const [repayShares, setRepayShares] = useState<bigint>(BigInt(0));
-  
+
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
   const [repayInputError, setRepayInputError] = useState<string | null>(null);
 
-  const { address: account, isConnected, chainId } = useAccount();
+  const { isConnected, chainId } = useAccount();
 
   // Add a loading state for the refresh button
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -82,13 +82,10 @@ export function WithdrawCollateralAndRepay({
 
   // if number changes, and it's not max, set the repayAssets to corresponding amount
   useEffect(() => {
-     if (repayAssets !== BigInt(currentPosition?.borrowAssets || 0)) {
+    if (repayAssets !== BigInt(currentPosition?.borrowAssets || 0)) {
       setRepayShares(BigInt(0));
-     }
+    }
   }, [repayAssets, currentPosition]);
-
-  console.log('repayAssets', repayAssets)
-  console.log('repayShares', repayShares)
 
   const needSwitchChain = useMemo(
     () => chainId !== market.morphoBlue.chain.id,
@@ -158,9 +155,7 @@ export function WithdrawCollateralAndRepay({
 
   if (!currentPosition) {
     return (
-      <div className="text-center text-sm opacity-70">
-        No active position found in this market
-      </div>
+      <div className="text-center text-sm opacity-70">No active position found in this market</div>
     );
   }
 
@@ -266,36 +261,34 @@ export function WithdrawCollateralAndRepay({
               />
             </div>
             <div className="mt-2 flex justify-end">
-              <p className="font-zen text-xs text-secondary">
-                Max LTV: {formatBalance(lltv, 16)}%
-              </p>
+              <p className="font-zen text-xs text-secondary">Max LTV: {formatBalance(lltv, 16)}%</p>
             </div>
           </div>
         </div>
 
         {/* Market Stats */}
         <div className="bg-hovered mb-4 rounded-lg p-4">
-            <div className="mb-3 font-zen text-base">Market Stats</div>
+          <div className="mb-3 font-zen text-base">Market Stats</div>
 
-            <div className="grid grid-cols-2 gap-y-2">
-              <p className="font-zen text-sm opacity-50">APY:</p>
-              <p className="text-right font-zen text-sm">
-                {(market.state.borrowApy * 100).toFixed(2)}%
-              </p>
+          <div className="grid grid-cols-2 gap-y-2">
+            <p className="font-zen text-sm opacity-50">APY:</p>
+            <p className="text-right font-zen text-sm">
+              {(market.state.borrowApy * 100).toFixed(2)}%
+            </p>
 
-              <p className="font-zen text-sm opacity-50">Available Liquidity:</p>
-              <p className="text-right font-zen text-sm">
-                {formatReadable(
-                  formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                )}
-              </p>
+            <p className="font-zen text-sm opacity-50">Available Liquidity:</p>
+            <p className="text-right font-zen text-sm">
+              {formatReadable(
+                formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
+              )}
+            </p>
 
-              <p className="font-zen text-sm opacity-50">Utilization:</p>
-              <p className="text-right font-zen text-sm">
-                {formatReadable(market.state.utilization * 100)}%
-              </p>
-            </div>
+            <p className="font-zen text-sm opacity-50">Utilization:</p>
+            <p className="text-right font-zen text-sm">
+              {formatReadable(market.state.utilization * 100)}%
+            </p>
           </div>
+        </div>
 
         {/* Oracle Price - compact format */}
         <div className="bg-hovered my-3 rounded-lg p-3 text-xs">
@@ -365,9 +358,7 @@ export function WithdrawCollateralAndRepay({
                     exceedMaxErrMessage="Exceeds current debt"
                     onMaxClick={setShareToMax}
                   />
-                  {repayInputError && (
-                    <p className="p-1 text-sm text-red-500">{repayInputError}</p>
-                  )}
+                  {repayInputError && <p className="p-1 text-sm text-red-500">{repayInputError}</p>}
                 </div>
               </div>
             </div>
@@ -409,20 +400,18 @@ export function WithdrawCollateralAndRepay({
               className="min-w-32"
               variant="cta"
             >
-              {isLoadingPermit2 ? (
-                'Loading...'
-              ) : !isApproved && !permit2Authorized ? (
-                'Approve & Repay'
-              ) : withdrawAmount > 0 ? (
-                'Withdraw & Repay'
-              ) : (
-                'Repay'
-              )}
+              {isLoadingPermit2
+                ? 'Loading...'
+                : !isApproved && !permit2Authorized
+                ? 'Approve & Repay'
+                : withdrawAmount > 0
+                ? 'Withdraw & Repay'
+                : 'Repay'}
             </Button>
           )}
         </div>
       </div>
-      
+
       {/* Process Modal */}
       {showProcessModal && (
         <RepayProcessModal
@@ -437,4 +426,4 @@ export function WithdrawCollateralAndRepay({
       )}
     </div>
   );
-} 
+}

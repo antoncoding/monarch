@@ -5,11 +5,11 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { Market, MarketPosition } from '@/utils/types';
-import { useStyledToast } from './useStyledToast';
-import { useTransactionWithToast } from './useTransactionWithToast';
-import { usePermit2 } from './usePermit2';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
+import { usePermit2 } from './usePermit2';
+import { useStyledToast } from './useStyledToast';
+import { useTransactionWithToast } from './useTransactionWithToast';
 
 type UseRepayTransactionProps = {
   market: Market;
@@ -24,7 +24,7 @@ export function useRepayTransaction({
   currentPosition,
   withdrawAmount,
   repayAssets,
-  repayShares
+  repayShares,
 }: UseRepayTransactionProps) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'repaying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
@@ -36,9 +36,7 @@ export function useRepayTransaction({
   const useRepayByShares = repayShares > 0n;
 
   // If we're using repay by shares, we need to add a small amount as buffer to the repay amount we're approving
-  const repayAmountToApprove = useRepayByShares ? repayAssets + 10n : repayAssets;
-
-  console.log('repayAmountToApprove', repayAmountToApprove);
+  const repayAmountToApprove = useRepayByShares ? repayAssets + 1000n : repayAssets;
 
   // Get approval for loan token
   const {
@@ -115,7 +113,7 @@ export function useRepayTransaction({
           );
         }
       }
-      
+
       // Add the repay transaction if there's an amount to repay
       if (useRepayByShares) {
         const morphoRepayTx = encodeFunctionData({
@@ -131,13 +129,20 @@ export function useRepayTransaction({
             },
             0n, // assets to repay (0)
             repayShares, // shares to repay
-            repayAmountToApprove,// Slippage amount: max amount to repay
+            repayAmountToApprove, // Slippage amount: max amount to repay
             account as Address,
             '0x', // bytes
           ],
         });
         txs.push(morphoRepayTx);
 
+        // build another erc20 transfer action, to transfer any surplus back (unused loan assets) back to the user
+        const refundTx = encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'erc20Transfer',
+          args: [market.loanAsset.address as Address, account as Address, repayAmountToApprove],
+        });
+        txs.push(refundTx);
       } else if (repayAssets > 0n) {
         const minShares = 1n;
         const morphoRepayTx = encodeFunctionData({
@@ -153,7 +158,7 @@ export function useRepayTransaction({
             },
             repayAssets, // assets to repay
             0n, // shares to repay (0)
-            minShares,// Slippage amount: min shares to repay
+            minShares, // Slippage amount: min shares to repay
             account as Address,
             '0x', // bytes
           ],
@@ -175,7 +180,7 @@ export function useRepayTransaction({
               lltv: BigInt(market.lltv),
             },
             withdrawAmount,
-            account as Address
+            account as Address,
           ],
         });
         txs.push(morphoWithdrawTx);
@@ -338,4 +343,4 @@ export function useRepayTransaction({
     approveAndRepay,
     signAndRepay,
   };
-} 
+}

@@ -72,13 +72,15 @@ export default function Input({
         onChange={onInputChange}
         className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
       />
-      {max && <button
-        type="button"
-        onClick={handleMax}
-        className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
-      >
-        Max
-      </button>}
+      {max && (
+        <button
+          type="button"
+          onClick={handleMax}
+          className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
+        >
+          Max
+        </button>
+      )}
     </div>
   );
 }

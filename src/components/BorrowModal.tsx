@@ -16,8 +16,8 @@ type BorrowModalProps = {
 
 export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
-  
-  const { address: account} = useAccount();
+
+  const { address: account } = useAccount();
 
   // Get user positions to calculate current LTV
   const { position: currentPosition, refetch: refetchPosition } = useUserPosition(
@@ -52,7 +52,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     { key: 'borrow', label: 'Add / Borrow', value: 'borrow' },
     { key: 'repay', label: 'Withdraw / Repay', value: 'repay' },
   ];
-  
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-black/50"
