@@ -228,7 +228,7 @@ export function WithdrawCollateralAndRepay({
             <div className="flex items-center justify-between">
               <p className="font-zen text-sm opacity-50">Loan to Value (LTV)</p>
               <div className="font-zen text-sm">
-                {(withdrawAmount > 0 || repayAssets > 0) && currentLTV > 0 ? (
+                {withdrawAmount > 0n || repayAssets > 0n ? (
                   <>
                     <span className="text-gray-400 line-through">
                       {formatBalance(currentLTV, 16).toPrecision(4)}%
