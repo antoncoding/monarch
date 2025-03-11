@@ -31,11 +31,14 @@ export function WithdrawCollateralAndRepay({
   refetchPosition,
   loanToken,
   collateralToken,
+  loanTokenBalance
 }: WithdrawCollateralAndRepayProps): JSX.Element {
   // State for withdraw and repay amounts
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
 
   const [repayAssets, setRepayAssets] = useState<bigint>(BigInt(0));
+
+  // Only specified when click on "max" button. If set, the contract specify exactly how much shares to repay
   const [repayShares, setRepayShares] = useState<bigint>(BigInt(0));
 
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
@@ -97,6 +100,13 @@ export function WithdrawCollateralAndRepay({
     oracle: market.oracleAddress as `0x${string}`,
     chainId: market.morphoBlue.chain.id,
   });
+
+  const maxToRepay = useMemo(() => 
+    BigInt(currentPosition?.borrowAssets || 0) > BigInt(loanTokenBalance || 0) 
+      ? BigInt(loanTokenBalance || 0) 
+      : BigInt(currentPosition?.borrowAssets || 0),
+    [loanTokenBalance, currentPosition],
+  );
 
   // Calculate current and new LTV whenever relevant values change
   useEffect(() => {
@@ -326,7 +336,7 @@ export function WithdrawCollateralAndRepay({
                     max={BigInt(currentPosition.collateral)}
                     setValue={setWithdrawAmount}
                     setError={setWithdrawInputError}
-                    exceedMaxErrMessage="Exceeds available collateral"
+                    exceedMaxErrMessage="Exceeds current collateral"
                   />
                   {withdrawInputError && (
                     <p className="p-1 text-sm text-red-500">{withdrawInputError}</p>
@@ -353,10 +363,10 @@ export function WithdrawCollateralAndRepay({
                 <div className="relative flex-grow">
                   <Input
                     decimals={market.loanAsset.decimals}
-                    max={BigInt(currentPosition.borrowAssets || 0)}
+                    max={maxToRepay}
                     setValue={setRepayAssets}
                     setError={setRepayInputError}
-                    exceedMaxErrMessage="Exceeds current debt"
+                    exceedMaxErrMessage="Exceeds current debt or insufficient balance"
                     onMaxClick={setShareToMax}
                   />
                   {repayInputError && <p className="p-1 text-sm text-red-500">{repayInputError}</p>}
