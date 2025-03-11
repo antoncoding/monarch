@@ -5,8 +5,8 @@ import { formatBalance } from '@/utils/balance';
 
 type InputProps = {
   decimals: number;
-  max: bigint;
   setValue: React.Dispatch<React.SetStateAction<bigint>>;
+  max?: bigint;
   setError?: React.Dispatch<React.SetStateAction<string | null>>;
   exceedMaxErrMessage?: string;
   allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
@@ -32,7 +32,7 @@ export default function Input({
       try {
         const inputBigInt = parseUnits(inputText, decimals);
 
-        if (inputBigInt > max) {
+        if (max && inputBigInt > max) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
           if (allowExceedMax) {
             setValue(inputBigInt);
@@ -54,9 +54,11 @@ export default function Input({
 
   // if max is clicked, set the input to the max value
   const handleMax = useCallback(() => {
-    setValue(max);
-    // set readable input
-    setInputAmount(formatBalance(max, decimals).toString());
+    if (max) {
+      setValue(max);
+      // set readable input
+      setInputAmount(formatBalance(max, decimals).toString());
+    }
   }, [max, decimals, setInputAmount, setValue]);
 
   return (
@@ -67,13 +69,13 @@ export default function Input({
         onChange={onInputChange}
         className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
       />
-      <button
+      {max && <button
         type="button"
         onClick={handleMax}
         className="bg-surface absolute right-2 top-1/2 -translate-y-1/2 transform rounded p-1 text-sm text-secondary opacity-80 duration-300 ease-in-out hover:scale-105 hover:opacity-100"
       >
         Max
-      </button>
+      </button>}
     </div>
   );
 }
