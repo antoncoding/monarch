@@ -165,12 +165,6 @@ export function WithdrawCollateralAndRepay({
     }
   };
 
-  if (!currentPosition) {
-    return (
-      <div className="text-center text-sm opacity-70">No active position found in this market</div>
-    );
-  }
-
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       <div className="flex flex-col">
@@ -205,7 +199,7 @@ export function WithdrawCollateralAndRepay({
                 )}
                 <p className="font-zen text-sm">
                   {formatBalance(
-                    BigInt(currentPosition.collateral),
+                    BigInt(currentPosition?.collateral ?? 0),
                     market.collateralAsset.decimals,
                   )}{' '}
                   {market.collateralAsset.symbol}
@@ -226,7 +220,7 @@ export function WithdrawCollateralAndRepay({
                 )}
                 <p className="font-zen text-sm">
                   {formatBalance(
-                    BigInt(currentPosition.borrowAssets || 0),
+                    BigInt(currentPosition?.borrowAssets ?? 0),
                     market.loanAsset.decimals,
                   )}{' '}
                   {market.loanAsset.symbol}
@@ -323,7 +317,7 @@ export function WithdrawCollateralAndRepay({
                 <p className="font-inter text-xs opacity-50">
                   Available:{' '}
                   {formatBalance(
-                    BigInt(currentPosition.collateral),
+                    BigInt(currentPosition?.collateral ?? 0),
                     market.collateralAsset.decimals,
                   )}{' '}
                   {market.collateralAsset.symbol}
@@ -334,7 +328,7 @@ export function WithdrawCollateralAndRepay({
                 <div className="relative flex-grow">
                   <Input
                     decimals={market.collateralAsset.decimals}
-                    max={BigInt(currentPosition.collateral)}
+                    max={BigInt(currentPosition?.collateral ?? 0)}
                     setValue={setWithdrawAmount}
                     setError={setWithdrawInputError}
                     exceedMaxErrMessage="Exceeds current collateral"
@@ -353,7 +347,7 @@ export function WithdrawCollateralAndRepay({
                 <p className="font-inter text-xs opacity-50">
                   Debt:{' '}
                   {formatBalance(
-                    BigInt(currentPosition.borrowAssets || 0),
+                    BigInt(currentPosition?.borrowAssets ?? 0),
                     market.loanAsset.decimals,
                   )}{' '}
                   {market.loanAsset.symbol}
