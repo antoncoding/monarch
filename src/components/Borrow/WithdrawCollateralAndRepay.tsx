@@ -31,7 +31,7 @@ export function WithdrawCollateralAndRepay({
   refetchPosition,
   loanToken,
   collateralToken,
-  loanTokenBalance
+  loanTokenBalance,
 }: WithdrawCollateralAndRepayProps): JSX.Element {
   // State for withdraw and repay amounts
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -101,10 +101,11 @@ export function WithdrawCollateralAndRepay({
     chainId: market.morphoBlue.chain.id,
   });
 
-  const maxToRepay = useMemo(() => 
-    BigInt(currentPosition?.borrowAssets || 0) > BigInt(loanTokenBalance || 0) 
-      ? BigInt(loanTokenBalance || 0) 
-      : BigInt(currentPosition?.borrowAssets || 0),
+  const maxToRepay = useMemo(
+    () =>
+      BigInt(currentPosition?.borrowAssets ?? 0) > BigInt(loanTokenBalance ?? 0)
+        ? BigInt(loanTokenBalance ?? 0)
+        : BigInt(currentPosition?.borrowAssets ?? 0),
     [loanTokenBalance, currentPosition],
   );
 
