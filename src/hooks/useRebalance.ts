@@ -204,7 +204,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         // if any action is max, there must be a "share" set
         const shares = groupedPosition.markets.find(
           (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
-        )?.supplyShares;
+        )?.state.supplyShares;
 
         console.log('shares', shares);
 

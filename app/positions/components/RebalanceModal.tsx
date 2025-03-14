@@ -124,7 +124,7 @@ export function RebalanceModal({
   const checkBalance = useCallback(() => {
     const oldBalance = groupedPosition.markets.find(
       (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
-    )?.supplyAssets;
+    )?.state.supplyAssets;
 
     const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
     const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
@@ -219,7 +219,7 @@ export function RebalanceModal({
     // Check if this is a max amount considering pending delta
     const isMaxAmount =
       selectedPosition !== undefined &&
-      BigInt(selectedPosition.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
+      BigInt(selectedPosition.state.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
@@ -323,7 +323,7 @@ export function RebalanceModal({
             <FromAndToMarkets
               eligibleMarkets={eligibleMarkets}
               fromMarkets={groupedPosition.markets
-                .filter((p) => BigInt(p.supplyShares) > 0)
+                .filter((p) => BigInt(p.state.supplyShares) > 0)
                 .map((market) => ({
                   ...market,
                   pendingDelta: getPendingDelta(market.market.uniqueKey),
@@ -339,7 +339,7 @@ export function RebalanceModal({
               fromPagination={{
                 currentPage: fromPagination.currentPage,
                 totalPages: Math.ceil(
-                  groupedPosition.markets.filter((p) => BigInt(p.supplyShares) > 0).length /
+                  groupedPosition.markets.filter((p) => BigInt(p.state.supplyShares) > 0).length /
                     PER_PAGE,
                 ),
                 onPageChange: fromPagination.setCurrentPage,

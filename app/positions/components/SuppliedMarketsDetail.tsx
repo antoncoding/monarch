@@ -46,8 +46,8 @@ export function SuppliedMarketsDetail({
   // Sort active markets by size
   const sortedActiveMarkets = [...groupedPosition.markets].sort(
     (a, b) =>
-      Number(formatBalance(b.supplyAssets, b.market.loanAsset.decimals)) -
-      Number(formatBalance(a.supplyAssets, a.market.loanAsset.decimals)),
+      Number(formatBalance(b.state.supplyAssets, b.market.loanAsset.decimals)) -
+      Number(formatBalance(a.state.supplyAssets, a.market.loanAsset.decimals)),
   );
 
   const totalSupply = groupedPosition.totalSupply;
@@ -123,7 +123,7 @@ export function SuppliedMarketsDetail({
           <tbody className="table-body text-xs">
             {sortedActiveMarkets.map((position) => {
               const suppliedAmount = Number(
-                formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+                formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
               );
               const percentageOfPortfolio =
                 totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;

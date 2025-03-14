@@ -79,7 +79,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         const enhancedPositions = await Promise.all(
           marketPositions
             .filter(
-              (position: MarketPosition) => showEmpty || position.supplyShares.toString() !== '0',
+              (position: MarketPosition) => showEmpty || position.state.supplyShares.toString() !== '0',
             )
             .map(async (position: MarketPosition) => {
               return {

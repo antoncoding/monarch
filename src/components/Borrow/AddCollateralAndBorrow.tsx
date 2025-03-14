@@ -95,8 +95,8 @@ export function AddCollateralAndBorrow({
     } else {
       // Calculate current LTV from position data
       const currentCollateralValue =
-        (BigInt(currentPosition.collateral) * oraclePrice) / BigInt(10 ** 36);
-      const currentBorrowValue = BigInt(currentPosition.borrowAssets || 0);
+        (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
+      const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
         const ltv = (currentBorrowValue * BigInt(10 ** 18)) / currentCollateralValue;
@@ -109,8 +109,8 @@ export function AddCollateralAndBorrow({
 
   useEffect(() => {
     // Calculate new LTV based on current position plus new amounts
-    const newCollateral = BigInt(currentPosition?.collateral ?? 0) + collateralAmount;
-    const newBorrow = BigInt(currentPosition?.borrowAssets ?? 0) + borrowAmount;
+    const newCollateral = BigInt(currentPosition?.state.collateral ?? 0) + collateralAmount;
+    const newBorrow = BigInt(currentPosition?.state.borrowAssets ?? 0) + borrowAmount;
 
     const newCollateralValueInLoan = (newCollateral * oraclePrice) / BigInt(10 ** 36);
 
@@ -191,7 +191,7 @@ export function AddCollateralAndBorrow({
                   )}
                   <p className="font-zen text-sm">
                     {formatBalance(
-                      BigInt(currentPosition?.collateral ?? 0),
+                      BigInt(currentPosition?.state.collateral ?? 0),
                       market.collateralAsset.decimals,
                     )}{' '}
                     {market.collateralAsset.symbol}
@@ -212,7 +212,7 @@ export function AddCollateralAndBorrow({
                   )}
                   <p className="font-zen text-sm">
                     {formatBalance(
-                      BigInt(currentPosition?.borrowAssets ?? 0),
+                      BigInt(currentPosition?.state.borrowAssets ?? 0),
                       market.loanAsset.decimals,
                     )}{' '}
                     {market.loanAsset.symbol}

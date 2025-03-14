@@ -97,7 +97,7 @@ export function SetupAgent({
     const activeLoanAssets = new Set<string>();
 
     positions.forEach((position) => {
-      if (BigInt(position.supplyShares) > 0) {
+      if (BigInt(position.state.supplyShares) > 0) {
         activeLoanAssets.add(position.market.loanAsset.address.toLowerCase());
       }
     });
@@ -129,7 +129,7 @@ export function SetupAgent({
       const position = positions.find((p) => p.market.uniqueKey === market.uniqueKey);
       if (position) {
         const supply = parseFloat(
-          formatUnits(BigInt(position.supplyAssets), position.market.loanAsset.decimals),
+          formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals),
         );
         if (supply > 0) {
           groups[loanAssetKey].activeMarkets.push(market);

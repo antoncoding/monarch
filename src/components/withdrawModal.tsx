@@ -68,10 +68,10 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
       return;
     }
 
-    const isMax = withdrawAmount.toString() === position.supplyAssets.toString();
+    const isMax = withdrawAmount.toString() === position.state.supplyAssets.toString();
 
     const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
-    const sharesToWithdraw = isMax ? position.supplyShares : '0';
+    const sharesToWithdraw = isMax ? position.state.supplyShares : '0';
 
     sendTransaction({
       account,
@@ -100,8 +100,8 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     position.market,
     withdrawAmount,
     sendTransaction,
-    position.supplyAssets,
-    position.supplyShares,
+    position.state.supplyAssets,
+    position.state.supplyShares,
     toast,
   ]);
 
@@ -156,7 +156,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
             <div className="flex items-center justify-center gap-2">
               <p className="text-right font-zen">
                 {formatReadable(
-                  formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+                  formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
                 )}
               </p>
               <p className="text-right font-zen">{position.market.loanAsset.symbol} </p>
@@ -182,7 +182,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
             <Input
               decimals={position.market.loanAsset.decimals}
               max={min(
-                BigInt(position.supplyAssets),
+                BigInt(position.state.supplyAssets),
                 BigInt(position.market.state.liquidityAssets),
               )}
               setValue={setWithdrawAmount}
