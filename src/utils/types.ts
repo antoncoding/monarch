@@ -1,14 +1,16 @@
 import { Address } from 'viem';
 
 export type MarketPosition = {
-  supplyShares: string;
-  supplyAssets: string;
-  supplyAssetsUsd: number;
-  borrowShares: string;
-  borrowAssets: string;
-  borrowAssetsUsd: number;
-  collateral: string;
-  collateralUsd: number;
+  state: {
+    supplyShares: string;
+    supplyAssets: string;
+    supplyAssetsUsd: number;
+    borrowShares: string;
+    borrowAssets: string;
+    borrowAssetsUsd: number;
+    collateral: string;
+    collateralUsd: number;
+  }
   market: Market; // Now using the full Market type
 };
 

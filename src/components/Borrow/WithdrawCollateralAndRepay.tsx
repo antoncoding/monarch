@@ -80,13 +80,13 @@ export function WithdrawCollateralAndRepay({
   // if max is clicked, set the repayShares to max shares
   const setShareToMax = useCallback(() => {
     if (currentPosition) {
-      setRepayShares(BigInt(currentPosition.borrowShares));
+      setRepayShares(BigInt(currentPosition.state.borrowShares));
     }
   }, [currentPosition]);
 
   // if number changes, and it's not max, set the repayAssets to corresponding amount
   useEffect(() => {
-    if (repayAssets !== BigInt(currentPosition?.borrowAssets || 0)) {
+    if (repayAssets !== BigInt(currentPosition?.state.borrowAssets || 0)) {
       setRepayShares(BigInt(0));
     }
   }, [repayAssets, currentPosition]);
@@ -103,9 +103,9 @@ export function WithdrawCollateralAndRepay({
 
   const maxToRepay = useMemo(
     () =>
-      BigInt(currentPosition?.borrowAssets ?? 0) > BigInt(loanTokenBalance ?? 0)
+      BigInt(currentPosition?.state.borrowAssets ?? 0) > BigInt(loanTokenBalance ?? 0)
         ? BigInt(loanTokenBalance ?? 0)
-        : BigInt(currentPosition?.borrowAssets ?? 0),
+        : BigInt(currentPosition?.state.borrowAssets ?? 0),
     [loanTokenBalance, currentPosition],
   );
 
@@ -116,8 +116,8 @@ export function WithdrawCollateralAndRepay({
     } else {
       // Calculate current LTV from position data
       const currentCollateralValue =
-        (BigInt(currentPosition.collateral) * oraclePrice) / BigInt(10 ** 36);
-      const currentBorrowValue = BigInt(currentPosition.borrowAssets || 0);
+        (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
+      const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
         const ltv = (currentBorrowValue * BigInt(10 ** 18)) / currentCollateralValue;
@@ -132,8 +132,8 @@ export function WithdrawCollateralAndRepay({
     if (!currentPosition) return;
 
     // Calculate new LTV based on current position minus withdraw/repay amounts
-    const newCollateral = BigInt(currentPosition.collateral) - withdrawAmount;
-    const newBorrow = BigInt(currentPosition.borrowAssets || 0) - repayAssets;
+    const newCollateral = BigInt(currentPosition.state.collateral) - withdrawAmount;
+    const newBorrow = BigInt(currentPosition.state.borrowAssets || 0) - repayAssets;
 
     const newCollateralValueInLoan = (newCollateral * oraclePrice) / BigInt(10 ** 36);
 
@@ -199,7 +199,7 @@ export function WithdrawCollateralAndRepay({
                 )}
                 <p className="font-zen text-sm">
                   {formatBalance(
-                    BigInt(currentPosition?.collateral ?? 0),
+                    BigInt(currentPosition?.state.collateral ?? 0),
                     market.collateralAsset.decimals,
                   )}{' '}
                   {market.collateralAsset.symbol}
@@ -220,7 +220,7 @@ export function WithdrawCollateralAndRepay({
                 )}
                 <p className="font-zen text-sm">
                   {formatBalance(
-                    BigInt(currentPosition?.borrowAssets ?? 0),
+                    BigInt(currentPosition?.state.borrowAssets ?? 0),
                     market.loanAsset.decimals,
                   )}{' '}
                   {market.loanAsset.symbol}
@@ -317,7 +317,7 @@ export function WithdrawCollateralAndRepay({
                 <p className="font-inter text-xs opacity-50">
                   Available:{' '}
                   {formatBalance(
-                    BigInt(currentPosition?.collateral ?? 0),
+                    BigInt(currentPosition?.state.collateral ?? 0),
                     market.collateralAsset.decimals,
                   )}{' '}
                   {market.collateralAsset.symbol}
@@ -328,7 +328,7 @@ export function WithdrawCollateralAndRepay({
                 <div className="relative flex-grow">
                   <Input
                     decimals={market.collateralAsset.decimals}
-                    max={BigInt(currentPosition?.collateral ?? 0)}
+                    max={BigInt(currentPosition?.state.collateral ?? 0)}
                     setValue={setWithdrawAmount}
                     setError={setWithdrawInputError}
                     exceedMaxErrMessage="Exceeds current collateral"
@@ -347,7 +347,7 @@ export function WithdrawCollateralAndRepay({
                 <p className="font-inter text-xs opacity-50">
                   Debt:{' '}
                   {formatBalance(
-                    BigInt(currentPosition?.borrowAssets ?? 0),
+                    BigInt(currentPosition?.state.borrowAssets ?? 0),
                     market.loanAsset.decimals,
                   )}{' '}
                   {market.loanAsset.symbol}

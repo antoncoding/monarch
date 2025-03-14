@@ -54,7 +54,7 @@ export default function Positions() {
   const hasActivePositionOnBase = marketPositions?.some((position) => {
     return (
       position.market.morphoBlue.chain.id === SupportedNetworks.Base &&
-      BigInt(position.supplyShares) > 0
+      BigInt(position.state.supplyShares) > 0
     );
   });
 

@@ -169,7 +169,7 @@ export function FromAndToMarkets({
                         <div className="flex items-center gap-2">
                           <div>
                             {formatReadable(
-                              (Number(marketPosition.supplyAssets) +
+                              (Number(marketPosition.state.supplyAssets) +
                                 Number(marketPosition.pendingDelta)) /
                                 10 ** marketPosition.market.loanAsset.decimals,
                             )}{' '}
@@ -180,7 +180,7 @@ export function FromAndToMarkets({
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
                             isDisabled={
-                              BigInt(marketPosition.supplyAssets) +
+                              BigInt(marketPosition.state.supplyAssets) +
                                 BigInt(marketPosition.pendingDelta) <=
                               0n
                             }
@@ -188,7 +188,7 @@ export function FromAndToMarkets({
                               e.stopPropagation();
                               onFromMarketSelect(marketPosition.market.uniqueKey);
                               const remainingAmount =
-                                BigInt(marketPosition.supplyAssets) +
+                                BigInt(marketPosition.state.supplyAssets) +
                                 BigInt(marketPosition.pendingDelta);
                               if (remainingAmount > 0n) {
                                 onSelectMax?.(

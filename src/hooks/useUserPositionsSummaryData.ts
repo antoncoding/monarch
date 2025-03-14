@@ -110,7 +110,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
         };
       }
 
-      const currentBalance = BigInt(position.supplyAssets);
+      const currentBalance = BigInt(position.state.supplyAssets);
       const marketId = position.market.uniqueKey;
       const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
       const now = Math.floor(Date.now() / 1000);

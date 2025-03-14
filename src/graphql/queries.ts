@@ -156,14 +156,16 @@ export const userPositionsQuery = `
   query getUserMarketPositions($address: String!, $chainId: Int) {
     userByAddress(address: $address, chainId: $chainId) {
       marketPositions {
-        supplyShares
-        supplyAssets
-        supplyAssetsUsd
-        borrowShares
-        borrowAssets
-        borrowAssetsUsd
-        collateral
-        collateralUsd
+        state {
+          supplyShares
+          supplyAssets
+          supplyAssetsUsd
+          borrowShares
+          borrowAssets
+          borrowAssetsUsd
+          collateral
+          collateralUsd
+        }
         market {
           ...MarketFields
         }
@@ -177,16 +179,19 @@ export const userPositionsQuery = `
 export const userPositionForMarketQuery = `
   query getUserMarketPosition($address: String!, $chainId: Int, $marketKey: String!) {
     marketPosition(userAddress: $address, marketUniqueKey: $marketKey, chainId: $chainId){
-      supplyShares
-      supplyAssets
-      supplyAssetsUsd
-      borrowShares
-      borrowAssets
-      borrowAssetsUsd
-      collateral
-      collateralUsd
+      state {
+        supplyShares
+        supplyAssets
+        supplyAssetsUsd
+        borrowShares
+        borrowAssets
+        borrowAssetsUsd
+        collateral
+        collateralUsd
+      }
       market {
-        ...MarketFields
+          ...MarketFields
+        }
       }
     }
   }

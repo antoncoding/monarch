@@ -122,7 +122,7 @@ export function PositionsSummaryTable({
     return marketPositions
       .filter(
         (position) =>
-          BigInt(position.supplyShares) > 0 ||
+          BigInt(position.state.supplyShares) > 0 ||
           rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey),
       )
       .reduce((acc: GroupedPosition[], position) => {
@@ -152,7 +152,7 @@ export function PositionsSummaryTable({
 
         // only push if the position has > 0 supply, earning or is in rebalancer info
         if (
-          Number(position.supplyShares) === 0 &&
+          Number(position.state.supplyShares) === 0 &&
           !rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
         ) {
           return acc;
@@ -168,7 +168,7 @@ export function PositionsSummaryTable({
         ] as WarningWithDetail[];
 
         const supplyAmount = Number(
-          formatBalance(position.supplyAssets, position.market.loanAsset.decimals),
+          formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
         );
         groupedPosition.totalSupply += supplyAmount;
 
