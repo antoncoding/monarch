@@ -162,11 +162,32 @@ export const userPositionsQuery = `
         borrowShares
         borrowAssets
         borrowAssetsUsd
+        collateral
+        collateralUsd
         market {
           ...MarketFields
         }
       }
       
+    }
+  }
+  ${marketFragment}
+`;
+
+export const userPositionForMarketQuery = `
+  query getUserMarketPosition($address: String!, $chainId: Int, $marketKey: String!) {
+    marketPosition(userAddress: $address, marketUniqueKey: $marketKey, chainId: $chainId){
+      supplyShares
+      supplyAssets
+      supplyAssetsUsd
+      borrowShares
+      borrowAssets
+      borrowAssetsUsd
+      collateral
+      collateralUsd
+      market {
+        ...MarketFields
+      }
     }
   }
   ${marketFragment}

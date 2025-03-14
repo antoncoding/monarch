@@ -7,6 +7,8 @@ export type MarketPosition = {
   borrowShares: string;
   borrowAssets: string;
   borrowAssetsUsd: number;
+  collateral: string;
+  collateralUsd: number;
   market: Market; // Now using the full Market type
 };
 
