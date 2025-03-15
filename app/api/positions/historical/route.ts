@@ -52,7 +52,13 @@ async function getPositionAtBlock(
   blockNumber: number,
   chainId: number,
 ) {
-  console.log(`Get user position ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
+  const isNow = blockNumber === 0;
+
+  if (!isNow) {
+    console.log(`Get user position ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
+  } else {
+    console.log(`Get user position ${marketId.slice(0, 6)} at current block`);
+  }
 
   const client = chainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
   if (!client) throw new Error(`Unsupported chain ID: ${chainId}`);
@@ -64,7 +70,7 @@ async function getPositionAtBlock(
       abi: morphoABI,
       functionName: 'position',
       args: [marketId as `0x${string}`, userAddress as Address],
-      blockNumber: BigInt(blockNumber),
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
     })) as readonly bigint[];
 
     // Convert array to position object
@@ -111,23 +117,6 @@ async function getPositionAtBlock(
       market.totalBorrowShares,
     );
 
-    // console.log(`Successfully retrieved position data:`, {
-    //   marketId,
-    //   userAddress,
-    //   blockNumber,
-    //   supplyShares: position.supplyShares.toString(),
-    //   supplyAssets: supplyAssets.toString(),
-    //   borrowShares: position.borrowShares.toString(),
-    //   borrowAssets: borrowAssets.toString(),
-    //   collateral: position.collateral.toString(),
-    //   market: {
-    //     totalSupplyAssets: market.totalSupplyAssets.toString(),
-    //     totalSupplyShares: market.totalSupplyShares.toString(),
-    //     totalBorrowAssets: market.totalBorrowAssets.toString(),
-    //     totalBorrowShares: market.totalBorrowShares.toString(),
-    //   },
-    // });
-
     return {
       supplyShares: position.supplyShares.toString(),
       supplyAssets: supplyAssets.toString(),
@@ -161,7 +150,7 @@ export async function GET(request: NextRequest) {
     //   chainId,
     // });
 
-    if (!blockNumber || !marketId || !userAddress) {
+    if (!marketId || !userAddress || (!blockNumber && blockNumber !== 0)) {
       console.error('Missing required parameters:', {
         blockNumber: !!blockNumber,
         marketId: !!marketId,

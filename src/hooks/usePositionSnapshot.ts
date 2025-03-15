@@ -6,6 +6,7 @@ export type PositionSnapshot = {
   supplyShares: string;
   borrowAssets: string;
   borrowShares: string;
+  collateral: string;
 };
 
 type PositionResponse = {
@@ -14,6 +15,7 @@ type PositionResponse = {
     supplyShares: string;
     borrowAssets: string;
     borrowShares: string;
+    collateral: string;
   } | null;
 };
 
@@ -50,10 +52,9 @@ export function usePositionSnapshot() {
             supplyShares: '0',
             borrowAssets: '0',
             borrowShares: '0',
+            collateral: '0',
           };
         }
-
-        console.log('Position snapshot response:', positionData);
 
         return {
           ...positionData.position,
