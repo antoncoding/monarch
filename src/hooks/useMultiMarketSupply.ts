@@ -11,7 +11,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
-
+import { useUserMarketsCache } from './useUserMarketsCache';
 export type MarketSupply = {
   market: Market;
   amount: bigint;
@@ -32,6 +32,8 @@ export function useMultiMarketSupply(
   const chainId = loanAsset?.network;
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
+
+  const { batchAddUserMarkets } = useUserMarketsCache();
 
   const {
     authorizePermit2,
@@ -159,6 +161,13 @@ export function useMultiMarketSupply(
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? totalAmount : 0n,
       });
+
+      batchAddUserMarkets(
+        supplies.map((supply) => ({
+          marketUniqueKey: supply.market.uniqueKey,
+          chainId: supply.market.morphoBlue.chain.id,
+        })),
+      );
 
       return true;
     } catch (error: unknown) {

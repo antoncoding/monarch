@@ -10,6 +10,7 @@ import { useLocalStorage } from './useLocalStorage';
 import { usePermit2 } from './usePermit2';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { useUserMarketsCache } from './useUserMarketsCache';
 
 type UseBorrowTransactionProps = {
   market: Market;
@@ -26,6 +27,8 @@ export function useBorrowTransaction({
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [useEth, setUseEth] = useState<boolean>(false);
+
+  const { batchAddUserMarkets } = useUserMarketsCache();
 
   const { address: account, chainId } = useAccount();
   const toast = useStyledToast();
@@ -166,6 +169,13 @@ export function useBorrowTransaction({
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? collateralAmount : 0n,
       });
+
+      batchAddUserMarkets([
+        {
+          marketUniqueKey: market.uniqueKey,
+          chainId: market.morphoBlue.chain.id,
+        },
+      ]);
 
       // come back to main borrow page
       setShowProcessModal(false);

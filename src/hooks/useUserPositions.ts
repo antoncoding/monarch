@@ -7,6 +7,8 @@ import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
+import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
+import { useMarkets } from './useMarkets';
 import { usePositionSnapshot } from './usePositionSnapshot';
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
@@ -15,7 +17,10 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [data, setData] = useState<MarketPosition[]>([]);
   const [positionsError, setPositionsError] = useState<unknown | null>(null);
 
+  const { markets } = useMarkets();
+
   const { fetchPositionSnapshot } = usePositionSnapshot();
+  const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache();
 
   const fetchData = useCallback(
     async (isRefetch = false, onSuccess?: () => void) => {
@@ -68,6 +73,8 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         const result1 = await responseMainnet.json();
         const result2 = await responseBase.json();
 
+        const unknownUsedMarkets = getUserMarkets();
+
         const marketPositions: MarketPosition[] = [];
 
         // Collect positions
@@ -79,7 +86,39 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           }
         }
 
-        // Process positions and calculate earnings
+        for (const market of unknownUsedMarkets) {
+          // check if they're already in the marketPositions array
+          if (
+            marketPositions.find(
+              (position) =>
+                position.market.uniqueKey.toLowerCase() === market.marketUniqueKey.toLowerCase() &&
+                position.market.morphoBlue.chain.id === market.chainId,
+            )
+          ) {
+            continue;
+          }
+
+          // skip markets we can't find
+          const marketWithDetails = markets.find((m) => m.uniqueKey === market.marketUniqueKey);
+          if (!marketWithDetails) {
+            continue;
+          }
+
+          const currentSnapshot = await fetchPositionSnapshot(
+            market.marketUniqueKey,
+            user as Address,
+            market.chainId,
+            0,
+          );
+
+          if (currentSnapshot) {
+            marketPositions.push({
+              market: marketWithDetails,
+              state: currentSnapshot,
+            });
+          }
+        }
+
         const enhancedPositions = await Promise.all(
           marketPositions
             .filter(
@@ -87,6 +126,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
                 showEmpty || position.state.supplyShares.toString() !== '0',
             )
             .map(async (position: MarketPosition) => {
+              // fetch real market position to be accurate
               const currentSnapshot = await fetchPositionSnapshot(
                 position.market.uniqueKey,
                 user as Address,
@@ -96,6 +136,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
 
               const accuratePositionState = currentSnapshot ? currentSnapshot : position.state;
 
+              // Process positions and calculate earnings
               return {
                 state: accuratePositionState,
                 market: {
@@ -107,6 +148,14 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         );
 
         setData(enhancedPositions);
+
+        batchAddUserMarkets(
+          marketPositions.map((position) => ({
+            marketUniqueKey: position.market.uniqueKey,
+            chainId: position.market.morphoBlue.chain.id,
+          })),
+        );
+
         onSuccess?.();
       } catch (err) {
         console.error('Error fetching positions:', err);
@@ -116,7 +165,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         setIsRefetching(false);
       }
     },
-    [user, showEmpty],
+    [user, showEmpty, markets],
   );
 
   useEffect(() => {
