@@ -12,6 +12,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
+import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
@@ -34,6 +35,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+
+  const { batchAddUserMarkets } = useUserMarketsCache();
 
   const { address: account, isConnected, chainId } = useAccount();
 
@@ -172,6 +175,13 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? supplyAmount : 0n,
       });
+
+      batchAddUserMarkets([
+        {
+          marketUniqueKey: market.uniqueKey,
+          chainId: market.morphoBlue.chain.id,
+        },
+      ]);
 
       // come back to main supply page
       setShowProcessModal(false);

@@ -159,10 +159,8 @@ export const userPositionsQuery = `
         state {
           supplyShares
           supplyAssets
-          supplyAssetsUsd
           borrowShares
           borrowAssets
-          borrowAssetsUsd
           collateral
           collateralUsd
         }
@@ -182,16 +180,13 @@ export const userPositionForMarketQuery = `
       state {
         supplyShares
         supplyAssets
-        supplyAssetsUsd
         borrowShares
         borrowAssets
-        borrowAssetsUsd
         collateral
         collateralUsd
       }
       market {
-          ...MarketFields
-        }
+        ...MarketFields
       }
     }
   }

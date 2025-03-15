@@ -8,6 +8,7 @@ import { getBundlerV2, MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { usePermit2 } from './usePermit2';
 import { useStyledToast } from './useStyledToast';
+import { useUserMarketsCache } from './useUserMarketsCache';
 
 export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
@@ -51,6 +52,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     amount: totalAmount,
   });
 
+  // add newly used markets to the cache
+  const { batchAddUserMarkets } = useUserMarketsCache();
+
   const addRebalanceAction = useCallback((action: RebalanceAction) => {
     setRebalanceActions((prev) => [...prev, action]);
   }, []);
@@ -74,6 +78,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     }
     setIsConfirming(true);
     const transactions: `0x${string}`[] = [];
+
+    const allMarketKeys: string[] = [];
 
     try {
       // Step 1: Authorize Permit2 if needed
@@ -193,6 +199,9 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
 
         groupedWithdraws[withdrawKey].push(action);
         groupedSupplies[supplyKey].push(action);
+
+        if (!allMarketKeys.includes(withdrawKey)) allMarketKeys.push(withdrawKey);
+        if (!allMarketKeys.includes(supplyKey)) allMarketKeys.push(supplyKey);
       });
 
       // Generate batched withdraw transactions
@@ -283,6 +292,14 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         data: multicallTx,
         chainId: groupedPosition.chainId,
       });
+
+      // add newly used markets to the cache
+      batchAddUserMarkets(
+        allMarketKeys.map((key) => ({
+          marketUniqueKey: key,
+          chainId: groupedPosition.chainId,
+        })),
+      );
 
       setRebalanceActions([]);
     } catch (error) {
