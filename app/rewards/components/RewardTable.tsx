@@ -14,7 +14,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
-import { getNetworkImg } from '@/utils/networks';
+import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { AggregatedRewardType } from '@/utils/types';
 
@@ -33,7 +33,7 @@ export default function RewardTable({
 }: RewardTableProps) {
   const { chainId } = useAccount();
   const toast = useStyledToast();
-  const [targetChainId, setTargetChainId] = useState<number>(chainId || 1);
+  const [targetChainId, setTargetChainId] = useState<number>(chainId ?? SupportedNetworks.Mainnet);
 
   // Use our custom hook for network switching
   const { switchToNetwork } = useMarketNetwork({
