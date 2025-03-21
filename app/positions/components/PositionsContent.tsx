@@ -43,7 +43,8 @@ export default function Positions() {
   }, [account, address]);
 
   const {
-    isLoading,
+    isPositionsLoading,
+    isEarningsLoading,
     isRefetching,
     positions: marketPositions,
     refetch,
@@ -143,7 +144,7 @@ export default function Positions() {
           userRebalancerInfo={rebalancerInfo}
         />
 
-        {isLoading ? (
+        {isPositionsLoading ? (
           <LoadingScreen message="Loading Supplies..." className="mt-10" />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
@@ -172,6 +173,7 @@ export default function Positions() {
               setSelectedPosition={setSelectedPosition}
               refetch={refetch}
               isRefetching={isRefetching}
+              isLoadingEarnings={isEarningsLoading}
               rebalancerInfo={rebalancerInfo}
             />
           </div>

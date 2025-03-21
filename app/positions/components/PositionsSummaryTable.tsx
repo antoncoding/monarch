@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
+import { PulseLoader} from 'react-spinners';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -13,10 +14,15 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
+import { 
+  EarningsPeriod, 
+  getGroupedEarnings,
+  groupPositionsByLoanAsset,
+  processCollaterals
+} from '@/utils/positions';
 import {
   MarketPosition,
   GroupedPosition,
-  WarningWithDetail,
   MarketPositionWithEarnings,
   UserRebalancerInfo,
 } from '@/utils/types';
@@ -28,13 +34,6 @@ import {
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 
-export enum EarningsPeriod {
-  All = 'all',
-  Day = '1D',
-  Week = '7D',
-  Month = '30D',
-}
-
 type PositionsSummaryTableProps = {
   account: string;
   marketPositions: MarketPositionWithEarnings[];
@@ -43,6 +42,7 @@ type PositionsSummaryTableProps = {
   setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
+  isLoadingEarnings?: boolean;
   rebalancerInfo: UserRebalancerInfo | undefined;
 };
 
@@ -53,6 +53,7 @@ export function PositionsSummaryTable({
   setSelectedPosition,
   refetch,
   isRefetching,
+  isLoadingEarnings,
   account,
   rebalancerInfo,
 }: PositionsSummaryTableProps) {
@@ -72,45 +73,6 @@ export function PositionsSummaryTable({
     return account === address;
   }, [account, address]);
 
-  const getEarningsForPeriod = (position: MarketPositionWithEarnings) => {
-    if (!position.earned) return '0';
-
-    switch (earningsPeriod) {
-      case EarningsPeriod.All:
-        return position.earned.lifetimeEarned;
-      case EarningsPeriod.Day:
-        return position.earned.last24hEarned;
-      case EarningsPeriod.Week:
-        return position.earned.last7dEarned;
-      case EarningsPeriod.Month:
-        return position.earned.last30dEarned;
-      default:
-        return '0';
-    }
-  };
-
-  const getGroupedEarnings = (groupedPosition: GroupedPosition) => {
-    console.log('gruping earnings from', groupedPosition.markets.length, 'positions');
-
-    for (const position of groupedPosition.markets) {
-      const earnings = getEarningsForPeriod(position);
-      console.log('position', position.market.uniqueKey, 'earnings', earnings);
-    }
-
-    return (
-      groupedPosition.markets
-        .reduce(
-          (total, position) => {
-            const earnings = getEarningsForPeriod(position);
-            if (earnings === null) return null;
-            return total === null ? BigInt(earnings) : total + BigInt(earnings);
-          },
-          null as bigint | null,
-        )
-        ?.toString() ?? null
-    );
-  };
-
   const periodLabels: Record<EarningsPeriod, string> = {
     [EarningsPeriod.All]: 'All Time',
     [EarningsPeriod.Day]: '1D',
@@ -118,116 +80,13 @@ export function PositionsSummaryTable({
     [EarningsPeriod.Month]: '30D',
   };
 
-  const groupedPositions: GroupedPosition[] = useMemo(() => {
-    return marketPositions
-      .filter(
-        (position) =>
-          BigInt(position.state.supplyShares) > 0 ||
-          rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey),
-      )
-      .reduce((acc: GroupedPosition[], position) => {
-        const loanAssetAddress = position.market.loanAsset.address;
-        const loanAssetDecimals = position.market.loanAsset.decimals;
-        const chainId = position.market.morphoBlue.chain.id;
+  const groupedPositions = useMemo(() => 
+    groupPositionsByLoanAsset(marketPositions, rebalancerInfo),
+  [marketPositions, rebalancerInfo]);
 
-        let groupedPosition = acc.find(
-          (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
-        );
-
-        if (!groupedPosition) {
-          groupedPosition = {
-            loanAsset: position.market.loanAsset.symbol || 'Unknown',
-            loanAssetAddress,
-            loanAssetDecimals,
-            chainId,
-            totalSupply: 0,
-            totalWeightedApy: 0,
-            collaterals: [],
-            markets: [],
-            processedCollaterals: [],
-            allWarnings: [],
-          };
-          acc.push(groupedPosition);
-        }
-
-        // only push if the position has > 0 supply, earning or is in rebalancer info
-        if (
-          Number(position.state.supplyShares) === 0 &&
-          !rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
-        ) {
-          return acc;
-        }
-
-        groupedPosition.markets.push(position);
-
-        groupedPosition.allWarnings = [
-          ...new Set([
-            ...groupedPosition.allWarnings,
-            ...(position.market.warningsWithDetail || []),
-          ]),
-        ] as WarningWithDetail[];
-
-        const supplyAmount = Number(
-          formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
-        );
-        groupedPosition.totalSupply += supplyAmount;
-
-        const weightedApy = supplyAmount * position.market.state.supplyApy;
-        groupedPosition.totalWeightedApy += weightedApy;
-
-        const collateralAddress = position.market.collateralAsset?.address;
-        const collateralSymbol = position.market.collateralAsset?.symbol;
-
-        if (collateralAddress && collateralSymbol) {
-          const existingCollateral = groupedPosition.collaterals.find(
-            (c) => c.address === collateralAddress,
-          );
-          if (existingCollateral) {
-            existingCollateral.amount += supplyAmount;
-          } else {
-            groupedPosition.collaterals.push({
-              address: collateralAddress,
-              symbol: collateralSymbol,
-              amount: supplyAmount,
-            });
-          }
-        }
-
-        return acc;
-      }, [])
-      .filter((groupedPosition) => groupedPosition.totalSupply > 0)
-      .sort((a, b) => b.totalSupply - a.totalSupply);
-  }, [marketPositions, rebalancerInfo]);
-
-  const processedPositions = useMemo(() => {
-    return groupedPositions.map((position) => {
-      const sortedCollaterals = [...position.collaterals].sort((a, b) => b.amount - a.amount);
-      const totalSupply = position.totalSupply;
-      const processedCollaterals = [];
-      let othersAmount = 0;
-
-      for (const collateral of sortedCollaterals) {
-        const percentage = (collateral.amount / totalSupply) * 100;
-        if (percentage >= 5) {
-          processedCollaterals.push({ ...collateral, percentage });
-        } else {
-          othersAmount += collateral.amount;
-        }
-      }
-
-      if (othersAmount > 0) {
-        const othersPercentage = (othersAmount / totalSupply) * 100;
-        processedCollaterals.push({
-          address: 'others',
-          symbol: 'Others',
-          amount: othersAmount,
-          percentage: othersPercentage,
-        });
-      }
-
-      return { ...position, processedCollaterals };
-    });
-  }, [groupedPositions]);
+  const processedPositions = useMemo(() => 
+    processCollaterals(groupedPositions),
+  [groupedPositions]);
 
   useEffect(() => {
     if (selectedGroupedPosition) {
@@ -330,7 +189,7 @@ export function PositionsSummaryTable({
               const isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
 
-              const earnings = getGroupedEarnings(groupedPosition);
+              const earnings = getGroupedEarnings(groupedPosition, earningsPeriod);
 
               return (
                 <React.Fragment key={rowKey}>
@@ -369,18 +228,24 @@ export function PositionsSummaryTable({
                     </td>
                     <td data-label={`Interest Accrued (${earningsPeriod})`}>
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">
-                          {(() => {
-                            if (earnings === null) return '-';
-                            return (
-                              formatReadable(
-                                Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)),
-                              ) +
-                              ' ' +
-                              groupedPosition.loanAsset
-                            );
-                          })()}
-                        </span>
+                        {isLoadingEarnings ? (
+                          <div className="flex items-center justify-center">
+                            <PulseLoader size={4} color="#f45f2d" margin={3} />
+                          </div>
+                        ) : (
+                          <span className="font-medium">
+                            {(() => {
+                              if (earnings === null) return '-';
+                              return (
+                                formatReadable(
+                                  Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)),
+                                ) +
+                                ' ' +
+                                groupedPosition.loanAsset
+                              );
+                            })()}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td data-label="Collateral">
