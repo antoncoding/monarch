@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
-import { 
+import {
   calculateEarningsFromPeriod as calculateEarnings,
-  initializePositionsWithEmptyEarnings
+  initializePositionsWithEmptyEarnings,
 } from '@/utils/positions';
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { MarketPositionWithEarnings } from '@/utils/types';
@@ -41,7 +41,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   // Loading state for positions that doesn't include earnings calculation
   const isPositionsLoading = positionsLoading;
-  
+
   // Loading state that combines all loading states (used for earnings)
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarnings;
 
@@ -120,30 +120,31 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
           const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
           const blockNumbers = blockNums[chainId];
-          
+
           const earned = await calculateEarnings(
             position,
             history.items,
             user as Address,
             chainId,
-            blockNumbers
+            blockNumbers,
           );
-          
+
           // Update this single position with earnings
-          setPositionsWithEarnings(prev => {
+          setPositionsWithEarnings((prev) => {
             const updatedPositions = [...prev];
-            const positionIndex = updatedPositions.findIndex(p => 
-              p.market.uniqueKey === position.market.uniqueKey &&
-              p.market.morphoBlue.chain.id === position.market.morphoBlue.chain.id
+            const positionIndex = updatedPositions.findIndex(
+              (p) =>
+                p.market.uniqueKey === position.market.uniqueKey &&
+                p.market.morphoBlue.chain.id === position.market.morphoBlue.chain.id,
             );
-            
+
             if (positionIndex !== -1) {
               updatedPositions[positionIndex] = {
                 ...updatedPositions[positionIndex],
                 earned,
               };
             }
-            
+
             return updatedPositions;
           });
         }
@@ -159,8 +160,8 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   return {
     positions: positionsWithEarnings,
-    isPositionsLoading,     // For initial load of positions only
-    isEarningsLoading,      // For earnings calculation
+    isPositionsLoading, // For initial load of positions only
+    isEarningsLoading, // For earnings calculation
     isRefetching,
     error: error ?? positionsError,
     refetch,

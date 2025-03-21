@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState, Dispatch, SetStateAction } from 'react';
+import { useCallback, useState, Dispatch, SetStateAction } from 'react';
 import { Address, encodeFunctionData } from 'viem';
-import { useAccount, useBalance, useSwitchChain } from 'wagmi';
+import { useAccount, useBalance } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -14,7 +14,7 @@ import { Market } from '@/utils/types';
 
 export type SupplyStepType = 'approve' | 'signing' | 'supplying';
 
-export interface UseSupplyMarketReturn {
+export type UseSupplyMarketReturn = {
   // State
   supplyAmount: bigint;
   setSupplyAmount: Dispatch<SetStateAction<bigint>>;
@@ -25,28 +25,23 @@ export interface UseSupplyMarketReturn {
   showProcessModal: boolean;
   setShowProcessModal: Dispatch<SetStateAction<boolean>>;
   currentStep: SupplyStepType;
-  needSwitchChain: boolean;
-  
+
   // Balance data
   tokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
-  
+
   // Transaction state
   isApproved: boolean;
   permit2Authorized: boolean;
   isLoadingPermit2: boolean;
   supplyPending: boolean;
-  
+
   // Actions
-  handleSwitchChain: () => void;
   approveAndSupply: () => Promise<void>;
   signAndSupply: () => Promise<void>;
-}
+};
 
-export function useSupplyMarket(
-  market: Market,
-  onSuccess?: () => void
-): UseSupplyMarketReturn {
+export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupplyMarketReturn {
   // State
   const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
@@ -56,8 +51,7 @@ export function useSupplyMarket(
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const { batchAddUserMarkets } = useUserMarketsCache();
-  const { address: account, isConnected, chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { address: account, chainId } = useAccount();
   const toast = useStyledToast();
 
   // Get token balance
@@ -72,12 +66,6 @@ export function useSupplyMarket(
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
-
-  // Check if chain switch is needed
-  const needSwitchChain = useMemo(
-    () => chainId !== market.morphoBlue.chain.id,
-    [chainId, market.morphoBlue.chain.id],
-  );
 
   // Handle Permit2 authorization
   const {
@@ -117,16 +105,11 @@ export function useSupplyMarket(
     onSuccess,
   });
 
-  // Switch chain handler
-  const handleSwitchChain = useCallback(() => {
-    return switchChain({ chainId: market.morphoBlue.chain.id });
-  }, [market.morphoBlue.chain.id, switchChain]);
-
   // Execute supply transaction
   const executeSupplyTransaction = useCallback(async () => {
     try {
       const txs: `0x${string}`[] = [];
-      
+
       if (useEth) {
         txs.push(
           encodeFunctionData({
@@ -211,7 +194,7 @@ export function useSupplyMarket(
 
       // come back to main supply page
       setShowProcessModal(false);
-      
+
       return true;
     } catch (error: unknown) {
       setShowProcessModal(false);
@@ -351,21 +334,19 @@ export function useSupplyMarket(
     showProcessModal,
     setShowProcessModal,
     currentStep,
-    needSwitchChain,
-    
+
     // Balance data
     tokenBalance: tokenBalance?.value,
     ethBalance: ethBalance?.value,
-    
+
     // Transaction state
     isApproved,
     permit2Authorized,
     isLoadingPermit2,
     supplyPending,
-    
+
     // Actions
-    handleSwitchChain,
     approveAndSupply,
     signAndSupply,
   };
-} 
+}

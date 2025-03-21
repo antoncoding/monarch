@@ -1,13 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Address } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { DistributionResponseType } from '@/hooks/useRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -16,6 +17,7 @@ import { getAssetURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { AggregatedRewardType } from '@/utils/types';
+
 type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
@@ -30,8 +32,17 @@ export default function RewardTable({
   showClaimed,
 }: RewardTableProps) {
   const { chainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
   const toast = useStyledToast();
+  const [targetChainId, setTargetChainId] = useState<number>(chainId || 1);
+
+  // Use our custom hook for network switching
+  const { switchToNetwork } = useMarketNetwork({
+    targetChainId,
+    onNetworkSwitched: () => {
+      // Additional actions after network switch if needed
+    },
+  });
+
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
     pendingText: 'Claiming Reward...',
@@ -211,9 +222,11 @@ export default function RewardTable({
                                 return;
                               }
                               if (chainId !== distribution.distributor.chain_id) {
-                                await switchChainAsync({
-                                  chainId: distribution.distributor.chain_id,
-                                });
+                                // Set the target chain ID and switch
+                                setTargetChainId(distribution.distributor.chain_id);
+                                switchToNetwork();
+                                // Wait for network switch
+                                await new Promise((resolve) => setTimeout(resolve, 1000));
                               }
                               sendTransaction({
                                 account: account as Address,

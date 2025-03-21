@@ -6,6 +6,7 @@ import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
@@ -38,17 +39,20 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
     showProcessModal,
     setShowProcessModal,
     currentStep,
-    needSwitchChain,
     tokenBalance,
     ethBalance,
     isApproved,
     permit2Authorized,
     isLoadingPermit2,
     supplyPending,
-    handleSwitchChain,
     approveAndSupply,
     signAndSupply,
   } = useSupplyMarket(market);
+
+  // Use the market network hook to handle network switching
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: market.morphoBlue.chain.id,
+  });
 
   return (
     <div
@@ -167,8 +171,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   <div className="flex items-center justify-center gap-2">
                     <p className="text-right font-zen">
                       {useEth
-                        ? formatBalance(ethBalance || BigInt(0), 18)
-                        : formatBalance(tokenBalance || BigInt(0), market.loanAsset.decimals)}
+                        ? formatBalance(ethBalance ?? BigInt(0), 18)
+                        : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}
                     </p>
                     <p className="text-right font-zen">
                       {useEth ? 'ETH' : market.loanAsset.symbol}{' '}
@@ -209,7 +213,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               <div className="relative flex-grow">
                 <Input
                   decimals={market.loanAsset.decimals}
-                  max={useEth ? ethBalance || BigInt(0) : tokenBalance || BigInt(0)}
+                  max={useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0)}
                   setValue={setSupplyAmount}
                   setError={setInputError}
                   exceedMaxErrMessage="Insufficient Balance"
@@ -218,11 +222,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               </div>
 
               {needSwitchChain ? (
-                <Button
-                  onClick={() => void handleSwitchChain()}
-                  className="ml-2 min-w-32"
-                  variant="solid"
-                >
+                <Button onClick={switchToNetwork} className="ml-2 min-w-32" variant="solid">
                   Switch Chain
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
