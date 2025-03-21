@@ -111,6 +111,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
         setError(null);
 
         // Process positions one by one to update earnings progressively
+        // Potential issue: too slow, parallel processing might be better
         for (const position of positions) {
           const history = await fetchTransactions({
             userAddress: [user],
