@@ -4,9 +4,9 @@ import {
   EarningsCalculation,
   filterTransactionsInPeriod,
 } from '@/utils/interest';
+import { fetchPositionSnapshot } from '@/utils/positions';
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
-import { usePositionSnapshot } from './usePositionSnapshot';
 import useUserTransactions from './useUserTransactions';
 
 export type PositionReport = {
@@ -38,7 +38,6 @@ export const usePositionReport = (
   startDate?: Date,
   endDate?: Date,
 ) => {
-  const { fetchPositionSnapshot } = usePositionSnapshot();
   const { fetchTransactions } = useUserTransactions();
 
   const generateReport = async (): Promise<ReportSummary | null> => {

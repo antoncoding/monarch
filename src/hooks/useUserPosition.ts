@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
 import { userPositionForMarketQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
+import { fetchPositionSnapshot } from '@/utils/positions';
 import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
-import { usePositionSnapshot } from './usePositionSnapshot';
 
 const useUserPositions = (
   user: string | undefined,
@@ -15,8 +15,6 @@ const useUserPositions = (
   const [isRefetching, setIsRefetching] = useState(false);
   const [position, setPosition] = useState<MarketPosition | null>(null);
   const [positionsError, setPositionsError] = useState<unknown | null>(null);
-
-  const { fetchPositionSnapshot } = usePositionSnapshot();
 
   const fetchData = useCallback(
     async (isRefetch = false, onSuccess?: () => void) => {

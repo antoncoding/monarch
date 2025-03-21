@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
 import { userPositionsQuery } from '@/graphql/queries';
 import { SupportedNetworks } from '@/utils/networks';
+import { fetchPositionSnapshot } from '@/utils/positions';
 import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useMarkets } from './useMarkets';
-import { usePositionSnapshot } from './usePositionSnapshot';
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,6 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
 
   const { markets } = useMarkets();
 
-  const { fetchPositionSnapshot } = usePositionSnapshot();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache();
 
   const fetchData = useCallback(
