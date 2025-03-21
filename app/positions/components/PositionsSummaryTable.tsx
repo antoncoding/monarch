@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
-import { PulseLoader} from 'react-spinners';
+import { PulseLoader } from 'react-spinners';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -14,11 +14,11 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import { 
-  EarningsPeriod, 
+import {
+  EarningsPeriod,
   getGroupedEarnings,
   groupPositionsByLoanAsset,
-  processCollaterals
+  processCollaterals,
 } from '@/utils/positions';
 import {
   MarketPosition,
@@ -80,13 +80,15 @@ export function PositionsSummaryTable({
     [EarningsPeriod.Month]: '30D',
   };
 
-  const groupedPositions = useMemo(() => 
-    groupPositionsByLoanAsset(marketPositions, rebalancerInfo),
-  [marketPositions, rebalancerInfo]);
+  const groupedPositions = useMemo(
+    () => groupPositionsByLoanAsset(marketPositions, rebalancerInfo),
+    [marketPositions, rebalancerInfo],
+  );
 
-  const processedPositions = useMemo(() => 
-    processCollaterals(groupedPositions),
-  [groupedPositions]);
+  const processedPositions = useMemo(
+    () => processCollaterals(groupedPositions),
+    [groupedPositions],
+  );
 
   useEffect(() => {
     if (selectedGroupedPosition) {
@@ -238,7 +240,9 @@ export function PositionsSummaryTable({
                               if (earnings === null) return '-';
                               return (
                                 formatReadable(
-                                  Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)),
+                                  Number(
+                                    formatBalance(earnings, groupedPosition.loanAssetDecimals),
+                                  ),
                                 ) +
                                 ' ' +
                                 groupedPosition.loanAsset

@@ -2,9 +2,9 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
 import { GrRefresh } from 'react-icons/gr';
 import { parseUnits, formatUnits } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
@@ -239,18 +239,18 @@ export function RebalanceModal({
     resetSelections,
   ]);
 
-  const { chainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-
-  const needSwitchChain = useMemo(
-    () => chainId !== groupedPosition.chainId,
-    [chainId, groupedPosition.chainId],
-  );
+  // Use the market network hook for chain switching with direct chainId
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: groupedPosition.chainId,
+  });
 
   const handleExecuteRebalance = useCallback(async () => {
     if (needSwitchChain) {
       try {
-        await switchChainAsync({ chainId: groupedPosition.chainId });
+        // Call our switchToNetwork function
+        switchToNetwork();
+        // Wait a bit for the network switch to complete
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
         toast.error('Something went wrong', 'Failed to switch network. Please try again');
         return;
@@ -265,7 +265,7 @@ export function RebalanceModal({
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance, needSwitchChain, switchChainAsync, groupedPosition.chainId, toast]);
+  }, [executeRebalance, needSwitchChain, switchToNetwork, toast]);
 
   const handleManualRefresh = () => {
     refetch(() => {

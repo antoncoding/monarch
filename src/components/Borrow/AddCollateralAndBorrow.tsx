@@ -3,13 +3,14 @@ import { Switch } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Address } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { ERC20Token } from '@/utils/tokens';
@@ -45,7 +46,7 @@ export function AddCollateralAndBorrow({
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { isConnected, chainId } = useAccount();
+  const { isConnected } = useAccount();
 
   // Add a loading state for the refresh button
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -57,7 +58,10 @@ export function AddCollateralAndBorrow({
   const [currentLTV, setCurrentLTV] = useState<bigint>(BigInt(0));
   const [newLTV, setNewLTV] = useState<bigint>(BigInt(0));
 
-  const { switchChain } = useSwitchChain();
+  // Use the market network hook for chain switching
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: market.morphoBlue.chain.id,
+  });
 
   // Use the new hook for borrow transaction logic
   const {
@@ -77,11 +81,6 @@ export function AddCollateralAndBorrow({
     collateralAmount,
     borrowAmount,
   });
-
-  const needSwitchChain = useMemo(
-    () => chainId !== market.morphoBlue.chain.id,
-    [chainId, market.morphoBlue.chain.id],
-  );
 
   const { price: oraclePrice } = useOraclePrice({
     oracle: market.oracleAddress as Address,
@@ -391,11 +390,7 @@ export function AddCollateralAndBorrow({
                   <AccountConnect />
                 </div>
               ) : needSwitchChain ? (
-                <Button
-                  onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
-                  className="min-w-32"
-                  variant="solid"
-                >
+                <Button onClick={switchToNetwork} className="min-w-32" variant="solid">
                   Switch Chain
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (

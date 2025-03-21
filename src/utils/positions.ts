@@ -2,13 +2,13 @@ import { Address } from 'viem';
 import { formatBalance } from './balance';
 import { calculateEarningsFromSnapshot } from './interest';
 import { SupportedNetworks } from './networks';
-import { 
-  MarketPosition, 
-  MarketPositionWithEarnings, 
-  PositionEarnings, 
+import {
+  MarketPosition,
+  MarketPositionWithEarnings,
+  PositionEarnings,
   UserTransaction,
   GroupedPosition,
-  WarningWithDetail
+  WarningWithDetail,
 } from './types';
 
 export type PositionSnapshot = {
@@ -31,7 +31,7 @@ type PositionResponse = {
 
 /**
  * Fetches a position snapshot for a specific market, user, and block number
- * 
+ *
  * @param marketId - The unique ID of the market
  * @param userAddress - The user's address
  * @param chainId - The chain ID of the network
@@ -84,7 +84,7 @@ export async function fetchPositionSnapshot(
 
 /**
  * Calculates earnings for a position across different time periods
- * 
+ *
  * @param position - The market position
  * @param transactions - User transactions for the position
  * @param userAddress - The user's address
@@ -170,14 +170,14 @@ export enum EarningsPeriod {
 
 /**
  * Get the earnings value for a specific period
- * 
+ *
  * @param position - Position with earnings data
  * @param period - The period to get earnings for
  * @returns The earnings value as a string
  */
 export function getEarningsForPeriod(
   position: MarketPositionWithEarnings,
-  period: EarningsPeriod
+  period: EarningsPeriod,
 ): string | null {
   if (!position.earned) return '0';
 
@@ -197,14 +197,14 @@ export function getEarningsForPeriod(
 
 /**
  * Get combined earnings for a group of positions
- * 
+ *
  * @param groupedPosition - The grouped position
  * @param period - The period to get earnings for
  * @returns The total earnings as a string or null
  */
 export function getGroupedEarnings(
   groupedPosition: GroupedPosition,
-  period: EarningsPeriod
+  period: EarningsPeriod,
 ): string | null {
   return (
     groupedPosition.markets
@@ -222,14 +222,14 @@ export function getGroupedEarnings(
 
 /**
  * Group positions by loan asset
- * 
+ *
  * @param positions - Array of positions with earnings
  * @param rebalancerInfo - Optional rebalancer info
  * @returns Array of grouped positions
  */
 export function groupPositionsByLoanAsset(
   positions: MarketPositionWithEarnings[],
-  rebalancerInfo?: { marketCaps: { marketId: string }[] }
+  rebalancerInfo?: { marketCaps: { marketId: string }[] },
 ): GroupedPosition[] {
   return positions
     .filter(
@@ -273,10 +273,7 @@ export function groupPositionsByLoanAsset(
       groupedPosition.markets.push(position);
 
       groupedPosition.allWarnings = [
-        ...new Set([
-          ...groupedPosition.allWarnings,
-          ...(position.market.warningsWithDetail || []),
-        ]),
+        ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
       ] as WarningWithDetail[];
 
       const supplyAmount = Number(
@@ -313,7 +310,7 @@ export function groupPositionsByLoanAsset(
 
 /**
  * Process collaterals for grouped positions, simplifying small collaterals into an "Others" category
- * 
+ *
  * @param groupedPositions - Array of grouped positions
  * @returns Processed grouped positions with simplified collaterals
  */
@@ -349,20 +346,20 @@ export function processCollaterals(groupedPositions: GroupedPosition[]): Grouped
 
 /**
  * Initialize positions with empty earnings data
- * 
+ *
  * @param positions - Original positions without earnings data
  * @returns Positions with initialized empty earnings
  */
 export function initializePositionsWithEmptyEarnings(
-  positions: MarketPosition[]
+  positions: MarketPosition[],
 ): MarketPositionWithEarnings[] {
-  return positions.map(position => ({
+  return positions.map((position) => ({
     ...position,
     earned: {
       lifetimeEarned: '0',
       last24hEarned: null,
       last7dEarned: null,
       last30dEarned: null,
-    }
+    },
   }));
-} 
+}

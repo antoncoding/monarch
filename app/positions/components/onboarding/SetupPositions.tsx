@@ -3,21 +3,21 @@ import { Slider } from '@nextui-org/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
-import { useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
+import { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const toast = useStyledToast();
-  const chainId = useChainId();
   const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
   const { balances } = useUserBalances();
   const [useEth] = useLocalStorage('useEth', false);
@@ -29,12 +29,10 @@ export function SetupPositions() {
   const [error, setError] = useState<string | null>(null);
   const [isSupplying, setIsSupplying] = useState(false);
 
-  const needSwitchChain = useMemo(
-    () => chainId !== selectedToken?.network,
-    [chainId, selectedToken],
-  );
-
-  const { switchChainAsync } = useSwitchChain();
+  // Use our custom hook for network switching
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: selectedToken?.network ?? SupportedNetworks.Base,
+  });
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -227,7 +225,9 @@ export function SetupPositions() {
 
     if (needSwitchChain && selectedToken) {
       try {
-        await switchChainAsync({ chainId: selectedToken.network });
+        switchToNetwork();
+        // Wait for network switch to complete
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (switchError) {
         toast.error('Failed to switch network', 'Please try again');
         return;

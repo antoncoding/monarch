@@ -1,14 +1,15 @@
 // Import the necessary hooks
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Address, encodeFunctionData } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useAccount } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
@@ -35,12 +36,10 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
     position.market.morphoBlue.chain.id,
   );
 
-  const needSwitchChain = useMemo(
-    () => chainId !== position.market.morphoBlue.chain.id,
-    [chainId, position.market.morphoBlue.chain.id],
-  );
-
-  const { switchChain } = useSwitchChain();
+  // Use the market network hook for chain switching
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: position.market.morphoBlue.chain.id,
+  });
 
   const { isConfirming, sendTransaction } = useTransactionWithToast({
     toastId: 'withdraw',
@@ -196,7 +195,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
           {needSwitchChain ? (
             <button
               type="button"
-              onClick={() => switchChain({ chainId: position.market.morphoBlue.chain.id })}
+              onClick={switchToNetwork}
               className="bg-monarch-orange ml-2 h-10 rounded p-2 text-sm text-primary opacity-90 duration-300 ease-in-out hover:scale-110 hover:opacity-100"
             >
               Switch Chain
