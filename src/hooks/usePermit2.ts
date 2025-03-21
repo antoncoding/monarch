@@ -56,7 +56,7 @@ export function usePermit2({
   const { data: signature, signTypedDataAsync } = useSignTypedData({});
 
   const permit2Authorized = useMemo(
-    () => allowanceToPermit2 && allowanceToPermit2 > amount,
+    () => (!!allowanceToPermit2) && allowanceToPermit2 > amount,
     [allowanceToPermit2, amount],
   );
 

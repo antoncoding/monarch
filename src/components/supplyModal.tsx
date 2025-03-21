@@ -1,312 +1,54 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { Address, encodeFunctionData } from 'viem';
-import { useAccount, useBalance, useSwitchChain } from 'wagmi';
-import morphoBundlerAbi from '@/abis/bundlerV2';
+import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
-import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { usePermit2 } from '@/hooks/usePermit2';
-import { useStyledToast } from '@/hooks/useStyledToast';
-import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
+import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
-import { getBundlerV2, getIRMTitle, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
+import { getIRMTitle } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
+
 type SupplyModalProps = {
   market: Market;
   onClose: () => void;
 };
 
 export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element {
-  // Add state for the supply amount and using ETH
-  const [supplyAmount, setSupplyAmount] = useState<bigint>(BigInt(0));
-  const [inputError, setInputError] = useState<string | null>(null);
-  const [useEth, setUseEth] = useState<boolean>(false);
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'supplying'>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-
-  const { batchAddUserMarkets } = useUserMarketsCache();
-
-  const { address: account, isConnected, chainId } = useAccount();
-
+  const { isConnected } = useAccount();
   const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
-  const { switchChain } = useSwitchChain();
-
-  const toast = useStyledToast();
-
-  const { data: tokenBalance } = useBalance({
-    token: market.loanAsset.address as `0x${string}`,
-    address: account,
-    chainId: market.morphoBlue.chain.id,
-  });
-
-  const { data: ethBalance } = useBalance({
-    address: account,
-    chainId: market.morphoBlue.chain.id,
-  });
-
-  // get allowance for morpho
+  // Use the hook to handle all supply logic
   const {
-    authorizePermit2,
-    permit2Authorized,
-    isLoading: isLoadingPermit2,
-    signForBundlers,
-  } = usePermit2({
-    user: account as `0x${string}`,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
-    token: market.loanAsset.address as `0x${string}`,
-    refetchInterval: 10000,
-    chainId: market.morphoBlue.chain.id,
-    tokenSymbol: market.loanAsset.symbol,
-    amount: supplyAmount,
-  });
-
-  const { isApproved, approve } = useERC20Approval({
-    token: market.loanAsset.address as Address,
-    spender: getBundlerV2(market.morphoBlue.chain.id),
-    amount: supplyAmount,
-    tokenSymbol: market.loanAsset.symbol,
-  });
-
-  const needSwitchChain = useMemo(
-    () => chainId !== market.morphoBlue.chain.id,
-    [chainId, market.morphoBlue.chain.id],
-  );
-
-  const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
-    toastId: 'supply',
-    pendingText: `Supplying ${formatBalance(supplyAmount, market.loanAsset.decimals)} ${
-      market.loanAsset.symbol
-    }`,
-    successText: `${market.loanAsset.symbol} Supplied`,
-    errorText: 'Failed to supply',
-    chainId,
-    pendingDescription: `Supplying to market ${market.uniqueKey.slice(2, 8)}...`,
-    successDescription: `Successfully supplied to market ${market.uniqueKey.slice(2, 8)}`,
-  });
-
-  const executeSupplyTransaction = useCallback(async () => {
-    try {
-      const txs: `0x${string}`[] = [];
-      if (useEth) {
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'wrapNative',
-            args: [supplyAmount],
-          }),
-        );
-      } else if (usePermit2Setting) {
-        const { sigs, permitSingle } = await signForBundlers();
-        console.log('Signed for bundlers:', { sigs, permitSingle });
-
-        const tx1 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'approve2',
-          args: [permitSingle, sigs, false],
-        });
-
-        // transferFrom with permit2
-        const tx2 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'transferFrom2',
-          args: [market.loanAsset.address as Address, supplyAmount],
-        });
-
-        txs.push(tx1);
-        txs.push(tx2);
-      } else {
-        // For standard ERC20 flow, we only need to transfer the tokens
-        txs.push(
-          encodeFunctionData({
-            abi: morphoBundlerAbi,
-            functionName: 'erc20TransferFrom',
-            args: [market.loanAsset.address as Address, supplyAmount],
-          }),
-        );
-      }
-
-      setCurrentStep('supplying');
-
-      const minShares = BigInt(1);
-      const morphoSupplyTx = encodeFunctionData({
-        abi: morphoBundlerAbi,
-        functionName: 'morphoSupply',
-        args: [
-          {
-            loanToken: market.loanAsset.address as Address,
-            collateralToken: market.collateralAsset.address as Address,
-            oracle: market.oracleAddress as Address,
-            irm: market.irmAddress as Address,
-            lltv: BigInt(market.lltv),
-          },
-          supplyAmount,
-          BigInt(0),
-          minShares,
-          account as `0x${string}`,
-          '0x', // callback
-        ],
-      });
-
-      txs.push(morphoSupplyTx);
-
-      // add timeout here to prevent rabby reverting
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      await sendTransactionAsync({
-        account,
-        to: getBundlerV2(market.morphoBlue.chain.id),
-        data: (encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'multicall',
-          args: [txs],
-        }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
-        value: useEth ? supplyAmount : 0n,
-      });
-
-      batchAddUserMarkets([
-        {
-          marketUniqueKey: market.uniqueKey,
-          chainId: market.morphoBlue.chain.id,
-        },
-      ]);
-
-      // come back to main supply page
-      setShowProcessModal(false);
-    } catch (error: unknown) {
-      setShowProcessModal(false);
-      toast.error('Supply Failed', 'Supply to market failed or cancelled');
-    }
-  }, [
-    account,
-    market,
     supplyAmount,
-    sendTransactionAsync,
+    setSupplyAmount,
+    inputError,
+    setInputError,
     useEth,
-    signForBundlers,
-    usePermit2Setting,
-    toast,
-  ]);
-
-  const approveAndSupply = useCallback(async () => {
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet to continue.');
-      return;
-    }
-
-    try {
-      setShowProcessModal(true);
-      setCurrentStep('approve');
-
-      if (useEth) {
-        setCurrentStep('supplying');
-        await executeSupplyTransaction();
-        return;
-      }
-
-      if (usePermit2Setting) {
-        // Permit2 flow
-        try {
-          await authorizePermit2();
-          setCurrentStep('signing');
-
-          // Small delay to prevent UI glitches
-          await new Promise((resolve) => setTimeout(resolve, 500));
-
-          await executeSupplyTransaction();
-        } catch (error: unknown) {
-          console.error('Error in Permit2 flow:', error);
-          if (error instanceof Error) {
-            if (error.message.includes('User rejected')) {
-              toast.error('Transaction rejected', 'Transaction rejected by user');
-            } else {
-              toast.error('Error', 'Failed to process Permit2 transaction');
-            }
-          } else {
-            toast.error('Error', 'An unexpected error occurred');
-          }
-          throw error;
-        }
-        return;
-      }
-
-      // Standard ERC20 flow
-      if (!isApproved) {
-        try {
-          await approve();
-          setCurrentStep('supplying');
-
-          // Small delay to prevent UI glitches
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (error: unknown) {
-          console.error('Error in approval:', error);
-          if (error instanceof Error) {
-            if (error.message.includes('User rejected')) {
-              toast.error('Transaction rejected', 'Approval rejected by user');
-            } else {
-              toast.error('Transaction Error', 'Failed to approve token');
-            }
-          } else {
-            toast.error('Transaction Error', 'An unexpected error occurred during approval');
-          }
-          throw error;
-        }
-      } else {
-        setCurrentStep('supplying');
-      }
-
-      await executeSupplyTransaction();
-    } catch (error: unknown) {
-      console.error('Error in approveAndSupply:', error);
-      setShowProcessModal(false);
-    }
-  }, [
-    account,
-    authorizePermit2,
-    executeSupplyTransaction,
-    useEth,
-    usePermit2Setting,
+    setUseEth,
+    showProcessModal,
+    setShowProcessModal,
+    currentStep,
+    needSwitchChain,
+    tokenBalance,
+    ethBalance,
     isApproved,
-    approve,
-    toast,
-  ]);
-
-  const signAndSupply = useCallback(async () => {
-    if (!account) {
-      toast.info('No account connected', 'Please connect your wallet to continue.');
-      return;
-    }
-
-    try {
-      setShowProcessModal(true);
-      setCurrentStep('signing');
-      await executeSupplyTransaction();
-    } catch (error: unknown) {
-      console.error('Error in signAndSupply:', error);
-      setShowProcessModal(false);
-      if (error instanceof Error) {
-        if (error.message.includes('User rejected')) {
-          toast.error('Transaction rejected', 'Transaction rejected by user');
-        } else {
-          toast.error('Transaction Error', 'Failed to process transaction');
-        }
-      } else {
-        toast.error('Transaction Error', 'An unexpected error occurred');
-      }
-    }
-  }, [account, executeSupplyTransaction, toast]);
+    permit2Authorized,
+    isLoadingPermit2,
+    supplyPending,
+    handleSwitchChain,
+    approveAndSupply,
+    signAndSupply,
+  } = useSupplyMarket(market);
 
   return (
     <div
@@ -425,11 +167,8 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                   <div className="flex items-center justify-center gap-2">
                     <p className="text-right font-zen">
                       {useEth
-                        ? formatBalance(ethBalance?.value ? ethBalance.value : '0', 18)
-                        : formatBalance(
-                            tokenBalance?.value ? tokenBalance.value : '0',
-                            market.loanAsset.decimals,
-                          )}
+                        ? formatBalance(ethBalance || BigInt(0), 18)
+                        : formatBalance(tokenBalance || BigInt(0), market.loanAsset.decimals)}
                     </p>
                     <p className="text-right font-zen">
                       {useEth ? 'ETH' : market.loanAsset.symbol}{' '}
@@ -470,15 +209,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               <div className="relative flex-grow">
                 <Input
                   decimals={market.loanAsset.decimals}
-                  max={
-                    useEth
-                      ? ethBalance?.value
-                        ? ethBalance.value
-                        : BigInt(0)
-                      : tokenBalance?.value
-                      ? tokenBalance.value
-                      : BigInt(0)
-                  }
+                  max={useEth ? ethBalance || BigInt(0) : tokenBalance || BigInt(0)}
                   setValue={setSupplyAmount}
                   setError={setInputError}
                   exceedMaxErrMessage="Insufficient Balance"
@@ -488,7 +219,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
 
               {needSwitchChain ? (
                 <Button
-                  onClick={() => void switchChain({ chainId: market.morphoBlue.chain.id })}
+                  onClick={() => void handleSwitchChain()}
                   className="ml-2 min-w-32"
                   variant="solid"
                 >
