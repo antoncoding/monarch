@@ -21,6 +21,10 @@ export const getNestedProperty = (obj: Market, path: string | ((item: Market) =>
     return path(obj);
   }
 
+  if (!path) {
+    return undefined;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
   return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
 };
@@ -98,8 +102,11 @@ export function applyFilterAndSort(
         return 0;
       } else {
         const property = sortProperties[sortColumn];
+        if (!property) {
+          return 0;
+        }
+        
         const aValue = getNestedProperty(a, property);
-
         const bValue = getNestedProperty(b, property);
         comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
       }

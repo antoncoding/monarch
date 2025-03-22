@@ -30,9 +30,15 @@ import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
 
-const defaultSortColumn = Number(
+const storedSortColumn = Number(
   storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
 );
+
+// Ensure the sort column is a valid value
+const defaultSortColumn = Object.values(SortColumn).includes(storedSortColumn)
+  ? storedSortColumn
+  : SortColumn.Supply;
+
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 const defaultStaredMarkets = JSON.parse(
   storage.getItem(keys.MarketFavoritesKey) ?? '[]',
@@ -262,6 +268,13 @@ export default function Markets() {
 
   const titleOnclick = useCallback(
     (column: number) => {
+      // Validate that column is a valid SortColumn value
+      const isValidColumn = Object.values(SortColumn).includes(column);
+      if (!isValidColumn) {
+        console.error(`Invalid sort column value: ${column}`);
+        return;
+      }
+
       setSortColumn(column);
       storage.setItem(keys.MarketSortColumnKey, column.toString());
 
