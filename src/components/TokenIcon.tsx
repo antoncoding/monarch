@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
+import { Tooltip } from '@nextui-org/tooltip';
 import Image from 'next/image';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { Tooltip } from '@nextui-org/tooltip';
 import { TooltipContent } from './TooltipContent';
 type TokenIconProps = {
   address: string;
@@ -29,7 +29,7 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
     />
 
     const detail = token.isFactoryToken
-      ? `This token is auto-detected from protocol ${token.protocol?.name} `
+      ? `This token is auto-detected from ${token.protocol?.name} `
       : `This token is trusted by Monarch whitelist`;
 
     return (
