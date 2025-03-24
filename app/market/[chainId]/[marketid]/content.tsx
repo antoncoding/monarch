@@ -188,6 +188,7 @@ function MarketContent() {
                     <TokenIcon
                       address={market.loanAsset.address}
                       chainId={market.morphoBlue.chain.id}
+                      symbol={market.loanAsset.symbol}
                       width={20}
                       height={20}
                     />
@@ -207,6 +208,7 @@ function MarketContent() {
                     <TokenIcon
                       address={market.collateralAsset.address}
                       chainId={market.morphoBlue.chain.id}
+                      symbol={market.collateralAsset.symbol}
                       width={20}
                       height={20}
                     />

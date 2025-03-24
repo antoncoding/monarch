@@ -3,6 +3,9 @@
 import { ReactNode } from 'react';
 import { MarketsProvider } from '@/contexts/MarketsContext';
 import { OnboardingProvider } from 'app/positions/components/onboarding/OnboardingContext';
+import { ConnectRedirectProvider } from './ConnectRedirectProvider';
+import { ThemeProviders } from './ThemeProvider';
+import { TokenProvider } from './TokenProvider';
 
 type ClientProvidersProps = {
   children: ReactNode;
@@ -10,8 +13,14 @@ type ClientProvidersProps = {
 
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <MarketsProvider>
-      <OnboardingProvider>{children}</OnboardingProvider>
-    </MarketsProvider>
+    <ThemeProviders>
+      <TokenProvider>
+        <ConnectRedirectProvider>
+          <MarketsProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </MarketsProvider>
+        </ConnectRedirectProvider>
+      </TokenProvider>
+    </ThemeProviders>
   );
 }

@@ -110,7 +110,7 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
                       key={address}
                       className="bg-surface flex items-center gap-2 rounded px-3 py-2"
                     >
-                      <TokenIcon address={address} chainId={chainId} width={18} height={18} />
+                      <TokenIcon address={address} chainId={chainId} symbol={symbol} width={18} height={18} />
                       <span className="text-sm">
                         {symbol ?? 'Unknown'} ({marketsForLoanAsset.length})
                       </span>

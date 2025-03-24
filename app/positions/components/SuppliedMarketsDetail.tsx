@@ -164,6 +164,7 @@ export function SuppliedMarketsDetail({
                         <TokenIcon
                           address={position.market.collateralAsset.address}
                           chainId={position.market.morphoBlue.chain.id}
+                          symbol={position.market.collateralAsset.symbol}
                           width={18}
                           height={18}
                         />

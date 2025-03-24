@@ -112,6 +112,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                       <TokenIcon
                         address={market.loanAsset.address}
                         chainId={market.morphoBlue.chain.id}
+                        symbol={market.loanAsset.symbol}
                         width={16}
                         height={16}
                       />
@@ -128,6 +129,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                       <TokenIcon
                         address={market.collateralAsset.address}
                         chainId={market.morphoBlue.chain.id}
+                        symbol={market.collateralAsset.symbol}
                         width={16}
                         height={16}
                       />
@@ -146,6 +148,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                           <TokenIcon
                             address={market.loanAsset.address}
                             chainId={market.morphoBlue.chain.id}
+                            symbol={market.loanAsset.symbol}
                             width={16}
                             height={16}
                           />

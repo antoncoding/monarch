@@ -110,6 +110,7 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
                     <TokenIcon
                       address={market.loanAsset.address}
                       chainId={market.morphoBlue.chain.id}
+                      symbol={market.loanAsset.symbol}
                       width={16}
                       height={16}
                     />

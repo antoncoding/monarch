@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
+import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
@@ -19,7 +20,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
-import { ERC20Token, getUniqueTokens, UnknownERC20Token } from '@/utils/tokens';
+import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
@@ -91,6 +92,8 @@ export default function Markets() {
   const [includeUnknownTokens] = useLocalStorage('includeUnknownTokens', false);
   const [showUnknownOracle] = useLocalStorage('showUnknownOracle', false);
 
+  const { allTokens, findToken } = useTokens();
+
   useEffect(() => {
     const currentParams = searchParams.toString();
     if (currentParams !== prevParamsRef.current) {
@@ -131,67 +134,68 @@ export default function Markets() {
   );
 
   useEffect(() => {
-    if (rawMarkets) {
-      const processTokens = (
-        tokenInfoList: { address: string; chainId: number; symbol: string; decimals: number }[],
-      ) => {
-        const knownTokens = getUniqueTokens(tokenInfoList);
 
-        if (!includeUnknownTokens) return knownTokens;
+    // return if no markets
+    if (!rawMarkets) return;
+    
+    const processTokens = (
+      tokenInfoList: { address: string; chainId: number; symbol: string; decimals: number }[],
+    ) => {
+      if (!includeUnknownTokens) return allTokens;
 
-        // Process unknown tokens
-        const unknownTokensBySymbol = tokenInfoList.reduce(
-          (acc, token) => {
-            if (
-              !knownTokens.some((known) =>
-                known.networks.some(
-                  (n) =>
-                    n.address.toLowerCase() === token.address.toLowerCase() &&
-                    n.chain.id === token.chainId,
-                ),
-              )
-            ) {
-              if (!acc[token.symbol]) {
-                acc[token.symbol] = {
-                  symbol:
-                    token.symbol.length > 10 ? `${token.symbol.slice(0, 10)}...` : token.symbol,
-                  img: undefined,
-                  decimals: token.decimals,
-                  networks: [],
-                  isUnknown: true,
-                };
-              }
-              acc[token.symbol].networks.push({
-                chain: { id: token.chainId } as Chain,
-                address: token.address,
-              });
+      // Process unknown tokens
+      const unknownTokensBySymbol = tokenInfoList.reduce(
+        (acc, token) => {
+          if (
+            !allTokens.some((known) =>
+              known.networks.some(
+                (n) =>
+                  n.address.toLowerCase() === token.address.toLowerCase() &&
+                  n.chain.id === token.chainId,
+              ),
+            )
+          ) {
+            if (!acc[token.symbol]) {
+              acc[token.symbol] = {
+                symbol:
+                  token.symbol.length > 10 ? `${token.symbol.slice(0, 10)}...` : token.symbol,
+                img: undefined,
+                decimals: token.decimals,
+                networks: [],
+                isUnknown: true,
+              };
             }
-            return acc;
-          },
-          {} as Record<string, UnknownERC20Token>,
-        );
+            acc[token.symbol].networks.push({
+              chain: { id: token.chainId } as Chain,
+              address: token.address,
+            });
+          }
+          return acc;
+        },
+        {} as Record<string, UnknownERC20Token>,
+      );
 
-        return [...knownTokens, ...Object.values(unknownTokensBySymbol)];
-      };
+      return [...allTokens, ...Object.values(unknownTokensBySymbol)];
+    };
 
-      const collatList = rawMarkets.map((m) => ({
-        address: m.collateralAsset.address,
-        chainId: m.morphoBlue.chain.id,
-        symbol: m.collateralAsset.symbol,
-        decimals: m.collateralAsset.decimals,
-      }));
+    const collatList = rawMarkets.map((m) => ({
+      address: m.collateralAsset.address,
+      chainId: m.morphoBlue.chain.id,
+      symbol: m.collateralAsset.symbol,
+      decimals: m.collateralAsset.decimals,
+    }));
 
-      const loanList = rawMarkets.map((m) => ({
-        address: m.loanAsset.address,
-        chainId: m.morphoBlue.chain.id,
-        symbol: m.loanAsset.symbol,
-        decimals: m.loanAsset.decimals,
-      }));
+    const loanList = rawMarkets.map((m) => ({
+      address: m.loanAsset.address,
+      chainId: m.morphoBlue.chain.id,
+      symbol: m.loanAsset.symbol,
+      decimals: m.loanAsset.decimals,
+    }));
 
-      setUniqueCollaterals(processTokens(collatList));
-      setUniqueLoanAssets(processTokens(loanList));
-    }
-  }, [rawMarkets, includeUnknownTokens]);
+    setUniqueCollaterals(processTokens(collatList));
+    setUniqueLoanAssets(processTokens(loanList));
+    
+  }, [rawMarkets, includeUnknownTokens, allTokens]);
 
   const updateUrlParams = useCallback(
     (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
@@ -234,6 +238,7 @@ export default function Markets() {
       selectedLoanAssets,
       selectedOracles,
       staredIds,
+      findToken,
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();

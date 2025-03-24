@@ -135,6 +135,7 @@ export function FromAndToMarkets({
                           <TokenIcon
                             address={marketPosition.market.collateralAsset.address}
                             chainId={marketPosition.market.morphoBlue.chain.id}
+                            symbol={marketPosition.market.collateralAsset.symbol}
                             width={18}
                             height={18}
                           />
@@ -270,6 +271,7 @@ export function FromAndToMarkets({
                           <TokenIcon
                             address={market.collateralAsset.address}
                             chainId={market.morphoBlue.chain.id}
+                            symbol={market.collateralAsset.symbol}
                             width={18}
                             height={18}
                           />

@@ -64,6 +64,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                 <TokenIcon
                   address={selectedAsset.address}
                   chainId={selectedAsset.chainId}
+                  symbol={selectedAsset.symbol}
                   width={20}
                   height={20}
                 />
@@ -105,7 +106,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
             {filteredAssets.map((asset) => (
               <button
                 type="button"
-                key={`${asset.symbol}-${asset.chainId}`}
+                key={`${asset.address}-${asset.chainId}`}
                 role="option"
                 aria-selected={
                   selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
@@ -127,7 +128,13 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                   }
                 }}
               >
-                <TokenIcon address={asset.address} chainId={asset.chainId} width={20} height={20} />
+                <TokenIcon
+                  address={asset.address}
+                  chainId={asset.chainId}
+                  symbol={asset.symbol}
+                  width={20}
+                  height={20}
+                />
                 <span className="font-medium">{asset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />

@@ -200,6 +200,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
                         <TokenIcon
                           address={asset.assetAddress}
                           chainId={displayChainId}
+                          symbol={asset.assetSymbol}
                           width={20}
                           height={20}
                         />

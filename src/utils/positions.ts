@@ -251,6 +251,7 @@ export function groupPositionsByLoanAsset(
           loanAsset: position.market.loanAsset.symbol || 'Unknown',
           loanAssetAddress,
           loanAssetDecimals,
+          loanAssetSymbol: position.market.loanAsset.symbol || 'Unknown',
           chainId,
           totalSupply: 0,
           totalWeightedApy: 0,

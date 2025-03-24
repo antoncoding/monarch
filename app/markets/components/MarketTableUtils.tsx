@@ -51,14 +51,20 @@ export function TDAsset({
   return (
     <td data-label={dataLabel ?? symbol} className="z-50">
       <div className="flex items-center justify-center gap-1">
-        <TokenIcon address={asset} chainId={chainId} width={18} height={18} />
+        <TokenIcon
+          address={asset}
+          chainId={chainId}
+          width={18}
+          height={18}
+          symbol={symbol}
+        />
         <a
           className="group flex items-center gap-1 no-underline hover:underline"
           href={getAssetURL(asset, chainId)}
           target="_blank"
           onClick={(e) => e.stopPropagation()}
         >
-          <p> {symbol} </p>
+          <p> {symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol} </p>
           <p className="opacity-0 group-hover:opacity-100">
             <ExternalLinkIcon />
           </p>

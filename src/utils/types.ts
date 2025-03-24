@@ -218,6 +218,7 @@ export type GroupedPosition = {
   loanAssetAddress: string;
   loanAssetDecimals: number;
   chainId: number;
+  loanAssetSymbol: string;
   totalSupply: number;
   totalWeightedApy: number;
 

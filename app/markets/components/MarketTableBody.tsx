@@ -48,6 +48,7 @@ export function MarketTableBody({
         return (
           <React.Fragment key={index}>
             <tr
+              key={item.uniqueKey}
               onClick={() =>
                 setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)
               }

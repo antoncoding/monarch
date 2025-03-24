@@ -106,11 +106,11 @@ export function AssetSelection() {
         </div>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2">
-          {tokensWithMarkets.map((token) => (
+          {tokensWithMarkets.map((token, idx) => (
             <motion.button
               aria-label={`Select ${token.symbol} on ${getNetworkName(token.network)}`}
               role="button"
-              key={`${token.symbol}-${token.network}`}
+              key={`${token.symbol}-${token.network}-${idx}`}
               onClick={() => handleTokenSelect(token)}
               className="group relative flex items-start gap-4 rounded border border-gray-200 bg-white p-4 text-left transition-all duration-300 hover:border-primary dark:border-gray-700 dark:bg-gray-800/50 dark:hover:bg-gray-800"
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}

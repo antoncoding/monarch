@@ -23,8 +23,9 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
         <TokenIcon
           address={market.collateralAsset.address}
           chainId={market.morphoBlue.chain.id}
-          width={16}
-          height={16}
+          symbol={market.collateralAsset.symbol}
+          width={20}
+          height={20}
         />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
@@ -64,8 +65,9 @@ export function MarketInfoBlockCompact({
         <TokenIcon
           address={market.collateralAsset.address}
           chainId={market.morphoBlue.chain.id}
-          width={16}
-          height={16}
+          symbol={market.collateralAsset.symbol}
+          width={20}
+          height={20}
         />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
