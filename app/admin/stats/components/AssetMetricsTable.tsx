@@ -16,7 +16,7 @@ const BASE_CHAIN_ID = 8453; // Base network ID
 type AssetMetricsTableProps = {
   data: AssetVolumeData[];
   selectedNetwork: SupportedNetworks;
-}
+};
 
 type SortKey = 'supplyCount' | 'withdrawCount' | 'uniqueUsers' | 'totalCount' | 'totalVolume';
 type SortDirection = 'asc' | 'desc';
@@ -37,9 +37,9 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
   // Process data with human-readable volumes and total counts
   const processedData = useMemo(() => {
     const assetsWithVolume = calculateHumanReadableVolumes(data);
-    return assetsWithVolume.map(asset => ({
+    return assetsWithVolume.map((asset) => ({
       ...asset,
-      totalCount: asset.supplyCount + asset.withdrawCount
+      totalCount: asset.supplyCount + asset.withdrawCount,
     }));
   }, [data]);
 
@@ -73,19 +73,19 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
   }, [processedData, sortKey, sortDirection]);
 
   return (
-    <div className="bg-surface rounded-md shadow-sm font-inter">
+    <div className="bg-surface rounded-md font-inter shadow-sm">
       <div className="border-b border-gray-200 px-6 py-4">
-        <h3 className="text-lg font-semibold font-zen">Asset Activity</h3>
+        <h3 className="font-zen text-lg font-semibold">Asset Activity</h3>
       </div>
       <div className="p-4">
         {processedData.length === 0 ? (
           <div className="py-8 text-center text-gray-400">No asset data available</div>
         ) : (
-          <Table 
-            aria-label="Asset metrics table" 
+          <Table
+            aria-label="Asset metrics table"
             classNames={{
-              base: "min-w-full",
-              wrapper: "rounded-md"
+              base: 'min-w-full',
+              wrapper: 'rounded-md',
             }}
             removeWrapper
           >
@@ -96,7 +96,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               <TableColumn>
                 <button
                   type="button"
-                  className="flex cursor-pointer items-center font-zen bg-transparent border-none p-0 w-full text-left"
+                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
                   onClick={() => handleSort('totalVolume')}
                   aria-label="Sort by Total Volume"
                 >
@@ -115,7 +115,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               <TableColumn>
                 <button
                   type="button"
-                  className="flex cursor-pointer items-center font-zen bg-transparent border-none p-0 w-full text-left"
+                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
                   onClick={() => handleSort('totalCount')}
                   aria-label="Sort by Total Transactions"
                 >
@@ -134,7 +134,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               <TableColumn>
                 <button
                   type="button"
-                  className="flex cursor-pointer items-center font-zen bg-transparent border-none p-0 w-full text-left"
+                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
                   onClick={() => handleSort('supplyCount')}
                   aria-label="Sort by Supply Count"
                 >
@@ -153,7 +153,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               <TableColumn>
                 <button
                   type="button"
-                  className="flex cursor-pointer items-center font-zen bg-transparent border-none p-0 w-full text-left"
+                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
                   onClick={() => handleSort('withdrawCount')}
                   aria-label="Sort by Withdraw Count"
                 >
@@ -172,7 +172,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               <TableColumn>
                 <button
                   type="button"
-                  className="flex cursor-pointer items-center font-zen bg-transparent border-none p-0 w-full text-left"
+                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
                   onClick={() => handleSort('uniqueUsers')}
                   aria-label="Sort by Unique Users"
                 >
@@ -195,7 +195,7 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
                 const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
                 // Find token using the determined chainId to avoid type errors
                 const token = findToken(asset.assetAddress, displayChainId);
-                
+
                 return (
                   <TableRow key={`${asset.assetAddress}-${asset.chainId}`}>
                     <TableCell>
@@ -210,12 +210,14 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
                           />
                         )}
                         <div className="flex flex-col">
-                          <span className="font-medium font-zen">{asset.assetSymbol ?? 'Unknown'}</span>
-                          <Link 
-                            href={getAssetURL(asset.assetAddress, selectedNetwork)} 
-                            target="_blank" 
+                          <span className="font-zen font-medium">
+                            {asset.assetSymbol ?? 'Unknown'}
+                          </span>
+                          <Link
+                            href={getAssetURL(asset.assetAddress, selectedNetwork)}
+                            target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center text-xs text-gray-500 hover:text-primary transition-colors"
+                            className="flex items-center text-xs text-gray-500 transition-colors hover:text-primary"
                           >
                             {formatAddress(asset.assetAddress)}
                             <FiExternalLink className="ml-1 h-3 w-3" />
@@ -224,13 +226,19 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
                       </div>
                     </TableCell>
                     <TableCell className="font-zen">
-                      {asset.totalVolumeFormatted 
-                        ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}`
+                      {asset.totalVolumeFormatted
+                        ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${
+                            asset.assetSymbol
+                          }`
                         : '-'}
                     </TableCell>
-                    <TableCell className="font-zen">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</TableCell>
+                    <TableCell className="font-zen">
+                      {(asset.supplyCount + asset.withdrawCount).toLocaleString()}
+                    </TableCell>
                     <TableCell className="font-zen">{asset.supplyCount.toLocaleString()}</TableCell>
-                    <TableCell className="font-zen">{asset.withdrawCount.toLocaleString()}</TableCell>
+                    <TableCell className="font-zen">
+                      {asset.withdrawCount.toLocaleString()}
+                    </TableCell>
                     <TableCell className="font-zen">{asset.uniqueUsers.toLocaleString()}</TableCell>
                   </TableRow>
                 );
@@ -241,4 +249,4 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
       </div>
     </div>
   );
-} 
+}

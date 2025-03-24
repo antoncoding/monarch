@@ -6,18 +6,20 @@ import { PlatformStats } from '@/utils/statsUtils';
 type StatsOverviewCardsProps = {
   stats: PlatformStats;
   selectedNetwork: SupportedNetworks;
-}
+};
 
 function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
-  const changeText = change !== undefined ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '';
-  const changeColor = change === undefined ? 'text-gray-500' : change > 0 ? 'text-green-500' : 'text-red-500';
+  const changeText =
+    change !== undefined ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '';
+  const changeColor =
+    change === undefined ? 'text-gray-500' : change > 0 ? 'text-green-500' : 'text-red-500';
 
   return (
     <Card className="bg-surface rounded-md shadow-sm">
       <CardBody className="p-4">
-        <h3 className="text-sm font-medium text-gray-500 font-inter">{title}</h3>
+        <h3 className="font-inter text-sm font-medium text-gray-500">{title}</h3>
         <div className="mt-2 flex items-baseline">
-          <p className="text-2xl font-semibold font-zen">
+          <p className="font-zen text-2xl font-semibold">
             {prefix}
             {value}
           </p>
@@ -28,12 +30,12 @@ function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
       </CardBody>
     </Card>
   );
-} 
+}
 
 export function StatsOverviewCards({ stats, selectedNetwork }: StatsOverviewCardsProps) {
   // Network display name for context
   const networkName = getNetworkName(selectedNetwork) ?? 'Network';
-  
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
@@ -69,4 +71,4 @@ type StatCardProps = {
   value: string | number;
   change?: number;
   prefix?: string;
-}
+};

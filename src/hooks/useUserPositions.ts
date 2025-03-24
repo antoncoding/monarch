@@ -164,7 +164,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         setIsRefetching(false);
       }
     },
-    [user, showEmpty, markets],
+    [user, showEmpty, markets, batchAddUserMarkets, getUserMarkets],
   );
 
   useEffect(() => {

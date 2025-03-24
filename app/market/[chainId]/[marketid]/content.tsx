@@ -15,14 +15,15 @@ import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModal } from '@/components/supplyModal';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
-import useMarketLiquidations from '@/hooks/useMarketLiquidations';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
+import { BorrowsTable } from './components/BorrowsTable';
 import { LiquidationsTable } from './components/LiquidationsTable';
+import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
@@ -64,12 +65,6 @@ function MarketContent() {
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
   } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
-
-  const {
-    liquidations,
-    loading: liquidationsLoading,
-    error: liquidationsError,
-  } = useMarketLiquidations(market?.uniqueKey);
 
   const setTimeRangeAndRefetch = useCallback(
     (days: number, type: 'rate' | 'volume') => {
@@ -206,7 +201,7 @@ function MarketContent() {
                       href={getExplorerURL(market.loanAsset.address, market.morphoBlue.chain.id)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center hover:underline"
+                      className="flex items-center no-underline hover:underline"
                     >
                       {market.loanAsset.symbol} <ExternalLinkIcon className="ml-1" />
                     </Link>
@@ -231,7 +226,7 @@ function MarketContent() {
                       )}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center hover:underline"
+                      className="flex items-center no-underline hover:underline"
                     >
                       {market.collateralAsset.symbol} <ExternalLinkIcon className="ml-1" />
                     </Link>
@@ -243,7 +238,7 @@ function MarketContent() {
                     href={getExplorerURL(market.irmAddress, market.morphoBlue.chain.id)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center hover:underline"
+                    className="flex items-center no-underline hover:underline"
                   >
                     {getIRMTitle(market.irmAddress)} <ExternalLinkIcon className="ml-1" />
                   </Link>
@@ -315,6 +310,7 @@ function MarketContent() {
           </Card>
         </div>
 
+        <h4 className="pt-4 text-2xl font-semibold">Volume</h4>
         <VolumeChart
           historicalData={historicalData?.volumes}
           market={market}
@@ -327,6 +323,7 @@ function MarketContent() {
           setVolumeView={setVolumeView}
         />
 
+        <h4 className="pt-4 text-2xl font-semibold">Rates</h4>
         <RateChart
           historicalData={historicalData?.rates}
           market={market}
@@ -337,13 +334,13 @@ function MarketContent() {
           setTimeRangeAndRefetch={setTimeRangeAndRefetch}
         />
 
-        <LiquidationsTable
-          chainId={network}
-          liquidations={liquidations || []}
-          loading={liquidationsLoading}
-          error={liquidationsError}
-          market={market}
-        />
+        <h4 className="pt-4 text-2xl font-semibold">Activities </h4>
+
+        {/* divider */}
+        <div className="my-4 h-[2px] w-full bg-gray-200 dark:bg-gray-800" />
+        <SuppliesTable chainId={network} market={market} />
+        <BorrowsTable chainId={network} market={market} />
+        <LiquidationsTable chainId={network} market={market} />
       </div>
     </>
   );

@@ -323,5 +323,70 @@ export const marketLiquidationsQuery = `
       }
     }   
   }
+`;
 
+export const marketSuppliesQuery = `
+  query getMarketSupplyActivities($uniqueKey: String!, $first: Int, $skip: Int) {
+    transactions (where: {
+      marketUniqueKey_in: [$uniqueKey],
+      type_in: [MarketSupply, MarketWithdraw]
+    },
+    first: $first,
+    skip: $skip
+    ) {
+      items {
+        type
+        hash
+        timestamp
+        data {
+          ... on MarketTransferTransactionData {
+            assets
+            shares
+          }
+        }
+        user {
+          address
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }   
+  }
+`;
+
+export const marketBorrowsQuery = `
+  query getMarketBorrowActivities($uniqueKey: String!, $first: Int, $skip: Int) {
+    transactions (where: {
+      marketUniqueKey_in: [$uniqueKey],
+      type_in: [MarketBorrow, MarketRepay]
+    },
+    first: $first,
+    skip: $skip
+    ) {
+      items {
+        type
+        hash
+        timestamp
+        data {
+          ... on MarketTransferTransactionData {
+            assets
+            shares
+          }
+        }
+        user {
+          address
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }   
+  }
 `;

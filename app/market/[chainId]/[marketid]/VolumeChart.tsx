@@ -183,7 +183,7 @@ function VolumeChart({
   return (
     <Card className="bg-surface my-4 rounded-md p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
-        <span>Volumes</span>
+        <span />
         <div className="flex gap-4">
           <ButtonGroup
             options={volumeViewOptions}

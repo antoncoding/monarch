@@ -6,7 +6,7 @@ import moment from 'moment';
 import Image from 'next/image';
 import { Address, formatUnits } from 'viem';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
-import { MarketLiquidationTransaction } from '@/hooks/useMarketLiquidations';
+import useMarketLiquidations from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -18,29 +18,23 @@ const formatAddress = (address: string) => {
 
 type LiquidationsTableProps = {
   chainId: number;
-  liquidations: MarketLiquidationTransaction[];
-  loading: boolean;
-  error: string | null;
   market: Market;
 };
 
-export function LiquidationsTable({
-  chainId,
-  liquidations,
-  loading,
-  error,
-  market,
-}: LiquidationsTableProps) {
+export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const totalPages = Math.ceil(liquidations.length / pageSize);
+
+  const { liquidations, loading, error } = useMarketLiquidations(market?.uniqueKey);
+
+  const totalPages = Math.ceil((liquidations || []).length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const paginatedLiquidations = useMemo(() => {
-    const sliced = liquidations.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const sliced = (liquidations || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
     return sliced;
   }, [currentPage, liquidations, pageSize]);
 
@@ -62,11 +56,15 @@ export function LiquidationsTable({
 
   return (
     <div className="mt-8">
-      <h4 className="mb-4 text-xl font-semibold">Liquidations</h4>
+      <h4 className="mb-4 text-lg text-secondary">Liquidations</h4>
 
       <Table
         key={tableKey}
         aria-label="Liquidations history"
+        classNames={{
+          wrapper: 'bg-surface shadow-sm',
+          table: 'bg-surface',
+        }}
         bottomContent={
           totalPages > 1 ? (
             <div className="flex w-full justify-center">
@@ -83,17 +81,19 @@ export function LiquidationsTable({
         }
       >
         <TableHeader>
-          <TableColumn>Liquidator</TableColumn>
-          <TableColumn align="end">Repaid ({market?.loanAsset?.symbol ?? 'USDC'})</TableColumn>
+          <TableColumn>LIQUIDATOR</TableColumn>
+          <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'USDC'})</TableColumn>
           <TableColumn align="end">
-            Seized{' '}
+            SEIZED{' '}
             {market?.collateralAsset?.symbol && (
               <span className="inline-flex items-center">{market.collateralAsset.symbol}</span>
             )}
           </TableColumn>
-          <TableColumn align="end">Bad Debt</TableColumn>
-          <TableColumn>Time</TableColumn>
-          <TableColumn className="font-mono">Transaction</TableColumn>
+          <TableColumn align="end">BAD DEBT</TableColumn>
+          <TableColumn>TIME</TableColumn>
+          <TableColumn className="font-mono" align="end">
+            TRANSACTION
+          </TableColumn>
         </TableHeader>
         <TableBody
           className="font-zen"
@@ -177,12 +177,12 @@ export function LiquidationsTable({
                   )}
                 </TableCell>
                 <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-                <TableCell className="font-zen ">
+                <TableCell className="text-right font-zen">
                   <Link
                     href={getExplorerTxURL(liquidation.hash, chainId)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center text-sm text-secondary"
+                    className="inline-flex items-center text-sm text-secondary"
                   >
                     {formatAddress(liquidation.hash)}
                     <ExternalLinkIcon className="ml-1" />

@@ -105,7 +105,7 @@ export function applyFilterAndSort(
         if (!property) {
           return 0;
         }
-        
+
         const aValue = getNestedProperty(a, property);
         const bValue = getNestedProperty(b, property);
         comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;

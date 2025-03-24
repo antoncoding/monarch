@@ -15,8 +15,10 @@ import { StatsOverviewCards } from './components/StatsOverviewCards';
 
 // API endpoints mapping for different networks
 const API_ENDPOINTS = {
-  [SupportedNetworks.Base]: 'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest',
-  [SupportedNetworks.Mainnet]: 'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest'
+  [SupportedNetworks.Base]:
+    'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest',
+  [SupportedNetworks.Mainnet]:
+    'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest',
 };
 
 export default function StatsPage() {
@@ -45,21 +47,25 @@ export default function StatsPage() {
     const loadStats = async () => {
       setIsLoading(true);
       try {
-        console.log(`Fetching statistics for timeframe: ${timeframe}, network: ${getNetworkName(selectedNetwork) ?? 'Unknown'}`);
+        console.log(
+          `Fetching statistics for timeframe: ${timeframe}, network: ${
+            getNetworkName(selectedNetwork) ?? 'Unknown'
+          }`,
+        );
         const startTime = performance.now();
-        
+
         // Get API endpoint for the selected network
         const apiEndpoint = API_ENDPOINTS[selectedNetwork];
         console.log(`Using API endpoint: ${apiEndpoint}`);
-        
+
         const allStats = await fetchAllStatistics(timeframe, selectedNetwork, apiEndpoint);
-        
+
         const endTime = performance.now();
         console.log(`Statistics fetched in ${endTime - startTime}ms:`, allStats);
-        
+
         console.log('Platform stats:', allStats.platformStats);
         console.log('Asset metrics count:', allStats.assetMetrics.length);
-        
+
         setStats({
           platformStats: allStats.platformStats,
           assetMetrics: allStats.assetMetrics,
@@ -81,7 +87,7 @@ export default function StatsPage() {
     { key: '90D', label: '90D', value: '90D' },
     { key: 'ALL', label: 'ALL', value: 'ALL' },
   ];
-  
+
   // Get network image for selected network with fallback
   const selectedNetworkImg = getNetworkImg(selectedNetwork);
   // Get network names
@@ -91,23 +97,23 @@ export default function StatsPage() {
   return (
     <div className="container mx-auto px-4 py-8 font-inter">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-zen">Platform Statistics</h1>
+        <h1 className="font-zen text-2xl font-bold">Platform Statistics</h1>
         <div className="flex items-center gap-4">
           {/* Network selector */}
           <Dropdown>
             <DropdownTrigger>
-              <Button 
-                variant="flat" 
+              <Button
+                variant="flat"
                 endContent={<FiChevronDown className="text-small" />}
-                className="min-w-[140px] font-zen bg-surface border border-divider hover:bg-default-100 active:bg-default-200"
+                className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
                 startContent={
                   <div className="flex items-center">
                     {selectedNetworkImg && (
-                      <Image 
-                        src={selectedNetworkImg as string} 
-                        alt={getNetworkName(selectedNetwork) ?? 'Network'} 
-                        width={20} 
-                        height={20} 
+                      <Image
+                        src={selectedNetworkImg as string}
+                        alt={getNetworkName(selectedNetwork) ?? 'Network'}
+                        width={20}
+                        height={20}
                         className="mr-2"
                       />
                     )}
@@ -117,19 +123,19 @@ export default function StatsPage() {
                 {getNetworkName(selectedNetwork) ?? 'Network'}
               </Button>
             </DropdownTrigger>
-            <DropdownMenu 
-              aria-label="Network Selection" 
+            <DropdownMenu
+              aria-label="Network Selection"
               onAction={(key) => setSelectedNetwork(Number(key) as SupportedNetworks)}
               className="font-zen"
             >
-              <DropdownItem 
+              <DropdownItem
                 key={SupportedNetworks.Base}
                 startContent={
                   getNetworkImg(SupportedNetworks.Base) && (
-                    <Image 
-                      src={getNetworkImg(SupportedNetworks.Base) as string} 
-                      alt={baseNetworkName ?? 'Base Network'} 
-                      width={20} 
+                    <Image
+                      src={getNetworkImg(SupportedNetworks.Base) as string}
+                      alt={baseNetworkName ?? 'Base Network'}
+                      width={20}
                       height={20}
                     />
                   )
@@ -138,14 +144,14 @@ export default function StatsPage() {
               >
                 {baseNetworkName}
               </DropdownItem>
-              <DropdownItem 
+              <DropdownItem
                 key={SupportedNetworks.Mainnet}
                 startContent={
                   getNetworkImg(SupportedNetworks.Mainnet) && (
-                    <Image 
-                      src={getNetworkImg(SupportedNetworks.Mainnet) as string} 
-                      alt={mainnetNetworkName ?? 'Mainnet Network'} 
-                      width={20} 
+                    <Image
+                      src={getNetworkImg(SupportedNetworks.Mainnet) as string}
+                      alt={mainnetNetworkName ?? 'Mainnet Network'}
+                      width={20}
                       height={20}
                     />
                   )
@@ -156,7 +162,7 @@ export default function StatsPage() {
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
-          
+
           {/* Timeframe selector */}
           <ButtonGroup
             options={timeframeOptions}
@@ -175,12 +181,9 @@ export default function StatsPage() {
       ) : (
         <div className="space-y-6">
           <StatsOverviewCards stats={stats.platformStats} selectedNetwork={selectedNetwork} />
-          <AssetMetricsTable 
-            data={stats.assetMetrics} 
-            selectedNetwork={selectedNetwork} 
-          />
+          <AssetMetricsTable data={stats.assetMetrics} selectedNetwork={selectedNetwork} />
         </div>
       )}
     </div>
   );
-} 
+}

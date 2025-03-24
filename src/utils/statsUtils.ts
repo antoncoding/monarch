@@ -30,12 +30,12 @@ export type Transaction = {
     };
     amount: string;
   }[];
-}
+};
 
 export type TimeSeriesData = {
   date: string;
   value: number;
-}
+};
 
 export type AssetVolumeData = {
   assetAddress: string;
@@ -47,7 +47,7 @@ export type AssetVolumeData = {
   supplyCount: number;
   withdrawCount: number;
   uniqueUsers: number;
-}
+};
 
 export type PlatformStats = {
   uniqueUsers: number;
@@ -59,7 +59,7 @@ export type PlatformStats = {
   withdrawCount: number;
   withdrawCountDelta: number;
   activeMarkets: number;
-}
+};
 
 /**
  * Calculates timestamp range based on the selected time frame
@@ -97,7 +97,7 @@ export const getPreviousTimeRange = (
 ): { startTime: number; endTime: number } => {
   const { startTime, endTime } = getTimeRange(timeframe);
   const duration = endTime - startTime;
-  
+
   return {
     startTime: startTime - duration,
     endTime: startTime,
@@ -134,13 +134,14 @@ export const groupTransactionsByPeriod = (
         break;
     }
 
-    const volume = Number(formatUnits(BigInt(tx.supplyVolume), tokenDecimals)) +
-                  Number(formatUnits(BigInt(tx.withdrawVolume), tokenDecimals));
-    
+    const volume =
+      Number(formatUnits(BigInt(tx.supplyVolume), tokenDecimals)) +
+      Number(formatUnits(BigInt(tx.withdrawVolume), tokenDecimals));
+
     if (!grouped[periodKey]) {
       grouped[periodKey] = 0;
     }
-    
+
     grouped[periodKey] += volume;
   });
 
@@ -154,11 +155,11 @@ export const groupTransactionsByPeriod = (
  */
 export const calculateUniqueUsers = (transactions: Transaction[]): number => {
   const uniqueUserSet = new Set<string>();
-  
+
   transactions.forEach((tx) => {
     uniqueUserSet.add(tx.user.toLowerCase());
   });
-  
+
   return uniqueUserSet.size;
 };
 
@@ -186,7 +187,7 @@ export const aggregateAssetMetrics = (
       tx.supplies.forEach((supply) => {
         if (supply.market?.loan) {
           const assetAddress = supply.market.loan.toLowerCase();
-          
+
           // Initialize asset metrics if needed
           if (!assetMetrics[assetAddress]) {
             assetMetrics[assetAddress] = {
@@ -202,25 +203,29 @@ export const aggregateAssetMetrics = (
             };
             assetUsers[assetAddress] = new Set<string>();
           }
-          
+
           // Update supply metrics
           const supplyVolumeBigInt = BigInt(supply.amount ?? '0');
-          assetMetrics[assetAddress].supplyVolume = (BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt).toString();
-          assetMetrics[assetAddress].totalVolume = (BigInt(assetMetrics[assetAddress].totalVolume) + supplyVolumeBigInt).toString();
+          assetMetrics[assetAddress].supplyVolume = (
+            BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt
+          ).toString();
+          assetMetrics[assetAddress].totalVolume = (
+            BigInt(assetMetrics[assetAddress].totalVolume) + supplyVolumeBigInt
+          ).toString();
           assetMetrics[assetAddress].supplyCount += 1;
-          
+
           // Track user
           assetUsers[assetAddress].add(tx.user.toLowerCase());
         }
       });
     }
-    
+
     // Process withdrawal events
     if (tx.withdrawals && Array.isArray(tx.withdrawals)) {
       tx.withdrawals.forEach((withdrawal) => {
         if (withdrawal.market?.loan) {
           const assetAddress = withdrawal.market.loan.toLowerCase();
-          
+
           // Initialize asset metrics if needed
           if (!assetMetrics[assetAddress]) {
             assetMetrics[assetAddress] = {
@@ -236,26 +241,32 @@ export const aggregateAssetMetrics = (
             };
             assetUsers[assetAddress] = new Set<string>();
           }
-          
+
           // Update withdrawal metrics
           const withdrawVolumeBigInt = BigInt(withdrawal.amount ?? '0');
-          assetMetrics[assetAddress].withdrawVolume = (BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt).toString();
-          assetMetrics[assetAddress].totalVolume = (BigInt(assetMetrics[assetAddress].totalVolume) + withdrawVolumeBigInt).toString();
+          assetMetrics[assetAddress].withdrawVolume = (
+            BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt
+          ).toString();
+          assetMetrics[assetAddress].totalVolume = (
+            BigInt(assetMetrics[assetAddress].totalVolume) + withdrawVolumeBigInt
+          ).toString();
           assetMetrics[assetAddress].withdrawCount += 1;
-          
+
           // Track user
           assetUsers[assetAddress].add(tx.user.toLowerCase());
         }
       });
     }
-    
+
     // If no detailed events but has market info, process aggregated counts
-    if ((!tx.supplies || tx.supplies.length === 0) && 
-        (!tx.withdrawals || tx.withdrawals.length === 0) && 
-        tx.market && typeof tx.market === 'string') {
-      
+    if (
+      (!tx.supplies || tx.supplies.length === 0) &&
+      (!tx.withdrawals || tx.withdrawals.length === 0) &&
+      tx.market &&
+      typeof tx.market === 'string'
+    ) {
       const assetAddress = tx.market.toLowerCase();
-      
+
       // Initialize asset metrics if needed
       if (!assetMetrics[assetAddress]) {
         assetMetrics[assetAddress] = {
@@ -271,19 +282,27 @@ export const aggregateAssetMetrics = (
         };
         assetUsers[assetAddress] = new Set<string>();
       }
-      
+
       // Add counts and volumes
       assetMetrics[assetAddress].supplyCount += tx.supplyCount ?? 0;
       assetMetrics[assetAddress].withdrawCount += tx.withdrawCount ?? 0;
-      
+
       // Add volumes
       const supplyVolumeBigInt = BigInt(tx.supplyVolume ?? '0');
       const withdrawVolumeBigInt = BigInt(tx.withdrawVolume ?? '0');
-      
-      assetMetrics[assetAddress].supplyVolume = (BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt).toString();
-      assetMetrics[assetAddress].withdrawVolume = (BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt).toString();
-      assetMetrics[assetAddress].totalVolume = (BigInt(assetMetrics[assetAddress].totalVolume) + supplyVolumeBigInt + withdrawVolumeBigInt).toString();
-      
+
+      assetMetrics[assetAddress].supplyVolume = (
+        BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt
+      ).toString();
+      assetMetrics[assetAddress].withdrawVolume = (
+        BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt
+      ).toString();
+      assetMetrics[assetAddress].totalVolume = (
+        BigInt(assetMetrics[assetAddress].totalVolume) +
+        supplyVolumeBigInt +
+        withdrawVolumeBigInt
+      ).toString();
+
       // Track user
       assetUsers[assetAddress].add(tx.user.toLowerCase());
     }
@@ -307,58 +326,69 @@ export const calculatePlatformStats = (
   // Current period calculations
   const uniqueUsers = calculateUniqueUsers(currentTransactions);
   const totalTransactions = currentTransactions.length;
-  
+
   let supplyCount = 0;
   let withdrawCount = 0;
   const uniqueMarketsSet = new Set<string>();
-  
+
   currentTransactions.forEach((tx) => {
     // Count supply and withdrawal transactions
     supplyCount += tx.supplyCount ?? 0;
     withdrawCount += tx.withdrawCount ?? 0;
-    
+
     // Track unique markets
     if (tx.market) {
       uniqueMarketsSet.add(tx.market.toLowerCase());
     }
-    
+
     // Also check market info in supplies and withdrawals
     if (tx.supplies) {
-      tx.supplies.forEach(supply => {
+      tx.supplies.forEach((supply) => {
         if (supply.market?.loan) {
-          uniqueMarketsSet.add(`${supply.market.loan.toLowerCase()}-${supply.market.collateral?.toLowerCase() ?? 'none'}`);
+          uniqueMarketsSet.add(
+            `${supply.market.loan.toLowerCase()}-${
+              supply.market.collateral?.toLowerCase() ?? 'none'
+            }`,
+          );
         }
       });
     }
-    
+
     if (tx.withdrawals) {
-      tx.withdrawals.forEach(withdrawal => {
+      tx.withdrawals.forEach((withdrawal) => {
         if (withdrawal.market?.loan) {
-          uniqueMarketsSet.add(`${withdrawal.market.loan.toLowerCase()}-${withdrawal.market.collateral?.toLowerCase() ?? 'none'}`);
+          uniqueMarketsSet.add(
+            `${withdrawal.market.loan.toLowerCase()}-${
+              withdrawal.market.collateral?.toLowerCase() ?? 'none'
+            }`,
+          );
         }
       });
     }
   });
-  
+
   // Previous period calculations
   const previousUniqueUsers = calculateUniqueUsers(previousTransactions);
   const previousTotalTransactions = previousTransactions.length;
-  
+
   let previousSupplyCount = 0;
   let previousWithdrawCount = 0;
-  
+
   previousTransactions.forEach((tx) => {
     // Count previous supply and withdrawal transactions
     previousSupplyCount += tx.supplyCount ?? 0;
     previousWithdrawCount += tx.withdrawCount ?? 0;
   });
-  
+
   // Calculate deltas
   const uniqueUsersDelta = calculatePercentageChange(uniqueUsers, previousUniqueUsers);
-  const totalTransactionsDelta = calculatePercentageChange(totalTransactions, previousTotalTransactions);
+  const totalTransactionsDelta = calculatePercentageChange(
+    totalTransactions,
+    previousTotalTransactions,
+  );
   const supplyCountDelta = calculatePercentageChange(supplyCount, previousSupplyCount);
   const withdrawCountDelta = calculatePercentageChange(withdrawCount, previousWithdrawCount);
-  
+
   return {
     uniqueUsers,
     uniqueUsersDelta,
@@ -370,4 +400,4 @@ export const calculatePlatformStats = (
     withdrawCountDelta,
     activeMarkets: uniqueMarketsSet.size,
   };
-}; 
+};
