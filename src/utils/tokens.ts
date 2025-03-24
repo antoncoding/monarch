@@ -1,4 +1,11 @@
 import { Chain, base, mainnet } from 'viem/chains';
+import { SupportedNetworks } from './networks';
+
+export type SingleChainERC20Basic = {
+  symbol: string;
+  decimals: number;
+  address: string;
+};
 
 export type ERC20Token = {
   symbol: string;
@@ -27,15 +34,15 @@ const MORPHO_LEGACY = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
 const MORPHO_TOKEN_WRAPPER = '0x9d03bb2092270648d7480049d0e58d2fcf0e5123';
 
 const supportedTokens = [
-  {
-    symbol: 'USDC',
-    img: require('../imgs/tokens/usdc.webp') as string,
-    decimals: 6,
-    networks: [
-      { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
-      { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
-    ],
-  },
+  // {
+  //   symbol: 'USDC',
+  //   img: require('../imgs/tokens/usdc.webp') as string,
+  //   decimals: 6,
+  //   networks: [
+  //     { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
+  //     { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+  //   ],
+  // },
   {
     symbol: 'USDT',
     img: require('../imgs/tokens/usdt.webp') as string,
@@ -242,6 +249,14 @@ const supportedTokens = [
     ],
   },
   {
+    symbol: 'eBTC',
+    img: require('../imgs/tokens/ebtc.webp') as string,
+    decimals: 8,
+    networks: [
+      { chain: mainnet, address: '0x657e8C867D8B37dCC18fA4Caead9C45EB088C642' },
+    ],
+  },
+  {
     symbol: 'rsETH',
     img: require('../imgs/tokens/rseth.png') as string,
     decimals: 18,
@@ -353,6 +368,12 @@ const supportedTokens = [
       { chain: mainnet, address: '0xA469B7Ee9ee773642b3e93E842e5D9b5BaA10067' },
       { chain: base, address: '0x04D5ddf5f3a8939889F11E97f8c4BB48317F1938' },
     ],
+  },
+  {
+    symbol: 'wUSDL',
+    img: require('../imgs/tokens/wusdl.webp') as string,
+    decimals: 18,
+    networks: [{ chain: mainnet, address: '0x7751E2F4b8ae93EF6B79d86419d42FE3295A4559' }],
   },
   {
     symbol: 'pufETH',
@@ -510,8 +531,19 @@ const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
   });
 };
 
+const isWETH = (address: string, chainId: number) => {
+  if (chainId === SupportedNetworks.Mainnet) {
+    return address.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
+  }
+  if (chainId === SupportedNetworks.Base) {
+    return address.toLowerCase() === '0x4200000000000000000000000000000000000006';
+  }
+  return false;
+};
+
 export {
   supportedTokens,
+  isWETH,
   isWhitelisted,
   findTokenWithKey,
   findToken,

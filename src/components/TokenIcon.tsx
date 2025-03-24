@@ -14,7 +14,7 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
   const token = findToken(address, chainId);
 
   if (!token?.img) {
-    return <div className="rounded-full bg-gray-300" style={{ width, height }} />;
+    return <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width, height }} />;
   }
 
   return (

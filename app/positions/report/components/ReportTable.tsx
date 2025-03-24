@@ -18,7 +18,6 @@ import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkName } from '@/utils/networks';
-import { ERC20Token } from '@/utils/tokens';
 
 import { Market } from '@/utils/types';
 
@@ -35,7 +34,12 @@ type MarketInfoBlockProps = {
 
 type ReportTableProps = {
   report: ReportSummary;
-  asset: ERC20Token;
+  asset: {
+    address: string;
+    chainId: number;
+    symbol: string;
+    decimals: number;
+  };
   startDate: DateValue;
   endDate: DateValue;
   chainId: number;

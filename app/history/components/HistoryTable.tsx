@@ -9,13 +9,13 @@ import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import LoadingScreen from '@/components/Status/LoadingScreen';
+import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
 import {
   UserTxTypes,
   UserRebalancerInfo,
@@ -33,7 +33,8 @@ type HistoryTableProps = {
 type AssetKey = {
   symbol: string;
   chainId: number;
-  img?: string;
+  address: string;
+  decimals: number;
 };
 
 export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTableProps) {
@@ -59,11 +60,11 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
 
       const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
-        const token = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
         assetMap.set(key, {
           symbol: market.loanAsset.symbol,
           chainId: market.morphoBlue.chain.id,
-          img: token?.img,
+          address: market.loanAsset.address,
+          decimals: market.loanAsset.decimals,
         });
       }
     });
@@ -147,15 +148,12 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
           <div className="flex items-center justify-between px-3 pt-6">
             {selectedAsset ? (
               <div className="flex items-center gap-2 pt-1">
-                {selectedAsset.img && (
-                  <Image
-                    src={selectedAsset.img}
-                    alt={selectedAsset.symbol}
-                    width={18}
-                    height={18}
-                    className="rounded-full"
-                  />
-                )}
+                <TokenIcon
+                  address={selectedAsset.address}
+                  chainId={selectedAsset.chainId}
+                  width={18}
+                  height={18}
+                />
                 <span className="text-sm">{selectedAsset.symbol}</span>
                 <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
                   <Image
@@ -221,15 +219,12 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      {asset.img && (
-                        <Image
-                          src={asset.img}
-                          alt={asset.symbol}
-                          width={18}
-                          height={18}
-                          className="rounded-full"
-                        />
-                      )}
+                      <TokenIcon
+                        address={asset.address}
+                        chainId={asset.chainId}
+                        width={18}
+                        height={18}
+                      />
                       <span>{asset.symbol}</span>
                       <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
                         <Image
@@ -305,11 +300,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                 (m) => m.uniqueKey === tx.data.market.uniqueKey,
               ) as Market;
 
-              const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
-              const collateralToken = findToken(
-                market.collateralAsset.address,
-                market.morphoBlue.chain.id,
-              );
+              
               const networkImg = getNetworkImg(market.morphoBlue.chain.id);
               const networkName = getNetworkName(market.morphoBlue.chain.id);
               const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
@@ -325,15 +316,12 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
-                        {loanToken?.img && (
-                          <Image
-                            src={loanToken.img}
-                            alt={market.loanAsset.symbol}
-                            width="20"
-                            height="20"
-                            className="rounded-full"
-                          />
-                        )}
+                        <TokenIcon
+                          address={market.loanAsset.address}
+                          chainId={market.morphoBlue.chain.id}
+                          width={20}
+                          height={20}
+                        />
                         <span className="text-default-600">{market.loanAsset.symbol}</span>
                       </div>
                       <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
@@ -363,15 +351,12 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                         {market.uniqueKey.slice(2, 8)}
                       </Link>
                       <div className="flex items-center gap-1">
-                        {collateralToken?.img && (
-                          <Image
-                            src={collateralToken.img}
-                            alt="collateral"
-                            width="16"
-                            height="16"
-                            className="rounded-full"
-                          />
-                        )}
+                        <TokenIcon
+                          address={market.collateralAsset.address}
+                          chainId={market.morphoBlue.chain.id}
+                          width={16}
+                          height={16}
+                        />
                         <span className="text-sm text-default-500">
                           {market.collateralAsset.symbol}
                         </span>

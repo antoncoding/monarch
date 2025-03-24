@@ -1,5 +1,5 @@
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
+import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { SortColumn } from './constants';
@@ -40,7 +40,6 @@ export function HTSortable({
 export function TDAsset({
   asset,
   chainId,
-  img,
   symbol,
   dataLabel,
 }: {
@@ -48,12 +47,16 @@ export function TDAsset({
   chainId: number;
   symbol: string;
   dataLabel?: string;
-  img?: string;
 }) {
   return (
     <td data-label={dataLabel ?? symbol} className="z-50">
       <div className="flex items-center justify-center gap-1">
-        {img ? <Image src={img} alt="icon" width="18" height="18" /> : null}
+        <TokenIcon
+          address={asset}
+          chainId={chainId}
+          width={18}
+          height={18}
+        />
         <a
           className="group flex items-center gap-1 no-underline hover:underline"
           href={getAssetURL(asset, chainId)}

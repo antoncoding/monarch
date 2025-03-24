@@ -3,14 +3,13 @@ import { Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
-import Image from 'next/image';
 import { Address } from 'viem';
 import { formatUnits } from 'viem';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
 import { Badge } from '@/components/common/Badge';
+import { TokenIcon } from '@/components/TokenIcon';
 import useMarketBorrows from '@/hooks/useMarketBorrows';
 import { getExplorerURL, getExplorerTxURL } from '@/utils/external';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
 // Helper functions to format data
@@ -41,11 +40,6 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
   }, [currentPage, borrows, pageSize]);
 
   const tableKey = `borrows-table-${currentPage}`;
-
-  const loanToken = useMemo(() => {
-    if (!market) return null;
-    return findToken(market.loanAsset.address, chainId);
-  }, [market, chainId]);
 
   if (error) {
     return <p className="text-danger">Error loading borrows: {error}</p>;
@@ -113,15 +107,12 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
                 {formatUnits(BigInt(borrow.data.assets), market.loanAsset.decimals)}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
-                    {loanToken?.img && (
-                      <Image
-                        src={loanToken.img}
-                        alt={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
-                        className="rounded-full"
-                      />
-                    )}
+                    <TokenIcon
+                      address={market.loanAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      width={16}
+                      height={16}
+                    />
                   </span>
                 )}
               </TableCell>

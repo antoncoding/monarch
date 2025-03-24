@@ -21,7 +21,6 @@ import { usePositionReport } from '@/hooks/usePositionReport';
 import { ReportSummary } from '@/hooks/usePositionReport';
 import useUserPositions from '@/hooks/useUserPositions';
 import { getMorphoGenesisDate } from '@/utils/morpho';
-import { findToken } from '@/utils/tokens';
 import { AssetSelector, type AssetKey } from './AssetSelector';
 import { ReportTable } from './ReportTable';
 
@@ -141,11 +140,6 @@ export default function ReportContent({ account }: { account: Address }) {
     }
   };
 
-  const selectedToken = useMemo(() => {
-    if (!selectedAsset) return null;
-    return findToken(selectedAsset.address, selectedAsset.chainId);
-  }, [selectedAsset]);
-
   // Validate dates
   const getDateError = useCallback(
     (date: DateValue, isStart: boolean) => {
@@ -175,15 +169,11 @@ export default function ReportContent({ account }: { account: Address }) {
     positions.forEach((position) => {
       const key = `${position.market.loanAsset.address}-${position.market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
-        const token = findToken(
-          position.market.loanAsset.address as Address,
-          position.market.morphoBlue.chain.id,
-        );
         assetMap.set(key, {
           symbol: position.market.loanAsset.symbol,
           address: position.market.loanAsset.address as Address,
           chainId: position.market.morphoBlue.chain.id,
-          img: token?.img,
+          decimals: position.market.loanAsset.decimals,
         });
       }
     });
@@ -262,13 +252,13 @@ export default function ReportContent({ account }: { account: Address }) {
             </div>
 
             {/* Report Content */}
-            {reportState?.report && (
+            {reportState?.report && selectedAsset && (
               <ReportTable
                 startDate={reportState.startDate}
                 endDate={reportState.endDate}
                 report={reportState.report}
-                asset={selectedToken!}
-                chainId={reportState.asset.chainId}
+                asset={selectedAsset as AssetKey}
+                chainId={selectedAsset.chainId}
               />
             )}
           </div>

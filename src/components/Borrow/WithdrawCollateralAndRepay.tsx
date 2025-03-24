@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { LTVWarning } from '@/components/common/LTVWarning';
@@ -11,16 +10,14 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { ERC20Token } from '@/utils/tokens';
 import { Market, MarketPosition } from '@/utils/types';
+import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
 
 type WithdrawCollateralAndRepayProps = {
   market: Market;
   currentPosition: MarketPosition | null;
   refetchPosition: (onSuccess?: () => void) => void;
-  loanToken: ERC20Token | undefined;
-  collateralToken: ERC20Token | undefined;
   loanTokenBalance: bigint | undefined;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
@@ -30,8 +27,6 @@ export function WithdrawCollateralAndRepay({
   market,
   currentPosition,
   refetchPosition,
-  loanToken,
-  collateralToken,
   loanTokenBalance,
 }: WithdrawCollateralAndRepayProps): JSX.Element {
   // State for withdraw and repay amounts
@@ -187,15 +182,12 @@ export function WithdrawCollateralAndRepay({
             <div>
               <p className="mb-1 font-zen text-xs opacity-50">Total Collateral</p>
               <div className="flex items-center">
-                {collateralToken?.img && (
-                  <Image
-                    src={collateralToken.img}
-                    height={16}
-                    width={16}
-                    alt={collateralToken.symbol}
-                    className="mr-1"
-                  />
-                )}
+                <TokenIcon
+                  address={market.collateralAsset.address}
+                  chainId={market.morphoBlue.chain.id}
+                  width={16}
+                  height={16}
+                />
                 <p className="font-zen text-sm">
                   {formatBalance(
                     BigInt(currentPosition?.state.collateral ?? 0),
@@ -208,15 +200,12 @@ export function WithdrawCollateralAndRepay({
             <div>
               <p className="mb-1 font-zen text-xs opacity-50">Total Borrowed</p>
               <div className="flex items-center">
-                {loanToken?.img && (
-                  <Image
-                    src={loanToken.img}
-                    height={16}
-                    width={16}
-                    alt={loanToken.symbol}
-                    className="mr-1"
-                  />
-                )}
+                <TokenIcon
+                  address={market.loanAsset.address}
+                  chainId={market.morphoBlue.chain.id}
+                  width={16}
+                  height={16}
+                />
                 <p className="font-zen text-sm">
                   {formatBalance(
                     BigInt(currentPosition?.state.borrowAssets ?? 0),

@@ -13,7 +13,6 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
@@ -303,12 +302,6 @@ export function SetupPositions() {
             </thead>
             <tbody className="divide-y divide-gray-200 text-sm dark:divide-gray-700">
               {selectedMarkets.map((market) => {
-                const collateralToken = findToken(
-                  market.collateralAsset.address,
-                  market.morphoBlue.chain.id,
-                );
-                if (!collateralToken) return null;
-
                 const currentPercentage = percentages[market.uniqueKey] ?? 0;
                 const isLocked = lockedAmounts.has(market.uniqueKey);
 

@@ -14,12 +14,12 @@ import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModal } from '@/components/supplyModal';
+import { TokenIcon } from '@/components/TokenIcon';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
 import { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
 import { LiquidationsTable } from './components/LiquidationsTable';
@@ -114,9 +114,6 @@ function MarketContent() {
     return <div className="text-center">Market data not available</div>;
   }
 
-  const loanImg = findToken(market.loanAsset.address, market.morphoBlue.chain.id)?.img;
-  const collateralImg = findToken(market.collateralAsset.address, market.morphoBlue.chain.id)?.img;
-
   const cardStyle = 'bg-surface rounded-md shadow-sm p-4';
 
   const averageLTV =
@@ -187,16 +184,13 @@ function MarketContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Loan Asset:</span>
-                  <div className="flex items-center">
-                    {loanImg && (
-                      <Image
-                        src={loanImg}
-                        alt={market.loanAsset.symbol}
-                        width={20}
-                        height={20}
-                        className="mr-2"
-                      />
-                    )}
+                  <div className="flex items-center gap-2">
+                    <TokenIcon
+                      address={market.loanAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      width={20}
+                      height={20}
+                    />
                     <Link
                       href={getExplorerURL(market.loanAsset.address, market.morphoBlue.chain.id)}
                       target="_blank"
@@ -209,16 +203,13 @@ function MarketContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Collateral Asset:</span>
-                  <div className="flex items-center">
-                    {collateralImg && (
-                      <Image
-                        src={collateralImg}
-                        alt={market.collateralAsset.symbol}
-                        width={20}
-                        height={20}
-                        className="mr-2"
-                      />
-                    )}
+                  <div className="flex items-center gap-2">
+                    <TokenIcon
+                      address={market.collateralAsset.address}
+                      chainId={market.morphoBlue.chain.id}
+                      width={20}
+                      height={20}
+                    />
                     <Link
                       href={getExplorerURL(
                         market.collateralAsset.address,

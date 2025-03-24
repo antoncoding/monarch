@@ -2,7 +2,6 @@
 import { useCallback, useState } from 'react';
 
 import { Cross1Icon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
@@ -14,9 +13,8 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
-import { findToken } from '@/utils/tokens';
 import { MarketPosition } from '@/utils/types';
-
+import { TokenIcon } from './TokenIcon';
 type ModalProps = {
   position: MarketPosition;
   onClose: () => void;
@@ -31,10 +29,6 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
 
   const { address: account, isConnected, chainId } = useAccount();
 
-  const loanToken = findToken(
-    position.market.loanAsset.address,
-    position.market.morphoBlue.chain.id,
-  );
 
   // Use the market network hook for chain switching
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -119,8 +113,13 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
         </button>
 
         <div className="mb-4 flex items-center gap-2 py-2 text-2xl">
-          Withdraw {loanToken ? loanToken.symbol : position.market.loanAsset.symbol}
-          {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
+          Withdraw {position.market.loanAsset.symbol}
+          <TokenIcon
+            address={position.market.loanAsset.address}
+            chainId={position.market.morphoBlue.chain.id}
+            width={16}
+            height={16}
+          />
         </div>
 
         <p className="py-2 opacity-80">
@@ -144,7 +143,12 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
               </p>
               <p className="text-right font-zen">{position.market.loanAsset.symbol} </p>
               <div>
-                {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
+                <TokenIcon
+                  address={position.market.loanAsset.address}
+                  chainId={position.market.morphoBlue.chain.id}
+                  width={16}
+                  height={16}
+                />
               </div>
             </div>
           </div>
@@ -160,7 +164,12 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
               </p>
               <p className="text-right font-zen">{position.market.loanAsset.symbol} </p>
               <div>
-                {loanToken?.img && <Image src={loanToken.img} height={16} alt={loanToken.symbol} />}{' '}
+                <TokenIcon
+                  address={position.market.loanAsset.address}
+                  chainId={position.market.morphoBlue.chain.id}
+                  width={16}
+                  height={16}
+                />
               </div>
             </div>
           </div>

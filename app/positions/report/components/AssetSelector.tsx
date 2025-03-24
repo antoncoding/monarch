@@ -1,15 +1,15 @@
 import { useRef, useState, useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { Address } from 'viem';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
+import { TokenIcon } from '@/components/TokenIcon';
 import { getNetworkName } from '@/utils/networks';
 
 export type AssetKey = {
   symbol: string;
   address: Address;
   chainId: number;
-  img?: string;
+  decimals: number;
 };
 
 type AssetSelectorProps = {
@@ -61,15 +61,12 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
           <div className="flex items-center gap-2">
             {selectedAsset && (
               <>
-                {selectedAsset.img && (
-                  <Image
-                    src={selectedAsset.img}
-                    alt={selectedAsset.symbol}
-                    width={20}
-                    height={20}
-                    className="rounded-full"
-                  />
-                )}
+                <TokenIcon
+                  address={selectedAsset.address}
+                  chainId={selectedAsset.chainId}
+                  width={20}
+                  height={20}
+                />
                 <span>{selectedAsset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={selectedAsset.chainId} />
@@ -130,7 +127,12 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                   }
                 }}
               >
-                {asset.img && <Image src={asset.img} alt={asset.symbol} width={20} height={20} />}
+                <TokenIcon
+                  address={asset.address}
+                  chainId={asset.chainId}
+                  width={20}
+                  height={20}
+                />
                 <span className="font-medium">{asset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />

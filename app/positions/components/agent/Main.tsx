@@ -4,10 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { GrStatusGood } from 'react-icons/gr';
 import { Button } from '@/components/common';
+import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { findAgent } from '@/utils/monarch-agent';
-import { findToken } from '@/utils/tokens';
 import { UserRebalancerInfo } from '@/utils/types';
 
 const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
@@ -42,12 +42,13 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
           address,
           chainId: market.morphoBlue.chain.id,
           markets: [],
+          symbol: market.loanAsset.symbol,
         };
       }
       acc[address].markets.push(market);
       return acc;
     },
-    {} as Record<string, { address: string; chainId: number; markets: typeof authorizedMarkets }>,
+    {} as Record<string, { address: string; chainId: number; symbol: string; markets: typeof authorizedMarkets }>,
   );
 
   return (
@@ -100,24 +101,20 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
             <h4 className="text-xs font-medium text-secondary">Monitoring Positions</h4>
             <div className="flex flex-wrap gap-3">
               {Object.values(loanAssetGroups).map(
-                ({ address, chainId, markets: marketsForLoanAsset }) => {
-                  const token = findToken(address, chainId);
+                ({ address, chainId, markets: marketsForLoanAsset, symbol }) => {
                   return (
                     <div
                       key={address}
                       className="bg-surface flex items-center gap-2 rounded px-3 py-2"
                     >
-                      {token?.img && (
-                        <Image
-                          src={token.img}
-                          alt={token.symbol}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                      )}
+                      <TokenIcon
+                        address={address}
+                        chainId={chainId}
+                        width={18}
+                        height={18}
+                      />
                       <span className="text-sm">
-                        {token?.symbol ?? 'Unknown'} ({marketsForLoanAsset.length})
+                        {symbol ?? 'Unknown'} ({marketsForLoanAsset.length})
                       </span>
                     </div>
                   );

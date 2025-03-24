@@ -2,11 +2,10 @@ import React from 'react';
 import { Input } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
 import { Button } from '@nextui-org/react';
-import Image from 'next/image';
 import { formatUnits } from 'viem';
+import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { MarketPosition } from '@/utils/types';
 import {
@@ -118,10 +117,6 @@ export function FromAndToMarkets({
               </thead>
               <tbody className="text-sm">
                 {paginatedFromMarkets.map((marketPosition) => {
-                  const collateralToken = findToken(
-                    marketPosition.market.collateralAsset.address,
-                    marketPosition.market.morphoBlue.chain.id,
-                  );
                   return (
                     <tr
                       key={marketPosition.market.uniqueKey}
@@ -137,14 +132,12 @@ export function FromAndToMarkets({
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-1">
-                          {collateralToken?.img && (
-                            <Image
-                              src={collateralToken.img}
-                              alt={marketPosition.market.collateralAsset.symbol}
-                              width={18}
-                              height={18}
-                            />
-                          )}
+                          <TokenIcon
+                            address={marketPosition.market.collateralAsset.address}
+                            chainId={marketPosition.market.morphoBlue.chain.id}
+                            width={18}
+                            height={18}
+                          />
                           <a
                             href={getAssetURL(
                               marketPosition.market.collateralAsset.address,
@@ -256,10 +249,6 @@ export function FromAndToMarkets({
               </thead>
               <tbody className="text-sm">
                 {paginatedToMarkets.map((market) => {
-                  const collateralToken = findToken(
-                    market.collateralAsset.address,
-                    market.morphoBlue.chain.id,
-                  );
                   const completeMarket = eligibleMarkets.find(
                     (m) => m.uniqueKey === market.uniqueKey,
                   );
@@ -278,14 +267,12 @@ export function FromAndToMarkets({
                       </td>
                       <td className="px-4">
                         <div className="flex items-center gap-1">
-                          {collateralToken?.img && (
-                            <Image
-                              src={collateralToken.img}
-                              alt={market.collateralAsset.symbol}
-                              width={18}
-                              height={18}
-                            />
-                          )}
+                          <TokenIcon
+                            address={market.collateralAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            width={18}
+                            height={18}
+                          />
                           <a
                             href={getAssetURL(
                               market.collateralAsset.address,

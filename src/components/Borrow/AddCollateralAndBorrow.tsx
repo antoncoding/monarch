@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Switch } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
@@ -13,17 +12,16 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { ERC20Token } from '@/utils/tokens';
+import { isWETH } from '@/utils/tokens';
 import { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from '../BorrowProcessModal';
+import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
 
 type BorrowLogicProps = {
   market: Market;
   currentPosition: MarketPosition | null;
   refetchPosition: (onSuccess?: () => void) => void;
-  loanToken: ERC20Token | undefined;
-  collateralToken: ERC20Token | undefined;
   loanTokenBalance: bigint | undefined;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
@@ -33,8 +31,6 @@ export function AddCollateralAndBorrow({
   market,
   currentPosition,
   refetchPosition,
-  loanToken,
-  collateralToken,
   loanTokenBalance,
   collateralTokenBalance,
   ethBalance,
@@ -179,15 +175,12 @@ export function AddCollateralAndBorrow({
               <div>
                 <p className="mb-1 font-zen text-xs opacity-50">Total Collateral</p>
                 <div className="flex items-center">
-                  {collateralToken?.img && (
-                    <Image
-                      src={collateralToken.img}
-                      height={16}
-                      width={16}
-                      alt={collateralToken.symbol}
-                      className="mr-1"
-                    />
-                  )}
+                  <TokenIcon
+                    address={market.collateralAsset.address}
+                    chainId={market.morphoBlue.chain.id}
+                    width={16}
+                    height={16}
+                  />
                   <p className="font-zen text-sm">
                     {formatBalance(
                       BigInt(currentPosition?.state.collateral ?? 0),
@@ -200,15 +193,12 @@ export function AddCollateralAndBorrow({
               <div>
                 <p className="mb-1 font-zen text-xs opacity-50">Total Borrowed</p>
                 <div className="flex items-center">
-                  {loanToken?.img && (
-                    <Image
-                      src={loanToken.img}
-                      height={16}
-                      width={16}
-                      alt={loanToken.symbol}
-                      className="mr-1"
-                    />
-                  )}
+                  <TokenIcon
+                    address={market.loanAsset.address}
+                    chainId={market.morphoBlue.chain.id}
+                    width={16}
+                    height={16}
+                  />
                   <p className="font-zen text-sm">
                     {formatBalance(
                       BigInt(currentPosition?.state.borrowAssets ?? 0),
@@ -320,7 +310,7 @@ export function AddCollateralAndBorrow({
                   </p>
                 </div>
 
-                {collateralToken?.symbol === 'WETH' && (
+                {isWETH(market.collateralAsset.address, market.morphoBlue.chain.id) && (
                   <div className="mb-2 mt-1 flex items-center justify-end">
                     <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
                     <Switch

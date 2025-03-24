@@ -3,12 +3,11 @@ import { Link, Pagination } from '@nextui-org/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
-import Image from 'next/image';
 import { Address, formatUnits } from 'viem';
+import { TokenIcon } from '@/components/TokenIcon';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
 import useMarketLiquidations from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
 // Helper functions to format data
@@ -39,16 +38,6 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   }, [currentPage, liquidations, pageSize]);
 
   const tableKey = `liquidations-table-${currentPage}`;
-
-  const collateralToken = useMemo(() => {
-    if (!market) return null;
-    return findToken(market.collateralAsset.address, chainId);
-  }, [market, chainId]);
-
-  const loanToken = useMemo(() => {
-    if (!market) return null;
-    return findToken(market.loanAsset.address, chainId);
-  }, [market, chainId]);
 
   if (error) {
     return <p className="text-danger">Error loading liquidations: {error}</p>;
@@ -117,37 +106,31 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   </Link>
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatUnits(BigInt(liquidation.data.repaidAssets), loanToken?.decimals ?? 6)}
+                  {formatUnits(BigInt(liquidation.data.repaidAssets), market.loanAsset.decimals)}
                   {market?.loanAsset?.symbol && (
                     <span className="ml-1 inline-flex items-center">
-                      {loanToken?.img && (
-                        <Image
-                          src={loanToken.img}
-                          alt={market.loanAsset.symbol || ''}
-                          width={16}
-                          height={16}
-                          className="rounded-full"
-                        />
-                      )}
+                      <TokenIcon
+                        address={market.loanAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        width={16}
+                        height={16}
+                      />
                     </span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatUnits(
                     BigInt(liquidation.data.seizedAssets),
-                    collateralToken?.decimals ?? 18,
+                    market.collateralAsset.decimals,
                   )}
                   {market?.collateralAsset?.symbol && (
                     <span className="ml-1 inline-flex items-center">
-                      {collateralToken?.img && (
-                        <Image
-                          src={collateralToken.img}
-                          alt={market.collateralAsset.symbol}
-                          width={16}
-                          height={16}
-                          className="rounded-full"
-                        />
-                      )}
+                      <TokenIcon
+                        address={market.collateralAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        width={16}
+                        height={16}
+                      />
                     </span>
                   )}
                 </TableCell>
@@ -156,19 +139,16 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                     <>
                       {formatUnits(
                         BigInt(liquidation.data.badDebtAssets),
-                        loanToken?.decimals ?? 6,
+                        market.loanAsset.decimals,
                       )}
                       {market?.loanAsset?.symbol && (
                         <span className="ml-1 inline-flex items-center">
-                          {loanToken?.img && (
-                            <Image
-                              src={loanToken.img}
-                              alt={market.loanAsset.symbol || ''}
-                              width={16}
-                              height={16}
-                              className="rounded-full"
-                            />
-                          )}
+                          <TokenIcon
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            width={16}
+                            height={16}
+                          />
                         </span>
                       )}
                     </>

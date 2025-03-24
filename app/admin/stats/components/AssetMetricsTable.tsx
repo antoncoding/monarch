@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/table';
-import Image from 'next/image';
 import Link from 'next/link';
 import { FiChevronUp, FiChevronDown, FiExternalLink } from 'react-icons/fi';
+import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
 import { AssetVolumeData } from '@/utils/statsUtils';
-import { findToken } from '@/utils/tokens';
 
 // Constants
 const BASE_CHAIN_ID = 8453; // Base network ID
@@ -193,22 +192,17 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
               {sortedData.map((asset) => {
                 // Use a determined chainId for display purposes
                 const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
-                // Find token using the determined chainId to avoid type errors
-                const token = findToken(asset.assetAddress, displayChainId);
 
                 return (
                   <TableRow key={`${asset.assetAddress}-${asset.chainId}`}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {token?.img && (
-                          <Image
-                            src={token.img}
-                            alt={asset.assetSymbol ?? 'token'}
-                            width={20}
-                            height={20}
-                            className="rounded-full"
-                          />
-                        )}
+                        <TokenIcon
+                          address={asset.assetAddress}
+                          chainId={displayChainId}
+                          width={20}
+                          height={20}
+                        />
                         <div className="flex flex-col">
                           <span className="font-zen font-medium">
                             {asset.assetSymbol ?? 'Unknown'}

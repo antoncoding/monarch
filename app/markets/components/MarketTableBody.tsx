@@ -8,7 +8,6 @@ import { Button } from '@/components/common/Button';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TooltipContent } from '@/components/TooltipContent';
 import { getNetworkImg } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
@@ -40,8 +39,6 @@ export function MarketTableBody({
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
-        const collatImg = findToken(item.collateralAsset.address, item.morphoBlue.chain.id)?.img;
-        const loanImg = findToken(item.loanAsset.address, item.morphoBlue.chain.id)?.img;
         const collatToShow = item.collateralAsset.symbol
           .slice(0, 6)
           .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
@@ -94,14 +91,12 @@ export function MarketTableBody({
                 dataLabel="Loan"
                 asset={item.loanAsset.address}
                 chainId={item.morphoBlue.chain.id}
-                img={loanImg}
                 symbol={item.loanAsset.symbol}
               />
               <TDAsset
                 dataLabel="Collateral"
                 asset={item.collateralAsset.address}
                 chainId={item.morphoBlue.chain.id}
-                img={collatImg}
                 symbol={collatToShow}
               />
               <td data-label="Oracle" className="z-50">

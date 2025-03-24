@@ -1,8 +1,7 @@
 import React from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { Button } from '@/components/common';
-import { ERC20Token } from '@/utils/tokens';
+import { TokenIcon } from '@/components/TokenIcon';
 import { GroupedPosition, Market } from '@/utils/types';
 import { MarketBadge } from './MarketBadge';
 
@@ -13,7 +12,10 @@ type RebalanceActionInputProps = {
   selectedToMarketUniqueKey: string;
   groupedPosition: GroupedPosition;
   eligibleMarkets: Market[];
-  token: ERC20Token | undefined;
+  token: {
+    address: string;
+    chainId: number;
+  };
   onAddAction: () => void;
 };
 
@@ -38,9 +40,12 @@ export function RebalanceActionInput({
       />
       <div className="mx-2 flex items-center">
         <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
-        {token?.img && (
-          <Image src={token.img} alt={groupedPosition.loanAsset} width={24} height={24} />
-        )}
+        <TokenIcon
+          address={token.address}
+          chainId={token.chainId}
+          width={24}
+          height={24}
+        />
       </div>
       <span className="mr-2">From </span>
       <div className="w-48">

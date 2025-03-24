@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { useAccount, useBalance } from 'wagmi';
 import useUserPosition from '@/hooks/useUserPosition';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { AddCollateralAndBorrow } from './Borrow/AddCollateralAndBorrow';
 import { WithdrawCollateralAndRepay } from './Borrow/WithdrawCollateralAndRepay';
 import ButtonGroup from './ButtonGroup';
+import { TokenIcon } from './TokenIcon';
 
 type BorrowModalProps = {
   market: Market;
@@ -25,10 +24,6 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     market.morphoBlue.chain.id,
     market.uniqueKey,
   );
-
-  // Find tokens
-  const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
-  const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
 
   // Get token balances
   const { data: loanTokenBalance } = useBalance({
@@ -70,10 +65,13 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
 
           <div className="mb-6 mr-2 flex items-center justify-between">
             <div className="flex items-center gap-2 text-2xl">
-              {loanToken?.img && (
-                <Image src={loanToken.img} height={24} width={24} alt={loanToken.symbol} />
-              )}
-              {loanToken ? loanToken.symbol : market.loanAsset.symbol} Position
+              <TokenIcon
+                address={market.loanAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                width={20}
+                height={20}
+              />
+              {market.loanAsset.symbol} Position
             </div>
 
             <ButtonGroup
@@ -90,8 +88,6 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               market={market}
               currentPosition={currentPosition}
               refetchPosition={refetchPosition}
-              loanToken={loanToken}
-              collateralToken={collateralToken}
               loanTokenBalance={loanTokenBalance?.value}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
@@ -101,8 +97,6 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               market={market}
               currentPosition={currentPosition}
               refetchPosition={refetchPosition}
-              loanToken={loanToken}
-              collateralToken={collateralToken}
               loanTokenBalance={loanTokenBalance?.value}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}

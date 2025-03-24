@@ -2,16 +2,14 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Checkbox } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { formatUnits, maxUint256 } from 'viem';
 import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
+import { TokenIcon } from '@/components/TokenIcon';
 import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
 import { findAgent, KnownAgents } from '@/utils/monarch-agent';
 import { SupportedNetworks } from '@/utils/networks';
-import { OracleVendorIcons, OracleVendors } from '@/utils/oracle';
-import { findToken } from '@/utils/tokens';
 import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
 
 type MarketGroup = {
@@ -219,9 +217,6 @@ export function SetupAgent({
 
           const numMarketsToRemove = group.authorizedMarkets.filter(isInPendingRemove).length;
 
-          const loanAsset = findToken(group.loanAsset.address, SupportedNetworks.Base);
-          const loanAssetImg = loanAsset?.img ?? OracleVendorIcons[OracleVendors.Unknown];
-
           return (
             <div
               key={groupKey}
@@ -239,12 +234,11 @@ export function SetupAgent({
                 className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-content2"
               >
                 <div className="flex items-center gap-4">
-                  <Image
-                    src={loanAssetImg}
-                    alt={group.loanAsset.symbol}
+                  <TokenIcon
+                    address={group.loanAsset.address}
+                    chainId={SupportedNetworks.Base}
                     width={24}
                     height={24}
-                    className="h-8 w-8 rounded-full object-cover"
                   />
                   <span className="font-zen">{group.loanAsset.symbol} Markets</span>
                   <span className="text-sm text-gray-500">

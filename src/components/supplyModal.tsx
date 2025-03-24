@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch } from '@nextui-org/react';
 import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
-import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -11,12 +10,13 @@ import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
-import { findToken } from '@/utils/tokens';
+import { isWETH } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 import OracleVendorBadge from './OracleVendorBadge';
 import { SupplyProcessModal } from './SupplyProcessModal';
+import { TokenIcon } from './TokenIcon';
 
 type SupplyModalProps = {
   market: Market;
@@ -26,7 +26,6 @@ type SupplyModalProps = {
 export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const { isConnected } = useAccount();
-  const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 
   // Use the hook to handle all supply logic
   const {
@@ -86,8 +85,13 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
             </button>
 
             <div className="mb-2 flex items-center gap-2 py-2 text-2xl">
-              Supply {loanToken ? loanToken.symbol : market.loanAsset.symbol}
-              {loanToken?.img && <Image src={loanToken.img} height={18} alt={loanToken.symbol} />}
+              Supply {market.loanAsset.symbol}
+              <TokenIcon
+                address={market.loanAsset.address}
+                chainId={market.morphoBlue.chain.id}
+                width={18}
+                height={18}
+              />
             </div>
 
             <p className="py-4 opacity-80">
@@ -178,13 +182,16 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                       {useEth ? 'ETH' : market.loanAsset.symbol}{' '}
                     </p>
                     <div>
-                      {loanToken?.img && (
-                        <Image src={loanToken.img} height={16} alt={loanToken.symbol} />
-                      )}{' '}
+                      <TokenIcon
+                        address={market.loanAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        width={18}
+                        height={18}
+                      />
                     </div>
                   </div>
                 </div>
-                {loanToken?.symbol === 'WETH' && (
+                {isWETH(market.loanAsset.address, market.morphoBlue.chain.id) && (
                   <div className="mx-6 flex items-start justify-between">
                     <div />
                     <div className="mt-4 flex items-center">

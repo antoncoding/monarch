@@ -64,6 +64,7 @@ export function applyFilterAndSort(
         return false;
       }
 
+      // todo: might need async function to search for tokens from API.
       const collateralToken = findToken(market.collateralAsset.address, market.morphoBlue.chain.id);
       const loanToken = findToken(market.loanAsset.address, market.morphoBlue.chain.id);
 

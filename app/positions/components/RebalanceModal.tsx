@@ -9,7 +9,6 @@ import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromAndToMarkets } from './FromAndToMarkets';
@@ -51,7 +50,6 @@ export function RebalanceModal({
     currentStep,
   } = useRebalance(groupedPosition, refetch);
 
-  const token = findToken(groupedPosition.loanAssetAddress, groupedPosition.chainId);
   const fromPagination = usePagination();
   const toPagination = usePagination();
 
@@ -316,7 +314,10 @@ export function RebalanceModal({
               selectedToMarketUniqueKey={selectedToMarketUniqueKey}
               groupedPosition={groupedPosition}
               eligibleMarkets={eligibleMarkets}
-              token={token}
+              token={{
+                address: groupedPosition.loanAssetAddress,
+                chainId: groupedPosition.chainId,
+              }}
               onAddAction={handleAddAction}
             />
 
