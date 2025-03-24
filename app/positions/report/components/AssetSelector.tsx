@@ -127,12 +127,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                   }
                 }}
               >
-                <TokenIcon
-                  address={asset.address}
-                  chainId={asset.chainId}
-                  width={20}
-                  height={20}
-                />
+                <TokenIcon address={asset.address} chainId={asset.chainId} width={20} height={20} />
                 <span className="font-medium">{asset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />

@@ -20,7 +20,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
       className={`flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 transition-all duration-200 ease-in-out dark:border-gray-700 dark:bg-gray-900/50 ${className}`}
     >
       <div className="flex items-center gap-3">
-        <TokenIcon  
+        <TokenIcon
           address={market.collateralAsset.address}
           chainId={market.morphoBlue.chain.id}
           width={16}
@@ -55,7 +55,6 @@ export function MarketInfoBlockCompact({
   amount,
   className,
 }: MarketInfoBlockProps): JSX.Element {
-  
   return (
     <div
       key={market.uniqueKey}

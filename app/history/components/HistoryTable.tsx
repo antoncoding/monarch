@@ -300,7 +300,6 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                 (m) => m.uniqueKey === tx.data.market.uniqueKey,
               ) as Market;
 
-              
               const networkImg = getNetworkImg(market.morphoBlue.chain.id);
               const networkName = getNetworkName(market.morphoBlue.chain.id);
               const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';

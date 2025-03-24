@@ -4,8 +4,8 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import { Address, formatUnits } from 'viem';
-import { TokenIcon } from '@/components/TokenIcon';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
+import { TokenIcon } from '@/components/TokenIcon';
 import useMarketLiquidations from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';

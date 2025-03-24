@@ -29,7 +29,6 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
 
   const { address: account, isConnected, chainId } = useAccount();
 
-
   // Use the market network hook for chain switching
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: position.market.morphoBlue.chain.id,

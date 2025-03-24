@@ -91,7 +91,6 @@ export default function RewardTable({
             {filteredRewardTokens
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
-
                 // try find the reward token, default to 18 decimals for unknown tokens
                 const matchedToken = findToken(
                   tokenReward.asset.address,

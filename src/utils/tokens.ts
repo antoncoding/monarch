@@ -252,9 +252,7 @@ const supportedTokens = [
     symbol: 'eBTC',
     img: require('../imgs/tokens/ebtc.webp') as string,
     decimals: 8,
-    networks: [
-      { chain: mainnet, address: '0x657e8C867D8B37dCC18fA4Caead9C45EB088C642' },
-    ],
+    networks: [{ chain: mainnet, address: '0x657e8C867D8B37dCC18fA4Caead9C45EB088C642' }],
   },
   {
     symbol: 'rsETH',
