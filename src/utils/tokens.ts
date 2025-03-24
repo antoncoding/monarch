@@ -14,8 +14,8 @@ export type ERC20Token = {
   networks: { chain: Chain; address: string }[];
   protocol?: {
     name: string;
-    isProxy: boolean;
   };
+  isFactoryToken?: boolean;
 };
 
 export type UnknownERC20Token = {
@@ -34,15 +34,15 @@ const MORPHO_LEGACY = '0x9994E35Db50125E0DF82e4c2dde62496CE330999';
 const MORPHO_TOKEN_WRAPPER = '0x9d03bb2092270648d7480049d0e58d2fcf0e5123';
 
 const supportedTokens = [
-  // {
-  //   symbol: 'USDC',
-  //   img: require('../imgs/tokens/usdc.webp') as string,
-  //   decimals: 6,
-  //   networks: [
-  //     { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
-  //     { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
-  //   ],
-  // },
+  {
+    symbol: 'USDC',
+    img: require('../imgs/tokens/usdc.webp') as string,
+    decimals: 6,
+    networks: [
+      { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
+      { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+    ],
+  },
   {
     symbol: 'USDT',
     img: require('../imgs/tokens/usdt.webp') as string,
@@ -485,14 +485,6 @@ const supportedTokens = [
   },
 ];
 
-const isWhitelisted = (address: string, chainId: number) => {
-  return supportedTokens.some((token) =>
-    token.networks.some(
-      (network) =>
-        network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
-    ),
-  );
-};
 
 const findToken = (address: string, chainId: number) => {
   return supportedTokens.find((token) =>
@@ -542,7 +534,6 @@ const isWETH = (address: string, chainId: number) => {
 export {
   supportedTokens,
   isWETH,
-  isWhitelisted,
   findTokenWithKey,
   findToken,
   getUniqueTokens,

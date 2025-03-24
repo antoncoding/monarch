@@ -54,11 +54,11 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
   // Get unique assets with their chain IDs
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
-    positions.forEach((pos) => {
+    positions.forEach((pos, idx) => {
       const market = markets.find((m) => m.uniqueKey === pos.market.uniqueKey);
       if (!market) return;
 
-      const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}`;
+      const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}-${idx}`;
       if (!assetMap.has(key)) {
         assetMap.set(key, {
           symbol: market.loanAsset.symbol,
@@ -151,6 +151,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                 <TokenIcon
                   address={selectedAsset.address}
                   chainId={selectedAsset.chainId}
+                  symbol={selectedAsset.symbol}
                   width={18}
                   height={18}
                 />
@@ -187,9 +188,9 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
             />
             <div className="relative">
               <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
-                {filteredAssets.map((asset) => (
+                {filteredAssets.map((asset, idx) => (
                   <li
-                    key={`${asset.symbol}-${asset.chainId}`}
+                    key={`${asset.symbol}-${asset.chainId}-${idx}`}
                     className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
                       selectedAsset?.symbol === asset.symbol &&
                       selectedAsset?.chainId === asset.chainId
@@ -222,6 +223,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                       <TokenIcon
                         address={asset.address}
                         chainId={asset.chainId}
+                        symbol={asset.symbol}
                         width={18}
                         height={18}
                       />
@@ -318,6 +320,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                         <TokenIcon
                           address={market.loanAsset.address}
                           chainId={market.morphoBlue.chain.id}
+                          symbol={market.loanAsset.symbol}
                           width={20}
                           height={20}
                         />
@@ -353,6 +356,7 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
                         <TokenIcon
                           address={market.collateralAsset.address}
                           chainId={market.morphoBlue.chain.id}
+                          symbol={market.collateralAsset.symbol}
                           width={16}
                           height={16}
                         />

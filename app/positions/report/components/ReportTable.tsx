@@ -75,6 +75,7 @@ function MarketSummaryBlock({
           <TokenIcon
             address={market.collateralAsset.address}
             chainId={market.morphoBlue.chain.id}
+            symbol={market.collateralAsset.symbol}
             width={24}
             height={24}
           />

@@ -116,6 +116,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
           <TokenIcon
             address={position.market.loanAsset.address}
             chainId={position.market.morphoBlue.chain.id}
+            symbol={position.market.loanAsset.symbol}
             width={16}
             height={16}
           />
@@ -145,6 +146,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
                 <TokenIcon
                   address={position.market.loanAsset.address}
                   chainId={position.market.morphoBlue.chain.id}
+                  symbol={position.market.loanAsset.symbol}
                   width={16}
                   height={16}
                 />
@@ -166,6 +168,7 @@ export function WithdrawModal({ position, onClose, refetch }: ModalProps): JSX.E
                 <TokenIcon
                   address={position.market.loanAsset.address}
                   chainId={position.market.morphoBlue.chain.id}
+                  symbol={position.market.loanAsset.symbol}
                   width={16}
                   height={16}
                 />

@@ -68,6 +68,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               <TokenIcon
                 address={market.loanAsset.address}
                 chainId={market.morphoBlue.chain.id}
+                symbol={market.loanAsset.symbol}
                 width={20}
                 height={20}
               />

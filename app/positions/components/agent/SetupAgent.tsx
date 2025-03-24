@@ -237,6 +237,7 @@ export function SetupAgent({
                   <TokenIcon
                     address={group.loanAsset.address}
                     chainId={SupportedNetworks.Base}
+                    symbol={group.loanAsset.symbol}
                     width={24}
                     height={24}
                   />

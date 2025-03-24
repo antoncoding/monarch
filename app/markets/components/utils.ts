@@ -2,7 +2,7 @@
 
 import { SupportedNetworks } from '@/utils/networks';
 import { parseOracleVendors, OracleVendors } from '@/utils/oracle';
-import { findToken } from '@/utils/tokens';
+import { ERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
 
@@ -57,6 +57,7 @@ export function applyFilterAndSort(
   selectedLoanAssets: string[],
   selectedOracles: OracleVendors[],
   staredIds: string[],
+  findToken: (address: string, chainId: number) => ERC20Token | undefined,
 ): Market[] {
   return markets
     .filter((market) => {

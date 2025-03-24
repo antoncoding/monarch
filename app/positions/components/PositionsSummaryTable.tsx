@@ -218,6 +218,7 @@ export function PositionsSummaryTable({
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
                           chainId={groupedPosition.chainId}
+                          symbol={groupedPosition.loanAssetSymbol}
                           width={16}
                           height={16}
                         />
@@ -262,6 +263,7 @@ export function PositionsSummaryTable({
                                 key={`${collateral.address}-${index}`}
                                 address={collateral.address}
                                 chainId={groupedPosition.chainId}
+                                symbol={collateral.symbol}
                                 width={20}
                                 height={20}
                                 opacity={collateral.amount > 0 ? 1 : 0.5}

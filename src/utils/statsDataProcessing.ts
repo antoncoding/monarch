@@ -1,7 +1,7 @@
 import { formatUnits } from 'viem';
 import { SupportedNetworks } from './networks';
 import { AssetVolumeData, Transaction } from './statsUtils';
-import { findToken } from './tokens';
+import { findToken as findTokenStatic } from './tokens';
 
 /**
  * Process transaction data to extract detailed asset metrics
@@ -27,7 +27,7 @@ export const processTransactionData = (
 
     if (!assetMetrics[assetKey]) {
       // Try to find token info using findToken
-      const token = findToken(assetAddress, chainId);
+      const token = findTokenStatic(assetAddress, chainId);
 
       const symbol = token?.symbol ?? assetSymbolMap[assetAddress] ?? 'Unknown';
 
@@ -205,7 +205,7 @@ export const calculateHumanReadableVolumes = (
 })[] => {
   return assetMetrics.map((asset) => {
     // Find token to get decimals
-    const token = findToken(asset.assetAddress, asset.chainId ?? SupportedNetworks.Base);
+    const token = findTokenStatic(asset.assetAddress, asset.chainId ?? SupportedNetworks.Base);
     const decimals = token?.decimals ?? 18;
 
     // Calculate formatted values

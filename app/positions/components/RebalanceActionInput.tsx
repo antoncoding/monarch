@@ -40,7 +40,13 @@ export function RebalanceActionInput({
       />
       <div className="mx-2 flex items-center">
         <span className="mr-1 font-bold">{groupedPosition.loanAsset}</span>
-        <TokenIcon address={token.address} chainId={token.chainId} width={24} height={24} />
+        <TokenIcon
+          address={token.address}
+          chainId={token.chainId}
+          symbol={groupedPosition.loanAssetSymbol}
+          width={24}
+          height={24}
+        />
       </div>
       <span className="mr-2">From </span>
       <div className="w-48">

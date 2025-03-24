@@ -145,7 +145,7 @@ export default function AssetFilter({
               <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
                 {filteredItems.map((token) => (
                   <li
-                    key={token.symbol}
+                    key={`${token.symbol}-${token.networks[0].address}`}
                     className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
                       selectedAssets.includes(
                         token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),

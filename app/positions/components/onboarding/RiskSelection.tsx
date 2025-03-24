@@ -4,9 +4,9 @@ import { motion } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
+import { useTokens } from '@/components/providers/TokenProvider';
 import { formatReadable } from '@/utils/balance';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
-import { findToken, getUniqueTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import AssetFilter from 'app/markets/components/AssetFilter';
 import OracleFilter from 'app/markets/components/OracleFilter';
@@ -28,6 +28,8 @@ export function RiskSelection() {
   } = useOnboarding();
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
   const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
+
+  const { findToken, getUniqueTokens } = useTokens();
 
   const collateralTokens = useMemo(() => {
     if (!selectedToken?.markets) return [];

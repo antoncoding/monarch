@@ -89,6 +89,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
               <TokenIcon
                 address={market.loanAsset.address}
                 chainId={market.morphoBlue.chain.id}
+                symbol={market.loanAsset.symbol}
                 width={18}
                 height={18}
               />
@@ -185,6 +186,7 @@ export function SupplyModal({ market, onClose }: SupplyModalProps): JSX.Element 
                       <TokenIcon
                         address={market.loanAsset.address}
                         chainId={market.morphoBlue.chain.id}
+                        symbol={market.loanAsset.symbol}
                         width={18}
                         height={18}
                       />

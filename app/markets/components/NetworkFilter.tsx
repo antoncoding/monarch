@@ -10,6 +10,7 @@ type FilterProps = {
 export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: FilterProps) {
   return (
     <Select
+      suppressHydrationWarning
       label="Network"
       selectionMode="single"
       placeholder="All networks"

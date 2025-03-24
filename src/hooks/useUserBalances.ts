@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { useTokens } from '@/components/providers/TokenProvider';
 import { SupportedNetworks } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
-
 type TokenBalance = {
   address: string;
   balance: string;
@@ -24,6 +23,8 @@ export function useUserBalances() {
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  const { findToken } = useTokens();
 
   const fetchBalances = useCallback(
     async (chainId: number): Promise<TokenResponse['tokens']> => {
