@@ -485,7 +485,6 @@ const supportedTokens = [
   },
 ];
 
-
 const findToken = (address: string, chainId: number) => {
   return supportedTokens.find((token) =>
     token.networks.some(

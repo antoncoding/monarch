@@ -134,10 +134,9 @@ export default function Markets() {
   );
 
   useEffect(() => {
-
     // return if no markets
     if (!rawMarkets) return;
-    
+
     const processTokens = (
       tokenInfoList: { address: string; chainId: number; symbol: string; decimals: number }[],
     ) => {
@@ -157,8 +156,7 @@ export default function Markets() {
           ) {
             if (!acc[token.symbol]) {
               acc[token.symbol] = {
-                symbol:
-                  token.symbol.length > 10 ? `${token.symbol.slice(0, 10)}...` : token.symbol,
+                symbol: token.symbol.length > 10 ? `${token.symbol.slice(0, 10)}...` : token.symbol,
                 img: undefined,
                 decimals: token.decimals,
                 networks: [],
@@ -194,7 +192,6 @@ export default function Markets() {
 
     setUniqueCollaterals(processTokens(collatList));
     setUniqueLoanAssets(processTokens(loanList));
-    
   }, [rawMarkets, includeUnknownTokens, allTokens]);
 
   const updateUrlParams = useCallback(

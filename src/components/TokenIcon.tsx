@@ -13,33 +13,28 @@ type TokenIconProps = {
 };
 
 export function TokenIcon({ address, chainId, width, height, opacity }: TokenIconProps) {
-
   const { findToken } = useTokens();
 
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
 
   // If we have a token with an image, use that
   if (token?.img) {
-    const img = <Image
-      className="rounded-full"
-      src={token.img}
-      alt={token.symbol}
-      width={width}
-      height={height}
-    />
+    const img = (
+      <Image
+        className="rounded-full"
+        src={token.img}
+        alt={token.symbol}
+        width={width}
+        height={height}
+      />
+    );
 
     const detail = token.isFactoryToken
       ? `This token is auto-detected from ${token.protocol?.name} `
-      : `This token is trusted by Monarch whitelist`;
+      : `This token is whitelisted by Monarch`;
 
     return (
-      <Tooltip
-        content={<TooltipContent
-          title={token.symbol}
-          detail={detail}
-          icon={img}
-        />}
-      >
+      <Tooltip content={<TooltipContent title={token.symbol} detail={detail} icon={img} />}>
         <Image
           className="rounded-full"
           src={token.img}

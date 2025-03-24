@@ -19,7 +19,7 @@ type TokenContextType = {
   allTokens: ERC20Token[];
   findToken: (address: string, chainId: number) => ERC20Token | undefined;
   getUniqueTokens: (tokenList: { address: string; chainId: number }[]) => ERC20Token[];
-}
+};
 
 const TokenContext = createContext<TokenContextType | null>(null);
 
@@ -27,7 +27,7 @@ async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
   try {
     const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`);
     if (!response.ok) return [];
-    const data = await response.json() as PendleAsset[];
+    const data = (await response.json()) as PendleAsset[];
     return z.array(PendleAssetSchema).parse(data);
   } catch (error) {
     console.error(`Error fetching Pendle assets for chain ${chainId}:`, error);
@@ -77,36 +77,39 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     void fetchAllAssets();
   }, []);
 
-  const findToken = useCallback((address: string, chainId: number) => {
-    return allTokens.find((token) =>
-      token.networks.some(
-        (network) =>
-          network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
-      ),
+  const findToken = useCallback(
+    (address: string, chainId: number) => {
+      return allTokens.find((token) =>
+        token.networks.some(
+          (network) =>
+            network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
+        ),
       );
     },
     [allTokens],
   );
 
-  const getUniqueTokens = useCallback((tokenList: { address: string; chainId: number }[]) => {
-    return allTokens.filter((token) => {
-      return tokenList.find((item) =>
-        token.networks.find(
-          (network) =>
-            network.address.toLowerCase() === item.address.toLowerCase() &&
-            network.chain.id === item.chainId,
-        ),
-      );
-    });
-  }, [allTokens]);
-
-  const value = useMemo(() => ({ allTokens, findToken, getUniqueTokens }), [allTokens, findToken, getUniqueTokens]);
-
-  return (
-    <TokenContext.Provider value={value}>
-      {children}
-    </TokenContext.Provider>
+  const getUniqueTokens = useCallback(
+    (tokenList: { address: string; chainId: number }[]) => {
+      return allTokens.filter((token) => {
+        return tokenList.find((item) =>
+          token.networks.find(
+            (network) =>
+              network.address.toLowerCase() === item.address.toLowerCase() &&
+              network.chain.id === item.chainId,
+          ),
+        );
+      });
+    },
+    [allTokens],
   );
+
+  const value = useMemo(
+    () => ({ allTokens, findToken, getUniqueTokens }),
+    [allTokens, findToken, getUniqueTokens],
+  );
+
+  return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;
 }
 
 export function useTokens() {
@@ -115,4 +118,4 @@ export function useTokens() {
     throw new Error('useTokens must be used within a TokenProvider');
   }
   return context;
-} 
+}
