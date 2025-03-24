@@ -37,7 +37,7 @@ const useMarketBorrows = (marketUniqueKey: string | undefined) => {
     try {
       const variables = {
         uniqueKey: marketUniqueKey,
-        first: 100, // Limit to 100 most recent transactions
+        first: 1000, // Limit to 100 most recent transactions
         skip: 0,
       };
 
