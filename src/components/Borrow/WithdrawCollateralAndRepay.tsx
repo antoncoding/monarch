@@ -181,7 +181,7 @@ export function WithdrawCollateralAndRepay({
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div>
               <p className="mb-1 font-zen text-xs opacity-50">Total Collateral</p>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 <TokenIcon
                   address={market.collateralAsset.address}
                   chainId={market.morphoBlue.chain.id}
@@ -200,7 +200,7 @@ export function WithdrawCollateralAndRepay({
             </div>
             <div>
               <p className="mb-1 font-zen text-xs opacity-50">Total Borrowed</p>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 <TokenIcon
                   address={market.loanAsset.address}
                   chainId={market.morphoBlue.chain.id}
