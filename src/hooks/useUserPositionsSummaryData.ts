@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 import {
@@ -30,13 +30,13 @@ export const blockKeys = {
 export const earningsKeys = {
   all: ['earnings'] as const,
   user: (address: string) => [...earningsKeys.all, address] as const,
-  position: (address: string, marketKey: string) => 
+  position: (address: string, marketKey: string) =>
     [...earningsKeys.user(address), marketKey] as const,
 };
 
 const fetchBlockNumbers = async () => {
   console.log('🔄 [BLOCK NUMBERS] Initial fetch started');
-  
+
   const now = Date.now() / 1000;
   const DAY = 86400;
   const timestamps = {
@@ -73,9 +73,8 @@ const fetchBlockNumbers = async () => {
 };
 
 const useUserPositionsSummaryData = (user: string | undefined) => {
-  const queryClient = useQueryClient();
   const [hasInitialData, setHasInitialData] = useState(false);
-  
+
   const {
     data: positions,
     loading: positionsLoading,
@@ -87,10 +86,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   const { fetchTransactions } = useUserTransactions();
 
   // Query for block numbers - this runs once and is cached
-  const { 
-    data: blockNums,
-    isLoading: isLoadingBlockNums,
-  } = useQuery({
+  const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
     queryKey: blockKeys.all,
     queryFn: fetchBlockNumbers,
     staleTime: 5 * 60 * 1000, // Consider block numbers fresh for 5 minutes
@@ -113,15 +109,10 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
       console.log('🔄 [EARNINGS] Starting calculation for', positions.length, 'positions');
 
-      // Start with empty earnings
-      const initialPositions = initializePositionsWithEmptyEarnings(positions);
-      
       // Calculate earnings for each position
       const positionPromises = positions.map(async (position) => {
-        const positionKey = earningsKeys.position(user, position.market.uniqueKey);
-        
         console.log('📈 [EARNINGS] Calculating for market:', position.market.uniqueKey);
-        
+
         const history = await fetchTransactions({
           userAddress: [user],
           marketUniqueKeys: [position.market.uniqueKey],
@@ -148,7 +139,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
       // Wait for all earnings calculations to complete
       const positionsWithCalculatedEarnings = await Promise.all(positionPromises);
-      
+
       console.log('📊 [EARNINGS] All earnings calculations complete');
       return positionsWithCalculatedEarnings;
     },
@@ -183,8 +174,8 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
       if (onSuccess) {
         onSuccess();
       }
-    } catch (error) {
-      console.error('Error refetching positions:', error);
+    } catch (refetchError) {
+      console.error('Error refetching positions:', refetchError);
     }
   };
 
@@ -192,14 +183,15 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   // 1. We haven't received initial data yet
   // 2. Positions are still loading initially
   // 3. We have positions but no earnings data yet
-  const isPositionsLoading = !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.length);
+  const isPositionsLoading =
+    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.length);
 
   // Consider earnings loading if:
   // 1. Block numbers are loading
   // 2. Initial earnings query is loading
   // 3. Earnings are being fetched/calculated (even if we have placeholder data)
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
-  
+
   return {
     positions: positionsWithEarnings ?? [],
     isPositionsLoading,

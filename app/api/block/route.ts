@@ -9,15 +9,15 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 async function getBlockFromEtherscan(timestamp: number, chainId: number): Promise<number | null> {
   try {
     const response = await fetch(
-      `https://api.etherscan.io/v2/api?chainid=${chainId}&module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${ETHERSCAN_API_KEY}`
+      `https://api.etherscan.io/v2/api?chainid=${chainId}&module=block&action=getblocknobytime&timestamp=${timestamp}&closest=before&apikey=${ETHERSCAN_API_KEY}`,
     );
 
-    const data = await response.json();
-    
+    const data = (await response.json()) as { status: string; message: string; result: string };
+
     if (data.status === '1' && data.message === 'OK') {
       return parseInt(data.result);
     }
-    
+
     return null;
   } catch (error) {
     console.error('Etherscan API error:', error);
@@ -44,13 +44,12 @@ export async function GET(request: NextRequest) {
     // Fallback to SmartBlockFinder
     const client = numericChainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
 
-    
     // Try Etherscan API first
     const etherscanBlock = await getBlockFromEtherscan(numericTimestamp, numericChainId);
     if (etherscanBlock !== null) {
       // For Etherscan results, we need to fetch the block to get its timestamp
       const block = await client.getBlock({ blockNumber: BigInt(etherscanBlock) });
-      
+
       return NextResponse.json({
         blockNumber: Number(block.number),
         timestamp: Number(block.timestamp),
@@ -58,7 +57,6 @@ export async function GET(request: NextRequest) {
     } else {
       console.log('etherscanBlock is null', timestamp, chainId);
     }
-
 
     if (!client) {
       return NextResponse.json({ error: 'Unsupported chain ID' }, { status: 400 });

@@ -45,7 +45,6 @@ export async function fetchPositionSnapshot(
   blockNumber: number,
 ): Promise<PositionSnapshot | null> {
   try {
-
     console.log('fetchPositionSnapshot called', marketId, userAddress, chainId, blockNumber);
 
     // Fetch the position at the specified block number
