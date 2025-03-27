@@ -56,7 +56,6 @@ export const positionKeys = {
 
 const fetchUserPositions = async (
   user: string,
-  markets: Market[],
   getUserMarkets: () => Array<{ marketUniqueKey: string; chainId: number }>,
 ): Promise<UserPositionsResponse> => {
   console.log('🔄 Fetching user positions for:', user);
@@ -124,7 +123,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     queryKey: positionKeys.user(user ?? ''),
     queryFn: async () => {
       if (!user) throw new Error('Missing user address');
-      return fetchUserPositions(user, markets, getUserMarkets);
+      return fetchUserPositions(user, getUserMarkets);
     },
     enabled: !!user,
     staleTime: 30000, // Consider data fresh for 30 seconds
@@ -169,7 +168,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         })
         .map(market => {
           const marketWithDetails = markets.find((m) => 
-            m.uniqueKey === market.marketUniqueKey && 
+            m.uniqueKey.toLowerCase() === market.marketUniqueKey.toLowerCase() && 
             m.morphoBlue?.chain?.id === market.chainId
           );
           if (!marketWithDetails || !marketWithDetails.uniqueKey || !marketWithDetails.morphoBlue?.chain?.id) {
