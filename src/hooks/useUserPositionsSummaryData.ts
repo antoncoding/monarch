@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 import {
@@ -20,148 +21,181 @@ type ChainBlockNumbers = {
   [K in SupportedNetworks]: BlockNumbers;
 };
 
+// Query keys for block numbers and earnings
+export const blockKeys = {
+  all: ['blocks'] as const,
+  chain: (chainId: number) => [...blockKeys.all, chainId] as const,
+};
+
+export const earningsKeys = {
+  all: ['earnings'] as const,
+  user: (address: string) => [...earningsKeys.all, address] as const,
+  position: (address: string, marketKey: string) =>
+    [...earningsKeys.user(address), marketKey] as const,
+};
+
+const fetchBlockNumbers = async () => {
+  console.log('🔄 [BLOCK NUMBERS] Initial fetch started');
+
+  const now = Date.now() / 1000;
+  const DAY = 86400;
+  const timestamps = {
+    day: now - DAY,
+    week: now - 7 * DAY,
+    month: now - 30 * DAY,
+  };
+
+  const newBlockNums = {} as ChainBlockNumbers;
+
+  // Get block numbers for each network and timestamp
+  await Promise.all(
+    Object.values(SupportedNetworks)
+      .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number')
+      .map(async (chainId) => {
+        const [day, week, month] = await Promise.all([
+          estimatedBlockNumber(chainId, timestamps.day),
+          estimatedBlockNumber(chainId, timestamps.week),
+          estimatedBlockNumber(chainId, timestamps.month),
+        ]);
+
+        if (day && week && month) {
+          newBlockNums[chainId] = {
+            day: day.blockNumber,
+            week: week.blockNumber,
+            month: month.blockNumber,
+          };
+        }
+      }),
+  );
+
+  console.log('📊 [BLOCK NUMBERS] Fetch complete');
+  return newBlockNums;
+};
+
 const useUserPositionsSummaryData = (user: string | undefined) => {
+  const [hasInitialData, setHasInitialData] = useState(false);
+
   const {
+    data: positions,
     loading: positionsLoading,
     isRefetching,
-    data: positions,
     positionsError,
-    refetch,
+    refetch: refetchPositions,
   } = useUserPositions(user, true);
 
   const { fetchTransactions } = useUserTransactions();
 
-  const [positionsWithEarnings, setPositionsWithEarnings] = useState<MarketPositionWithEarnings[]>(
-    [],
-  );
-  const [blockNums, setBlockNums] = useState<ChainBlockNumbers>();
-  const [isLoadingBlockNums, setIsLoadingBlockNums] = useState(false);
-  const [isLoadingEarnings, setIsLoadingEarnings] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  // Query for block numbers - this runs once and is cached
+  const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
+    queryKey: blockKeys.all,
+    queryFn: fetchBlockNumbers,
+    staleTime: 5 * 60 * 1000, // Consider block numbers fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+  });
 
-  // Loading state for positions that doesn't include earnings calculation
-  const isPositionsLoading = positionsLoading;
+  // Query for earnings calculations with progressive updates
+  const {
+    data: positionsWithEarnings,
+    isLoading: isLoadingEarningsQuery,
+    isFetching: isFetchingEarnings,
+    error,
+  } = useQuery({
+    queryKey: ['positions-earnings', user, positions, blockNums],
+    queryFn: async () => {
+      if (!positions || !user || !blockNums) {
+        console.log('⚠️ [EARNINGS] Missing required data, returning empty earnings');
+        return [] as MarketPositionWithEarnings[];
+      }
 
-  // Loading state that combines all loading states (used for earnings)
-  const isEarningsLoading = isLoadingBlockNums || isLoadingEarnings;
+      console.log('🔄 [EARNINGS] Starting calculation for', positions.length, 'positions');
 
-  useEffect(() => {
-    const fetchBlockNums = async () => {
-      try {
-        setIsLoadingBlockNums(true);
-        setError(null);
+      // Calculate earnings for each position
+      const positionPromises = positions.map(async (position) => {
+        console.log('📈 [EARNINGS] Calculating for market:', position.market.uniqueKey);
 
-        const now = Date.now() / 1000;
-        const DAY = 86400;
-        const timestamps = {
-          day: now - DAY,
-          week: now - 7 * DAY,
-          month: now - 30 * DAY,
-        };
+        const history = await fetchTransactions({
+          userAddress: [user],
+          marketUniqueKeys: [position.market.uniqueKey],
+        });
 
-        const newBlockNums = {} as ChainBlockNumbers;
+        const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
+        const blockNumbers = blockNums[chainId];
 
-        // Get block numbers for each network and timestamp
-        await Promise.all(
-          Object.values(SupportedNetworks)
-            .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number')
-            .map(async (chainId) => {
-              const [day, week, month] = await Promise.all([
-                estimatedBlockNumber(chainId, timestamps.day),
-                estimatedBlockNumber(chainId, timestamps.week),
-                estimatedBlockNumber(chainId, timestamps.month),
-              ]);
-
-              if (day && week && month) {
-                newBlockNums[chainId] = {
-                  day: day.blockNumber,
-                  week: week.blockNumber,
-                  month: month.blockNumber,
-                };
-              }
-            }),
+        const earned = await calculateEarnings(
+          position,
+          history.items,
+          user as Address,
+          chainId,
+          blockNumbers,
         );
 
-        setBlockNums(newBlockNums);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch block numbers'));
-      } finally {
-        setIsLoadingBlockNums(false);
+        console.log('✅ [EARNINGS] Completed for market:', position.market.uniqueKey);
+
+        return {
+          ...position,
+          earned,
+        };
+      });
+
+      // Wait for all earnings calculations to complete
+      const positionsWithCalculatedEarnings = await Promise.all(positionPromises);
+
+      console.log('📊 [EARNINGS] All earnings calculations complete');
+      return positionsWithCalculatedEarnings;
+    },
+    placeholderData: (prev) => {
+      // If we have positions but no earnings data yet, initialize with empty earnings
+      if (positions?.length) {
+        console.log('📋 [EARNINGS] Using placeholder data with empty earnings');
+        return initializePositionsWithEmptyEarnings(positions);
       }
-    };
+      // If we have previous data, keep it during transitions
+      if (prev) {
+        console.log('📋 [EARNINGS] Keeping previous earnings data during transition');
+        return prev;
+      }
+      return [] as MarketPositionWithEarnings[];
+    },
+    enabled: !!positions && !!user && !!blockNums,
+    gcTime: 5 * 60 * 1000,
+    staleTime: 30000,
+  });
 
-    void fetchBlockNums();
-  }, []);
-
-  // Create positions with empty earnings as soon as positions are loaded
+  // Update hasInitialData when we first get positions with earnings
   useEffect(() => {
-    if (positions && positions.length > 0) {
-      // Initialize positions with empty earnings data to display immediately
-      setPositionsWithEarnings(initializePositionsWithEmptyEarnings(positions));
+    if (positionsWithEarnings && positionsWithEarnings.length > 0 && !hasInitialData) {
+      setHasInitialData(true);
     }
-  }, [positions]);
+  }, [positionsWithEarnings, hasInitialData]);
 
-  // Calculate real earnings in the background
-  useEffect(() => {
-    const updatePositionsWithEarnings = async () => {
-      try {
-        if (!positions || !user || !blockNums) return;
-
-        setIsLoadingEarnings(true);
-        setError(null);
-
-        // Process positions one by one to update earnings progressively
-        // Potential issue: too slow, parallel processing might be better
-        for (const position of positions) {
-          const history = await fetchTransactions({
-            userAddress: [user],
-            marketUniqueKeys: [position.market.uniqueKey],
-          });
-
-          const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
-          const blockNumbers = blockNums[chainId];
-
-          const earned = await calculateEarnings(
-            position,
-            history.items,
-            user as Address,
-            chainId,
-            blockNumbers,
-          );
-
-          // Update this single position with earnings
-          setPositionsWithEarnings((prev) => {
-            const updatedPositions = [...prev];
-            const positionIndex = updatedPositions.findIndex(
-              (p) =>
-                p.market.uniqueKey === position.market.uniqueKey &&
-                p.market.morphoBlue.chain.id === position.market.morphoBlue.chain.id,
-            );
-
-            if (positionIndex !== -1) {
-              updatedPositions[positionIndex] = {
-                ...updatedPositions[positionIndex],
-                earned,
-              };
-            }
-
-            return updatedPositions;
-          });
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to calculate earnings'));
-      } finally {
-        setIsLoadingEarnings(false);
+  const refetch = async (onSuccess?: () => void) => {
+    try {
+      await refetchPositions();
+      if (onSuccess) {
+        onSuccess();
       }
-    };
+    } catch (refetchError) {
+      console.error('Error refetching positions:', refetchError);
+    }
+  };
 
-    void updatePositionsWithEarnings();
-  }, [positions, user, blockNums, fetchTransactions]);
+  // Consider loading if either:
+  // 1. We haven't received initial data yet
+  // 2. Positions are still loading initially
+  // 3. We have positions but no earnings data yet
+  const isPositionsLoading =
+    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.length);
+
+  // Consider earnings loading if:
+  // 1. Block numbers are loading
+  // 2. Initial earnings query is loading
+  // 3. Earnings are being fetched/calculated (even if we have placeholder data)
+  const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
   return {
-    positions: positionsWithEarnings,
-    isPositionsLoading, // For initial load of positions only
-    isEarningsLoading, // For earnings calculation
+    positions: positionsWithEarnings ?? [],
+    isPositionsLoading,
+    isEarningsLoading,
     isRefetching,
     error: error ?? positionsError,
     refetch,

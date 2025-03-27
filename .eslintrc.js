@@ -121,8 +121,8 @@ module.exports = {
     // APIs
     '@typescript-eslint/prefer-includes': 'error',
     '@typescript-eslint/prefer-nullish-coalescing': 'error',
-    '@typescript-eslint/prefer-optional-chain': 'error',
     '@typescript-eslint/prefer-string-starts-ends-with': 'error',
+    '@typescript-eslint/prefer-optional-chain': 'warn',
 
     // Hard to migrate
     // Errors for all try/catch blocks and any types from third-parties

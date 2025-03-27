@@ -23,8 +23,6 @@ export function calculateEarningsFromSnapshot(
     .filter((tx) => Number(tx.timestamp) > start && Number(tx.timestamp) < end)
     .sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1));
 
-  console.log('txsWithinPeriod', txsWithinPeriod.length);
-
   const depositsAfter = txsWithinPeriod
     .filter((tx) => tx.type === UserTxTypes.MarketSupply)
     .reduce((sum, tx) => sum + BigInt(tx.data?.assets || '0'), 0n);

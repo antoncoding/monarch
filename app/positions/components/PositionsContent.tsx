@@ -60,7 +60,7 @@ export default function Positions() {
   });
 
   const handleRefetch = () => {
-    refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
+    void refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
   };
 
   return (
@@ -112,7 +112,7 @@ export default function Positions() {
               setShowWithdrawModal(false);
               setSelectedPosition(null);
             }}
-            refetch={refetch}
+            refetch={() => void refetch()}
           />
         )}
 
@@ -171,7 +171,7 @@ export default function Positions() {
               setShowWithdrawModal={setShowWithdrawModal}
               setShowSupplyModal={setShowSupplyModal}
               setSelectedPosition={setSelectedPosition}
-              refetch={refetch}
+              refetch={() => void refetch()}
               isRefetching={isRefetching}
               isLoadingEarnings={isEarningsLoading}
               rebalancerInfo={rebalancerInfo}
