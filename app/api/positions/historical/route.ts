@@ -143,13 +143,6 @@ export async function GET(request: NextRequest) {
     const userAddress = searchParams.get('userAddress');
     const chainId = parseInt(searchParams.get('chainId') ?? '1');
 
-    // console.log(`Historical position request:`, {
-    //   blockNumber,
-    //   marketId,
-    //   userAddress,
-    //   chainId,
-    // });
-
     if (!marketId || !userAddress || (!blockNumber && blockNumber !== 0)) {
       console.error('Missing required parameters:', {
         blockNumber: !!blockNumber,
@@ -161,14 +154,6 @@ export async function GET(request: NextRequest) {
 
     // Get position data at the specified blockNumber
     const position = await getPositionAtBlock(marketId, userAddress, blockNumber, chainId);
-
-    // console.log(`Successfully retrieved historical position data:`, {
-    //   blockNumber,
-    //   marketId,
-    //   userAddress,
-    //   chainId,
-    //   position,
-    // });
 
     return NextResponse.json({
       position,
