@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import storage from 'local-storage-fallback';
-import { useAccount } from 'wagmi';
 import { CacheMarketPositionKeys } from '../utils/storageKeys';
 
 type MarketIdentifier = {
@@ -10,8 +9,7 @@ type MarketIdentifier = {
 
 type UserMarketsCache = Record<string, MarketIdentifier[]>;
 
-export function useUserMarketsCache() {
-  const { address } = useAccount();
+export function useUserMarketsCache(address: string | undefined) {
   const userAddress = address?.toLowerCase() ?? '';
 
   // Load cache from localStorage

@@ -35,7 +35,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
   const { address } = useAccount();
-  const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(address);
+  const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(account);
 
   const isOwner = useMemo(() => {
     if (!account) return false;

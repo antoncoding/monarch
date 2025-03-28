@@ -50,8 +50,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const [currentStep, setCurrentStep] = useState<SupplyStepType>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { batchAddUserMarkets } = useUserMarketsCache();
   const { address: account, chainId } = useAccount();
+  const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
 
   // Get token balance

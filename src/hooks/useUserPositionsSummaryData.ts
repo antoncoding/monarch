@@ -75,6 +75,8 @@ const fetchBlockNumbers = async () => {
 const useUserPositionsSummaryData = (user: string | undefined) => {
   const [hasInitialData, setHasInitialData] = useState(false);
 
+  console.log('usePositionsSummaryData', user);
+
   const {
     data: positions,
     loading: positionsLoading,

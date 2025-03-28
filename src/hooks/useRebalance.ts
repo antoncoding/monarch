@@ -53,7 +53,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   });
 
   // add newly used markets to the cache
-  const { batchAddUserMarkets } = useUserMarketsCache();
+  const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const addRebalanceAction = useCallback((action: RebalanceAction) => {
     setRebalanceActions((prev) => [...prev, action]);

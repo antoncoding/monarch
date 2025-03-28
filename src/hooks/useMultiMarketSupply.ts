@@ -33,7 +33,7 @@ export function useMultiMarketSupply(
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
 
-  const { batchAddUserMarkets } = useUserMarketsCache();
+  const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const {
     authorizePermit2,

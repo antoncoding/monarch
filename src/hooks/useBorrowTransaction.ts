@@ -28,9 +28,8 @@ export function useBorrowTransaction({
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [useEth, setUseEth] = useState<boolean>(false);
 
-  const { batchAddUserMarkets } = useUserMarketsCache();
-
   const { address: account, chainId } = useAccount();
+  const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
 
   // Get approval for collateral token

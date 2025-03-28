@@ -105,7 +105,7 @@ const fetchUserPositions = async (
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const queryClient = useQueryClient();
   const { markets } = useMarkets();
-  const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache();
+  const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   // Main query for user positions
   const {
