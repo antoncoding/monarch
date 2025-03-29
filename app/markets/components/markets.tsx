@@ -1,18 +1,17 @@
 'use client';
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { Tooltip } from '@nextui-org/react';
-import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
+import { useDisclosure } from '@nextui-org/react';
 import { Chain } from '@rainbow-me/rainbowkit';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
+import { FiSettings } from 'react-icons/fi';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModal } from '@/components/supplyModal';
-import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -26,6 +25,7 @@ import { Market } from '@/utils/types';
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
 import { SortColumn } from './constants';
+import MarketSettingsModal from './MarketSettingsModal';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
@@ -52,6 +52,12 @@ export default function Markets() {
   const toast = useStyledToast();
 
   const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+
+  const {
+    isOpen: isSettingsModalOpen,
+    onOpen: onSettingsModalOpen,
+    onOpenChange: onSettingsModalOpenChange,
+  } = useDisclosure();
 
   const defaultNetwork = (() => {
     const networkParam = searchParams.get('network');
@@ -89,10 +95,18 @@ export default function Markets() {
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
     usePagination();
 
-  const [includeUnknownTokens] = useLocalStorage('includeUnknownTokens', false);
-  const [showUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
+    'includeUnknownTokens',
+    false,
+  );
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
 
   const { allTokens, findToken } = useTokens();
+
+  const [usdFilters, setUsdFilters] = useState({
+    minSupply: '',
+    minBorrow: '',
+  });
 
   useEffect(() => {
     const currentParams = searchParams.toString();
@@ -236,6 +250,7 @@ export default function Markets() {
       selectedOracles,
       staredIds,
       findToken,
+      usdFilters,
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
@@ -255,13 +270,16 @@ export default function Markets() {
     sortColumn,
     sortDirection,
     selectedNetwork,
+    includeUnknownTokens,
     showUnknownOracle,
     selectedCollaterals,
     selectedLoanAssets,
     selectedOracles,
+    staredIds,
+    findToken,
+    usdFilters,
     searchQuery,
     resetPage,
-    staredIds,
   ]);
 
   useEffect(() => {
@@ -350,7 +368,19 @@ export default function Markets() {
           />
         )}
 
-        {/* Pass uniqueCollaterals and uniqueLoanAssets to AdvancedSearchBar */}
+        <MarketSettingsModal
+          isOpen={isSettingsModalOpen}
+          onOpenChange={onSettingsModalOpenChange}
+          includeUnknownTokens={includeUnknownTokens}
+          setIncludeUnknownTokens={setIncludeUnknownTokens}
+          showUnknownOracle={showUnknownOracle}
+          setShowUnknownOracle={setShowUnknownOracle}
+          usdFilters={usdFilters}
+          setUsdFilters={setUsdFilters}
+          entriesPerPage={entriesPerPage}
+          onEntriesPerPageChange={handleEntriesPerPageChange}
+        />
+
         <div className="flex items-center justify-between pb-4">
           <AdvancedSearchBar
             searchQuery={searchQuery}
@@ -363,9 +393,7 @@ export default function Markets() {
           />
         </div>
 
-        {/* basic filter row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          {/* left section: asset filters */}
           <div className="flex flex-col gap-4 lg:flex-row">
             <div className="flex flex-col gap-4 lg:flex-row">
               <NetworkFilter
@@ -417,22 +445,20 @@ export default function Markets() {
               className="text-secondary"
               onClick={handleRefresh}
             >
-              <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-2`} size={10} />
+              <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-1`} size={10} />
               Refresh
             </Button>
 
-            <Tooltip
-              content={
-                <TooltipContent
-                  icon={<QuestionMarkCircledIcon />}
-                  title="Can't find a particular market?"
-                  detail="Some markets are hidden by default. Check the settings page for advanced filter options."
-                />
-              }
-              className="max-w-[400px] rounded-sm"
+            <Button
+              isIconOnly
+              aria-label="Market View Settings"
+              variant="light"
+              size="sm"
+              className="text-secondary"
+              onClick={onSettingsModalOpen}
             >
-              <QuestionMarkCircledIcon className="ml-2 h-4 w-4 cursor-help text-secondary" />
-            </Tooltip>
+              <FiSettings size={14} />
+            </Button>
           </div>
         </div>
 
@@ -449,15 +475,14 @@ export default function Markets() {
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onMarketClick={handleMarketClick}
-                setShowSupplyModal={setShowSupplyModal}
-                setSelectedMarket={setSelectedMarket}
                 staredIds={staredIds}
                 starMarket={starMarket}
                 unstarMarket={unstarMarket}
                 currentPage={currentPage}
                 entriesPerPage={entriesPerPage}
-                handleEntriesPerPageChange={handleEntriesPerPageChange}
                 setCurrentPage={setCurrentPage}
+                setShowSupplyModal={setShowSupplyModal}
+                setSelectedMarket={setSelectedMarket}
               />
             ) : (
               <EmptyScreen

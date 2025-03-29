@@ -1,0 +1,242 @@
+import React from 'react';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Switch,
+  Input,
+  Divider,
+} from '@nextui-org/react';
+
+type MarketSettingsModalProps = {
+  isOpen: boolean;
+  onOpenChange: () => void;
+  // Unknown Filters
+  includeUnknownTokens: boolean;
+  setIncludeUnknownTokens: (value: boolean) => void;
+  showUnknownOracle: boolean;
+  setShowUnknownOracle: (value: boolean) => void;
+  // USD Filters (Simplified)
+  usdFilters: {
+    minSupply: string;
+    minBorrow: string;
+  };
+  setUsdFilters: (filters: MarketSettingsModalProps['usdFilters']) => void;
+  // Pagination
+  entriesPerPage: number;
+  onEntriesPerPageChange: (value: number) => void;
+};
+
+// Reusable component for consistent setting layout
+function SettingItem({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-grow flex-col gap-1 pr-2">
+        <h4 className="text-base font-medium text-primary">{title}</h4>
+        <p className="text-xs text-secondary">{description}</p>
+      </div>
+      <div className="flex-shrink-0 pt-1">
+        {' '}
+        {/* Align control slightly lower */}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function MarketSettingsModal({
+  isOpen,
+  onOpenChange,
+  includeUnknownTokens,
+  setIncludeUnknownTokens,
+  showUnknownOracle,
+  setShowUnknownOracle,
+  usdFilters,
+  setUsdFilters,
+  entriesPerPage,
+  onEntriesPerPageChange,
+}: MarketSettingsModalProps) {
+  const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
+
+  const handleEntriesChange = (value: number) => {
+    onEntriesPerPageChange(value);
+    setCustomEntries(value.toString()); // Update local state if preset is clicked
+  };
+
+  const handleCustomEntriesSubmit = () => {
+    const value = parseInt(customEntries, 10);
+    if (!isNaN(value) && value > 0) {
+      onEntriesPerPageChange(value);
+    } else {
+      setCustomEntries(entriesPerPage.toString());
+    }
+  };
+
+  const handleUsdFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (/^\d*$/.test(value)) {
+      setUsdFilters({
+        ...usdFilters,
+        [name]: value,
+      });
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl">
+      <ModalContent>
+        {(onClose) => (
+          <>
+            <ModalHeader className="flex flex-col gap-1 font-zen">Market View Settings</ModalHeader>
+            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
+              {/* --- Filter Settings Section --- */}
+              <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
+                {/* Section Header: Adjusted style & position */}
+                <h3 className="mb-1 font-zen text-xs uppercase text-secondary">Filter Settings</h3>
+                <SettingItem
+                  title="Show Unknown Tokens"
+                  description="Display tokens not in the recognized list (marked with '?'). Use with caution."
+                >
+                  <Switch
+                    isSelected={includeUnknownTokens}
+                    onValueChange={setIncludeUnknownTokens}
+                    size="sm"
+                    color="primary"
+                  />
+                </SettingItem>
+                <Divider />
+                <SettingItem
+                  title="Show Unknown Oracles"
+                  description="Display markets using unverified oracles. Use with caution."
+                >
+                  <Switch
+                    isSelected={showUnknownOracle}
+                    onValueChange={setShowUnknownOracle}
+                    size="sm"
+                    color="primary"
+                  />
+                </SettingItem>
+              </div>
+
+              {/* --- USD Value Filters Section --- */}
+              <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
+                {/* Section Header: Adjusted style & position */}
+                <h3 className="mb-1 font-zen text-xs uppercase text-secondary">
+                  Filter by Min USD Value
+                </h3>
+                <p className="-mt-3 mb-1 text-xs text-warning">
+                  {' '}
+                  {/* Fine-tune note position */}
+                  Note: USD values are estimates and may not be available or accurate for all
+                  markets.
+                </p>
+                <SettingItem
+                  title="Min Supply (USD)"
+                  description="Show markets with total supply >= this value."
+                >
+                  <Input
+                    aria-label="Minimum Supply in USD"
+                    name="minSupply"
+                    placeholder="0"
+                    value={usdFilters.minSupply}
+                    onChange={handleUsdFilterChange}
+                    size="sm"
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    className="max-w-[120px]"
+                    classNames={{ input: 'text-right' }}
+                    startContent={
+                      <div className="pointer-events-none flex items-center">
+                        <span className="text-small text-default-400">$</span>
+                      </div>
+                    }
+                  />
+                </SettingItem>
+                <Divider />
+                <SettingItem
+                  title="Min Borrow (USD)"
+                  description="Show markets with total borrow >= this value."
+                >
+                  <Input
+                    aria-label="Minimum Borrow in USD"
+                    name="minBorrow"
+                    placeholder="0"
+                    value={usdFilters.minBorrow}
+                    onChange={handleUsdFilterChange}
+                    size="sm"
+                    type="text"
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    className="max-w-[120px]"
+                    classNames={{ input: 'text-right' }}
+                    startContent={
+                      <div className="pointer-events-none flex items-center">
+                        <span className="text-small text-default-400">$</span>
+                      </div>
+                    }
+                  />
+                </SettingItem>
+              </div>
+
+              {/* --- Pagination Settings Section --- */}
+              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+                {/* Section Header: Adjusted style & position */}
+                <h3 className="mb-1 font-zen text-xs uppercase text-secondary">View Options</h3>
+                <p className="-mt-1 w-full text-left text-sm">Entries per page:</p>
+                <div className="flex flex-row flex-wrap items-center justify-start gap-2">
+                  {[8, 10, 15].map((value) => (
+                    <Button
+                      key={value}
+                      size="sm"
+                      onClick={() => handleEntriesChange(value)}
+                      variant={entriesPerPage === value ? 'solid' : 'bordered'}
+                      color={entriesPerPage === value ? 'primary' : 'default'}
+                      className={`min-w-[40px] ${
+                        entriesPerPage === value ? '' : 'border-foreground-300 text-foreground-600'
+                      }`}
+                    >
+                      {value}
+                    </Button>
+                  ))}
+                  <div className="flex flex-grow items-center gap-2 sm:flex-grow-0">
+                    <Input
+                      aria-label="Custom entries per page"
+                      type="number"
+                      placeholder="Custom"
+                      value={customEntries}
+                      onChange={(e) => setCustomEntries(e.target.value)}
+                      min="1"
+                      size="sm"
+                      className="w-20"
+                      onKeyDown={(e) => e.key === 'Enter' && handleCustomEntriesSubmit()}
+                    />
+                    <Button size="sm" onClick={handleCustomEntriesSubmit} variant="flat">
+                      Set
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </ModalBody>
+            <ModalFooter>
+              <Button color="danger" variant="light" onPress={onClose}>
+                Close
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </ModalContent>
+    </Modal>
+  );
+}
