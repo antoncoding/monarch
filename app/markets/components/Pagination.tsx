@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Pagination as NextUIPagination } from '@nextui-org/react';
 
 type PaginationProps = {
@@ -16,11 +16,6 @@ export function Pagination({
   entriesPerPage,
   isDataLoaded,
 }: PaginationProps) {
-  useEffect(() => {
-    if (isDataLoaded) {
-    }
-  }, [isDataLoaded]);
-
   if (!isDataLoaded || totalPages === 0) {
     return null;
   }
