@@ -46,6 +46,12 @@ const isSelectedAsset = (
   );
 };
 
+// Define the type for USD Filters
+type UsdFilters = {
+  minSupply: string;
+  minBorrow: string;
+};
+
 export function applyFilterAndSort(
   markets: Market[],
   sortColumn: SortColumn,
@@ -58,7 +64,17 @@ export function applyFilterAndSort(
   selectedOracles: OracleVendors[],
   staredIds: string[],
   findToken: (address: string, chainId: number) => ERC20Token | undefined,
+  usdFilters: UsdFilters,
 ): Market[] {
+  const parseUsdValue = (value: string | null | undefined): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = parseFloat(value);
+    return isNaN(num) ? null : num;
+  };
+
+  const minSupplyUsd = parseUsdValue(usdFilters.minSupply);
+  const minBorrowUsd = parseUsdValue(usdFilters.minBorrow);
+
   return markets
     .filter((market) => {
       if (selectedNetwork !== null && market.morphoBlue.chain.id !== selectedNetwork) {
@@ -91,6 +107,18 @@ export function applyFilterAndSort(
           return false;
         }
       }
+
+      // Add USD Filters
+      const supplyUsd = parseUsdValue(market.state?.supplyAssetsUsd); // Use optional chaining
+      const borrowUsd = parseUsdValue(market.state?.borrowAssetsUsd); // Use optional chaining
+
+      if (minSupplyUsd !== null && (supplyUsd === null || supplyUsd < minSupplyUsd)) {
+        return false;
+      }
+      if (minBorrowUsd !== null && (borrowUsd === null || borrowUsd < minBorrowUsd)) {
+        return false;
+      }
+      // End USD Filters
 
       return true;
     })

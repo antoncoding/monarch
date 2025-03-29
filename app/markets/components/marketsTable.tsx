@@ -18,7 +18,6 @@ type MarketsTableProps = {
   starMarket: (id: string) => void;
   currentPage: number;
   entriesPerPage: number;
-  handleEntriesPerPageChange: (value: number) => void;
   setCurrentPage: (value: number) => void;
   onMarketClick: (market: Market) => void;
 };
@@ -35,7 +34,6 @@ function MarketsTable({
   unstarMarket,
   currentPage,
   entriesPerPage,
-  handleEntriesPerPageChange,
   setCurrentPage,
   onMarketClick,
 }: MarketsTableProps) {
@@ -128,7 +126,6 @@ function MarketsTable({
         currentPage={currentPage}
         onPageChange={setCurrentPage}
         entriesPerPage={entriesPerPage}
-        onEntriesPerPageChange={handleEntriesPerPageChange}
         isDataLoaded={markets.length > 0}
       />
     </div>
