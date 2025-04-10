@@ -246,8 +246,16 @@ export function AddCollateralAndBorrow({
             </div>
           </div>
 
+          {/* Market Details Block - includes position overview and collapsible details */}
+          <div className="mb-5">
+            <MarketDetailsBlock 
+              market={market}
+              mode="borrow"
+            />
+          </div>
+
           {isConnected && (
-            <>
+            <div className="space-y-4 mt-12">
               {/* Collateral Input Section */}
               <div className="mb-1">
                 <div className="flex items-center justify-between">
@@ -322,7 +330,7 @@ export function AddCollateralAndBorrow({
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* Action Button */}

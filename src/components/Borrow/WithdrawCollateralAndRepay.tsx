@@ -12,7 +12,7 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { Market, MarketPosition } from '@/utils/types';
 import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
-import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
+import { MarketDetailsBlock } from '../common/MarketDetailsBlock';
 
 type WithdrawCollateralAndRepayProps = {
   market: Market;
@@ -250,8 +250,16 @@ export function WithdrawCollateralAndRepay({
           </div>
         </div>
 
+        {/* Market Details Block - includes position overview and collapsible details */}
+        <div className="mb-5">
+          <MarketDetailsBlock 
+            market={market}
+            mode="borrow"
+          />
+        </div>
+
         {isConnected && (
-          <>
+          <div className="space-y-4 mt-12">
             {/* Withdraw Input Section */}
             <div className="mb-1">
               <div className="flex items-center justify-between">
@@ -310,7 +318,7 @@ export function WithdrawCollateralAndRepay({
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {/* Action Button */}

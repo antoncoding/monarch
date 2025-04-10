@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { Market, MarketPosition } from '@/utils/types';
+import { Market } from '@/utils/types';
 import { TokenIcon } from '../TokenIcon';
 import OracleVendorBadge from '../OracleVendorBadge';
-import { getExplorerURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 
 type MarketDetailsBlockProps = {
   market: Market;
-  position?: MarketPosition;
-  showPosition?: boolean;
   showDetailsLink?: boolean;
   defaultCollapsed?: boolean;
   mode?: 'supply' | 'borrow';
@@ -18,8 +15,6 @@ type MarketDetailsBlockProps = {
 
 export function MarketDetailsBlock({ 
   market, 
-  position, 
-  showPosition = false,
   showDetailsLink = false,
   defaultCollapsed = false,
   mode = 'supply'
@@ -36,7 +31,7 @@ export function MarketDetailsBlock({
     <div>
       {/* Collapsible Market Details */}
       <div 
-        className="bg-hovered rounded cursor-pointer transition-colors hover:bg-white/5"
+        className="bg-hovered rounded cursor-pointer transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between p-2">

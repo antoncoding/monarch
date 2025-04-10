@@ -82,8 +82,6 @@ export function SupplyModalV2({
           <div className="mb-5">
             <MarketDetailsBlock 
               market={market}
-              position={position}
-              showPosition={!isMarketPage}
               showDetailsLink={!isMarketPage}
               defaultCollapsed={true}
               mode="supply"
