@@ -17,7 +17,6 @@ import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
-import { WithdrawModalContent } from '@/components/WithdrawModalContent';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { SupportedNetworks } from '@/utils/networks';

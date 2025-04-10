@@ -18,45 +18,42 @@ type WithdrawModalContentProps = {
   market?: Market;
   onClose: () => void;
   refetch: () => void;
-  isMarketPage?: boolean;
 };
 
-export function WithdrawModalContent({ position, market, onClose, refetch, isMarketPage }: WithdrawModalContentProps): JSX.Element {
+export function WithdrawModalContent({
+  position,
+  market,
+  onClose,
+  refetch,
+}: WithdrawModalContentProps): JSX.Element {
   const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
-
   const { address: account, isConnected, chainId } = useAccount();
 
   // Use market from either position or direct prop
   const activeMarket = position?.market ?? market;
 
-  if (!activeMarket) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8">
-        <p className="text-center text-red-500">Market data not available</p>
-      </div>
-    );
-  }
-
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
-    targetChainId: activeMarket.morphoBlue.chain.id,
+    targetChainId: activeMarket?.morphoBlue.chain.id ?? 0,
   });
 
   const { isConfirming, sendTransaction } = useTransactionWithToast({
     toastId: 'withdraw',
-    pendingText: `Withdrawing ${formatBalance(
-      withdrawAmount,
-      activeMarket.loanAsset.decimals,
-    )} ${activeMarket.loanAsset.symbol}`,
-    successText: `${activeMarket.loanAsset.symbol} Withdrawn`,
+    pendingText: activeMarket
+      ? `Withdrawing ${formatBalance(withdrawAmount, activeMarket.loanAsset.decimals)} ${
+          activeMarket.loanAsset.symbol
+        }`
+      : '',
+    successText: activeMarket ? `${activeMarket.loanAsset.symbol} Withdrawn` : '',
     errorText: 'Failed to withdraw',
     chainId,
-    pendingDescription: `Withdrawing from market ${activeMarket.uniqueKey.slice(2, 8)}...`,
-    successDescription: `Successfully withdrawn from market ${activeMarket.uniqueKey.slice(
-      2,
-      8,
-    )}`,
+    pendingDescription: activeMarket
+      ? `Withdrawing from market ${activeMarket.uniqueKey.slice(2, 8)}...`
+      : '',
+    successDescription: activeMarket
+      ? `Successfully withdrawn from market ${activeMarket.uniqueKey.slice(2, 8)}`
+      : '',
     onSuccess: () => {
       refetch();
       onClose();
@@ -64,6 +61,11 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
   });
 
   const withdraw = useCallback(async () => {
+    if (!activeMarket) {
+      toast.error('No market', 'Market data not available');
+      return;
+    }
+
     if (!account) {
       toast.info('No account connected', 'Please connect your wallet to continue.');
       return;
@@ -101,16 +103,15 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
       }),
       chainId: activeMarket.morphoBlue.chain.id,
     });
-  }, [
-    account,
-    activeMarket,
-    position,
-    withdrawAmount,
-    sendTransaction,
-    position?.state.supplyAssets,
-    position?.state.supplyShares,
-    toast,
-  ]);
+  }, [account, activeMarket, position, withdrawAmount, sendTransaction, toast]);
+
+  if (!activeMarket) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <p className="text-center text-red-500">Market data not available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -121,15 +122,20 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
       ) : (
         <>
           {/* Withdraw Input Section */}
-          <div className="space-y-4 mt-12">
+          <div className="mt-12 space-y-4">
             <div>
               <div className="flex items-center justify-between">
                 <span className="opacity-80">Withdraw amount</span>
                 <div className="flex flex-col items-end gap-1">
                   <p className="font-inter text-xs opacity-50">
-                    Available: {formatReadable(
-                      formatBalance(position?.state.supplyAssets ?? BigInt(0), activeMarket.loanAsset.decimals)
-                    )} {activeMarket.loanAsset.symbol}
+                    Available:{' '}
+                    {formatReadable(
+                      formatBalance(
+                        position?.state.supplyAssets ?? BigInt(0),
+                        activeMarket.loanAsset.decimals,
+                      ),
+                    )}{' '}
+                    {activeMarket.loanAsset.symbol}
                   </p>
                 </div>
               </div>
@@ -138,10 +144,14 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
                 <div className="relative flex-grow">
                   <Input
                     decimals={activeMarket.loanAsset.decimals}
-                    max={position ? min(
-                      BigInt(position.state.supplyAssets),
-                      BigInt(activeMarket.state.liquidityAssets),
-                    ) : BigInt(0)}
+                    max={
+                      position
+                        ? min(
+                            BigInt(position.state.supplyAssets),
+                            BigInt(activeMarket.state.liquidityAssets),
+                          )
+                        : BigInt(0)
+                    }
                     setValue={setWithdrawAmount}
                     setError={setInputError}
                     exceedMaxErrMessage="Insufficient Liquidity"
@@ -154,11 +164,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
                   )}
                 </div>
                 {needSwitchChain ? (
-                  <Button
-                    onClick={switchToNetwork}
-                    className="ml-2 min-w-32"
-                    variant="default"
-                  >
+                  <Button onClick={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
                     Switch Chain
                   </Button>
                 ) : (

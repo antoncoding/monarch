@@ -63,20 +63,21 @@ export function useRepayTransaction({
 
   const { isConfirming: repayPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'repay',
-    pendingText: `Repaying ${formatBalance(repayAssets, market.loanAsset.decimals)} ${
-      market.loanAsset.symbol
-    }`,
-    successText: `${market.loanAsset.symbol} Repaid`,
-    errorText: 'Failed to repay',
+    pendingText: `${repayAssets > 0n || repayShares > 0n ? 'Repaying ' + formatBalance(repayAssets, market.loanAsset.decimals).toString() + ' ' + market.loanAsset.symbol : ''}${withdrawAmount > 0n ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') + 'Withdrawing ' + formatBalance(withdrawAmount, market.collateralAsset.decimals).toString() + ' ' + market.collateralAsset.symbol : ''}`,
+    successText: `${repayAssets > 0n || repayShares > 0n ? market.loanAsset.symbol + ' Repaid' : ''}${withdrawAmount > 0n ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') + market.collateralAsset.symbol + ' Withdrawn' : ''}`,
+    errorText: 'Transaction failed',
     chainId,
-    pendingDescription: `Repaying to market ${market.uniqueKey.slice(2, 8)}...`,
-    successDescription: `Successfully repaid to market ${market.uniqueKey.slice(2, 8)}`,
+    pendingDescription: `Processing transaction for market ${market.uniqueKey.slice(2, 8)}...`,
+    successDescription: `Successfully processed transaction for market ${market.uniqueKey.slice(
+      2,
+      8,
+    )}`,
   });
 
   // Core transaction execution logic
   const executeRepayTransaction = useCallback(async () => {
     if (!currentPosition) {
-      toast.error('No Position', 'No active position found to repay');
+      toast.error('No Position', 'No active position found');
       return;
     }
 
@@ -84,7 +85,7 @@ export function useRepayTransaction({
       const txs: `0x${string}`[] = [];
 
       // Add token approval and transfer transactions if repaying
-      if (repayAssets > 0n || repayShares > 0n) {
+      if ((repayAssets > 0n || repayShares > 0n) && repayAmountToApprove > 0n) {
         if (usePermit2Setting) {
           const { sigs, permitSingle } = await signForBundlers();
           const tx1 = encodeFunctionData({
@@ -115,6 +116,7 @@ export function useRepayTransaction({
       }
 
       // Add the repay transaction if there's an amount to repay
+
       if (useRepayByShares) {
         const morphoRepayTx = encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -144,6 +146,7 @@ export function useRepayTransaction({
         });
         txs.push(refundTx);
       } else if (repayAssets > 0n) {
+        console.log('repayAssets', repayAssets);
         const minShares = 1n;
         const morphoRepayTx = encodeFunctionData({
           abi: morphoBundlerAbi,
@@ -265,7 +268,7 @@ export function useRepayTransaction({
           throw error;
         }
       } else {
-        // ERC20 approval flow
+        // ERC20 approval flow or just withdraw
         if (!isApproved) {
           try {
             await approve();
@@ -320,7 +323,6 @@ export function useRepayTransaction({
         if (error.message.includes('User rejected')) {
           toast.error('Transaction rejected', 'Transaction rejected by user');
         } else {
-          console.log('Error in signAndRepay:', error);
           toast.error('Transaction Error', 'Failed to process transaction');
         }
       } else {

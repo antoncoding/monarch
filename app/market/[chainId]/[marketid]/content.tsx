@@ -16,6 +16,7 @@ import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
+import { useOraclePrice } from '@/hooks/useOraclePrice';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
@@ -26,8 +27,6 @@ import { LiquidationsTable } from './components/LiquidationsTable';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
-import { useOraclePrice } from '@/hooks/useOraclePrice';
-import { useAccount } from 'wagmi';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -37,7 +36,6 @@ function MarketContent() {
   const { marketid, chainId } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { address: account } = useAccount();
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
@@ -295,7 +293,7 @@ function MarketContent() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Live Price:</span>
-                  <span className="text-secondary text-sm">
+                  <span className="text-sm text-secondary">
                     {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
                   </span>
                 </div>

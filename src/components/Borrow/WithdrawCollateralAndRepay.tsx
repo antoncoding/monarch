@@ -8,11 +8,11 @@ import AccountConnect from '@/components/layout/header/AccountConnect';
 import { RepayProcessModal } from '@/components/RepayProcessModal';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useRepayTransaction } from '@/hooks/useRepayTransaction';
-import { formatBalance, formatReadable } from '@/utils/balance';
+import { formatBalance } from '@/utils/balance';
 import { Market, MarketPosition } from '@/utils/types';
+import { MarketDetailsBlock } from '../common/MarketDetailsBlock';
 import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
-import { MarketDetailsBlock } from '../common/MarketDetailsBlock';
 
 type WithdrawCollateralAndRepayProps = {
   market: Market;
@@ -105,7 +105,8 @@ export function WithdrawCollateralAndRepay({
     } else {
       // Calculate current LTV from position data
       const currentCollateralValue =
-        (BigInt(currentPosition.state.collateral) * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
+        (BigInt(currentPosition.state.collateral) * BigInt(market.collateralPrice)) /
+        BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
@@ -124,7 +125,8 @@ export function WithdrawCollateralAndRepay({
     const newCollateral = BigInt(currentPosition.state.collateral) - withdrawAmount;
     const newBorrow = BigInt(currentPosition.state.borrowAssets || 0) - repayAssets;
 
-    const newCollateralValueInLoan = (newCollateral * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
+    const newCollateralValueInLoan =
+      (newCollateral * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
 
     if (newCollateralValueInLoan > 0) {
       const ltv = (newBorrow * BigInt(10 ** 18)) / newCollateralValueInLoan;
@@ -252,15 +254,11 @@ export function WithdrawCollateralAndRepay({
 
         {/* Market Details Block - includes position overview and collapsible details */}
         <div className="mb-5">
-          <MarketDetailsBlock 
-            market={market}
-            mode="borrow"
-            defaultCollapsed={true}
-          />
+          <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed />
         </div>
 
         {isConnected && (
-          <div className="space-y-4 mt-12">
+          <div className="mt-12 space-y-4">
             {/* Withdraw Input Section */}
             <div className="mb-1">
               <div className="flex items-center justify-between">

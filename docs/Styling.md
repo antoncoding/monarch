@@ -11,6 +11,7 @@ Use these shared components instead of raw HTML elements:
 ## Component Guidelines
 
 ### Rounding
+
 - Use `rounded` for:
   - Modals
   - Cards
@@ -18,7 +19,6 @@ Use these shared components instead of raw HTML elements:
   - Container components
   - Tables
   - Market info blocks
-  
 - Use `rounded-sm` for:
   - Buttons
   - Inputs

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Switch } from '@nextui-org/react';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
@@ -11,25 +11,25 @@ import { isWETH } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
 import { SupplyProcessModal } from './SupplyProcessModal';
-import useUserPosition from '@/hooks/useUserPosition';
 
 type SupplyModalContentProps = {
   market: Market;
   onClose: () => void;
-  isMarketPage?: boolean;
+  refetch: () => void;
 };
 
-export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModalContentProps): JSX.Element {
+export function SupplyModalContent({
+  onClose,
+  market,
+  refetch,
+}: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const { isConnected } = useAccount();
-  const { address: account } = useAccount();
-  
-  // Get user position
-  const { position } = useUserPosition(
-    account,
-    market.morphoBlue.chain.id,
-    market.uniqueKey,
-  );
+
+  const onSuccess = useCallback(() => {
+    onClose();
+    refetch();
+  }, [onClose]);
 
   // Use the hook to handle all supply logic
   const {
@@ -50,7 +50,7 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
     supplyPending,
     approveAndSupply,
     signAndSupply,
-  } = useSupplyMarket(market);
+  } = useSupplyMarket(market, onSuccess);
 
   // Use the market network hook to handle network switching
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -78,7 +78,7 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
           ) : (
             <>
               {/* Supply Input Section */}
-              <div className="space-y-4 mt-12">
+              <div className="mt-12 space-y-4">
                 {isWETH(market.loanAsset.address, market.morphoBlue.chain.id) && (
                   <div className="flex items-center justify-end gap-2">
                     <div className="font-inter text-xs opacity-50">Use ETH instead</div>
@@ -95,10 +95,11 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                   <div className="flex items-center justify-between">
                     <span className="opacity-80">Supply amount</span>
                     <p className="font-inter text-xs opacity-50">
-                      Balance: {useEth
+                      Balance:{' '}
+                      {useEth
                         ? formatBalance(ethBalance ?? BigInt(0), 18)
-                        : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)
-                      } {useEth ? 'ETH' : market.loanAsset.symbol}
+                        : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
+                      {useEth ? 'ETH' : market.loanAsset.symbol}
                     </p>
                   </div>
 
@@ -108,14 +109,25 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                         decimals={market.loanAsset.decimals}
                         max={useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0)}
                         setValue={setSupplyAmount}
-                        setError={(error: string | null | ((prev: string | null) => string | null)) => {
-                          if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
+                        setError={(
+                          error: string | null | ((prev: string | null) => string | null),
+                        ) => {
+                          if (
+                            typeof error === 'string' &&
+                            !error.includes("You don't have any supplied assets")
+                          ) {
                             setInputError(error);
                           } else {
                             setInputError(null);
                           }
                         }}
-                        exceedMaxErrMessage={supplyAmount && supplyAmount > (useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0)) ? "Insufficient Balance" : undefined}
+                        exceedMaxErrMessage={
+                          supplyAmount &&
+                          supplyAmount >
+                            (useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0))
+                            ? 'Insufficient Balance'
+                            : undefined
+                        }
                       />
                       {inputError && !inputError.includes("You don't have any supplied assets") && (
                         <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
@@ -125,7 +137,11 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                     </div>
 
                     {needSwitchChain ? (
-                      <Button onClick={switchToNetwork} className="ml-2 min-w-32" variant="default">
+                      <Button
+                        onClick={switchToNetwork}
+                        className="ml-2 min-w-32"
+                        variant="secondary"
+                      >
                         Switch Chain
                       </Button>
                     ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
@@ -139,7 +155,9 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                       </Button>
                     ) : (
                       <Button
-                        disabled={!isConnected || supplyPending || inputError !== null || !supplyAmount}
+                        disabled={
+                          !isConnected || supplyPending || inputError !== null || !supplyAmount
+                        }
                         onClick={() => void signAndSupply()}
                         className="ml-2 min-w-32"
                         variant="cta"

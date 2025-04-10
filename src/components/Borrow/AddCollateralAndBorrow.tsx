@@ -1,10 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Switch } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { LTVWarning } from '@/components/common/LTVWarning';
+import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
@@ -16,13 +16,11 @@ import { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from '../BorrowProcessModal';
 import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
-import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 
 type BorrowLogicProps = {
   market: Market;
   currentPosition: MarketPosition | null;
   refetchPosition: (onSuccess?: () => void) => void;
-  loanTokenBalance: bigint | undefined;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
 };
@@ -31,7 +29,6 @@ export function AddCollateralAndBorrow({
   market,
   currentPosition,
   refetchPosition,
-  loanTokenBalance,
   collateralTokenBalance,
   ethBalance,
 }: BorrowLogicProps): JSX.Element {
@@ -85,7 +82,8 @@ export function AddCollateralAndBorrow({
     } else {
       // Calculate current LTV from position data
       const currentCollateralValue =
-        (BigInt(currentPosition.state.collateral) * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
+        (BigInt(currentPosition.state.collateral) * BigInt(market.collateralPrice)) /
+        BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
@@ -102,7 +100,8 @@ export function AddCollateralAndBorrow({
     const newCollateral = BigInt(currentPosition?.state.collateral ?? 0) + collateralAmount;
     const newBorrow = BigInt(currentPosition?.state.borrowAssets ?? 0) + borrowAmount;
 
-    const newCollateralValueInLoan = (newCollateral * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
+    const newCollateralValueInLoan =
+      (newCollateral * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
 
     if (newCollateralValueInLoan > 0) {
       const ltv = (newBorrow * BigInt(10 ** 18)) / newCollateralValueInLoan;
@@ -248,15 +247,11 @@ export function AddCollateralAndBorrow({
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">
-            <MarketDetailsBlock 
-              market={market}
-              mode="borrow"
-              defaultCollapsed={true}
-            />
+            <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed />
           </div>
 
           {isConnected && (
-            <div className="space-y-4 mt-12">
+            <div className="mt-12 space-y-4">
               {/* Collateral Input Section */}
               <div className="mb-1">
                 <div className="flex items-center justify-between">

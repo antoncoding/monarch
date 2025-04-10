@@ -69,8 +69,11 @@ export function useBorrowTransaction({
 
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
-    const minSharesToBorrow = borrowAmount === 0n ? 0n :
-      (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) - 1n;
+    const minSharesToBorrow =
+      borrowAmount === 0n
+        ? 0n
+        : (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) -
+          1n;
 
     try {
       const txs: `0x${string}`[] = [];
@@ -103,7 +106,6 @@ export function useBorrowTransaction({
 
           txs.push(tx1);
           txs.push(tx2);
-          
         } else {
           // For standard ERC20 flow, we only need to transfer the tokens
           txs.push(
@@ -114,7 +116,6 @@ export function useBorrowTransaction({
             }),
           );
         }
-
       }
 
       setCurrentStep('borrowing');
@@ -156,7 +157,7 @@ export function useBorrowTransaction({
         ],
       });
 
-      console.log('morphoBorrowTx', morphoBorrowTx)
+      console.log('morphoBorrowTx', morphoBorrowTx);
 
       if (collateralAmount > 0n) {
         txs.push(morphoAddCollat);
@@ -166,7 +167,7 @@ export function useBorrowTransaction({
         txs.push(morphoBorrowTx);
       }
 
-      console.log('txs', txs.length)
+      console.log('txs', txs.length);
 
       // add timeout here to prevent rabby reverting
       await new Promise((resolve) => setTimeout(resolve, 800));

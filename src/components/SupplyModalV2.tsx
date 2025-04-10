@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { FaArrowRightArrowLeft } from 'react-icons/fa6';
-import { useAccount, useBalance } from 'wagmi';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
-import { TokenIcon } from './TokenIcon';
 import { SupplyModalContent } from './SupplyModalContent';
+import { TokenIcon } from './TokenIcon';
 import { WithdrawModalContent } from './WithdrawModalContent';
 
 type SupplyModalV2Props = {
@@ -17,33 +16,28 @@ type SupplyModalV2Props = {
   defaultMode?: 'supply' | 'withdraw';
 };
 
-export function SupplyModalV2({ 
-  market, 
-  position, 
-  onClose, 
-  refetch, 
+export function SupplyModalV2({
+  market,
+  position,
+  onClose,
+  refetch,
   isMarketPage,
-  defaultMode = 'supply' 
+  defaultMode = 'supply',
 }: SupplyModalV2Props): JSX.Element {
   const [mode, setMode] = useState<'supply' | 'withdraw'>(defaultMode);
-  const { address: account } = useAccount();
-
-  // Get token balance
-  const { data: tokenBalance } = useBalance({
-    token: market.loanAsset.address as `0x${string}`,
-    address: account,
-    chainId: market.morphoBlue.chain.id,
-  });
 
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50" style={{ zIndex: 50 }}>
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/50"
+      style={{ zIndex: 50 }}
+    >
       <div className="bg-surface relative w-full max-w-lg rounded p-6">
         <div className="flex flex-col">
           <button
             type="button"
-            className="absolute right-2 top-2 text-secondary opacity-60 hover:opacity-100 transition-opacity"
+            className="absolute right-2 top-2 text-secondary opacity-60 transition-opacity hover:opacity-100"
             onClick={onClose}
           >
             <Cross1Icon />
@@ -59,7 +53,9 @@ export function SupplyModalV2({
                   width={20}
                   height={20}
                 />
-                <span className="text-2xl">{mode === 'supply' ? 'Supply' : 'Withdraw'} {market.loanAsset.symbol}</span>
+                <span className="text-2xl">
+                  {mode === 'supply' ? 'Supply' : 'Withdraw'} {market.loanAsset.symbol}
+                </span>
               </div>
               <span className="mt-1 text-sm text-gray-400">
                 {mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'}
@@ -80,31 +76,26 @@ export function SupplyModalV2({
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">
-            <MarketDetailsBlock 
+            <MarketDetailsBlock
               market={market}
               showDetailsLink={!isMarketPage}
-              defaultCollapsed={true}
+              defaultCollapsed
               mode="supply"
             />
           </div>
 
           {mode === 'supply' ? (
-            <SupplyModalContent
-              market={market}
-              onClose={onClose}
-              isMarketPage={isMarketPage}
-            />
+            <SupplyModalContent market={market} onClose={onClose} refetch={refetch ?? (() => {})} />
           ) : (
             <WithdrawModalContent
               position={position}
               market={market}
               onClose={onClose}
               refetch={refetch ?? (() => {})}
-              isMarketPage={isMarketPage}
             />
           )}
         </div>
       </div>
     </div>
   );
-} 
+}

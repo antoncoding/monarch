@@ -42,10 +42,10 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
     chainId: market.morphoBlue.chain.id,
   });
 
-  const hasPosition = currentPosition && (
-    BigInt(currentPosition.state.borrowAssets) > 0n || 
-    BigInt(currentPosition.state.collateral) > 0n
-  );
+  const hasPosition =
+    currentPosition &&
+    (BigInt(currentPosition.state.borrowAssets) > 0n ||
+      BigInt(currentPosition.state.collateral) > 0n);
 
   return (
     <div
@@ -56,7 +56,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
         <div className="flex flex-col">
           <button
             type="button"
-            className="absolute right-2 top-2 text-secondary opacity-60 hover:opacity-100 transition-opacity"
+            className="absolute right-2 top-2 text-secondary opacity-60 transition-opacity hover:opacity-100"
             onClick={onClose}
           >
             <Cross1Icon />
@@ -73,7 +73,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
                     width={24}
                     height={24}
                   />
-                  <div className="border border-gray-800 rounded-full">
+                  <div className="rounded-full border border-gray-800">
                     <TokenIcon
                       address={market.collateralAsset.address}
                       chainId={market.morphoBlue.chain.id}
@@ -112,7 +112,6 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               market={market}
               currentPosition={currentPosition}
               refetchPosition={refetchPosition}
-              loanTokenBalance={loanTokenBalance?.value}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
             />
