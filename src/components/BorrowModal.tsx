@@ -56,7 +56,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
         <div className="flex flex-col">
           <button
             type="button"
-            className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
+            className="absolute right-2 top-2 text-secondary opacity-60 hover:opacity-100 transition-opacity"
             onClick={onClose}
           >
             <Cross1Icon />

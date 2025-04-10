@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { Market } from '@/utils/types';
 import { TokenIcon } from '../TokenIcon';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { getIRMTitle } from '@/utils/morpho';
+import { formatUnits } from 'viem';
 
 type MarketDetailsBlockProps = {
   market: Market;
@@ -36,23 +38,23 @@ export function MarketDetailsBlock({
       >
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-2">
-            <div className="relative flex -space-x-1">
+            <div className="flex items-center">
               <div className="z-10">
                 <TokenIcon
                   address={market.loanAsset.address}
                   chainId={market.morphoBlue.chain.id}
                   symbol={market.loanAsset.symbol}
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                 />
               </div>
-              <div className="border border-gray-800 rounded-full bg-surface">
+              <div className="bg-surface -ml-2.5">
                 <TokenIcon
                   address={market.collateralAsset.address}
                   chainId={market.morphoBlue.chain.id}
                   symbol={market.collateralAsset.symbol}
-                  width={16}
-                  height={16}
+                  width={20}
+                  height={20}
                 />
               </div>
             </div>
@@ -88,46 +90,58 @@ export function MarketDetailsBlock({
         </div>
 
         {/* Expanded Market Details */}
-        {isExpanded && (
-          <div className="border-t border-gray-100 p-4 dark:border-gray-700">
-            <div className="mb-4 flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
-                <span className="text-xs opacity-50">·</span>
-                <span className="text-xs opacity-70">{getIRMTitle(market.irmAddress)}</span>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="border-t border-gray-100 p-4 dark:border-gray-700">
+                <div className="mb-4 flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <OracleVendorBadge oracleData={market.oracle.data} showText useTooltip={false} />
+                    <span className="text-xs opacity-50">·</span>
+                    <span className="text-xs opacity-70">{getIRMTitle(market.irmAddress)}</span>
+                    <span className="text-xs opacity-50">·</span>
+                    <span className="text-xs opacity-70">{formatUnits(BigInt(market.lltv), 16)}%</span>
+                  </div>
+                </div>
+                <div className="w-full">
+                  <p className="mb-2 font-zen text-sm">Market State</p>
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between">
+                      <p className="font-zen text-sm opacity-50">{mode === 'supply' ? 'Supply' : 'Borrow'} APY:</p>
+                      <p className="text-right font-bold text-sm">
+                        {getAPY()}%
+                      </p>
+                    </div>
+                    <div className="flex items-start justify-between">
+                      <p className="font-zen text-sm opacity-50">Total Supply:</p>
+                      <p className="text-right text-sm">
+                        {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
+                      </p>
+                    </div>
+                    <div className="flex items-start justify-between">
+                      <p className="font-zen text-sm opacity-50">Liquidity:</p>
+                      <p className="text-right font-zen text-sm">
+                        {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+                      </p>
+                    </div>
+                    <div className="flex items-start justify-between">
+                      <p className="font-zen text-sm opacity-50">Utilization:</p>
+                      <p className="text-right text-sm">
+                        {formatReadable(market.state.utilization * 100)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="w-full">
-              <p className="mb-2 font-zen text-sm">Market State</p>
-              <div className="space-y-2">
-                <div className="flex items-start justify-between">
-                  <p className="font-zen text-sm opacity-50">{mode === 'supply' ? 'Supply' : 'Borrow'} APY:</p>
-                  <p className="text-right font-bold text-sm">
-                    {getAPY()}%
-                  </p>
-                </div>
-                <div className="flex items-start justify-between">
-                  <p className="font-zen text-sm opacity-50">Total Supply:</p>
-                  <p className="text-right text-sm">
-                    {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
-                  </p>
-                </div>
-                <div className="flex items-start justify-between">
-                  <p className="font-zen text-sm opacity-50">Liquidity:</p>
-                  <p className="text-right font-zen text-sm">
-                    {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
-                  </p>
-                </div>
-                <div className="flex items-start justify-between">
-                  <p className="font-zen text-sm opacity-50">Utilization:</p>
-                  <p className="text-right text-sm">
-                    {formatReadable(market.state.utilization * 100)}%
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

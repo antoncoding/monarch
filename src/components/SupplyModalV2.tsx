@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Cross1Icon, ArrowRightIcon } from '@radix-ui/react-icons';
+import { Cross1Icon } from '@radix-ui/react-icons';
+import { FaArrowRightArrowLeft } from 'react-icons/fa6';
 import { useAccount, useBalance } from 'wagmi';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { TokenIcon } from './TokenIcon';
 import { SupplyModalContent } from './SupplyModalContent';
 import { WithdrawModalContent } from './WithdrawModalContent';
-import { formatBalance } from '@/utils/balance';
 
 type SupplyModalV2Props = {
   market: Market;
@@ -43,7 +43,7 @@ export function SupplyModalV2({
         <div className="flex flex-col">
           <button
             type="button"
-            className="bg-main absolute right-2 top-2 rounded-full p-1 text-primary hover:cursor-pointer"
+            className="absolute right-2 top-2 text-secondary opacity-60 hover:opacity-100 transition-opacity"
             onClick={onClose}
           >
             <Cross1Icon />
@@ -72,7 +72,7 @@ export function SupplyModalV2({
                 onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
                 className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-white/10"
               >
-                <ArrowRightIcon className="h-3.5 w-3.5 rotate-90" />
+                <FaArrowRightArrowLeft className="h-3.5 w-3.5 rotate-90" />
                 {mode === 'supply' ? 'Withdraw' : 'Supply'}
               </button>
             )}

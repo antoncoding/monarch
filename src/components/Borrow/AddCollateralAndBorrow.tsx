@@ -59,6 +59,8 @@ export function AddCollateralAndBorrow({
     targetChainId: market.morphoBlue.chain.id,
   });
 
+  console.log('needSwitchChain', needSwitchChain)
+
   // Use the new hook for borrow transaction logic
   const {
     currentStep,
@@ -251,6 +253,7 @@ export function AddCollateralAndBorrow({
             <MarketDetailsBlock 
               market={market}
               mode="borrow"
+              defaultCollapsed={true}
             />
           </div>
 
@@ -369,15 +372,14 @@ export function AddCollateralAndBorrow({
                     borrowPending ||
                     collateralInputError !== null ||
                     borrowInputError !== null ||
-                    collateralAmount === BigInt(0) ||
-                    borrowAmount === BigInt(0) ||
+                    (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
                     newLTV >= lltv
                   }
                   onClick={() => void signAndBorrow()}
                   className="min-w-32"
                   variant="cta"
                 >
-                  {useEth ? 'Borrow' : 'Sign and Borrow'}
+                  {collateralAmount > 0n && borrowAmount == 0n ? 'Add Collateral' : 'Borrow'}
                 </Button>
               )}
             </div>

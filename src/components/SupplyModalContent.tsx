@@ -78,7 +78,7 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
           ) : (
             <>
               {/* Supply Input Section */}
-              <div className="space-y-4 mt-16">
+              <div className="space-y-4 mt-12">
                 {isWETH(market.loanAsset.address, market.morphoBlue.chain.id) && (
                   <div className="flex items-center justify-end gap-2">
                     <div className="font-inter text-xs opacity-50">Use ETH instead</div>
@@ -135,7 +135,7 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                         className="ml-2 min-w-32"
                         variant="cta"
                       >
-                        Approve and Supply
+                        Supply
                       </Button>
                     ) : (
                       <Button
@@ -144,7 +144,7 @@ export function SupplyModalContent({ market, onClose, isMarketPage }: SupplyModa
                         className="ml-2 min-w-32"
                         variant="cta"
                       >
-                        {useEth ? 'Supply' : 'Sign and Supply'}
+                        Supply
                       </Button>
                     )}
                   </div>

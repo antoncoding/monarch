@@ -255,6 +255,7 @@ export function WithdrawCollateralAndRepay({
           <MarketDetailsBlock 
             market={market}
             mode="borrow"
+            defaultCollapsed={true}
           />
         </div>
 

@@ -121,7 +121,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
       ) : (
         <>
           {/* Withdraw Input Section */}
-          <div className="space-y-4 mt-16">
+          <div className="space-y-4 mt-12">
             <div>
               <div className="flex items-center justify-between">
                 <span className="opacity-80">Withdraw amount</span>
