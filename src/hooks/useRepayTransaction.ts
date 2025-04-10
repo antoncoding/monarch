@@ -63,8 +63,31 @@ export function useRepayTransaction({
 
   const { isConfirming: repayPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'repay',
-    pendingText: `${repayAssets > 0n || repayShares > 0n ? 'Repaying ' + formatBalance(repayAssets, market.loanAsset.decimals).toString() + ' ' + market.loanAsset.symbol : ''}${withdrawAmount > 0n ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') + 'Withdrawing ' + formatBalance(withdrawAmount, market.collateralAsset.decimals).toString() + ' ' + market.collateralAsset.symbol : ''}`,
-    successText: `${repayAssets > 0n || repayShares > 0n ? market.loanAsset.symbol + ' Repaid' : ''}${withdrawAmount > 0n ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') + market.collateralAsset.symbol + ' Withdrawn' : ''}`,
+    pendingText: `${
+      repayAssets > 0n || repayShares > 0n
+        ? 'Repaying ' +
+          formatBalance(repayAssets, market.loanAsset.decimals).toString() +
+          ' ' +
+          market.loanAsset.symbol
+        : ''
+    }${
+      withdrawAmount > 0n
+        ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') +
+          'Withdrawing ' +
+          formatBalance(withdrawAmount, market.collateralAsset.decimals).toString() +
+          ' ' +
+          market.collateralAsset.symbol
+        : ''
+    }`,
+    successText: `${
+      repayAssets > 0n || repayShares > 0n ? market.loanAsset.symbol + ' Repaid' : ''
+    }${
+      withdrawAmount > 0n
+        ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') +
+          market.collateralAsset.symbol +
+          ' Withdrawn'
+        : ''
+    }`,
     errorText: 'Transaction failed',
     chainId,
     pendingDescription: `Processing transaction for market ${market.uniqueKey.slice(2, 8)}...`,
