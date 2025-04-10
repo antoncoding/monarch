@@ -3,10 +3,11 @@ import { Cross1Icon } from '@radix-ui/react-icons';
 import { FaArrowRightArrowLeft } from 'react-icons/fa6';
 import { useAccount, useBalance } from 'wagmi';
 import { Market, MarketPosition } from '@/utils/types';
-import { Button } from './common';
+import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { TokenIcon } from './TokenIcon';
 import { SupplyModalContent } from './SupplyModalContent';
 import { WithdrawModalContent } from './WithdrawModalContent';
+import { formatBalance } from '@/utils/balance';
 
 type SupplyModalV2Props = {
   market: Market;
@@ -26,6 +27,8 @@ export function SupplyModalV2({ market, position, onClose, refetch, isMarketPage
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
+
+  const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50" style={{ zIndex: 50 }}>
@@ -49,47 +52,61 @@ export function SupplyModalV2({ market, position, onClose, refetch, isMarketPage
                   width={20}
                   height={20}
                 />
-                <span className="text-2xl">{market.loanAsset.symbol}</span>
+                <span className="text-2xl">{mode === 'supply' ? 'Supply' : 'Withdraw'} {market.loanAsset.symbol}</span>
               </div>
               <span className="mt-1 text-sm text-gray-400">
-                {mode === 'supply' ? 'Supply Position' : 'Withdraw Position'}
+                {mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'}
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
-              className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/10"
-            >
-              <FaArrowRightArrowLeft className="h-3 w-3" />
-              {mode === 'supply' ? 'Withdraw' : 'Supply'}
-            </button>
+            {hasPosition && (
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
+                className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/10"
+              >
+                <FaArrowRightArrowLeft className="h-3 w-3" />
+                {mode === 'supply' ? 'Withdraw' : 'Supply'}
+              </button>
+            )}
           </div>
 
-          {/* Position Overview */}
-          <div className="bg-hovered mb-5 rounded p-4">
-            <div className="mb-3 font-zen text-base">Position Overview</div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="mb-1 font-zen text-xs opacity-50">Current Supply</p>
-                <div className="flex items-center gap-2">
-                  <TokenIcon
-                    address={market.loanAsset.address}
-                    chainId={market.morphoBlue.chain.id}
-                    symbol={market.loanAsset.symbol}
-                    width={16}
-                    height={16}
-                  />
-                  <p className="font-zen text-sm">
-                    {position ? position.state.supplyAssets : '0'} {market.loanAsset.symbol}
-                  </p>
+           {/* Current Position Section */}
+           {position && BigInt(position.state.supplyAssets) > 0n && (
+                <div className="bg-hovered mb-4 rounded-sm p-4">
+                  <div className="mb-3 flex items-center justify-between font-zen text-base">
+                    <span>My Supply</span>
+                  </div>
+                  <div>
+                    <p className="mb-1 font-zen text-xs opacity-50">Current Supply</p>
+                    <div className="flex items-center gap-2">
+                      <TokenIcon
+                        address={market.loanAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        symbol={market.loanAsset.symbol}
+                        width={16}
+                        height={16}
+                      />
+                      <p className="font-zen text-sm">
+                        {formatBalance(position.state.supplyAssets, market.loanAsset.decimals)}{' '}
+                        {market.loanAsset.symbol}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="mb-1 font-zen text-xs opacity-50">Supply APY</p>
-                <p className="font-zen text-sm">{(market.state.supplyApy * 100).toFixed(2)}%</p>
-              </div>
-            </div>
+              )}
+
+
+          {/* Market Details Block - includes position overview and collapsible details */}
+          <div className="mb-5">
+            <MarketDetailsBlock 
+              market={market}
+              position={position}
+              showPosition={!isMarketPage}
+              showDetailsLink={!isMarketPage}
+              defaultCollapsed={true}
+              mode="supply"
+            />
           </div>
 
           {mode === 'supply' ? (

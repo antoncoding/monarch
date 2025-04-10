@@ -1,10 +1,8 @@
 // Import the necessary hooks
 import { useCallback, useState } from 'react';
-
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
-import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
@@ -14,7 +12,6 @@ import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { MORPHO } from '@/utils/morpho';
 import { Market, MarketPosition } from '@/utils/types';
 import { Button } from './common';
-import { TokenIcon } from './TokenIcon';
 
 type WithdrawModalContentProps = {
   position?: MarketPosition;
@@ -117,63 +114,68 @@ export function WithdrawModalContent({ position, market, onClose, refetch, isMar
 
   return (
     <div className="flex flex-col">
-      {!isMarketPage && (
+      {!isConnected ? (
+        <div className="flex justify-center py-4">
+          <AccountConnect />
+        </div>
+      ) : (
         <>
-          <MarketInfoBlock market={activeMarket} />
+          {/* Withdraw Input Section */}
+          <div className="space-y-4 mt-16">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="opacity-80">Withdraw amount</span>
+                <div className="flex flex-col items-end gap-1">
+                  <p className="font-inter text-xs opacity-50">
+                    Available: {formatReadable(
+                      formatBalance(position?.state.supplyAssets ?? BigInt(0), activeMarket.loanAsset.decimals)
+                    )} {activeMarket.loanAsset.symbol}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-start justify-between">
+                <div className="relative flex-grow">
+                  <Input
+                    decimals={activeMarket.loanAsset.decimals}
+                    max={position ? min(
+                      BigInt(position.state.supplyAssets),
+                      BigInt(activeMarket.state.liquidityAssets),
+                    ) : BigInt(0)}
+                    setValue={setWithdrawAmount}
+                    setError={setInputError}
+                    exceedMaxErrMessage="Insufficient Liquidity"
+                    allowExceedMax
+                  />
+                  {inputError && (
+                    <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
+                      {inputError}
+                    </p>
+                  )}
+                </div>
+                {needSwitchChain ? (
+                  <Button
+                    onClick={switchToNetwork}
+                    className="ml-2 min-w-32"
+                    variant="default"
+                  >
+                    Switch Chain
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={!isConnected || isConfirming || !position || !withdrawAmount}
+                    onClick={() => void withdraw()}
+                    className="ml-2 min-w-32"
+                    variant="cta"
+                  >
+                    Withdraw
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </>
       )}
-
-      {!isConnected && (
-        <div className="flex justify-center">
-          <div className="items-center justify-center pt-4">
-            <AccountConnect />
-          </div>
-        </div>
-      )}
-
-      <div className="mt-8 flex items-center justify-between py-4">
-        <span className="opacity-80">Withdraw amount</span>
-        <p className="font-inter text-xs opacity-50">
-          Market Liquidity: {formatReadable(
-            formatBalance(activeMarket.state.liquidityAssets, activeMarket.loanAsset.decimals)
-          )} {activeMarket.loanAsset.symbol}
-        </p>
-      </div>
-
-      <div className="mb-1 flex items-start justify-between">
-        <div className="relative flex-grow">
-          <Input
-            decimals={activeMarket.loanAsset.decimals}
-            max={position ? min(
-              BigInt(position.state.supplyAssets),
-              BigInt(activeMarket.state.liquidityAssets),
-            ) : BigInt(0)}
-            setValue={setWithdrawAmount}
-            setError={setInputError}
-            exceedMaxErrMessage="Insufficient Liquidity"
-            allowExceedMax
-          />
-          {inputError && <p className="p-1 text-sm text-red-500">{inputError}</p>}
-        </div>
-        {needSwitchChain ? (
-          <Button
-            onClick={switchToNetwork}
-            className="ml-2 min-w-32"
-            variant="default"
-          >
-            Switch Chain
-          </Button>
-        ) : (
-          <Button
-            disabled={!isConnected || isConfirming || !position}
-            onClick={() => void withdraw()}
-            className="ml-2 min-w-32"
-            variant="cta"
-          >
-            {position ? 'Withdraw' : 'No Position'}
-          </Button>
-        )}
-      </div>
     </div>
   );
 }

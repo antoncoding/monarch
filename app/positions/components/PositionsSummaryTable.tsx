@@ -37,8 +37,7 @@ import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
 type PositionsSummaryTableProps = {
   account: string;
   marketPositions: MarketPositionWithEarnings[];
-  setShowWithdrawModal: (show: boolean) => void;
-  setShowSupplyModal: (show: boolean) => void;
+  setShowModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
@@ -48,8 +47,7 @@ type PositionsSummaryTableProps = {
 
 export function PositionsSummaryTable({
   marketPositions,
-  setShowWithdrawModal,
-  setShowSupplyModal,
+  setShowModal,
   setSelectedPosition,
   refetch,
   isRefetching,
@@ -330,8 +328,7 @@ export function PositionsSummaryTable({
                           >
                             <SuppliedMarketsDetail
                               groupedPosition={groupedPosition}
-                              setShowWithdrawModal={setShowWithdrawModal}
-                              setShowSupplyModal={setShowSupplyModal}
+                              setShowModal={setShowModal}
                               setSelectedPosition={setSelectedPosition}
                             />
                           </motion.div>

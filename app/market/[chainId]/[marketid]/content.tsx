@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
@@ -26,20 +26,29 @@ import { LiquidationsTable } from './components/LiquidationsTable';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
+import { useOraclePrice } from '@/hooks/useOraclePrice';
+import { useAccount } from 'wagmi';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
 
 function MarketContent() {
+  // 1. Get URL params and router first
   const { marketid, chainId } = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { address: account } = useAccount();
 
+  // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
   const networkImg = getNetworkImg(network);
 
+  // 3. All useState hooks grouped together
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const [apyTimeframe, setApyTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
+  const [volumeTimeframe, setVolumeTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
+  const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('USD');
   const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
     startTimestamp: NOW - WEEK_IN_SECONDS,
     endTimestamp: NOW,
@@ -50,10 +59,8 @@ function MarketContent() {
     endTimestamp: NOW,
     interval: 'HOUR',
   });
-  const [apyTimeframe, setApyTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
-  const [volumeTimeframe, setVolumeTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
-  const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('USD');
 
+  // 4. Data fetching hooks
   const {
     data: market,
     isLoading: isMarketLoading,
@@ -65,6 +72,21 @@ function MarketContent() {
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
   } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
+
+  // 5. Oracle price hook - safely handle undefined market
+  const { price: oraclePrice } = useOraclePrice({
+    oracle: market?.oracleAddress as `0x${string}`,
+    chainId: market?.morphoBlue.chain.id,
+  });
+
+  // 6. All memoized values and callbacks
+  const formattedOraclePrice = useMemo(() => {
+    if (!market) return '0';
+    const adjusted =
+      (oraclePrice * BigInt(10 ** market.collateralAsset.decimals)) /
+      BigInt(10 ** market.loanAsset.decimals);
+    return formatUnits(adjusted, 36);
+  }, [oraclePrice, market]);
 
   const setTimeRangeAndRefetch = useCallback(
     (days: number, type: 'rate' | 'volume') => {
@@ -87,17 +109,14 @@ function MarketContent() {
     [refetchHistoricalData, setRateTimeRange, setVolumeTimeRange],
   );
 
-  const handleBackToMarkets = () => {
-    // Preserve all current search parameters when going back
+  const handleBackToMarkets = useCallback(() => {
     const currentParams = searchParams.toString();
     const marketsPath = '/markets';
-
-    // If we have query params, append them to the markets URL
     const targetPath = currentParams ? `${marketsPath}?${currentParams}` : marketsPath;
-
     router.push(targetPath);
-  };
+  }, [router, searchParams]);
 
+  // 7. Early returns for loading/error states
   if (isMarketLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -114,8 +133,8 @@ function MarketContent() {
     return <div className="text-center">Market data not available</div>;
   }
 
+  // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
-
   const averageLTV =
     !market.state.collateralAssetsUsd ||
     !market.state.borrowAssetsUsd ||
@@ -274,11 +293,16 @@ function MarketContent() {
                     </Link>
                   )}
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>Live Price:</span>
+                  <span className="text-secondary text-sm">
+                    {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
+                  </span>
+                </div>
                 <div>
                   <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
                   {market.oracle.data && (
                     <div>
-                      {' '}
                       <OracleFeedInfo
                         feed={market.oracle.data.baseFeedOne}
                         chainId={market.morphoBlue.chain.id}
@@ -294,7 +318,7 @@ function MarketContent() {
                       <OracleFeedInfo
                         feed={market.oracle.data.quoteFeedTwo}
                         chainId={market.morphoBlue.chain.id}
-                      />{' '}
+                      />
                     </div>
                   )}
                 </div>
