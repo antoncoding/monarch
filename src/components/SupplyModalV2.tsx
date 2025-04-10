@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Cross1Icon } from '@radix-ui/react-icons';
-import { FaArrowRightArrowLeft } from 'react-icons/fa6';
+import { Cross1Icon, ArrowRightIcon } from '@radix-ui/react-icons';
 import { useAccount, useBalance } from 'wagmi';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
@@ -15,10 +14,18 @@ type SupplyModalV2Props = {
   onClose: () => void;
   refetch?: () => void;
   isMarketPage?: boolean;
+  defaultMode?: 'supply' | 'withdraw';
 };
 
-export function SupplyModalV2({ market, position, onClose, refetch, isMarketPage }: SupplyModalV2Props): JSX.Element {
-  const [mode, setMode] = useState<'supply' | 'withdraw'>('supply');
+export function SupplyModalV2({ 
+  market, 
+  position, 
+  onClose, 
+  refetch, 
+  isMarketPage,
+  defaultMode = 'supply' 
+}: SupplyModalV2Props): JSX.Element {
+  const [mode, setMode] = useState<'supply' | 'withdraw'>(defaultMode);
   const { address: account } = useAccount();
 
   // Get token balance
@@ -63,39 +70,13 @@ export function SupplyModalV2({ market, position, onClose, refetch, isMarketPage
               <button
                 type="button"
                 onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
-                className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-white/10"
+                className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-white/10"
               >
-                <FaArrowRightArrowLeft className="h-3 w-3" />
+                <ArrowRightIcon className="h-3.5 w-3.5 rotate-90" />
                 {mode === 'supply' ? 'Withdraw' : 'Supply'}
               </button>
             )}
           </div>
-
-           {/* Current Position Section */}
-           {position && BigInt(position.state.supplyAssets) > 0n && (
-                <div className="bg-hovered mb-4 rounded-sm p-4">
-                  <div className="mb-3 flex items-center justify-between font-zen text-base">
-                    <span>My Supply</span>
-                  </div>
-                  <div>
-                    <p className="mb-1 font-zen text-xs opacity-50">Current Supply</p>
-                    <div className="flex items-center gap-2">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
-                      />
-                      <p className="font-zen text-sm">
-                        {formatBalance(position.state.supplyAssets, market.loanAsset.decimals)}{' '}
-                        {market.loanAsset.symbol}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">

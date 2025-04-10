@@ -115,6 +115,7 @@ export default function Positions() {
             }}
             refetch={() => void refetch()}
             isMarketPage={false}
+            defaultMode="withdraw"
           />
         )}
 

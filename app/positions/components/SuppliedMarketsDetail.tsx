@@ -9,10 +9,10 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
-
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
-  setShowModal: (show: boolean) => void;
+  setShowWithdrawModal: (show: boolean) => void;
+  setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
 };
 
@@ -39,7 +39,8 @@ function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
 
 export function SuppliedMarketsDetail({
   groupedPosition,
-  setShowModal,
+  setShowWithdrawModal,
+  setShowSupplyModal,
   setSelectedPosition,
 }: SuppliedMarketsDetailProps) {
   // Sort active markets by size
@@ -204,16 +205,26 @@ export function SuppliedMarketsDetail({
                     </div>
                   </td>
                   <td data-label="Actions" className="justify-center px-4 py-3">
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center gap-2">
                       <Button
                         size="sm"
                         variant="interactive"
                         onClick={() => {
                           setSelectedPosition(position);
-                          setShowModal(true);
+                          setShowWithdrawModal(true);
                         }}
                       >
-                        Manage
+                        Withdraw
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="interactive"
+                        onClick={() => {
+                          setSelectedPosition(position);
+                          setShowSupplyModal(true);
+                        }}
+                      >
+                        Supply
                       </Button>
                     </div>
                   </td>
