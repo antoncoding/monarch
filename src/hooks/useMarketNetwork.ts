@@ -45,8 +45,6 @@ export function useMarketNetwork({
   const toast = useStyledToast();
 
   // Check if chain switch is needed
-  console.log('chainId', chainId)
-  console.log('targetChainId', targetChainId)
   const needSwitchChain = useMemo(() => chainId !== targetChainId, [chainId, targetChainId]);
 
   // Function to switch to the target network

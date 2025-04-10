@@ -59,8 +59,6 @@ export function AddCollateralAndBorrow({
     targetChainId: market.morphoBlue.chain.id,
   });
 
-  console.log('needSwitchChain', needSwitchChain)
-
   // Use the new hook for borrow transaction logic
   const {
     currentStep,
@@ -298,6 +296,7 @@ export function AddCollateralAndBorrow({
                       setValue={setCollateralAmount}
                       setError={setCollateralInputError}
                       exceedMaxErrMessage="Insufficient Balance"
+                      value={collateralAmount}
                     />
                     {collateralInputError && (
                       <p className="p-1 text-sm text-red-500">{collateralInputError}</p>
@@ -326,6 +325,7 @@ export function AddCollateralAndBorrow({
                       setValue={setBorrowAmount}
                       setError={setBorrowInputError}
                       exceedMaxErrMessage="Exceeds available liquidity"
+                      value={borrowAmount}
                     />
                     {borrowInputError && (
                       <p className="p-1 text-sm text-red-500">{borrowInputError}</p>
