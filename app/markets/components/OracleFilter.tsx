@@ -41,7 +41,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
   return (
     <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`bg-surface min-w-48 cursor-pointer rounded p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
         }`}
         role="button"
@@ -79,7 +79,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         </div>
       </div>
       <div
-        className={`bg-surface absolute z-10 mt-1 w-full transform rounded shadow-lg transition-all duration-200 ${
+        className={`bg-surface absolute z-10 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >

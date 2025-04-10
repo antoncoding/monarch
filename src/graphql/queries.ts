@@ -129,6 +129,14 @@ export const marketFragment = `
         }
       }
     }
+    riskAnalysis {
+      analysis {
+        ... on CredoraRiskAnalysis {
+          score
+          rating
+        }
+      }
+    }
   }
   ${feedFieldsFragment}
 `;

@@ -13,7 +13,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { SupplyModal } from '@/components/supplyModal';
+import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
@@ -114,7 +114,7 @@ function MarketContent() {
     return <div className="text-center">Market data not available</div>;
   }
 
-  const cardStyle = 'bg-surface rounded-md shadow-sm p-4';
+  const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
   const averageLTV =
     !market.state.collateralAssetsUsd ||
@@ -151,7 +151,7 @@ function MarketContent() {
         </div>
 
         {showSupplyModal && (
-          <SupplyModal market={market} onClose={() => setShowSupplyModal(false)} />
+          <SupplyModalV2 market={market} onClose={() => setShowSupplyModal(false)} isMarketPage />
         )}
 
         {showBorrowModal && (

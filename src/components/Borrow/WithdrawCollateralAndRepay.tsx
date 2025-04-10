@@ -163,7 +163,7 @@ export function WithdrawCollateralAndRepay({
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
       <div className="flex flex-col">
         {/* Position Overview Box with dynamic LTV */}
-        <div className="bg-hovered mb-5 rounded-lg p-4">
+        <div className="bg-hovered mb-5 rounded-sm p-4">
           <div className="mb-3 flex items-center justify-between font-zen text-base">
             <span>Position Overview</span>
             <button
