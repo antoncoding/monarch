@@ -9,7 +9,7 @@ import { WithdrawModalContent } from './WithdrawModalContent';
 
 type SupplyModalV2Props = {
   market: Market;
-  position?: MarketPosition;
+  position?: MarketPosition | null;
   onClose: () => void;
   refetch?: () => void;
   isMarketPage?: boolean;

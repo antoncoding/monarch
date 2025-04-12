@@ -14,7 +14,7 @@ import { Market, MarketPosition } from '@/utils/types';
 import { Button } from './common';
 
 type WithdrawModalContentProps = {
-  position?: MarketPosition;
+  position?: MarketPosition | null;
   market?: Market;
   onClose: () => void;
   refetch: () => void;

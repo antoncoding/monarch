@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits } from 'viem';
+import { useAccount } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
@@ -17,6 +18,7 @@ import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
+import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
@@ -27,6 +29,8 @@ import { LiquidationsTable } from './components/LiquidationsTable';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
+import { formatBalance } from '@/utils/balance';
+import { PositionStats } from './components/PositionStats';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -76,6 +80,13 @@ function MarketContent() {
     oracle: market?.oracleAddress as `0x${string}`,
     chainId: market?.morphoBlue.chain.id,
   });
+
+  const { address } = useAccount();
+  
+  const {
+    position: userPosition,
+    loading: positionLoading,
+  } = useUserPositions(address, network, marketid as string);
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
@@ -168,7 +179,12 @@ function MarketContent() {
         </div>
 
         {showSupplyModal && (
-          <SupplyModalV2 market={market} onClose={() => setShowSupplyModal(false)} isMarketPage />
+          <SupplyModalV2 
+            market={market} 
+            onClose={() => setShowSupplyModal(false)} 
+            position={userPosition}
+            isMarketPage
+          />
         )}
 
         {showBorrowModal && (
@@ -181,24 +197,23 @@ function MarketContent() {
 
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
           <Card className={cardStyle}>
-            <CardHeader className="text-xl">Basic Info</CardHeader>
-            <CardBody>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Network:</span>
-                  <div className="flex items-center">
+            <CardHeader className="flex items-center justify-between text-xl">
+              <span>Basic Info</span>
+              <span className="text-sm text-gray-500"><div className="flex items-center">
                     {networkImg && (
                       <Image
                         src={networkImg}
                         alt={network.toString()}
-                        width={20}
-                        height={20}
+                        width={18}
+                        height={18}
                         className="mr-2"
                       />
                     )}
                     {getNetworkName(network)}
-                  </div>
-                </div>
+                  </div></span>
+            </CardHeader>
+            <CardBody>
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Loan Asset:</span>
                   <div className="flex items-center gap-2">
@@ -253,21 +268,9 @@ function MarketContent() {
                     {getIRMTitle(market.irmAddress)} <ExternalLinkIcon className="ml-1" />
                   </Link>
                 </div>
-              </div>
-            </CardBody>
-          </Card>
-
-          <Card className={cardStyle}>
-            <CardHeader className="text-xl">LLTV Info</CardHeader>
-            <CardBody>
-              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>LLTV:</span>
                   <span>{formatUnits(BigInt(market.lltv), 16)}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Average LTV:</span>
-                  <span>{averageLTV.toFixed(2)}%</span>
                 </div>
               </div>
             </CardBody>
@@ -323,6 +326,13 @@ function MarketContent() {
               </div>
             </CardBody>
           </Card>
+
+          <PositionStats
+            market={market}
+            userPosition={userPosition}
+            positionLoading={positionLoading}
+            cardStyle={cardStyle}
+          />
         </div>
 
         <h4 className="pt-4 text-2xl font-semibold">Volume</h4>
