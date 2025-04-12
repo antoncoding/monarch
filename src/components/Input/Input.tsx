@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 import { parseUnits } from 'viem';
 import { formatBalance } from '@/utils/balance';
@@ -11,6 +11,7 @@ type InputProps = {
   exceedMaxErrMessage?: string;
   allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
   onMaxClick?: () => void;
+  value?: bigint;
 };
 
 export default function Input({
@@ -21,9 +22,19 @@ export default function Input({
   exceedMaxErrMessage,
   allowExceedMax = false,
   onMaxClick,
+  value,
 }: InputProps): JSX.Element {
   // State for the input text
-  const [inputAmount, setInputAmount] = useState<string>('0');
+  const [inputAmount, setInputAmount] = useState<string>(
+    value ? formatBalance(value, decimals).toString() : '0',
+  );
+
+  // Update input text when value prop changes
+  useEffect(() => {
+    if (value !== undefined) {
+      setInputAmount(formatBalance(value, decimals).toString());
+    }
+  }, [value, decimals]);
 
   const onInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {

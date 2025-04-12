@@ -10,8 +10,23 @@ Use these shared components instead of raw HTML elements:
 
 ## Component Guidelines
 
-- Use `rounded` for tables, cards or bigger components
-- Use `rounded-sm` for buttons, inputs
+### Rounding
+
+- Use `rounded` for:
+  - Modals
+  - Cards
+  - Large content areas
+  - Container components
+  - Tables
+  - Market info blocks
+- Use `rounded-sm` for:
+  - Buttons
+  - Inputs
+  - Filter components
+  - Small interactive elements
+  - Tooltips
+  - Tags/badges
+  - Helper text containers
 
 ### Button Component
 

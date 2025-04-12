@@ -52,7 +52,7 @@ export function SuppliesTable({ chainId, market }: SuppliesTableProps) {
       <Table
         key={tableKey}
         classNames={{
-          wrapper: 'bg-surface shadow-sm',
+          wrapper: 'bg-surface shadow-sm rounded',
           table: 'bg-surface',
         }}
         aria-label="Supply and withdraw activities"

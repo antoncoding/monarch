@@ -51,7 +51,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
         key={tableKey}
         aria-label="Liquidations history"
         classNames={{
-          wrapper: 'bg-surface shadow-sm',
+          wrapper: 'bg-surface shadow-sm rounded',
           table: 'bg-surface',
         }}
         bottomContent={

@@ -70,47 +70,52 @@ export function useBorrowTransaction({
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
     const minSharesToBorrow =
-      (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) - 1n;
+      borrowAmount === 0n
+        ? 0n
+        : (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) -
+          1n;
 
     try {
       const txs: `0x${string}`[] = [];
 
-      if (useEth) {
-        txs.push(
-          encodeFunctionData({
+      if (collateralAmount > 0n) {
+        if (useEth) {
+          txs.push(
+            encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'wrapNative',
+              args: [collateralAmount],
+            }),
+          );
+        } else if (usePermit2Setting) {
+          const { sigs, permitSingle } = await signForBundlers();
+          console.log('Signed for bundlers:', { sigs, permitSingle });
+
+          const tx1 = encodeFunctionData({
             abi: morphoBundlerAbi,
-            functionName: 'wrapNative',
-            args: [collateralAmount],
-          }),
-        );
-      } else if (usePermit2Setting) {
-        const { sigs, permitSingle } = await signForBundlers();
-        console.log('Signed for bundlers:', { sigs, permitSingle });
+            functionName: 'approve2',
+            args: [permitSingle, sigs, false],
+          });
 
-        const tx1 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'approve2',
-          args: [permitSingle, sigs, false],
-        });
-
-        // transferFrom with permit2
-        const tx2 = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'transferFrom2',
-          args: [market.collateralAsset.address as Address, collateralAmount],
-        });
-
-        txs.push(tx1);
-        txs.push(tx2);
-      } else {
-        // For standard ERC20 flow, we only need to transfer the tokens
-        txs.push(
-          encodeFunctionData({
+          // transferFrom with permit2
+          const tx2 = encodeFunctionData({
             abi: morphoBundlerAbi,
-            functionName: 'erc20TransferFrom',
+            functionName: 'transferFrom2',
             args: [market.collateralAsset.address as Address, collateralAmount],
-          }),
-        );
+          });
+
+          txs.push(tx1);
+          txs.push(tx2);
+        } else {
+          // For standard ERC20 flow, we only need to transfer the tokens
+          txs.push(
+            encodeFunctionData({
+              abi: morphoBundlerAbi,
+              functionName: 'erc20TransferFrom',
+              args: [market.collateralAsset.address as Address, collateralAmount],
+            }),
+          );
+        }
       }
 
       setCurrentStep('borrowing');
@@ -152,8 +157,17 @@ export function useBorrowTransaction({
         ],
       });
 
-      txs.push(morphoAddCollat);
-      txs.push(morphoBorrowTx);
+      console.log('morphoBorrowTx', morphoBorrowTx);
+
+      if (collateralAmount > 0n) {
+        txs.push(morphoAddCollat);
+      }
+
+      if (borrowAmount > 0n) {
+        txs.push(morphoBorrowTx);
+      }
+
+      console.log('txs', txs.length);
 
       // add timeout here to prevent rabby reverting
       await new Promise((resolve) => setTimeout(resolve, 800));

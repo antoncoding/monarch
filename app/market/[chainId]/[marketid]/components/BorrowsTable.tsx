@@ -53,7 +53,7 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
         key={tableKey}
         aria-label="Borrow and repay activities"
         classNames={{
-          wrapper: 'bg-surface shadow-sm',
+          wrapper: 'bg-surface shadow-sm rounded',
           table: 'bg-surface',
         }}
         bottomContent={

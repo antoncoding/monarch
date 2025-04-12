@@ -16,8 +16,7 @@ import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
-import { SupplyModal } from '@/components/supplyModal';
-import { WithdrawModal } from '@/components/withdrawModal';
+import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { SupportedNetworks } from '@/utils/networks';
@@ -106,23 +105,29 @@ export default function Positions() {
         </div>
 
         {showWithdrawModal && selectedPosition && (
-          <WithdrawModal
+          <SupplyModalV2
+            market={selectedPosition.market}
             position={selectedPosition}
             onClose={() => {
               setShowWithdrawModal(false);
               setSelectedPosition(null);
             }}
             refetch={() => void refetch()}
+            isMarketPage={false}
+            defaultMode="withdraw"
           />
         )}
 
         {showSupplyModal && selectedPosition && (
-          <SupplyModal
+          <SupplyModalV2
             market={selectedPosition.market}
+            position={selectedPosition}
             onClose={() => {
               setShowSupplyModal(false);
               setSelectedPosition(null);
             }}
+            refetch={() => void refetch()}
+            isMarketPage={false}
           />
         )}
 

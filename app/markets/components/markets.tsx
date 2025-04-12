@@ -11,7 +11,7 @@ import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
-import { SupplyModal } from '@/components/supplyModal';
+import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -361,11 +361,8 @@ export default function Markets() {
       <div className="container h-full gap-8 px-[5%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        {showSupplyModal && (
-          <SupplyModal
-            market={selectedMarket as Market}
-            onClose={() => setShowSupplyModal(false)}
-          />
+        {showSupplyModal && selectedMarket && (
+          <SupplyModalV2 market={selectedMarket} onClose={() => setShowSupplyModal(false)} />
         )}
 
         <MarketSettingsModal
