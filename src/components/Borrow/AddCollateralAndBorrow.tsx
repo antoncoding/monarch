@@ -23,6 +23,7 @@ type BorrowLogicProps = {
   refetchPosition: (onSuccess?: () => void) => void;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
+  oraclePrice: bigint;
 };
 
 export function AddCollateralAndBorrow({
@@ -31,6 +32,7 @@ export function AddCollateralAndBorrow({
   refetchPosition,
   collateralTokenBalance,
   ethBalance,
+  oraclePrice,
 }: BorrowLogicProps): JSX.Element {
   // State for collateral and borrow amounts
   const [collateralAmount, setCollateralAmount] = useState<bigint>(BigInt(0));
@@ -80,9 +82,9 @@ export function AddCollateralAndBorrow({
     if (!currentPosition) {
       setCurrentLTV(BigInt(0));
     } else {
-      // Calculate current LTV from position data
+      // Calculate current LTV from position data using oracle price
       const currentCollateralValue =
-        (BigInt(currentPosition.state.collateral) * BigInt(market.collateralPrice)) /
+        (BigInt(currentPosition.state.collateral) * oraclePrice) /
         BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
@@ -93,15 +95,15 @@ export function AddCollateralAndBorrow({
         setCurrentLTV(BigInt(0));
       }
     }
-  }, [currentPosition, market]);
+  }, [currentPosition, oraclePrice]);
 
   useEffect(() => {
-    // Calculate new LTV based on current position plus new amounts
+    // Calculate new LTV based on current position plus new amounts using oracle price
     const newCollateral = BigInt(currentPosition?.state.collateral ?? 0) + collateralAmount;
     const newBorrow = BigInt(currentPosition?.state.borrowAssets ?? 0) + borrowAmount;
 
     const newCollateralValueInLoan =
-      (newCollateral * BigInt(market.collateralPrice)) / BigInt(10 ** 36);
+      (newCollateral * oraclePrice) / BigInt(10 ** 36);
 
     if (newCollateralValueInLoan > 0) {
       const ltv = (newBorrow * BigInt(10 ** 18)) / newCollateralValueInLoan;
@@ -109,7 +111,7 @@ export function AddCollateralAndBorrow({
     } else {
       setNewLTV(BigInt(0));
     }
-  }, [currentPosition, collateralAmount, borrowAmount, market]);
+  }, [currentPosition, collateralAmount, borrowAmount, oraclePrice]);
 
   // Function to refresh position data
   const handleRefreshPosition = () => {

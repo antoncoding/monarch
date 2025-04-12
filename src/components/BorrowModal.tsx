@@ -11,9 +11,10 @@ import { TokenIcon } from './TokenIcon';
 type BorrowModalProps = {
   market: Market;
   onClose: () => void;
+  oraclePrice: bigint;
 };
 
-export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element {
+export function BorrowModal({ market, onClose, oraclePrice }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
   const { address: account } = useAccount();
 
@@ -114,6 +115,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               refetchPosition={refetchPosition}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
+              oraclePrice={oraclePrice}
             />
           ) : (
             <WithdrawCollateralAndRepay
@@ -123,6 +125,7 @@ export function BorrowModal({ market, onClose }: BorrowModalProps): JSX.Element 
               loanTokenBalance={loanTokenBalance?.value}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
+              oraclePrice={oraclePrice}
             />
           )}
         </div>

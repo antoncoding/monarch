@@ -181,7 +181,11 @@ function MarketContent() {
         )}
 
         {showBorrowModal && (
-          <BorrowModal market={market} onClose={() => setShowBorrowModal(false)} />
+          <BorrowModal 
+            market={market} 
+            onClose={() => setShowBorrowModal(false)} 
+            oraclePrice={oraclePrice}
+          />
         )}
 
         <h1 className="mb-8 text-center text-3xl">
