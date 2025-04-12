@@ -26,11 +26,10 @@ import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networ
 import { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
 import { LiquidationsTable } from './components/LiquidationsTable';
+import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
-import { formatBalance } from '@/utils/balance';
-import { PositionStats } from './components/PositionStats';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -144,13 +143,7 @@ function MarketContent() {
 
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
-  const averageLTV =
-    !market.state.collateralAssetsUsd ||
-    !market.state.borrowAssetsUsd ||
-    market.state.collateralAssetsUsd <= 0
-      ? 0
-      : (parseFloat(market.state.borrowAssetsUsd) / market.state.collateralAssetsUsd) * 100;
-
+  
   return (
     <>
       <Header />

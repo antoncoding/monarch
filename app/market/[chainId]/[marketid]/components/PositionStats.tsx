@@ -1,21 +1,25 @@
 import { useState } from 'react';
 import { Card } from '@nextui-org/card';
 import { Switch } from '@nextui-org/switch';
-import { HiOutlineGlobeAsiaAustralia } from "react-icons/hi2";
 import { FiUser } from "react-icons/fi";
-import { Market, MarketPosition } from '@/utils/types';
+import { HiOutlineGlobeAsiaAustralia } from "react-icons/hi2";
+import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { Spinner } from '@/components/common/Spinner';
+import { Market, MarketPosition } from '@/utils/types';
 
-interface PositionStatsProps {
+type PositionStatsProps = {
   market: Market;
   userPosition: MarketPosition | null;
   positionLoading: boolean;
   cardStyle: string;
 }
 
-export const PositionStats = ({ market, userPosition, positionLoading, cardStyle }: PositionStatsProps) => {
+function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
+  return isSelected ? <FiUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
+}
+
+export function PositionStats({ market, userPosition, positionLoading, cardStyle }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition ? 'user' : 'global');
 
@@ -172,20 +176,18 @@ export const PositionStats = ({ market, userPosition, positionLoading, cardStyle
 
   return (
     <Card className={cardStyle}>
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between p-4 py-3">
         <span className="text-xl">{viewMode === 'global' ? 'Global Stats' : 'Your Position'}</span>
         <Switch
           defaultSelected={viewMode === 'user'}
           size="sm"
           color="primary"
+          classNames={{
+            wrapper: 'mx-0',
+            thumbIcon: 'p-0 mr-0'
+          }}
           onChange={toggleView}
-          thumbIcon={({ isSelected, className }) =>
-            isSelected ? (
-              <FiUser className={className} />
-            ) : (
-              <HiOutlineGlobeAsiaAustralia className={className} />
-            )
-          }
+          thumbIcon={ThumbIcon}
         />
       </div>
       <div className="px-4 py-3">
@@ -193,4 +195,4 @@ export const PositionStats = ({ market, userPosition, positionLoading, cardStyle
       </div>
     </Card>
   );
-}; 
+} 
