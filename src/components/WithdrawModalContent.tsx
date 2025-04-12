@@ -155,7 +155,6 @@ export function WithdrawModalContent({
                     setValue={setWithdrawAmount}
                     setError={setInputError}
                     exceedMaxErrMessage="Insufficient Liquidity"
-                    allowExceedMax
                   />
                   {inputError && (
                     <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
