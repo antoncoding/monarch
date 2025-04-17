@@ -75,8 +75,6 @@ const fetchBlockNumbers = async () => {
 const useUserPositionsSummaryData = (user: string | undefined) => {
   const [hasInitialData, setHasInitialData] = useState(false);
 
-  console.log('usePositionsSummaryData', user);
-
   const {
     data: positions,
     loading: positionsLoading,
@@ -84,6 +82,9 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     positionsError,
     refetch: refetchPositions,
   } = useUserPositions(user, true);
+
+  console.log('positionsLoading', positionsLoading);
+  console.log('hasInitialData', hasInitialData);
 
   const { fetchTransactions } = useUserTransactions();
 
@@ -165,7 +166,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   // Update hasInitialData when we first get positions with earnings
   useEffect(() => {
-    if (positionsWithEarnings && positionsWithEarnings.length > 0 && !hasInitialData) {
+    if (positionsWithEarnings && !hasInitialData) {
       setHasInitialData(true);
     }
   }, [positionsWithEarnings, hasInitialData]);

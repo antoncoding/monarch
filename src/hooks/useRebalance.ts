@@ -1,58 +1,84 @@
 import { useState, useCallback } from 'react';
-import { Address, encodeFunctionData, maxUint256, parseSignature } from 'viem';
-import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
+import { Address, encodeFunctionData, maxUint256 } from 'viem';
+import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
-import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { getBundlerV2, MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
+import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import { useERC20Approval } from './useERC20Approval';
+import { useLocalStorage } from './useLocalStorage';
+import { useMorphoBundlerAuthorization } from './useMorphoBundlerAuthorization';
 import { usePermit2 } from './usePermit2';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from './useUserMarketsCache';
 
+// Define more specific step types
+export type RebalanceStepType =
+  | 'idle'
+  | 'approve_permit2' // For Permit2 flow: Step 1
+  | 'authorize_bundler_sig' // For Permit2 flow: Step 2 (if needed)
+  | 'sign_permit' // For Permit2 flow: Step 3
+  | 'authorize_bundler_tx' // For standard flow: Step 1 (if needed)
+  | 'approve_token' // For standard flow: Step 2 (if needed)
+  | 'execute'; // Common final step
+
 export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [currentStep, setCurrentStep] = useState<
-    'idle' | 'approve' | 'authorize' | 'sign' | 'execute'
-  >('idle');
+  const [isProcessing, setIsProcessing] = useState(false); // Renamed from isConfirming for clarity
+  const [currentStep, setCurrentStep] = useState<RebalanceStepType>('idle');
 
   const { address: account } = useAccount();
-  const { signTypedDataAsync } = useSignTypedData();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
   const toast = useStyledToast();
-  const { data: isAuthorized } = useReadContract({
-    address: MORPHO,
-    abi: morphoAbi,
-    functionName: 'isAuthorized',
-    args: [account as Address, bundlerAddress as Address],
-    chainId: groupedPosition.chainId,
-  });
-
-  const { data: nonce } = useReadContract({
-    address: MORPHO,
-    abi: morphoAbi,
-    functionName: 'nonce',
-    args: [account as Address],
-    chainId: groupedPosition.chainId,
-  });
+  const [usePermit2Setting] = useLocalStorage('usePermit2', true); // Read user setting
 
   const totalAmount = rebalanceActions.reduce(
     (acc, action) => acc + BigInt(action.amount),
     BigInt(0),
   );
 
-  const { authorizePermit2, permit2Authorized, signForBundlers } = usePermit2({
-    user: account as `0x${string}`,
-    spender: getBundlerV2(groupedPosition.chainId),
-    token: groupedPosition.loanAssetAddress as `0x${string}`,
+  // Hook for Morpho bundler authorization (both sig and tx)
+  const {
+    isBundlerAuthorized,
+    isAuthorizingBundler,
+    authorizeBundlerWithSignature,
+    authorizeBundlerWithTransaction,
+    refetchIsBundlerAuthorized,
+  } = useMorphoBundlerAuthorization({
+    chainId: groupedPosition.chainId,
+    bundlerAddress,
+  });
+
+  // Hook for Permit2 handling
+  const {
+    authorizePermit2,
+    permit2Authorized,
+    signForBundlers,
+    isLoading: isLoadingPermit2,
+  } = usePermit2({
+    user: account as Address,
+    spender: bundlerAddress,
+    token: groupedPosition.loanAssetAddress as Address,
     refetchInterval: 10000,
     chainId: groupedPosition.chainId,
     tokenSymbol: groupedPosition.loanAsset,
     amount: totalAmount,
   });
 
-  // add newly used markets to the cache
+  // Hook for standard ERC20 approval
+  const {
+    isApproved: isTokenApproved,
+    approve: approveToken,
+    isApproving: isTokenApproving,
+  } = useERC20Approval({
+    token: groupedPosition.loanAssetAddress as Address,
+    spender: bundlerAddress,
+    amount: totalAmount,
+    tokenSymbol: groupedPosition.loanAsset,
+    chainId: groupedPosition.chainId,
+  });
+
+  // Add newly used markets to the cache
   const { batchAddUserMarkets } = useUserMarketsCache(account);
 
   const addRebalanceAction = useCallback((action: RebalanceAction) => {
@@ -63,223 +89,201 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     setRebalanceActions((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  const { sendTransactionAsync } = useTransactionWithToast({
+  // Transaction hook for the final multicall
+  const { sendTransactionAsync, isConfirming: isExecuting } = useTransactionWithToast({
     toastId: 'rebalance',
     pendingText: 'Rebalancing positions',
     successText: 'Positions rebalanced successfully',
     errorText: 'Failed to rebalance positions',
     chainId: groupedPosition.chainId,
-    onSuccess: onRebalance,
+    onSuccess: () => {
+      setRebalanceActions([]); // Clear actions on success
+      void refetchIsBundlerAuthorized(); // Refetch bundler auth status
+      if (onRebalance) void onRebalance(); // Call external callback
+    },
   });
 
-  const executeRebalance = useCallback(async () => {
-    if (!account) {
-      return;
-    }
-    setIsConfirming(true);
-    const transactions: `0x${string}`[] = [];
-
+  // Helper function to generate common withdraw/supply tx data
+  const generateRebalanceTxData = useCallback(() => {
+    const withdrawTxs: `0x${string}`[] = [];
+    const supplyTxs: `0x${string}`[] = [];
     const allMarketKeys: string[] = [];
 
-    try {
-      // Step 1: Authorize Permit2 if needed
-      setCurrentStep('approve');
-      if (!permit2Authorized) {
-        await authorizePermit2();
+    const groupedWithdraws: Record<string, RebalanceAction[]> = {};
+    const groupedSupplies: Record<string, RebalanceAction[]> = {};
 
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      }
+    rebalanceActions.forEach((action) => {
+      const withdrawKey = action.fromMarket.uniqueKey;
+      const supplyKey = action.toMarket.uniqueKey;
 
-      // Step 2: Sign and authorize bundler if needed
-      setCurrentStep('authorize');
-      if (isAuthorized === false) {
-        const domain = {
-          chainId: groupedPosition.chainId,
-          verifyingContract: MORPHO as Address,
-        };
+      if (!groupedWithdraws[withdrawKey]) groupedWithdraws[withdrawKey] = [];
+      if (!groupedSupplies[supplyKey]) groupedSupplies[supplyKey] = [];
 
-        const types = {
-          Authorization: [
-            { name: 'authorizer', type: 'address' },
-            { name: 'authorized', type: 'address' },
-            { name: 'isAuthorized', type: 'bool' },
-            { name: 'nonce', type: 'uint256' },
-            { name: 'deadline', type: 'uint256' },
-          ],
-        };
+      groupedWithdraws[withdrawKey].push(action);
+      groupedSupplies[supplyKey].push(action);
 
-        const deadline = Math.floor(Date.now() / 1000) + 3600;
+      if (!allMarketKeys.includes(withdrawKey)) allMarketKeys.push(withdrawKey);
+      if (!allMarketKeys.includes(supplyKey)) allMarketKeys.push(supplyKey);
+    });
 
-        const value = {
-          authorizer: account,
-          authorized: bundlerAddress,
-          isAuthorized: true,
-          nonce: nonce,
-          deadline: BigInt(deadline),
-        };
+    Object.values(groupedWithdraws).forEach((actions) => {
+      const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+      const isWithdrawMax = actions.some((action) => action.isMax);
+      const shares = isWithdrawMax
+        ? groupedPosition.markets.find(
+            (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
+          )?.state.supplyShares
+        : undefined;
 
-        let signatureRaw;
-        try {
-          signatureRaw = await signTypedDataAsync({
-            domain,
-            types,
-            primaryType: 'Authorization',
-            message: value,
-          });
-        } catch (error) {
-          const errorMessage = 'Signature request was rejected or failed. Please try again.';
-          toast.error('Signature request failed', errorMessage);
-          return;
-        }
-        const signature = parseSignature(signatureRaw);
-
-        const authorizationTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'morphoSetAuthorizationWithSig',
-          args: [
-            {
-              authorizer: account as Address,
-              authorized: bundlerAddress,
-              isAuthorized: true,
-              nonce: BigInt(nonce ?? 0),
-              deadline: BigInt(deadline),
-            },
-            {
-              v: Number(signature.v),
-              r: signature.r,
-              s: signature.s,
-            },
-            false,
-          ],
-        });
-
-        transactions.push(authorizationTx);
-
-        // wait 800ms to avoid rabby wallet issue
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      }
-
-      // Step 3: Sign permit for USDC
-      setCurrentStep('sign');
-      const { sigs, permitSingle } = await signForBundlers();
-      console.log('Signed for bundlers:', { sigs, permitSingle });
-
-      const permitTx = encodeFunctionData({
-        abi: morphoBundlerAbi,
-        functionName: 'approve2',
-        args: [permitSingle, sigs, false],
-      });
-      const transferFromTx = encodeFunctionData({
-        abi: morphoBundlerAbi,
-        functionName: 'transferFrom2',
-        args: [groupedPosition.loanAssetAddress as Address, totalAmount],
-      });
-
-      // don't push the transferFromTx to the array, do it after all withdrawals. Here we only dealt with permit
-      transactions.push(permitTx);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Step 4: Append rebalance actions and generate tx
-      setCurrentStep('execute');
-
-      const withdrawTxs: `0x${string}`[] = [];
-      const supplyTxs: `0x${string}`[] = [];
-
-      // Group actions by market
-      const groupedWithdraws: Record<string, RebalanceAction[]> = {};
-      const groupedSupplies: Record<string, RebalanceAction[]> = {};
-
-      rebalanceActions.forEach((action) => {
-        const withdrawKey = action.fromMarket.uniqueKey;
-        const supplyKey = action.toMarket.uniqueKey;
-
-        if (!groupedWithdraws[withdrawKey]) groupedWithdraws[withdrawKey] = [];
-        if (!groupedSupplies[supplyKey]) groupedSupplies[supplyKey] = [];
-
-        groupedWithdraws[withdrawKey].push(action);
-        groupedSupplies[supplyKey].push(action);
-
-        if (!allMarketKeys.includes(withdrawKey)) allMarketKeys.push(withdrawKey);
-        if (!allMarketKeys.includes(supplyKey)) allMarketKeys.push(supplyKey);
-      });
-
-      // Generate batched withdraw transactions
-      Object.values(groupedWithdraws).forEach((actions) => {
-        const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
-
-        // if any of the action has `isMax`,
-        const isWithdrawMax = actions.some((action) => action.isMax);
-        // if any action is max, there must be a "share" set
-        const shares = groupedPosition.markets.find(
-          (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
-        )?.state.supplyShares;
-
-        console.log('shares', shares);
-
-        if (isWithdrawMax && shares === undefined) {
-          throw new Error('No share found for max withdraw');
-        }
-
-        const market = actions[0].fromMarket;
-
-        const withdrawTx = encodeFunctionData({
-          abi: morphoBundlerAbi,
-          functionName: 'morphoWithdraw',
-          args: [
-            {
-              loanToken: market.loanToken as Address,
-              collateralToken: market.collateralToken as Address,
-              oracle: market.oracle as Address,
-              irm: market.irm as Address,
-              lltv: BigInt(market.lltv),
-            },
-            isWithdrawMax ? BigInt(0) : batchAmount, // assets
-            isWithdrawMax ? BigInt(shares as string) : BigInt(0), // shares
-            isWithdrawMax ? batchAmount : maxUint256, // slippage: max: minWithdraw => max share burned
-            account, // receiver
-          ],
-        });
-
-        withdrawTxs.push(withdrawTx);
-      });
-
-      // Generate batched supply transactions
-      Object.values(groupedSupplies).forEach((actions) => {
-        const bachedAmount = actions.reduce(
-          (sum, action) => sum + BigInt(action.amount),
-          BigInt(0),
+      if (isWithdrawMax && shares === undefined) {
+        throw new Error(
+          `No shares found for max withdraw from market ${actions[0].fromMarket.uniqueKey}`,
         );
-        const market = actions[0].toMarket;
+      }
 
-        const supplyTx = encodeFunctionData({
+      const market = actions[0].fromMarket;
+
+      // Add checks for required market properties
+      if (
+        !market.loanToken ||
+        !market.collateralToken ||
+        !market.oracle ||
+        !market.irm ||
+        market.lltv === undefined
+      ) {
+        throw new Error(`Market data incomplete for withdraw from ${market.uniqueKey}`);
+      }
+
+      const withdrawTx = encodeFunctionData({
+        abi: morphoBundlerAbi,
+        functionName: 'morphoWithdraw',
+        args: [
+          {
+            loanToken: market.loanToken! as Address,
+            collateralToken: market.collateralToken! as Address,
+            oracle: market.oracle as Address,
+            irm: market.irm as Address,
+            lltv: BigInt(market.lltv),
+          },
+          isWithdrawMax ? BigInt(0) : batchAmount, // assets
+          isWithdrawMax ? BigInt(shares as string) : BigInt(0), // shares
+          isWithdrawMax ? batchAmount : maxUint256, // maxAssetsToWithdraw or minSharesToWithdraw depending on other inputs
+          account!, // receiver (assets sent here)
+        ],
+      });
+      withdrawTxs.push(withdrawTx);
+    });
+
+    Object.values(groupedSupplies).forEach((actions) => {
+      const batchedAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
+      const market = actions[0].toMarket;
+
+      // Add checks for required market properties
+      if (
+        !market.loanToken ||
+        !market.collateralToken ||
+        !market.oracle ||
+        !market.irm ||
+        market.lltv === undefined
+      ) {
+        throw new Error(`Market data incomplete for supply to ${market.uniqueKey}`);
+      }
+
+      const supplyTx = encodeFunctionData({
+        abi: morphoBundlerAbi,
+        functionName: 'morphoSupply',
+        args: [
+          {
+            loanToken: market.loanToken! as Address,
+            collateralToken: market.collateralToken! as Address,
+            oracle: market.oracle as Address,
+            irm: market.irm as Address,
+            lltv: BigInt(market.lltv),
+          },
+          batchedAmount, // assets
+          BigInt(0), // shares (must be 0 if assets > 0)
+          BigInt(1), // minShares (slippage control - accept at least 1 share)
+          account!, // onBehalf (supply deposited for this account)
+          '0x', // callback data
+        ],
+      });
+      supplyTxs.push(supplyTx);
+    });
+
+    return { withdrawTxs, supplyTxs, allMarketKeys };
+  }, [rebalanceActions, groupedPosition.markets, account]);
+
+  const executeRebalance = useCallback(async () => {
+    if (!account || rebalanceActions.length === 0) {
+      toast.info('No actions', 'Please add rebalance actions first.');
+      return;
+    }
+    setIsProcessing(true);
+    const transactions: `0x${string}`[] = [];
+
+    try {
+      const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();
+
+      if (usePermit2Setting) {
+        // --- Permit2 Flow ---
+        setCurrentStep('approve_permit2');
+        if (!permit2Authorized) {
+          await authorizePermit2(); // Authorize Permit2 contract
+          await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
+        }
+
+        setCurrentStep('authorize_bundler_sig');
+        const bundlerAuthSigTx = await authorizeBundlerWithSignature(); // Get signature for Bundler auth if needed
+        if (bundlerAuthSigTx) {
+          transactions.push(bundlerAuthSigTx);
+          await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
+        }
+
+        setCurrentStep('sign_permit');
+        const { sigs, permitSingle } = await signForBundlers(); // Sign for Permit2 token transfer
+        const permitTx = encodeFunctionData({
           abi: morphoBundlerAbi,
-          functionName: 'morphoSupply',
-          args: [
-            {
-              loanToken: market.loanToken as Address,
-              collateralToken: market.collateralToken as Address,
-              oracle: market.oracle as Address,
-              irm: market.irm as Address,
-              lltv: BigInt(market.lltv),
-            },
-            bachedAmount,
-            BigInt(0),
-            BigInt(0), // slippageAmount => min share minted
-            account,
-            '0x',
-          ],
+          functionName: 'approve2',
+          args: [permitSingle, sigs, false],
+        });
+        const transferFromTx = encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'transferFrom2',
+          args: [groupedPosition.loanAssetAddress as Address, totalAmount],
         });
 
-        supplyTxs.push(supplyTx);
-      });
+        transactions.push(permitTx);
+        transactions.push(...withdrawTxs); // Withdraw first
+        transactions.push(transferFromTx); // Then transfer assets via Permit2
+        transactions.push(...supplyTxs); // Then supply
+      } else {
+        // --- Standard ERC20 Flow ---
+        setCurrentStep('authorize_bundler_tx');
+        const bundlerTxAuthorized = await authorizeBundlerWithTransaction(); // Authorize Bundler via TX if needed
+        if (!bundlerTxAuthorized) {
+          throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
+        }
+        // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeBundlerWithTransaction
 
-      // Reorder transactions
-      transactions.push(...withdrawTxs);
-      transactions.push(transferFromTx);
-      transactions.push(...supplyTxs);
+        setCurrentStep('approve_token');
+        if (!isTokenApproved) {
+          await approveToken(); // Approve ERC20 token
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // UI delay
+        }
 
-      // Execute all transactions
+        const erc20TransferTx = encodeFunctionData({
+          abi: morphoBundlerAbi,
+          functionName: 'erc20TransferFrom',
+          args: [groupedPosition.loanAssetAddress as Address, totalAmount],
+        });
+
+        transactions.push(...withdrawTxs); // Withdraw first
+        transactions.push(erc20TransferTx); // Then transfer assets via standard ERC20
+        transactions.push(...supplyTxs); // Then supply
+      }
+
+      // Step Final: Execute multicall
+      setCurrentStep('execute');
       const multicallTx = (encodeFunctionData({
         abi: morphoBundlerAbi,
         functionName: 'multicall',
@@ -293,47 +297,74 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         chainId: groupedPosition.chainId,
       });
 
-      // add newly used markets to the cache
       batchAddUserMarkets(
         allMarketKeys.map((key) => ({
           marketUniqueKey: key,
           chainId: groupedPosition.chainId,
         })),
       );
-
-      setRebalanceActions([]);
     } catch (error) {
-      console.error('Error during rebalance:', error);
-      toast.error('An error occurred during rebalance. Please try again.');
-      throw error;
+      console.error('Error during rebalance executeRebalance:', error);
+      // Log specific details if available, especially for standard flow issues
+      if (!usePermit2Setting) {
+        console.error('Error occurred during standard ERC20 rebalance flow.');
+      }
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        // Attempt to log simulation failure details if present (common pattern)
+        if (
+          error.message.toLowerCase().includes('simulation failed') ||
+          error.message.toLowerCase().includes('gas estimation failed')
+        ) {
+          console.error('Potential transaction simulation/estimation failure details:', error);
+        }
+      }
+
+      // Specific errors should be handled within the sub-functions (auth, approve, sign) with toasts
+      if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
+        toast.error('Rebalance Failed', 'An unexpected error occurred during rebalance.');
+      }
+      // Don't re-throw generic errors if specific ones were already handled
     } finally {
-      setIsConfirming(false);
+      setIsProcessing(false);
       setCurrentStep('idle');
     }
   }, [
     account,
+    rebalanceActions,
+    usePermit2Setting,
     permit2Authorized,
     authorizePermit2,
+    authorizeBundlerWithSignature,
     signForBundlers,
-    isAuthorized,
-    nonce,
+    authorizeBundlerWithTransaction,
+    isTokenApproved,
+    approveToken,
+    generateRebalanceTxData,
+    sendTransactionAsync,
+    refetchIsBundlerAuthorized,
     bundlerAddress,
     groupedPosition.chainId,
-    signTypedDataAsync,
-    rebalanceActions,
-    sendTransactionAsync,
     groupedPosition.loanAssetAddress,
     totalAmount,
+    batchAddUserMarkets,
     toast,
   ]);
+
+  // Determine overall loading state
+  const isLoading =
+    isProcessing || isLoadingPermit2 || isTokenApproving || isAuthorizingBundler || isExecuting;
 
   return {
     rebalanceActions,
     addRebalanceAction,
     removeRebalanceAction,
     executeRebalance,
-    isConfirming,
+    isProcessing: isLoading, // Use combined loading state
     currentStep,
-    isAuthorized: permit2Authorized,
+    // Expose relevant states for UI feedback
+    isBundlerAuthorized,
+    permit2Authorized, // Relevant only if usePermit2Setting is true
+    isTokenApproved, // Relevant only if usePermit2Setting is false
   };
 };

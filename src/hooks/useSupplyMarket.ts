@@ -119,6 +119,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
           }),
         );
       } else if (usePermit2Setting) {
+        // if user turned on gasless mode (already approved Permit2), ask for a sinature to transfer assets
         const { sigs, permitSingle } = await signForBundlers();
 
         const tx1 = encodeFunctionData({
@@ -137,7 +138,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
         txs.push(tx1);
         txs.push(tx2);
       } else {
-        // For standard ERC20 flow, we only need to transfer the tokens
+        // For standard ERC20 flow, we only need to transfer the tokens to the bundler
         txs.push(
           encodeFunctionData({
             abi: morphoBundlerAbi,
