@@ -9,6 +9,7 @@ import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
+import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from './useUserMarketsCache';
@@ -79,6 +80,8 @@ export function useMultiMarketSupply(
 
     const txs: `0x${string}`[] = [];
 
+    let gas = undefined;
+
     try {
       // Handle ETH wrapping if needed
       if (useEth) {
@@ -90,7 +93,7 @@ export function useMultiMarketSupply(
           }),
         );
       }
-      // Handle token approvals
+      // Token approvals with Permit 2
       else if (usePermit2Setting) {
         setCurrentStep('signing');
         const { sigs, permitSingle } = await signForBundlers();
@@ -120,6 +123,9 @@ export function useMultiMarketSupply(
             args: [loanAsset.address as Address, totalAmount],
           }),
         );
+
+        const numOfSupplies = supplies.length;
+        gas = GAS_COSTS.BUNDLER_SUPPLY + GAS_COSTS.SINGLE_SUPPLY * (numOfSupplies - 1);
       }
 
       setCurrentStep('supplying');
@@ -160,6 +166,9 @@ export function useMultiMarketSupply(
           args: [txs],
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? totalAmount : 0n,
+
+        // Only add gas for standard approval flow -> skip gas estimation
+        gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
       });
 
       batchAddUserMarkets(

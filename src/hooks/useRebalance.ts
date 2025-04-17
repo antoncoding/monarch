@@ -5,6 +5,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { useMorphoBundlerAuthorization } from './useMorphoBundlerAuthorization';
@@ -224,6 +225,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     try {
       const { withdrawTxs, supplyTxs, allMarketKeys } = generateRebalanceTxData();
 
+      let multicallGas = undefined;
+
       if (usePermit2Setting) {
         // --- Permit2 Flow ---
         setCurrentStep('approve_permit2');
@@ -280,6 +283,19 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         transactions.push(...withdrawTxs); // Withdraw first
         transactions.push(erc20TransferTx); // Then transfer assets via standard ERC20
         transactions.push(...supplyTxs); // Then supply
+
+        // estimate gas for multicall
+        multicallGas = GAS_COSTS.BUNDLER_REBALANCE;
+
+        if (supplyTxs.length > 1) {
+          multicallGas += GAS_COSTS.SINGLE_SUPPLY * (supplyTxs.length - 1);
+        }
+
+        if (withdrawTxs.length > 1) {
+          multicallGas += GAS_COSTS.SINGLE_WITHDRAW * (withdrawTxs.length - 1);
+        }
+
+        console.log('multicallGas', multicallGas);
       }
 
       // Step Final: Execute multicall
@@ -295,6 +311,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
         to: bundlerAddress,
         data: multicallTx,
         chainId: groupedPosition.chainId,
+        gas: multicallGas ? BigInt(multicallGas * GAS_MULTIPLIER) : undefined,
       });
 
       batchAddUserMarkets(
@@ -303,6 +320,8 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
           chainId: groupedPosition.chainId,
         })),
       );
+
+      return true;
     } catch (error) {
       console.error('Error during rebalance executeRebalance:', error);
       // Log specific details if available, especially for standard flow issues

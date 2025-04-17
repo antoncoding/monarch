@@ -259,11 +259,14 @@ export function RebalanceModal({
 
     setShowProcessModal(true);
     try {
-      await executeRebalance();
+      const result = await executeRebalance();
       // Explicitly refetch AFTER successful execution
-      refetch(() => {
-        toast.info('Data refreshed', 'Position data updated after rebalance.');
-      });
+
+      if (result == true) {
+        refetch(() => {
+          toast.info('Data refreshed', 'Position data updated after rebalance.');
+        });
+      }
     } catch (error) {
       console.error('Error during rebalance:', error);
     } finally {

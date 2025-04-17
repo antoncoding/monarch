@@ -107,7 +107,10 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     queryFn: async () => {
       if (!positions || !user || !blockNums) {
         console.log('⚠️ [EARNINGS] Missing required data, returning empty earnings');
-        return [] as MarketPositionWithEarnings[];
+        return {
+          positions: [] as MarketPositionWithEarnings[],
+          fetched: false,
+        };
       }
 
       console.log('🔄 [EARNINGS] Starting calculation for', positions.length, 'positions');
@@ -144,20 +147,29 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
       const positionsWithCalculatedEarnings = await Promise.all(positionPromises);
 
       console.log('📊 [EARNINGS] All earnings calculations complete');
-      return positionsWithCalculatedEarnings;
+      return {
+        positions: positionsWithCalculatedEarnings,
+        fetched: true,
+      };
     },
     placeholderData: (prev) => {
       // If we have positions but no earnings data yet, initialize with empty earnings
       if (positions?.length) {
         console.log('📋 [EARNINGS] Using placeholder data with empty earnings');
-        return initializePositionsWithEmptyEarnings(positions);
+        return {
+          positions: initializePositionsWithEmptyEarnings(positions),
+          fetched: false,
+        };
       }
       // If we have previous data, keep it during transitions
       if (prev) {
         console.log('📋 [EARNINGS] Keeping previous earnings data during transition');
         return prev;
       }
-      return [] as MarketPositionWithEarnings[];
+      return {
+        positions: [] as MarketPositionWithEarnings[],
+        fetched: false,
+      };
     },
     enabled: !!positions && !!user && !!blockNums,
     gcTime: 5 * 60 * 1000,
@@ -166,7 +178,8 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   // Update hasInitialData when we first get positions with earnings
   useEffect(() => {
-    if (positionsWithEarnings && !hasInitialData) {
+    if (positionsWithEarnings && positionsWithEarnings.fetched && !hasInitialData) {
+      console.log('positionsWithEarnings', positionsWithEarnings);
       setHasInitialData(true);
     }
   }, [positionsWithEarnings, hasInitialData]);
@@ -186,8 +199,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   // 1. We haven't received initial data yet
   // 2. Positions are still loading initially
   // 3. We have positions but no earnings data yet
-  const isPositionsLoading =
-    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.length);
+  const isPositionsLoading = !hasInitialData || positionsLoading || !positionsWithEarnings?.fetched;
 
   // Consider earnings loading if:
   // 1. Block numbers are loading
@@ -196,7 +208,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
   return {
-    positions: positionsWithEarnings ?? [],
+    positions: positionsWithEarnings?.positions ?? [],
     isPositionsLoading,
     isEarningsLoading,
     isRefetching,

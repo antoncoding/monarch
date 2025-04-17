@@ -4,12 +4,12 @@ import {
   rainbowWallet,
   coinbaseWallet,
   rabbyWallet,
-  safeWallet,
   argentWallet,
   injectedWallet,
   trustWallet,
   ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
+import { safe } from '@wagmi/connectors';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet } from 'wagmi/chains';
 import { getChainsForEnvironment } from './supportedChains';
@@ -32,7 +32,6 @@ export function createWagmiConfig(projectId: string) {
           metaMaskWallet,
           rainbowWallet,
           coinbaseWallet,
-          safeWallet,
           argentWallet,
           injectedWallet,
           trustWallet,
@@ -53,6 +52,15 @@ export function createWagmiConfig(projectId: string) {
       [mainnet.id]: http(rpcMainnet),
       [base.id]: http(rpcBase),
     },
-    connectors,
+    connectors: [
+      ...connectors,
+      safe({
+        shimDisconnect: true,
+        allowedDomains: [
+          // safe global, no localhost
+          /^(https:\/\/safe\.global|https:\/\/app\.safe\.global)$/,
+        ],
+      }),
+    ],
   });
 }
