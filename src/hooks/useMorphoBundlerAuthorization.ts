@@ -4,7 +4,7 @@ import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
+import { MORPHO } from '@/utils/morpho';
 import { useStyledToast } from './useStyledToast';
 
 interface UseMorphoBundlerAuthorizationProps {
@@ -141,16 +141,14 @@ export const useMorphoBundlerAuthorization = ({
       setIsAuthorizing(true);
       try {
         // Simple Morpho setAuthorization transaction
-         const setAuthorizationTxData = encodeFunctionData({
-            abi: morphoAbi,
-            functionName: 'setAuthorization',
-            args: [bundlerAddress, true]
-         });
-
-         await sendBundlerAuthorizationTx({
+        await sendBundlerAuthorizationTx({
             account: account,
             to: MORPHO,
-            data: (setAuthorizationTxData + MONARCH_TX_IDENTIFIER) as `0x${string}`, // Use Morpho directly
+            data: encodeFunctionData({
+              abi: morphoAbi,
+              functionName: 'setAuthorization',
+              args: [bundlerAddress, true]
+              }),
             chainId: chainId,
          });
         return true;

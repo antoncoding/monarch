@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
-import { GrRefresh } from 'react-icons/gr';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
@@ -301,7 +301,7 @@ export function RebalanceModal({
               onClick={handleManualRefresh}
               isDisabled={isRefetching}
             >
-              <GrRefresh size={16} />
+              <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
           </ModalHeader>

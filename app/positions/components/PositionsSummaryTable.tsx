@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip } from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
-import { IoRefreshOutline, IoChevronDownOutline } from 'react-icons/io5';
+import { IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
 import { useAccount } from 'wagmi';
@@ -147,9 +148,10 @@ export function PositionsSummaryTable({
           variant="light"
           size="sm"
           onClick={handleManualRefresh}
+          disabled={isRefetching}
           className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
         >
-          <IoRefreshOutline className="mr-2 h-4 w-4" />
+          <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>

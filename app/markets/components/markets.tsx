@@ -5,6 +5,7 @@ import { Chain } from '@rainbow-me/rainbowkit';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FaSync } from 'react-icons/fa';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
@@ -442,7 +443,7 @@ export default function Markets() {
               className="text-secondary"
               onClick={handleRefresh}
             >
-              <FaSync className={`${isRefetching ? 'animate-spin' : ''} mr-1`} size={10} />
+              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} mr-1 h-3 w-3`} />
               Refresh
             </Button>
 

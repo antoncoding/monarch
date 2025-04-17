@@ -22,7 +22,7 @@ export type RebalanceStepType =
   | 'approve_token' // For standard flow: Step 2 (if needed)
   | 'execute'; // Common final step
 
-export const useRebalance = (groupedPosition: GroupedPosition) => {
+export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () => void) => {
   const [rebalanceActions, setRebalanceActions] = useState<RebalanceAction[]>([]);
   const [isProcessing, setIsProcessing] = useState(false); // Renamed from isConfirming for clarity
   const [currentStep, setCurrentStep] = useState<RebalanceStepType>('idle');
@@ -97,9 +97,10 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
     successText: 'Positions rebalanced successfully',
     errorText: 'Failed to rebalance positions',
     chainId: groupedPosition.chainId,
-    onSuccess: async () => { // Only include internal state updates
+    onSuccess: async () => {
         setRebalanceActions([]); // Clear actions on success
         await refetchIsBundlerAuthorized(); // Refetch bundler auth status
+        if (onRebalance) onRebalance(); // Call external callback
     },
   });
 
@@ -253,7 +254,7 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
         setCurrentStep('approve_token');
         if (!isTokenApproved) {
           await approveToken(); // Approve ERC20 token
-           await new Promise((resolve) => setTimeout(resolve, 800)); // UI delay
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // UI delay
         }
 
          const erc20TransferTx = encodeFunctionData({
@@ -291,7 +292,19 @@ export const useRebalance = (groupedPosition: GroupedPosition) => {
       );
 
     } catch (error) {
-      console.error('Error during rebalance:', error);
+      console.error('Error during rebalance executeRebalance:', error);
+      // Log specific details if available, especially for standard flow issues
+      if (!usePermit2Setting) {
+          console.error('Error occurred during standard ERC20 rebalance flow.');
+      }
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        // Attempt to log simulation failure details if present (common pattern)
+        if (error.message.toLowerCase().includes('simulation failed') || error.message.toLowerCase().includes('gas estimation failed')) {
+            console.error('Potential transaction simulation/estimation failure details:', error);
+        }
+      }
+
       // Specific errors should be handled within the sub-functions (auth, approve, sign) with toasts
       if (error instanceof Error && !error.message.toLowerCase().includes('rejected')) {
          toast.error('Rebalance Failed', 'An unexpected error occurred during rebalance.');
