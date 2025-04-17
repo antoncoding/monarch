@@ -7,6 +7,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { Market } from '@/utils/types';
@@ -39,6 +40,7 @@ export function RebalanceModal({
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
   const toast = useStyledToast();
+  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const { markets: allMarkets } = useMarkets();
   const {
@@ -46,9 +48,9 @@ export function RebalanceModal({
     addRebalanceAction,
     removeRebalanceAction,
     executeRebalance,
-    isConfirming,
+    isProcessing,
     currentStep,
-  } = useRebalance(groupedPosition, refetch);
+  } = useRebalance(groupedPosition);
 
   const fromPagination = usePagination();
   const toPagination = usePagination();
@@ -258,12 +260,16 @@ export function RebalanceModal({
     setShowProcessModal(true);
     try {
       await executeRebalance();
+      // Explicitly refetch AFTER successful execution
+      refetch(() => {
+        toast.info('Data refreshed', 'Position data updated after rebalance.');
+      });
     } catch (error) {
       console.error('Error during rebalance:', error);
     } finally {
       setShowProcessModal(false);
     }
-  }, [executeRebalance, needSwitchChain, switchToNetwork, toast]);
+  }, [executeRebalance, needSwitchChain, switchToNetwork, toast, refetch]);
 
   const handleManualRefresh = () => {
     refetch(() => {
@@ -372,8 +378,8 @@ export function RebalanceModal({
             <Button
               variant="cta"
               onPress={() => void handleExecuteRebalance()}
-              isDisabled={isConfirming || rebalanceActions.length === 0}
-              isLoading={isConfirming}
+              isDisabled={isProcessing || rebalanceActions.length === 0}
+              isLoading={isProcessing}
               className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
             >
               {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
@@ -384,6 +390,7 @@ export function RebalanceModal({
       {showProcessModal && (
         <RebalanceProcessModal
           currentStep={currentStep}
+          isPermit2Flow={usePermit2Setting}
           onClose={() => setShowProcessModal(false)}
           tokenSymbol={groupedPosition.loanAsset}
           actionsCount={rebalanceActions.length}

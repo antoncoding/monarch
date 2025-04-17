@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { RebalanceStepType } from '@/hooks/useRebalance';
 
 type RebalanceProcessModalProps = {
-  currentStep: 'idle' | 'approve' | 'authorize' | 'sign' | 'execute';
+  currentStep: RebalanceStepType;
+  isPermit2Flow: boolean;
   onClose: () => void;
   tokenSymbol: string;
   actionsCount: number;
@@ -11,48 +13,66 @@ type RebalanceProcessModalProps = {
 
 export function RebalanceProcessModal({
   currentStep,
+  isPermit2Flow,
   onClose,
   tokenSymbol,
   actionsCount,
 }: RebalanceProcessModalProps): JSX.Element {
-  const steps = useMemo(
-    () => [
+  const steps = useMemo(() => {
+    const permit2Steps = [
       {
-        key: 'idle',
-        label: 'Idle',
-        detail: 'Waiting to start the rebalance process.',
-      },
-      {
-        key: 'approve',
+        key: 'approve_permit2',
         label: 'Authorize Permit2',
-        detail: `This one-time approval ensures you don't need to send approval transactions in the future.`,
+        detail: `Approve the Permit2 contract if this is your first time using it.`,
       },
       {
-        key: 'authorize',
-        label: 'Authorize Morpho Bundler',
-        detail: 'Authorize the Morpho official bundler to execute batched actions.',
+        key: 'authorize_bundler_sig',
+        label: 'Authorize Morpho Bundler (Signature)',
+        detail: 'Sign a message to authorize the Morpho bundler if needed.',
       },
       {
-        key: 'sign',
-        label: 'Sign Permit',
-        detail: 'Sign a Permit2 signature to authorize the one time use of asset.',
+        key: 'sign_permit',
+        label: 'Sign Token Permit',
+        detail: 'Sign a Permit2 signature to authorize the token transfer.',
       },
       {
         key: 'execute',
         label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${
-          actionsCount > 1 ? 's' : ''
-        }.`,
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
       },
-    ],
-    [actionsCount],
-  );
+    ];
 
-  const getStepStatus = (stepKey: string) => {
-    if (
-      steps.findIndex((step) => step.key === stepKey) <
-      steps.findIndex((step) => step.key === currentStep)
-    ) {
+    const standardSteps = [
+      {
+        key: 'authorize_bundler_tx',
+        label: 'Authorize Morpho Bundler (Transaction)',
+        detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+      },
+      {
+        key: 'approve_token',
+        label: `Approve ${tokenSymbol}`,
+        detail: `Approve the bundler contract to spend your ${tokenSymbol}.`,
+      },
+      {
+        key: 'execute',
+        label: 'Confirm Rebalance',
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
+      },
+    ];
+
+    return isPermit2Flow ? permit2Steps : standardSteps;
+  }, [isPermit2Flow, actionsCount, tokenSymbol]);
+
+  const getStepStatus = (stepKey: RebalanceStepType) => {
+    const currentFlowSteps = isPermit2Flow ? steps : steps;
+    const currentIndex = currentFlowSteps.findIndex((step) => step.key === currentStep);
+    const stepIndex = currentFlowSteps.findIndex((step) => step.key === stepKey);
+
+    if (currentStep === 'idle' || currentIndex === -1 || stepIndex === -1) {
+      return 'undone';
+    }
+
+    if (stepIndex < currentIndex) {
       return 'done';
     }
     if (stepKey === currentStep) {
@@ -85,9 +105,9 @@ export function RebalanceProcessModal({
             .map((step, index) => (
               <div key={step.key} className="step gap-4">
                 <div className="step-icon">
-                  {getStepStatus(step.key) === 'done' && <FaCheckCircle color="orange" size={24} />}
-                  {getStepStatus(step.key) === 'current' && <div className="loading-ring" />}
-                  {getStepStatus(step.key) === 'undone' && <FaCircle className="text-gray-400" />}
+                  {getStepStatus(step.key as RebalanceStepType) === 'done' && <FaCheckCircle color="orange" size={24} />}
+                  {getStepStatus(step.key as RebalanceStepType) === 'current' && <div className="loading-ring" />}
+                  {getStepStatus(step.key as RebalanceStepType) === 'undone' && <FaCircle className="text-gray-400" />}
                 </div>
                 <div className="step-label">
                   <div className="text-lg">{step.label}</div>
