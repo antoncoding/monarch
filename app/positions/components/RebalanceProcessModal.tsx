@@ -38,7 +38,9 @@ export function RebalanceProcessModal({
       {
         key: 'execute',
         label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${
+          actionsCount > 1 ? 's' : ''
+        }.`,
       },
     ];
 
@@ -56,7 +58,9 @@ export function RebalanceProcessModal({
       {
         key: 'execute',
         label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${
+          actionsCount > 1 ? 's' : ''
+        }.`,
       },
     ];
 
@@ -105,9 +109,15 @@ export function RebalanceProcessModal({
             .map((step, index) => (
               <div key={step.key} className="step gap-4">
                 <div className="step-icon">
-                  {getStepStatus(step.key as RebalanceStepType) === 'done' && <FaCheckCircle color="orange" size={24} />}
-                  {getStepStatus(step.key as RebalanceStepType) === 'current' && <div className="loading-ring" />}
-                  {getStepStatus(step.key as RebalanceStepType) === 'undone' && <FaCircle className="text-gray-400" />}
+                  {getStepStatus(step.key as RebalanceStepType) === 'done' && (
+                    <FaCheckCircle color="orange" size={24} />
+                  )}
+                  {getStepStatus(step.key as RebalanceStepType) === 'current' && (
+                    <div className="loading-ring" />
+                  )}
+                  {getStepStatus(step.key as RebalanceStepType) === 'undone' && (
+                    <FaCircle className="text-gray-400" />
+                  )}
                 </div>
                 <div className="step-label">
                   <div className="text-lg">{step.label}</div>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Card } from '@nextui-org/card';
 import { Switch } from '@nextui-org/switch';
-import { FiUser } from "react-icons/fi";
-import { HiOutlineGlobeAsiaAustralia } from "react-icons/hi2";
+import { FiUser } from 'react-icons/fi';
+import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -13,18 +13,27 @@ type PositionStatsProps = {
   userPosition: MarketPosition | null;
   positionLoading: boolean;
   cardStyle: string;
-}
+};
 
 function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
-  return isSelected ? <FiUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
+  return isSelected ? (
+    <FiUser className={className} />
+  ) : (
+    <HiOutlineGlobeAsiaAustralia className={className} />
+  );
 }
 
-export function PositionStats({ market, userPosition, positionLoading, cardStyle }: PositionStatsProps) {
+export function PositionStats({
+  market,
+  userPosition,
+  positionLoading,
+  cardStyle,
+}: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition ? 'user' : 'global');
 
   const toggleView = () => {
-    setViewMode(prev => prev === 'global' ? 'user' : 'global');
+    setViewMode((prev) => (prev === 'global' ? 'user' : 'global'));
   };
 
   const renderStats = () => {
@@ -122,7 +131,7 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
                 formatBalance(
                   BigInt(market.state.supplyAssets || 0),
                   market.loanAsset.decimals,
-                ).toString()
+                ).toString(),
               )}{' '}
               {market.loanAsset.symbol}
             </span>
@@ -143,7 +152,7 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
                 formatBalance(
                   BigInt(market.state.borrowAssets || 0),
                   market.loanAsset.decimals,
-                ).toString()
+                ).toString(),
               )}{' '}
               {market.loanAsset.symbol}
             </span>
@@ -164,7 +173,7 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
                 formatBalance(
                   BigInt(market.state.collateralAssets || 0),
                   market.collateralAsset.decimals,
-                ).toString()
+                ).toString(),
               )}{' '}
               {market.collateralAsset.symbol}
             </span>
@@ -184,15 +193,13 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
           color="primary"
           classNames={{
             wrapper: 'mx-0',
-            thumbIcon: 'p-0 mr-0'
+            thumbIcon: 'p-0 mr-0',
           }}
           onChange={toggleView}
           thumbIcon={ThumbIcon}
         />
       </div>
-      <div className="px-4 py-3">
-        {renderStats()}
-      </div>
+      <div className="px-4 py-3">{renderStats()}</div>
     </Card>
   );
-} 
+}

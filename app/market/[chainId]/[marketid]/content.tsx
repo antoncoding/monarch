@@ -81,11 +81,12 @@ function MarketContent() {
   });
 
   const { address } = useAccount();
-  
-  const {
-    position: userPosition,
-    loading: positionLoading,
-  } = useUserPositions(address, network, marketid as string);
+
+  const { position: userPosition, loading: positionLoading } = useUserPositions(
+    address,
+    network,
+    marketid as string,
+  );
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
@@ -143,7 +144,7 @@ function MarketContent() {
 
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
-  
+
   return (
     <>
       <Header />
@@ -172,18 +173,18 @@ function MarketContent() {
         </div>
 
         {showSupplyModal && (
-          <SupplyModalV2 
-            market={market} 
-            onClose={() => setShowSupplyModal(false)} 
+          <SupplyModalV2
+            market={market}
+            onClose={() => setShowSupplyModal(false)}
             position={userPosition}
             isMarketPage
           />
         )}
 
         {showBorrowModal && (
-          <BorrowModal 
-            market={market} 
-            onClose={() => setShowBorrowModal(false)} 
+          <BorrowModal
+            market={market}
+            onClose={() => setShowBorrowModal(false)}
             oraclePrice={oraclePrice}
           />
         )}
@@ -196,18 +197,20 @@ function MarketContent() {
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
               <span>Basic Info</span>
-              <span className="text-sm text-gray-500"><div className="flex items-center">
-                    {networkImg && (
-                      <Image
-                        src={networkImg}
-                        alt={network.toString()}
-                        width={18}
-                        height={18}
-                        className="mr-2"
-                      />
-                    )}
-                    {getNetworkName(network)}
-                  </div></span>
+              <span className="text-sm text-gray-500">
+                <div className="flex items-center">
+                  {networkImg && (
+                    <Image
+                      src={networkImg}
+                      alt={network.toString()}
+                      width={18}
+                      height={18}
+                      className="mr-2"
+                    />
+                  )}
+                  {getNetworkName(network)}
+                </div>
+              </span>
             </CardHeader>
             <CardBody>
               <div className="space-y-2">

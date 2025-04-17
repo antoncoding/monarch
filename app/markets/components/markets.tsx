@@ -1,11 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useDisclosure } from '@nextui-org/react';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
 import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaSync } from 'react-icons/fa';
-import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';

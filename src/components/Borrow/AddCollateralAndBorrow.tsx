@@ -84,8 +84,7 @@ export function AddCollateralAndBorrow({
     } else {
       // Calculate current LTV from position data using oracle price
       const currentCollateralValue =
-        (BigInt(currentPosition.state.collateral) * oraclePrice) /
-        BigInt(10 ** 36);
+        (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
@@ -102,8 +101,7 @@ export function AddCollateralAndBorrow({
     const newCollateral = BigInt(currentPosition?.state.collateral ?? 0) + collateralAmount;
     const newBorrow = BigInt(currentPosition?.state.borrowAssets ?? 0) + borrowAmount;
 
-    const newCollateralValueInLoan =
-      (newCollateral * oraclePrice) / BigInt(10 ** 36);
+    const newCollateralValueInLoan = (newCollateral * oraclePrice) / BigInt(10 ** 36);
 
     if (newCollateralValueInLoan > 0) {
       const ltv = (newBorrow * BigInt(10 ** 18)) / newCollateralValueInLoan;
