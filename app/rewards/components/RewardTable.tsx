@@ -234,6 +234,7 @@ export default function RewardTable({
                                 to: distribution.distributor.address as Address,
                                 data: distribution.tx_data as `0x${string}`,
                                 chainId: distribution.distributor.chain_id,
+                                // allow estimating gas
                               });
                             })();
                           }}

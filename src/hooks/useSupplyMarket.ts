@@ -11,6 +11,7 @@ import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { Market } from '@/utils/types';
+import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 
 export type SupplyStepType = 'approve' | 'signing' | 'supplying';
 
@@ -110,6 +111,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     try {
       const txs: `0x${string}`[] = [];
 
+      let gas = undefined;
+
       if (useEth) {
         txs.push(
           encodeFunctionData({
@@ -146,6 +149,9 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
             args: [market.loanAsset.address as Address, supplyAmount],
           }),
         );
+
+        // Standard Flow: add gas
+        gas = GAS_COSTS.SINGLE_SUPPLY;
       }
 
       setCurrentStep('supplying');
@@ -184,6 +190,9 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
           args: [txs],
         }) + MONARCH_TX_IDENTIFIER) as `0x${string}`,
         value: useEth ? supplyAmount : 0n,
+
+        // Only add gas for standard approval flow -> skip gas estimation
+        gas: gas ? BigInt(gas * GAS_MULTIPLIER) : undefined,
       });
 
       batchAddUserMarkets([
