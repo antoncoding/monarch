@@ -30,6 +30,7 @@ import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
+import { useSubgraphMarket } from '@/hooks/useSubgraphMarket';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -62,11 +63,15 @@ function MarketContent() {
   });
 
   // 4. Data fetching hooks
-  const {
-    data: market,
-    isLoading: isMarketLoading,
-    error: marketError,
-  } = useMarket(marketid as string, network);
+  // const {
+  //   data: market,
+  //   isLoading: isMarketLoading,
+  //   error: marketError,
+  // } = useMarket(marketid as string, network);
+
+  const {data: market, isLoading: isMarketLoading, error: marketError} = useSubgraphMarket(marketid as string, network);
+
+  console.log('market', market);
 
   const {
     data: historicalData,
