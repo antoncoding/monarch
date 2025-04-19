@@ -46,7 +46,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   const {
     loading: liquidationsLoading,
-    liquidatedMarketIds,
+    liquidatedMarketKeys,
     error: liquidationsError,
     refetch: refetchLiquidations,
   } = useLiquidations();
@@ -81,7 +81,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
         const processedMarkets = filtered.map((market) => {
           const warningsWithDetail = getMarketWarningsWithDetail(market);
-          const isProtectedByLiquidationBots = liquidatedMarketIds.has(market.id);
+          const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
 
           return {
             ...market,
@@ -101,7 +101,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         }
       }
     },
-    [liquidatedMarketIds],
+    [liquidatedMarketKeys],
   );
 
   useEffect(() => {

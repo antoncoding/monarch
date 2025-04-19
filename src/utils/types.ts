@@ -97,7 +97,6 @@ export type TokenInfo = {
   symbol: string;
   name: string;
   decimals: number;
-  priceUsd: number;
 };
 
 // Common types
@@ -273,9 +272,6 @@ export type Market = {
       id: number;
     };
   };
-  oracleInfo: {
-    type: string;
-  };
   loanAsset: TokenInfo;
   collateralAsset: TokenInfo;
   state: {
@@ -299,7 +295,6 @@ export type Market = {
       yearlySupplyTokens: string;
       asset: {
         address: string;
-        priceUsd: string | null;
         spotPriceEth: string | null;
       };
       amountPerSuppliedToken: string;
@@ -321,14 +316,11 @@ export type Market = {
     underlying: number;
     usd: number;
   };
-  dailyApys: {
-    netSupplyApy: number;
-    netBorrowApy: number;
-  };
 
   // appended by us
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
+
   oracle: {
     data: MorphoChainlinkOracleData;
   };
