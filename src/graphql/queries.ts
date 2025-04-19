@@ -57,21 +57,6 @@ export const marketFragment = `
       fee
       timestamp
       rateAtUTarget
-      rewards {
-        yearlySupplyTokens
-        asset {
-          address
-          spotPriceEth
-        }
-        amountPerSuppliedToken
-        amountPerBorrowedToken
-      }
-      monthlySupplyApy
-      monthlyBorrowApy
-      dailySupplyApy
-      dailyBorrowApy
-      weeklySupplyApy
-      weeklyBorrowApy
     }
     warnings {
       type

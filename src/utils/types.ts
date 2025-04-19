@@ -291,21 +291,6 @@ export type Market = {
     fee: number;
     timestamp: number;
     rateAtUTarget: number;
-    rewards: {
-      yearlySupplyTokens: string;
-      asset: {
-        address: string;
-        spotPriceEth: string | null;
-      };
-      amountPerSuppliedToken: string;
-      amountPerBorrowedToken: string;
-    }[];
-    monthlySupplyApy: number;
-    monthlyBorrowApy: number;
-    dailySupplyApy: number;
-    dailyBorrowApy: number;
-    weeklySupplyApy: number;
-    weeklyBorrowApy: number;
   };
   warnings: MarketWarning[];
   badDebt?: {
