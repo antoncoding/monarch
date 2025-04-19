@@ -1,5 +1,5 @@
 import { request, gql } from 'graphql-request';
-import { transactionsByTimeRangeQuery, userGrowthQuery } from '@/graphql/statsQueries';
+import { transactionsByTimeRangeQuery, userGrowthQuery } from '@/graphql/monarch-stats-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { processTransactionData } from '@/utils/statsDataProcessing';
 import {
