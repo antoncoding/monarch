@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { userRebalancerInfoQuery } from '@/graphql/queries';
+import { userRebalancerInfoQuery } from '@/graphql/morpho-api-queries';
 import { UserRebalancerInfo } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 

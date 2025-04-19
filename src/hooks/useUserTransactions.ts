@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { userTransactionsQuery } from '@/graphql/queries';
+import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { UserTransaction } from '@/utils/types';
 import { URLS } from '@/utils/urls';

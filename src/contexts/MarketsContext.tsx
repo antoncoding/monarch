@@ -9,7 +9,7 @@ import {
   useState,
   useMemo,
 } from 'react';
-import { marketsQuery } from '@/graphql/queries';
+import { marketsQuery } from '@/graphql/morpho-api-queries';
 import useLiquidations from '@/hooks/useLiquidations';
 import { isSupportedChain } from '@/utils/networks';
 import { Market } from '@/utils/types';

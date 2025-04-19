@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
-import { userPositionForMarketQuery } from '@/graphql/queries';
+import { userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import { MarketPosition } from '@/utils/types';

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { marketSuppliesQuery } from '@/graphql/queries';
+import { marketSuppliesQuery } from '@/graphql/morpho-api-queries';
 import { URLS } from '@/utils/urls';
 
 export type MarketSupplyTransaction = {

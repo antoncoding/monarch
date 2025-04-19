@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SupportedNetworks } from '@/utils/networks';
 import { URLS } from '@/utils/urls';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
-import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/queries';
+import { marketDetailQuery, marketHistoricalDataQuery } from '../graphql/morpho-api-queries';
 import { MarketDetail, TimeseriesOptions, Market } from '../utils/types';
 
 type GraphQLResponse = {
