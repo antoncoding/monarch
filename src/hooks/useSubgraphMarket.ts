@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { SupportedNetworks } from '@/utils/networks';
-import { URLS } from '@/utils/urls';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
+import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import the new URL getter
 import { MarketDetail, TimeseriesOptions, WarningWithDetail, WarningCategory, MorphoChainlinkOracleData } from '../utils/types';
 import {
   marketsQuery as subgraphMarketsQuery, // Keep old name for reference if needed
@@ -17,16 +16,12 @@ import {
 } from '../utils/subgraph-types';
 import { Address, formatUnits } from 'viem';
 
-const apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY
-
-// Use the existing API URL for now, replace if Subgraph has a dedicated URL
-const SUBGRAPH_API_URL = `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/71ZTy1veF9twER9CLMnPWeLQ7GZcwKsjmygejrgKirqs`
-
 const subgraphGraphqlFetcher = async <T extends object>(
+  apiUrl: string, // Accept URL as a parameter
   query: string,
   variables: Record<string, unknown>,
 ): Promise<T> => {
-  const response = await fetch(SUBGRAPH_API_URL, { // Use subgraph URL
+  const response = await fetch(apiUrl, { // Use the passed URL
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
@@ -66,7 +61,7 @@ const safeParseInt = (value: string | null | undefined): number => {
 }
 
 // Transformation function
-const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphMarket>): MarketDetail => {
+const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphMarket>, network: SupportedNetworks): MarketDetail => {
   // Use Partial<SubgraphMarket> as input type since not all fields are guaranteed
 
   // --- Handle fields from the simplified response --- 
@@ -102,7 +97,7 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
 
   // Placeholder for chain ID mapping
   // TODO: Implement mapping from subgraphMarket.protocol?.network string to chain ID number
-  const chainId = 1; // Default to Mainnet for now
+  const chainId = network;
 
   // Default state values for fields not present in the simplified query
   const borrowAssets = subgraphMarket.totalBorrow ?? '0';
@@ -197,12 +192,23 @@ export const useSubgraphMarket = (uniqueKey: string | undefined, network: Suppor
   return useQuery<MarketDetail | null>({ // Allow null if market not found
     queryKey: ['subgraphMarket', uniqueKey, network],
     queryFn: async () => {
-      if (!uniqueKey) return null; // Return null if uniqueKey is not provided
+      if (!uniqueKey || !network) return null; // Also check if network is provided
+
+      const subgraphApiUrl = getSubgraphUrl(network);
+
+      if (!subgraphApiUrl) {
+        console.error(`Subgraph URL for network ${network} is not defined.`);
+        throw new Error(`Subgraph URL for network ${network} is not defined.`); // Or return null
+      }
 
       // Use the new query for a single market
-      const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(subgraphMarketQuery, {
-        id: uniqueKey.toLowerCase() // Pass the uniqueKey as the id variable
-      });
+      const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
+          subgraphApiUrl, // Pass the dynamically selected URL
+          subgraphMarketQuery,
+          {
+            id: uniqueKey.toLowerCase() // Pass the uniqueKey as the id variable
+          }
+      );
 
       // Get the market data directly from the response
       const marketData = response.data.market;
@@ -212,7 +218,7 @@ export const useSubgraphMarket = (uniqueKey: string | undefined, network: Suppor
         return null; // Market not found or query returned null
       }
 
-      return transformSubgraphMarketToMarketDetail(marketData);
+      return transformSubgraphMarketToMarketDetail(marketData, network);
     },
     enabled: !!uniqueKey && !!network, // Only run query if uniqueKey and network are available
     staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
