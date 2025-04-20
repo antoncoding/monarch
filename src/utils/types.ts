@@ -319,7 +319,7 @@ export type TimeseriesDataPoint = {
 export type TimeseriesOptions = {
   startTimestamp: number;
   endTimestamp: number;
-  interval: 'MINUTE' | 'HALF_HOUR' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL';
+  interval: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
 };
 
 type MarketRates = {

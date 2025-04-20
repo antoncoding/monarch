@@ -35,30 +35,18 @@ const graphqlFetcher = async (
   return result;
 };
 
-const processMarketData = (market: Market): MarketDetail => {
+const processMarketData = (market: Market): Market => {
   const warningsWithDetail = getMarketWarningsWithDetail(market);
 
   return {
     ...market,
     warningsWithDetail,
     isProtectedByLiquidationBots: false, // NOT needed for now, might implement later
-    historicalState: {
-      supplyApy: [],
-      borrowApy: [],
-      supplyAssetsUsd: [],
-      borrowAssetsUsd: [],
-      rateAtUTarget: [],
-      utilization: [],
-      supplyAssets: [],
-      borrowAssets: [],
-      liquidityAssetsUsd: [],
-      liquidityAssets: [],
-    },
   };
 };
 
 export const useMarket = (uniqueKey: string, network: SupportedNetworks) => {
-  return useQuery<MarketDetail>({
+  return useQuery<Market>({
     queryKey: ['market', uniqueKey, network],
     queryFn: async () => {
       const response = await graphqlFetcher(marketDetailQuery, { uniqueKey, chainId: network });

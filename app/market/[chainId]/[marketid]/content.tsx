@@ -62,16 +62,9 @@ function MarketContent() {
     interval: 'HOUR',
   });
 
-  // 4. Data fetching hooks
-  // const {
-  //   data: market,
-  //   isLoading: isMarketLoading,
-  //   error: marketError,
-  // } = useMarket(marketid as string, network);
-
   const {data: market, isLoading: isMarketLoading, error: marketError} = useSubgraphMarket(marketid as string, network);
 
-  console.log('market', market);
+  console.log('market', market?.oracle);
 
   const {
     data: historicalData,

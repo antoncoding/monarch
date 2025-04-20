@@ -60,10 +60,7 @@ const useUserPositions = (
         if (currentSnapshot) {
           setPosition({
             market: data.data.marketPosition.market,
-            state: {
-              ...currentSnapshot,
-              collateral: data.data.marketPosition.state.collateral,
-            },
+            state: currentSnapshot,
           });
         } else {
           setPosition(data.data.marketPosition);

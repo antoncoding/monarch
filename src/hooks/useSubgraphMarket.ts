@@ -1,27 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
 import { SupportedNetworks } from '@/utils/networks';
-import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import the new URL getter
-import { MarketDetail, TimeseriesOptions, WarningWithDetail, WarningCategory, MorphoChainlinkOracleData } from '../utils/types';
+import { getSubgraphUrl } from '@/utils/subgraph-urls';
+import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '../utils/types';
 import {
-  marketsQuery as subgraphMarketsQuery, // Keep old name for reference if needed
-  marketQuery as subgraphMarketQuery // Import the new single market query
+  marketQuery as subgraphMarketQuery
 } from '../graphql/morpho-subgraph-queries';
 import {
   SubgraphMarket,
-  SubgraphMarketsQueryResponse, // Keep for reference if needed
-  SubgraphMarketQueryResponse, // Use the single market response type
+  SubgraphMarketQueryResponse,
   SubgraphToken,
-  SubgraphInterestRate,
-  SubgraphOracle
 } from '../utils/subgraph-types';
-import { Address, formatUnits } from 'viem';
+import { Address } from 'viem';
 
 const subgraphGraphqlFetcher = async <T extends object>(
-  apiUrl: string, // Accept URL as a parameter
+  apiUrl: string,
   query: string,
   variables: Record<string, unknown>,
 ): Promise<T> => {
-  const response = await fetch(apiUrl, { // Use the passed URL
+  const response = await fetch(apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
@@ -33,7 +29,6 @@ const subgraphGraphqlFetcher = async <T extends object>(
 
   const result = (await response.json()) as T;
 
-  // Basic error handling, specific to GraphQL structure
   if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
     throw new Error((result as any).errors[0].message);
   }
@@ -60,12 +55,9 @@ const safeParseInt = (value: string | null | undefined): number => {
     }
 }
 
-// Transformation function
-const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphMarket>, network: SupportedNetworks): MarketDetail => {
-  // Use Partial<SubgraphMarket> as input type since not all fields are guaranteed
+const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphMarket>, network: SupportedNetworks): Market => {
 
-  // --- Handle fields from the simplified response --- 
-  const marketId = subgraphMarket.id ?? ''; // This is the derived market ID/uniqueKey
+  const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
   const irmAddress = subgraphMarket.irm ?? '0x';
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
@@ -75,19 +67,19 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
 
-  // Map token info - provide defaults if tokens are missing
+  console.log('subgraphMarket', subgraphMarket);
+
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({
-    id: token?.id ?? '0x', // Default to zero address
-    address: token?.id ?? '0x', // Default to zero address
+    id: token?.id ?? '0x',
+    address: token?.id ?? '0x',
     symbol: token?.symbol ?? 'Unknown',
     name: token?.name ?? 'Unknown Token',
-    decimals: token?.decimals ?? 18, // Default to 18 decimals
+    decimals: token?.decimals ?? 18,
   });
 
   const loanAsset = mapToken(subgraphMarket.borrowedToken);
   const collateralAsset = mapToken(subgraphMarket.inputToken);
 
-  // --- Provide defaults for missing fields --- 
   const defaultOracleData: MorphoChainlinkOracleData = {
     baseFeedOne: null,
     baseFeedTwo: null,
@@ -95,93 +87,69 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
     quoteFeedTwo: null,
   };
 
-  // Placeholder for chain ID mapping
   // TODO: Implement mapping from subgraphMarket.protocol?.network string to chain ID number
   const chainId = network;
 
-  // Default state values for fields not present in the simplified query
   const borrowAssets = subgraphMarket.totalBorrow ?? '0';
   const supplyAssets = subgraphMarket.totalSupply ?? '0';
   const collateralAssets = subgraphMarket.inputTokenBalance ?? '0';
-  const collateralAssetsUsd = safeParseFloat(subgraphMarket.totalValueLockedUSD); // Use totalValueLockedUSD if available, else 0
-  const timestamp = safeParseInt(subgraphMarket.lastUpdate); // Use lastUpdate if available, else 0
+  const collateralAssetsUsd = safeParseFloat(subgraphMarket.totalValueLockedUSD);
+  const timestamp = safeParseInt(subgraphMarket.lastUpdate);
 
-  // Calculate utilization safely with defaults
   const totalSupplyNum = safeParseFloat(supplyAssets);
   const totalBorrowNum = safeParseFloat(borrowAssets);
   const utilization = totalSupplyNum > 0 ? (totalBorrowNum / totalSupplyNum) * 100 : 0;
 
-  // Default APYs (since rates are not fetched)
-  const supplyApy = 0;
-  const borrowApy = 0;
+  const supplyApy = Number(subgraphMarket.rates?.find(r => r.side === 'LENDER')?.rate ?? 0);
+  const borrowApy = Number(subgraphMarket.rates?.find(r => r.side === 'BORROWER')?.rate ?? 0);
 
-  // Liquidity calculation with defaults
   const liquidityAssets = (BigInt(supplyAssets) - BigInt(borrowAssets)).toString();
   const liquidityAssetsUsd = safeParseFloat(totalDepositBalanceUSD) - safeParseFloat(totalBorrowBalanceUSD);
 
-  // Default warnings (isActive is not fetched in simplified query)
   const warningsWithDetail: WarningWithDetail[] = [];
 
-  const marketDetail: MarketDetail = {
-    // Mapped from simplified response
+  const marketDetail: Market = {
     id: marketId,
     uniqueKey: marketId,
     lltv: lltv,
-    irmAddress: irmAddress as Address, // Cast to Address
+    irmAddress: irmAddress as Address,
     collateralPrice: inputTokenPriceUSD,
     loanAsset: loanAsset,
     collateralAsset: collateralAsset,
-    
-    // State mapped from simplified response + defaults
     state: {
-      borrowAssets: borrowAssets, 
-      supplyAssets: supplyAssets, 
-      borrowAssetsUsd: totalBorrowBalanceUSD, 
-      supplyAssetsUsd: totalDepositBalanceUSD, 
-      borrowShares: totalBorrowShares, 
-      supplyShares: totalSupplyShares, 
-      liquidityAssets: liquidityAssets, 
+      borrowAssets: borrowAssets,
+      supplyAssets: supplyAssets,
+      borrowAssetsUsd: totalBorrowBalanceUSD,
+      supplyAssetsUsd: totalDepositBalanceUSD,
+      borrowShares: totalBorrowShares,
+      supplyShares: totalSupplyShares,
+      liquidityAssets: liquidityAssets,
       liquidityAssetsUsd: liquidityAssetsUsd,
-      collateralAssets: collateralAssets, 
-      collateralAssetsUsd: collateralAssetsUsd, 
+      collateralAssets: collateralAssets,
+      collateralAssetsUsd: collateralAssetsUsd,
       utilization: utilization,
       supplyApy: supplyApy,
       borrowApy: borrowApy,
-      // Fee: Assuming conversion from basis points (10000 = 100%)
-      fee: safeParseFloat(fee) / 100, // Divide by 100 if fee is basis points * 100
+      fee: safeParseFloat(fee) / 100,
       timestamp: timestamp,
-      rateAtUTarget: 0, // Default
+      rateAtUTarget: 0,
     },
-
-    // Defaulted fields
-    oracleAddress: subgraphMarket.oracle?.oracleAddress ?? '0x', // Default to zero address
+    oracleAddress: subgraphMarket.oracle?.oracleAddress ?? '0x',
     morphoBlue: {
-      id: subgraphMarket.protocol?.id ?? '0x', // Default
-      address: subgraphMarket.protocol?.id ?? '0x', // Default
+      id: subgraphMarket.protocol?.id ?? '0x',
+      address: subgraphMarket.protocol?.id ?? '0x',
       chain: {
         id: chainId,
       },
     },
-    warnings: [], // Default
-    warningsWithDetail: warningsWithDetail, // Default
+    warnings: [],
+    warningsWithDetail: warningsWithDetail,
     oracle: {
-        data: defaultOracleData, // Default
+        data: defaultOracleData,
     },
-    isProtectedByLiquidationBots: false, // Default
-    badDebt: undefined, // Default
-    realizedBadDebt: undefined, // Default
-    historicalState: { // Default empty historical
-      supplyApy: [],
-      borrowApy: [],
-      supplyAssetsUsd: [],
-      borrowAssetsUsd: [],
-      rateAtUTarget: [],
-      utilization: [],
-      supplyAssets: [],
-      borrowAssets: [],
-      liquidityAssetsUsd: [],
-      liquidityAssets: [],
-    },
+    isProtectedByLiquidationBots: false,
+    badDebt: undefined,
+    realizedBadDebt: undefined,
   };
 
   return marketDetail;
@@ -189,40 +157,36 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
 
 // Hook to fetch a specific market using its ID (uniqueKey)
 export const useSubgraphMarket = (uniqueKey: string | undefined, network: SupportedNetworks) => {
-  return useQuery<MarketDetail | null>({ // Allow null if market not found
+  return useQuery<Market | null>({ 
     queryKey: ['subgraphMarket', uniqueKey, network],
     queryFn: async () => {
-      if (!uniqueKey || !network) return null; // Also check if network is provided
+      if (!uniqueKey || !network) return null;
 
       const subgraphApiUrl = getSubgraphUrl(network);
 
       if (!subgraphApiUrl) {
         console.error(`Subgraph URL for network ${network} is not defined.`);
-        throw new Error(`Subgraph URL for network ${network} is not defined.`); // Or return null
+        throw new Error(`Subgraph URL for network ${network} is not defined.`);
       }
 
-      // Use the new query for a single market
       const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
-          subgraphApiUrl, // Pass the dynamically selected URL
+          subgraphApiUrl,
           subgraphMarketQuery,
           {
-            id: uniqueKey.toLowerCase() // Pass the uniqueKey as the id variable
+            id: uniqueKey.toLowerCase()
           }
       );
 
-      // Get the market data directly from the response
       const marketData = response.data.market;
 
       if (!marketData) {
         console.warn(`Market with key ${uniqueKey} not found in Subgraph response.`);
-        return null; // Market not found or query returned null
+        return null;
       }
 
       return transformSubgraphMarketToMarketDetail(marketData, network);
     },
-    enabled: !!uniqueKey && !!network, // Only run query if uniqueKey and network are available
-    staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+    enabled: !!uniqueKey && !!network,
+    staleTime: 1000 * 60 * 5,
   });
 };
-
-// TODO: Add useSubgraphMarketHistoricalData if needed, requires adding historical queries to the subgraph file. 

@@ -1,6 +1,6 @@
 export const tokenFragment = `
   fragment TokenFields on Token {
-    id # Maps to address
+    id # address
     name
     symbol
     decimals
@@ -20,27 +20,24 @@ export const oracleFragment = `
 
 export const marketFragment = `
   fragment SubgraphMarketFields on Market {
-    id # Maps to uniqueKey
+    id # uniqueKey
     lltv
-    irm # Maps to irmAddress
-    inputToken { # Maps to collateralAsset
-      # Fetch full token details now
+    irm # irmAddress
+    inputToken { # collateralAsset
       ...TokenFields
     }
-    inputTokenPriceUSD # Maps to collateralPrice
-    borrowedToken { # Maps to loanAsset
-      # Fetch full token details now
+    inputTokenPriceUSD # collateralPrice
+    borrowedToken { # loanAsset
       ...TokenFields
     }
-    totalDepositBalanceUSD # Maps to state.supplyAssetsUsd
-    totalBorrowBalanceUSD # Maps to state.borrowAssetsUsd
-    totalSupplyShares # Maps to state.supplyShares
-    totalBorrowShares # Maps to state.borrowShares
-    totalSupply # Add back
-    totalBorrow # Add back
-    fee # Maps to state.fee
+    totalDepositBalanceUSD # supplyAssetsUsd
+    totalBorrowBalanceUSD # borrowAssetsUsd
+    totalSupplyShares # supplyShares
+    totalBorrowShares # borrowShares
+    totalSupply # supplyAssets
+    totalBorrow # borrowAssets
+    fee # fee
 
-    # --- Restore previously removed fields ---
     name
     isActive
     canBorrowFrom
@@ -50,30 +47,29 @@ export const marketFragment = `
     liquidationPenalty
     createdTimestamp
     createdBlockNumber
-    inputTokenBalance # Add back
-    variableBorrowedTokenBalance # Add back
-    totalValueLockedUSD # Add back
-    lastUpdate # Add back
-    reserves # Add back
-    reserveFactor # Add back
-    oracle { # Add back
+    inputTokenBalance # collateralAssets
+    variableBorrowedTokenBalance
+    totalValueLockedUSD # collateralAssetsUsd?
+    lastUpdate # timestamp
+    reserves
+    reserveFactor
+    oracle {
       ...OracleFields
     }
-    rates { # Add back
+    rates {
       id
       rate # APY
       side
       type
     }
-    protocol { # Add back
-      id # Morpho Blue ID?
-      network # Chain ID?
-      protocol # Protocol Name (e.g., Morpho Blue)
+    protocol {
+      id # Morpho Blue Address?
+      network # Chain Name
+      protocol # Protocol Name
     }
-    # --- End of restored fields ---
   }
-  ${tokenFragment} # Restore interpolation
-  ${oracleFragment} # Restore interpolation
+  ${tokenFragment}
+  ${oracleFragment}
 `;
 
 export const marketsQuery = `
