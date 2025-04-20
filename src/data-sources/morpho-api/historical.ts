@@ -1,6 +1,6 @@
+import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { TimeseriesOptions, Market, TimeseriesDataPoint } from '@/utils/types';
-import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // --- Types related to Historical Data ---
@@ -50,52 +50,68 @@ export const fetchMorphoMarketHistoricalData = async (
   options: TimeseriesOptions,
 ): Promise<HistoricalDataSuccessResult | null> => {
   try {
-    const response = await morphoGraphqlFetcher<HistoricalDataGraphQLResponse>(marketHistoricalDataQuery, {
-      uniqueKey,
-      options,
-      chainId: network,
-    });
+    const response = await morphoGraphqlFetcher<HistoricalDataGraphQLResponse>(
+      marketHistoricalDataQuery,
+      {
+        uniqueKey,
+        options,
+        chainId: network,
+      },
+    );
 
     const historicalState = response?.data?.marketByUniqueKey?.historicalState;
 
     // --- Add detailed logging ---
-    console.log('[fetchMorphoMarketHistoricalData] Raw API Response:', JSON.stringify(response, null, 2));
-    console.log('[fetchMorphoMarketHistoricalData] Extracted historicalState:', JSON.stringify(historicalState, null, 2));
+    console.log(
+      '[fetchMorphoMarketHistoricalData] Raw API Response:',
+      JSON.stringify(response, null, 2),
+    );
+    console.log(
+      '[fetchMorphoMarketHistoricalData] Extracted historicalState:',
+      JSON.stringify(historicalState, null, 2),
+    );
     // --- End logging ---
 
     // Check if historicalState exists and has *any* relevant data points (e.g., supplyApy)
     // This check might need refinement based on what fields are essential
-    if (!historicalState || Object.keys(historicalState).length === 0 || !historicalState.supplyApy) { // Example check
-      console.warn("Historical state not found, empty, or missing essential data in Morpho API response for", uniqueKey);
+    if (
+      !historicalState ||
+      Object.keys(historicalState).length === 0 ||
+      !historicalState.supplyApy
+    ) {
+      // Example check
+      console.warn(
+        'Historical state not found, empty, or missing essential data in Morpho API response for',
+        uniqueKey,
+      );
       return null;
     }
 
     // Construct the expected nested structure for the hook
     // Assume API returns *some* data if historicalState is valid
     const rates: MarketRates = {
-        supplyApy: historicalState.supplyApy ?? [],
-        borrowApy: historicalState.borrowApy ?? [],
-        rateAtUTarget: historicalState.rateAtUTarget ?? [],
-        utilization: historicalState.utilization ?? [],
+      supplyApy: historicalState.supplyApy ?? [],
+      borrowApy: historicalState.borrowApy ?? [],
+      rateAtUTarget: historicalState.rateAtUTarget ?? [],
+      utilization: historicalState.utilization ?? [],
     };
     const volumes: MarketVolumes = {
-        supplyAssetsUsd: historicalState.supplyAssetsUsd ?? [],
-        borrowAssetsUsd: historicalState.borrowAssetsUsd ?? [],
-        liquidityAssetsUsd: historicalState.liquidityAssetsUsd ?? [],
-        supplyAssets: historicalState.supplyAssets ?? [],
-        borrowAssets: historicalState.borrowAssets ?? [],
-        liquidityAssets: historicalState.liquidityAssets ?? [],
+      supplyAssetsUsd: historicalState.supplyAssetsUsd ?? [],
+      borrowAssetsUsd: historicalState.borrowAssetsUsd ?? [],
+      liquidityAssetsUsd: historicalState.liquidityAssetsUsd ?? [],
+      supplyAssets: historicalState.supplyAssets ?? [],
+      borrowAssets: historicalState.borrowAssets ?? [],
+      liquidityAssets: historicalState.liquidityAssets ?? [],
     };
 
     // Sort each timeseries array by timestamp (x-axis) ascending
     const sortByTimestamp = (a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x;
-    Object.values(rates).forEach(arr => arr.sort(sortByTimestamp));
-    Object.values(volumes).forEach(arr => arr.sort(sortByTimestamp));
+    Object.values(rates).forEach((arr) => arr.sort(sortByTimestamp));
+    Object.values(volumes).forEach((arr) => arr.sort(sortByTimestamp));
 
     return { rates, volumes };
-
   } catch (error) {
-      console.error("Error fetching Morpho historical data:", error);
-      return null; // Return null on error
+    console.error('Error fetching Morpho historical data:', error);
+    return null; // Return null on error
   }
-}; 
+};

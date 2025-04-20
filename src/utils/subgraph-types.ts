@@ -82,4 +82,4 @@ export type SubgraphMarketQueryResponse = {
     market: SubgraphMarket | null; // Assuming a query like market(id: ...) might return null
   };
   errors?: { message: string }[];
-}; 
+};

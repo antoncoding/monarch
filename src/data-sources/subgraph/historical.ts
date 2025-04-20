@@ -1,22 +1,19 @@
+import { marketHourlySnapshotsQuery } from '@/graphql/morpho-subgraph-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import {
-  TimeseriesOptions,
-  TimeseriesDataPoint,
-} from '@/utils/types'; // Assuming TimeseriesDataPoint is exported
-import { marketHourlySnapshotsQuery } from '@/graphql/morpho-subgraph-queries';
-import { subgraphGraphqlFetcher } from './fetchers';
+import { TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types'; // Assuming TimeseriesDataPoint is exported
 import { HistoricalDataSuccessResult, MarketRates, MarketVolumes } from '../morpho-api/historical'; // Updated path & added imports
+import { subgraphGraphqlFetcher } from './fetchers';
 
 // --- Subgraph Specific Types (Copied from useSubgraphMarketHistoricalData.ts) ---
-interface SubgraphInterestRate {
+type SubgraphInterestRate = {
   id: string;
   rate: string;
   side: 'LENDER' | 'BORROWER';
   type: 'VARIABLE' | 'STABLE' | 'FIXED';
-}
+};
 
-interface SubgraphMarketHourlySnapshot {
+type SubgraphMarketHourlySnapshot = {
   id: string;
   timestamp: string;
   market: {
@@ -31,18 +28,18 @@ interface SubgraphMarketHourlySnapshot {
   hourlyBorrowUSD: string;
   outputTokenSupply: string | null;
   variableBorrowedTokenBalance: string | null;
-}
+};
 
-interface SubgraphMarketHourlySnapshotQueryResponse {
+type SubgraphMarketHourlySnapshotQueryResponse = {
   data: {
     marketHourlySnapshots: SubgraphMarketHourlySnapshot[];
   };
-}
+};
 // --- End Subgraph Specific Types ---
 
 // Transformation function (simplified)
 const transformSubgraphSnapshotsToHistoricalResult = (
-  snapshots: SubgraphMarketHourlySnapshot[] // Expect non-empty array here
+  snapshots: SubgraphMarketHourlySnapshot[], // Expect non-empty array here
 ): HistoricalDataSuccessResult => {
   const rates: MarketRates = {
     supplyApy: [] as TimeseriesDataPoint[],
@@ -60,16 +57,16 @@ const transformSubgraphSnapshotsToHistoricalResult = (
   };
 
   // No need to check for !snapshots here, handled by caller
-  snapshots.forEach(snapshot => {
+  snapshots.forEach((snapshot) => {
     const timestamp = parseInt(snapshot.timestamp, 10);
     if (isNaN(timestamp)) {
-      console.warn("Skipping snapshot due to invalid timestamp:", snapshot);
+      console.warn('Skipping snapshot due to invalid timestamp:', snapshot);
       return;
     }
 
     const snapshotRates = Array.isArray(snapshot.rates) ? snapshot.rates : [];
-    const supplyRate = snapshotRates.find(r => r?.side === 'LENDER');
-    const borrowRate = snapshotRates.find(r => r?.side === 'BORROWER');
+    const supplyRate = snapshotRates.find((r) => r?.side === 'LENDER');
+    const borrowRate = snapshotRates.find((r) => r?.side === 'BORROWER');
 
     const supplyApyValue = supplyRate?.rate ? parseFloat(supplyRate.rate) : 0;
     const borrowApyValue = borrowRate?.rate ? parseFloat(borrowRate.rate) : 0;
@@ -93,8 +90,12 @@ const transformSubgraphSnapshotsToHistoricalResult = (
   });
 
   // Sort data by timestamp
-  Object.values(rates).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
-  Object.values(volumes).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
+  Object.values(rates).forEach((arr: TimeseriesDataPoint[]) =>
+    arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x),
+  );
+  Object.values(volumes).forEach((arr: TimeseriesDataPoint[]) =>
+    arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x),
+  );
 
   return { rates, volumes };
 };
@@ -104,7 +105,8 @@ export const fetchSubgraphMarketHistoricalData = async (
   marketId: string,
   network: SupportedNetworks,
   timeRange: TimeseriesOptions,
-): Promise<HistoricalDataSuccessResult | null> => { // Updated return type
+): Promise<HistoricalDataSuccessResult | null> => {
+  // Updated return type
 
   if (!timeRange.startTimestamp || !timeRange.endTimestamp) {
     console.warn('Subgraph historical fetch requires start and end timestamps.');
@@ -127,20 +129,23 @@ export const fetchSubgraphMarketHistoricalData = async (
     const response = await subgraphGraphqlFetcher<SubgraphMarketHourlySnapshotQueryResponse>(
       subgraphApiUrl,
       marketHourlySnapshotsQuery,
-      variables
+      variables,
     );
 
     // If no data or empty snapshots array, return null
-    if (!response.data || !response.data.marketHourlySnapshots || response.data.marketHourlySnapshots.length === 0) {
+    if (
+      !response.data ||
+      !response.data.marketHourlySnapshots ||
+      response.data.marketHourlySnapshots.length === 0
+    ) {
       console.warn(`No subgraph historical snapshots found for market ${marketId}`);
       return null;
     }
 
     // Pass the guaranteed non-empty array to the transformer
     return transformSubgraphSnapshotsToHistoricalResult(response.data.marketHourlySnapshots);
-
   } catch (error) {
-    console.error("Error fetching or processing subgraph historical data:", error);
+    console.error('Error fetching or processing subgraph historical data:', error);
     return null; // Return null on error
   }
-}; 
+};

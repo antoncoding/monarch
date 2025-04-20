@@ -1,7 +1,7 @@
-import { SupportedNetworks } from '@/utils/networks';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { marketDetailQuery } from '@/graphql/morpho-api-queries';
+import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
+import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Removed historical types (MarketRates, MarketVolumes, etc.)
@@ -24,7 +24,10 @@ const processMarketData = (market: Market): Market => {
 };
 
 // Fetcher for market details from Morpho API
-export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market> => {
+export const fetchMorphoMarket = async (
+  uniqueKey: string,
+  network: SupportedNetworks,
+): Promise<Market> => {
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -33,4 +36,4 @@ export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNet
     throw new Error('Market data not found in Morpho API response');
   }
   return processMarketData(response.data.marketByUniqueKey);
-}; 
+};

@@ -26,4 +26,4 @@ export const SUBGRAPH_URLS: { [key in SupportedNetworks]?: string } = {
 
 export const getSubgraphUrl = (network: SupportedNetworks): string | undefined => {
   return SUBGRAPH_URLS[network];
-}; 
+};

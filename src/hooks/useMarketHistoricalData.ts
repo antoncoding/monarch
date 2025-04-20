@@ -1,14 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { SupportedNetworks } from '@/utils/networks';
-import { TimeseriesOptions } from '@/utils/types';
 import { getHistoricalDataSource } from '@/config/dataSources';
 import {
   fetchMorphoMarketHistoricalData,
   HistoricalDataSuccessResult,
 } from '@/data-sources/morpho-api/historical';
-import {
-  fetchSubgraphMarketHistoricalData,
-} from '@/data-sources/subgraph/historical';
+import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
+import { SupportedNetworks } from '@/utils/networks';
+import { TimeseriesOptions } from '@/utils/types';
 
 export const useMarketHistoricalData = (
   uniqueKey: string | undefined,
@@ -26,14 +24,15 @@ export const useMarketHistoricalData = (
 
   const dataSource = network ? getHistoricalDataSource(network) : null;
 
-  const { data, isLoading, error, refetch } = useQuery<
-    HistoricalDataSuccessResult | null
-  >({
+  const { data, isLoading, error, refetch } = useQuery<HistoricalDataSuccessResult | null>({
     queryKey: queryKey,
     queryFn: async (): Promise<HistoricalDataSuccessResult | null> => {
       if (!uniqueKey || !network || !options || !dataSource) {
         console.log('Historical data prerequisites not met or source unavailable.', {
-          uniqueKey, network, options, dataSource
+          uniqueKey,
+          network,
+          options,
+          dataSource,
         });
         return null;
       }
@@ -49,8 +48,8 @@ export const useMarketHistoricalData = (
         console.log('res', res);
         return res;
       }
-      
-      console.warn("Unknown historical data source determined");
+
+      console.warn('Unknown historical data source determined');
       return null;
     },
     enabled: !!uniqueKey && !!network && !!options && !!dataSource,
@@ -66,4 +65,4 @@ export const useMarketHistoricalData = (
     refetch: refetch,
     dataSource: dataSource,
   };
-}; 
+};

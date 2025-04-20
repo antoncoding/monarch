@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import { Progress } from '@nextui-org/progress';
 import {
@@ -16,31 +16,25 @@ import {
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
-import {
-  TimeseriesDataPoint,
-  MarketHistoricalData,
-  Market,
-  TimeseriesOptions,
-} from '@/utils/types';
+import { MarketRates } from '@/data-sources/morpho-api/historical';
+import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type RateChartProps = {
-  historicalData: MarketHistoricalData['rates'] | undefined;
+  historicalData: MarketRates | undefined;
   market: Market;
   isLoading: boolean;
-  apyTimeframe: '1day' | '7day' | '30day';
-  setApyTimeframe: (timeframe: '1day' | '7day' | '30day') => void;
-  setTimeRangeAndRefetch: (days: number, type: 'rate') => void;
-  rateTimeRange: TimeseriesOptions;
+  selectedTimeframe: '1d' | '7d' | '30d';
+  selectedTimeRange: TimeseriesOptions;
+  handleTimeframeChange: (timeframe: '1d' | '7d' | '30d') => void;
 };
 
 function RateChart({
   historicalData,
   market,
   isLoading,
-  apyTimeframe,
-  setApyTimeframe,
-  setTimeRangeAndRefetch,
-  rateTimeRange,
+  selectedTimeframe,
+  selectedTimeRange,
+  handleTimeframeChange,
 }: RateChartProps) {
   const [visibleLines, setVisibleLines] = useState({
     supplyApy: true,
@@ -69,7 +63,9 @@ function RateChart({
   const getAverageApyValue = (type: 'supply' | 'borrow') => {
     if (!historicalData) return 0;
     const data = type === 'supply' ? historicalData.supplyApy : historicalData.borrowApy;
-    return data.length > 0 ? data.reduce((sum, point) => sum + point.y, 0) / data.length : 0;
+    return data.length > 0
+      ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length
+      : 0;
   };
 
   const getCurrentRateAtUTargetValue = () => {
@@ -77,10 +73,12 @@ function RateChart({
   };
 
   const getAverageRateAtUTargetValue = () => {
-    if (!historicalData?.rateAtUTarget) return 0;
+    if (!historicalData?.rateAtUTarget || historicalData.rateAtUTarget.length === 0) return 0;
     return (
-      historicalData.rateAtUTarget.reduce((sum, point) => sum + point.y, 0) /
-      historicalData.rateAtUTarget.length
+      historicalData.rateAtUTarget.reduce(
+        (sum: number, point: TimeseriesDataPoint) => sum + point.y,
+        0,
+      ) / historicalData.rateAtUTarget.length
     );
   };
 
@@ -89,35 +87,28 @@ function RateChart({
   };
 
   const getAverageUtilizationRate = () => {
-    if (!historicalData?.utilization) return 0;
+    if (!historicalData?.utilization || historicalData.utilization.length === 0) return 0;
     return (
-      historicalData.utilization.reduce((sum, point) => sum + point.y, 0) /
-      historicalData.utilization.length
+      historicalData.utilization.reduce(
+        (sum: number, point: TimeseriesDataPoint) => sum + point.y,
+        0,
+      ) / historicalData.utilization.length
     );
   };
 
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
-    if (rateTimeRange.endTimestamp - rateTimeRange.startTimestamp <= 86400) {
+    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 86400) {
       return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     }
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
 
   const timeframeOptions = [
-    { key: '1day', label: '1D', value: '1day' },
-    { key: '7day', label: '7D', value: '7day' },
-    { key: '30day', label: '30D', value: '30day' },
+    { key: '1d', label: '1D', value: '1d' },
+    { key: '7d', label: '7D', value: '7d' },
+    { key: '30d', label: '30D', value: '30d' },
   ];
-
-  const handleTimeframeChange = useCallback(
-    (value: string) => {
-      setApyTimeframe(value as '1day' | '7day' | '30day');
-      const days = value === '1day' ? 1 : value === '7day' ? 7 : 30;
-      setTimeRangeAndRefetch(days, 'rate');
-    },
-    [setApyTimeframe, setTimeRangeAndRefetch],
-  );
 
   return (
     <Card className="bg-surface my-4 rounded p-4 shadow-sm">
@@ -125,8 +116,8 @@ function RateChart({
         <span />
         <ButtonGroup
           options={timeframeOptions}
-          value={apyTimeframe}
-          onChange={handleTimeframeChange}
+          value={selectedTimeframe}
+          onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
           size="sm"
           variant="default"
         />
@@ -285,7 +276,7 @@ function RateChart({
               <div>
                 <h3 className="mb-1 text-lg font-semibold">
                   Historical Averages{' '}
-                  <span className="font-normal text-gray-500">({apyTimeframe})</span>
+                  <span className="font-normal text-gray-500">({selectedTimeframe})</span>
                 </h3>
                 {isLoading ? (
                   <div className="flex min-h-48 justify-center text-primary">
