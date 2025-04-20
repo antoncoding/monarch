@@ -1,40 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '../utils/types';
-import {
-  marketQuery as subgraphMarketQuery
-} from '../graphql/morpho-subgraph-queries';
+import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
+import { marketQuery as subgraphMarketQuery } from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
 import {
   SubgraphMarket,
   SubgraphMarketQueryResponse,
   SubgraphToken,
-} from '../utils/subgraph-types';
+} from '@/utils/subgraph-types';
 import { Address } from 'viem';
-
-const subgraphGraphqlFetcher = async <T extends object>(
-  apiUrl: string,
-  query: string,
-  variables: Record<string, unknown>,
-): Promise<T> => {
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-
-  const result = (await response.json()) as T;
-
-  if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
-    throw new Error((result as any).errors[0].message);
-  }
-
-  return result;
-};
+import { subgraphGraphqlFetcher } from './fetchers';
 
 // Helper to safely parse BigDecimal/BigInt strings
 const safeParseFloat = (value: string | null | undefined): number => {
@@ -55,7 +29,10 @@ const safeParseInt = (value: string | null | undefined): number => {
     }
 }
 
-const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphMarket>, network: SupportedNetworks): Market => {
+const transformSubgraphMarketToMarket = (
+    subgraphMarket: Partial<SubgraphMarket>,
+    network: SupportedNetworks
+): Market => {
 
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
@@ -66,8 +43,6 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
-
-  console.log('subgraphMarket', subgraphMarket);
 
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({
     id: token?.id ?? '0x',
@@ -87,7 +62,6 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
     quoteFeedTwo: null,
   };
 
-  // TODO: Implement mapping from subgraphMarket.protocol?.network string to chain ID number
   const chainId = network;
 
   const borrowAssets = subgraphMarket.totalBorrow ?? '0';
@@ -106,7 +80,7 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
   const liquidityAssets = (BigInt(supplyAssets) - BigInt(borrowAssets)).toString();
   const liquidityAssetsUsd = safeParseFloat(totalDepositBalanceUSD) - safeParseFloat(totalBorrowBalanceUSD);
 
-  const warningsWithDetail: WarningWithDetail[] = [];
+  const warningsWithDetail: WarningWithDetail[] = []; // Subgraph doesn't provide warnings directly
 
   const marketDetail: Market = {
     id: marketId,
@@ -130,9 +104,9 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
       utilization: utilization,
       supplyApy: supplyApy,
       borrowApy: borrowApy,
-      fee: safeParseFloat(fee) / 100,
+      fee: safeParseFloat(fee) / 10000, // Subgraph fee is likely basis points (needs verification)
       timestamp: timestamp,
-      rateAtUTarget: 0,
+      rateAtUTarget: 0, // Not available from subgraph
     },
     oracleAddress: subgraphMarket.oracle?.oracleAddress ?? '0x',
     morphoBlue: {
@@ -142,51 +116,46 @@ const transformSubgraphMarketToMarketDetail = (subgraphMarket: Partial<SubgraphM
         id: chainId,
       },
     },
-    warnings: [],
+    warnings: [], // Subgraph doesn't provide warnings
     warningsWithDetail: warningsWithDetail,
     oracle: {
-        data: defaultOracleData,
+        data: defaultOracleData, // Placeholder oracle data
     },
-    isProtectedByLiquidationBots: false,
-    badDebt: undefined,
-    realizedBadDebt: undefined,
+    isProtectedByLiquidationBots: false, // Not available from subgraph
+    badDebt: undefined, // Not available from subgraph
+    realizedBadDebt: undefined, // Not available from subgraph
   };
 
   return marketDetail;
 };
 
-// Hook to fetch a specific market using its ID (uniqueKey)
-export const useSubgraphMarket = (uniqueKey: string | undefined, network: SupportedNetworks) => {
-  return useQuery<Market | null>({ 
-    queryKey: ['subgraphMarket', uniqueKey, network],
-    queryFn: async () => {
-      if (!uniqueKey || !network) return null;
+// Fetcher for market details from Subgraph
+export const fetchSubgraphMarket = async (
+    uniqueKey: string,
+    network: SupportedNetworks
+): Promise<Market | null> => {
 
-      const subgraphApiUrl = getSubgraphUrl(network);
+    const subgraphApiUrl = getSubgraphUrl(network);
 
-      if (!subgraphApiUrl) {
+    if (!subgraphApiUrl) {
         console.error(`Subgraph URL for network ${network} is not defined.`);
         throw new Error(`Subgraph URL for network ${network} is not defined.`);
-      }
+    }
 
-      const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
-          subgraphApiUrl,
-          subgraphMarketQuery,
-          {
-            id: uniqueKey.toLowerCase()
-          }
-      );
+    const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
+        subgraphApiUrl,
+        subgraphMarketQuery,
+        {
+            id: uniqueKey.toLowerCase() // Ensure ID is lowercase for subgraph
+        }
+    );
 
-      const marketData = response.data.market;
+    const marketData = response.data.market;
 
-      if (!marketData) {
+    if (!marketData) {
         console.warn(`Market with key ${uniqueKey} not found in Subgraph response.`);
-        return null;
-      }
+        return null; // Return null if not found, hook can handle this
+    }
 
-      return transformSubgraphMarketToMarketDetail(marketData, network);
-    },
-    enabled: !!uniqueKey && !!network,
-    staleTime: 1000 * 60 * 5,
-  });
-};
+    return transformSubgraphMarketToMarket(marketData, network);
+}; 

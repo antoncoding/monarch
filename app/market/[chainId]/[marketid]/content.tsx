@@ -16,7 +16,6 @@ import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
-import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
@@ -30,8 +29,8 @@ import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
-import { useSubgraphMarket } from '@/hooks/useSubgraphMarket';
-import { useSubgraphMarketHistoricalData } from '@/hooks/useSubgraphMarketHistoricalData';
+import { useMarketData } from '@/hooks/useMarketData';
+import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -63,21 +62,14 @@ function MarketContent() {
     interval: 'HOUR',
   });
 
-  const {data: market, isLoading: isMarketLoading, error: marketError} = useSubgraphMarket(marketid as string, network);
+  const {data: market, isLoading: isMarketLoading, error: marketError} = useMarketData(marketid as string, network);
 
-  console.log('market', market?.oracle);
-
-  // const {
-  //   data: historicalData,
-  //   isLoading: isHistoricalLoading,
-  //   refetch: refetchHistoricalData,
-  // } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
 
   const {
     data: historicalData,
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
-  } = useSubgraphMarketHistoricalData(marketid as string, network, rateTimeRange);
+  } = useMarketHistoricalData(marketid as string, network, rateTimeRange);
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
@@ -143,7 +135,14 @@ function MarketContent() {
   }
 
   if (!market) {
-    return <div className="text-center">Market data not available</div>;
+    return (<> 
+    <Header />
+    <div className="container mx-auto px-4 py-8 pb-4 font-zen">
+      <div className="flex h-screen items-center justify-center">
+        <Spinner size={24} />
+      </div>
+    </div>
+    </>);
   }
 
   // 8. Derived values that depend on market data
