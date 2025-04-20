@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
-import { userPositionsQuery } from '@/graphql/queries';
+import { userPositionsQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
 import { MarketPosition, Market } from '@/utils/types';

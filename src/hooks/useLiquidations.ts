@@ -70,7 +70,7 @@ type QueryResult = {
 const useLiquidations = () => {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [liquidatedMarketIds, setLiquidatedMarketIds] = useState<Set<string>>(new Set());
+  const [liquidatedMarketKeys, setLiquidatedMarketKeys] = useState<Set<string>>(new Set());
   const [error, setError] = useState<unknown | null>(null);
 
   const fetchLiquidations = useCallback(async (isRefetch = false) => {
@@ -80,7 +80,7 @@ const useLiquidations = () => {
       } else {
         setLoading(true);
       }
-      const liquidatedIds = new Set<string>();
+      const liquidatedKeys = new Set<string>();
       let skip = 0;
       const pageSize = 1000;
       let totalCount = 0;
@@ -100,7 +100,7 @@ const useLiquidations = () => {
 
         liquidations.forEach((tx) => {
           if (tx.data && 'market' in tx.data) {
-            liquidatedIds.add(tx.data.market.id);
+            liquidatedKeys.add(tx.data.market.uniqueKey);
           }
         });
 
@@ -108,7 +108,7 @@ const useLiquidations = () => {
         skip += pageInfo.count;
       } while (skip < totalCount);
 
-      setLiquidatedMarketIds(liquidatedIds);
+      setLiquidatedMarketKeys(liquidatedKeys);
     } catch (_error) {
       setError(_error);
     } finally {
@@ -125,7 +125,7 @@ const useLiquidations = () => {
     fetchLiquidations(true).catch(console.error);
   }, [fetchLiquidations]);
 
-  return { loading, isRefetching, liquidatedMarketIds, error, refetch };
+  return { loading, isRefetching, liquidatedMarketKeys, error, refetch };
 };
 
 export default useLiquidations;

@@ -16,7 +16,8 @@ import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
-import { useMarket, useMarketHistoricalData } from '@/hooks/useMarket';
+import { useMarketData } from '@/hooks/useMarketData';
+import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
@@ -32,7 +33,30 @@ import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
 const NOW = Math.floor(Date.now() / 1000);
-const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+const DAY_IN_SECONDS = 24 * 60 * 60;
+const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS;
+
+// Helper to calculate time range based on timeframe string
+const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions => {
+  const endTimestamp = NOW;
+  let startTimestamp;
+  let interval: TimeseriesOptions['interval'] = 'HOUR';
+  switch (timeframe) {
+    case '1d':
+      startTimestamp = endTimestamp - DAY_IN_SECONDS;
+      break;
+    case '30d':
+      startTimestamp = endTimestamp - 30 * DAY_IN_SECONDS;
+      // Use DAY interval for longer ranges if desired, adjust as needed
+      interval = 'DAY';
+      break;
+    case '7d':
+    default:
+      startTimestamp = endTimestamp - WEEK_IN_SECONDS;
+      break;
+  }
+  return { startTimestamp, endTimestamp, interval };
+};
 
 function MarketContent() {
   // 1. Get URL params and router first
@@ -44,35 +68,27 @@ function MarketContent() {
   const network = Number(chainId as string) as SupportedNetworks;
   const networkImg = getNetworkImg(network);
 
-  // 3. All useState hooks grouped together
+  // 3. Consolidated state
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [showBorrowModal, setShowBorrowModal] = useState(false);
-  const [apyTimeframe, setApyTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
-  const [volumeTimeframe, setVolumeTimeframe] = useState<'1day' | '7day' | '30day'>('7day');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'1d' | '7d' | '30d'>('7d');
+  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeseriesOptions>(
+    calculateTimeRange('7d'), // Initialize based on default timeframe
+  );
   const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('USD');
-  const [rateTimeRange, setRateTimeRange] = useState<TimeseriesOptions>({
-    startTimestamp: NOW - WEEK_IN_SECONDS,
-    endTimestamp: NOW,
-    interval: 'HOUR',
-  });
-  const [volumeTimeRange, setVolumeTimeRange] = useState<TimeseriesOptions>({
-    startTimestamp: NOW - WEEK_IN_SECONDS,
-    endTimestamp: NOW,
-    interval: 'HOUR',
-  });
 
-  // 4. Data fetching hooks
+  // 4. Data fetching hooks - use unified time range
   const {
     data: market,
     isLoading: isMarketLoading,
     error: marketError,
-  } = useMarket(marketid as string, network);
+  } = useMarketData(marketid as string, network);
 
   const {
     data: historicalData,
     isLoading: isHistoricalLoading,
-    refetch: refetchHistoricalData,
-  } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
+    // No need for manual refetch on time change, queryKey handles it
+  } = useMarketHistoricalData(marketid as string, network, selectedTimeRange); // Use selectedTimeRange
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
@@ -97,26 +113,12 @@ function MarketContent() {
     return formatUnits(adjusted, 36);
   }, [oraclePrice, market]);
 
-  const setTimeRangeAndRefetch = useCallback(
-    (days: number, type: 'rate' | 'volume') => {
-      const endTimestamp = Math.floor(Date.now() / 1000);
-      const startTimestamp = endTimestamp - days * 24 * 60 * 60;
-      const newTimeRange = {
-        startTimestamp,
-        endTimestamp,
-        interval: days > 30 ? 'DAY' : 'HOUR',
-      } as TimeseriesOptions;
-
-      if (type === 'rate') {
-        setRateTimeRange(newTimeRange);
-        void refetchHistoricalData.rates();
-      } else {
-        setVolumeTimeRange(newTimeRange);
-        void refetchHistoricalData.volumes();
-      }
-    },
-    [refetchHistoricalData, setRateTimeRange, setVolumeTimeRange],
-  );
+  // Unified handler for timeframe changes
+  const handleTimeframeChange = useCallback((timeframe: '1d' | '7d' | '30d') => {
+    setSelectedTimeframe(timeframe);
+    setSelectedTimeRange(calculateTimeRange(timeframe));
+    // No explicit refetch needed, change in selectedTimeRange (part of queryKey) triggers it
+  }, []);
 
   const handleBackToMarkets = useCallback(() => {
     const currentParams = searchParams.toString();
@@ -139,7 +141,16 @@ function MarketContent() {
   }
 
   if (!market) {
-    return <div className="text-center">Market data not available</div>;
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 py-8 pb-4 font-zen">
+          <div className="flex h-screen items-center justify-center">
+            <Spinner size={24} />
+          </div>
+        </div>
+      </>
+    );
   }
 
   // 8. Derived values that depend on market data
@@ -339,12 +350,11 @@ function MarketContent() {
         <VolumeChart
           historicalData={historicalData?.volumes}
           market={market}
-          volumeTimeRange={volumeTimeRange}
-          isLoading={isHistoricalLoading.volumes}
+          selectedTimeRange={selectedTimeRange}
+          isLoading={isHistoricalLoading}
           volumeView={volumeView}
-          volumeTimeframe={volumeTimeframe}
-          setVolumeTimeframe={setVolumeTimeframe}
-          setTimeRangeAndRefetch={setTimeRangeAndRefetch}
+          selectedTimeframe={selectedTimeframe}
+          handleTimeframeChange={handleTimeframeChange}
           setVolumeView={setVolumeView}
         />
 
@@ -352,11 +362,10 @@ function MarketContent() {
         <RateChart
           historicalData={historicalData?.rates}
           market={market}
-          rateTimeRange={rateTimeRange}
-          isLoading={isHistoricalLoading.rates}
-          apyTimeframe={apyTimeframe}
-          setApyTimeframe={setApyTimeframe}
-          setTimeRangeAndRefetch={setTimeRangeAndRefetch}
+          selectedTimeRange={selectedTimeRange}
+          isLoading={isHistoricalLoading}
+          selectedTimeframe={selectedTimeframe}
+          handleTimeframeChange={handleTimeframeChange}
         />
 
         <h4 className="pt-4 text-2xl font-semibold">Activities </h4>

@@ -1,4 +1,3 @@
-import { formatBalance } from './balance';
 import { SupportedNetworks } from './networks';
 import { UserTxTypes } from './types';
 
@@ -15,22 +14,6 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
 
   // EthereumBundlerV2
   return '0x4095F064B8d3c3548A3bebfd0Bbfd04750E30077';
-};
-
-export const getRewardPer1000USD = (yearlySupplyTokens: string, marketSupplyAssetUSD: number) => {
-  return ((formatBalance(yearlySupplyTokens, 18) / marketSupplyAssetUSD) * 1000).toString();
-};
-
-export const getUserRewardPerYear = (
-  yearlySupplyTokens: string | null,
-  marketSupplyAssetUSD: number,
-  userSuppliedUSD: number,
-) => {
-  if (!yearlySupplyTokens) return '0';
-  return (
-    (formatBalance(yearlySupplyTokens, 18) * Number(userSuppliedUSD)) /
-    marketSupplyAssetUSD
-  ).toFixed(2);
 };
 
 export const getIRMTitle = (address: string) => {

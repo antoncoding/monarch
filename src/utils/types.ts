@@ -97,7 +97,6 @@ export type TokenInfo = {
   symbol: string;
   name: string;
   decimals: number;
-  priceUsd: number;
 };
 
 // Common types
@@ -273,9 +272,6 @@ export type Market = {
       id: number;
     };
   };
-  oracleInfo: {
-    type: string;
-  };
   loanAsset: TokenInfo;
   collateralAsset: TokenInfo;
   state: {
@@ -295,22 +291,6 @@ export type Market = {
     fee: number;
     timestamp: number;
     rateAtUTarget: number;
-    rewards: {
-      yearlySupplyTokens: string;
-      asset: {
-        address: string;
-        priceUsd: string | null;
-        spotPriceEth: string | null;
-      };
-      amountPerSuppliedToken: string;
-      amountPerBorrowedToken: string;
-    }[];
-    monthlySupplyApy: number;
-    monthlyBorrowApy: number;
-    dailySupplyApy: number;
-    dailyBorrowApy: number;
-    weeklySupplyApy: number;
-    weeklyBorrowApy: number;
   };
   warnings: MarketWarning[];
   badDebt?: {
@@ -321,14 +301,11 @@ export type Market = {
     underlying: number;
     usd: number;
   };
-  dailyApys: {
-    netSupplyApy: number;
-    netBorrowApy: number;
-  };
 
   // appended by us
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
+
   oracle: {
     data: MorphoChainlinkOracleData;
   };
@@ -342,17 +319,18 @@ export type TimeseriesDataPoint = {
 export type TimeseriesOptions = {
   startTimestamp: number;
   endTimestamp: number;
-  interval: 'MINUTE' | 'HALF_HOUR' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL';
+  interval: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
 };
 
-type MarketRates = {
+// Export MarketRates and MarketVolumes
+export type MarketRates = {
   supplyApy: TimeseriesDataPoint[];
   borrowApy: TimeseriesDataPoint[];
   rateAtUTarget: TimeseriesDataPoint[];
   utilization: TimeseriesDataPoint[];
 };
 
-type MarketVolumes = {
+export type MarketVolumes = {
   supplyAssetsUsd: TimeseriesDataPoint[];
   borrowAssetsUsd: TimeseriesDataPoint[];
   liquidityAssetsUsd: TimeseriesDataPoint[];
@@ -361,7 +339,7 @@ type MarketVolumes = {
   liquidityAssets: TimeseriesDataPoint[];
 };
 
-export type MarketDetail = Market & {
+export type HistoricalData = {
   historicalState: MarketRates & MarketVolumes;
 };
 

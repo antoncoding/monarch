@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardBody } from '@nextui-org/card';
 import {
   AreaChart,
@@ -17,23 +17,18 @@ import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
-import {
-  TimeseriesDataPoint,
-  MarketHistoricalData,
-  Market,
-  TimeseriesOptions,
-} from '@/utils/types';
+import { MarketVolumes } from '@/utils/types';
+import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type VolumeChartProps = {
-  historicalData: MarketHistoricalData['volumes'] | undefined;
+  historicalData: MarketVolumes | undefined;
   market: Market;
   isLoading: boolean;
   volumeView: 'USD' | 'Asset';
-  volumeTimeframe: '1day' | '7day' | '30day';
-  setVolumeTimeframe: (timeframe: '1day' | '7day' | '30day') => void;
-  setTimeRangeAndRefetch: (days: number, type: 'volume') => void;
-  volumeTimeRange: TimeseriesOptions;
   setVolumeView: (view: 'USD' | 'Asset') => void;
+  selectedTimeframe: '1d' | '7d' | '30d';
+  selectedTimeRange: TimeseriesOptions;
+  handleTimeframeChange: (timeframe: '1d' | '7d' | '30d') => void;
 };
 
 function VolumeChart({
@@ -41,11 +36,10 @@ function VolumeChart({
   market,
   isLoading,
   volumeView,
-  volumeTimeframe,
-  setVolumeTimeframe,
-  setTimeRangeAndRefetch,
-  volumeTimeRange,
   setVolumeView,
+  selectedTimeframe,
+  selectedTimeRange,
+  handleTimeframeChange,
 }: VolumeChartProps) {
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
@@ -57,7 +51,7 @@ function VolumeChart({
 
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
-    if (volumeTimeRange.endTimestamp - volumeTimeRange.startTimestamp <= 24 * 60 * 60) {
+    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 24 * 60 * 60) {
       return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     }
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -77,8 +71,8 @@ function VolumeChart({
     return supplyData
       .map((point: TimeseriesDataPoint, index: number) => {
         // Get corresponding points from other series
-        const borrowPoint = borrowData[index];
-        const liquidityPoint = liquidityData[index];
+        const borrowPoint: TimeseriesDataPoint | undefined = borrowData[index];
+        const liquidityPoint: TimeseriesDataPoint | undefined = liquidityData[index];
 
         // Convert values based on view type
         const supplyValue =
@@ -144,7 +138,7 @@ function VolumeChart({
         : historicalData?.[`${type}Assets`];
     if (!data || data.length === 0) return 0;
     const sum = data.reduce(
-      (acc, point) =>
+      (acc: number, point: TimeseriesDataPoint) =>
         acc +
         Number(
           volumeView === 'USD' ? point.y : formatUnits(BigInt(point.y), market.loanAsset.decimals),
@@ -160,19 +154,10 @@ function VolumeChart({
   ];
 
   const timeframeOptions = [
-    { key: '1day', label: '1D', value: '1day' },
-    { key: '7day', label: '7D', value: '7day' },
-    { key: '30day', label: '30D', value: '30day' },
+    { key: '1d', label: '1D', value: '1d' },
+    { key: '7d', label: '7D', value: '7d' },
+    { key: '30d', label: '30D', value: '30d' },
   ];
-
-  const handleTimeframeChange = useCallback(
-    (value: string) => {
-      setVolumeTimeframe(value as '1day' | '7day' | '30day');
-      const days = value === '1day' ? 1 : value === '7day' ? 7 : 30;
-      setTimeRangeAndRefetch(days, 'volume');
-    },
-    [setVolumeTimeframe, setTimeRangeAndRefetch],
-  );
 
   const [visibleLines, setVisibleLines] = useState({
     supply: true,
@@ -194,8 +179,8 @@ function VolumeChart({
           />
           <ButtonGroup
             options={timeframeOptions}
-            value={volumeTimeframe}
-            onChange={handleTimeframeChange}
+            value={selectedTimeframe}
+            onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
             size="sm"
             variant="default"
           />
@@ -343,7 +328,7 @@ function VolumeChart({
               <div>
                 <h3 className="mb-1 text-lg font-semibold">
                   Historical Averages{' '}
-                  <span className="font-normal text-gray-500">({volumeTimeframe})</span>
+                  <span className="font-normal text-gray-500">({selectedTimeframe})</span>
                 </h3>
                 {isLoading ? (
                   <div className="flex min-h-48 justify-center text-primary">

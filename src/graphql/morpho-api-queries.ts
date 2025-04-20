@@ -1,3 +1,6 @@
+// Queries for Morpho Officail API
+// Reference: https://blue-api.morpho.org/graphql
+
 export const feedFieldsFragment = `
   fragment FeedFields on OracleFeed {
     address
@@ -13,7 +16,6 @@ export const feedFieldsFragment = `
 
 export const marketFragment = `
   fragment MarketFields on Market {
-    id
     lltv
     uniqueKey
     irmAddress
@@ -27,16 +29,12 @@ export const marketFragment = `
         id
       }
     }
-    oracleInfo {
-      type
-    }
     loanAsset {
       id
       address
       symbol
       name
       decimals
-      priceUsd
     }
     collateralAsset {
       id
@@ -44,7 +42,6 @@ export const marketFragment = `
       symbol
       name
       decimals
-      priceUsd
     }
     state {
       borrowAssets
@@ -63,26 +60,6 @@ export const marketFragment = `
       fee
       timestamp
       rateAtUTarget
-      rewards {
-        yearlySupplyTokens
-        asset {
-          address
-          priceUsd
-          spotPriceEth
-        }
-        amountPerSuppliedToken
-        amountPerBorrowedToken
-      }
-      monthlySupplyApy
-      monthlyBorrowApy
-      dailySupplyApy
-      dailyBorrowApy
-      weeklySupplyApy
-      weeklyBorrowApy
-    }
-    dailyApys {
-      netSupplyApy
-      netBorrowApy
     }
     warnings {
       type
