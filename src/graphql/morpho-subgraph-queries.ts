@@ -1,6 +1,6 @@
 export const tokenFragment = `
   fragment TokenFields on Token {
-    id # address
+    id
     name
     symbol
     decimals
@@ -20,23 +20,23 @@ export const oracleFragment = `
 
 export const marketFragment = `
   fragment SubgraphMarketFields on Market {
-    id # uniqueKey
+    id
     lltv
-    irm # irmAddress
+    irm
     inputToken { # collateralAsset
       ...TokenFields
     }
-    inputTokenPriceUSD # collateralPrice
+    inputTokenPriceUSD
     borrowedToken { # loanAsset
       ...TokenFields
     }
-    totalDepositBalanceUSD # supplyAssetsUsd
-    totalBorrowBalanceUSD # borrowAssetsUsd
-    totalSupplyShares # supplyShares
-    totalBorrowShares # borrowShares
-    totalSupply # supplyAssets
-    totalBorrow # borrowAssets
-    fee # fee
+    totalDepositBalanceUSD
+    totalBorrowBalanceUSD
+    totalSupplyShares
+    totalBorrowShares
+    totalSupply
+    totalBorrow
+    fee
 
     name
     isActive
@@ -47,10 +47,10 @@ export const marketFragment = `
     liquidationPenalty
     createdTimestamp
     createdBlockNumber
-    inputTokenBalance # collateralAssets
+    inputTokenBalance
     variableBorrowedTokenBalance
-    totalValueLockedUSD # collateralAssetsUsd?
-    lastUpdate # timestamp
+    totalValueLockedUSD
+    lastUpdate
     reserves
     reserveFactor
     oracle {
@@ -63,7 +63,7 @@ export const marketFragment = `
       type
     }
     protocol {
-      id # Morpho Blue Address?
+      id
       network # Chain Name
       protocol # Protocol Name
     }
@@ -91,3 +91,57 @@ export const marketQuery = `
   }
   ${marketFragment}
 `;
+
+// --- Added for Historical Data ---
+
+export const marketHourlySnapshotFragment = `
+  fragment MarketHourlySnapshotFields on MarketHourlySnapshot {
+    id
+    timestamp
+    market {
+      id
+      inputToken { 
+        ...TokenFields
+      }
+      borrowedToken {
+        ...TokenFields
+      }
+    }
+    rates {
+      id
+      rate # APY
+      side
+      type
+    }
+    totalDepositBalanceUSD
+    totalBorrowBalanceUSD
+    inputTokenBalance
+    inputTokenPriceUSD
+    hourlyDepositUSD
+    hourlyBorrowUSD
+    outputTokenSupply
+    variableBorrowedTokenBalance
+    # Note: The subgraph schema for snapshots doesn't seem to directly expose
+    # total native supply/borrow amounts historically, only USD values and hourly deltas.
+  }
+`;
+
+export const marketHourlySnapshotsQuery = `
+  query getMarketHourlySnapshots($marketId: Bytes!, $startTimestamp: BigInt!, $endTimestamp: BigInt!) {
+    marketHourlySnapshots(
+      first: 1000, # Subgraph max limit
+      orderBy: timestamp,
+      orderDirection: asc,
+      where: {
+        market: $marketId,
+        timestamp_gte: $startTimestamp,
+        timestamp_lte: $endTimestamp
+      }
+    ) {
+      ...MarketHourlySnapshotFields
+    }
+  }
+  ${marketHourlySnapshotFragment}
+  ${tokenFragment} # Ensure TokenFields fragment is included
+`;
+// --- End Added Section ---

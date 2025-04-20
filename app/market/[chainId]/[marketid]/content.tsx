@@ -31,6 +31,7 @@ import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 import { useSubgraphMarket } from '@/hooks/useSubgraphMarket';
+import { useSubgraphMarketHistoricalData } from '@/hooks/useSubgraphMarketHistoricalData';
 
 const NOW = Math.floor(Date.now() / 1000);
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -66,11 +67,17 @@ function MarketContent() {
 
   console.log('market', market?.oracle);
 
+  // const {
+  //   data: historicalData,
+  //   isLoading: isHistoricalLoading,
+  //   refetch: refetchHistoricalData,
+  // } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
+
   const {
     data: historicalData,
     isLoading: isHistoricalLoading,
     refetch: refetchHistoricalData,
-  } = useMarketHistoricalData(marketid as string, network, rateTimeRange, volumeTimeRange);
+  } = useSubgraphMarketHistoricalData(marketid as string, network, rateTimeRange);
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
@@ -107,11 +114,10 @@ function MarketContent() {
 
       if (type === 'rate') {
         setRateTimeRange(newTimeRange);
-        void refetchHistoricalData.rates();
       } else {
         setVolumeTimeRange(newTimeRange);
-        void refetchHistoricalData.volumes();
       }
+      void refetchHistoricalData();
     },
     [refetchHistoricalData, setRateTimeRange, setVolumeTimeRange],
   );
@@ -338,7 +344,7 @@ function MarketContent() {
           historicalData={historicalData?.volumes}
           market={market}
           volumeTimeRange={volumeTimeRange}
-          isLoading={isHistoricalLoading.volumes}
+          isLoading={isHistoricalLoading}
           volumeView={volumeView}
           volumeTimeframe={volumeTimeframe}
           setVolumeTimeframe={setVolumeTimeframe}
@@ -351,7 +357,7 @@ function MarketContent() {
           historicalData={historicalData?.rates}
           market={market}
           rateTimeRange={rateTimeRange}
-          isLoading={isHistoricalLoading.rates}
+          isLoading={isHistoricalLoading}
           apyTimeframe={apyTimeframe}
           setApyTimeframe={setApyTimeframe}
           setTimeRangeAndRefetch={setTimeRangeAndRefetch}

@@ -338,7 +338,7 @@ type MarketVolumes = {
   liquidityAssets: TimeseriesDataPoint[];
 };
 
-export type MarketDetail = Market & {
+export type HistoricalData = {
   historicalState: MarketRates & MarketVolumes;
 };
 
