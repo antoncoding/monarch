@@ -1,8 +1,8 @@
 import { marketHourlySnapshotsQuery } from '@/graphql/morpho-subgraph-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types'; // Assuming TimeseriesDataPoint is exported
-import { HistoricalDataSuccessResult, MarketRates, MarketVolumes } from '../morpho-api/historical'; // Updated path & added imports
+import { TimeseriesOptions, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
+import { HistoricalDataSuccessResult } from '../morpho-api/historical';
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // --- Subgraph Specific Types (Copied from useSubgraphMarketHistoricalData.ts) ---

@@ -16,8 +16,8 @@ import { formatUnits } from 'viem';
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
-import { MarketVolumes } from '@/data-sources/morpho-api/historical';
 import { formatReadable } from '@/utils/balance';
+import { MarketVolumes } from '@/utils/types';
 import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type VolumeChartProps = {

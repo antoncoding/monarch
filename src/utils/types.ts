@@ -322,14 +322,15 @@ export type TimeseriesOptions = {
   interval: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
 };
 
-type MarketRates = {
+// Export MarketRates and MarketVolumes
+export type MarketRates = {
   supplyApy: TimeseriesDataPoint[];
   borrowApy: TimeseriesDataPoint[];
   rateAtUTarget: TimeseriesDataPoint[];
   utilization: TimeseriesDataPoint[];
 };
 
-type MarketVolumes = {
+export type MarketVolumes = {
   supplyAssetsUsd: TimeseriesDataPoint[];
   borrowAssetsUsd: TimeseriesDataPoint[];
   liquidityAssetsUsd: TimeseriesDataPoint[];

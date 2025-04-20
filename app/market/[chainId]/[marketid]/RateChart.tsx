@@ -16,7 +16,7 @@ import {
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
-import { MarketRates } from '@/data-sources/morpho-api/historical';
+import { MarketRates } from '@/utils/types';
 import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type RateChartProps = {

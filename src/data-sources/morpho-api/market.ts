@@ -4,9 +4,6 @@ import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { morphoGraphqlFetcher } from './fetchers';
 
-// Removed historical types (MarketRates, MarketVolumes, etc.)
-// Moved HistoricalDataResult to historical.ts
-
 type MarketGraphQLResponse = {
   data: {
     marketByUniqueKey: Market;
