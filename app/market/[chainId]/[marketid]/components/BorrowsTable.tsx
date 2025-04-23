@@ -8,7 +8,7 @@ import { formatUnits } from 'viem';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
 import { Badge } from '@/components/common/Badge';
 import { TokenIcon } from '@/components/TokenIcon';
-import useMarketBorrows from '@/hooks/useMarketBorrows';
+import { useMarketBorrows } from '@/hooks/useMarketBorrows';
 import { getExplorerURL, getExplorerTxURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
@@ -26,7 +26,11 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const { borrows, loading, error } = useMarketBorrows(market?.uniqueKey);
+  const { data: borrows, isLoading, error } = useMarketBorrows(
+    market?.uniqueKey,
+    market.loanAsset.id,
+    chainId,
+  );
 
   const totalPages = Math.ceil((borrows || []).length / pageSize);
 
@@ -42,7 +46,7 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
   const tableKey = `borrows-table-${currentPage}`;
 
   if (error) {
-    return <p className="text-danger">Error loading borrows: {error}</p>;
+    return <p className="text-danger">Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}</p>;
   }
 
   return (
@@ -82,19 +86,19 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
         </TableHeader>
         <TableBody
           className="font-zen"
-          emptyContent={loading ? 'Loading...' : 'No borrow activities found for this market'}
-          isLoading={loading}
+          emptyContent={isLoading ? 'Loading...' : 'No borrow activities found for this market'}
+          isLoading={isLoading}
         >
           {paginatedBorrows.map((borrow) => (
             <TableRow key={borrow.hash}>
               <TableCell>
                 <Link
-                  href={getExplorerURL(borrow.user.address, chainId)}
+                  href={getExplorerURL(borrow.userAddress, chainId)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center text-primary"
                 >
-                  <AccountWithAvatar address={borrow.user.address as Address} />
+                  <AccountWithAvatar address={borrow.userAddress as Address} />
                   <ExternalLinkIcon className="ml-1" />
                 </Link>
               </TableCell>
@@ -104,7 +108,7 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                {formatUnits(BigInt(borrow.data.assets), market.loanAsset.decimals)}
+                {formatUnits(BigInt(borrow.amount), market.loanAsset.decimals)}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     <TokenIcon

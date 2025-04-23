@@ -366,3 +366,12 @@ export type AgentMetadata = {
   name: string;
   strategyDescription: string;
 };
+
+// Define the comprehensive Market Activity Transaction type
+export type MarketActivityTransaction = {
+  type: 'MarketSupply' | 'MarketWithdraw' | 'MarketBorrow' | 'MarketRepay';
+  hash: string;
+  timestamp: number;
+  amount: string; // Unified field for assets/amount
+  userAddress: string; // Unified field for user address
+};

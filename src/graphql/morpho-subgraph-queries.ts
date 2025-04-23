@@ -145,3 +145,69 @@ export const marketHourlySnapshotsQuery = `
   ${tokenFragment} # Ensure TokenFields fragment is included
 `;
 // --- End Added Section ---
+
+// --- Query for Market Supplies/Withdraws (Deposits/Withdraws of Loan Asset) ---
+export const marketDepositsWithdrawsQuery = `
+  query getMarketDepositsWithdraws($marketId: Bytes!, $loanAssetId: Bytes!) {
+    deposits(
+      first: 1000, # Subgraph max limit
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account {
+        id
+      }
+      timestamp
+      hash
+    }
+    withdraws(
+      first: 1000, # Subgraph max limit
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account {
+        id
+      }
+      timestamp
+      hash
+    }
+  }
+`;
+// --- End Query ---
+
+// --- Query for Market Borrows/Repays (Borrows/Repays of Loan Asset) ---
+export const marketBorrowsRepaysQuery = `
+  query getMarketBorrowsRepays($marketId: Bytes!, $loanAssetId: Bytes!) {
+    borrows(
+      first: 1000,
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account {
+        id
+      }
+      timestamp
+      hash
+    }
+    repays(
+      first: 1000,
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account {
+        id
+      }
+      timestamp
+      hash
+    }
+  }
+`;
+// --- End Query ---

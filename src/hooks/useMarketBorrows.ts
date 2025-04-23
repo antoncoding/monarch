@@ -1,86 +1,68 @@
-import { useState, useEffect, useCallback } from 'react';
-import { marketBorrowsQuery } from '@/graphql/morpho-api-queries';
-import { URLS } from '@/utils/urls';
-
-export type MarketBorrowTransaction = {
-  type: 'MarketBorrow' | 'MarketRepay';
-  hash: string;
-  timestamp: number;
-  data: {
-    assets: string;
-    shares: string;
-  };
-  user: {
-    address: string;
-  };
-};
+import { useQuery } from '@tanstack/react-query';
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
+import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
+import { SupportedNetworks } from '@/utils/networks';
+import { MarketActivityTransaction } from '@/utils/types';
 
 /**
- * Hook to fetch all borrow and repay activities for a specific market
- * @param marketUniqueKey The unique key of the market
- * @returns List of all borrow and repay transactions for the market
+ * Hook to fetch all borrow and repay activities for a specific market's loan asset,
+ * using the appropriate data source based on the network.
+ * @param marketId The ID or unique key of the market.
+ * @param loanAssetId The address of the loan asset for the market.
+ * @param network The blockchain network.
+ * @returns List of borrow and repay transactions for the market's loan asset.
  */
-const useMarketBorrows = (marketUniqueKey: string | undefined) => {
-  const [borrows, setBorrows] = useState<MarketBorrowTransaction[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+export const useMarketBorrows = (
+  marketId: string | undefined,
+  loanAssetId: string | undefined,
+  network: SupportedNetworks | undefined,
+) => {
+  const queryKey = ['marketBorrows', marketId, loanAssetId, network];
 
-  const fetchBorrows = useCallback(async () => {
-    if (!marketUniqueKey) {
-      setBorrows([]);
-      return;
-    }
+  // Determine the data source
+  const dataSource = network ? getMarketDataSource(network) : null;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const variables = {
-        uniqueKey: marketUniqueKey,
-        first: 1000, // Limit to 100 most recent transactions
-        skip: 0,
-      };
-
-      const response = await fetch(`${URLS.MORPHO_BLUE_API}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: marketBorrowsQuery,
-          variables,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch market borrows');
+  const { data, isLoading, error, refetch } = useQuery<MarketActivityTransaction[] | null>({
+    queryKey: queryKey,
+    queryFn: async (): Promise<MarketActivityTransaction[] | null> => {
+      // Guard clauses
+      if (!marketId || !loanAssetId || !network || !dataSource) {
+        return null;
       }
 
-      const result = (await response.json()) as {
-        data: { transactions: { items: MarketBorrowTransaction[] } };
-      };
+      console.log(
+        `Fetching market borrows for market ${marketId} (loan asset ${loanAssetId}) on ${network} via ${dataSource}`,
+      );
 
-      if (result.data?.transactions?.items) {
-        setBorrows(result.data.transactions.items);
-      } else {
-        setBorrows([]);
+      try {
+        if (dataSource === 'morpho') {
+          // Morpho API might only need marketId for borrows
+          return await fetchMorphoMarketBorrows(marketId);
+        } else if (dataSource === 'subgraph') {
+          return await fetchSubgraphMarketBorrows(marketId, loanAssetId, network);
+        }
+      } catch (fetchError) {
+        console.error(`Failed to fetch market borrows via ${dataSource}:`, fetchError);
+        return null;
       }
-    } catch (err) {
-      console.error('Error fetching market borrows:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }, [marketUniqueKey]);
 
-  useEffect(() => {
-    void fetchBorrows();
-  }, [fetchBorrows]);
+      console.warn('Unknown market data source determined for borrows');
+      return null;
+    },
+    enabled: !!marketId && !!loanAssetId && !!network && !!dataSource,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    placeholderData: (previousData) => previousData ?? null,
+    retry: 1,
+  });
 
+  // Return react-query result structure
   return {
-    borrows,
-    loading,
-    error,
+    data: data,
+    isLoading: isLoading,
+    error: error,
+    refetch: refetch,
+    dataSource: dataSource,
   };
 };
 
