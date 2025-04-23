@@ -32,14 +32,14 @@ export function SuppliesTable({ chainId, market }: SuppliesTableProps) {
     chainId,
   );
 
-  const totalPages = Math.ceil((supplies || []).length / pageSize);
+  const totalPages = Math.ceil((supplies ?? []).length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const paginatedSupplies = useMemo(() => {
-    const sliced = (supplies || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const sliced = (supplies ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
     return sliced;
   }, [currentPage, supplies, pageSize]);
 

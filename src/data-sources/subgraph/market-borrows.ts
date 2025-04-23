@@ -1,7 +1,7 @@
 import { marketBorrowsRepaysQuery } from '@/graphql/morpho-subgraph-queries';
-import { MarketActivityTransaction } from '@/utils/types'; // Import shared type
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
+import { MarketActivityTransaction } from '@/utils/types'; // Import shared type
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Types specific to the Subgraph response for this query
@@ -81,4 +81,4 @@ export const fetchSubgraphMarketBorrows = async (
     }
     throw new Error('An unknown error occurred while fetching subgraph market borrows');
   }
-}; 
+};

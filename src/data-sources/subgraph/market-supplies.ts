@@ -1,7 +1,7 @@
 import { marketDepositsWithdrawsQuery } from '@/graphql/morpho-subgraph-queries';
-import { MarketActivityTransaction } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import shared utility
+import { MarketActivityTransaction } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Types specific to the Subgraph response for this query
@@ -80,8 +80,6 @@ export const fetchSubgraphMarketSupplies = async (
     // Combine and sort by timestamp descending (most recent first)
     const combined = [...mappedDeposits, ...mappedWithdraws];
 
-    console.log('combined', combined.length)
-
     combined.sort((a, b) => b.timestamp - a.timestamp);
 
     return combined;
@@ -95,4 +93,4 @@ export const fetchSubgraphMarketSupplies = async (
     }
     throw new Error('An unknown error occurred while fetching subgraph market supplies');
   }
-}; 
+};

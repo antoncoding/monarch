@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { getMarketDataSource } from '@/config/dataSources';
-import { SupportedNetworks } from '@/utils/networks';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
 import { fetchSubgraphMarketSupplies } from '@/data-sources/subgraph/market-supplies';
+import { SupportedNetworks } from '@/utils/networks';
 import { MarketActivityTransaction } from '@/utils/types';
 
 /**
@@ -22,8 +22,6 @@ export const useMarketSupplies = (
 
   // Determine the data source
   const dataSource = network ? getMarketDataSource(network) : null;
-
-  console.log('dataSource', dataSource)
 
   const { data, isLoading, error, refetch } = useQuery<
     MarketActivityTransaction[] | null // The hook returns the unified type

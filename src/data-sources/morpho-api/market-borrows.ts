@@ -7,7 +7,7 @@ import { morphoGraphqlFetcher } from './fetchers';
 type MorphoAPIBorrowsResponse = {
   data?: {
     transactions?: {
-      items?: Array<{
+      items?: {
         type: 'MarketBorrow' | 'MarketRepay'; // Specific types for this query
         hash: string;
         timestamp: number;
@@ -18,7 +18,7 @@ type MorphoAPIBorrowsResponse = {
         user: {
           address: string;
         };
-      }>;
+      }[];
     };
   };
 };
@@ -61,4 +61,4 @@ export const fetchMorphoMarketBorrows = async (
     }
     throw new Error('An unknown error occurred while fetching Morpho API market borrows');
   }
-}; 
+};

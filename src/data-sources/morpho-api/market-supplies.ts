@@ -4,9 +4,10 @@ import { morphoGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Type specifically for the raw Morpho API response structure within this module
 type MorphoAPISuppliesResponse = {
-  data?: { // Mark data as optional to align with fetcher's generic handling
+  data?: {
+    // Mark data as optional to align with fetcher's generic handling
     transactions?: {
-      items?: Array<{
+      items?: {
         type: 'MarketSupply' | 'MarketWithdraw';
         hash: string;
         timestamp: number;
@@ -17,7 +18,7 @@ type MorphoAPISuppliesResponse = {
         user: {
           address: string;
         };
-      }>;
+      }[];
     };
   };
   // Error handling is now done by the fetcher
@@ -59,11 +60,14 @@ export const fetchMorphoMarketSupplies = async (
     }));
   } catch (error) {
     // Catch errors from the fetcher or during processing
-    console.error(`Error fetching or processing Morpho API market supplies for ${marketId}:`, error);
+    console.error(
+      `Error fetching or processing Morpho API market supplies for ${marketId}:`,
+      error,
+    );
     // Re-throw the error to be handled by the calling hook
     if (error instanceof Error) {
       throw error;
     }
     throw new Error('An unknown error occurred while fetching Morpho API market supplies');
   }
-}; 
+};

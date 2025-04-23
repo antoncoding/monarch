@@ -26,27 +26,31 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const { data: borrows, isLoading, error } = useMarketBorrows(
-    market?.uniqueKey,
-    market.loanAsset.id,
-    chainId,
-  );
+  const {
+    data: borrows,
+    isLoading,
+    error,
+  } = useMarketBorrows(market?.uniqueKey, market.loanAsset.id, chainId);
 
-  const totalPages = Math.ceil((borrows || []).length / pageSize);
+  const totalPages = Math.ceil((borrows ?? []).length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const paginatedBorrows = useMemo(() => {
-    const sliced = (borrows || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const sliced = (borrows ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
     return sliced;
   }, [currentPage, borrows, pageSize]);
 
   const tableKey = `borrows-table-${currentPage}`;
 
   if (error) {
-    return <p className="text-danger">Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}</p>;
+    return (
+      <p className="text-danger">
+        Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}
+      </p>
+    );
   }
 
   return (
