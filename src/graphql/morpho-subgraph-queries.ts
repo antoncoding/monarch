@@ -211,3 +211,34 @@ export const marketBorrowsRepaysQuery = `
   }
 `;
 // --- End Query ---
+
+// --- Query for Market Liquidations and Bad Debt ---
+export const marketLiquidationsAndBadDebtQuery = `
+  query getMarketLiquidations($marketId: Bytes!) {
+    liquidates(
+      first: 1000,
+      where: { market: $marketId },
+      orderBy: timestamp,
+      orderDirection: desc
+    ) {
+      id # ID of the liquidate event itself
+      hash
+      timestamp
+      repaid # Amount of loan asset repaid
+      amount # Amount of collateral seized
+      liquidator {
+        id
+      }
+    }
+    badDebtRealizations(
+      first: 1000,
+      where: { market: $marketId }
+    ) {
+      badDebt
+      liquidation {
+        id
+      }
+    }
+  }
+`;
+// --- End Query ---

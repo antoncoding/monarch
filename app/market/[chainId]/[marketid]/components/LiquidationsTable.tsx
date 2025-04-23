@@ -6,9 +6,9 @@ import moment from 'moment';
 import { Address, formatUnits } from 'viem';
 import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
 import { TokenIcon } from '@/components/TokenIcon';
-import useMarketLiquidations from '@/hooks/useMarketLiquidations';
+import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
-import { Market } from '@/utils/types';
+import { Market, MarketLiquidationTransaction } from '@/utils/types';
 
 // Helper functions to format data
 const formatAddress = (address: string) => {
@@ -24,23 +24,31 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const { liquidations, loading, error } = useMarketLiquidations(market?.uniqueKey);
+  const {
+    data: liquidations,
+    isLoading,
+    error,
+  } = useMarketLiquidations(market?.uniqueKey, chainId);
 
-  const totalPages = Math.ceil((liquidations || []).length / pageSize);
+  const totalPages = Math.ceil((liquidations ?? []).length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const paginatedLiquidations = useMemo(() => {
-    const sliced = (liquidations || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const sliced = (liquidations ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
     return sliced;
   }, [currentPage, liquidations, pageSize]);
 
   const tableKey = `liquidations-table-${currentPage}`;
 
   if (error) {
-    return <p className="text-danger">Error loading liquidations: {error}</p>;
+    return (
+      <p className="text-danger">
+        Error loading liquidations: {error instanceof Error ? error.message : 'Unknown error'}
+      </p>
+    );
   }
 
   return (
@@ -71,14 +79,11 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
       >
         <TableHeader>
           <TableColumn>LIQUIDATOR</TableColumn>
-          <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'USDC'})</TableColumn>
+          <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
           <TableColumn align="end">
-            SEIZED{' '}
-            {market?.collateralAsset?.symbol && (
-              <span className="inline-flex items-center">{market.collateralAsset.symbol}</span>
-            )}
+            SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})
           </TableColumn>
-          <TableColumn align="end">BAD DEBT</TableColumn>
+          <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
           <TableColumn>TIME</TableColumn>
           <TableColumn className="font-mono" align="end">
             TRANSACTION
@@ -86,27 +91,32 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
         </TableHeader>
         <TableBody
           className="font-zen"
-          emptyContent={loading ? 'Loading...' : 'No liquidations found for this market'}
-          isLoading={loading}
+          emptyContent={isLoading ? 'Loading...' : 'No liquidations found for this market'}
+          isLoading={isLoading}
         >
-          {paginatedLiquidations.map((liquidation) => {
-            const hasBadDebt = BigInt(liquidation.data.badDebtAssets) !== BigInt(0);
+          {paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
+            const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
+            const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
             return (
               <TableRow key={liquidation.hash}>
                 <TableCell>
-                  <Link
-                    href={getExplorerURL(liquidation.data.liquidator, chainId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center text-primary"
-                  >
-                    <AccountWithAvatar address={liquidation.data.liquidator as Address} />
-                    <ExternalLinkIcon className="ml-1" />
-                  </Link>
+                  {isLiquidatorAddress ? (
+                    <Link
+                      href={getExplorerURL(liquidation.liquidator, chainId)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-primary"
+                    >
+                      <AccountWithAvatar address={liquidation.liquidator as Address} />
+                      <ExternalLinkIcon className="ml-1" />
+                    </Link>
+                  ) : (
+                    <span>{liquidation.liquidator}</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatUnits(BigInt(liquidation.data.repaidAssets), market.loanAsset.decimals)}
+                  {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
                   {market?.loanAsset?.symbol && (
                     <span className="ml-1 inline-flex items-center">
                       <TokenIcon
@@ -120,10 +130,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatUnits(
-                    BigInt(liquidation.data.seizedAssets),
-                    market.collateralAsset.decimals,
-                  )}
+                  {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
                   {market?.collateralAsset?.symbol && (
                     <span className="ml-1 inline-flex items-center">
                       <TokenIcon
@@ -139,10 +146,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                 <TableCell className="text-right">
                   {hasBadDebt ? (
                     <>
-                      {formatUnits(
-                        BigInt(liquidation.data.badDebtAssets),
-                        market.loanAsset.decimals,
-                      )}
+                      {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
                       {market?.loanAsset?.symbol && (
                         <span className="ml-1 inline-flex items-center">
                           <TokenIcon

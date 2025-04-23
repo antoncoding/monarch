@@ -51,17 +51,6 @@ export const fetchMorphoMarketHistoricalData = async (
 
     const historicalState = response?.data?.marketByUniqueKey?.historicalState;
 
-    // --- Add detailed logging ---
-    console.log(
-      '[fetchMorphoMarketHistoricalData] Raw API Response:',
-      JSON.stringify(response, null, 2),
-    );
-    console.log(
-      '[fetchMorphoMarketHistoricalData] Extracted historicalState:',
-      JSON.stringify(historicalState, null, 2),
-    );
-    // --- End logging ---
-
     // Check if historicalState exists and has *any* relevant data points (e.g., supplyApy)
     // This check might need refinement based on what fields are essential
     if (

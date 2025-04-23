@@ -375,3 +375,14 @@ export type MarketActivityTransaction = {
   amount: string; // Unified field for assets/amount
   userAddress: string; // Unified field for user address
 };
+
+// Type for Liquidation Transactions (Simplified based on original hook)
+export type MarketLiquidationTransaction = {
+  type: 'MarketLiquidation';
+  hash: string;
+  timestamp: number;
+  liquidator: string;
+  repaidAssets: string;
+  seizedAssets: string;
+  badDebtAssets: string;
+};
