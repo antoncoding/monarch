@@ -36,6 +36,7 @@ export const marketFragment = `
     totalBorrowShares
     totalSupply
     totalBorrow
+    totalCollateral
     fee
 
     name
@@ -79,10 +80,6 @@ export const marketsQuery = `
       where: $where,
       orderBy: totalValueLockedUSD,
       orderDirection: desc,
-      # Subgraph network filtering is typically done via the endpoint URL or a field in the 'where' clause
-      # Assuming the schema allows filtering by protocol network name:
-      # where: { protocol_: { network: $network }, ...$where } # Adjust if schema differs
-      # If filtering by network isn't directly supported in 'where', it might need to be handled post-fetch or by endpoint selection
     ) {
       ...SubgraphMarketFields
     }

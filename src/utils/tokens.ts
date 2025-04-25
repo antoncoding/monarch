@@ -530,6 +530,9 @@ const isWETH = (address: string, chainId: number) => {
   return false;
 };
 
+// Scam tokens
+const blacklistTokens = ['0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd'];
+
 export {
   supportedTokens,
   isWETH,
@@ -541,4 +544,5 @@ export {
   MORPHO_TOKEN_MAINNET,
   MORPHO_LEGACY,
   MORPHO_TOKEN_WRAPPER,
+  blacklistTokens,
 };

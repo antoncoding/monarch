@@ -277,8 +277,8 @@ export type Market = {
   state: {
     borrowAssets: string;
     supplyAssets: string;
-    borrowAssetsUsd: string;
-    supplyAssetsUsd: string;
+    borrowAssetsUsd: number;
+    supplyAssetsUsd: number;
     borrowShares: string;
     supplyShares: string;
     liquidityAssets: string;

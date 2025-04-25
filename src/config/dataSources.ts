@@ -5,7 +5,8 @@ import { SupportedNetworks } from '@/utils/networks';
  */
 export const getMarketDataSource = (network: SupportedNetworks): 'morpho' | 'subgraph' => {
   switch (network) {
-    // case SupportedNetworks.Mainnet:
+    case SupportedNetworks.Mainnet:
+      return 'subgraph';
     case SupportedNetworks.Base:
       return 'subgraph';
     default:

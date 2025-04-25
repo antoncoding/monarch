@@ -3,6 +3,7 @@ import {
   marketQuery as subgraphMarketQuery,
   marketsQuery as subgraphMarketsQuery,
 } from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
+import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import {
   SubgraphMarket,
@@ -11,6 +12,7 @@ import {
   SubgraphToken,
 } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
+import { blacklistTokens } from '@/utils/tokens';
 import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers';
 
@@ -41,7 +43,7 @@ const transformSubgraphMarketToMarket = (
   const lltv = subgraphMarket.lltv ?? '0';
   const irmAddress = subgraphMarket.irm ?? '0x';
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
-  const totalDepositBalanceUSD = subgraphMarket.totalDepositBalanceUSD ?? '0';
+
   const totalBorrowBalanceUSD = subgraphMarket.totalBorrowBalanceUSD ?? '0';
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
@@ -67,10 +69,12 @@ const transformSubgraphMarketToMarket = (
 
   const chainId = network;
 
-  const borrowAssets = subgraphMarket.totalBorrow ?? '0';
-  const supplyAssets = subgraphMarket.totalSupply ?? '0';
-  const collateralAssets = subgraphMarket.inputTokenBalance ?? '0';
-  const collateralAssetsUsd = safeParseFloat(subgraphMarket.totalValueLockedUSD);
+  // @todo: might update due to input token being used here
+  const supplyAssets = subgraphMarket.totalSupply ?? subgraphMarket.inputTokenBalance ?? '0';
+  const borrowAssets =
+    subgraphMarket.totalBorrow ?? subgraphMarket.variableBorrowedTokenBalance ?? '0';
+  const collateralAssets = subgraphMarket.totalCollateral ?? '0';
+
   const timestamp = safeParseInt(subgraphMarket.lastUpdate);
 
   const totalSupplyNum = safeParseFloat(supplyAssets);
@@ -80,9 +84,20 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
+  // only borrowBalanceUSD is available in subgraph, we need to calculate supplyAssetsUsd, liquidityAssetsUsd, collateralAssetsUsd
+  const borrowAssetsUsd = safeParseFloat(totalBorrowBalanceUSD);
+
+  // get the prices
+  const loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
+  const collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
+
+  const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
+
   const liquidityAssets = (BigInt(supplyAssets) - BigInt(borrowAssets)).toString();
-  const liquidityAssetsUsd =
-    safeParseFloat(totalDepositBalanceUSD) - safeParseFloat(totalBorrowBalanceUSD);
+  const liquidityAssetsUsd = formatBalance(liquidityAssets, loanAsset.decimals) * loanAssetPrice;
+
+  const collateralAssetsUsd =
+    formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
 
   const warningsWithDetail: WarningWithDetail[] = []; // Subgraph doesn't provide warnings directly
 
@@ -95,16 +110,20 @@ const transformSubgraphMarketToMarket = (
     loanAsset: loanAsset,
     collateralAsset: collateralAsset,
     state: {
+      // assets
       borrowAssets: borrowAssets,
       supplyAssets: supplyAssets,
-      borrowAssetsUsd: totalBorrowBalanceUSD,
-      supplyAssetsUsd: totalDepositBalanceUSD,
+      liquidityAssets: liquidityAssets,
+      collateralAssets: collateralAssets,
+      // shares
       borrowShares: totalBorrowShares,
       supplyShares: totalSupplyShares,
-      liquidityAssets: liquidityAssets,
+      // usd
+      borrowAssetsUsd: borrowAssetsUsd,
+      supplyAssetsUsd: supplyAssetsUsd,
       liquidityAssetsUsd: liquidityAssetsUsd,
-      collateralAssets: collateralAssets,
       collateralAssetsUsd: collateralAssetsUsd,
+
       utilization: utilization,
       supplyApy: supplyApy,
       borrowApy: borrowApy,
@@ -176,13 +195,13 @@ export const fetchSubgraphMarkets = async (
     throw new Error(`Subgraph URL for network ${network} is not defined.`);
   }
 
-  // Construct variables for the query
+  // Construct variables for the query, adding blacklistTokens
   const variables: { first: number; where?: Record<string, any>; network?: string } = {
     first: 1000, // Max limit
     // If filtering is needed and supported by the schema, add it here
-    // where: filter,
-    // Pass network if the query uses it for filtering
-    // network: network === SupportedNetworks.Base ? 'BASE' : 'MAINNET', // Example mapping
+    where: {
+      inputToken_not_in: blacklistTokens,
+    },
   };
 
   // Use the new marketsQuery
