@@ -1,7 +1,15 @@
 import { Address } from 'viem';
-import { marketQuery as subgraphMarketQuery } from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
+import {
+  marketQuery as subgraphMarketQuery,
+  marketsQuery as subgraphMarketsQuery,
+} from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
 import { SupportedNetworks } from '@/utils/networks';
-import { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
+import {
+  SubgraphMarket,
+  SubgraphMarketQueryResponse,
+  SubgraphMarketsQueryResponse,
+  SubgraphToken,
+} from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers';
@@ -153,4 +161,45 @@ export const fetchSubgraphMarket = async (
   }
 
   return transformSubgraphMarketToMarket(marketData, network);
+};
+
+// Fetcher for multiple markets from Subgraph
+export const fetchSubgraphMarkets = async (
+  network: SupportedNetworks,
+  // Optional filter, adjust based on actual subgraph schema capabilities
+  // filter?: { [key: string]: any },
+): Promise<Market[]> => {
+  const subgraphApiUrl = getSubgraphUrl(network);
+
+  if (!subgraphApiUrl) {
+    console.error(`Subgraph URL for network ${network} is not defined.`);
+    throw new Error(`Subgraph URL for network ${network} is not defined.`);
+  }
+
+  // Construct variables for the query
+  const variables: { first: number; where?: Record<string, any>; network?: string } = {
+    first: 1000, // Max limit
+    // If filtering is needed and supported by the schema, add it here
+    // where: filter,
+    // Pass network if the query uses it for filtering
+    // network: network === SupportedNetworks.Base ? 'BASE' : 'MAINNET', // Example mapping
+  };
+
+  // Use the new marketsQuery
+  const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>( // Use the new response type
+    subgraphApiUrl,
+    subgraphMarketsQuery, // Use the new query
+    variables,
+  );
+
+  // Assuming the response structure matches the single market query for the list
+  const marketsData = response.data.markets; // Adjust based on actual response structure
+
+  if (!marketsData || !Array.isArray(marketsData)) {
+    console.warn(`No markets found or invalid format in Subgraph response for network ${network}.`);
+    return []; // Return empty array if no markets or error
+  }
+
+  // Transform each market
+  return marketsData.map((market) => transformSubgraphMarketToMarket(market, network));
 };

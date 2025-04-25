@@ -55,8 +55,6 @@ const useUserPositions = (
         // Read on-chain data
         const currentSnapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
 
-        console.log('currentSnapshot', currentSnapshot);
-
         if (currentSnapshot) {
           setPosition({
             market: data.data.marketPosition.market,

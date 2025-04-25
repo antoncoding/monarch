@@ -79,7 +79,7 @@ export type SubgraphMarketsQueryResponse = {
 // Type for a single market response (if we adapt query later)
 export type SubgraphMarketQueryResponse = {
   data: {
-    market: SubgraphMarket | null; // Assuming a query like market(id: ...) might return null
+    market: SubgraphMarket | null;
   };
   errors?: { message: string }[];
 };
