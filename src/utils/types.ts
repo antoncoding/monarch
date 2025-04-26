@@ -292,6 +292,9 @@ export type Market = {
     timestamp: number;
     rateAtUTarget: number;
   };
+
+  // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
+  hasUSDPrice: boolean;
   warnings: MarketWarning[];
   badDebt?: {
     underlying: number;

@@ -27,6 +27,9 @@ const processMarketData = (market: Market): Market => {
     ...market,
     warningsWithDetail,
     isProtectedByLiquidationBots: false,
+
+    // Standard API always have USD price!
+    hasUSDPrice: true,
   };
 };
 

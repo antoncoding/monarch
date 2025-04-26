@@ -132,15 +132,13 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         }
       }
     },
-    [liquidatedMarketKeys], // Dependencies: liquidatedMarketKeys is needed for processing
+    [liquidatedMarketKeys],
   );
 
   useEffect(() => {
     if (!liquidationsLoading && markets.length === 0) {
-      // Fetch markets only if liquidations are loaded and markets aren't already populated
       fetchMarkets().catch(console.error);
     }
-    // Dependency on fetchMarkets is correct here, also depends on liquidationsLoading
   }, [liquidationsLoading, fetchMarkets, markets.length]);
 
   const refetch = useCallback(

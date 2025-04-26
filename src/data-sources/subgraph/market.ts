@@ -12,9 +12,57 @@ import {
   SubgraphToken,
 } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { blacklistTokens } from '@/utils/tokens';
+import {
+  blacklistTokens,
+  ERC20Token,
+  findToken,
+  UnknownERC20Token,
+  TokenPeg,
+} from '@/utils/tokens';
 import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers';
+
+// Define the structure for the fetched prices locally
+type LocalMajorPrices = {
+  [TokenPeg.BTC]?: number;
+  [TokenPeg.ETH]?: number;
+};
+
+// Define expected type for CoinGecko API response
+type CoinGeckoPriceResponse = {
+  bitcoin?: { usd?: number };
+  ethereum?: { usd?: number };
+}
+
+// CoinGecko API endpoint
+const COINGECKO_API_URL =
+  'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd';
+
+// Fetcher for major prices needed for estimation
+const fetchLocalMajorPrices = async (): Promise<LocalMajorPrices> => {
+  try {
+    const response = await fetch(COINGECKO_API_URL);
+    if (!response.ok) {
+      throw new Error(`Internal CoinGecko API request failed with status ${response.status}`);
+    }
+    // Type the JSON response
+    const data = (await response.json()) as CoinGeckoPriceResponse;
+    const prices: LocalMajorPrices = {
+      [TokenPeg.BTC]: data.bitcoin?.usd,
+      [TokenPeg.ETH]: data.ethereum?.usd,
+    };
+    // Filter out undefined prices
+    return Object.entries(prices).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key as keyof LocalMajorPrices] = value;
+      }
+      return acc;
+    }, {} as LocalMajorPrices);
+  } catch (err) {
+    console.error('Failed to fetch internal major token prices for subgraph estimation:', err);
+    return {}; // Return empty object on error
+  }
+};
 
 // Helper to safely parse BigDecimal/BigInt strings
 const safeParseFloat = (value: string | null | undefined): number => {
@@ -38,6 +86,7 @@ const safeParseInt = (value: string | null | undefined): number => {
 const transformSubgraphMarketToMarket = (
   subgraphMarket: Partial<SubgraphMarket>,
   network: SupportedNetworks,
+  majorPrices: LocalMajorPrices,
 ): Market => {
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
@@ -48,6 +97,20 @@ const transformSubgraphMarketToMarket = (
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
+
+  // Define the estimation helper *inside* the transform function
+  // so it has access to majorPrices
+  const getEstimateValue = (token: ERC20Token | UnknownERC20Token): number | undefined => {
+    if (!('peg' in token) || token.peg === undefined) {
+      return undefined;
+    }
+    const peg = token.peg as TokenPeg;
+    if (peg === TokenPeg.USD) {
+      return 1;
+    }
+    // Access majorPrices from the outer function's scope
+    return majorPrices[peg];
+  };
 
   const mapToken = (token: Partial<SubgraphToken> | undefined) => ({
     id: token?.id ?? '0x',
@@ -88,8 +151,23 @@ const transformSubgraphMarketToMarket = (
   const borrowAssetsUsd = safeParseFloat(totalBorrowBalanceUSD);
 
   // get the prices
-  const loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
-  const collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
+  let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
+  let collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
+
+  // @todo: might update due to input token being used here
+  const hasUSDPrice = loanAssetPrice > 0 && collateralAssetPrice > 0;
+  if (!hasUSDPrice) {
+    // no price available, try to estimate
+
+    const knownLoadAsset = findToken(loanAsset.address, network);
+    if (knownLoadAsset) {
+      loanAssetPrice = getEstimateValue(knownLoadAsset) ?? 0;
+    }
+    const knownCollateralAsset = findToken(collateralAsset.address, network);
+    if (knownCollateralAsset) {
+      collateralAssetPrice = getEstimateValue(knownCollateralAsset) ?? 0;
+    }
+  }
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
 
@@ -144,6 +222,7 @@ const transformSubgraphMarketToMarket = (
     oracle: {
       data: defaultOracleData, // Placeholder oracle data
     },
+    hasUSDPrice: hasUSDPrice,
     isProtectedByLiquidationBots: false, // Not available from subgraph
     badDebt: undefined, // Not available from subgraph
     realizedBadDebt: undefined, // Not available from subgraph
@@ -179,15 +258,24 @@ export const fetchSubgraphMarket = async (
     return null; // Return null if not found, hook can handle this
   }
 
-  return transformSubgraphMarketToMarket(marketData, network);
+  // Fetch major prices needed for potential estimation
+  const majorPrices = await fetchLocalMajorPrices();
+
+  return transformSubgraphMarketToMarket(marketData, network, majorPrices);
 };
 
+// Define type for GraphQL variables
+type SubgraphMarketsVariables = {
+  first: number;
+  where?: {
+    inputToken_not_in?: string[];
+    // Add other potential filter fields here if needed
+  };
+  network?: string; // Keep network optional if sometimes omitted
+}
+
 // Fetcher for multiple markets from Subgraph
-export const fetchSubgraphMarkets = async (
-  network: SupportedNetworks,
-  // Optional filter, adjust based on actual subgraph schema capabilities
-  // filter?: { [key: string]: any },
-): Promise<Market[]> => {
+export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
   const subgraphApiUrl = getSubgraphUrl(network);
 
   if (!subgraphApiUrl) {
@@ -196,9 +284,8 @@ export const fetchSubgraphMarkets = async (
   }
 
   // Construct variables for the query, adding blacklistTokens
-  const variables: { first: number; where?: Record<string, any>; network?: string } = {
+  const variables: SubgraphMarketsVariables = {
     first: 1000, // Max limit
-    // If filtering is needed and supported by the schema, add it here
     where: {
       inputToken_not_in: blacklistTokens,
     },
@@ -208,7 +295,7 @@ export const fetchSubgraphMarkets = async (
   const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>( // Use the new response type
     subgraphApiUrl,
     subgraphMarketsQuery, // Use the new query
-    variables,
+    variables as unknown as Record<string, unknown>, // Convert via unknown
   );
 
   // Assuming the response structure matches the single market query for the list
@@ -219,6 +306,9 @@ export const fetchSubgraphMarkets = async (
     return []; // Return empty array if no markets or error
   }
 
-  // Transform each market
-  return marketsData.map((market) => transformSubgraphMarketToMarket(market, network));
+  // Fetch major prices *once* before transforming all markets
+  const majorPrices = await fetchLocalMajorPrices();
+
+  // Transform each market using the fetched prices
+  return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
 };
