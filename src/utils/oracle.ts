@@ -27,6 +27,7 @@ export const OracleVendorIcons: Record<OracleVendors, string> = {
 
 export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null): VendorInfo {
   if (!oracleData) return { vendors: [], isUnknown: false };
+  
   if (
     !oracleData.baseFeedOne &&
     !oracleData.baseFeedTwo &&

@@ -1,4 +1,4 @@
-import { Address } from 'viem';
+import { Address, zeroAddress } from 'viem';
 import {
   marketQuery as subgraphMarketQuery,
   marketsQuery as subgraphMarketsQuery,
@@ -19,9 +19,15 @@ import {
   UnknownERC20Token,
   TokenPeg,
 } from '@/utils/tokens';
-import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
+import { MorphoChainlinkOracleData, Market } from '@/utils/types';
+import {
+  getMarketWarningsWithDetail,
+  SUBGRAPH_NO_ORACLE,
+  SUBGRAPH_NO_PRICE,
+  UNRECOGNIZED_COLLATERAL,
+  UNRECOGNIZED_LOAN,
+} from '@/utils/warnings';
 import { subgraphGraphqlFetcher } from './fetchers';
-import { getMarketWarningsWithDetail, subgraphDefaultWarnings } from '@/utils/warnings';
 
 // Define the structure for the fetched prices locally
 type LocalMajorPrices = {
@@ -94,11 +100,12 @@ const transformSubgraphMarketToMarket = (
   const irmAddress = subgraphMarket.irm ?? '0x';
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
 
-  if (marketId.toLowerCase() === '0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836') {
-    console.log('subgraphMarket', subgraphMarket)
+  if (
+    marketId.toLowerCase() === '0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836'
+  ) {
+    console.log('subgraphMarket', subgraphMarket);
   }
 
-  const totalBorrowBalanceUSD = subgraphMarket.totalBorrowBalanceUSD ?? '0';
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
@@ -129,7 +136,16 @@ const transformSubgraphMarketToMarket = (
   const collateralAsset = mapToken(subgraphMarket.inputToken);
 
   const defaultOracleData: MorphoChainlinkOracleData = {
-    baseFeedOne: null,
+    baseFeedOne:  {
+      address: zeroAddress,
+      chain: {
+        id: network,
+      },
+      description: null,
+      id: zeroAddress,
+      pair: null,
+      vendor: 'Unknown',
+    },
     baseFeedTwo: null,
     quoteFeedOne: null,
     quoteFeedTwo: null,
@@ -152,23 +168,34 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
+  const warnings = [SUBGRAPH_NO_ORACLE];
+
   // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
   let collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
 
   // @todo: might update due to input token being used here
   const hasUSDPrice = loanAssetPrice > 0 && collateralAssetPrice > 0;
+
+  const knownLoadAsset = findToken(loanAsset.address, network);
+  const knownCollateralAsset = findToken(collateralAsset.address, network);
+
+  if (!knownLoadAsset) {
+    warnings.push(UNRECOGNIZED_LOAN);
+  }
+  if (!knownCollateralAsset) {
+    warnings.push(UNRECOGNIZED_COLLATERAL);
+  }
+
   if (!hasUSDPrice) {
     // no price available, try to estimate
-
-    const knownLoadAsset = findToken(loanAsset.address, network);
     if (knownLoadAsset) {
       loanAssetPrice = getEstimateValue(knownLoadAsset) ?? 0;
     }
-    const knownCollateralAsset = findToken(collateralAsset.address, network);
     if (knownCollateralAsset) {
       collateralAssetPrice = getEstimateValue(knownCollateralAsset) ?? 0;
     }
+    warnings.push(SUBGRAPH_NO_PRICE);
   }
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
@@ -180,7 +207,7 @@ const transformSubgraphMarketToMarket = (
   const collateralAssetsUsd =
     formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
 
-  const warningsWithDetail = getMarketWarningsWithDetail({warnings:subgraphDefaultWarnings});
+  const warningsWithDetail = getMarketWarningsWithDetail({ warnings });
 
   const marketDetail: Market = {
     id: marketId,
@@ -220,7 +247,7 @@ const transformSubgraphMarketToMarket = (
         id: chainId,
       },
     },
-    warnings: subgraphDefaultWarnings, 
+    warnings: warnings,
     warningsWithDetail: warningsWithDetail,
     oracle: {
       data: defaultOracleData, // Placeholder oracle data
