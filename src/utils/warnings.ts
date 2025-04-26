@@ -1,6 +1,14 @@
 import { MarketWarning } from '@/utils/types';
 import { WarningCategory, WarningWithDetail } from './types';
 
+export const subgraphDefaultWarnings: MarketWarning[] = [
+  {
+    type: 'unrecognized_oracle',
+    level: 'alert',
+    __typename: 'OracleWarning_MonarchAttached',
+  },
+];
+
 const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'hardcoded_oracle',
@@ -102,30 +110,5 @@ export const getMarketWarningsWithDetail = (market: { warnings: MarketWarning[] 
       result.push(foundWarning);
     }
   }
-
-  // ======================
-  //   Add Extra warnings
-  // ======================
-
-  // bad debt warnings
-  // if (market.badDebt && market.badDebt.usd > 0) {
-  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_unrealized');
-  //   if (warning) {
-  //     if (Number(market.badDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
-  //       warning.level = 'alert';
-  //     }
-  //     result.push(warning);
-  //   }
-  // }
-  // if (market.realizedBadDebt && market.realizedBadDebt.usd > 0) {
-  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_realized');
-  //   if (warning) {
-  //     if (Number(market.realizedBadDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
-  //       warning.level = 'alert';
-  //     }
-  //     result.push(warning);
-  //   }
-  // }
-
   return result;
 };

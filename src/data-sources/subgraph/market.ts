@@ -21,6 +21,7 @@ import {
 } from '@/utils/tokens';
 import { WarningWithDetail, MorphoChainlinkOracleData, Market } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers';
+import { getMarketWarningsWithDetail, subgraphDefaultWarnings } from '@/utils/warnings';
 
 // Define the structure for the fetched prices locally
 type LocalMajorPrices = {
@@ -179,7 +180,7 @@ const transformSubgraphMarketToMarket = (
   const collateralAssetsUsd =
     formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
 
-  const warningsWithDetail: WarningWithDetail[] = []; // Subgraph doesn't provide warnings directly
+  const warningsWithDetail = getMarketWarningsWithDetail({warnings:subgraphDefaultWarnings});
 
   const marketDetail: Market = {
     id: marketId,
@@ -219,7 +220,7 @@ const transformSubgraphMarketToMarket = (
         id: chainId,
       },
     },
-    warnings: [], // Subgraph doesn't provide warnings
+    warnings: subgraphDefaultWarnings, 
     warningsWithDetail: warningsWithDetail,
     oracle: {
       data: defaultOracleData, // Placeholder oracle data
