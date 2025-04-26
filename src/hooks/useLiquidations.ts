@@ -1,71 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { URLS } from '@/utils/urls';
-
-const liquidationsQuery = `
-  query getLiquidations($first: Int, $skip: Int) {
-    transactions(
-      where: { type_in: [MarketLiquidation] }
-      first: $first
-      skip: $skip
-    ) {
-      items {
-        id
-        type
-        data {
-          ... on MarketLiquidationTransactionData {
-            market {
-              id
-              uniqueKey
-            }
-            repaidAssets
-          }
-        }
-        hash
-        chain {
-          id
-        }
-      }
-      pageInfo {
-        countTotal
-        count
-        limit
-        skip
-      }
-    }
-  }
-`;
-
-export type LiquidationTransaction = {
-  id: string;
-  type: string;
-  data: {
-    market: {
-      id: string;
-      uniqueKey: string;
-    };
-    repaidAssets: string;
-  };
-  hash: string;
-  chain: {
-    id: number;
-  };
-};
-
-type PageInfo = {
-  countTotal: number;
-  count: number;
-  limit: number;
-  skip: number;
-};
-
-type QueryResult = {
-  data: {
-    transactions: {
-      items: LiquidationTransaction[];
-      pageInfo: PageInfo;
-    };
-  };
-};
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoApiLiquidatedMarketKeys } from '@/data-sources/morpho-api/liquidations';
+import { fetchSubgraphLiquidatedMarketKeys } from '@/data-sources/subgraph/liquidations';
+import { SupportedNetworks } from '@/utils/networks';
 
 const useLiquidations = () => {
   const [loading, setLoading] = useState(true);
@@ -74,48 +11,67 @@ const useLiquidations = () => {
   const [error, setError] = useState<unknown | null>(null);
 
   const fetchLiquidations = useCallback(async (isRefetch = false) => {
+    if (isRefetch) {
+      setIsRefetching(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null); // Reset error
+
+    // Define the networks to check for liquidations
+    const networksToCheck: SupportedNetworks[] = [
+      SupportedNetworks.Mainnet,
+      SupportedNetworks.Base,
+    ];
+
+    const combinedLiquidatedKeys = new Set<string>();
+    let fetchErrors: unknown[] = [];
+
     try {
-      if (isRefetch) {
-        setIsRefetching(true);
-      } else {
-        setLoading(true);
-      }
-      const liquidatedKeys = new Set<string>();
-      let skip = 0;
-      const pageSize = 1000;
-      let totalCount = 0;
+      await Promise.all(
+        networksToCheck.map(async (network) => {
+          try {
+            const dataSource = getMarketDataSource(network);
+            let networkLiquidatedKeys: Set<string>;
 
-      do {
-        const response = await fetch(URLS.MORPHO_BLUE_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: liquidationsQuery,
-            variables: { first: pageSize, skip },
-          }),
-        });
-        const result = (await response.json()) as QueryResult;
-        const liquidations = result.data.transactions.items;
-        const pageInfo = result.data.transactions.pageInfo;
+            console.log(`Fetching liquidated markets for ${network} via ${dataSource}`);
 
-        liquidations.forEach((tx) => {
-          if (tx.data && 'market' in tx.data) {
-            liquidatedKeys.add(tx.data.market.uniqueKey);
+            if (dataSource === 'morpho') {
+              networkLiquidatedKeys = await fetchMorphoApiLiquidatedMarketKeys(network);
+            } else if (dataSource === 'subgraph') {
+              networkLiquidatedKeys = await fetchSubgraphLiquidatedMarketKeys(network);
+            } else {
+              console.warn(`No valid data source found for network ${network} for liquidations.`);
+              networkLiquidatedKeys = new Set<string>(); // Assume none if no source
+            }
+
+            // Add keys from this network to the combined set
+            networkLiquidatedKeys.forEach((key) => combinedLiquidatedKeys.add(key));
+          } catch (networkError) {
+            console.error(
+              `Failed to fetch liquidated market keys for network ${network}:`,
+              networkError,
+            );
+            fetchErrors.push(networkError); // Collect errors
           }
-        });
+        }),
+      );
 
-        totalCount = pageInfo.countTotal;
-        skip += pageInfo.count;
-      } while (skip < totalCount);
+      setLiquidatedMarketKeys(combinedLiquidatedKeys);
 
-      setLiquidatedMarketKeys(liquidatedKeys);
-    } catch (_error) {
-      setError(_error);
+      // Set overall error if any network fetch failed
+      if (fetchErrors.length > 0) {
+        setError(fetchErrors[0]); // Or aggregate errors if needed
+      }
+    } catch (err) {
+      // Catch potential errors from Promise.all itself
+      console.error('Overall error fetching liquidations:', err);
+      setError(err);
     } finally {
       setLoading(false);
       setIsRefetching(false);
     }
-  }, []);
+  }, []); // Dependencies: None needed directly, fetchers are self-contained
 
   useEffect(() => {
     fetchLiquidations().catch(console.error);

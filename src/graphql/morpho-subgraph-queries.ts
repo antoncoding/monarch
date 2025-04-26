@@ -248,3 +248,26 @@ export const marketLiquidationsAndBadDebtQuery = `
   }
 `;
 // --- End Query ---
+
+// --- Query to check which markets have had at least one liquidation ---
+export const subgraphMarketsWithLiquidationCheckQuery = `
+  query getSubgraphMarketsWithLiquidationCheck(
+    $first: Int,
+    $where: Market_filter,
+  ) {
+    markets(
+      first: $first,
+      where: $where,
+      orderBy: totalValueLockedUSD, # Keep ordering consistent if needed, though less relevant here
+      orderDirection: desc,
+    ) {
+      id # Market ID (uniqueKey)
+      liquidates(first: 1) { # Fetch only one liquidation event to check existence
+        id # Need any field to confirm presence
+      }
+      # Include fields needed for filtering if the 'where' clause doesn't cover everything
+      # Example: inputToken { id } if filtering by inputToken needs to happen client-side (though 'where' is better)
+    }
+  }
+`;
+// --- End Query ---
