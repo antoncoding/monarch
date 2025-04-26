@@ -93,6 +93,10 @@ const transformSubgraphMarketToMarket = (
   const irmAddress = subgraphMarket.irm ?? '0x';
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
 
+  if (marketId.toLowerCase() === '0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836') {
+    console.log('subgraphMarket', subgraphMarket)
+  }
+
   const totalBorrowBalanceUSD = subgraphMarket.totalBorrowBalanceUSD ?? '0';
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
@@ -147,9 +151,6 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
-  // only borrowBalanceUSD is available in subgraph, we need to calculate supplyAssetsUsd, liquidityAssetsUsd, collateralAssetsUsd
-  const borrowAssetsUsd = safeParseFloat(totalBorrowBalanceUSD);
-
   // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
   let collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
@@ -170,6 +171,7 @@ const transformSubgraphMarketToMarket = (
   }
 
   const supplyAssetsUsd = formatBalance(supplyAssets, loanAsset.decimals) * loanAssetPrice;
+  const borrowAssetsUsd = formatBalance(borrowAssets, loanAsset.decimals) * loanAssetPrice;
 
   const liquidityAssets = (BigInt(supplyAssets) - BigInt(borrowAssets)).toString();
   const liquidityAssetsUsd = formatBalance(liquidityAssets, loanAsset.decimals) * loanAssetPrice;
@@ -287,7 +289,7 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
   const variables: SubgraphMarketsVariables = {
     first: 1000, // Max limit
     where: {
-      inputToken_not_in: blacklistTokens,
+      inputToken_not_in: [...blacklistTokens, '0x0000000000000000000000000000000000000000'],
     },
   };
 
@@ -308,7 +310,6 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
 
   // Fetch major prices *once* before transforming all markets
   const majorPrices = await fetchLocalMajorPrices();
-
   // Transform each market using the fetched prices
   return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
 };
