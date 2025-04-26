@@ -1,92 +1,118 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Address } from 'viem';
-import { userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
+import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import { MarketPosition } from '@/utils/types';
-import { URLS } from '@/utils/urls';
 
-const useUserPositions = (
+/**
+ * Hook to fetch a user's position in a specific market.
+ *
+ * Prioritizes the latest on-chain snapshot via `fetchPositionSnapshot`.
+ * Falls back to the configured data source (Morpho API or Subgraph) if the snapshot is unavailable.
+ *
+ * @param user The user's address.
+ * @param chainId The network ID.
+ * @param marketKey The unique key of the market.
+ * @returns User position data, loading state, error state, and refetch function.
+ */
+const useUserPosition = (
   user: string | undefined,
-  chainId: SupportedNetworks,
-  marketKey: string,
+  chainId: SupportedNetworks | undefined,
+  marketKey: string | undefined,
 ) => {
-  const [loading, setLoading] = useState(true);
-  const [isRefetching, setIsRefetching] = useState(false);
-  const [position, setPosition] = useState<MarketPosition | null>(null);
-  const [positionsError, setPositionsError] = useState<unknown | null>(null);
+  const queryKey = ['userPosition', user, chainId, marketKey];
 
-  const fetchData = useCallback(
-    async (isRefetch = false, onSuccess?: () => void) => {
-      if (!user) {
-        console.error('Missing user address');
-        setLoading(false);
-        setIsRefetching(false);
-        return;
+  const { data, isLoading, error, refetch, isRefetching } = useQuery<
+    MarketPosition | null,
+    unknown
+  >({
+    queryKey: queryKey,
+    queryFn: async (): Promise<MarketPosition | null> => {
+      if (!user || !chainId || !marketKey) {
+        console.log('Missing user, chainId, or marketKey for useUserPosition');
+        return null;
       }
 
+      // 1. Try fetching the on-chain snapshot first
+      console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
+      const snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
+
+      if (snapshot) {
+        // If snapshot has zero balances, treat as null position early
+        if (
+          snapshot.supplyAssets === '0' &&
+          snapshot.borrowAssets === '0' &&
+          snapshot.collateral === '0'
+        ) {
+          console.log(
+            `Snapshot shows zero balance for ${user} on market ${marketKey}, returning null.`,
+          );
+          return null;
+        }
+      }
+
+      // 2. Determine fallback data source
+      const dataSource = getMarketDataSource(chainId);
+      console.log(`Fallback data source for ${chainId}: ${dataSource}`);
+
+      // 3. Fetch from the determined data source
+      let positionData: MarketPosition | null = null;
       try {
-        if (isRefetch) {
-          setIsRefetching(true);
-        } else {
-          setLoading(true);
+        if (dataSource === 'morpho') {
+          positionData = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
+        } else if (dataSource === 'subgraph') {
+          positionData = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
         }
-
-        setPositionsError(null);
-
-        // Fetch position data from both networks
-        const res = await fetch(URLS.MORPHO_BLUE_API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: userPositionForMarketQuery,
-            variables: {
-              address: user.toLowerCase(),
-              chainId: chainId,
-              marketKey,
-            },
-          }),
-        });
-
-        const data = (await res.json()) as { data: { marketPosition: MarketPosition } };
-
-        // Read on-chain data
-        const currentSnapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
-
-        if (currentSnapshot) {
-          setPosition({
-            market: data.data.marketPosition.market,
-            state: currentSnapshot,
-          });
-        } else {
-          setPosition(data.data.marketPosition);
-        }
-
-        onSuccess?.();
-      } catch (err) {
-        console.error('Error fetching positions:', err);
-        setPositionsError(err);
-      } finally {
-        setLoading(false);
-        setIsRefetching(false);
+      } catch (fetchError) {
+        console.error(
+          `Failed to fetch user position via fallback (${dataSource}) for ${user} on market ${marketKey}:`,
+          fetchError,
+        );
+        return null; // Return null on error during fallback
       }
-    },
-    [user, chainId, marketKey],
-  );
 
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+      // If we got a snapshot earlier, overwrite the state from the fallback with the fresh snapshot state
+      // Ensure the structure matches MarketPosition.state
+      if (snapshot && positionData) {
+        console.log(`Overwriting fallback state with fresh snapshot state for ${marketKey}`);
+        positionData.state = {
+          supplyAssets: snapshot.supplyAssets.toString(),
+          supplyShares: snapshot.supplyShares.toString(),
+          borrowAssets: snapshot.borrowAssets.toString(),
+          borrowShares: snapshot.borrowShares.toString(),
+          collateral: snapshot.collateral,
+        };
+      } else if (snapshot && !positionData) {
+        // If snapshot exists but fallback failed, we cannot construct MarketPosition
+        console.warn(
+          `Snapshot existed but fallback failed for ${marketKey}, cannot return full MarketPosition.`,
+        );
+        return null;
+      }
+
+      console.log(
+        `Final position data for ${user} on market ${marketKey}:`,
+        positionData ? 'Found' : 'Not Found',
+      );
+      return positionData; // This will be null if neither snapshot nor fallback worked, or if balances were zero
+    },
+    enabled: !!user && !!chainId && !!marketKey,
+    staleTime: 1000 * 60 * 1, // Stale after 1 minute
+    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    placeholderData: (previousData) => previousData ?? null,
+    retry: 1, // Retry once on error
+  });
 
   return {
-    position,
-    loading,
+    position: data,
+    loading: isLoading,
     isRefetching,
-    positionsError,
-    refetch: (onSuccess?: () => void) => void fetchData(true, onSuccess),
+    error,
+    refetch,
   };
 };
 
-export default useUserPositions;
+export default useUserPosition;

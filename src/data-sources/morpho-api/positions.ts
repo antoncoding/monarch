@@ -1,7 +1,8 @@
-import { userPositionsQuery } from '@/graphql/morpho-api-queries';
+import { userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { URLS } from '@/utils/urls';
+import { morphoGraphqlFetcher } from './fetchers';
 
 // Type for the raw response from the Morpho API userPositionsQuery
 type MorphoUserPositionsApiResponse = {
@@ -9,6 +10,14 @@ type MorphoUserPositionsApiResponse = {
     userByAddress?: {
       marketPositions?: MarketPosition[];
     };
+  };
+  errors?: { message: string }[];
+};
+
+// Type for the raw response from the Morpho API userPositionForMarketQuery
+type MorphoUserMarketPositionApiResponse = {
+  data?: {
+    marketPosition?: MarketPosition;
   };
   errors?: { message: string }[];
 };
@@ -29,27 +38,13 @@ export const fetchMorphoUserPositionMarkets = async (
   network: SupportedNetworks,
 ): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
   try {
-    const response = await fetch(URLS.MORPHO_BLUE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: userPositionsQuery,
-        variables: {
-          address: userAddress.toLowerCase(),
-          chainId: network,
-        },
-      }),
-    });
-
-    const result = (await response.json()) as MorphoUserPositionsApiResponse;
-
-    if (result.errors) {
-      console.error(
-        `Morpho API error fetching position markets for ${userAddress} on ${network}:`,
-        result.errors,
-      );
-      throw new Error(result.errors.map((e) => e.message).join('; '));
-    }
+    const result = await morphoGraphqlFetcher<MorphoUserPositionsApiResponse>(
+      userPositionsQuery,
+      {
+        address: userAddress.toLowerCase(),
+        chainId: network,
+      },
+    );
 
     const marketPositions = result.data?.userByAddress?.marketPositions ?? [];
 
@@ -72,5 +67,45 @@ export const fetchMorphoUserPositionMarkets = async (
       error,
     );
     return []; // Return empty array on error
+  }
+};
+
+/**
+ * Fetches a user's position for a specific market directly from the Morpho API.
+ */
+export const fetchMorphoUserPositionForMarket = async (
+  marketUniqueKey: string,
+  userAddress: string,
+  network: SupportedNetworks,
+): Promise<MarketPosition | null> => {
+  try {
+    const result = await morphoGraphqlFetcher<MorphoUserMarketPositionApiResponse>(
+      userPositionForMarketQuery,
+      {
+        address: userAddress.toLowerCase(),
+        chainId: network,
+        marketKey: marketUniqueKey,
+      },
+    );
+
+    const marketPosition = result.data?.marketPosition;
+
+    // Check if the position state has zero balances - API might return structure even with no actual position
+    if (
+      marketPosition &&
+      marketPosition.state.supplyAssets === '0' &&
+      marketPosition.state.borrowAssets === '0' &&
+      marketPosition.state.collateral === '0'
+    ) {
+      return null; // Treat zero balance position as null
+    }
+
+    return marketPosition ?? null;
+  } catch (error) {
+    console.error(
+      `Failed to fetch position for market ${marketUniqueKey} from Morpho API for ${userAddress} on ${network}:`,
+      error,
+    );
+    return null; // Return null on error
   }
 };

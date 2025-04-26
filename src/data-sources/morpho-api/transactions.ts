@@ -2,6 +2,15 @@ import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
 import { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
 import { SupportedNetworks } from '@/utils/networks';
 import { URLS } from '@/utils/urls';
+import { morphoGraphqlFetcher } from './fetchers';
+
+// Define the expected shape of the GraphQL response for transactions
+type MorphoTransactionsApiResponse = {
+  data?: {
+    transactions?: TransactionResponse;
+  };
+  // errors are handled by the fetcher
+};
 
 export const fetchMorphoTransactions = async (
   filters: TransactionFilters,
@@ -30,29 +39,14 @@ export const fetchMorphoTransactions = async (
   }
 
   try {
-    const response = await fetch(URLS.MORPHO_BLUE_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const result = await morphoGraphqlFetcher<MorphoTransactionsApiResponse>(
+      userTransactionsQuery,
+      {
+        where: whereClause,
+        first: filters.first ?? 1000,
+        skip: filters.skip ?? 0,
       },
-      body: JSON.stringify({
-        query: userTransactionsQuery,
-        variables: {
-          where: whereClause, // Use the conditionally built 'where' clause
-          first: filters.first ?? 1000,
-          skip: filters.skip ?? 0,
-        },
-      }),
-    });
-
-    const result = (await response.json()) as {
-      data?: { transactions?: TransactionResponse };
-      errors?: { message: string }[];
-    };
-
-    if (result.errors) {
-      throw new Error(result.errors.map((e) => e.message).join(', '));
-    }
+    );
 
     const transactions = result.data?.transactions;
     if (!transactions) {

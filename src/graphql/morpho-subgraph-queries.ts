@@ -271,6 +271,24 @@ export const subgraphUserPositionMarketsQuery = `
 `;
 // --- End Query ---
 
+// --- Query for User Position in a Single Market ---
+export const subgraphUserMarketPositionQuery = `
+  query GetUserMarketPosition($marketId: ID!, $userId: ID!) {
+    positions(
+      where: { market: $marketId, account: $userId }
+    ) {
+      id
+      asset {
+        id # Token address
+      }
+      isCollateral
+      balance
+      side # SUPPLIER, BORROWER, COLLATERAL
+    }
+  }
+`;
+// --- End Query ---
+
 // Note: The exact field names might need adjustment based on the specific Subgraph schema.
 export const subgraphUserTransactionsQuery = `
   query GetUserTransactions(
