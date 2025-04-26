@@ -80,10 +80,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                 console.warn(`No valid data source found for network ${network}`);
               }
 
-              if (network === SupportedNetworks.Mainnet) {
-                console.log('networkMarkets', networkMarkets);
-              }
-
               combinedMarkets.push(...networkMarkets);
             } catch (networkError) {
               console.error(`Failed to fetch markets for network ${network}:`, networkError);

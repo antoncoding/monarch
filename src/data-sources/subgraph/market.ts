@@ -32,7 +32,7 @@ type LocalMajorPrices = {
 type CoinGeckoPriceResponse = {
   bitcoin?: { usd?: number };
   ethereum?: { usd?: number };
-}
+};
 
 // CoinGecko API endpoint
 const COINGECKO_API_URL =
@@ -272,7 +272,7 @@ type SubgraphMarketsVariables = {
     // Add other potential filter fields here if needed
   };
   network?: string; // Keep network optional if sometimes omitted
-}
+};
 
 // Fetcher for multiple markets from Subgraph
 export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<Market[]> => {

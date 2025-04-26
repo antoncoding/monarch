@@ -162,9 +162,7 @@ export const marketDepositsWithdrawsQuery = `
       where: { market: $marketId, asset: $loanAssetId }
     ) {
       amount
-      account {
-        id
-      }
+      account { id }
       timestamp
       hash
     }
@@ -175,9 +173,7 @@ export const marketDepositsWithdrawsQuery = `
       where: { market: $marketId, asset: $loanAssetId }
     ) {
       amount
-      account {
-        id
-      }
+      account { id }
       timestamp
       hash
     }
@@ -195,9 +191,7 @@ export const marketBorrowsRepaysQuery = `
       where: { market: $marketId, asset: $loanAssetId }
     ) {
       amount
-      account {
-        id
-      }
+      account { id }
       timestamp
       hash
     }
@@ -208,9 +202,7 @@ export const marketBorrowsRepaysQuery = `
       where: { market: $marketId, asset: $loanAssetId }
     ) {
       amount
-      account {
-        id
-      }
+      account { id }
       timestamp
       hash
     }
@@ -227,23 +219,19 @@ export const marketLiquidationsAndBadDebtQuery = `
       orderBy: timestamp,
       orderDirection: desc
     ) {
-      id # ID of the liquidate event itself
+      id
       hash
       timestamp
-      repaid # Amount of loan asset repaid
-      amount # Amount of collateral seized
-      liquidator {
-        id
-      }
+      repaid
+      amount
+      liquidator { id }
     }
     badDebtRealizations(
       first: 1000,
       where: { market: $marketId }
     ) {
       badDebt
-      liquidation {
-        id
-      }
+      liquidation { id }
     }
   }
 `;
@@ -258,16 +246,123 @@ export const subgraphMarketsWithLiquidationCheckQuery = `
     markets(
       first: $first,
       where: $where,
-      orderBy: totalValueLockedUSD, # Keep ordering consistent if needed, though less relevant here
+      orderBy: totalValueLockedUSD,
       orderDirection: desc,
     ) {
       id # Market ID (uniqueKey)
-      liquidates(first: 1) { # Fetch only one liquidation event to check existence
-        id # Need any field to confirm presence
+      liquidates(first: 1) { # Fetch only one to check existence
+        id
       }
-      # Include fields needed for filtering if the 'where' clause doesn't cover everything
-      # Example: inputToken { id } if filtering by inputToken needs to happen client-side (though 'where' is better)
     }
   }
 `;
-// --- End Query ---
+
+// Note: The exact field names might need adjustment based on the specific Subgraph schema.
+export const subgraphUserTransactionsQuery = `
+  query GetUserTransactions(
+    $userId: ID!
+    $first: Int!
+    $skip: Int!
+    $timestamp_gt: BigInt! # Always filter from timestamp 0
+    $timestamp_lt: BigInt! # Always filter up to current time
+  ) {
+    account(id: $userId) {
+      deposits(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        isCollateral
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      withdraws(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        isCollateral
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      borrows(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      repays(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      liquidations(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        liquidator { id }
+        amount # Collateral seized
+        repaid # Debt repaid
+      }
+    }
+  }
+`;
