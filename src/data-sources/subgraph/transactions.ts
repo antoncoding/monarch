@@ -173,10 +173,6 @@ export const fetchSubgraphTransactions = async (
     variables: variables,
   };
 
-  // Log the URL and body before sending
-  console.log('Subgraph Request URL:', subgraphUrl);
-  console.log('Subgraph Request Body:', JSON.stringify(requestBody));
-
   try {
     const response = await fetch(subgraphUrl, {
       method: 'POST',

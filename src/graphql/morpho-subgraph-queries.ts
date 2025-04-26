@@ -257,6 +257,20 @@ export const subgraphMarketsWithLiquidationCheckQuery = `
   }
 `;
 
+// --- Query for User Position Market IDs ---
+export const subgraphUserPositionMarketsQuery = `
+  query GetUserPositionMarkets($userId: ID!) {
+    account(id: $userId) {
+      positions(first: 1000) { # Assuming a user won't have > 1000 positions
+        market {
+          id # Market unique key
+        }
+      }
+    }
+  }
+`;
+// --- End Query ---
+
 // Note: The exact field names might need adjustment based on the specific Subgraph schema.
 export const subgraphUserTransactionsQuery = `
   query GetUserTransactions(

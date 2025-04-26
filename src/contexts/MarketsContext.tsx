@@ -17,7 +17,8 @@ import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
-type MarketsContextType = {
+// Export the type definition
+export type MarketsContextType = {
   markets: Market[];
   loading: boolean;
   isRefetching: boolean;
