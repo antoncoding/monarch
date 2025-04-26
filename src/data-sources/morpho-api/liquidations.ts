@@ -3,7 +3,7 @@ import { URLS } from '@/utils/urls';
 
 // Re-use the query structure from the original hook
 const liquidationsQuery = `
-  query getLiquidations($first: Int, $skip: Int, $chainId: Int) {
+  query getLiquidations($first: Int, $skip: Int, $chainId: Int!) {
     transactions(
       where: { type_in: [MarketLiquidation], chainId_in: [$chainId] } # Filter by chainId
       first: $first
