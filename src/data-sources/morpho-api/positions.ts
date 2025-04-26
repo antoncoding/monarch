@@ -1,7 +1,6 @@
 import { userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
-import { URLS } from '@/utils/urls';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Type for the raw response from the Morpho API userPositionsQuery
@@ -38,13 +37,10 @@ export const fetchMorphoUserPositionMarkets = async (
   network: SupportedNetworks,
 ): Promise<{ marketUniqueKey: string; chainId: number }[]> => {
   try {
-    const result = await morphoGraphqlFetcher<MorphoUserPositionsApiResponse>(
-      userPositionsQuery,
-      {
-        address: userAddress.toLowerCase(),
-        chainId: network,
-      },
-    );
+    const result = await morphoGraphqlFetcher<MorphoUserPositionsApiResponse>(userPositionsQuery, {
+      address: userAddress.toLowerCase(),
+      chainId: network,
+    });
 
     const marketPositions = result.data?.userByAddress?.marketPositions ?? [];
 

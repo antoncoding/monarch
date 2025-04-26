@@ -107,7 +107,7 @@ const useUserPosition = (
   });
 
   return {
-    position: data,
+    position: data ?? null,
     loading: isLoading,
     isRefetching,
     error,

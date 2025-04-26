@@ -142,7 +142,7 @@ const transformSubgraphMarketToMarket = (
 
   const totalSupplyNum = safeParseFloat(supplyAssets);
   const totalBorrowNum = safeParseFloat(borrowAssets);
-  const utilization = totalSupplyNum > 0 ? (totalBorrowNum / totalSupplyNum) * 100 : 0;
+  const utilization = totalSupplyNum > 0 ? totalBorrowNum / totalSupplyNum : 0;
 
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
