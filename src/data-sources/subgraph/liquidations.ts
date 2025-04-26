@@ -63,10 +63,13 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
       }
     });
   } catch (error) {
-    console.error(`Error fetching liquidated market keys via Subgraph for network ${network}:`, error);
+    console.error(
+      `Error fetching liquidated market keys via Subgraph for network ${network}:`,
+      error,
+    );
     throw error; // Re-throw
   }
 
   console.log(`Fetched ${liquidatedKeys.size} liquidated market keys via Subgraph for ${network}.`);
   return liquidatedKeys;
-}; 
+};

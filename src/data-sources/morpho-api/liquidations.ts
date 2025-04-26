@@ -1,5 +1,5 @@
-import { URLS } from '@/utils/urls';
 import { SupportedNetworks } from '@/utils/networks';
+import { URLS } from '@/utils/urls';
 
 // Re-use the query structure from the original hook
 const liquidationsQuery = `
@@ -112,6 +112,8 @@ export const fetchMorphoApiLiquidatedMarketKeys = async (
     throw error; // Re-throw the error to be handled by the calling hook
   }
 
-  console.log(`Fetched ${liquidatedKeys.size} liquidated market keys via Morpho API for ${network}.`);
+  console.log(
+    `Fetched ${liquidatedKeys.size} liquidated market keys via Morpho API for ${network}.`,
+  );
   return liquidatedKeys;
-}; 
+};
