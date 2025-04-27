@@ -109,8 +109,8 @@ export function applyFilterAndSort(
       }
 
       // Add USD Filters
-      const supplyUsd = parseUsdValue(market.state?.supplyAssetsUsd); // Use optional chaining
-      const borrowUsd = parseUsdValue(market.state?.borrowAssetsUsd); // Use optional chaining
+      const supplyUsd = parseUsdValue(market.state?.supplyAssetsUsd.toString()); // Use optional chaining
+      const borrowUsd = parseUsdValue(market.state?.borrowAssetsUsd.toString()); // Use optional chaining
 
       if (minSupplyUsd !== null && (supplyUsd === null || supplyUsd < minSupplyUsd)) {
         return false;

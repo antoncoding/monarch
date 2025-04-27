@@ -1,222 +1,220 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
-import { userPositionsQuery } from '@/graphql/morpho-api-queries';
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
+import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
-import { MarketPosition, Market } from '@/utils/types';
-import { URLS } from '@/utils/urls';
+import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useMarkets } from './useMarkets';
 
-type UserPositionsResponse = {
-  marketPositions: MarketPosition[];
-  usedMarkets: {
-    marketUniqueKey: string;
-    chainId: number;
-  }[];
+// Type for market key and chain identifier
+type PositionMarket = {
+  marketUniqueKey: string;
+  chainId: number;
 };
 
+// Type returned by the first query
+type InitialDataResponse = {
+  finalMarketKeys: PositionMarket[];
+};
+
+// Type for object used to fetch snapshot details
 type MarketToFetch = {
   marketKey: string;
   chainId: number;
   market: Market;
-  existingState: PositionSnapshot | null;
 };
 
+// Type for the final processed position data
 type EnhancedMarketPosition = {
   state: PositionSnapshot;
   market: Market & { warningsWithDetail: ReturnType<typeof getMarketWarningsWithDetail> };
 };
 
+// Type for the result of a single snapshot fetch
 type SnapshotResult = {
   market: Market;
   state: PositionSnapshot | null;
 } | null;
 
-type ValidMarketPosition = MarketPosition & {
-  market: Market & {
-    uniqueKey: string;
-    morphoBlue: { chain: { id: number } };
-  };
-};
-
-// Query keys for caching
+// --- Query Keys (adjusted for two-step process) ---
 export const positionKeys = {
   all: ['positions'] as const,
-  user: (address: string) => [...positionKeys.all, address] as const,
+  // Key for the initial fetch of relevant market keys
+  initialData: (user: string) => [...positionKeys.all, 'initialData', user] as const,
+  // Key for fetching the on-chain snapshot state for a specific market (used internally by queryClient)
   snapshot: (marketKey: string, userAddress: string, chainId: number) =>
     [...positionKeys.all, 'snapshot', marketKey, userAddress, chainId] as const,
-  enhanced: (user: string | undefined, data: UserPositionsResponse | undefined) =>
-    ['enhanced-positions', user, data] as const,
+  // Key for the final enhanced position data, dependent on initialData result
+  enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined) =>
+    [
+      'enhanced-positions',
+      user,
+      initialData?.finalMarketKeys
+        .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}`)
+        .sort()
+        .join(','),
+    ] as const,
 };
 
-const fetchUserPositions = async (
-  user: string,
-  getUserMarkets: () => { marketUniqueKey: string; chainId: number }[],
-): Promise<UserPositionsResponse> => {
-  console.log('🔄 Fetching user positions for:', user);
+// --- Helper Fetch Function --- //
 
-  const [responseMainnet, responseBase] = await Promise.all([
-    fetch(URLS.MORPHO_BLUE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: userPositionsQuery,
-        variables: {
-          address: user.toLowerCase(),
-          chainId: SupportedNetworks.Mainnet,
-        },
-      }),
-    }),
-    fetch(URLS.MORPHO_BLUE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: userPositionsQuery,
-        variables: {
-          address: user.toLowerCase(),
-          chainId: SupportedNetworks.Base,
-        },
-      }),
-    }),
-  ]);
+// Fetches market keys ONLY from API/Subgraph sources
+const fetchSourceMarketKeys = async (user: string): Promise<PositionMarket[]> => {
+  const allSupportedNetworks = Object.values(SupportedNetworks).filter(
+    (value) => typeof value === 'number',
+  ) as SupportedNetworks[];
 
-  const [result1, result2] = await Promise.all([responseMainnet.json(), responseBase.json()]);
+  const morphoNetworks: SupportedNetworks[] = [];
+  const subgraphNetworks: SupportedNetworks[] = [];
 
-  console.log('📊 Received positions data from both networks');
-
-  const usedMarkets = getUserMarkets();
-  const marketPositions: MarketPosition[] = [];
-
-  // Collect positions
-  for (const result of [result1, result2]) {
-    if (result.data?.userByAddress?.marketPositions) {
-      marketPositions.push(...(result.data.userByAddress.marketPositions as MarketPosition[]));
+  allSupportedNetworks.forEach((network: SupportedNetworks) => {
+    const source = getMarketDataSource(network);
+    if (source === 'subgraph') {
+      subgraphNetworks.push(network);
+    } else {
+      morphoNetworks.push(network);
     }
-  }
+  });
 
-  return { marketPositions, usedMarkets };
+  const fetchPromises: Promise<PositionMarket[]>[] = [];
+
+  morphoNetworks.forEach((network) => {
+    fetchPromises.push(fetchMorphoUserPositionMarkets(user, network));
+  });
+  subgraphNetworks.forEach((network) => {
+    fetchPromises.push(fetchSubgraphUserPositionMarkets(user, network));
+  });
+
+  const results = await Promise.allSettled(fetchPromises);
+
+  let sourcePositionMarkets: PositionMarket[] = [];
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      sourcePositionMarkets = sourcePositionMarkets.concat(result.value);
+    } else {
+      const network = [...morphoNetworks, ...subgraphNetworks][index];
+      const source = getMarketDataSource(network);
+      console.error(
+        `[Positions] Failed to fetch from ${source} for network ${network}:`,
+        result.reason,
+      );
+    }
+  });
+  // console.log(`[Positions] Fetched ${sourcePositionMarkets.length} keys from sources.`);
+  return sourcePositionMarkets;
 };
+
+// --- Main Hook --- //
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const queryClient = useQueryClient();
-  const { markets } = useMarkets();
+  const { markets } = useMarkets(); // Get markets list (loading state not directly used for enabling 2nd query)
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
-  // Main query for user positions
+  // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate
   const {
-    data: positionsData,
-    isLoading: isLoadingPositions,
-    isRefetching: isRefetchingPositions,
-    error: positionsError,
-    refetch: refetchPositions,
-  } = useQuery<UserPositionsResponse>({
-    queryKey: positionKeys.user(user ?? ''),
+    data: initialData,
+    isLoading: isLoadingInitialData, // Primary loading state
+    isRefetching: isRefetchingInitialData,
+    error: initialError,
+    refetch: refetchInitialData,
+  } = useQuery<InitialDataResponse>({
+    // Note: Removed MarketsContextType type assertion
+    queryKey: positionKeys.initialData(user ?? ''),
     queryFn: async () => {
-      if (!user) throw new Error('Missing user address');
-      return fetchUserPositions(user, getUserMarkets);
+      // User is guaranteed non-null here due to the 'enabled' flag
+      if (!user) throw new Error('Assertion failed: User should be defined here.');
+
+      // Fetch keys from API/Subgraph
+      const sourceMarketKeys = await fetchSourceMarketKeys(user);
+      // Get keys from cache
+      const usedMarkets = getUserMarkets();
+      // Combine and deduplicate
+      const combinedMarkets = [...sourceMarketKeys, ...usedMarkets];
+      const uniqueMarketsMap = new Map<string, PositionMarket>();
+      combinedMarkets.forEach((market) => {
+        const key = `${market.marketUniqueKey.toLowerCase()}-${market.chainId}`;
+        if (!uniqueMarketsMap.has(key)) {
+          uniqueMarketsMap.set(key, market);
+        }
+      });
+      const finalMarketKeys = Array.from(uniqueMarketsMap.values());
+      // console.log(`[Positions] Query 1: Final unique keys count: ${finalMarketKeys.length}`);
+      return { finalMarketKeys };
     },
-    enabled: !!user,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: !!user && markets.length > 0,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Query for position snapshots
+  // 2. Query for enhanced position data (snapshots), dependent on initialData
   const { data: enhancedPositions, isRefetching: isRefetchingEnhanced } = useQuery<
     EnhancedMarketPosition[]
   >({
-    queryKey: positionKeys.enhanced(user, positionsData),
+    queryKey: positionKeys.enhanced(user, initialData),
     queryFn: async () => {
-      if (!positionsData || !user) return [];
+      // initialData and user are guaranteed non-null here due to the 'enabled' flag
+      if (!initialData || !user)
+        throw new Error('Assertion failed: initialData/user should be defined here.');
 
-      console.log('🔄 Fetching position snapshots');
+      const { finalMarketKeys } = initialData;
+      // console.log(`[Positions] Query 2: Processing ${finalMarketKeys.length} keys for snapshots.`);
 
-      const { marketPositions, usedMarkets } = positionsData;
-
-      // We need to fetch snapshots for ALL markets - both from API and used ones
-      const knownMarkets = marketPositions
-        .filter(
-          (position): position is ValidMarketPosition =>
-            position.market?.uniqueKey !== undefined &&
-            position.market?.morphoBlue?.chain?.id !== undefined,
-        )
-        .map(
-          (position): MarketToFetch => ({
-            marketKey: position.market.uniqueKey,
-            chainId: position.market.morphoBlue.chain.id,
-            market: position.market,
-            existingState: position.state,
-          }),
-        );
-
-      const marketsToRescan = usedMarkets
-        .filter((market) => {
-          return !marketPositions.find(
-            (position) =>
-              position.market?.uniqueKey?.toLowerCase() === market.marketUniqueKey.toLowerCase() &&
-              position.market?.morphoBlue?.chain?.id === market.chainId,
+      // Find market details using the main `markets` list from context
+      const allMarketsToFetch: MarketToFetch[] = finalMarketKeys
+        .map((marketInfo) => {
+          const marketDetails = markets.find(
+            (m: Market) =>
+              m.uniqueKey?.toLowerCase() === marketInfo.marketUniqueKey.toLowerCase() &&
+              m.morphoBlue?.chain?.id === marketInfo.chainId,
           );
-        })
-        .map((market) => {
-          const marketWithDetails = markets.find(
-            (m) =>
-              m.uniqueKey?.toLowerCase() === market.marketUniqueKey.toLowerCase() &&
-              m.morphoBlue?.chain?.id === market.chainId,
-          );
-          if (
-            !marketWithDetails ||
-            !marketWithDetails.uniqueKey ||
-            !marketWithDetails.morphoBlue?.chain?.id
-          ) {
+          if (!marketDetails) {
+            console.warn(
+              `[Positions] Market details not found for ${marketInfo.marketUniqueKey} on chain ${marketInfo.chainId}. Skipping snapshot fetch.`,
+            );
             return null;
           }
           return {
-            marketKey: market.marketUniqueKey,
-            chainId: market.chainId,
-            market: marketWithDetails,
-            existingState: null,
-          } as MarketToFetch;
+            marketKey: marketInfo.marketUniqueKey,
+            chainId: marketInfo.chainId,
+            market: marketDetails,
+          };
         })
         .filter((item): item is MarketToFetch => item !== null);
 
-      const allMarketsToFetch: MarketToFetch[] = [...knownMarkets, ...marketsToRescan];
+      // console.log(`[Positions] Query 2: Fetching snapshots for ${allMarketsToFetch.length} markets.`);
 
-      console.log(`🔄 Fetching snapshots for ${allMarketsToFetch.length} markets`);
-
-      // Fetch snapshots in parallel using React Query's built-in caching
+      // Fetch snapshots in parallel
       const snapshots = await Promise.all(
-        allMarketsToFetch.map(
-          async ({ marketKey, chainId, market, existingState }): Promise<SnapshotResult> => {
-            const snapshot = await queryClient.fetchQuery({
-              queryKey: positionKeys.snapshot(marketKey, user, chainId),
-              queryFn: async () => fetchPositionSnapshot(marketKey, user as Address, chainId, 0),
-              staleTime: 30000,
-              gcTime: 5 * 60 * 1000,
-            });
-
-            if (!snapshot && !existingState) return null;
-
-            return {
-              market,
-              state: snapshot ?? existingState,
-            };
-          },
-        ),
+        allMarketsToFetch.map(async ({ marketKey, chainId, market }): Promise<SnapshotResult> => {
+          const snapshot = await queryClient.fetchQuery({
+            queryKey: positionKeys.snapshot(marketKey, user, chainId),
+            queryFn: async () => fetchPositionSnapshot(marketKey, user as Address, chainId, 0),
+            staleTime: 30000, // Use same staleTime as main queries
+            gcTime: 5 * 60 * 1000,
+          });
+          // No fallback to existingState here, unlike original logic
+          return snapshot ? { market, state: snapshot } : null;
+        }),
       );
 
-      console.log('📊 Received position snapshots');
-
-      // Filter out null results and process positions
+      // Process valid snapshots
       const validPositions = snapshots
         .filter(
           (item): item is NonNullable<typeof item> & { state: NonNullable<PositionSnapshot> } =>
             item !== null && item.state !== null,
         )
-        .filter((position) => showEmpty || position.state.supplyShares.toString() !== '0')
+        .filter((position) => {
+          const hasSupply = position.state.supplyShares.toString() !== '0';
+          const hasBorrow = position.state.borrowShares.toString() !== '0';
+          const hasCollateral = position.state.collateral.toString() !== '0';
+          return showEmpty || hasSupply || hasBorrow || hasCollateral;
+        })
         .map((position) => ({
           state: position.state,
           market: {
@@ -225,7 +223,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           },
         }));
 
-      // Update market cache with all valid positions
+      // Update market cache
       const marketsToCache = validPositions
         .filter((position) => position.market?.uniqueKey && position.market?.morphoBlue?.chain?.id)
         .map((position) => ({
@@ -237,33 +235,38 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         batchAddUserMarkets(marketsToCache);
       }
 
+      // console.log(`[Positions] Query 2: Processed ${validPositions.length} valid positions.`);
       return validPositions;
     },
-    enabled: !!positionsData && !!user,
+    // Enable this query only when the first query has successfully run
+    enabled: !!initialData && !!user,
+    // This query represents derived data, stale/gc time might not be strictly needed
+    // but keeping consistent for simplicity
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
+  // Refetch function targets the initial data query
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        await refetchPositions();
-        if (onSuccess) {
-          onSuccess();
-        }
+        await refetchInitialData();
+        onSuccess?.();
       } catch (error) {
-        console.error('Error refetching positions:', error);
+        console.error('[Positions] Error during manual refetch:', error);
       }
     },
-    [refetchPositions],
+    [refetchInitialData],
   );
 
-  // Consider refetching true if either query is refetching
-  const isRefetching = isRefetchingPositions || isRefetchingEnhanced;
+  // Combine refetching states
+  const isRefetching = isRefetchingInitialData || isRefetchingEnhanced;
 
   return {
     data: enhancedPositions ?? [],
-    loading: isLoadingPositions,
+    loading: isLoadingInitialData, // Loading is determined by the first query
     isRefetching,
-    positionsError,
+    positionsError: initialError, // Error is determined by the first query
     refetch,
   };
 };

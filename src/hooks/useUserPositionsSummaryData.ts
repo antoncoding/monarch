@@ -83,9 +83,6 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     refetch: refetchPositions,
   } = useUserPositions(user, true);
 
-  console.log('positionsLoading', positionsLoading);
-  console.log('hasInitialData', hasInitialData);
-
   const { fetchTransactions } = useUserTransactions();
 
   // Query for block numbers - this runs once and is cached

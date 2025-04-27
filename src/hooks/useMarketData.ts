@@ -11,42 +11,35 @@ export const useMarketData = (
 ) => {
   const queryKey = ['marketData', uniqueKey, network];
 
-  // Determine the data source
   const dataSource = network ? getMarketDataSource(network) : null;
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
-    // Allow null return
     queryKey: queryKey,
     queryFn: async (): Promise<Market | null> => {
-      // Guard clauses
       if (!uniqueKey || !network || !dataSource) {
-        return null; // Return null if prerequisites aren't met
+        return null;
       }
 
       console.log(`Fetching market data for ${uniqueKey} on ${network} via ${dataSource}`);
 
-      // Fetch based on the determined data source
       try {
         if (dataSource === 'morpho') {
           return await fetchMorphoMarket(uniqueKey, network);
         } else if (dataSource === 'subgraph') {
-          // fetchSubgraphMarket already handles potential null return
           return await fetchSubgraphMarket(uniqueKey, network);
         }
       } catch (fetchError) {
         console.error(`Failed to fetch market data via ${dataSource}:`, fetchError);
-        return null; // Return null on fetch error
+        return null;
       }
 
-      // Fallback if dataSource logic is somehow incorrect
       console.warn('Unknown market data source determined');
       return null;
     },
-    // Enable query only if all parameters are present AND a valid data source exists
     enabled: !!uniqueKey && !!network && !!dataSource,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     placeholderData: (previousData) => previousData ?? null,
-    retry: 1, // Optional: retry once on failure
+    retry: 1,
   });
 
   return {
@@ -54,6 +47,6 @@ export const useMarketData = (
     isLoading: isLoading,
     error: error,
     refetch: refetch,
-    dataSource: dataSource, // Expose the determined data source
+    dataSource: dataSource,
   };
 };

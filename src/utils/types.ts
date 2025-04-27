@@ -277,8 +277,8 @@ export type Market = {
   state: {
     borrowAssets: string;
     supplyAssets: string;
-    borrowAssetsUsd: string;
-    supplyAssetsUsd: string;
+    borrowAssetsUsd: number;
+    supplyAssetsUsd: number;
     borrowShares: string;
     supplyShares: string;
     liquidityAssets: string;
@@ -292,6 +292,9 @@ export type Market = {
     timestamp: number;
     rateAtUTarget: number;
   };
+
+  // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
+  hasUSDPrice: boolean;
   warnings: MarketWarning[];
   badDebt?: {
     underlying: number;
@@ -365,4 +368,24 @@ export type AgentMetadata = {
   address: Address;
   name: string;
   strategyDescription: string;
+};
+
+// Define the comprehensive Market Activity Transaction type
+export type MarketActivityTransaction = {
+  type: 'MarketSupply' | 'MarketWithdraw' | 'MarketBorrow' | 'MarketRepay';
+  hash: string;
+  timestamp: number;
+  amount: string; // Unified field for assets/amount
+  userAddress: string; // Unified field for user address
+};
+
+// Type for Liquidation Transactions (Simplified based on original hook)
+export type MarketLiquidationTransaction = {
+  type: 'MarketLiquidation';
+  hash: string;
+  timestamp: number;
+  liquidator: string;
+  repaidAssets: string;
+  seizedAssets: string;
+  badDebtAssets: string;
 };

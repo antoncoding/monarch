@@ -54,6 +54,8 @@ function RateChart({
     }));
   };
 
+  console.log('market', market);
+
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
   const getCurrentApyValue = (type: 'supply' | 'borrow') => {

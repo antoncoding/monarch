@@ -40,13 +40,9 @@ export const useMarketHistoricalData = (
       console.log(`Fetching historical data for ${uniqueKey} on ${network} via ${dataSource}`);
 
       if (dataSource === 'morpho') {
-        const res = await fetchMorphoMarketHistoricalData(uniqueKey, network, options);
-        console.log('res morpho', res);
-        return res;
+        return fetchMorphoMarketHistoricalData(uniqueKey, network, options);
       } else if (dataSource === 'subgraph') {
-        const res = await fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
-        console.log('res', res);
-        return res;
+        return fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
       }
 
       console.warn('Unknown historical data source determined');

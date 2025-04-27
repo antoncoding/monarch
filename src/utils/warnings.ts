@@ -1,6 +1,38 @@
 import { MarketWarning } from '@/utils/types';
 import { WarningCategory, WarningWithDetail } from './types';
 
+// Subgraph Warnings
+
+// Default subrgaph  has no oracle data attached!
+export const SUBGRAPH_NO_ORACLE = {
+  type: 'subgraph_unrecognized_oracle',
+  level: 'alert',
+  __typename: 'OracleWarning_MonarchAttached',
+};
+
+// Most subgraph markets has no price data
+export const SUBGRAPH_NO_PRICE = {
+  type: 'subgraph_no_price',
+  level: 'warning',
+  __typename: 'MarketWarning_SubgraphNoPrice',
+};
+
+export const subgraphDefaultWarnings: MarketWarning[] = [SUBGRAPH_NO_ORACLE];
+
+export const UNRECOGNIZED_LOAN = {
+  type: 'unrecognized_loan_asset',
+  level: 'alert',
+  __typename: 'MarketWarning_UnrecognizedLoanAsset',
+};
+
+export const UNRECOGNIZED_COLLATERAL = {
+  type: 'unrecognized_collateral_asset',
+  level: 'alert',
+  __typename: 'MarketWarning_UnrecognizedCollateralAsset',
+};
+
+// Morpho Official Warnings
+
 const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'hardcoded_oracle',
@@ -92,40 +124,33 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   },
 ];
 
+const subgraphWarnings: WarningWithDetail[] = [
+  {
+    code: 'subgraph_unrecognized_oracle',
+    level: 'alert',
+    description:
+      'The underlying data source (subgraph) does not provide any details on this oralce address.',
+    category: WarningCategory.oracle,
+  },
+  {
+    code: 'subgraph_no_price',
+    level: 'warning',
+    description: 'The USD value of the market is estimated with an offchain price source.',
+    category: WarningCategory.general,
+  },
+];
+
 export const getMarketWarningsWithDetail = (market: { warnings: MarketWarning[] }) => {
   const result = [];
 
+  const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
+
   // process official warnings
   for (const warning of market.warnings) {
-    const foundWarning = morphoOfficialWarnings.find((w) => w.code === warning.type);
+    const foundWarning = allDetails.find((w) => w.code === warning.type);
     if (foundWarning) {
       result.push(foundWarning);
     }
   }
-
-  // ======================
-  //   Add Extra warnings
-  // ======================
-
-  // bad debt warnings
-  // if (market.badDebt && market.badDebt.usd > 0) {
-  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_unrealized');
-  //   if (warning) {
-  //     if (Number(market.badDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
-  //       warning.level = 'alert';
-  //     }
-  //     result.push(warning);
-  //   }
-  // }
-  // if (market.realizedBadDebt && market.realizedBadDebt.usd > 0) {
-  //   const warning = morphoOfficialWarnings.find((w) => w.code === 'bad_debt_realized');
-  //   if (warning) {
-  //     if (Number(market.realizedBadDebt.usd) > 0.01 * Number(market.state.supplyAssetsUsd)) {
-  //       warning.level = 'alert';
-  //     }
-  //     result.push(warning);
-  //   }
-  // }
-
   return result;
 };

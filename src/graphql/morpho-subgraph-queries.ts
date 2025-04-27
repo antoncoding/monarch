@@ -36,6 +36,7 @@ export const marketFragment = `
     totalBorrowShares
     totalSupply
     totalBorrow
+    totalCollateral
     fee
 
     name
@@ -73,8 +74,13 @@ export const marketFragment = `
 `;
 
 export const marketsQuery = `
-  query getSubgraphMarkets($first: Int, $where: Market_filter) {
-    markets(first: $first, where: $where, orderBy: totalValueLockedUSD, orderDirection: desc) {
+  query getSubgraphMarkets($first: Int, $where: Market_filter, $network: String) {
+    markets(
+      first: $first,
+      where: $where,
+      orderBy: totalValueLockedUSD,
+      orderDirection: desc,
+    ) {
       ...SubgraphMarketFields
     }
   }
@@ -145,3 +151,250 @@ export const marketHourlySnapshotsQuery = `
   ${tokenFragment} # Ensure TokenFields fragment is included
 `;
 // --- End Added Section ---
+
+// --- Query for Market Supplies/Withdraws (Deposits/Withdraws of Loan Asset) ---
+export const marketDepositsWithdrawsQuery = `
+  query getMarketDepositsWithdraws($marketId: Bytes!, $loanAssetId: Bytes!) {
+    deposits(
+      first: 1000, # Subgraph max limit
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account { id }
+      timestamp
+      hash
+    }
+    withdraws(
+      first: 1000, # Subgraph max limit
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account { id }
+      timestamp
+      hash
+    }
+  }
+`;
+// --- End Query ---
+
+// --- Query for Market Borrows/Repays (Borrows/Repays of Loan Asset) ---
+export const marketBorrowsRepaysQuery = `
+  query getMarketBorrowsRepays($marketId: Bytes!, $loanAssetId: Bytes!) {
+    borrows(
+      first: 1000,
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account { id }
+      timestamp
+      hash
+    }
+    repays(
+      first: 1000,
+      orderBy: timestamp,
+      orderDirection: desc,
+      where: { market: $marketId, asset: $loanAssetId }
+    ) {
+      amount
+      account { id }
+      timestamp
+      hash
+    }
+  }
+`;
+// --- End Query ---
+
+// --- Query for Market Liquidations and Bad Debt ---
+export const marketLiquidationsAndBadDebtQuery = `
+  query getMarketLiquidations($marketId: Bytes!) {
+    liquidates(
+      first: 1000,
+      where: { market: $marketId },
+      orderBy: timestamp,
+      orderDirection: desc
+    ) {
+      id
+      hash
+      timestamp
+      repaid
+      amount
+      liquidator { id }
+    }
+    badDebtRealizations(
+      first: 1000,
+      where: { market: $marketId }
+    ) {
+      badDebt
+      liquidation { id }
+    }
+  }
+`;
+// --- End Query ---
+
+// --- Query to check which markets have had at least one liquidation ---
+export const subgraphMarketsWithLiquidationCheckQuery = `
+  query getSubgraphMarketsWithLiquidationCheck(
+    $first: Int,
+    $where: Market_filter,
+  ) {
+    markets(
+      first: $first,
+      where: $where,
+      orderBy: totalValueLockedUSD,
+      orderDirection: desc,
+    ) {
+      id # Market ID (uniqueKey)
+      liquidates(first: 1) { # Fetch only one to check existence
+        id
+      }
+    }
+  }
+`;
+
+// --- Query for User Position Market IDs ---
+export const subgraphUserPositionMarketsQuery = `
+  query GetUserPositionMarkets($userId: ID!) {
+    account(id: $userId) {
+      positions(first: 1000) { # Assuming a user won't have > 1000 positions
+        market {
+          id # Market unique key
+        }
+      }
+    }
+  }
+`;
+// --- End Query ---
+
+// --- Query for User Position in a Single Market ---
+export const subgraphUserMarketPositionQuery = `
+  query GetUserMarketPosition($marketId: ID!, $userId: ID!) {
+    positions(
+      where: { market: $marketId, account: $userId }
+    ) {
+      id
+      asset {
+        id # Token address
+      }
+      isCollateral
+      balance
+      side # SUPPLIER, BORROWER, COLLATERAL
+    }
+  }
+`;
+// --- End Query ---
+
+// Note: The exact field names might need adjustment based on the specific Subgraph schema.
+export const subgraphUserTransactionsQuery = `
+  query GetUserTransactions(
+    $userId: ID!
+    $first: Int!
+    $skip: Int!
+    $timestamp_gt: BigInt! # Always filter from timestamp 0
+    $timestamp_lt: BigInt! # Always filter up to current time
+  ) {
+    account(id: $userId) {
+      deposits(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        isCollateral
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      withdraws(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        isCollateral
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      borrows(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      repays(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        asset { id }
+        amount
+        shares
+        accountActor { id }
+      }
+      liquidations(
+        first: $first
+        skip: $skip
+        orderBy: timestamp
+        orderDirection: desc
+        where: {
+          timestamp_gt: $timestamp_gt
+          timestamp_lt: $timestamp_lt
+        }
+      ) {
+        id
+        hash
+        timestamp
+        market { id }
+        liquidator { id }
+        amount # Collateral seized
+        repaid # Debt repaid
+      }
+    }
+  }
+`;

@@ -40,29 +40,35 @@ export type SubgraphMarket = {
   isActive: boolean;
   canBorrowFrom: boolean;
   canUseAsCollateral: boolean;
-  maximumLTV: string; // BigDecimal
-  liquidationThreshold: string; // BigDecimal
-  liquidationPenalty: string; // BigDecimal
-  createdTimestamp: string; // BigInt
-  createdBlockNumber: string; // BigInt
-  lltv: string; // BigInt
-  irm: Address; // irmAddress
-  inputToken: SubgraphToken; // collateralAsset
-  inputTokenBalance: string; // BigInt (native collateral amount)
+  maximumLTV: string;
+  liquidationThreshold: string;
+  liquidationPenalty: string;
+  createdTimestamp: string;
+  createdBlockNumber: string;
+  lltv: string;
+  irm: Address;
+  inputToken: SubgraphToken;
   inputTokenPriceUSD: string; // BigDecimal (collateralPrice)
   borrowedToken: SubgraphToken; // loanAsset
-  variableBorrowedTokenBalance: string | null; // BigInt (native borrow amount)
-  totalValueLockedUSD: string; // BigDecimal (collateralAssetsUsd?)
-  totalDepositBalanceUSD: string; // BigDecimal (supplyAssetsUsd)
-  totalBorrowBalanceUSD: string; // BigDecimal (borrowAssetsUsd)
-  totalSupplyShares: string; // BigInt (supplyShares)
+
+  // note: these 2 are weird
+  variableBorrowedTokenBalance: string | null; // updated as total Borrowed
+  inputTokenBalance: string; // updated as total Supply
+
+  totalValueLockedUSD: string;
+  totalDepositBalanceUSD: string;
+  totalBorrowBalanceUSD: string;
+  totalSupplyShares: string;
   totalBorrowShares: string; // BigInt (borrowShares)
-  totalSupply: string; // BigInt (supplyAssets)
-  totalBorrow: string; // BigInt (borrowAssets)
-  lastUpdate: string; // BigInt (timestamp)
-  reserves: string; // BigDecimal
-  reserveFactor: string; // BigDecimal
-  fee: string; // BigInt (basis points?)
+
+  totalSupply: string;
+  totalBorrow: string;
+  totalCollateral: string;
+
+  lastUpdate: string;
+  reserves: string;
+  reserveFactor: string;
+  fee: string;
   oracle: SubgraphOracle;
   rates: SubgraphInterestRate[];
   protocol: SubgraphProtocolInfo;
@@ -79,7 +85,7 @@ export type SubgraphMarketsQueryResponse = {
 // Type for a single market response (if we adapt query later)
 export type SubgraphMarketQueryResponse = {
   data: {
-    market: SubgraphMarket | null; // Assuming a query like market(id: ...) might return null
+    market: SubgraphMarket | null;
   };
   errors?: { message: string }[];
 };

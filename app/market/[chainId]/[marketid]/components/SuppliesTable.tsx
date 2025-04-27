@@ -26,24 +26,24 @@ export function SuppliesTable({ chainId, market }: SuppliesTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const { supplies, loading, error } = useMarketSupplies(market?.uniqueKey);
+  const { data: supplies, isLoading } = useMarketSupplies(
+    market?.uniqueKey,
+    market.loanAsset.id,
+    chainId,
+  );
 
-  const totalPages = Math.ceil((supplies || []).length / pageSize);
+  const totalPages = Math.ceil((supplies ?? []).length / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
   const paginatedSupplies = useMemo(() => {
-    const sliced = (supplies || []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const sliced = (supplies ?? []).slice((currentPage - 1) * pageSize, currentPage * pageSize);
     return sliced;
   }, [currentPage, supplies, pageSize]);
 
   const tableKey = `supplies-table-${currentPage}`;
-
-  if (error) {
-    return <p className="text-danger">Error loading supplies: {error}</p>;
-  }
 
   return (
     <div className="mt-8">
@@ -82,19 +82,19 @@ export function SuppliesTable({ chainId, market }: SuppliesTableProps) {
         </TableHeader>
         <TableBody
           className="font-zen"
-          emptyContent={loading ? 'Loading...' : 'No supply activities found for this market'}
-          isLoading={loading}
+          emptyContent={isLoading ? 'Loading...' : 'No supply activities found for this market'}
+          isLoading={isLoading}
         >
           {paginatedSupplies.map((supply) => (
             <TableRow key={supply.hash}>
               <TableCell>
                 <Link
-                  href={getExplorerURL(supply.user.address, chainId)}
+                  href={getExplorerURL(supply.userAddress, chainId)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center text-primary"
                 >
-                  <AccountWithAvatar address={supply.user.address as Address} />
+                  <AccountWithAvatar address={supply.userAddress as Address} />
                   <ExternalLinkIcon className="ml-1" />
                 </Link>
               </TableCell>
@@ -104,7 +104,7 @@ export function SuppliesTable({ chainId, market }: SuppliesTableProps) {
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                {formatUnits(BigInt(supply.data.assets), market.loanAsset.decimals)}
+                {formatUnits(BigInt(supply.amount), market.loanAsset.decimals)}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     <TokenIcon

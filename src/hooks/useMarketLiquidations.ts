@@ -1,83 +1,66 @@
-import { useState, useEffect, useCallback } from 'react';
-import { marketLiquidationsQuery } from '@/graphql/morpho-api-queries';
-import { URLS } from '@/utils/urls';
-
-export type MarketLiquidationTransaction = {
-  hash: string;
-  timestamp: number;
-  type: string;
-  data: {
-    repaidAssets: string;
-    seizedAssets: string;
-    liquidator: string;
-    badDebtAssets: string;
-  };
-};
+import { useQuery } from '@tanstack/react-query';
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
+import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
+import { SupportedNetworks } from '@/utils/networks';
+import { MarketLiquidationTransaction } from '@/utils/types'; // Use simplified type
 
 /**
- * Hook to fetch all liquidations for a specific market
- * @param marketUniqueKey The unique key of the market
- * @returns List of all liquidation transactions for the market
+ * Hook to fetch all liquidations for a specific market, using the appropriate data source.
+ * @param marketId The ID or unique key of the market.
+ * @param network The blockchain network.
+ * @returns List of liquidation transactions for the market.
  */
-const useMarketLiquidations = (marketUniqueKey: string | undefined) => {
-  const [liquidations, setLiquidations] = useState<MarketLiquidationTransaction[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+export const useMarketLiquidations = (
+  marketId: string | undefined,
+  network: SupportedNetworks | undefined,
+) => {
+  // Note: loanAssetId is not needed for liquidations query
+  const queryKey = ['marketLiquidations', marketId, network];
 
-  const fetchLiquidations = useCallback(async () => {
-    if (!marketUniqueKey) {
-      setLiquidations([]);
-      return;
-    }
+  // Determine the data source
+  const dataSource = network ? getMarketDataSource(network) : null;
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const variables = {
-        uniqueKey: marketUniqueKey,
-      };
-
-      const response = await fetch(`${URLS.MORPHO_BLUE_API}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: marketLiquidationsQuery,
-          variables,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch market liquidations');
+  const { data, isLoading, error, refetch } = useQuery<MarketLiquidationTransaction[] | null>({
+    queryKey: queryKey,
+    queryFn: async (): Promise<MarketLiquidationTransaction[] | null> => {
+      // Guard clauses
+      if (!marketId || !network || !dataSource) {
+        return null;
       }
 
-      const result = (await response.json()) as {
-        data: { transactions: { items: MarketLiquidationTransaction[] } };
-      };
+      console.log(
+        `Fetching market liquidations for market ${marketId} on ${network} via ${dataSource}`,
+      );
 
-      if (result.data?.transactions?.items) {
-        setLiquidations(result.data.transactions.items);
-      } else {
-        setLiquidations([]);
+      try {
+        if (dataSource === 'morpho') {
+          return await fetchMorphoMarketLiquidations(marketId);
+        } else if (dataSource === 'subgraph') {
+          console.log('fetching subgraph liquidations');
+          return await fetchSubgraphMarketLiquidations(marketId, network);
+        }
+      } catch (fetchError) {
+        console.error(`Failed to fetch market liquidations via ${dataSource}:`, fetchError);
+        return null;
       }
-    } catch (err) {
-      console.error('Error fetching market liquidations:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }, [marketUniqueKey]);
 
-  useEffect(() => {
-    void fetchLiquidations();
-  }, [fetchLiquidations]);
+      console.warn('Unknown market data source determined for liquidations');
+      return null;
+    },
+    enabled: !!marketId && !!network && !!dataSource,
+    staleTime: 1000 * 60 * 5, // 5 minutes, liquidations are less frequent
+    placeholderData: (previousData) => previousData ?? null,
+    retry: 1,
+  });
 
+  // Return standard react-query hook structure
   return {
-    liquidations,
-    loading,
-    error,
+    data: data, // Consumers can alias this as 'liquidations' if desired
+    isLoading: isLoading,
+    error: error,
+    refetch: refetch,
+    dataSource: dataSource,
   };
 };
 

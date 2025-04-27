@@ -9,13 +9,16 @@ import {
   useState,
   useMemo,
 } from 'react';
-import { marketsQuery } from '@/graphql/morpho-api-queries';
+import { getMarketDataSource } from '@/config/dataSources';
+import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
+import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
-import { isSupportedChain } from '@/utils/networks';
+import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
-type MarketsContextType = {
+// Export the type definition
+export type MarketsContextType = {
   markets: Market[];
   loading: boolean;
   isRefetching: boolean;
@@ -28,14 +31,6 @@ const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
 
 type MarketsProviderProps = {
   children: ReactNode;
-};
-
-type MarketResponse = {
-  data: {
-    markets: {
-      items: Market[];
-    };
-  };
 };
 
 export function MarketsProvider({ children }: MarketsProviderProps) {
@@ -53,46 +48,79 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   const fetchMarkets = useCallback(
     async (isRefetch = false) => {
+      if (isRefetch) {
+        setIsRefetching(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null); // Reset error at the start
+
+      // Define the networks to fetch markets for
+      const networksToFetch: SupportedNetworks[] = [
+        SupportedNetworks.Mainnet,
+        SupportedNetworks.Base,
+      ];
+      let combinedMarkets: Market[] = [];
+      let fetchErrors: unknown[] = [];
+
       try {
-        if (isRefetch) {
-          setIsRefetching(true);
-        } else {
-          setLoading(true);
-        }
+        // Fetch markets for each network based on its data source
+        await Promise.all(
+          networksToFetch.map(async (network) => {
+            try {
+              const dataSource = getMarketDataSource(network);
+              let networkMarkets: Market[] = [];
 
-        const marketsResponse = await fetch('https://blue-api.morpho.org/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: marketsQuery,
-            variables: { first: 1000, where: { whitelisted: true } },
+              console.log(`Fetching markets for ${network} via ${dataSource}`);
+
+              if (dataSource === 'morpho') {
+                networkMarkets = await fetchMorphoMarkets(network);
+              } else if (dataSource === 'subgraph') {
+                networkMarkets = await fetchSubgraphMarkets(network);
+              } else {
+                console.warn(`No valid data source found for network ${network}`);
+              }
+
+              combinedMarkets.push(...networkMarkets);
+            } catch (networkError) {
+              console.error(`Failed to fetch markets for network ${network}:`, networkError);
+              fetchErrors.push(networkError); // Collect errors for each network
+            }
           }),
-        });
+        );
 
-        const marketsResult = (await marketsResponse.json()) as MarketResponse;
-        const rawMarkets = marketsResult.data.markets.items;
-
-        const filtered = rawMarkets
+        // Process combined markets (filters, warnings, liquidation status)
+        // Existing filters seem appropriate
+        const filtered = combinedMarkets
           .filter((market) => market.collateralAsset != undefined)
           .filter(
             (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
           )
-          .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
+          .filter((market) => isSupportedChain(market.morphoBlue.chain.id)); // Keep this filter
 
         const processedMarkets = filtered.map((market) => {
-          const warningsWithDetail = getMarketWarningsWithDetail(market);
+          const warningsWithDetail = getMarketWarningsWithDetail(market); // Recalculate warnings if needed, though fetchers might do this
           const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
 
           return {
             ...market,
-            warningsWithDetail,
+            // Ensure warningsWithDetail from fetchers are used or recalculated consistently
+            warningsWithDetail: market.warningsWithDetail ?? warningsWithDetail,
             isProtectedByLiquidationBots,
           };
         });
 
         setMarkets(processedMarkets);
-      } catch (_error) {
-        setError(_error);
+
+        // If any network fetch failed, set the overall error state
+        if (fetchErrors.length > 0) {
+          // Maybe combine errors or just take the first one
+          setError(fetchErrors[0]);
+        }
+      } catch (err) {
+        // Catch potential errors from Promise.all itself or overall logic
+        console.error('Overall error fetching markets:', err);
+        setError(err);
       } finally {
         if (isRefetch) {
           setIsRefetching(false);
@@ -108,12 +136,17 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     if (!liquidationsLoading && markets.length === 0) {
       fetchMarkets().catch(console.error);
     }
-  }, [liquidationsLoading, fetchMarkets]);
+  }, [liquidationsLoading, fetchMarkets, markets.length]);
 
   const refetch = useCallback(
-    (onSuccess?: () => void) => {
-      refetchLiquidations();
-      fetchMarkets(true).then(onSuccess).catch(console.error);
+    async (onSuccess?: () => void) => {
+      try {
+        refetchLiquidations();
+        await fetchMarkets(true);
+        onSuccess?.();
+      } catch (err) {
+        console.error('Error during refetch:', err);
+      }
     },
     [refetchLiquidations, fetchMarkets],
   );
@@ -121,12 +154,17 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const refresh = useCallback(async () => {
     setLoading(true);
     setMarkets([]);
+    setError(null);
     try {
+      refetchLiquidations();
       await fetchMarkets();
     } catch (_error) {
       console.error('Failed to refresh markets:', _error);
+      setError(_error);
+    } finally {
+      setLoading(false);
     }
-  }, [fetchMarkets]);
+  }, [refetchLiquidations, fetchMarkets]);
 
   const isLoading = loading || liquidationsLoading;
   const combinedError = error || liquidationsError;
