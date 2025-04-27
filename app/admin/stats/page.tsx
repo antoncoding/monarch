@@ -13,12 +13,15 @@ import { PlatformStats, TimeFrame, AssetVolumeData } from '@/utils/statsUtils';
 import { AssetMetricsTable } from './components/AssetMetricsTable';
 import { StatsOverviewCards } from './components/StatsOverviewCards';
 
-// API endpoints mapping for different networks
-const API_ENDPOINTS = {
-  [SupportedNetworks.Base]:
-    'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest',
-  [SupportedNetworks.Mainnet]:
-    'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest',
+const getAPIEndpoint = (network: SupportedNetworks) => {
+  switch (network) {
+    case SupportedNetworks.Base:
+      return 'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest';
+    case SupportedNetworks.Mainnet:
+      return 'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest';
+    default:
+      return undefined;
+  }
 };
 
 export default function StatsPage() {
@@ -55,7 +58,10 @@ export default function StatsPage() {
         const startTime = performance.now();
 
         // Get API endpoint for the selected network
-        const apiEndpoint = API_ENDPOINTS[selectedNetwork];
+        const apiEndpoint = getAPIEndpoint(selectedNetwork);
+        if (!apiEndpoint) {
+          throw new Error(`Unsupported network: ${selectedNetwork}`);
+        }
         console.log(`Using API endpoint: ${apiEndpoint}`);
 
         const allStats = await fetchAllStatistics(timeframe, selectedNetwork, apiEndpoint);

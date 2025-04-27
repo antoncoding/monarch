@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PublicClient } from 'viem';
 import { SmartBlockFinder } from '@/utils/blockFinder';
 import { SupportedNetworks } from '@/utils/networks';
-import { mainnetClient, baseClient } from '@/utils/rpc';
+import { getClient } from '@/utils/rpc';
 
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const numericTimestamp = parseInt(timestamp);
 
     // Fallback to SmartBlockFinder
-    const client = numericChainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
+    const client = getClient(numericChainId as SupportedNetworks);
 
     // Try Etherscan API first
     const etherscanBlock = await getBlockFromEtherscan(numericTimestamp, numericChainId);

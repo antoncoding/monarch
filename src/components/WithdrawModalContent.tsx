@@ -9,7 +9,8 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
-import { MORPHO } from '@/utils/morpho';
+import { getMorphoAddress } from '@/utils/morpho';
+import { SupportedNetworks } from '@/utils/networks';
 import { Market, MarketPosition } from '@/utils/types';
 import { Button } from './common';
 
@@ -83,7 +84,7 @@ export function WithdrawModalContent({
 
     sendTransaction({
       account,
-      to: MORPHO,
+      to: getMorphoAddress(activeMarket.morphoBlue.chain.id as SupportedNetworks),
       data: encodeFunctionData({
         abi: morphoAbi,
         functionName: 'withdraw',

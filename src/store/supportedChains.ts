@@ -1,12 +1,12 @@
-import { base, Chain, mainnet } from 'viem/chains';
+import { base, Chain, mainnet, polygon } from 'viem/chains';
 import { Environment, getCurrentEnvironment } from './environment';
 
 // The list of supported Chains for a given environment
 export const SUPPORTED_CHAINS: Record<Environment, [Chain, ...Chain[]]> = {
-  [Environment.localhost]: [mainnet, base],
-  [Environment.development]: [mainnet, base],
-  [Environment.staging]: [mainnet, base],
-  [Environment.production]: [mainnet, base],
+  [Environment.localhost]: [mainnet, base, polygon],
+  [Environment.development]: [mainnet, base, polygon],
+  [Environment.staging]: [mainnet, base, polygon],
+  [Environment.production]: [mainnet, base, polygon],
 };
 
 /**

@@ -1,6 +1,7 @@
 enum SupportedNetworks {
   Mainnet = 1,
   Base = 8453,
+  Polygon = 137,
 }
 
 const isSupportedChain = (chainId: number) => {
@@ -17,6 +18,11 @@ const networks = [
     network: SupportedNetworks.Base,
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
+  },
+  {
+    network: SupportedNetworks.Polygon,
+    logo: require('../imgs/chains/polygon.png') as string,
+    name: 'Polygon',
   },
 ];
 

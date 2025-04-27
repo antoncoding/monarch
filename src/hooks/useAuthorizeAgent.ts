@@ -6,7 +6,7 @@ import morphoAbi from '@/abis/morpho';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { AGENT_CONTRACT } from '@/utils/monarch-agent';
-import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
+import { MONARCH_TX_IDENTIFIER, getMorphoAddress } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 export enum AuthorizeAgentStep {
@@ -42,14 +42,14 @@ export const useAuthorizeAgent = (
   const { signTypedDataAsync } = useSignTypedData();
 
   const { data: isAuthorized } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(chainId as SupportedNetworks),
     abi: morphoAbi,
     functionName: 'isAuthorized',
     args: [account as Address, AGENT_CONTRACT],
   });
 
   const { data: nonce } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(chainId as SupportedNetworks),
     abi: morphoAbi,
     functionName: 'nonce',
     args: [account as Address],
@@ -95,7 +95,7 @@ export const useAuthorizeAgent = (
         if (isAuthorized === false) {
           const domain = {
             chainId: SupportedNetworks.Base,
-            verifyingContract: MORPHO as Address,
+            verifyingContract: getMorphoAddress(chainId as SupportedNetworks) as Address,
           };
 
           const types = {

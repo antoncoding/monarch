@@ -17,11 +17,15 @@ const mainnetSubgraphUrl = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/8Lz789DP5VKLXumTMTgygjU2xtuzx8AhbaacgN5PYCAs`
   : undefined;
 
+const polygonSubgraphUrl = apiKey
+  ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/EhFokmwryNs7qbvostceRqVdjc3petuD13mmdUiMBw8Y`
+  : undefined;
+
 // Map network IDs (from SupportedNetworks) to Subgraph URLs
 export const SUBGRAPH_URLS: { [key in SupportedNetworks]?: string } = {
   [SupportedNetworks.Base]: baseSubgraphUrl,
   [SupportedNetworks.Mainnet]: mainnetSubgraphUrl,
-  // Add other supported networks and their Subgraph URLs here
+  [SupportedNetworks.Polygon]: polygonSubgraphUrl,
 };
 
 export const getSubgraphUrl = (network: SupportedNetworks): string | undefined => {

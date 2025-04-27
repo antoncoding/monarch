@@ -59,6 +59,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       const networksToFetch: SupportedNetworks[] = [
         SupportedNetworks.Mainnet,
         SupportedNetworks.Base,
+        SupportedNetworks.Polygon,
       ];
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];

@@ -1,4 +1,4 @@
-import { Chain, base, mainnet } from 'viem/chains';
+import { Chain, base, mainnet, polygon } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
 export type SingleChainERC20Basic = {
@@ -51,6 +51,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+      { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
     ],
     peg: TokenPeg.USD,
   },
@@ -58,7 +59,10 @@ const supportedTokens = [
     symbol: 'USDT',
     img: require('../imgs/tokens/usdt.webp') as string,
     decimals: 6,
-    networks: [{ chain: mainnet, address: '0xdac17f958d2ee523a2206206994597c13d831ec7' }],
+    networks: [
+      { chain: mainnet, address: '0xdac17f958d2ee523a2206206994597c13d831ec7' },
+      { chain: polygon, address: '0xc2132d05d31c914a87c6611c10748aeb04b58e8f' },
+    ],
     peg: TokenPeg.USD,
   },
   {
@@ -195,6 +199,11 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
       { chain: base, address: '0x4200000000000000000000000000000000000006' },
+
+      // wrapped eth on polygon, defined here as it will not be interpreted as "WETH Contract"
+      // which is determined by isWETH function
+      // This is solely for displaying and linking to eth.
+      { chain: polygon, address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619' },
     ],
     peg: TokenPeg.ETH,
   },
@@ -252,7 +261,10 @@ const supportedTokens = [
     symbol: 'WBTC',
     img: require('../imgs/tokens/wbtc.png') as string,
     decimals: 8,
-    networks: [{ chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' }],
+    networks: [
+      { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
+      { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
+    ],
     peg: TokenPeg.BTC,
   },
   {
@@ -487,6 +499,12 @@ const supportedTokens = [
     img: require('../imgs/tokens/usui.png') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0xb0505e5a99abd03d94a1169e638B78EDfEd26ea4' }],
+  },
+  {
+    symbol: 'MaticX',
+    img: require('../imgs/tokens/maticx.png') as string,
+    decimals: 18,
+    networks: [{ chain: polygon, address: '0xfa68fb4628dff1028cfec22b4162fccd0d45efb6' }],
   },
   // rewards
   {

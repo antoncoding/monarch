@@ -4,7 +4,7 @@ import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { MORPHO } from '@/utils/morpho';
+import { getMorphoAddress } from '@/utils/morpho';
 import { useStyledToast } from './useStyledToast';
 
 type UseMorphoBundlerAuthorizationProps = {
@@ -22,7 +22,7 @@ export const useMorphoBundlerAuthorization = ({
   const [isAuthorizing, setIsAuthorizing] = useState(false);
 
   const { data: isBundlerAuthorized, refetch: refetchIsBundlerAuthorized } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(chainId),
     abi: morphoAbi,
     functionName: 'isAuthorized',
     args: [account as Address, bundlerAddress],
@@ -33,7 +33,7 @@ export const useMorphoBundlerAuthorization = ({
   });
 
   const { data: nonce, refetch: refetchNonce } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(chainId),
     abi: morphoAbi,
     functionName: 'nonce',
     args: [account as Address],
@@ -70,7 +70,7 @@ export const useMorphoBundlerAuthorization = ({
     try {
       const domain = {
         chainId: chainId,
-        verifyingContract: MORPHO as Address,
+        verifyingContract: getMorphoAddress(chainId) as Address,
       };
 
       const types = {
@@ -158,7 +158,7 @@ export const useMorphoBundlerAuthorization = ({
       // Simple Morpho setAuthorization transaction
       await sendBundlerAuthorizationTx({
         account: account,
-        to: MORPHO,
+        to: getMorphoAddress(chainId),
         data: encodeFunctionData({
           abi: morphoAbi,
           functionName: 'setAuthorization',
