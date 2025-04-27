@@ -208,6 +208,12 @@ const supportedTokens = [
     peg: TokenPeg.ETH,
   },
   {
+    symbol: 'WMATIC',
+    img: require('../imgs/tokens/wpol.webp') as string,
+    decimals: 18,
+    networks: [{ chain: polygon, address: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270' }],
+  },
+  {
     symbol: 'sDAI',
     img: require('../imgs/tokens/sdai.svg') as string,
     decimals: 18,
