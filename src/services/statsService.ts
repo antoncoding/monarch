@@ -1,38 +1,21 @@
 import { request, gql } from 'graphql-request';
-import { transactionsByTimeRangeQuery, userGrowthQuery } from '@/graphql/monarch-stats-queries';
+import { transactionsByTimeRangeQuery } from '@/graphql/monarch-stats-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { processTransactionData } from '@/utils/statsDataProcessing';
 import {
   TimeFrame,
-  MetricPeriod,
   Transaction,
-  TimeSeriesData,
   AssetVolumeData,
   PlatformStats,
   getTimeRange,
   getPreviousTimeRange,
-  groupTransactionsByPeriod,
   calculatePlatformStats,
 } from '@/utils/statsUtils';
 import { supportedTokens } from '@/utils/tokens';
 
-// Default API endpoints for different networks
-const DEFAULT_API_ENDPOINTS = {
-  [SupportedNetworks.Base]:
-    process.env.NEXT_PUBLIC_BASE_METRICS_API ??
-    'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest',
-  [SupportedNetworks.Mainnet]:
-    process.env.NEXT_PUBLIC_MAINNET_METRICS_API ??
-    'https://api.thegraph.com/subgraphs/name/monarch/metrics-mainnet',
-};
-
 // GraphQL response types
 type TransactionResponse = {
   userTransactions: Transaction[];
-};
-
-type UserGrowthResponse = {
-  users: { id: string; firstTxTimestamp: string }[];
 };
 
 /**
@@ -41,11 +24,10 @@ type UserGrowthResponse = {
 export const fetchTransactionsByTimeRange = async (
   startTime: number,
   endTime: number,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
+  networkId: SupportedNetworks,
   endpoint: string,
 ): Promise<Transaction[]> => {
   try {
-
     console.log(
       `Fetching transactions between ${new Date(startTime * 1000).toISOString()} and ${new Date(
         endTime * 1000,
@@ -130,13 +112,12 @@ export const fetchTransactionsByTimeRange = async (
   }
 };
 
-
 /**
  * Fetch and calculate platform-wide statistics
  */
 export const fetchPlatformStats = async (
   timeframe: TimeFrame,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
+  networkId: SupportedNetworks,
   endpoint: string,
 ): Promise<PlatformStats> => {
   try {
@@ -181,7 +162,7 @@ export const fetchPlatformStats = async (
  */
 export const fetchAssetMetrics = async (
   timeframe: TimeFrame,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
+  networkId: SupportedNetworks,
   endpoint: string,
 ): Promise<AssetVolumeData[]> => {
   try {
@@ -258,9 +239,9 @@ export const fetchAssetMetrics = async (
  * Build a statistics payload with all relevant metrics
  */
 export const fetchAllStatistics = async (
-  timeframe: TimeFrame = '30D',
-  networkId: SupportedNetworks = SupportedNetworks.Base,
+  networkId: SupportedNetworks,
   endpoint: string,
+  timeframe: TimeFrame = '30D',
 ): Promise<{
   platformStats: PlatformStats;
   assetMetrics: AssetVolumeData[];

@@ -64,7 +64,7 @@ export default function StatsPage() {
         }
         console.log(`Using API endpoint: ${apiEndpoint}`);
 
-        const allStats = await fetchAllStatistics(timeframe, selectedNetwork, apiEndpoint);
+        const allStats = await fetchAllStatistics(selectedNetwork, apiEndpoint, timeframe);
 
         const endTime = performance.now();
         console.log(`Statistics fetched in ${endTime - startTime}ms:`, allStats);
