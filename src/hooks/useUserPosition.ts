@@ -26,7 +26,7 @@ const useUserPosition = (
 ) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
-  const { markets } = useMarkets()
+  const { markets } = useMarkets();
 
   const {
     data,
@@ -64,10 +64,13 @@ const useUserPosition = (
 
         if (market) {
           // Local market data found, construct position directly
-          console.log(`Found local market data for ${marketKey}, constructing position from snapshot.`);
+          console.log(
+            `Found local market data for ${marketKey}, constructing position from snapshot.`,
+          );
           finalPosition = {
             market: market,
-            state: { // Add state from snapshot
+            state: {
+              // Add state from snapshot
               supplyAssets: snapshot.supplyAssets.toString(),
               supplyShares: snapshot.supplyShares.toString(),
               borrowAssets: snapshot.borrowAssets.toString(),

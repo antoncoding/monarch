@@ -52,7 +52,9 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
     const markets = page.data?.markets;
 
     if (!markets) {
-      console.warn(`No market data returned for liquidation check on network ${network} at skip ${skip}.`);
+      console.warn(
+        `No market data returned for liquidation check on network ${network} at skip ${skip}.`,
+      );
       break; // Exit loop if no markets are returned
     }
 

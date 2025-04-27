@@ -19,7 +19,7 @@ import {
   UnknownERC20Token,
   TokenPeg,
 } from '@/utils/tokens';
-import { MorphoChainlinkOracleData, Market } from '@/utils/types';
+import { MorphoChainlinkOracleData, Market, MarketWarning } from '@/utils/types';
 import {
   getMarketWarningsWithDetail,
   SUBGRAPH_NO_ORACLE,
@@ -46,7 +46,11 @@ const COINGECKO_API_URL =
   'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd';
 
 // Fetcher for major prices needed for estimation
+const priceCache: { data?: LocalMajorPrices; ts?: number } = {};
 const fetchLocalMajorPrices = async (): Promise<LocalMajorPrices> => {
+  if (priceCache.data && Date.now() - (priceCache.ts ?? 0) < 60_000) {
+    return priceCache.data;
+  }
   try {
     const response = await fetch(COINGECKO_API_URL);
     if (!response.ok) {
@@ -59,12 +63,15 @@ const fetchLocalMajorPrices = async (): Promise<LocalMajorPrices> => {
       [TokenPeg.ETH]: data.ethereum?.usd,
     };
     // Filter out undefined prices
-    return Object.entries(prices).reduce((acc, [key, value]) => {
+    const result = Object.entries(prices).reduce((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key as keyof LocalMajorPrices] = value;
       }
       return acc;
     }, {} as LocalMajorPrices);
+    priceCache.data = result;
+    priceCache.ts = Date.now();
+    return result;
   } catch (err) {
     console.error('Failed to fetch internal major token prices for subgraph estimation:', err);
     return {}; // Return empty object on error
@@ -168,7 +175,7 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
-  const warnings = [SUBGRAPH_NO_ORACLE];
+  const warnings: MarketWarning[] = [SUBGRAPH_NO_ORACLE];
 
   // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');

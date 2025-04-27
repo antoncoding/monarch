@@ -51,7 +51,14 @@ export const positionKeys = {
     [...positionKeys.all, 'snapshot', marketKey, userAddress, chainId] as const,
   // Key for the final enhanced position data, dependent on initialData result
   enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined) =>
-    ['enhanced-positions', user, initialData] as const,
+    [
+      'enhanced-positions',
+      user,
+      initialData?.finalMarketKeys
+        .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}`)
+        .sort()
+        .join(','),
+    ] as const,
 };
 
 // --- Helper Fetch Function --- //
