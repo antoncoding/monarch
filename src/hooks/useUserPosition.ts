@@ -25,10 +25,13 @@ const useUserPosition = (
 ) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
-  const { data, isLoading, error, refetch, isRefetching } = useQuery<
-    MarketPosition | null,
-    unknown
-  >({
+  const {
+    data,
+    isLoading,
+    error,
+    refetch: refetchQuery,
+    isRefetching,
+  } = useQuery<MarketPosition | null, unknown>({
     queryKey: queryKey,
     queryFn: async (): Promise<MarketPosition | null> => {
       if (!user || !chainId || !marketKey) {
@@ -105,6 +108,19 @@ const useUserPosition = (
     placeholderData: (previousData) => previousData ?? null,
     retry: 1, // Retry once on error
   });
+
+  // refetch with onsuccess callback
+  const refetch = (onSuccess?: () => void) => {
+    refetchQuery()
+      .then(() => {
+        // Call onSuccess callback if provided after successful refetch
+        onSuccess?.();
+      })
+      .catch((err) => {
+        // Optional: Log error during refetch, but don't trigger onSuccess
+        console.error('Error during refetch triggered by refetch function:', err);
+      });
+  };
 
   return {
     position: data ?? null,

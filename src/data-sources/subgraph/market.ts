@@ -136,7 +136,7 @@ const transformSubgraphMarketToMarket = (
   const collateralAsset = mapToken(subgraphMarket.inputToken);
 
   const defaultOracleData: MorphoChainlinkOracleData = {
-    baseFeedOne:  {
+    baseFeedOne: {
       address: zeroAddress,
       chain: {
         id: network,
