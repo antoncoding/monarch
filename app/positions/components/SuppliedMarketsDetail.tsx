@@ -14,6 +14,7 @@ type SuppliedMarketsDetailProps = {
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
+  showEmptyPositions: boolean;
 };
 
 function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
@@ -42,13 +43,23 @@ export function SuppliedMarketsDetail({
   setShowWithdrawModal,
   setShowSupplyModal,
   setSelectedPosition,
+  showEmptyPositions,
 }: SuppliedMarketsDetailProps) {
-  // Sort active markets by size
-  const sortedActiveMarkets = [...groupedPosition.markets].sort(
+  // Sort active markets by size first
+  const sortedMarkets = [...groupedPosition.markets].sort(
     (a, b) =>
       Number(formatBalance(b.state.supplyAssets, b.market.loanAsset.decimals)) -
       Number(formatBalance(a.state.supplyAssets, a.market.loanAsset.decimals)),
   );
+
+  // Filter based on the showEmptyPositions prop
+  const filteredMarkets = showEmptyPositions
+    ? sortedMarkets
+    : sortedMarkets.filter(
+        (position) =>
+          Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals)) >
+          0,
+      );
 
   const totalSupply = groupedPosition.totalSupply;
 
@@ -121,7 +132,7 @@ export function SuppliedMarketsDetail({
             </tr>
           </thead>
           <tbody className="table-body text-xs">
-            {sortedActiveMarkets.map((position) => {
+            {filteredMarkets.map((position) => {
               const suppliedAmount = Number(
                 formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
               );

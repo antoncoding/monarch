@@ -1,7 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip } from '@nextui-org/react';
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Tooltip,
+  Switch,
+  Button as NextUIButton,
+} from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
+import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
@@ -12,6 +21,7 @@ import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -21,6 +31,7 @@ import {
   groupPositionsByLoanAsset,
   processCollaterals,
 } from '@/utils/positions';
+import { PositionsShowEmptyKey } from '@/utils/storageKeys';
 import {
   MarketPosition,
   GroupedPosition,
@@ -65,6 +76,10 @@ export function PositionsSummaryTable({
   );
 
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
+  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(
+    PositionsShowEmptyKey,
+    false,
+  );
   const { address } = useAccount();
 
   const toast = useStyledToast();
@@ -154,6 +169,35 @@ export function PositionsSummaryTable({
           <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
+        <Dropdown>
+          <DropdownTrigger>
+            <NextUIButton
+              isIconOnly
+              variant="light"
+              size="sm"
+              className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            >
+              <GearIcon className="h-4 w-4" />
+            </NextUIButton>
+          </DropdownTrigger>
+          <DropdownMenu
+            aria-label="Position table settings"
+            className="bg-surface rounded p-2"
+            closeOnSelect={false}
+          >
+            <DropdownItem key="show-empty" className="flex h-auto gap-2 p-0">
+              <div className="flex items-center justify-between px-2 py-1.5">
+                <span className="mr-2 text-xs">Show Empty Positions</span>
+                <Switch
+                  size="sm"
+                  isSelected={showEmptyPositions}
+                  onValueChange={setShowEmptyPositions}
+                  aria-label="Show empty positions"
+                />
+              </div>
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
       </div>
       <div className="bg-surface overflow-hidden rounded">
         <table className="responsive w-full min-w-[640px] font-zen">
@@ -335,6 +379,7 @@ export function PositionsSummaryTable({
                               setShowWithdrawModal={setShowWithdrawModal}
                               setShowSupplyModal={setShowSupplyModal}
                               setSelectedPosition={setSelectedPosition}
+                              showEmptyPositions={showEmptyPositions}
                             />
                           </motion.div>
                         </td>
