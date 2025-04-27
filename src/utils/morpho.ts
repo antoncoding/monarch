@@ -42,7 +42,7 @@ export const getIRMTitle = (address: string) => {
       return 'Adaptive Curve';
     case '0x46415998764c29ab2a25cbea6254146d50d22687': // on base
       return 'Adaptive Curve';
-    case '0xe675A2161D4a6E2de2eeD70ac98EEBf257FBF0B0': // on polygon
+    case '0xe675a2161d4a6e2de2eed70ac98eebf257fbf0b0': // on polygon
       return 'Adaptive Curve';
     default:
       return 'Unknown IRM';
