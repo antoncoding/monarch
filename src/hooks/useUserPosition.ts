@@ -6,6 +6,7 @@ import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/posi
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import { MarketPosition } from '@/utils/types';
+import { useMarkets } from './useMarkets';
 
 /**
  * Hook to fetch a user's position in a specific market.
@@ -25,6 +26,8 @@ const useUserPosition = (
 ) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
+  const { markets } = useMarkets()
+
   const {
     data,
     isLoading,
@@ -41,66 +44,106 @@ const useUserPosition = (
 
       // 1. Try fetching the on-chain snapshot first
       console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
-      const snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
+      let snapshot = null;
+      try {
+        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
+        console.log(`Snapshot result for ${marketKey}:`, snapshot ? 'Exists' : 'Null');
+      } catch (snapshotError) {
+        console.error(
+          `Error fetching position snapshot for ${user} on market ${marketKey}:`,
+          snapshotError,
+        );
+        // Snapshot fetch failed, will proceed to fallback fetch
+      }
+
+      let finalPosition: MarketPosition | null = null;
 
       if (snapshot) {
-        // If snapshot has zero balances, treat as null position early
-        if (
-          snapshot.supplyAssets === '0' &&
-          snapshot.borrowAssets === '0' &&
-          snapshot.collateral === '0'
-        ) {
-          console.log(
-            `Snapshot shows zero balance for ${user} on market ${marketKey}, returning null.`,
+        // Snapshot succeeded, try to use local market data first
+        const market = markets?.find((m) => m.uniqueKey === marketKey);
+
+        if (market) {
+          // Local market data found, construct position directly
+          console.log(`Found local market data for ${marketKey}, constructing position from snapshot.`);
+          finalPosition = {
+            market: market,
+            state: { // Add state from snapshot
+              supplyAssets: snapshot.supplyAssets.toString(),
+              supplyShares: snapshot.supplyShares.toString(),
+              borrowAssets: snapshot.borrowAssets.toString(),
+              borrowShares: snapshot.borrowShares.toString(),
+              collateral: snapshot.collateral,
+            },
+          };
+        } else {
+          // Local market data NOT found, need to fetch from fallback to get structure
+          console.warn(
+            `Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`,
           );
-          return null;
+          const dataSource = getMarketDataSource(chainId);
+          let fallbackPosition: MarketPosition | null = null;
+          try {
+            if (dataSource === 'morpho') {
+              fallbackPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
+            } else if (dataSource === 'subgraph') {
+              fallbackPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
+            }
+            if (fallbackPosition) {
+              // Fallback succeeded, combine with snapshot state
+              finalPosition = {
+                ...fallbackPosition,
+                state: {
+                  supplyAssets: snapshot.supplyAssets.toString(),
+                  supplyShares: snapshot.supplyShares.toString(),
+                  borrowAssets: snapshot.borrowAssets.toString(),
+                  borrowShares: snapshot.borrowShares.toString(),
+                  collateral: snapshot.collateral,
+                },
+              };
+            } else {
+              // Fallback failed even though snapshot existed
+              console.error(
+                `Snapshot exists for ${marketKey}, but fallback fetch failed. Cannot return full position.`,
+              );
+              finalPosition = null;
+            }
+          } catch (fetchError) {
+            console.error(
+              `Failed to fetch user position via fallback (${dataSource}) for ${user} on market ${marketKey} after snapshot success:`,
+              fetchError,
+            );
+            finalPosition = null;
+          }
         }
-      }
-
-      // 2. Determine fallback data source
-      const dataSource = getMarketDataSource(chainId);
-      console.log(`Fallback data source for ${chainId}: ${dataSource}`);
-
-      // 3. Fetch from the determined data source
-      let positionData: MarketPosition | null = null;
-      try {
-        if (dataSource === 'morpho') {
-          positionData = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
-        } else if (dataSource === 'subgraph') {
-          positionData = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
+      } else {
+        // Snapshot failed, rely entirely on the fallback data source
+        console.log(`Snapshot failed for ${marketKey}, fetching from fallback source.`);
+        const dataSource = getMarketDataSource(chainId);
+        try {
+          if (dataSource === 'morpho') {
+            finalPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
+          } else if (dataSource === 'subgraph') {
+            finalPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
+          }
+          console.log(
+            `Fallback fetch result (after snapshot failure) for ${marketKey}:`,
+            finalPosition ? 'Found' : 'Not Found',
+          );
+        } catch (fetchError) {
+          console.error(
+            `Failed to fetch user position via fallback (${dataSource}) for ${user} on market ${marketKey}:`,
+            fetchError,
+          );
+          finalPosition = null; // Ensure null on error
         }
-      } catch (fetchError) {
-        console.error(
-          `Failed to fetch user position via fallback (${dataSource}) for ${user} on market ${marketKey}:`,
-          fetchError,
-        );
-        return null; // Return null on error during fallback
-      }
-
-      // If we got a snapshot earlier, overwrite the state from the fallback with the fresh snapshot state
-      // Ensure the structure matches MarketPosition.state
-      if (snapshot && positionData) {
-        console.log(`Overwriting fallback state with fresh snapshot state for ${marketKey}`);
-        positionData.state = {
-          supplyAssets: snapshot.supplyAssets.toString(),
-          supplyShares: snapshot.supplyShares.toString(),
-          borrowAssets: snapshot.borrowAssets.toString(),
-          borrowShares: snapshot.borrowShares.toString(),
-          collateral: snapshot.collateral,
-        };
-      } else if (snapshot && !positionData) {
-        // If snapshot exists but fallback failed, we cannot construct MarketPosition
-        console.warn(
-          `Snapshot existed but fallback failed for ${marketKey}, cannot return full MarketPosition.`,
-        );
-        return null;
       }
 
       console.log(
         `Final position data for ${user} on market ${marketKey}:`,
-        positionData ? 'Found' : 'Not Found',
+        finalPosition ? 'Found' : 'Not Found',
       );
-      return positionData; // This will be null if neither snapshot nor fallback worked, or if balances were zero
+      // If finalPosition has zero balances, it's still a valid position state from the snapshot or fallback
+      return finalPosition;
     },
     enabled: !!user && !!chainId && !!marketKey,
     staleTime: 1000 * 60 * 1, // Stale after 1 minute

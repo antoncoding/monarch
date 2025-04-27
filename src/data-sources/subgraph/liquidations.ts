@@ -29,31 +29,31 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
   const liquidatedKeys = new Set<string>();
 
   // Apply the same base filters as fetchSubgraphMarkets
-  const variables = {
-    first: 1000, // Fetch in batches if necessary, though unlikely needed just for IDs
-    where: {
-      inputToken_not_in: blacklistTokens,
-    },
-  };
-
-  try {
-    // Subgraph might paginate; handle if necessary, but 1000 limit is often sufficient for just IDs
-    const response = await subgraphGraphqlFetcher<SubgraphMarketsLiquidationCheckResponse>(
+  // paginate until the API returns < pageSize items
+  const pageSize = 1000;
+  let skip = 0;
+  while (true) {
+    const variables = {
+      first: pageSize,
+      skip,
+      where: { inputToken_not_in: blacklistTokens },
+    };
+    const page = await subgraphGraphqlFetcher<SubgraphMarketsLiquidationCheckResponse>(
       subgraphApiUrl,
       subgraphMarketsWithLiquidationCheckQuery,
       variables,
     );
 
-    if (response.errors) {
-      console.error('GraphQL errors:', response.errors);
+    if (page.errors) {
+      console.error('GraphQL errors:', page.errors);
       throw new Error(`GraphQL error fetching liquidated market keys for network ${network}`);
     }
 
-    const markets = response.data?.markets;
+    const markets = page.data?.markets;
 
     if (!markets) {
-      console.warn(`No market data returned for liquidation check on network ${network}.`);
-      return liquidatedKeys; // Return empty set
+      console.warn(`No market data returned for liquidation check on network ${network} at skip ${skip}.`);
+      break; // Exit loop if no markets are returned
     }
 
     markets.forEach((market) => {
@@ -62,12 +62,11 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
         liquidatedKeys.add(market.id);
       }
     });
-  } catch (error) {
-    console.error(
-      `Error fetching liquidated market keys via Subgraph for network ${network}:`,
-      error,
-    );
-    throw error; // Re-throw
+
+    if (markets.length < pageSize) {
+      break; // Exit loop if the number of returned markets is less than the page size
+    }
+    skip += pageSize;
   }
 
   console.log(`Fetched ${liquidatedKeys.size} liquidated market keys via Subgraph for ${network}.`);
