@@ -79,7 +79,7 @@ export function TDTotalSupplyOrBorrow({
   symbol,
 }: {
   dataLabel: string;
-  assetsUSD: string;
+  assetsUSD: number;
   assets: string;
   decimals: number;
   symbol: string;
