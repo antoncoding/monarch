@@ -51,9 +51,10 @@ export default function Positions() {
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
-  const hasActivePositionOnBase = marketPositions?.some((position) => {
+  const hasActivePositionForAgent = marketPositions?.some((position) => {
     return (
-      position.market.morphoBlue.chain.id === SupportedNetworks.Base &&
+      (position.market.morphoBlue.chain.id === SupportedNetworks.Base ||
+        position.market.morphoBlue.chain.id === SupportedNetworks.Polygon) &&
       BigInt(position.state.supplyShares) > 0
     );
   });
@@ -84,7 +85,7 @@ export default function Positions() {
                 Report
               </Button>
             </Link>
-            {isOwner && hasActivePositionOnBase && (
+            {isOwner && hasActivePositionForAgent && (
               <Button size="md" className="font-zen" onClick={() => setShowSetupAgentModal(true)}>
                 <RiRobot2Line size={14} className="mr-2" />
                 Monarch Agent <Badge variant="success">New</Badge>

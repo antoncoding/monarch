@@ -197,7 +197,9 @@ export function SetupAgentModal({
                 <SetupAgent
                   positions={positions}
                   allMarkets={allMarkets.filter(
-                    (m) => m.morphoBlue.chain.id === SupportedNetworks.Base,
+                    (m) =>
+                      m.morphoBlue.chain.id === SupportedNetworks.Base ||
+                      m.morphoBlue.chain.id === SupportedNetworks.Polygon,
                   )}
                   pendingCaps={pendingCaps}
                   addToPendingCaps={addToPendingCaps}

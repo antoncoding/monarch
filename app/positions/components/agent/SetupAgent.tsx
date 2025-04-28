@@ -13,6 +13,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
 
 type MarketGroup = {
+  network: SupportedNetworks;
   loanAsset: {
     address: string;
     symbol: string;
@@ -78,6 +79,8 @@ export function SetupAgent({
   const [showAllMarkets, setShowAllMarkets] = useState(false);
   const [showProcessModal, setShowProcessModal] = useState(false);
 
+  const [targetNetwork, setTargetNetwork] = useState<SupportedNetworks>(SupportedNetworks.Base);
+
   const isInPending = (market: Market) =>
     pendingCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount > 0);
 
@@ -107,6 +110,7 @@ export function SetupAgent({
 
       if (!groups[loanAssetKey]) {
         groups[loanAssetKey] = {
+          network: market.morphoBlue.chain.id,
           loanAsset: market.loanAsset,
           authorizedMarkets: [],
           activeMarkets: [],
@@ -179,6 +183,7 @@ export function SetupAgent({
   const { executeBatchSetupAgent, currentStep } = useAuthorizeAgent(
     KnownAgents.MAX_APY,
     pendingCaps,
+    targetNetwork,
     onNext,
   );
 

@@ -15,6 +15,7 @@ type SuppliedMarketsDetailProps = {
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
   showEmptyPositions: boolean;
+  showCollateralExposure: boolean;
 };
 
 function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
@@ -44,6 +45,7 @@ export function SuppliedMarketsDetail({
   setShowSupplyModal,
   setSelectedPosition,
   showEmptyPositions,
+  showCollateralExposure,
 }: SuppliedMarketsDetailProps) {
   // Sort active markets by size first
   const sortedMarkets = [...groupedPosition.markets].sort(
@@ -78,44 +80,47 @@ export function SuppliedMarketsDetail({
       className="overflow-hidden"
     >
       <div className="bg-surface bg-opacity-20">
-        <div className="mb-4 flex items-center justify-center">
-          <div className="my-4 w-1/2">
-            <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
-              {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                <div
-                  key={`${collateral.address}-${colIndex}`}
-                  className="h-full opacity-70"
-                  style={{
-                    width: `${collateral.percentage}%`,
-                    backgroundColor:
-                      collateral.symbol === 'Others'
-                        ? '#A0AEC0'
-                        : getCollateralColor(collateral.address),
-                  }}
-                  title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
-                />
-              ))}
-            </div>
-            <div className="mt-1 flex flex-wrap justify-center text-xs">
-              {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
-                  <span
+        {/* Conditionally render collateral exposure section */}
+        {showCollateralExposure && (
+          <div className="mb-4 flex items-center justify-center">
+            <div className="my-4 w-1/2">
+              <h3 className="mb-2 text-base font-semibold">Collateral Exposure</h3>
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-200">
+                {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
+                  <div
+                    key={`${collateral.address}-${colIndex}`}
+                    className="h-full opacity-70"
                     style={{
-                      color:
+                      width: `${collateral.percentage}%`,
+                      backgroundColor:
                         collateral.symbol === 'Others'
                           ? '#A0AEC0'
                           : getCollateralColor(collateral.address),
                     }}
-                  >
-                    ■
-                  </span>{' '}
-                  {collateral.symbol}: {formatReadable(collateral.percentage)}%
-                </span>
-              ))}
+                    title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
+                  />
+                ))}
+              </div>
+              <div className="mt-1 flex flex-wrap justify-center text-xs">
+                {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
+                  <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
+                    <span
+                      style={{
+                        color:
+                          collateral.symbol === 'Others'
+                            ? '#A0AEC0'
+                            : getCollateralColor(collateral.address),
+                      }}
+                    >
+                      ■
+                    </span>{' '}
+                    {collateral.symbol}: {formatReadable(collateral.percentage)}%
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Markets Table - Always visible */}
         <table className="no-hover-effect w-full font-zen">

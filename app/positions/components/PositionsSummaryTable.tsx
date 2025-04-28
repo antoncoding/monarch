@@ -31,7 +31,7 @@ import {
   groupPositionsByLoanAsset,
   processCollaterals,
 } from '@/utils/positions';
-import { PositionsShowEmptyKey } from '@/utils/storageKeys';
+import { PositionsShowEmptyKey, PositionsShowCollateralExposureKey } from '@/utils/storageKeys';
 import {
   MarketPosition,
   GroupedPosition,
@@ -79,6 +79,10 @@ export function PositionsSummaryTable({
   const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(
     PositionsShowEmptyKey,
     false,
+  );
+  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(
+    PositionsShowCollateralExposureKey,
+    true,
   );
   const { address } = useAccount();
 
@@ -186,13 +190,31 @@ export function PositionsSummaryTable({
             closeOnSelect={false}
           >
             <DropdownItem key="show-empty" className="flex h-auto gap-2 p-0">
-              <div className="flex items-center justify-between px-2 py-1.5">
+              <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Empty Positions</span>
                 <Switch
                   size="sm"
                   isSelected={showEmptyPositions}
                   onValueChange={setShowEmptyPositions}
                   aria-label="Show empty positions"
+                  classNames={{
+                    wrapper: 'mx-0',
+                    thumbIcon: 'p-0 mr-0',
+                  }}
+                />
+              </div>
+            </DropdownItem>
+            <DropdownItem key="show-collateral-exposure" className="flex h-auto gap-2 p-0">
+              <div className="flex w-full items-center justify-between px-2 py-1.5">
+                <span className="mr-2 text-xs">Show Collateral Exposure</span>
+                <Switch
+                  size="sm"
+                  isSelected={showCollateralExposure}
+                  onValueChange={setShowCollateralExposure}
+                  classNames={{
+                    wrapper: 'mx-0',
+                    thumbIcon: 'p-0 mr-0',
+                  }}
                 />
               </div>
             </DropdownItem>
@@ -380,6 +402,7 @@ export function PositionsSummaryTable({
                               setShowSupplyModal={setShowSupplyModal}
                               setSelectedPosition={setSelectedPosition}
                               showEmptyPositions={showEmptyPositions}
+                              showCollateralExposure={showCollateralExposure}
                             />
                           </motion.div>
                         </td>
