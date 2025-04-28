@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userRebalancerInfoQuery } from '@/graphql/morpho-api-queries';
+import { SupportedNetworks } from '@/utils/networks';
 import { UserRebalancerInfo } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
@@ -30,7 +31,11 @@ export function useUserRebalancerInfo(account: string | undefined) {
       const json = (await response.json()) as { data?: { user?: UserRebalancerInfo } };
 
       if (json.data?.user) {
-        setData(json.data.user);
+        const finalData = {
+          ...json.data.user,
+          network: SupportedNetworks.Base,
+        };
+        setData(finalData);
       }
       setError(null);
     } catch (err) {

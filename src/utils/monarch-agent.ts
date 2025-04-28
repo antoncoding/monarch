@@ -9,7 +9,7 @@ export const getAgentContract = (chain: SupportedNetworks) => {
     case SupportedNetworks.Polygon:
       return '0x01c90eEb82f982301fE4bd11e36A5704673CF18C';
     default:
-      return zeroAddress
+      return zeroAddress;
   }
 };
 

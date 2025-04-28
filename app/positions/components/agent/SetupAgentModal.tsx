@@ -6,7 +6,7 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
 import { findAgent } from '@/utils/monarch-agent';
-import { SupportedNetworks } from '@/utils/networks';
+import { isAgentAvailable } from '@/utils/networks';
 import { Market, UserRebalancerInfo } from '@/utils/types';
 import { Main as MainContent } from './Main';
 import { SetupAgent } from './SetupAgent';
@@ -188,19 +188,15 @@ export function SetupAgentModal({
               )}
               {currentStep === SetupStep.Main && hasSetupAgent && (
                 <MainContent
+                  // account={account}
                   onNext={handleNext}
-                  account={account}
                   userRebalancerInfo={userRebalancerInfo}
                 />
               )}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
-                  allMarkets={allMarkets.filter(
-                    (m) =>
-                      m.morphoBlue.chain.id === SupportedNetworks.Base ||
-                      m.morphoBlue.chain.id === SupportedNetworks.Polygon,
-                  )}
+                  allMarkets={allMarkets.filter((m) => isAgentAvailable(m.morphoBlue.chain.id))}
                   pendingCaps={pendingCaps}
                   addToPendingCaps={addToPendingCaps}
                   removeFromPendingCaps={removeFromCaps}

@@ -8,6 +8,12 @@ const isSupportedChain = (chainId: number) => {
   return Object.values(SupportedNetworks).includes(chainId);
 };
 
+const agentNetworks = [SupportedNetworks.Base, SupportedNetworks.Polygon];
+
+const isAgentAvailable = (chainId: number) => {
+  return agentNetworks.includes(chainId);
+};
+
 const networks = [
   {
     network: SupportedNetworks.Mainnet,
@@ -36,4 +42,12 @@ const getNetworkName = (chainId: number) => {
   return target?.name;
 };
 
-export { SupportedNetworks, isSupportedChain, getNetworkImg, getNetworkName, networks };
+export {
+  SupportedNetworks,
+  isSupportedChain,
+  getNetworkImg,
+  getNetworkName,
+  networks,
+  isAgentAvailable,
+  agentNetworks,
+};

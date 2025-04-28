@@ -13,12 +13,11 @@ import { UserRebalancerInfo } from '@/utils/types';
 const img = require('../../../../src/imgs/agent/agent-detailed.png') as string;
 
 type MainProps = {
-  account?: string;
   onNext: () => void;
   userRebalancerInfo: UserRebalancerInfo;
 };
 
-export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
+export function Main({ onNext, userRebalancerInfo }: MainProps) {
   const agent = findAgent(userRebalancerInfo.rebalancer);
   const { markets } = useMarkets();
 
@@ -124,20 +123,6 @@ export function Main({ account, onNext, userRebalancerInfo }: MainProps) {
                   );
                 },
               )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h4 className="text-xs font-medium text-secondary">Automations</h4>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={`/history/${account}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-surface hover:bg-hovered flex items-center gap-2 rounded px-3 py-2 text-sm no-underline"
-              >
-                View All ({userRebalancerInfo.transactions?.length ?? 0})
-              </Link>
             </div>
           </div>
         </div>

@@ -1,15 +1,30 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Checkbox } from '@nextui-org/react';
+import {
+  Checkbox,
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+  Tooltip,
+} from '@nextui-org/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { BsQuestionCircle } from 'react-icons/bs';
 import { formatUnits, maxUint256 } from 'viem';
 import { AgentSetupProcessModal } from '@/components/AgentSetupProcessModal';
 import { Button } from '@/components/common/Button';
 import { MarketInfoBlockCompact } from '@/components/common/MarketInfoBlock';
 import { TokenIcon } from '@/components/TokenIcon';
+import { TooltipContent } from '@/components/TooltipContent';
 import { MarketCap, useAuthorizeAgent } from '@/hooks/useAuthorizeAgent';
 import { findAgent, KnownAgents } from '@/utils/monarch-agent';
-import { SupportedNetworks } from '@/utils/networks';
+import {
+  getNetworkName,
+  getNetworkImg,
+  SupportedNetworks,
+  isAgentAvailable,
+} from '@/utils/networks';
 import { Market, MarketPosition, UserRebalancerInfo } from '@/utils/types';
 
 type MarketGroup = {
@@ -43,20 +58,27 @@ function MarketRow({
   market,
   isSelected,
   onToggle,
+  isDisabled,
 }: {
   market: Market;
   isSelected: boolean;
   onToggle: (selected: boolean) => void;
+  isDisabled: boolean;
 }) {
   return (
-    <div className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2">
+    <div
+      className={`group flex items-center justify-between rounded-lg px-2 py-1 transition-opacity ${
+        isDisabled ? 'cursor-not-allowed opacity-50' : 'hover:bg-content2'
+      }`}
+    >
       <div className="flex flex-1 items-center gap-3">
         <Checkbox
           isSelected={isSelected}
-          onValueChange={onToggle}
+          onValueChange={(selected) => !isDisabled && onToggle(selected)}
           size="sm"
           color="primary"
           className="mr-0"
+          isDisabled={isDisabled}
         />
         <MarketInfoBlockCompact market={market} className="flex-1" />
       </div>
@@ -80,6 +102,17 @@ export function SetupAgent({
   const [showProcessModal, setShowProcessModal] = useState(false);
 
   const [targetNetwork, setTargetNetwork] = useState<SupportedNetworks>(SupportedNetworks.Base);
+
+  // --- Network Logic Start ---
+  const availableNetworks = useMemo(() => {
+    const networkSet = new Set<SupportedNetworks>();
+    positions.forEach((p) => {
+      if (isAgentAvailable(p.market.morphoBlue.chain.id)) {
+        networkSet.add(p.market.morphoBlue.chain.id);
+      }
+    });
+    return Array.from(networkSet).sort();
+  }, [positions, allMarkets]);
 
   const isInPending = (market: Market) =>
     pendingCaps.some((cap) => cap.market.uniqueKey === market.uniqueKey && cap.amount > 0);
@@ -143,20 +176,27 @@ export function SetupAgent({
       }
     });
 
-    return Object.values(groups);
+    // Sort groups by network ID first, then potentially by loan asset symbol
+    return Object.values(groups).sort((a, b) => {
+      if (a.network !== b.network) {
+        return a.network - b.network;
+      }
+      return a.loanAsset.symbol.localeCompare(b.loanAsset.symbol);
+    });
   }, [allMarkets, positions, userRebalancerInfo]);
 
-  // Pre-select active markets only once when component mounts
+  // Pre-select active markets only once when component mounts and target network is set
   useEffect(() => {
     let mounted = true;
-    if (!hasPreselected && groupedMarkets.length > 0) {
+    if (!hasPreselected && groupedMarkets.length > 0 && targetNetwork) {
       groupedMarkets.forEach((group) => {
-        // pre-select active markets but not already authorized
-        group.activeMarkets.forEach((market) => {
-          if (!isInPending(market)) {
-            addToPendingCaps(market, maxUint256);
-          }
-        });
+        if (group.network === targetNetwork) {
+          group.activeMarkets.forEach((market) => {
+            if (!isInPending(market)) {
+              addToPendingCaps(market, maxUint256);
+            }
+          });
+        }
       });
       if (mounted) {
         setHasPreselected(true);
@@ -166,7 +206,7 @@ export function SetupAgent({
     return () => {
       mounted = false;
     };
-  }, [hasPreselected, groupedMarkets, isInPending, addToPendingCaps]);
+  }, [hasPreselected, groupedMarkets, isInPending, addToPendingCaps, targetNetwork]);
 
   const toggleGroup = (key: string) => {
     setExpandedGroups((prev) =>
@@ -201,7 +241,47 @@ export function SetupAgent({
         </div>
       )}
       <div className="flex items-center justify-between font-zen text-sm">
-        The agent can only reallocate funds among your approved markets.
+        <span>The agent can only reallocate funds among approved markets.</span>
+        {availableNetworks.length > 1 && targetNetwork && (
+          <Dropdown>
+            <DropdownTrigger>
+              <Button variant="light" size="sm" className="gap-2">
+                <Image
+                  src={getNetworkImg(targetNetwork) ?? ''}
+                  alt={getNetworkName(targetNetwork) ?? 'Unknown Network'}
+                  width={16}
+                  height={16}
+                />
+                {getNetworkName(targetNetwork) ?? 'Select Network'}
+                <ChevronDownIcon />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Select Network"
+              selectionMode="single"
+              selectedKeys={new Set([targetNetwork.toString()])}
+              onSelectionChange={(keys) => {
+                const selectedKey = Array.from(keys)[0];
+                setTargetNetwork(Number(selectedKey) as SupportedNetworks);
+                setHasPreselected(false);
+              }}
+            >
+              {availableNetworks.map((networkId) => (
+                <DropdownItem key={networkId.toString()} value={networkId.toString()}>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={getNetworkImg(networkId) ?? ''}
+                      alt={getNetworkName(networkId) ?? 'Unknown Network'}
+                      width={16}
+                      height={16}
+                    />
+                    {getNetworkName(networkId) ?? `Network ${networkId}`}
+                  </div>
+                </DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+        )}
       </div>
 
       <div
@@ -211,8 +291,9 @@ export function SetupAgent({
         max-h-[400px] space-y-4 overflow-y-auto pr-2"
       >
         {groupedMarkets.map((group) => {
-          const groupKey = group.loanAsset.address;
+          const groupKey = `${group.loanAsset.address}-${group.network}`;
           const isExpanded = expandedGroups.includes(groupKey);
+          const isGroupDisabled = group.network !== targetNetwork;
 
           const numMarketsToAdd = [
             ...group.activeMarkets,
@@ -233,15 +314,19 @@ export function SetupAgent({
                   onClose={() => setShowProcessModal(false)}
                 />
               )}
+
               <button
                 type="button"
-                onClick={() => toggleGroup(groupKey)}
-                className="flex w-full items-center justify-between px-4 py-3 transition-colors hover:bg-content2"
+                onClick={() => !isGroupDisabled && toggleGroup(groupKey)}
+                className={`flex w-full items-center justify-between px-4 py-3 transition-colors ${
+                  isGroupDisabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-content2'
+                }`}
+                disabled={isGroupDisabled}
               >
                 <div className="flex items-center gap-4">
                   <TokenIcon
                     address={group.loanAsset.address}
-                    chainId={SupportedNetworks.Base}
+                    chainId={group.network}
                     symbol={group.loanAsset.symbol}
                     width={24}
                     height={24}
@@ -263,7 +348,27 @@ export function SetupAgent({
                     {group.authorizedMarkets.length !== 1 ? 's' : ''}
                   </span>
                 </div>
-                {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                <Tooltip
+                  isDisabled={!isGroupDisabled}
+                  className="rounded-sm"
+                  content={
+                    <TooltipContent
+                      title="Network Mismatch"
+                      detail="You're currently setting up the agent on a different network. Please switch the target network above."
+                      icon={<BsQuestionCircle size={16} />}
+                    />
+                  }
+                >
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={getNetworkImg(group.network) ?? ''}
+                      alt={getNetworkName(group.network) ?? 'Network'}
+                      width={16}
+                      height={16}
+                    />
+                    {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                  </div>
+                </Tooltip>
               </button>
 
               <AnimatePresence>
@@ -290,6 +395,7 @@ export function SetupAgent({
                                   ? removeFromPendingCaps(market)
                                   : addToPendingCaps(market, BigInt(0))
                               }
+                              isDisabled={isGroupDisabled}
                             />
                           ))}
                         </div>
@@ -309,6 +415,7 @@ export function SetupAgent({
                                   ? addToPendingCaps(market, maxUint256)
                                   : removeFromPendingCaps(market)
                               }
+                              isDisabled={isGroupDisabled}
                             />
                           ))}
                         </div>
@@ -328,6 +435,7 @@ export function SetupAgent({
                                   ? addToPendingCaps(market, maxUint256)
                                   : removeFromPendingCaps(market)
                               }
+                              isDisabled={isGroupDisabled}
                             />
                           ))}
                         </div>
@@ -340,6 +448,7 @@ export function SetupAgent({
                           size="sm"
                           onClick={() => setShowAllMarkets(true)}
                           className="w-full"
+                          isDisabled={isGroupDisabled}
                         >
                           Show More Markets
                         </Button>
@@ -358,6 +467,7 @@ export function SetupAgent({
                                   ? addToPendingCaps(market, maxUint256)
                                   : removeFromPendingCaps(market)
                               }
+                              isDisabled={isGroupDisabled}
                             />
                           ))}
                         </div>
@@ -380,7 +490,7 @@ export function SetupAgent({
           variant="solid"
           color="primary"
           onPress={handleExecute}
-          isDisabled={pendingCaps.length === 0}
+          isDisabled={pendingCaps.length === 0 || !targetNetwork}
         >
           Execute
         </Button>

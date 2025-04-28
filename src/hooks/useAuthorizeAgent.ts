@@ -40,7 +40,7 @@ export const useAuthorizeAgent = (
   const { switchChainAsync } = useSwitchChain();
 
   const { address: account, chainId } = useAccount();
-  
+
   const { signTypedDataAsync } = useSignTypedData();
 
   const AGENT_CONTRACT = getAgentContract(targetChainId);
@@ -49,6 +49,7 @@ export const useAuthorizeAgent = (
     address: getMorphoAddress(targetChainId),
     abi: morphoAbi,
     functionName: 'isAuthorized',
+    chainId: targetChainId,
     args: [account as Address, AGENT_CONTRACT],
   });
 

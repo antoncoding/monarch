@@ -19,7 +19,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
-import { SupportedNetworks } from '@/utils/networks';
+import { isAgentAvailable } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
@@ -53,8 +53,7 @@ export default function Positions() {
 
   const hasActivePositionForAgent = marketPositions?.some((position) => {
     return (
-      (position.market.morphoBlue.chain.id === SupportedNetworks.Base ||
-        position.market.morphoBlue.chain.id === SupportedNetworks.Polygon) &&
+      isAgentAvailable(position.market.morphoBlue.chain.id) &&
       BigInt(position.state.supplyShares) > 0
     );
   });
