@@ -257,7 +257,7 @@ export function PositionsSummaryTable({
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const isExpanded = expandedRows.has(rowKey);
-              const avgApy = groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+              const avgApy = groupedPosition.totalWeightedApy;
 
               const earnings = getGroupedEarnings(groupedPosition, earningsPeriod);
 
