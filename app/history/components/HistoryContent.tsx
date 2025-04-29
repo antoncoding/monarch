@@ -8,7 +8,7 @@ import { HistoryTable } from './HistoryTable';
 export default function HistoryContent({ account }: { account: string }) {
   const { data: positions } = useUserPositions(account, true);
 
-  const { rebalancerInfo } = useUserRebalancerInfo(account);
+  const { rebalancerInfos } = useUserRebalancerInfo(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -17,7 +17,7 @@ export default function HistoryContent({ account }: { account: string }) {
         <h1 className="py-4 font-zen text-2xl">Transaction History</h1>
 
         <div className="mt-4">
-          <HistoryTable account={account} positions={positions} rebalancerInfo={rebalancerInfo} />
+          <HistoryTable account={account} positions={positions} rebalancerInfos={rebalancerInfos} />
         </div>
       </div>
     </div>

@@ -55,7 +55,7 @@ type PositionsSummaryTableProps = {
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
   isLoadingEarnings?: boolean;
-  rebalancerInfo: UserRebalancerInfo | undefined;
+  rebalancerInfos: UserRebalancerInfo[];
 };
 
 export function PositionsSummaryTable({
@@ -67,7 +67,7 @@ export function PositionsSummaryTable({
   isRefetching,
   isLoadingEarnings,
   account,
-  rebalancerInfo,
+  rebalancerInfos,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -101,8 +101,8 @@ export function PositionsSummaryTable({
   };
 
   const groupedPositions = useMemo(
-    () => groupPositionsByLoanAsset(marketPositions, rebalancerInfo),
-    [marketPositions, rebalancerInfo],
+    () => groupPositionsByLoanAsset(marketPositions, rebalancerInfos),
+    [marketPositions, rebalancerInfos],
   );
 
   const processedPositions = useMemo(
