@@ -195,7 +195,8 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   // 1. We haven't received initial data yet
   // 2. Positions are still loading initially
   // 3. We have positions but no earnings data yet
-  const isPositionsLoading = !hasInitialData || positionsLoading || !positionsWithEarnings?.fetched;
+  const isPositionsLoading =
+    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.fetched);
 
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
