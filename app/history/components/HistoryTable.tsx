@@ -27,7 +27,7 @@ import {
 type HistoryTableProps = {
   account: string | undefined;
   positions: MarketPosition[];
-  rebalancerInfo?: UserRebalancerInfo;
+  rebalancerInfos: UserRebalancerInfo[];
 };
 
 type AssetKey = {
@@ -37,7 +37,7 @@ type AssetKey = {
   decimals: number;
 };
 
-export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTableProps) {
+export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTableProps) {
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -307,7 +307,12 @@ export function HistoryTable({ account, positions, rebalancerInfo }: HistoryTabl
               const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
               const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
 
-              const isAgent = rebalancerInfo?.transactions.some(
+              // Find the rebalancer info for the specific network of the transaction
+              const networkRebalancerInfo = rebalancerInfos.find(
+                (info) => info.network === market.morphoBlue.chain.id,
+              );
+              // Check if the transaction hash exists in the transactions of the found rebalancer info
+              const isAgent = networkRebalancerInfo?.transactions.some(
                 (agentTx) => agentTx.transactionHash === tx.hash,
               );
 

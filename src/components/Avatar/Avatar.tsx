@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { Address } from 'viem';
-import { MORPHO } from '@/utils/morpho';
+import { getMorphoAddress } from '@/utils/morpho';
 
 type AvatarProps = {
   address: Address;
@@ -16,7 +16,7 @@ export function Avatar({ address, size = 30, rounded = true }: AvatarProps) {
 
   useEffect(() => {
     const checkEffigyAvailability = async () => {
-      const effigyMockurl = `https://effigy.im/a/${MORPHO}.png`;
+      const effigyMockurl = `https://effigy.im/a/${getMorphoAddress(1)}.png`;
       try {
         const response = await fetch(effigyMockurl, { method: 'HEAD' });
         setUseEffigy(response.ok);

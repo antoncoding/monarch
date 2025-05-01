@@ -1,4 +1,5 @@
 import { Address } from 'viem';
+import { SupportedNetworks } from './networks';
 
 export type MarketPosition = {
   state: {
@@ -362,6 +363,7 @@ export type UserRebalancerInfo = {
   transactions: {
     transactionHash: string;
   }[];
+  network: SupportedNetworks;
 };
 
 export type AgentMetadata = {

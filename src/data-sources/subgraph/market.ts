@@ -1,4 +1,5 @@
 import { Address, zeroAddress } from 'viem';
+import { getWhitelistedOracleData } from '@/config/oracle-whitelist'; // Import the whitelist helper
 import {
   marketQuery as subgraphMarketQuery,
   marketsQuery as subgraphMarketsQuery,
@@ -106,6 +107,7 @@ const transformSubgraphMarketToMarket = (
   const lltv = subgraphMarket.lltv ?? '0';
   const irmAddress = subgraphMarket.irm ?? '0x';
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
+  const oracleAddress = (subgraphMarket.oracle?.oracleAddress ?? '0x') as Address;
 
   if (
     marketId.toLowerCase() === '0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836'
@@ -175,7 +177,23 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
-  const warnings: MarketWarning[] = [SUBGRAPH_NO_ORACLE];
+  let warnings: MarketWarning[] = []; // Initialize warnings
+  let whitelistedOracleData = getWhitelistedOracleData(oracleAddress, network);
+
+  // Add SUBGRAPH_NO_ORACLE warning *only* if not whitelisted, or add warnings from whitelist
+  if (!whitelistedOracleData) {
+    warnings.push(SUBGRAPH_NO_ORACLE);
+  } else if (whitelistedOracleData.warningCodes && whitelistedOracleData.warningCodes.length > 0) {
+    // Add warnings specified in the whitelist configuration
+    const whitelistWarnings = whitelistedOracleData.warningCodes.map((code) => ({
+      type: code,
+      // Determine level based on code if needed, or use a default/derive from code convention
+      // For simplicity, let's assume they are all 'warning' level for now, adjust as needed
+      level: 'warning', // This might need refinement based on warning code meanings
+      __typename: `OracleWarning_${code}`, // Construct a basic typename
+    }));
+    warnings = warnings.concat(whitelistWarnings);
+  }
 
   // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
@@ -214,6 +232,10 @@ const transformSubgraphMarketToMarket = (
   const collateralAssetsUsd =
     formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
 
+  // Use whitelisted oracle data (feeds) if available, otherwise default
+  const oracleDataToUse = whitelistedOracleData ?? defaultOracleData;
+
+  // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
   const warningsWithDetail = getMarketWarningsWithDetail({ warnings });
 
   const marketDetail: Market = {
@@ -246,7 +268,7 @@ const transformSubgraphMarketToMarket = (
       timestamp: timestamp,
       rateAtUTarget: 0, // Not available from subgraph
     },
-    oracleAddress: subgraphMarket.oracle?.oracleAddress ?? '0x',
+    oracleAddress: oracleAddress,
     morphoBlue: {
       id: subgraphMarket.protocol?.id ?? '0x',
       address: subgraphMarket.protocol?.id ?? '0x',
@@ -254,10 +276,10 @@ const transformSubgraphMarketToMarket = (
         id: chainId,
       },
     },
-    warnings: warnings,
+    warnings: warnings, // Assign the potentially filtered warnings
     warningsWithDetail: warningsWithDetail,
     oracle: {
-      data: defaultOracleData, // Placeholder oracle data
+      data: oracleDataToUse, // Use the determined oracle data
     },
     hasUSDPrice: hasUSDPrice,
     isProtectedByLiquidationBots: false, // Not available from subgraph

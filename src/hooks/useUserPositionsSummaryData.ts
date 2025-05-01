@@ -176,7 +176,6 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   // Update hasInitialData when we first get positions with earnings
   useEffect(() => {
     if (positionsWithEarnings && positionsWithEarnings.fetched && !hasInitialData) {
-      console.log('positionsWithEarnings', positionsWithEarnings);
       setHasInitialData(true);
     }
   }, [positionsWithEarnings, hasInitialData]);
@@ -196,12 +195,9 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   // 1. We haven't received initial data yet
   // 2. Positions are still loading initially
   // 3. We have positions but no earnings data yet
-  const isPositionsLoading = !hasInitialData || positionsLoading || !positionsWithEarnings?.fetched;
+  const isPositionsLoading =
+    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.fetched);
 
-  // Consider earnings loading if:
-  // 1. Block numbers are loading
-  // 2. Initial earnings query is loading
-  // 3. Earnings are being fetched/calculated (even if we have placeholder data)
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
   return {

@@ -1,5 +1,4 @@
-import { Address } from 'viem';
-import { formatBalance } from './balance';
+import { Address, formatUnits } from 'viem';
 import { calculateEarningsFromSnapshot } from './interest';
 import { SupportedNetworks } from './networks';
 import {
@@ -9,6 +8,7 @@ import {
   UserTransaction,
   GroupedPosition,
   WarningWithDetail,
+  UserRebalancerInfo,
 } from './types';
 
 export type PositionSnapshot = {
@@ -226,19 +226,23 @@ export function getGroupedEarnings(
  * Group positions by loan asset
  *
  * @param positions - Array of positions with earnings
- * @param rebalancerInfo - Optional rebalancer info
+ * @param rebalancerInfos - Array of rebalancer info objects for different networks
  * @returns Array of grouped positions
  */
 export function groupPositionsByLoanAsset(
   positions: MarketPositionWithEarnings[],
-  rebalancerInfo?: { marketCaps: { marketId: string }[] },
+  rebalancerInfos: UserRebalancerInfo[] = [],
 ): GroupedPosition[] {
   return positions
-    .filter(
-      (position) =>
+    .filter((position) => {
+      const networkRebalancerInfo = rebalancerInfos.find(
+        (info) => info.network === position.market.morphoBlue.chain.id,
+      );
+      return (
         BigInt(position.state.supplyShares) > 0 ||
-        rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey),
-    )
+        networkRebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
+      );
+    })
     .reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
       const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -265,49 +269,68 @@ export function groupPositionsByLoanAsset(
         acc.push(groupedPosition);
       }
 
-      // only push if the position has > 0 supply, earning or is in rebalancer info
-      if (
-        Number(position.state.supplyShares) === 0 &&
-        !rebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
-      ) {
-        return acc;
-      }
-
-      groupedPosition.markets.push(position);
-
-      groupedPosition.allWarnings = [
-        ...new Set([...groupedPosition.allWarnings, ...(position.market.warningsWithDetail || [])]),
-      ] as WarningWithDetail[];
-
-      const supplyAmount = Number(
-        formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
+      const networkRebalancerInfoForAdd = rebalancerInfos.find(
+        (info) => info.network === position.market.morphoBlue.chain.id,
       );
-      groupedPosition.totalSupply += supplyAmount;
 
-      const weightedApy = supplyAmount * position.market.state.supplyApy;
-      groupedPosition.totalWeightedApy += weightedApy;
-
-      const collateralAddress = position.market.collateralAsset?.address;
-      const collateralSymbol = position.market.collateralAsset?.symbol;
-
-      if (collateralAddress && collateralSymbol) {
-        const existingCollateral = groupedPosition.collaterals.find(
-          (c) => c.address === collateralAddress,
+      // Check if position should be included in the group
+      const shouldInclude =
+        BigInt(position.state.supplyShares) > 0 ||
+        getEarningsForPeriod(position, EarningsPeriod.All) !== '0' ||
+        networkRebalancerInfoForAdd?.marketCaps.some(
+          (c) => c.marketId === position.market.uniqueKey,
         );
-        if (existingCollateral) {
-          existingCollateral.amount += supplyAmount;
-        } else {
-          groupedPosition.collaterals.push({
-            address: collateralAddress,
-            symbol: collateralSymbol,
-            amount: supplyAmount,
-          });
+
+      if (shouldInclude) {
+        groupedPosition.markets.push(position);
+
+        // Restore original logic for totals, warnings, and collaterals
+        groupedPosition.allWarnings = [
+          ...new Set([
+            ...groupedPosition.allWarnings,
+            ...(position.market.warningsWithDetail || []),
+          ]),
+        ] as WarningWithDetail[];
+
+        const supplyAmount = Number(
+          formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals),
+        );
+        groupedPosition.totalSupply += supplyAmount;
+
+        const weightedApyContribution = supplyAmount * (position.market.state?.supplyApy ?? 0); // Use optional chaining for state
+        groupedPosition.totalWeightedApy += weightedApyContribution; // Accumulate weighted APY sum
+
+        const collateralAddress = position.market.collateralAsset?.address;
+        const collateralSymbol = position.market.collateralAsset?.symbol;
+
+        if (collateralAddress && collateralSymbol) {
+          const existingCollateral = groupedPosition.collaterals.find(
+            (c) => c.address === collateralAddress,
+          );
+          if (existingCollateral) {
+            existingCollateral.amount += supplyAmount;
+          } else {
+            groupedPosition.collaterals.push({
+              address: collateralAddress,
+              symbol: collateralSymbol,
+              amount: supplyAmount,
+            });
+          }
         }
       }
 
       return acc;
     }, [])
-    .filter((groupedPosition) => groupedPosition.totalSupply > 0)
+    .map((groupedPosition) => {
+      // Calculate the final average weighted APY
+      if (groupedPosition.totalSupply > 0) {
+        groupedPosition.totalWeightedApy =
+          groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+      } else {
+        groupedPosition.totalWeightedApy = 0; // Avoid division by zero
+      }
+      return groupedPosition;
+    })
     .sort((a, b) => b.totalSupply - a.totalSupply);
 }
 

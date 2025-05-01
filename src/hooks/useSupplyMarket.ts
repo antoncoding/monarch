@@ -62,6 +62,8 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     chainId: market.morphoBlue.chain.id,
   });
 
+  console.log('tokenBalance', tokenBalance);
+
   // Get ETH balance
   const { data: ethBalance } = useBalance({
     address: account,

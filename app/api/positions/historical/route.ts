@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Address } from 'viem';
 import morphoABI from '@/abis/morpho';
-import { MORPHO } from '@/utils/morpho';
+import { getMorphoAddress } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
-import { baseClient, mainnetClient } from '@/utils/rpc';
+import { getClient } from '@/utils/rpc';
 
 // Types
 type Position = {
@@ -60,13 +60,13 @@ async function getPositionAtBlock(
     console.log(`Get user position ${marketId.slice(0, 6)} at current block`);
   }
 
-  const client = chainId === SupportedNetworks.Mainnet ? mainnetClient : baseClient;
+  const client = getClient(chainId as SupportedNetworks);
   if (!client) throw new Error(`Unsupported chain ID: ${chainId}`);
 
   try {
     // First get the position data
     const positionArray = (await client.readContract({
-      address: MORPHO,
+      address: getMorphoAddress(chainId as SupportedNetworks),
       abi: morphoABI,
       functionName: 'position',
       args: [marketId as `0x${string}`, userAddress as Address],
@@ -94,7 +94,7 @@ async function getPositionAtBlock(
 
     // Only fetch market data if position has shares
     const marketArray = (await client.readContract({
-      address: MORPHO,
+      address: getMorphoAddress(chainId as SupportedNetworks),
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],

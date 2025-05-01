@@ -19,7 +19,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
-import { SupportedNetworks } from '@/utils/networks';
+import { isAgentAvailable } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
 import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
@@ -34,7 +34,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
   const { address } = useAccount();
-  const { rebalancerInfo, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(account);
+  const { rebalancerInfos, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(account);
 
   const isOwner = useMemo(() => {
     if (!account) return false;
@@ -51,9 +51,9 @@ export default function Positions() {
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
-  const hasActivePositionOnBase = marketPositions?.some((position) => {
+  const hasActivePositionForAgent = marketPositions?.some((position) => {
     return (
-      position.market.morphoBlue.chain.id === SupportedNetworks.Base &&
+      isAgentAvailable(position.market.morphoBlue.chain.id) &&
       BigInt(position.state.supplyShares) > 0
     );
   });
@@ -84,7 +84,7 @@ export default function Positions() {
                 Report
               </Button>
             </Link>
-            {isOwner && hasActivePositionOnBase && (
+            {isOwner && hasActivePositionForAgent && (
               <Button size="md" className="font-zen" onClick={() => setShowSetupAgentModal(true)}>
                 <RiRobot2Line size={14} className="mr-2" />
                 Monarch Agent <Badge variant="success">New</Badge>
@@ -146,7 +146,7 @@ export default function Positions() {
             setShowSetupAgentModal(false);
           }}
           account={account as Address}
-          userRebalancerInfo={rebalancerInfo}
+          userRebalancerInfos={rebalancerInfos}
         />
 
         {isPositionsLoading ? (
@@ -179,7 +179,7 @@ export default function Positions() {
               refetch={() => void refetch()}
               isRefetching={isRefetching}
               isLoadingEarnings={isEarningsLoading}
-              rebalancerInfo={rebalancerInfo}
+              rebalancerInfos={rebalancerInfos}
             />
           </div>
         )}

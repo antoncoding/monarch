@@ -5,8 +5,8 @@ import monarchAgentAbi from '@/abis/monarch-agent-v1';
 import morphoAbi from '@/abis/morpho';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { AGENT_CONTRACT } from '@/utils/monarch-agent';
-import { MONARCH_TX_IDENTIFIER, MORPHO } from '@/utils/morpho';
+import { getAgentContract } from '@/utils/monarch-agent';
+import { MONARCH_TX_IDENTIFIER, getMorphoAddress } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 export enum AuthorizeAgentStep {
@@ -21,7 +21,7 @@ export type MarketCap = {
 };
 
 /**
- * This hook should only be used on Base
+ * This hook should only be used on Base and Polygon
  * @param markets
  * @param caps
  * @param onSuccess
@@ -30,6 +30,7 @@ export type MarketCap = {
 export const useAuthorizeAgent = (
   agent: Address,
   marketCaps: MarketCap[],
+  targetChainId: SupportedNetworks,
   onSuccess?: () => void,
 ) => {
   const toast = useStyledToast();
@@ -39,21 +40,25 @@ export const useAuthorizeAgent = (
   const { switchChainAsync } = useSwitchChain();
 
   const { address: account, chainId } = useAccount();
+
   const { signTypedDataAsync } = useSignTypedData();
 
+  const AGENT_CONTRACT = getAgentContract(targetChainId);
+
   const { data: isAuthorized } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(targetChainId),
     abi: morphoAbi,
     functionName: 'isAuthorized',
+    chainId: targetChainId,
     args: [account as Address, AGENT_CONTRACT],
   });
 
   const { data: nonce } = useReadContract({
-    address: MORPHO,
+    address: getMorphoAddress(targetChainId),
     abi: morphoAbi,
     functionName: 'nonce',
     args: [account as Address],
-    chainId: SupportedNetworks.Base,
+    chainId: targetChainId,
   });
 
   const { data: rebalancerAddress } = useReadContract({
@@ -61,7 +66,7 @@ export const useAuthorizeAgent = (
     abi: monarchAgentAbi,
     functionName: 'rebalancers',
     args: [account as Address],
-    chainId: SupportedNetworks.Base,
+    chainId: targetChainId,
     query: { enabled: !!account },
   });
 
@@ -70,7 +75,7 @@ export const useAuthorizeAgent = (
     pendingText: 'Auhorizing Monarch Agent',
     successText: 'Monarch Agent authorized successfully',
     errorText: 'Failed to authorize Monarch Agent',
-    chainId: SupportedNetworks.Base,
+    chainId: targetChainId,
     onSuccess,
   });
 
@@ -80,8 +85,8 @@ export const useAuthorizeAgent = (
         return;
       }
 
-      if (chainId !== SupportedNetworks.Base) {
-        await switchChainAsync({ chainId: SupportedNetworks.Base });
+      if (chainId !== targetChainId) {
+        await switchChainAsync({ chainId: targetChainId });
       }
 
       setIsConfirming(true);
@@ -94,8 +99,8 @@ export const useAuthorizeAgent = (
         setCurrentStep(AuthorizeAgentStep.Authorize);
         if (isAuthorized === false) {
           const domain = {
-            chainId: SupportedNetworks.Base,
-            verifyingContract: MORPHO as Address,
+            chainId: targetChainId,
+            verifyingContract: getMorphoAddress(targetChainId) as Address,
           };
 
           const types = {
@@ -195,7 +200,7 @@ export const useAuthorizeAgent = (
           account,
           to: AGENT_CONTRACT,
           data: multicallTx,
-          chainId: SupportedNetworks.Base,
+          chainId: targetChainId,
         });
       } catch (error) {
         console.error('Error during agent setup:', error);
@@ -220,6 +225,7 @@ export const useAuthorizeAgent = (
       rebalancerAddress,
       chainId,
       switchChainAsync,
+      targetChainId,
     ],
   );
 

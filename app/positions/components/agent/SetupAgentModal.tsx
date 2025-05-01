@@ -6,7 +6,7 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
 import { findAgent } from '@/utils/monarch-agent';
-import { SupportedNetworks } from '@/utils/networks';
+import { isAgentAvailable } from '@/utils/networks';
 import { Market, UserRebalancerInfo } from '@/utils/types';
 import { Main as MainContent } from './Main';
 import { SetupAgent } from './SetupAgent';
@@ -66,14 +66,14 @@ type SetupAgentModalProps = {
   account?: Address;
   isOpen: boolean;
   onClose: () => void;
-  userRebalancerInfo?: UserRebalancerInfo;
+  userRebalancerInfos: UserRebalancerInfo[];
 };
 
 export function SetupAgentModal({
   account,
   isOpen,
   onClose,
-  userRebalancerInfo,
+  userRebalancerInfos,
 }: SetupAgentModalProps) {
   const [currentStep, setCurrentStep] = useState<SetupStep>(SetupStep.Main);
   const [pendingCaps, setPendingCaps] = useState<MarketCap[]>([]);
@@ -122,12 +122,13 @@ export function SetupAgentModal({
     ]);
   };
 
-  const removeFromCaps = (market: Market) => {
+  const removeFromPendingCaps = (market: Market) => {
     setPendingCaps((prev) => prev.filter((cap) => cap.market.uniqueKey !== market.uniqueKey));
   };
 
-  const hasSetupAgent =
-    !!userRebalancerInfo && findAgent(userRebalancerInfo.rebalancer) !== undefined;
+  const hasSetupAgent = userRebalancerInfos.some(
+    (info) => findAgent(info.rebalancer) !== undefined,
+  );
 
   return (
     <Modal
@@ -188,23 +189,22 @@ export function SetupAgentModal({
               )}
               {currentStep === SetupStep.Main && hasSetupAgent && (
                 <MainContent
+                  // account={account}
                   onNext={handleNext}
-                  account={account}
-                  userRebalancerInfo={userRebalancerInfo}
+                  userRebalancerInfos={userRebalancerInfos}
                 />
               )}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
-                  allMarkets={allMarkets.filter(
-                    (m) => m.morphoBlue.chain.id === SupportedNetworks.Base,
-                  )}
+                  allMarkets={allMarkets.filter((m) => isAgentAvailable(m.morphoBlue.chain.id))}
+                  userRebalancerInfos={userRebalancerInfos}
                   pendingCaps={pendingCaps}
                   addToPendingCaps={addToPendingCaps}
-                  removeFromPendingCaps={removeFromCaps}
+                  removeFromPendingCaps={removeFromPendingCaps}
                   onNext={handleNext}
                   onBack={handleBack}
-                  userRebalancerInfo={userRebalancerInfo}
+                  account={account}
                 />
               )}
               {currentStep === SetupStep.Success && (

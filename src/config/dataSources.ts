@@ -5,12 +5,12 @@ import { SupportedNetworks } from '@/utils/networks';
  */
 export const getMarketDataSource = (network: SupportedNetworks): 'morpho' | 'subgraph' => {
   switch (network) {
-    // case SupportedNetworks.Mainnet:
-    //   return 'subgraph';
-    // case SupportedNetworks.Base:
-    //   return 'subgraph';
+    case SupportedNetworks.Mainnet:
+      return 'morpho';
+    case SupportedNetworks.Base:
+      return 'morpho';
     default:
-      return 'morpho'; // Default to Morpho API
+      return 'subgraph'; // Default to Subgraph
   }
 };
 
@@ -20,7 +20,11 @@ export const getMarketDataSource = (network: SupportedNetworks): 'morpho' | 'sub
  */
 export const getHistoricalDataSource = (network: SupportedNetworks): 'morpho' | 'subgraph' => {
   switch (network) {
-    default:
+    case SupportedNetworks.Mainnet:
       return 'morpho';
+    case SupportedNetworks.Base:
+      return 'morpho';
+    default:
+      return 'subgraph';
   }
 };

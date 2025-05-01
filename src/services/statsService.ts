@@ -1,38 +1,21 @@
 import { request, gql } from 'graphql-request';
-import { transactionsByTimeRangeQuery, userGrowthQuery } from '@/graphql/monarch-stats-queries';
+import { transactionsByTimeRangeQuery } from '@/graphql/monarch-stats-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { processTransactionData } from '@/utils/statsDataProcessing';
 import {
   TimeFrame,
-  MetricPeriod,
   Transaction,
-  TimeSeriesData,
   AssetVolumeData,
   PlatformStats,
   getTimeRange,
   getPreviousTimeRange,
-  groupTransactionsByPeriod,
   calculatePlatformStats,
 } from '@/utils/statsUtils';
 import { supportedTokens } from '@/utils/tokens';
 
-// Default API endpoints for different networks
-const DEFAULT_API_ENDPOINTS = {
-  [SupportedNetworks.Base]:
-    process.env.NEXT_PUBLIC_BASE_METRICS_API ??
-    'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest',
-  [SupportedNetworks.Mainnet]:
-    process.env.NEXT_PUBLIC_MAINNET_METRICS_API ??
-    'https://api.thegraph.com/subgraphs/name/monarch/metrics-mainnet',
-};
-
 // GraphQL response types
 type TransactionResponse = {
   userTransactions: Transaction[];
-};
-
-type UserGrowthResponse = {
-  users: { id: string; firstTxTimestamp: string }[];
 };
 
 /**
@@ -41,13 +24,10 @@ type UserGrowthResponse = {
 export const fetchTransactionsByTimeRange = async (
   startTime: number,
   endTime: number,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
+  networkId: SupportedNetworks,
+  endpoint: string,
 ): Promise<Transaction[]> => {
   try {
-    // Get the API endpoint for the selected network
-    const endpoint = apiEndpoint ?? DEFAULT_API_ENDPOINTS[networkId];
-
     console.log(
       `Fetching transactions between ${new Date(startTime * 1000).toISOString()} and ${new Date(
         endTime * 1000,
@@ -133,146 +113,12 @@ export const fetchTransactionsByTimeRange = async (
 };
 
 /**
- * Fetch user growth data
- */
-export const fetchUserGrowth = async (
-  timeframe: TimeFrame,
-  period: MetricPeriod,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
-): Promise<TimeSeriesData[]> => {
-  try {
-    const { startTime, endTime } = getTimeRange(timeframe);
-
-    // Get the API endpoint for the selected network
-    const endpoint = apiEndpoint ?? DEFAULT_API_ENDPOINTS[networkId];
-
-    console.log(
-      `Fetching user growth between ${new Date(startTime * 1000).toISOString()} and ${new Date(
-        endTime * 1000,
-      ).toISOString()}`,
-    );
-    console.log(`Using API endpoint: ${endpoint}`);
-
-    const batchSize = 1000;
-    let skip = 0;
-    let allUsers: { id: string; firstTxTimestamp: string }[] = [];
-    let hasMore = true;
-
-    // Paginate through all available users
-    while (hasMore) {
-      const variables = {
-        startTime: startTime.toString(),
-        endTime: endTime.toString(),
-        first: batchSize,
-        skip: skip,
-      };
-
-      console.log(`Fetching users batch: first=${batchSize}, skip=${skip}`);
-
-      // Fetch from specified network
-      const response = await request<UserGrowthResponse>(
-        endpoint,
-        gql`
-          ${userGrowthQuery}
-        `,
-        variables,
-      ).catch((error) => {
-        console.warn(`Error fetching user growth from network ${networkId}:`, error);
-        return { users: [] };
-      });
-
-      const users = response.users ?? [];
-
-      console.log(`Found ${users.length} users in batch (skip=${skip})`);
-
-      // Add to our collection
-      allUsers = [...allUsers, ...users];
-
-      // Check if we should fetch more
-      if (users.length < batchSize) {
-        hasMore = false;
-      } else {
-        skip += batchSize;
-      }
-    }
-
-    console.log(`Found a total of ${allUsers.length} users after pagination`);
-
-    // Group users by their first transaction date
-    const usersByDate: Record<string, number> = {};
-
-    allUsers.forEach((user) => {
-      const date = new Date(Number(user.firstTxTimestamp) * 1000);
-      let periodKey: string;
-
-      switch (period) {
-        case 'daily':
-          periodKey = date.toISOString().split('T')[0];
-          break;
-        case 'weekly':
-          const weekStart = new Date(date);
-          weekStart.setDate(date.getDate() - date.getDay());
-          periodKey = weekStart.toISOString().split('T')[0];
-          break;
-        case 'monthly':
-          periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-          break;
-      }
-
-      if (!usersByDate[periodKey]) {
-        usersByDate[periodKey] = 0;
-      }
-
-      usersByDate[periodKey]++;
-    });
-
-    // Convert to time series data format
-    return Object.entries(usersByDate)
-      .map(([date, value]) => ({ date, value }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  } catch (error) {
-    console.error('Error fetching user growth:', error);
-    return [];
-  }
-};
-
-/**
- * Fetch volume data over time
- */
-export const fetchVolumeOverTime = async (
-  timeframe: TimeFrame,
-  period: MetricPeriod,
-  tokenDecimals = 18,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
-): Promise<TimeSeriesData[]> => {
-  try {
-    console.log(
-      `Fetching volume data for timeframe: ${timeframe}, period: ${period} from network ${networkId}`,
-    );
-    const { startTime, endTime } = getTimeRange(timeframe);
-    const transactions = await fetchTransactionsByTimeRange(
-      startTime,
-      endTime,
-      networkId,
-      apiEndpoint,
-    );
-
-    return groupTransactionsByPeriod(transactions, period, tokenDecimals);
-  } catch (error) {
-    console.error('Error fetching volume over time:', error);
-    return [];
-  }
-};
-
-/**
  * Fetch and calculate platform-wide statistics
  */
 export const fetchPlatformStats = async (
   timeframe: TimeFrame,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
+  networkId: SupportedNetworks,
+  endpoint: string,
 ): Promise<PlatformStats> => {
   try {
     console.log(`Fetching platform stats for timeframe: ${timeframe} from network ${networkId}`);
@@ -284,13 +130,13 @@ export const fetchPlatformStats = async (
         currentRange.startTime,
         currentRange.endTime,
         networkId,
-        apiEndpoint,
+        endpoint,
       ),
       fetchTransactionsByTimeRange(
         previousRange.startTime,
         previousRange.endTime,
         networkId,
-        apiEndpoint,
+        endpoint,
       ),
     ]);
 
@@ -316,8 +162,8 @@ export const fetchPlatformStats = async (
  */
 export const fetchAssetMetrics = async (
   timeframe: TimeFrame,
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
+  networkId: SupportedNetworks,
+  endpoint: string,
 ): Promise<AssetVolumeData[]> => {
   try {
     console.log(`Fetching asset metrics for timeframe: ${timeframe} from network ${networkId}`);
@@ -326,7 +172,7 @@ export const fetchAssetMetrics = async (
       startTime,
       endTime,
       networkId,
-      apiEndpoint,
+      endpoint,
     );
 
     console.log(`Processing ${transactions.length} transactions for asset metrics`);
@@ -393,9 +239,9 @@ export const fetchAssetMetrics = async (
  * Build a statistics payload with all relevant metrics
  */
 export const fetchAllStatistics = async (
+  networkId: SupportedNetworks,
+  endpoint: string,
   timeframe: TimeFrame = '30D',
-  networkId: SupportedNetworks = SupportedNetworks.Base,
-  apiEndpoint?: string,
 ): Promise<{
   platformStats: PlatformStats;
   assetMetrics: AssetVolumeData[];
@@ -405,8 +251,8 @@ export const fetchAllStatistics = async (
     const startTime = performance.now();
 
     const [platformStats, assetMetrics] = await Promise.all([
-      fetchPlatformStats(timeframe, networkId, apiEndpoint),
-      fetchAssetMetrics(timeframe, networkId, apiEndpoint),
+      fetchPlatformStats(timeframe, networkId, endpoint),
+      fetchAssetMetrics(timeframe, networkId, endpoint),
     ]);
 
     const endTime = performance.now();
