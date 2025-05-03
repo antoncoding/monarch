@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
@@ -73,7 +72,7 @@ const fetchBlockNumbers = async () => {
 };
 
 const useUserPositionsSummaryData = (user: string | undefined) => {
-  const [hasInitialData, setHasInitialData] = useState(false);
+  // const [hasInitialData, setHasInitialData] = useState(false);
 
   const {
     data: positions,
@@ -173,13 +172,6 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     staleTime: 30000,
   });
 
-  // Update hasInitialData when we first get positions with earnings
-  useEffect(() => {
-    if (positionsWithEarnings && positionsWithEarnings.fetched && !hasInitialData) {
-      setHasInitialData(true);
-    }
-  }, [positionsWithEarnings, hasInitialData]);
-
   const refetch = async (onSuccess?: () => void) => {
     try {
       await refetchPositions();
@@ -191,18 +183,11 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     }
   };
 
-  // Consider loading if either:
-  // 1. We haven't received initial data yet
-  // 2. Positions are still loading initially
-  // 3. We have positions but no earnings data yet
-  const isPositionsLoading =
-    !hasInitialData || positionsLoading || (!!positions?.length && !positionsWithEarnings?.fetched);
-
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
   return {
     positions: positionsWithEarnings?.positions ?? [],
-    isPositionsLoading,
+    isPositionsLoading: positionsLoading,
     isEarningsLoading,
     isRefetching,
     error: error ?? positionsError,

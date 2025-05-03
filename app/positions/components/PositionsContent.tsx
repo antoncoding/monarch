@@ -17,6 +17,7 @@ import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
+import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { isAgentAvailable } from '@/utils/networks';
@@ -41,6 +42,8 @@ export default function Positions() {
     return account === address;
   }, [account, address]);
 
+  const { loading: isMarketsLoading } = useMarkets();
+
   const {
     isPositionsLoading,
     isEarningsLoading,
@@ -48,6 +51,8 @@ export default function Positions() {
     positions: marketPositions,
     refetch,
   } = useUserPositionsSummaryData(account);
+
+  const loading = isMarketsLoading || isPositionsLoading;
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
@@ -149,7 +154,7 @@ export default function Positions() {
           userRebalancerInfos={rebalancerInfos}
         />
 
-        {isPositionsLoading ? (
+        {loading ? (
           <LoadingScreen message="Loading Supplies..." className="mt-10" />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
