@@ -186,7 +186,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
   const isEarningsLoading = isLoadingBlockNums || isLoadingEarningsQuery || isFetchingEarnings;
 
   return {
-    positions: positionsWithEarnings?.positions ?? [],
+    positions: positionsWithEarnings?.positions,
     isPositionsLoading: positionsLoading,
     isEarningsLoading,
     isRefetching,

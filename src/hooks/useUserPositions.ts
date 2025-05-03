@@ -153,14 +153,19 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   });
 
   // 2. Query for enhanced position data (snapshots), dependent on initialData
-  const { data: enhancedPositions, isRefetching: isRefetchingEnhanced } = useQuery<
-    EnhancedMarketPosition[]
-  >({
+  const {
+    data: enhancedPositions,
+    isLoading: isLoadingEnhanced, // <-- Destructure isLoading
+    isRefetching: isRefetchingEnhanced,
+  } = useQuery<EnhancedMarketPosition[]>({
+    // <-- Start options object here
     queryKey: positionKeys.enhanced(user, initialData),
     queryFn: async () => {
       // initialData and user are guaranteed non-null here due to the 'enabled' flag
       if (!initialData || !user)
         throw new Error('Assertion failed: initialData/user should be defined here.');
+
+      console.log('fetching enhanced positions with market keys');
 
       const { finalMarketKeys } = initialData;
       // console.log(`[Positions] Query 2: Processing ${finalMarketKeys.length} keys for snapshots.`);
@@ -244,7 +249,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     // but keeping consistent for simplicity
     staleTime: 30000,
     gcTime: 5 * 60 * 1000,
-  });
+  }); // <-- End options object here
 
   // Refetch function targets the initial data query
   const refetch = useCallback(
@@ -262,9 +267,12 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   // Combine refetching states
   const isRefetching = isRefetchingInitialData || isRefetchingEnhanced;
 
+  // Combine loading states: loading is true if either the initial data OR the enhanced data is loading for the first time.
+  const loading = isLoadingInitialData || isLoadingEnhanced;
+
   return {
     data: enhancedPositions ?? [],
-    loading: isLoadingInitialData, // Loading is determined by the first query
+    loading: loading, // <-- Use the combined loading state
     isRefetching,
     positionsError: initialError, // Error is determined by the first query
     refetch,
