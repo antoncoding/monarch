@@ -346,7 +346,7 @@ export function FromAndToMarkets({
             <table className="responsive w-full rounded-md font-zen">
               <thead className="table-header bg-gray-50 text-sm dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-2 text-left">Market</th>
+                  <th className="flex items-center justify-start px-4 py-2">Market</th>
                   <SortableHeader
                     label="Collateral / LLTV"
                     column={ToMarketSortColumn.LLTV}
