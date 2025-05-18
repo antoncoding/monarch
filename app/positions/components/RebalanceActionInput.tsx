@@ -30,7 +30,7 @@ export function RebalanceActionInput({
   onAddAction,
 }: RebalanceActionInputProps) {
   return (
-    <div className="mb-4 flex items-center justify-between rounded-md border-1 border-dashed border-primary p-4">
+    <div className="mb-4 flex items-center justify-between rounded-md border-1 border-gray-200 p-4 dark:border-gray-700">
       <span className="mr-2">Rebalance</span>
       <input
         type="number"
