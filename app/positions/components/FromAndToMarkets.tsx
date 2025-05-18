@@ -68,8 +68,9 @@ function SortableHeader({
   className = 'px-4 py-2 text-left',
 }: SortableHeaderProps) {
   const isSorted = currentSortColumn === column;
-  const commonClass = "flex items-center gap-1";
-  const sortIcon = isSorted && (currentSortDirection === 1 ? <FaArrowUp size={12} /> : <FaArrowDown size={12} />); 
+  const commonClass = 'flex items-center gap-1';
+  const sortIcon =
+    isSorted && (currentSortDirection === 1 ? <FaArrowUp size={12} /> : <FaArrowDown size={12} />);
 
   return (
     <th
@@ -211,6 +212,19 @@ export function FromAndToMarkets({
               </thead>
               <tbody className="text-sm">
                 {paginatedFromMarkets.map((marketPosition) => {
+                  const userConfirmedSupply = BigInt(marketPosition.state.supplyAssets);
+                  const pendingDeltaBigInt = BigInt(marketPosition.pendingDelta);
+                  const userNetSupply = userConfirmedSupply + pendingDeltaBigInt;
+
+                  const rawMarketLiquidity = BigInt(marketPosition.market.state.liquidityAssets);
+
+                  const adjustedMarketLiquidity = rawMarketLiquidity + pendingDeltaBigInt;
+
+                  const maxTransferableAmount =
+                    userNetSupply < adjustedMarketLiquidity
+                      ? userNetSupply
+                      : adjustedMarketLiquidity;
+
                   return (
                     <tr
                       key={marketPosition.market.uniqueKey}
@@ -249,7 +263,7 @@ export function FromAndToMarkets({
                                 : marketPosition.market.collateralAsset.symbol}
                             </a>
                           </div>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded-sm">
+                          <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             {formatUnits(BigInt(marketPosition.market.lltv), 16)}%
                           </span>
                         </div>
@@ -267,25 +281,20 @@ export function FromAndToMarkets({
                             )}{' '}
                             {marketPosition.market.loanAsset.symbol}
                           </div>
+
+                          {/* max button */}
                           <Button
                             size="sm"
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
-                            isDisabled={
-                              BigInt(marketPosition.state.supplyAssets) +
-                                BigInt(marketPosition.pendingDelta) <=
-                              0n
-                            }
+                            isDisabled={maxTransferableAmount <= 0n}
                             onClick={(e) => {
                               e.stopPropagation();
                               onFromMarketSelect(marketPosition.market.uniqueKey);
-                              const remainingAmount =
-                                BigInt(marketPosition.state.supplyAssets) +
-                                BigInt(marketPosition.pendingDelta);
-                              if (remainingAmount > 0n) {
+                              if (maxTransferableAmount > 0n) {
                                 onSelectMax?.(
                                   marketPosition.market.uniqueKey,
-                                  Number(remainingAmount),
+                                  Number(maxTransferableAmount),
                                 );
                               }
                             }}
@@ -386,11 +395,11 @@ export function FromAndToMarkets({
                               <FaStar className="text-yellow-500" />
                             </span>
                           )}
-                          {fromMarkets.some(
-                            (fm) => fm.market.uniqueKey === market.uniqueKey,
-                          ) && (
+                          {fromMarkets.some((fm) => fm.market.uniqueKey === market.uniqueKey) && (
                             <Tooltip
-                              content={<TooltipContent detail="You have supplied to this market." />}
+                              content={
+                                <TooltipContent detail="You have supplied to this market." />
+                              }
                               className="rounded-sm"
                               placement="top"
                             >
@@ -426,7 +435,7 @@ export function FromAndToMarkets({
                                 : market.collateralAsset.symbol}
                             </a>
                           </div>
-                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded-sm">
+                          <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
                             {formatUnits(BigInt(market.lltv), 16)}%
                           </span>
                         </div>

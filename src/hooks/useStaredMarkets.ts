@@ -42,4 +42,4 @@ export const useStaredMarkets = () => {
   );
 
   return { staredIds, starMarket, unstarMarket };
-}; 
+};
