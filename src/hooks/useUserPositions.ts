@@ -122,7 +122,6 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     isLoading: isLoadingInitialData, // Primary loading state
     isRefetching: isRefetchingInitialData,
     error: initialError,
-    refetch: refetchInitialData,
   } = useQuery<InitialDataResponse>({
     // Note: Removed MarketsContextType type assertion
     queryKey: positionKeys.initialData(user ?? ''),
@@ -148,8 +147,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
       return { finalMarketKeys };
     },
     enabled: !!user && markets.length > 0,
-    staleTime: 30000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 
   // 2. Query for enhanced position data (snapshots), dependent on initialData
@@ -251,17 +249,18 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     gcTime: 5 * 60 * 1000,
   }); // <-- End options object here
 
-  // Refetch function targets the initial data query
+  // Refetch function targets both the initial data and enhanced queries
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        await refetchInitialData();
+        await queryClient.invalidateQueries({ queryKey: positionKeys.initialData(user ?? '') });
+        await queryClient.invalidateQueries({ queryKey: ['enhanced-positions', user] });
         onSuccess?.();
       } catch (error) {
         console.error('[Positions] Error during manual refetch:', error);
       }
     },
-    [refetchInitialData],
+    [queryClient, user],
   );
 
   // Combine refetching states

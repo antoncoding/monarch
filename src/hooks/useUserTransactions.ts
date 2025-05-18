@@ -88,8 +88,6 @@ const useUserTransactions = () => {
       // 3. Create fetch promises
       const fetchPromises: Promise<TransactionResponse>[] = [];
 
-      console.log('morphoNetworks', morphoNetworks);
-
       // Morpho API Fetch
       if (morphoNetworks.length > 0) {
         // morphoNetworks directly contains the numeric chain IDs (e.g., [1, ...])
