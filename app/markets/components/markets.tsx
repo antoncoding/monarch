@@ -15,6 +15,7 @@ import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
+import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
@@ -41,9 +42,6 @@ const defaultSortColumn = Object.values(SortColumn).includes(storedSortColumn)
   : SortColumn.Supply;
 
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
-const defaultStaredMarkets = JSON.parse(
-  storage.getItem(keys.MarketFavoritesKey) ?? '[]',
-) as string[];
 
 export default function Markets() {
   const router = useRouter();
@@ -52,6 +50,7 @@ export default function Markets() {
   const toast = useStyledToast();
 
   const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+  const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
 
   const {
     isOpen: isSettingsModalOpen,
@@ -81,8 +80,6 @@ export default function Markets() {
 
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
-
-  const [staredIds, setStaredIds] = useState<string[]>(defaultStaredMarkets);
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
@@ -128,24 +125,6 @@ export default function Markets() {
       prevParamsRef.current = currentParams;
     }
   }, [searchParams]);
-
-  const starMarket = useCallback(
-    (id: string) => {
-      setStaredIds([...staredIds, id]);
-      storage.setItem(keys.MarketFavoritesKey, JSON.stringify([...staredIds, id]));
-      toast.success('Market starred', 'Market added to favorites', { icon: <span>🌟</span> });
-    },
-    [staredIds, toast],
-  );
-
-  const unstarMarket = useCallback(
-    (id: string) => {
-      setStaredIds(staredIds.filter((i) => i !== id));
-      storage.setItem(keys.MarketFavoritesKey, JSON.stringify(staredIds.filter((i) => i !== id)));
-      toast.success('Market unstarred', 'Market removed from favorites', { icon: <span>🌟</span> });
-    },
-    [staredIds, toast],
-  );
 
   useEffect(() => {
     // return if no markets

@@ -1,9 +1,12 @@
-import React from 'react';
-import { Input } from '@nextui-org/react';
+import React, { useState, useMemo } from 'react';
+import { Input, Tooltip } from '@nextui-org/react';
 import { Pagination } from '@nextui-org/react';
 import { Button } from '@nextui-org/react';
+import { FaArrowUp, FaArrowDown, FaStar, FaUser } from 'react-icons/fa';
 import { formatUnits } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
+import { TooltipContent } from '@/components/TooltipContent';
+import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { Market } from '@/utils/types';
@@ -41,6 +44,46 @@ type MarketTablesProps = {
   selectedToMarketUniqueKey: string;
 };
 
+enum ToMarketSortColumn {
+  APY,
+  TotalSupply,
+  LLTV, // Added for future use
+}
+
+type SortableHeaderProps = {
+  label: string;
+  column: ToMarketSortColumn;
+  currentSortColumn: ToMarketSortColumn | null;
+  currentSortDirection: number;
+  onClick: (column: ToMarketSortColumn) => void;
+  className?: string;
+};
+
+function SortableHeader({
+  label,
+  column,
+  currentSortColumn,
+  currentSortDirection,
+  onClick,
+  className = 'px-4 py-2 text-left',
+}: SortableHeaderProps) {
+  const isSorted = currentSortColumn === column;
+  const commonClass = "flex items-center gap-1";
+  const sortIcon = isSorted && (currentSortDirection === 1 ? <FaArrowUp size={12} /> : <FaArrowDown size={12} />); 
+
+  return (
+    <th
+      className={`${className} cursor-pointer hover:text-primary-500`}
+      onClick={() => onClick(column)}
+    >
+      <div className={commonClass}>
+        {label}
+        {sortIcon}
+      </div>
+    </th>
+  );
+}
+
 export function FromAndToMarkets({
   eligibleMarkets,
   fromMarkets,
@@ -57,23 +100,75 @@ export function FromAndToMarkets({
   selectedFromMarketUniqueKey,
   selectedToMarketUniqueKey,
 }: MarketTablesProps) {
+  const { staredIds } = useStaredMarkets();
+
+  const [toSortColumn, setToSortColumn] = useState<ToMarketSortColumn | null>(
+    ToMarketSortColumn.TotalSupply,
+  );
+  const [toSortDirection, setToSortDirection] = useState<number>(-1); // -1 for desc, 1 for asc
+
+  const handleToSortChange = (column: ToMarketSortColumn) => {
+    if (toSortColumn === column) {
+      setToSortDirection(toSortDirection * -1);
+    } else {
+      setToSortColumn(column);
+      setToSortDirection(-1); // Default to descending for new column
+    }
+  };
+
   const filteredFromMarkets = fromMarkets.filter(
     (marketPosition) =>
       marketPosition.market.uniqueKey.toLowerCase().includes(fromFilter.toLowerCase()) ||
       marketPosition.market.collateralAsset.symbol.toLowerCase().includes(fromFilter.toLowerCase()),
   );
 
-  const filteredToMarkets = toMarkets.filter(
-    (market) =>
-      market.uniqueKey.toLowerCase().includes(toFilter.toLowerCase()) ||
-      market.collateralAsset.symbol.toLowerCase().includes(toFilter.toLowerCase()),
-  );
+  const filteredToMarkets = useMemo(() => {
+    return toMarkets.filter(
+      (market) =>
+        market.uniqueKey.toLowerCase().includes(toFilter.toLowerCase()) ||
+        market.collateralAsset.symbol.toLowerCase().includes(toFilter.toLowerCase()),
+    );
+  }, [toMarkets, toFilter]);
+
+  const sortedAndFilteredToMarkets = useMemo(() => {
+    let sorted = [...filteredToMarkets];
+    if (toSortColumn !== null) {
+      sorted.sort((a, b) => {
+        let valA: number | bigint = 0;
+        let valB: number | bigint = 0;
+
+        switch (toSortColumn) {
+          case ToMarketSortColumn.APY:
+            valA = a.state.supplyApy;
+            valB = b.state.supplyApy;
+            break;
+          case ToMarketSortColumn.TotalSupply:
+            // Ensure consistent comparison, potentially convert to number if safe
+            // For now, using BigInt comparison which is fine for sorting
+            valA = BigInt(a.state.supplyAssets);
+            valB = BigInt(b.state.supplyAssets);
+            break;
+          case ToMarketSortColumn.LLTV:
+            valA = BigInt(a.lltv);
+            valB = BigInt(b.lltv);
+            break;
+          default:
+            return 0;
+        }
+
+        if (valA < valB) return -1 * toSortDirection;
+        if (valA > valB) return 1 * toSortDirection;
+        return 0;
+      });
+    }
+    return sorted;
+  }, [filteredToMarkets, toSortColumn, toSortDirection]);
 
   const paginatedFromMarkets = filteredFromMarkets.slice(
     (fromPagination.currentPage - 1) * PER_PAGE,
     fromPagination.currentPage * PER_PAGE,
   );
-  const paginatedToMarkets = filteredToMarkets.slice(
+  const paginatedToMarkets = sortedAndFilteredToMarkets.slice(
     (toPagination.currentPage - 1) * PER_PAGE,
     toPagination.currentPage * PER_PAGE,
   );
@@ -109,8 +204,7 @@ export function FromAndToMarkets({
               <thead className="table-header bg-gray-50 text-sm dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-2 text-left">Market</th>
-                  <th className="px-4 py-2 text-left">Collateral</th>
-                  <th className="px-4 py-2 text-left">LLTV</th>
+                  <th className="px-4 py-2 text-left">Collateral / LLTV</th>
                   <th className="px-4 py-2 text-left">APY</th>
                   <th className="px-4 py-2 text-left">Supplied Amount</th>
                 </tr>
@@ -131,30 +225,34 @@ export function FromAndToMarkets({
                         {marketPosition.market.uniqueKey.slice(2, 8)}
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex items-center gap-1">
-                          <TokenIcon
-                            address={marketPosition.market.collateralAsset.address}
-                            chainId={marketPosition.market.morphoBlue.chain.id}
-                            symbol={marketPosition.market.collateralAsset.symbol}
-                            width={18}
-                            height={18}
-                          />
-                          <a
-                            href={getAssetURL(
-                              marketPosition.market.collateralAsset.address,
-                              marketPosition.market.morphoBlue.chain.id,
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1 no-underline hover:underline"
-                          >
-                            {marketPosition.market.collateralAsset.symbol}
-                          </a>
+                        <div className="flex items-center gap-x-2">
+                          <div className="flex items-center gap-1">
+                            <TokenIcon
+                              address={marketPosition.market.collateralAsset.address}
+                              chainId={marketPosition.market.morphoBlue.chain.id}
+                              symbol={marketPosition.market.collateralAsset.symbol}
+                              width={18}
+                              height={18}
+                            />
+                            <a
+                              href={getAssetURL(
+                                marketPosition.market.collateralAsset.address,
+                                marketPosition.market.morphoBlue.chain.id,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 no-underline hover:underline"
+                            >
+                              {marketPosition.market.collateralAsset.symbol.length > 6
+                                ? `${marketPosition.market.collateralAsset.symbol.slice(0, 6)}...`
+                                : marketPosition.market.collateralAsset.symbol}
+                            </a>
+                          </div>
+                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded-sm">
+                            {formatUnits(BigInt(marketPosition.market.lltv), 16)}%
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        {formatUnits(BigInt(marketPosition.market.lltv), 16)}%
                       </td>
                       <td className="px-4 py-2">
                         {formatReadable(marketPosition.market.state.supplyApy * 100)}%
@@ -240,10 +338,27 @@ export function FromAndToMarkets({
               <thead className="table-header bg-gray-50 text-sm dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-2 text-left">Market</th>
-                  <th className="px-4 py-2 text-left">Collateral</th>
-                  <th className="px-4 py-2 text-left">LLTV</th>
-                  <th className="px-4 py-2 text-left">APY</th>
-                  <th className="px-4 py-2 text-left">Total Supply</th>
+                  <SortableHeader
+                    label="Collateral / LLTV"
+                    column={ToMarketSortColumn.LLTV}
+                    currentSortColumn={toSortColumn}
+                    currentSortDirection={toSortDirection}
+                    onClick={handleToSortChange}
+                  />
+                  <SortableHeader
+                    label="APY"
+                    column={ToMarketSortColumn.APY}
+                    currentSortColumn={toSortColumn}
+                    currentSortDirection={toSortDirection}
+                    onClick={handleToSortChange}
+                  />
+                  <SortableHeader
+                    label="Total Supply"
+                    column={ToMarketSortColumn.TotalSupply}
+                    currentSortColumn={toSortColumn}
+                    currentSortDirection={toSortDirection}
+                    onClick={handleToSortChange}
+                  />
                   <th className="px-4 py-2 text-left">Util Rate</th>
                   <th className="px-4 py-2 text-left">Risks</th>
                 </tr>
@@ -264,32 +379,58 @@ export function FromAndToMarkets({
                       }`}
                     >
                       <td className="px-4 py-2 font-monospace text-xs">
-                        {market.uniqueKey.slice(2, 8)}
-                      </td>
-                      <td className="px-4">
                         <div className="flex items-center gap-1">
-                          <TokenIcon
-                            address={market.collateralAsset.address}
-                            chainId={market.morphoBlue.chain.id}
-                            symbol={market.collateralAsset.symbol}
-                            width={18}
-                            height={18}
-                          />
-                          <a
-                            href={getAssetURL(
-                              market.collateralAsset.address,
-                              market.morphoBlue.chain.id,
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex items-center gap-1 no-underline hover:underline"
-                          >
-                            {market.collateralAsset.symbol}
-                          </a>
+                          <span>{market.uniqueKey.slice(2, 8)}</span>
+                          {staredIds.includes(market.uniqueKey) && (
+                            <span className="flex-shrink-0">
+                              <FaStar className="text-yellow-500" />
+                            </span>
+                          )}
+                          {fromMarkets.some(
+                            (fm) => fm.market.uniqueKey === market.uniqueKey,
+                          ) && (
+                            <Tooltip
+                              content={<TooltipContent detail="You have supplied to this market." />}
+                              className="rounded-sm"
+                              placement="top"
+                            >
+                              <span className="flex-shrink-0 cursor-default">
+                                <FaUser size={12} />
+                              </span>
+                            </Tooltip>
+                          )}
                         </div>
                       </td>
-                      <td className="px-4 py-2">{formatUnits(BigInt(market.lltv), 16)}%</td>
+                      <td className="px-4">
+                        <div className="flex items-center gap-x-2">
+                          <div className="flex items-center gap-1">
+                            <TokenIcon
+                              address={market.collateralAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.collateralAsset.symbol}
+                              width={18}
+                              height={18}
+                            />
+                            <a
+                              href={getAssetURL(
+                                market.collateralAsset.address,
+                                market.morphoBlue.chain.id,
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex items-center gap-1 no-underline hover:underline"
+                            >
+                              {market.collateralAsset.symbol.length > 6
+                                ? `${market.collateralAsset.symbol.slice(0, 6)}...`
+                                : market.collateralAsset.symbol}
+                            </a>
+                          </div>
+                          <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-1.5 py-0.5 rounded-sm">
+                            {formatUnits(BigInt(market.lltv), 16)}%
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-4 py-2">{formatReadable(market.state.supplyApy * 100)}%</td>
                       <td className="px-4 py-2">
                         {formatReadable(
