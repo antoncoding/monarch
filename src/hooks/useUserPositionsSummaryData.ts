@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 import {
@@ -7,7 +7,7 @@ import {
 } from '@/utils/positions';
 import { estimatedBlockNumber } from '@/utils/rpc';
 import { MarketPositionWithEarnings } from '@/utils/types';
-import useUserPositions from './useUserPositions';
+import useUserPositions, { positionKeys } from './useUserPositions';
 import useUserTransactions from './useUserTransactions';
 
 type BlockNumbers = {
@@ -79,10 +79,11 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     loading: positionsLoading,
     isRefetching,
     positionsError,
-    refetch: refetchPositions,
   } = useUserPositions(user, true);
 
   const { fetchTransactions } = useUserTransactions();
+
+  const queryClient = useQueryClient();
 
   // Query for block numbers - this runs once and is cached
   const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
@@ -174,7 +175,15 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   const refetch = async (onSuccess?: () => void) => {
     try {
-      await refetchPositions();
+      // Do not invalidate block numbers: keep the old block numbers
+      // await queryClient.invalidateQueries({ queryKey: blockKeys.all });
+      
+      // Invalidate positions initial data
+      await queryClient.invalidateQueries({ queryKey: positionKeys.initialData(user ?? '') });
+      // Invalidate positions enhanced data (invalidate all for this user)
+      await queryClient.invalidateQueries({ queryKey: ['enhanced-positions', user] });
+      // Invalidate earnings query
+      await queryClient.invalidateQueries({ queryKey: ['positions-earnings', user] });
       if (onSuccess) {
         onSuccess();
       }
