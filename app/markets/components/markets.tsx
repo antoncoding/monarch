@@ -43,6 +43,11 @@ const defaultSortColumn = Object.values(SortColumn).includes(storedSortColumn)
 
 const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 
+/**
+ * Displays a list of financial markets with advanced filtering, sorting, search, and pagination features.
+ *
+ * Integrates user preferences, starred markets, and modal dialogs for market settings and supply actions. Synchronizes filter state with URL parameters and persists user settings in local storage.
+ */
 export default function Markets() {
   const router = useRouter();
   const searchParams = useSearchParams();

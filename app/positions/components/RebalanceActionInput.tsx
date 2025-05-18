@@ -19,6 +19,20 @@ type RebalanceActionInputProps = {
   onAddAction: () => void;
 };
 
+/**
+ * Renders a UI input for specifying and adding a rebalance action between two markets.
+ *
+ * Displays input fields for the rebalance amount, source and destination markets, and the associated token. The "Add Action" button is enabled only when all required fields are populated.
+ *
+ * @param amount - The current rebalance amount as a string.
+ * @param setAmount - Callback to update the rebalance amount.
+ * @param selectedFromMarketUniqueKey - Unique key identifying the source market.
+ * @param selectedToMarketUniqueKey - Unique key identifying the destination market.
+ * @param groupedPosition - Object containing grouped position data, including available markets and loan asset information.
+ * @param eligibleMarkets - Array of markets eligible as rebalance destinations.
+ * @param token - Token information including address and chain ID.
+ * @param onAddAction - Callback triggered when the "Add Action" button is clicked.
+ */
 export function RebalanceActionInput({
   amount,
   setAmount,

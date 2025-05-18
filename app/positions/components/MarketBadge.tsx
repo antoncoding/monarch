@@ -7,6 +7,13 @@ type MarketBadgeProps = {
     | undefined;
 };
 
+/**
+ * Displays a badge summarizing key information about a selected market.
+ *
+ * If no market is selected, prompts the user to select one.
+ *
+ * @param market - The market to display, or `null`/`undefined` to show a prompt.
+ */
 export function MarketBadge({ market }: MarketBadgeProps) {
   if (!market)
     return <span className="py-3 font-monospace text-sm text-secondary">Select market</span>;

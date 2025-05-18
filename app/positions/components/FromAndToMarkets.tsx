@@ -59,6 +59,18 @@ type SortableHeaderProps = {
   className?: string;
 };
 
+/**
+ * Renders a sortable table header cell with a clickable label and sort direction indicator.
+ *
+ * Displays an up or down arrow icon if the column is currently sorted.
+ *
+ * @param label - The text label for the header cell.
+ * @param column - The column enum value associated with this header.
+ * @param currentSortColumn - The currently sorted column.
+ * @param currentSortDirection - The current sort direction (1 for ascending, -1 for descending).
+ * @param onClick - Callback invoked with the column enum when the header is clicked.
+ * @param className - Optional CSS class for the header cell.
+ */
 function SortableHeader({
   label,
   column,
@@ -85,6 +97,29 @@ function SortableHeader({
   );
 }
 
+/**
+ * Displays two interactive tables for managing market positions and selecting markets for rebalancing.
+ *
+ * Renders "Your Market Positions" and "Available Markets for Rebalancing" tables with filtering, sorting, pagination, and selection capabilities. Users can filter markets by ID or collateral, sort available markets by APY, total supply, or LLTV, and select or maximize positions for rebalancing actions.
+ *
+ * @param eligibleMarkets - List of all eligible markets with full details for risk indicators.
+ * @param fromMarkets - User's current market positions.
+ * @param toMarkets - Markets available for rebalancing.
+ * @param fromFilter - Current filter string for the "fromMarkets" table.
+ * @param toFilter - Current filter string for the "toMarkets" table.
+ * @param onFromFilterChange - Callback for updating the "fromMarkets" filter.
+ * @param onToFilterChange - Callback for updating the "toMarkets" filter.
+ * @param onFromMarketSelect - Callback when a market is selected in "fromMarkets".
+ * @param onToMarketSelect - Callback when a market is selected in "toMarkets".
+ * @param onSelectMax - Optional callback when the "Max" button is clicked for a market position.
+ * @param fromPagination - Pagination state and handlers for "fromMarkets".
+ * @param toPagination - Pagination state and handlers for "toMarkets".
+ * @param selectedFromMarketUniqueKey - Unique key of the currently selected "fromMarkets" row.
+ * @param selectedToMarketUniqueKey - Unique key of the currently selected "toMarkets" row.
+ *
+ * @remark
+ * The "Max" button in the "Your Market Positions" table is disabled if the maximum transferable amount is zero or less, reflecting both user supply and market liquidity. Sorting in the "Available Markets for Rebalancing" table is applied after filtering and before pagination.
+ */
 export function FromAndToMarkets({
   eligibleMarkets,
   fromMarkets,
