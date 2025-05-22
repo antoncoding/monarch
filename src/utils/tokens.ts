@@ -178,6 +178,12 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'sPin',
+    img: require('../imgs/tokens/sPinto.svg') as string,
+    decimals: 18,
+    networks: [{ chain: base, address: '0x00b174d66adA7d63789087F50A9b9e0e48446dc1' }],
+  },
+  {
     symbol: 'EURe',
     img: require('../imgs/tokens/eure.png') as string,
     decimals: 18,

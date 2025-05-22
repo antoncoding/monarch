@@ -177,7 +177,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     try {
       // Do not invalidate block numbers: keep the old block numbers
       // await queryClient.invalidateQueries({ queryKey: blockKeys.all });
-      
+
       // Invalidate positions initial data
       await queryClient.invalidateQueries({ queryKey: positionKeys.initialData(user ?? '') });
       // Invalidate positions enhanced data (invalidate all for this user)
