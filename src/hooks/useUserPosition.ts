@@ -60,7 +60,7 @@ const useUserPosition = (
 
       if (snapshot) {
         // Snapshot succeeded, try to use local market data first
-        const market = markets?.find((m) => m.uniqueKey === marketKey);
+        const market = markets?.find((m) => m.uniqueKey.toLowerCase() === marketKey.toLowerCase());
 
         if (market) {
           // Local market data found, construct position directly
