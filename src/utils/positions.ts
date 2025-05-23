@@ -19,6 +19,14 @@ export type PositionSnapshot = {
   collateral: string;
 };
 
+export type MarketSnapshot = {
+  totalSupplyAssets: string;
+  totalSupplyShares: string;
+  totalBorrowAssets: string;
+  totalBorrowShares: string;
+  liquidityAssets: string;
+};
+
 type PositionResponse = {
   position: {
     supplyAssets: string;
@@ -26,6 +34,16 @@ type PositionResponse = {
     borrowAssets: string;
     borrowShares: string;
     collateral: string;
+  } | null;
+};
+
+type MarketResponse = {
+  market: {
+    totalSupplyAssets: string;
+    totalSupplyShares: string;
+    totalBorrowAssets: string;
+    totalBorrowShares: string;
+    liquidityAssets: string;
   } | null;
 };
 
@@ -80,6 +98,58 @@ export async function fetchPositionSnapshot(
     };
   } catch (error) {
     console.error('Error fetching position snapshot:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches a market snapshot for a specific market and block number
+ *
+ * @param marketId - The unique ID of the market
+ * @param chainId - The chain ID of the network
+ * @param blockNumber - The block number to fetch the market at (0 for latest)
+ * @returns The market snapshot or null if there was an error
+ */
+export async function fetchMarketSnapshot(
+  marketId: string,
+  chainId: number,
+  blockNumber = 0,
+): Promise<MarketSnapshot | null> {
+  try {
+    console.log('fetchMarketSnapshot called', marketId, chainId, blockNumber);
+
+    // Fetch the market at the specified block number
+    const marketResponse = await fetch(
+      `/api/market/historical?` +
+        `marketId=${encodeURIComponent(marketId)}` +
+        `&chainId=${encodeURIComponent(chainId)}` +
+        (blockNumber ? `&blockNumber=${encodeURIComponent(blockNumber)}` : ''),
+    );
+
+    if (!marketResponse.ok) {
+      const errorData = (await marketResponse.json()) as { error?: string };
+      console.error('Failed to fetch market snapshot:', errorData);
+      return null;
+    }
+
+    const marketData = (await marketResponse.json()) as MarketResponse;
+
+    // If market is empty, return zeros
+    if (!marketData.market) {
+      return {
+        totalSupplyAssets: '0',
+        totalSupplyShares: '0',
+        totalBorrowAssets: '0',
+        totalBorrowShares: '0',
+        liquidityAssets: '0',
+      };
+    }
+
+    return {
+      ...marketData.market,
+    };
+  } catch (error) {
+    console.error('Error fetching market snapshot:', error);
     return null;
   }
 }

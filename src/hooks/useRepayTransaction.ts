@@ -17,6 +17,7 @@ type UseRepayTransactionProps = {
   withdrawAmount: bigint;
   repayAssets: bigint;
   repayShares: bigint;
+  onSuccess?: () => void;
 };
 
 export function useRepayTransaction({
@@ -25,6 +26,7 @@ export function useRepayTransaction({
   withdrawAmount,
   repayAssets,
   repayShares,
+  onSuccess,
 }: UseRepayTransactionProps) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'repaying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
@@ -95,6 +97,7 @@ export function useRepayTransaction({
       2,
       8,
     )}`,
+    onSuccess,
   });
 
   // Core transaction execution logic

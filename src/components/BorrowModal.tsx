@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { FaArrowRightArrowLeft } from 'react-icons/fa6';
 import { useAccount, useBalance } from 'wagmi';
-import useUserPosition from '@/hooks/useUserPosition';
-import { Market } from '@/utils/types';
+import { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndBorrow } from './Borrow/AddCollateralAndBorrow';
 import { WithdrawCollateralAndRepay } from './Borrow/WithdrawCollateralAndRepay';
 import { TokenIcon } from './TokenIcon';
@@ -12,18 +11,21 @@ type BorrowModalProps = {
   market: Market;
   onClose: () => void;
   oraclePrice: bigint;
+  refetch?: () => void;
+  isRefreshing?: boolean;
+  position: MarketPosition | null;
 };
 
-export function BorrowModal({ market, onClose, oraclePrice }: BorrowModalProps): JSX.Element {
+export function BorrowModal({
+  market,
+  onClose,
+  oraclePrice,
+  refetch,
+  isRefreshing = false,
+  position,
+}: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
   const { address: account } = useAccount();
-
-  // Get user positions to calculate current LTV
-  const { position: currentPosition, refetch: refetchPosition } = useUserPosition(
-    account,
-    market.morphoBlue.chain.id,
-    market.uniqueKey,
-  );
 
   // Get token balances
   const { data: loanTokenBalance } = useBalance({
@@ -44,9 +46,8 @@ export function BorrowModal({ market, onClose, oraclePrice }: BorrowModalProps):
   });
 
   const hasPosition =
-    currentPosition &&
-    (BigInt(currentPosition.state.borrowAssets) > 0n ||
-      BigInt(currentPosition.state.collateral) > 0n);
+    position &&
+    (BigInt(position.state.borrowAssets) > 0n || BigInt(position.state.collateral) > 0n);
 
   return (
     <div
@@ -111,21 +112,23 @@ export function BorrowModal({ market, onClose, oraclePrice }: BorrowModalProps):
           {mode === 'borrow' ? (
             <AddCollateralAndBorrow
               market={market}
-              currentPosition={currentPosition}
-              refetchPosition={refetchPosition}
+              currentPosition={position}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
               oraclePrice={oraclePrice}
+              onSuccess={refetch}
+              isRefreshing={isRefreshing}
             />
           ) : (
             <WithdrawCollateralAndRepay
               market={market}
-              currentPosition={currentPosition}
-              refetchPosition={refetchPosition}
+              currentPosition={position}
               loanTokenBalance={loanTokenBalance?.value}
               collateralTokenBalance={collateralTokenBalance?.value}
               ethBalance={ethBalance?.value}
               oraclePrice={oraclePrice}
+              onSuccess={refetch}
+              isRefreshing={isRefreshing}
             />
           )}
         </div>

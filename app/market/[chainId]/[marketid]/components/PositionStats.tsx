@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card } from '@nextui-org/card';
 import { Switch } from '@nextui-org/switch';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/common/Spinner';
@@ -13,6 +14,8 @@ type PositionStatsProps = {
   userPosition: MarketPosition | null;
   positionLoading: boolean;
   cardStyle: string;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
 function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
@@ -28,6 +31,8 @@ export function PositionStats({
   userPosition,
   positionLoading,
   cardStyle,
+  onRefresh,
+  isRefreshing = false,
 }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition ? 'user' : 'global');
@@ -187,17 +192,30 @@ export function PositionStats({
     <Card className={cardStyle}>
       <div className="flex items-center justify-between p-4 py-3">
         <span className="text-xl">{viewMode === 'global' ? 'Global Stats' : 'Your Position'}</span>
-        <Switch
-          defaultSelected={viewMode === 'user'}
-          size="sm"
-          color="primary"
-          classNames={{
-            wrapper: 'mx-0',
-            thumbIcon: 'p-0 mr-0',
-          }}
-          onChange={toggleView}
-          thumbIcon={ThumbIcon}
-        />
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="rounded-full p-1 transition-opacity hover:opacity-70"
+              disabled={isRefreshing}
+              aria-label="Refresh position and market data"
+            >
+              <ReloadIcon className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          )}
+          <Switch
+            defaultSelected={viewMode === 'user'}
+            size="sm"
+            color="primary"
+            classNames={{
+              wrapper: 'mx-0',
+              thumbIcon: 'p-0 mr-0',
+            }}
+            onChange={toggleView}
+            thumbIcon={ThumbIcon}
+          />
+        </div>
       </div>
       <div className="px-4 py-3">{renderStats()}</div>
     </Card>

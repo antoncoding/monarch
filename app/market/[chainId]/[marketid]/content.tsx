@@ -76,12 +76,14 @@ function MarketContent() {
     calculateTimeRange('7d'), // Initialize based on default timeframe
   );
   const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('USD');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 4. Data fetching hooks - use unified time range
   const {
     data: market,
     isLoading: isMarketLoading,
     error: marketError,
+    refetch: refetchMarket,
   } = useMarketData(marketid as string, network);
 
   const {
@@ -98,11 +100,11 @@ function MarketContent() {
 
   const { address } = useAccount();
 
-  const { position: userPosition, loading: positionLoading } = useUserPositions(
-    address,
-    network,
-    marketid as string,
-  );
+  const {
+    position: userPosition,
+    loading: positionLoading,
+    refetch: refetchUserPosition,
+  } = useUserPositions(address, network, marketid as string);
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
@@ -112,6 +114,23 @@ function MarketContent() {
       BigInt(10 ** market.loanAsset.decimals);
     return formatUnits(adjusted, 36);
   }, [oraclePrice, market]);
+
+  // Unified refetch function for both market and user position
+  const handleRefreshAll = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchMarket(), refetchUserPosition()]);
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetchMarket, refetchUserPosition]);
+
+  // Non-async wrapper for components that expect void returns
+  const handleRefreshAllSync = useCallback(() => {
+    void handleRefreshAll();
+  }, [handleRefreshAll]);
 
   // Unified handler for timeframe changes
   const handleTimeframeChange = useCallback((timeframe: '1d' | '7d' | '30d') => {
@@ -189,6 +208,7 @@ function MarketContent() {
             onClose={() => setShowSupplyModal(false)}
             position={userPosition}
             isMarketPage
+            refetch={handleRefreshAllSync}
           />
         )}
 
@@ -197,6 +217,9 @@ function MarketContent() {
             market={market}
             onClose={() => setShowBorrowModal(false)}
             oraclePrice={oraclePrice}
+            refetch={handleRefreshAllSync}
+            isRefreshing={isRefreshing}
+            position={userPosition}
           />
         )}
 
@@ -343,6 +366,8 @@ function MarketContent() {
             userPosition={userPosition}
             positionLoading={positionLoading}
             cardStyle={cardStyle}
+            onRefresh={handleRefreshAllSync}
+            isRefreshing={isRefreshing}
           />
         </div>
 

@@ -16,12 +16,14 @@ type UseBorrowTransactionProps = {
   market: Market;
   collateralAmount: bigint;
   borrowAmount: bigint;
+  onSuccess?: () => void;
 };
 
 export function useBorrowTransaction({
   market,
   collateralAmount,
   borrowAmount,
+  onSuccess,
 }: UseBorrowTransactionProps) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'borrowing'>('approve');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
@@ -65,6 +67,7 @@ export function useBorrowTransaction({
     chainId,
     pendingDescription: `Borrowing from market ${market.uniqueKey.slice(2, 8)}...`,
     successDescription: `Successfully borrowed from market ${market.uniqueKey.slice(2, 8)}`,
+    onSuccess,
   });
 
   // Core transaction execution logic

@@ -68,7 +68,7 @@ export function SupplyModalV2({
                 onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
                 className="flex items-center gap-1 rounded-full bg-white/5 px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-white/10"
               >
-                <FaArrowRightArrowLeft className="h-3.5 w-3.5 rotate-90" />
+                <FaArrowRightArrowLeft className="h-3 w-3 rotate-90" />
                 {mode === 'supply' ? 'Withdraw' : 'Supply'}
               </button>
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
@@ -20,19 +20,21 @@ import { getLTVColor, getLTVProgressColor } from './helpers';
 type BorrowLogicProps = {
   market: Market;
   currentPosition: MarketPosition | null;
-  refetchPosition: (onSuccess?: () => void) => void;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
   oraclePrice: bigint;
+  onSuccess?: () => void;
+  isRefreshing?: boolean;
 };
 
 export function AddCollateralAndBorrow({
   market,
   currentPosition,
-  refetchPosition,
   collateralTokenBalance,
   ethBalance,
   oraclePrice,
+  onSuccess,
+  isRefreshing = false,
 }: BorrowLogicProps): JSX.Element {
   // State for collateral and borrow amounts
   const [collateralAmount, setCollateralAmount] = useState<bigint>(BigInt(0));
@@ -42,9 +44,6 @@ export function AddCollateralAndBorrow({
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const { isConnected } = useAccount();
-
-  // Add a loading state for the refresh button
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);
@@ -75,6 +74,7 @@ export function AddCollateralAndBorrow({
     market,
     collateralAmount,
     borrowAmount,
+    onSuccess,
   });
 
   // Calculate current and new LTV whenever relevant values change
@@ -111,18 +111,15 @@ export function AddCollateralAndBorrow({
     }
   }, [currentPosition, collateralAmount, borrowAmount, oraclePrice]);
 
-  // Function to refresh position data
-  const handleRefreshPosition = () => {
-    setIsRefreshing(true);
+  // Function to handle manual refresh
+  const handleRefresh = useCallback(() => {
+    if (!onSuccess) return;
     try {
-      refetchPosition(() => {
-        setIsRefreshing(false);
-      });
+      onSuccess();
     } catch (error) {
-      console.error('Failed to refresh position:', error);
-      setIsRefreshing(false);
+      console.error('Failed to refresh data:', error);
     }
-  };
+  }, [onSuccess]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -146,15 +143,17 @@ export function AddCollateralAndBorrow({
           <div className="bg-hovered mb-5 rounded-sm p-4">
             <div className="mb-3 flex items-center justify-between font-zen text-base">
               <span>My Borrow</span>
-              <button
-                type="button"
-                onClick={handleRefreshPosition}
-                className="rounded-full p-1 transition-opacity hover:opacity-70"
-                disabled={isRefreshing}
-                aria-label="Refresh position data"
-              >
-                <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </button>
+              {onSuccess && (
+                <button
+                  type="button"
+                  onClick={() => void handleRefresh()}
+                  className="rounded-full p-1 transition-opacity hover:opacity-70"
+                  disabled={isRefreshing}
+                  aria-label="Refresh position data"
+                >
+                  <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              )}
             </div>
 
             {/* Current Position Stats */}

@@ -17,19 +17,21 @@ import { getLTVColor, getLTVProgressColor } from './helpers';
 type WithdrawCollateralAndRepayProps = {
   market: Market;
   currentPosition: MarketPosition | null;
-  refetchPosition: (onSuccess?: () => void) => void;
   loanTokenBalance: bigint | undefined;
   collateralTokenBalance: bigint | undefined;
   ethBalance: bigint | undefined;
   oraclePrice: bigint;
+  onSuccess?: () => void;
+  isRefreshing?: boolean;
 };
 
 export function WithdrawCollateralAndRepay({
   market,
   currentPosition,
-  refetchPosition,
   loanTokenBalance,
   oraclePrice,
+  onSuccess,
+  isRefreshing = false,
 }: WithdrawCollateralAndRepayProps): JSX.Element {
   // State for withdraw and repay amounts
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -43,9 +45,6 @@ export function WithdrawCollateralAndRepay({
   const [repayInputError, setRepayInputError] = useState<string | null>(null);
 
   const { isConnected } = useAccount();
-
-  // Add a loading state for the refresh button
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);
@@ -76,6 +75,7 @@ export function WithdrawCollateralAndRepay({
     withdrawAmount,
     repayAssets,
     repayShares,
+    onSuccess,
   });
 
   // if max is clicked, set the repayShares to max shares
@@ -136,18 +136,15 @@ export function WithdrawCollateralAndRepay({
     }
   }, [currentPosition, withdrawAmount, repayAssets, oraclePrice]);
 
-  // Function to refresh position data
-  const handleRefreshPosition = () => {
-    setIsRefreshing(true);
+  // Function to handle manual refresh
+  const handleRefresh = useCallback(() => {
+    if (!onSuccess) return;
     try {
-      refetchPosition(() => {
-        setIsRefreshing(false);
-      });
+      onSuccess();
     } catch (error) {
-      console.error('Failed to refresh position:', error);
-      setIsRefreshing(false);
+      console.error('Failed to refresh data:', error);
     }
-  };
+  }, [onSuccess]);
 
   return (
     <div className="bg-surface relative w-full max-w-lg rounded-lg">
@@ -156,15 +153,17 @@ export function WithdrawCollateralAndRepay({
         <div className="bg-hovered mb-5 rounded-sm p-4">
           <div className="mb-3 flex items-center justify-between font-zen text-base">
             <span>My Borrow</span>
-            <button
-              type="button"
-              onClick={handleRefreshPosition}
-              className="rounded-full p-1 transition-opacity hover:opacity-70"
-              disabled={isRefreshing}
-              aria-label="Refresh position data"
-            >
-              <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            </button>
+            {onSuccess && (
+              <button
+                type="button"
+                onClick={() => void handleRefresh()}
+                className="rounded-full p-1 transition-opacity hover:opacity-70"
+                disabled={isRefreshing}
+                aria-label="Refresh position data"
+              >
+                <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+            )}
           </div>
 
           {/* Current Position Stats */}
