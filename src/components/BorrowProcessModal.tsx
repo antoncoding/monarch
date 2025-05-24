@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { BorrowStepType } from '@/hooks/useBorrowTransaction';
 import { Market } from '@/utils/types';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 
@@ -13,7 +14,7 @@ type MarketBorrow = {
 
 type BorrowProcessModalProps = {
   borrow: MarketBorrow;
-  currentStep: 'approve' | 'signing' | 'borrowing';
+  currentStep: BorrowStepType;
   onClose: () => void;
   tokenSymbol: string;
   useEth: boolean;
@@ -32,7 +33,7 @@ export function BorrowProcessModal({
     if (useEth) {
       return [
         {
-          key: 'borrowing',
+          key: 'execute',
           label: 'Confirm Borrow',
           detail: 'Confirm transaction in wallet to complete the borrow',
         },
@@ -42,17 +43,22 @@ export function BorrowProcessModal({
     if (usePermit2) {
       return [
         {
-          key: 'approve',
+          key: 'approve_permit2',
           label: 'Authorize Permit2',
           detail: `This one-time approval makes sure you don't need to send approval tx again in the future.`,
         },
         {
-          key: 'signing',
-          label: 'Sign message in wallet',
+          key: 'authorize_bundler_sig',
+          label: 'Authorize Morpho Bundler (Signature)',
+          detail: 'Sign a message to authorize the Morpho bundler if needed.',
+        },
+        {
+          key: 'sign_permit',
+          label: 'Sign Token Permit',
           detail: 'Sign a Permit2 signature to authorize the collateral',
         },
         {
-          key: 'borrowing',
+          key: 'execute',
           label: 'Confirm Borrow',
           detail: 'Confirm transaction in wallet to complete the borrow',
         },
@@ -62,12 +68,17 @@ export function BorrowProcessModal({
     // Standard ERC20 approval flow
     return [
       {
-        key: 'approve',
-        label: 'Approve Collateral',
+        key: 'authorize_bundler_tx',
+        label: 'Authorize Morpho Bundler (Transaction)',
+        detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+      },
+      {
+        key: 'approve_token',
+        label: `Approve ${tokenSymbol}`,
         detail: `Approve ${tokenSymbol} for spending`,
       },
       {
-        key: 'borrowing',
+        key: 'execute',
         label: 'Confirm Borrow',
         detail: 'Confirm transaction in wallet to complete the borrow',
       },
@@ -77,6 +88,10 @@ export function BorrowProcessModal({
   const getStepStatus = (stepKey: string) => {
     const currentIndex = steps.findIndex((step) => step.key === currentStep);
     const stepIndex = steps.findIndex((step) => step.key === stepKey);
+
+    if (currentIndex === -1 || stepIndex === -1) {
+      return 'undone';
+    }
 
     if (stepIndex < currentIndex) {
       return 'done';
