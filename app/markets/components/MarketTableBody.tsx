@@ -102,7 +102,7 @@ export function MarketTableBody({
               />
               <td data-label="Oracle" className="z-50">
                 <div className="flex justify-center">
-                  <OracleVendorBadge oracleData={item.oracle.data} />
+                  <OracleVendorBadge oracleData={item.oracle?.data} />
                 </div>
               </td>
               <td data-label="LLTV" className="z-50">
