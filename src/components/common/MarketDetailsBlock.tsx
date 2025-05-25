@@ -85,7 +85,7 @@ export function MarketDetailsBlock({
             {!isExpanded && (
               <div className="flex items-center gap-2 text-xs opacity-70">
                 <span>·</span>
-                <OracleVendorBadge oracleData={market.oracle.data} showText={false} useTooltip />
+                <OracleVendorBadge oracleData={market.oracle?.data} showText={false} useTooltip />
                 <span>·</span>
                 <span>{getAPY()}% APY</span>
                 <span>·</span>
@@ -113,7 +113,7 @@ export function MarketDetailsBlock({
                 <div className="mb-4 flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <OracleVendorBadge
-                      oracleData={market.oracle.data}
+                      oracleData={market.oracle?.data}
                       showText
                       useTooltip={false}
                     />

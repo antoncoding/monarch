@@ -113,7 +113,7 @@ const fetchSourceMarketKeys = async (user: string): Promise<PositionMarket[]> =>
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const queryClient = useQueryClient();
-  const { allMarkets } = useMarkets(); // Get markets list (loading state not directly used for enabling 2nd query)
+  const { allMarkets } = useMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate

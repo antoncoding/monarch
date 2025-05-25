@@ -311,7 +311,7 @@ export type Market = {
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
 
-  oracle: {
+  oracle?: {
     data: MorphoChainlinkOracleData;
   };
 };

@@ -26,7 +26,7 @@ const useUserPosition = (
 ) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
-  const { markets } = useMarkets();
+  const { allMarkets: markets } = useMarkets();
 
   const {
     data,

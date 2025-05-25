@@ -63,7 +63,7 @@ export function RiskSelection() {
 
         // Check if oracle is selected (if any are selected)
         if (selectedOracles.length > 0) {
-          const { vendors } = parseOracleVendors(market.oracle.data);
+          const { vendors } = parseOracleVendors(market.oracle?.data);
 
           // if vendors is empty, push "unknown oracle" into list that needed to be selected
           if (vendors.length === 0) {

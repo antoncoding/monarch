@@ -10,6 +10,7 @@ import {
   Input,
   Divider,
 } from '@nextui-org/react';
+import { useMarkets } from '@/hooks/useMarkets';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
@@ -68,6 +69,7 @@ export default function MarketSettingsModal({
   onEntriesPerPageChange,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
 
   const handleEntriesChange = (value: number) => {
     onEntriesPerPageChange(value);
@@ -127,6 +129,26 @@ export default function MarketSettingsModal({
                     color="primary"
                   />
                 </SettingItem>
+                <Divider />
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-grow flex-col gap-1 pr-2">
+                    <h4 className="text-base font-medium text-red-600 dark:text-red-400">
+                      Show Unwhitelisted Markets
+                    </h4>
+                    <p className="text-xs text-secondary">
+                      Display markets that haven't been verified or whitelisted. These may have
+                      additional risks.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-1">
+                    <Switch
+                      isSelected={showUnwhitelistedMarkets}
+                      onValueChange={setShowUnwhitelistedMarkets}
+                      size="sm"
+                      color="danger"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* --- USD Value Filters Section --- */}

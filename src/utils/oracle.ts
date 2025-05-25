@@ -25,7 +25,9 @@ export const OracleVendorIcons: Record<OracleVendors, string> = {
   [OracleVendors.Unknown]: '',
 };
 
-export function parseOracleVendors(oracleData: MorphoChainlinkOracleData | null): VendorInfo {
+export function parseOracleVendors(
+  oracleData: MorphoChainlinkOracleData | null | undefined,
+): VendorInfo {
   if (!oracleData) return { vendors: [], isUnknown: false };
 
   if (

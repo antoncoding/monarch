@@ -316,7 +316,7 @@ function MarketContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span>Vendor:</span>
-                  {market.oracle.data && (
+                  {market.oracle?.data && (
                     <Link
                       href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
                       target="_blank"
@@ -336,7 +336,7 @@ function MarketContent() {
                 </div>
                 <div>
                   <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
-                  {market.oracle.data && (
+                  {market.oracle?.data && (
                     <div>
                       <OracleFeedInfo
                         feed={market.oracle.data.baseFeedOne}

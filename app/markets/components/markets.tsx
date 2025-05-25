@@ -233,7 +233,7 @@ export default function Markets() {
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
-      const { vendors } = parseOracleVendors(market.oracle.data);
+      const { vendors } = parseOracleVendors(market.oracle?.data);
       const vendorsName = vendors.join(',');
       return (
         market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||

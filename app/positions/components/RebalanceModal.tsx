@@ -42,7 +42,8 @@ export function RebalanceModal({
   const toast = useStyledToast();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { markets: allMarkets } = useMarkets();
+  // Use computed markets based on user setting
+  const { markets } = useMarkets();
   const {
     rebalanceActions,
     addRebalanceAction,
@@ -56,12 +57,12 @@ export function RebalanceModal({
   const toPagination = usePagination();
 
   const eligibleMarkets = useMemo(() => {
-    return allMarkets.filter(
+    return markets.filter(
       (market) =>
         market.loanAsset.address === groupedPosition.loanAssetAddress &&
         market.morphoBlue.chain.id === groupedPosition.chainId,
     );
-  }, [allMarkets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
+  }, [markets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
   const getPendingDelta = useCallback(
     (marketUniqueKey: string) => {
@@ -200,12 +201,12 @@ export function RebalanceModal({
   const handleAddAction = useCallback(() => {
     if (!validateInputs()) return;
 
-    const markets = getMarkets();
-    if (!markets) {
+    const fromToMarkets = getMarkets();
+    if (!fromToMarkets) {
       return;
     }
 
-    const { fromMarket, toMarket } = markets;
+    const { fromMarket, toMarket } = fromToMarkets;
     if (!checkBalance()) return;
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);

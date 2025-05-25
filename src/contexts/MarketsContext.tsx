@@ -13,19 +13,23 @@ import { getMarketDataSource } from '@/config/dataSources';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 // Export the type definition
 export type MarketsContextType = {
-  markets: Market[]; // Whitelisted markets only (backward compatible)
-  allMarkets: Market[]; // All markets (whitelisted and unwhitelisted) - NEW
+  markets: Market[]; // Computed based on showUnwhitelistedMarkets setting
+  whitelistedMarkets: Market[]; // Always whitelisted markets only
+  allMarkets: Market[]; // All markets (whitelisted and unwhitelisted)
   loading: boolean;
   isRefetching: boolean;
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
   refresh: () => Promise<void>;
+  showUnwhitelistedMarkets: boolean;
+  setShowUnwhitelistedMarkets: (value: boolean) => void;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
@@ -37,9 +41,15 @@ type MarketsProviderProps = {
 export function MarketsProvider({ children }: MarketsProviderProps) {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
-  const [markets, setMarkets] = useState<Market[]>([]);
+  const [whitelistedMarkets, setWhitelistedMarkets] = useState<Market[]>([]);
   const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
+
+  // Global setting for showing unwhitelisted markets
+  const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage(
+    'showUnwhitelistedMarkets',
+    false,
+  );
 
   const {
     loading: liquidationsLoading,
@@ -47,6 +57,11 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     error: liquidationsError,
     refetch: refetchLiquidations,
   } = useLiquidations();
+
+  // Computed markets based on the setting
+  const markets = useMemo(() => {
+    return showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
+  }, [showUnwhitelistedMarkets, allMarkets, whitelistedMarkets]);
 
   const fetchMarkets = useCallback(
     async (isRefetch = false) => {
@@ -114,8 +129,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         setAllMarkets(processedMarkets);
 
         // Filter for whitelisted markets only
-        const whitelistedMarkets = processedMarkets.filter((market) => market.whitelisted);
-        setMarkets(whitelistedMarkets);
+        const whitelisted = processedMarkets.filter((market) => market.whitelisted);
+        setWhitelistedMarkets(whitelisted);
 
         // If any network fetch failed, set the overall error state
         if (fetchErrors.length > 0) {
@@ -138,10 +153,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   );
 
   useEffect(() => {
-    if (!liquidationsLoading && markets.length === 0) {
+    if (!liquidationsLoading && whitelistedMarkets.length === 0) {
       fetchMarkets().catch(console.error);
     }
-  }, [liquidationsLoading, fetchMarkets, markets.length]);
+  }, [liquidationsLoading, fetchMarkets, whitelistedMarkets.length]);
 
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
@@ -158,7 +173,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    setMarkets([]);
+    setWhitelistedMarkets([]);
     setAllMarkets([]);
     setError(null);
     try {
@@ -179,14 +194,28 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const contextValue = useMemo(
     () => ({
       markets,
+      whitelistedMarkets,
       allMarkets,
       loading: isLoading,
       isRefetching,
       error: combinedError,
       refetch,
       refresh,
+      showUnwhitelistedMarkets,
+      setShowUnwhitelistedMarkets,
     }),
-    [markets, allMarkets, isLoading, isRefetching, combinedError, refetch, refresh],
+    [
+      markets,
+      whitelistedMarkets,
+      allMarkets,
+      isLoading,
+      isRefetching,
+      combinedError,
+      refetch,
+      refresh,
+      showUnwhitelistedMarkets,
+      setShowUnwhitelistedMarkets,
+    ],
   );
 
   return <MarketsContext.Provider value={contextValue}>{children}</MarketsContext.Provider>;

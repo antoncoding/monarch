@@ -42,7 +42,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { markets } = useMarkets();
+  const { allMarkets } = useMarkets();
 
   const { loading, fetchTransactions } = useUserTransactions();
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,11 +54,11 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
   // Get unique assets with their chain IDs
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
-    positions.forEach((pos, idx) => {
-      const market = markets.find((m) => m.uniqueKey === pos.market.uniqueKey);
+    positions.forEach((pos) => {
+      const market = allMarkets.find((m) => m.uniqueKey === pos.market.uniqueKey);
       if (!market) return;
 
-      const key = `${market.loanAsset.symbol}-${market.morphoBlue.chain.id}-${idx}`;
+      const key = `${market.loanAsset.address}-${market.morphoBlue.chain.id}`;
       if (!assetMap.has(key)) {
         assetMap.set(key, {
           symbol: market.loanAsset.symbol,
@@ -69,20 +69,20 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
       }
     });
     return Array.from(assetMap.values());
-  }, [positions, markets]);
+  }, [positions, allMarkets]);
 
   // Get filtered market IDs based on selected asset
   const filteredMarketIds = useMemo(() => {
-    if (!selectedAsset) return markets.map((m) => m.uniqueKey);
+    if (!selectedAsset) return allMarkets.map((m) => m.uniqueKey);
 
-    return markets
+    return allMarkets
       .filter(
         (m) =>
           m.loanAsset.symbol === selectedAsset.symbol &&
           m.morphoBlue.chain.id === selectedAsset.chainId,
       )
       .map((m) => m.uniqueKey);
-  }, [selectedAsset, markets]);
+  }, [selectedAsset, allMarkets]);
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -298,7 +298,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
           <TableBody emptyContent="No transactions found">
             {history.map((tx, index) => {
               // safely cast here because we only fetch txs for unique id in "markets"
-              const market = markets.find(
+              const market = allMarkets.find(
                 (m) => m.uniqueKey === tx.data.market.uniqueKey,
               ) as Market;
 

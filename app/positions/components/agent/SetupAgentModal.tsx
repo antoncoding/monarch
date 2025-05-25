@@ -80,7 +80,8 @@ export function SetupAgentModal({
 
   const { data: positions } = useUserPositions(account, true);
 
-  const { markets: allMarkets } = useMarkets();
+  // Use computed markets based on user setting
+  const { markets } = useMarkets();
 
   const currentStepIndex = SETUP_STEPS.findIndex((s) => s.id === currentStep);
 
@@ -197,7 +198,7 @@ export function SetupAgentModal({
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
                   positions={positions}
-                  allMarkets={allMarkets.filter((m) => isAgentAvailable(m.morphoBlue.chain.id))}
+                  allMarkets={markets.filter((m) => isAgentAvailable(m.morphoBlue.chain.id))}
                   userRebalancerInfos={userRebalancerInfos}
                   pendingCaps={pendingCaps}
                   addToPendingCaps={addToPendingCaps}

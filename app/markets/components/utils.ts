@@ -89,7 +89,10 @@ export function applyFilterAndSort(
         return false;
       }
 
-      if (!showUnknownOracle && parseOracleVendors(market.oracle.data).isUnknown) {
+      if (
+        !showUnknownOracle &&
+        (!market.oracle || parseOracleVendors(market.oracle.data).isUnknown)
+      ) {
         return false;
       }
 
@@ -101,7 +104,7 @@ export function applyFilterAndSort(
         return false;
       }
 
-      if (selectedOracles.length > 0) {
+      if (selectedOracles.length > 0 && !!market.oracle) {
         const marketOracles = parseOracleVendors(market.oracle.data).vendors;
         if (!marketOracles.some((oracle) => selectedOracles.includes(oracle))) {
           return false;

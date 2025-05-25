@@ -3,6 +3,7 @@
 import { Switch } from '@nextui-org/react';
 import Header from '@/components/layout/header/Header';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMarkets } from '@/hooks/useMarkets';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
@@ -11,6 +12,8 @@ export default function SettingsPage() {
     false,
   );
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -91,6 +94,33 @@ export default function SettingsPage() {
                   onValueChange={setShowUnknownOracle}
                   size="sm"
                   color="primary"
+                  className="min-w-[64px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Danger Zone Section */}
+          <div className="flex flex-col gap-4 py-8">
+            <h2 className="text font-monospace text-secondary">Danger Zone</h2>
+
+            <div className="flex flex-col gap-6 rounded border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/20">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-red-600 dark:text-red-400">
+                    Show Unwhitelisted Markets
+                  </h3>
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    Display markets that haven't been verified or whitelisted by the Morpho team.
+                    These markets may have additional risks including unverified oracles, tokens, or
+                    other security concerns.
+                  </p>
+                </div>
+                <Switch
+                  defaultSelected={showUnwhitelistedMarkets}
+                  onValueChange={setShowUnwhitelistedMarkets}
+                  size="sm"
+                  color="danger"
                   className="min-w-[64px]"
                 />
               </div>

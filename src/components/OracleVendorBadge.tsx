@@ -6,7 +6,7 @@ import { OracleVendorIcons, OracleVendors, parseOracleVendors } from '@/utils/or
 import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
-  oracleData: MorphoChainlinkOracleData | null;
+  oracleData: MorphoChainlinkOracleData | null | undefined;
   useTooltip?: boolean;
   showText?: boolean;
 };
