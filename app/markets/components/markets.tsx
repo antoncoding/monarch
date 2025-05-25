@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useDisclosure } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
@@ -100,10 +100,25 @@ export default function Markets() {
 
   const { allTokens, findToken } = useTokens();
 
-  const [usdFilters, setUsdFilters] = useState({
-    minSupply: '',
-    minBorrow: '',
-  });
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, '');
+  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
+
+  // Create memoized usdFilters object from individual localStorage values to prevent re-renders
+  const usdFilters = useMemo(
+    () => ({
+      minSupply: usdMinSupply,
+      minBorrow: usdMinBorrow,
+    }),
+    [usdMinSupply, usdMinBorrow],
+  );
+
+  const setUsdFilters = useCallback(
+    (filters: { minSupply: string; minBorrow: string }) => {
+      setUsdMinSupply(filters.minSupply);
+      setUsdMinBorrow(filters.minBorrow);
+    },
+    [setUsdMinSupply, setUsdMinBorrow],
+  );
 
   useEffect(() => {
     const currentParams = searchParams.toString();

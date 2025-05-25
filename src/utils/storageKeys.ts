@@ -6,6 +6,8 @@ export const MarketFavoritesKey = 'monarch_marketsFavorites';
 export const MarketEntriesPerPageKey = 'monarch_marketsEntriesPerPage';
 export const MarketsShowUnknownKey = 'monarch_marketsShowUnknown';
 export const MarketsShowUnknownOracleKey = 'monarch_marketsShowUnknownOracle';
+export const MarketsUsdMinSupplyKey = 'monarch_marketsUsdMinSupply';
+export const MarketsUsdMinBorrowKey = 'monarch_marketsUsdMinBorrow';
 
 export const PositionsShowEmptyKey = 'positions:show-empty';
 export const PositionsShowCollateralExposureKey = 'positions:show-collateral-exposure';
