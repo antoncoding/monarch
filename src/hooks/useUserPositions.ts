@@ -113,7 +113,7 @@ const fetchSourceMarketKeys = async (user: string): Promise<PositionMarket[]> =>
 
 const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const queryClient = useQueryClient();
-  const { markets } = useMarkets(); // Get markets list (loading state not directly used for enabling 2nd query)
+  const { allMarkets } = useMarkets(); // Get markets list (loading state not directly used for enabling 2nd query)
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate
@@ -146,7 +146,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
       // console.log(`[Positions] Query 1: Final unique keys count: ${finalMarketKeys.length}`);
       return { finalMarketKeys };
     },
-    enabled: !!user && markets.length > 0,
+    enabled: !!user && allMarkets.length > 0,
     staleTime: 0,
   });
 
@@ -171,7 +171,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
       // Find market details using the main `markets` list from context
       const allMarketsToFetch: MarketToFetch[] = finalMarketKeys
         .map((marketInfo) => {
-          const marketDetails = markets.find(
+          const marketDetails = allMarkets.find(
             (m: Market) =>
               m.uniqueKey?.toLowerCase() === marketInfo.marketUniqueKey.toLowerCase() &&
               m.morphoBlue?.chain?.id === marketInfo.chainId,

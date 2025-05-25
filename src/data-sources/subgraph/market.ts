@@ -244,6 +244,7 @@ const transformSubgraphMarketToMarket = (
     lltv: lltv,
     irmAddress: irmAddress as Address,
     collateralPrice: inputTokenPriceUSD,
+    whitelisted: true, // All subgraph markets are considered whitelisted
     loanAsset: loanAsset,
     collateralAsset: collateralAsset,
     state: {

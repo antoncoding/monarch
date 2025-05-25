@@ -19,7 +19,8 @@ import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 // Export the type definition
 export type MarketsContextType = {
-  markets: Market[];
+  markets: Market[]; // Whitelisted markets only (backward compatible)
+  allMarkets: Market[]; // All markets (whitelisted and unwhitelisted) - NEW
   loading: boolean;
   isRefetching: boolean;
   error: unknown | null;
@@ -37,6 +38,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const [loading, setLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
   const [markets, setMarkets] = useState<Market[]>([]);
+  const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
   const {
@@ -94,9 +96,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         // Existing filters seem appropriate
         const filtered = combinedMarkets
           .filter((market) => market.collateralAsset != undefined)
-          .filter(
-            (market) => market.warnings.find((w) => w.type === 'not_whitelisted') === undefined,
-          )
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id)); // Keep this filter
 
         const processedMarkets = filtered.map((market) => {
@@ -111,7 +110,12 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           };
         });
 
-        setMarkets(processedMarkets);
+        // Set all markets (including unwhitelisted)
+        setAllMarkets(processedMarkets);
+
+        // Filter for whitelisted markets only
+        const whitelistedMarkets = processedMarkets.filter((market) => market.whitelisted);
+        setMarkets(whitelistedMarkets);
 
         // If any network fetch failed, set the overall error state
         if (fetchErrors.length > 0) {
@@ -155,6 +159,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const refresh = useCallback(async () => {
     setLoading(true);
     setMarkets([]);
+    setAllMarkets([]);
     setError(null);
     try {
       refetchLiquidations();
@@ -174,13 +179,14 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const contextValue = useMemo(
     () => ({
       markets,
+      allMarkets,
       loading: isLoading,
       isRefetching,
       error: combinedError,
       refetch,
       refresh,
     }),
-    [markets, isLoading, isRefetching, combinedError, refetch, refresh],
+    [markets, allMarkets, isLoading, isRefetching, combinedError, refetch, refresh],
   );
 
   return <MarketsContext.Provider value={contextValue}>{children}</MarketsContext.Provider>;

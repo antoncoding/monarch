@@ -266,6 +266,7 @@ export type Market = {
   irmAddress: string;
   oracleAddress: string;
   collateralPrice: string;
+  whitelisted: boolean;
   morphoBlue: {
     id: string;
     address: string;

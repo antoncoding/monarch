@@ -119,8 +119,8 @@ export const marketFragment = `
 `;
 
 export const marketsQuery = `
-  query getMarkets($first: Int, $where: MarketFilters) {
-    markets(first: $first, where: $where) {
+  query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
       items {
         ...MarketFields
       }
