@@ -3,6 +3,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { morphoGraphqlFetcher } from './fetchers';
+import { blacklistTokens } from '@/utils/tokens';
 
 type MarketGraphQLResponse = {
   data: {
@@ -73,6 +74,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
         skip,
         where: {
           chainId_in: [network],
+
           // Remove whitelisted filter to fetch all markets
           // Add other potential filters to 'where' if needed in the future
         },
@@ -116,7 +118,13 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
     console.log(
       `Completed fetching all markets for network ${network}. Total queries: ${queryCount}, Total markets: ${allMarkets.length}`,
     );
-    return allMarkets;
+
+    // final filter: remove scam markets
+    return allMarkets.filter(
+      (market) =>
+        !blacklistTokens.includes(market.collateralAsset?.address.toLowerCase() ?? '') &&
+        !blacklistTokens.includes(market.loanAsset?.address.toLowerCase() ?? ''),
+    );
   } catch (error) {
     console.error(`Error fetching markets via Morpho API for network ${network}:`, error);
     throw error;
