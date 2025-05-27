@@ -1,9 +1,9 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
+import { blacklistTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { morphoGraphqlFetcher } from './fetchers';
-import { blacklistTokens } from '@/utils/tokens';
 
 type MarketGraphQLResponse = {
   data: {

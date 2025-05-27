@@ -15,6 +15,7 @@ import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
+import { blacklistedMarkets } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
@@ -111,7 +112,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         // Existing filters seem appropriate
         const filtered = combinedMarkets
           .filter((market) => market.collateralAsset != undefined)
-          .filter((market) => isSupportedChain(market.morphoBlue.chain.id)); // Keep this filter
+          .filter((market) => isSupportedChain(market.morphoBlue.chain.id)) // Keep this filter
+          .filter((market) => !blacklistedMarkets.includes(market.uniqueKey)); // Filter out blacklisted markets
 
         const processedMarkets = filtered.map((market) => {
           const warningsWithDetail = getMarketWarningsWithDetail(market); // Recalculate warnings if needed, though fetchers might do this

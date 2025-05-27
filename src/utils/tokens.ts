@@ -611,7 +611,15 @@ const isWETH = (address: string, chainId: number) => {
 };
 
 // Scam tokens
-const blacklistTokens = ['0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd', '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83'];
+const blacklistTokens = [
+  '0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd',
+  '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83',
+];
+
+// Blacklisted markets by uniqueKey
+const blacklistedMarkets = [
+  '0x8eaf7b29f02ba8d8c1d7aeb587403dcb16e2e943e4e2f5f94b0963c2386406c9', // PAXG / USDC market with wrong oracle
+];
 
 export {
   supportedTokens,
@@ -625,4 +633,5 @@ export {
   MORPHO_LEGACY,
   MORPHO_TOKEN_WRAPPER,
   blacklistTokens,
+  blacklistedMarkets,
 };
