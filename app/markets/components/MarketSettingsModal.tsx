@@ -181,7 +181,13 @@ export default function MarketSettingsModal({
                     classNames={{ input: 'text-right' }}
                     startContent={
                       <div className="pointer-events-none flex items-center">
-                        <span className="text-small text-default-400">$</span>
+                        <span
+                          className={`text-small ${
+                            usdFilters.minSupply ? 'text-primary' : 'text-default-400'
+                          }`}
+                        >
+                          $
+                        </span>
                       </div>
                     }
                   />
@@ -205,7 +211,13 @@ export default function MarketSettingsModal({
                     classNames={{ input: 'text-right' }}
                     startContent={
                       <div className="pointer-events-none flex items-center">
-                        <span className="text-small text-default-400">$</span>
+                        <span
+                          className={`text-small ${
+                            usdFilters.minBorrow ? 'text-primary' : 'text-default-400'
+                          }`}
+                        >
+                          $
+                        </span>
                       </div>
                     }
                   />
