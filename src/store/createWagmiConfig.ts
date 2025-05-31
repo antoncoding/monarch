@@ -58,10 +58,7 @@ export function createWagmiConfig(projectId: string) {
       ...connectors,
       safe({
         shimDisconnect: true,
-        allowedDomains: [
-          // safe global, no localhost
-          /^(https:\/\/safe\.global|https:\/\/app\.safe\.global)$/,
-        ],
+        allowedDomains: [/^app\.safe\.global$/],
       }),
     ],
   });
