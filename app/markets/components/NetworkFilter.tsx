@@ -33,9 +33,9 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
             {items.map((item) => {
               const networkImg = getNetworkImg(Number(item.key));
               return networkImg ? (
-                <Image src={networkImg} alt="icon" height="18" />
+                <Image key={item.key} src={networkImg} alt="icon" height="18" />
               ) : (
-                item.textValue
+                <span key={item.key}>{item.textValue}</span>
               );
             })}
           </div>

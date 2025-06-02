@@ -23,18 +23,16 @@ function OracleVendorBadge({
   showText = false,
   useTooltip = true,
 }: OracleVendorBadgeProps) {
-  const { vendors } = parseOracleVendors(oracleData);
-
-  const noFeeds = vendors.length === 0;
+  const { vendors, isUnknown } = parseOracleVendors(oracleData);
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && (
         <span className="mr-1 text-xs font-medium">
-          {noFeeds ? 'No Oracle' : vendors.join(', ')}
+          {isUnknown ? 'Unknown' : vendors.join(', ')}
         </span>
       )}
-      {noFeeds ? (
+      {isUnknown ? (
         <IoWarningOutline className="text-secondary" size={16} />
       ) : (
         vendors.map((vendor, index) => (
@@ -50,7 +48,7 @@ function OracleVendorBadge({
         content={
           <div className="m-2">
             <p className="py-2 text-sm font-medium">
-              {noFeeds ? 'No Oracle Feed Used' : 'Oracle Vendors:'}
+              {isUnknown ? 'Unknown Oracle' : 'Oracle Vendors:'}
             </p>
             <ul>
               {vendors.map((vendor, index) => (

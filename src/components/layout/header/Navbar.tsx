@@ -84,10 +84,23 @@ export function Navbar() {
       <div className="flex items-center gap-8">
         <div className="flex items-center gap-2">
           <NavbarLink href="/markets">Markets</NavbarLink>
-          <NavbarLink href={`/positions/${address ?? ''}`}>Portfolio</NavbarLink>
-          <NavbarLink href={`/rewards/${address ?? ''}`} matchKey="/rewards">
-            Rewards
-          </NavbarLink>
+          {mounted ? (
+            <>
+              <NavbarLink href={address ? `/positions/${address}` : '/positions'}>
+                Portfolio
+              </NavbarLink>
+              <NavbarLink href={address ? `/rewards/${address}` : '/rewards'} matchKey="/rewards">
+                Rewards
+              </NavbarLink>
+            </>
+          ) : (
+            <>
+              <NavbarLink href="/positions">Portfolio</NavbarLink>
+              <NavbarLink href="/rewards" matchKey="/rewards">
+                Rewards
+              </NavbarLink>
+            </>
+          )}
 
           <Dropdown onOpenChange={setIsMoreOpen} className="rounded-sm">
             <DropdownTrigger>
