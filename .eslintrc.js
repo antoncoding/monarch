@@ -120,7 +120,7 @@ module.exports = {
 
     // APIs
     '@typescript-eslint/prefer-includes': 'error',
-    '@typescript-eslint/prefer-nullish-coalescing': 'error',
+    '@typescript-eslint/prefer-nullish-coalescing': 'warn',
     '@typescript-eslint/prefer-string-starts-ends-with': 'error',
     '@typescript-eslint/prefer-optional-chain': 'warn',
 

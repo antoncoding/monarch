@@ -1,3 +1,5 @@
+// eslint-disable @typescript-eslint/prefer-nullish-coalescing
+
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
@@ -175,7 +177,11 @@ function MarketContent() {
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
-  const hasFeed = market.oracle?.data?.baseFeedOne || market.oracle?.data?.baseFeedTwo || market.oracle?.data?.quoteFeedOne || market.oracle?.data?.quoteFeedTwo;
+  const hasFeed =
+    market.oracle?.data?.baseFeedOne ||
+    market.oracle?.data?.baseFeedTwo ||
+    market.oracle?.data?.quoteFeedOne ||
+    market.oracle?.data?.quoteFeedTwo;
 
   return (
     <>
@@ -336,29 +342,31 @@ function MarketContent() {
                     {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
                   </span>
                 </div>
-                {hasFeed && <div>
-                  <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
-                  {market.oracle?.data && (
-                    <div>
-                      <OracleFeedInfo
-                        feed={market.oracle.data.baseFeedOne}
-                        chainId={market.morphoBlue.chain.id}
-                      />
-                      <OracleFeedInfo
-                        feed={market.oracle.data.baseFeedTwo}
-                        chainId={market.morphoBlue.chain.id}
-                      />
-                      <OracleFeedInfo
-                        feed={market.oracle.data.quoteFeedOne}
-                        chainId={market.morphoBlue.chain.id}
-                      />
-                      <OracleFeedInfo
-                        feed={market.oracle.data.quoteFeedTwo}
-                        chainId={market.morphoBlue.chain.id}
-                      />
-                    </div>
-                  )}
-                </div>}
+                {hasFeed && (
+                  <div>
+                    <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
+                    {market.oracle?.data && (
+                      <div>
+                        <OracleFeedInfo
+                          feed={market.oracle.data.baseFeedOne}
+                          chainId={market.morphoBlue.chain.id}
+                        />
+                        <OracleFeedInfo
+                          feed={market.oracle.data.baseFeedTwo}
+                          chainId={market.morphoBlue.chain.id}
+                        />
+                        <OracleFeedInfo
+                          feed={market.oracle.data.quoteFeedOne}
+                          chainId={market.morphoBlue.chain.id}
+                        />
+                        <OracleFeedInfo
+                          feed={market.oracle.data.quoteFeedTwo}
+                          chainId={market.morphoBlue.chain.id}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </CardBody>
           </Card>
