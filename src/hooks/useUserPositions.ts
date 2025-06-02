@@ -222,7 +222,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           state: position.state,
           market: {
             ...position.market,
-            warningsWithDetail: getMarketWarningsWithDetail(position.market),
+            warningsWithDetail: getMarketWarningsWithDetail(position.market, true),
           },
         }));
 

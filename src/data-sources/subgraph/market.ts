@@ -236,7 +236,7 @@ const transformSubgraphMarketToMarket = (
   const oracleDataToUse = whitelistedOracleData ?? defaultOracleData;
 
   // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
-  const warningsWithDetail = getMarketWarningsWithDetail({ warnings });
+  const warningsWithDetail = getMarketWarningsWithDetail({ warnings, uniqueKey: marketId });
 
   const marketDetail: Market = {
     id: marketId,

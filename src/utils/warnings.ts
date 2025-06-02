@@ -1,4 +1,5 @@
 import { MarketWarning } from '@/utils/types';
+import { monarchWhitelistedMarkets } from './markets';
 import { WarningCategory, WarningWithDetail } from './types';
 
 // Subgraph Warnings
@@ -140,15 +141,32 @@ const subgraphWarnings: WarningWithDetail[] = [
   },
 ];
 
-export const getMarketWarningsWithDetail = (market: { warnings: MarketWarning[] }) => {
+export const getMarketWarningsWithDetail = (
+  market: { warnings: MarketWarning[]; uniqueKey: string },
+  considerWhitelist = false,
+) => {
   const result = [];
 
   const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
 
+  const whitelistedMarketData = considerWhitelist
+    ? monarchWhitelistedMarkets.find((m) => m.id === market.uniqueKey.toLowerCase())
+    : undefined;
+
+  console.log('market', market);
+
   // process official warnings
   for (const warning of market.warnings) {
     const foundWarning = allDetails.find((w) => w.code === warning.type);
-    if (foundWarning) {
+
+    if (whitelistedMarketData) {
+      console.log('whitelistedMarketData', whitelistedMarketData);
+    }
+
+    // if this market is whitelisted, there might be warnings we want to "offset"
+    const isOffset = whitelistedMarketData?.offsetWarnings.includes(warning.type);
+
+    if (foundWarning && !isOffset) {
       result.push(foundWarning);
     }
   }

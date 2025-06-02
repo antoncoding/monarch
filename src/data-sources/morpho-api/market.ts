@@ -29,7 +29,7 @@ type MarketsGraphQLResponse = {
 };
 
 const processMarketData = (market: Market): Market => {
-  const warningsWithDetail = getMarketWarningsWithDetail(market);
+  const warningsWithDetail = getMarketWarningsWithDetail(market, true);
   return {
     ...market,
     warningsWithDetail,

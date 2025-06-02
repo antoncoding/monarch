@@ -116,13 +116,15 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           .filter((market) => !blacklistedMarkets.includes(market.uniqueKey)); // Filter out blacklisted markets
 
         const processedMarkets = filtered.map((market) => {
-          const warningsWithDetail = getMarketWarningsWithDetail(market); // Recalculate warnings if needed, though fetchers might do this
+          const warningsWithDetail = getMarketWarningsWithDetail(market, true); // Recalculate warnings if needed, though fetchers might do this
           const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
 
           // only show this indicator when it's not already whitelisted
           const isMonarchWhitelisted =
             !market.whitelisted &&
-            monarchWhitelistedMarkets.includes(market.uniqueKey.toLowerCase());
+            monarchWhitelistedMarkets.some(
+              (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
+            );
 
           return {
             ...market,
