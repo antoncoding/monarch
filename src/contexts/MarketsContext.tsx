@@ -14,8 +14,8 @@ import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { monarchWhitelistedMarkets, blacklistedMarkets } from '@/utils/markets';
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
-import { blacklistedMarkets } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
@@ -119,11 +119,18 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           const warningsWithDetail = getMarketWarningsWithDetail(market); // Recalculate warnings if needed, though fetchers might do this
           const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
 
+          // only show this indicator when it's not already whitelisted
+          const isMonarchWhitelisted =
+            !market.whitelisted &&
+            monarchWhitelistedMarkets.includes(market.uniqueKey.toLowerCase());
+
           return {
             ...market,
+            whitelisted: market.whitelisted || isMonarchWhitelisted,
             // Ensure warningsWithDetail from fetchers are used or recalculated consistently
             warningsWithDetail: market.warningsWithDetail ?? warningsWithDetail,
             isProtectedByLiquidationBots,
+            isMonarchWhitelisted,
           };
         });
 

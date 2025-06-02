@@ -310,6 +310,7 @@ export type Market = {
   // appended by us
   warningsWithDetail: WarningWithDetail[];
   isProtectedByLiquidationBots: boolean;
+  isMonarchWhitelisted?: boolean;
 
   oracle?: {
     data: MorphoChainlinkOracleData;

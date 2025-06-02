@@ -9,6 +9,7 @@ import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TooltipContent } from '@/components/TooltipContent';
 import { getNetworkImg } from '@/utils/networks';
 import { Market } from '@/utils/types';
+import logo from '../../../imgs/logo.png';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
@@ -144,6 +145,21 @@ export function MarketTableBody({
                     >
                       <div>
                         <FaShieldAlt size={16} className="text-primary text-opacity-50" />
+                      </div>
+                    </Tooltip>
+                  )}
+                  {item.isMonarchWhitelisted && (
+                    <Tooltip
+                      className="rounded-sm"
+                      content={
+                        <TooltipContent
+                          icon={<Image src={logo} alt="Monarch" width={16} height={16} />}
+                          detail="This market is whitelisted by Monarch"
+                        />
+                      }
+                    >
+                      <div>
+                        <Image src={logo} alt="Monarch" width={16} height={16} />
                       </div>
                     </Tooltip>
                   )}
