@@ -98,7 +98,7 @@ async function getPositionAtBlock(
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],
-      blockNumber: BigInt(blockNumber),
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
     })) as readonly bigint[];
 
     // Convert array to market object
@@ -129,6 +129,7 @@ async function getPositionAtBlock(
       marketId,
       userAddress,
       blockNumber,
+      chainId,
       error,
     });
     throw error;
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
       position,
     });
   } catch (error) {
-    console.error('Error in historical position API:', error);
+    // console.error('Error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

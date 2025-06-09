@@ -1,4 +1,4 @@
-import { Chain, base, mainnet, polygon } from 'viem/chains';
+import { Chain, base, mainnet, polygon, unichain } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
 export type SingleChainERC20Basic = {
@@ -52,6 +52,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
+      { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
     ],
     peg: TokenPeg.USD,
   },
@@ -205,7 +206,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
       { chain: base, address: '0x4200000000000000000000000000000000000006' },
-
+      { chain: unichain, address: '0x4200000000000000000000000000000000000006' },
       // wrapped eth on polygon, defined here as it will not be interpreted as "WETH Contract"
       // which is determined by isWETH function
       // This is solely for displaying and linking to eth.
@@ -461,7 +462,10 @@ const supportedTokens = [
     symbol: 'UNI',
     img: require('../imgs/tokens/uni.webp') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' }],
+    networks: [
+      { chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984'},
+      { chain: unichain, address: '0x8f187aa05619a017077f5308904739877ce9ea21'}
+    ],
   },
   {
     symbol: 'AERO',

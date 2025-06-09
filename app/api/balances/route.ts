@@ -5,6 +5,7 @@ const ALCHEMY_URLS = {
   '1': `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
   '8453': `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
   '137': `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+  '130': `https://unichain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
 };
 
 type TokenBalance = {
