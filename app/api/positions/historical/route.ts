@@ -144,10 +144,6 @@ export async function GET(request: NextRequest) {
     const userAddress = searchParams.get('userAddress');
     const chainId = parseInt(searchParams.get('chainId') ?? '1');
 
-    if (chainId === 130) {
-      console.log('Unichain position API is not supported yet');
-    }
-
     if (!marketId || !userAddress || (!blockNumber && blockNumber !== 0)) {
       console.error('Missing required parameters:', {
         blockNumber: !!blockNumber,
