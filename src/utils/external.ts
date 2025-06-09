@@ -11,6 +11,8 @@ export const getAssetURL = (address: string, chain: SupportedNetworks): string =
       return `https://basescan.org/token/${address}`;
     case SupportedNetworks.Polygon:
       return `https://polygonscan.com/token/${address}`;
+    case SupportedNetworks.Unichain:
+      return `https://uniscan.xyz/token/${address}`;
     default:
       return `https://etherscan.io/token/${address}`;
   }
@@ -22,6 +24,8 @@ export const getExplorerURL = (address: string, chain: SupportedNetworks): strin
       return `https://basescan.org/address/${address}`;
     case SupportedNetworks.Polygon:
       return `https://polygonscan.com/address/${address}`;
+    case SupportedNetworks.Unichain:
+      return `https://uniscan.xyz/address/${address}`;
     default:
       return `https://etherscan.io/address/${address}`;
   }
@@ -33,6 +37,8 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
       return `https://basescan.org/tx/${hash}`;
     case SupportedNetworks.Polygon:
       return `https://polygonscan.com/tx/${hash}`;
+    case SupportedNetworks.Unichain:
+      return `https://uniscan.xyz/tx/${hash}`;
     default:
       return `https://etherscan.io/tx/${hash}`;
   }

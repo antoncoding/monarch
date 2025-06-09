@@ -1,5 +1,5 @@
 import { createPublicClient, http } from 'viem';
-import { base, mainnet, polygon } from 'viem/chains';
+import { base, mainnet, polygon, unichain } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
 // Initialize Alchemy clients for each chain
@@ -18,6 +18,11 @@ export const polygonClient = createPublicClient({
   transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
 });
 
+export const unichainClient = createPublicClient({
+  chain: unichain,
+  transport: http(`https://unichain-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
+});
+
 export const getClient = (chainId: SupportedNetworks) => {
   switch (chainId) {
     case SupportedNetworks.Mainnet:
@@ -26,6 +31,8 @@ export const getClient = (chainId: SupportedNetworks) => {
       return baseClient;
     case SupportedNetworks.Polygon:
       return polygonClient;
+    case SupportedNetworks.Unichain:
+      return unichainClient;
     default:
       throw new Error(`Unsupported chainId: ${chainId}`);
   }
@@ -35,18 +42,21 @@ export const BLOCK_TIME = {
   [SupportedNetworks.Mainnet]: 12, // Ethereum mainnet: 12 seconds
   [SupportedNetworks.Base]: 2, // Base: 2 seconds
   [SupportedNetworks.Polygon]: 2, // Polygon: 2 seconds
+  [SupportedNetworks.Unichain]: 1, // Unichain: 2 seconds
 } as const;
 
 export const GENESIS_BLOCK = {
   [SupportedNetworks.Mainnet]: 18883124, // Ethereum mainnet
   [SupportedNetworks.Base]: 13977148, // Base
   [SupportedNetworks.Polygon]: 66931042, // Polygon
+  [SupportedNetworks.Unichain]: 9139027, // Unichain
 } as const;
 
 export const LATEST_BLOCK_DELAY = {
   [SupportedNetworks.Mainnet]: 0, // Ethereum mainnet
   [SupportedNetworks.Base]: 20, // Base
   [SupportedNetworks.Polygon]: 20, // Polygon
+  [SupportedNetworks.Unichain]: 20, // Unichain
 };
 
 type BlockResponse = {

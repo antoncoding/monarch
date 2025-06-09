@@ -51,10 +51,11 @@ export function useUserBalances() {
 
     try {
       // Fetch balances from both chains
-      const [mainnetBalances, baseBalances, polygonBalances] = await Promise.all([
+      const [mainnetBalances, baseBalances, polygonBalances, unichainBalances] = await Promise.all([
         fetchBalances(SupportedNetworks.Mainnet),
         fetchBalances(SupportedNetworks.Base),
         fetchBalances(SupportedNetworks.Polygon),
+        fetchBalances(SupportedNetworks.Unichain),
       ]);
 
       // Process and filter tokens
@@ -79,6 +80,7 @@ export function useUserBalances() {
       processTokens(mainnetBalances, 1);
       processTokens(baseBalances, 8453);
       processTokens(polygonBalances, 137);
+      processTokens(unichainBalances, 130);
       setBalances(processedBalances);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));
