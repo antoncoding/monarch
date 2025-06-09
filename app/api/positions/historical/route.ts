@@ -98,7 +98,7 @@ async function getPositionAtBlock(
       abi: morphoABI,
       functionName: 'market',
       args: [marketId as `0x${string}`],
-      blockNumber: BigInt(blockNumber),
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
     })) as readonly bigint[];
 
     // Convert array to market object
@@ -129,6 +129,7 @@ async function getPositionAtBlock(
       marketId,
       userAddress,
       blockNumber,
+      chainId,
       error,
     });
     throw error;
@@ -142,6 +143,10 @@ export async function GET(request: NextRequest) {
     const marketId = searchParams.get('marketId');
     const userAddress = searchParams.get('userAddress');
     const chainId = parseInt(searchParams.get('chainId') ?? '1');
+
+    if (chainId === 130) {
+      console.log('Unichain position API is not supported yet');
+    }
 
     if (!marketId || !userAddress || (!blockNumber && blockNumber !== 0)) {
       console.error('Missing required parameters:', {
@@ -159,7 +164,7 @@ export async function GET(request: NextRequest) {
       position,
     });
   } catch (error) {
-    console.error('Error in historical position API:', error);
+    // console.error('Error', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
