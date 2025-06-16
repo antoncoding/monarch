@@ -61,7 +61,10 @@ const useLiquidations = () => {
             // Add the keys to the combined set
             networkLiquidatedKeys.forEach((key) => combinedLiquidatedKeys.add(key));
           } catch (networkError) {
-            console.error(`Failed to fetch liquidated markets for network ${network}:`, networkError);
+            console.error(
+              `Failed to fetch liquidated markets for network ${network}:`,
+              networkError,
+            );
             fetchErrors.push(networkError);
           }
         }),
@@ -93,7 +96,7 @@ const useLiquidations = () => {
     isRefetching,
     liquidatedMarketKeys,
     error,
-    refetch: () => fetchLiquidations(true),
+    refetch: async () => fetchLiquidations(true),
   };
 };
 

@@ -9,7 +9,7 @@ import {
   useState,
   useMemo,
 } from 'react';
-import { getMarketDataSource, supportsMorphoApi } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
@@ -78,7 +78,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         SupportedNetworks.Mainnet,
         SupportedNetworks.Base,
         SupportedNetworks.Polygon,
-        SupportedNetworks.Unichain
+        SupportedNetworks.Unichain,
       ];
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];
@@ -96,7 +96,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                   console.log(`Attempting to fetch markets via Morpho API for ${network}`);
                   networkMarkets = await fetchMorphoMarkets(network);
                 } catch (morphoError) {
-                  console.error(`Failed to fetch markets via Morpho API for ${network}:`, morphoError);
+                  console.error(
+                    `Failed to fetch markets via Morpho API for ${network}:`,
+                    morphoError,
+                  );
                   // Continue to Subgraph fallback
                 }
               }
@@ -107,7 +110,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                   console.log(`Attempting to fetch markets via Subgraph for ${network}`);
                   networkMarkets = await fetchSubgraphMarkets(network);
                 } catch (subgraphError) {
-                  console.error(`Failed to fetch markets via Subgraph for ${network}:`, subgraphError);
+                  console.error(
+                    `Failed to fetch markets via Subgraph for ${network}:`,
+                    subgraphError,
+                  );
                   throw subgraphError; // Throw to be caught by outer catch
                 }
               }
@@ -177,14 +183,24 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   useEffect(() => {
     if (!liquidationsLoading && whitelistedMarkets.length === 0) {
-      fetchMarkets().catch(console.error);
+      void fetchMarkets().catch(console.error);
     }
+
+    // Set up refresh interval
+    const refreshInterval = setInterval(
+      () => {
+        void fetchMarkets(true).catch(console.error);
+      },
+      5 * 60 * 1000,
+    ); // Refresh every 5 minutes
+
+    return () => clearInterval(refreshInterval);
   }, [liquidationsLoading, fetchMarkets, whitelistedMarkets.length]);
 
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        refetchLiquidations();
+        await refetchLiquidations();
         await fetchMarkets(true);
         onSuccess?.();
       } catch (err) {
@@ -200,7 +216,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     setAllMarkets([]);
     setError(null);
     try {
-      refetchLiquidations();
+      await refetchLiquidations();
       await fetchMarkets();
     } catch (_error) {
       console.error('Failed to refresh markets:', _error);

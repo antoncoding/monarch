@@ -130,7 +130,7 @@ const useUserPosition = (
       } else {
         // Snapshot failed, rely entirely on the fallback data source
         console.log(`Snapshot failed for ${marketKey}, fetching from fallback source.`);
-        
+
         // Try Morpho API first if supported
         if (supportsMorphoApi(chainId)) {
           try {
