@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
-import { getMarketDataSource } from '@/config/dataSources';
+import { getMarketDataSource, supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
@@ -69,43 +69,43 @@ const fetchSourceMarketKeys = async (user: string): Promise<PositionMarket[]> =>
     (value) => typeof value === 'number',
   ) as SupportedNetworks[];
 
-  const morphoNetworks: SupportedNetworks[] = [];
-  const subgraphNetworks: SupportedNetworks[] = [];
+  const results = await Promise.allSettled(
+    allSupportedNetworks.map(async (network) => {
+      let markets: PositionMarket[] = [];
+      
+      // Try Morpho API first if supported
+      if (supportsMorphoApi(network)) {
+        try {
+          console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
+          markets = await fetchMorphoUserPositionMarkets(user, network);
+        } catch (morphoError) {
+          console.error(`Failed to fetch positions via Morpho API for network ${network}:`, morphoError);
+          // Continue to Subgraph fallback
+        }
+      }
 
-  allSupportedNetworks.forEach((network: SupportedNetworks) => {
-    const source = getMarketDataSource(network);
-    if (source === 'subgraph') {
-      subgraphNetworks.push(network);
-    } else {
-      morphoNetworks.push(network);
-    }
-  });
+      // If Morpho API failed or not supported, try Subgraph
+      if (markets.length === 0) {
+        try {
+          console.log(`Attempting to fetch positions via Subgraph for network ${network}`);
+          markets = await fetchSubgraphUserPositionMarkets(user, network);
+        } catch (subgraphError) {
+          console.error(`Failed to fetch positions via Subgraph for network ${network}:`, subgraphError);
+          return [];
+        }
+      }
 
-  const fetchPromises: Promise<PositionMarket[]>[] = [];
-
-  morphoNetworks.forEach((network) => {
-    fetchPromises.push(fetchMorphoUserPositionMarkets(user, network));
-  });
-  subgraphNetworks.forEach((network) => {
-    fetchPromises.push(fetchSubgraphUserPositionMarkets(user, network));
-  });
-
-  const results = await Promise.allSettled(fetchPromises);
+      return markets;
+    }),
+  );
 
   let sourcePositionMarkets: PositionMarket[] = [];
-  results.forEach((result, index) => {
+  results.forEach((result) => {
     if (result.status === 'fulfilled') {
       sourcePositionMarkets = sourcePositionMarkets.concat(result.value);
-    } else {
-      const network = [...morphoNetworks, ...subgraphNetworks][index];
-      const source = getMarketDataSource(network);
-      console.error(
-        `[Positions] Failed to fetch from ${source} for network ${network}:`,
-        result.reason,
-      );
     }
   });
-  // console.log(`[Positions] Fetched ${sourcePositionMarkets.length} keys from sources.`);
+
   return sourcePositionMarkets;
 };
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getMarketDataSource } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
 import { fetchSubgraphMarketSupplies } from '@/data-sources/subgraph/market-supplies';
 import { SupportedNetworks } from '@/utils/networks';
@@ -20,46 +20,41 @@ export const useMarketSupplies = (
 ) => {
   const queryKey = ['marketSupplies', marketId, loanAssetId, network];
 
-  // Determine the data source
-  const dataSource = network ? getMarketDataSource(network) : null;
-
-  const { data, isLoading, error, refetch } = useQuery<
-    MarketActivityTransaction[] | null // The hook returns the unified type
-  >({
+  const { data, isLoading, error, refetch } = useQuery<MarketActivityTransaction[] | null>({
     queryKey: queryKey,
     queryFn: async (): Promise<MarketActivityTransaction[] | null> => {
-      // Guard clauses
-      if (!marketId || !loanAssetId || !network || !dataSource) {
+      if (!marketId || !loanAssetId || !network) {
         return null;
       }
 
-      console.log(
-        `Fetching market supplies for market ${marketId} (loan asset ${loanAssetId}) on ${network} via ${dataSource}`,
-      );
+      let supplies: MarketActivityTransaction[] | null = null;
 
-      try {
-        // Call the appropriate imported function
-        if (dataSource === 'morpho') {
-          return await fetchMorphoMarketSupplies(marketId);
-        } else if (dataSource === 'subgraph') {
-          return await fetchSubgraphMarketSupplies(marketId, loanAssetId, network);
+      // Try Morpho API first if supported
+      if (supportsMorphoApi(network)) {
+        try {
+          console.log(`Attempting to fetch supplies via Morpho API for ${marketId}`);
+          supplies = await fetchMorphoMarketSupplies(marketId);
+        } catch (morphoError) {
+          console.error(`Failed to fetch supplies via Morpho API:`, morphoError);
+          // Continue to Subgraph fallback
         }
-      } catch (fetchError) {
-        // Log the specific error from the data source function
-        console.error(
-          `Failed to fetch market supplies via ${dataSource} for market ${marketId}:`,
-          fetchError,
-        );
-        return null; // Return null on fetch error
       }
 
-      // This case should ideally not be reached if getMarketDataSource is exhaustive
-      console.warn('Unknown market data source determined for supplies');
-      return null;
+      // If Morpho API failed or not supported, try Subgraph
+      if (!supplies) {
+        try {
+          console.log(`Attempting to fetch supplies via Subgraph for ${marketId}`);
+          supplies = await fetchSubgraphMarketSupplies(marketId, loanAssetId, network);
+        } catch (subgraphError) {
+          console.error(`Failed to fetch supplies via Subgraph:`, subgraphError);
+          supplies = null;
+        }
+      }
+
+      return supplies;
     },
-    // enable query only if all parameters are present AND a valid data source exists
-    enabled: !!marketId && !!loanAssetId && !!network && !!dataSource,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    enabled: !!marketId && !!loanAssetId && !!network,
+    staleTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
   });
@@ -69,7 +64,6 @@ export const useMarketSupplies = (
     isLoading: isLoading,
     error: error,
     refetch: refetch,
-    dataSource: dataSource,
   };
 };
 
