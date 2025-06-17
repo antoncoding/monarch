@@ -463,8 +463,8 @@ const supportedTokens = [
     img: require('../imgs/tokens/uni.webp') as string,
     decimals: 18,
     networks: [
-      { chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984'},
-      { chain: unichain, address: '0x8f187aa05619a017077f5308904739877ce9ea21'}
+      { chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' },
+      { chain: unichain, address: '0x8f187aa05619a017077f5308904739877ce9ea21' },
     ],
   },
   {

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getMarketDataSource } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
 import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
 import { SupportedNetworks } from '@/utils/networks';
@@ -20,37 +20,40 @@ export const useMarketBorrows = (
 ) => {
   const queryKey = ['marketBorrows', marketId, loanAssetId, network];
 
-  // Determine the data source
-  const dataSource = network ? getMarketDataSource(network) : null;
-
   const { data, isLoading, error, refetch } = useQuery<MarketActivityTransaction[] | null>({
     queryKey: queryKey,
     queryFn: async (): Promise<MarketActivityTransaction[] | null> => {
-      // Guard clauses
-      if (!marketId || !loanAssetId || !network || !dataSource) {
+      if (!marketId || !loanAssetId || !network) {
         return null;
       }
 
-      console.log(
-        `Fetching market borrows for market ${marketId} (loan asset ${loanAssetId}) on ${network} via ${dataSource}`,
-      );
+      let borrows: MarketActivityTransaction[] | null = null;
 
-      try {
-        if (dataSource === 'morpho') {
-          // Morpho API might only need marketId for borrows
-          return await fetchMorphoMarketBorrows(marketId);
-        } else if (dataSource === 'subgraph') {
-          return await fetchSubgraphMarketBorrows(marketId, loanAssetId, network);
+      // Try Morpho API first if supported
+      if (supportsMorphoApi(network)) {
+        try {
+          console.log(`Attempting to fetch borrows via Morpho API for ${marketId}`);
+          borrows = await fetchMorphoMarketBorrows(marketId);
+        } catch (morphoError) {
+          console.error(`Failed to fetch borrows via Morpho API:`, morphoError);
+          // Continue to Subgraph fallback
         }
-      } catch (fetchError) {
-        console.error(`Failed to fetch market borrows via ${dataSource}:`, fetchError);
-        return null;
       }
 
-      console.warn('Unknown market data source determined for borrows');
-      return null;
+      // If Morpho API failed or not supported, try Subgraph
+      if (!borrows) {
+        try {
+          console.log(`Attempting to fetch borrows via Subgraph for ${marketId}`);
+          borrows = await fetchSubgraphMarketBorrows(marketId, loanAssetId, network);
+        } catch (subgraphError) {
+          console.error(`Failed to fetch borrows via Subgraph:`, subgraphError);
+          borrows = null;
+        }
+      }
+
+      return borrows;
     },
-    enabled: !!marketId && !!loanAssetId && !!network && !!dataSource,
+    enabled: !!marketId && !!loanAssetId && !!network,
     staleTime: 1000 * 60 * 2, // 2 minutes
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
@@ -62,7 +65,6 @@ export const useMarketBorrows = (
     isLoading: isLoading,
     error: error,
     refetch: refetch,
-    dataSource: dataSource,
   };
 };
 

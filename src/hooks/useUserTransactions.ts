@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getMarketDataSource } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoTransactions } from '@/data-sources/morpho-api/transactions';
 import { fetchSubgraphTransactions } from '@/data-sources/subgraph/transactions';
 import { SupportedNetworks, isSupportedChain } from '@/utils/networks';
@@ -58,9 +58,7 @@ const useUserTransactions = () => {
       }
 
       // Check for subgraph user address limitation
-      const usesSubgraph = targetNetworks.some(
-        (network) => getMarketDataSource(network) === 'subgraph',
-      );
+      const usesSubgraph = targetNetworks.some((network) => !supportsMorphoApi(network));
       if (usesSubgraph && filters.userAddress.length !== 1) {
         console.error('Subgraph requires exactly one user address.');
         setError('Subgraph data source requires exactly one user address.');
@@ -72,89 +70,121 @@ const useUserTransactions = () => {
         };
       }
 
-      // 2. Categorize networks by data source (numeric enum values)
-      const morphoNetworks: SupportedNetworks[] = [];
-      const subgraphNetworks: SupportedNetworks[] = [];
+      // 2. Create fetch promises for each network
+      const results = await Promise.allSettled(
+        targetNetworks.map(async (network) => {
+          let networkItems: UserTransaction[] = [];
+          let networkError: string | null = null;
 
-      targetNetworks.forEach((network) => {
-        // network is now guaranteed to be a numeric enum value (e.g., 1, 8453)
-        if (getMarketDataSource(network) === 'subgraph') {
-          subgraphNetworks.push(network);
-        } else {
-          morphoNetworks.push(network);
-        }
-      });
+          // Try Morpho API first if supported
+          if (supportsMorphoApi(network)) {
+            try {
+              console.log(`Attempting to fetch transactions via Morpho API for network ${network}`);
+              const morphoFilters = {
+                ...filters,
+                chainIds: [network],
+                first: MAX_ITEMS_PER_SOURCE,
+                skip: 0,
+              };
+              const morphoResponse = await fetchMorphoTransactions(morphoFilters);
+              if (!morphoResponse.error) {
+                networkItems = morphoResponse.items;
+                console.log(
+                  `Received ${networkItems.length} items from Morpho API for network ${network}`,
+                );
+                return {
+                  items: networkItems,
+                  pageInfo: {
+                    count: networkItems.length,
+                    countTotal: networkItems.length,
+                  },
+                  error: null,
+                };
+              } else {
+                networkError = morphoResponse.error;
+                console.warn(`Error from Morpho API for network ${network}:`, networkError);
+              }
+            } catch (morphoError) {
+              console.error(`Failed to fetch from Morpho API for network ${network}:`, morphoError);
+              networkError = `Failed to fetch from Morpho API: ${
+                (morphoError as Error)?.message || 'Unknown error'
+              }`;
+            }
+          }
 
-      // 3. Create fetch promises
-      const fetchPromises: Promise<TransactionResponse>[] = [];
+          // Only try Subgraph if Morpho API failed or is not supported
+          if (!supportsMorphoApi(network) || networkError) {
+            try {
+              console.log(`Attempting to fetch transactions via Subgraph for network ${network}`);
+              const subgraphFilters = {
+                ...filters,
+                chainIds: [network],
+                first: MAX_ITEMS_PER_SOURCE,
+                skip: 0,
+              };
+              const subgraphResponse = await fetchSubgraphTransactions(subgraphFilters, network);
+              if (!subgraphResponse.error) {
+                networkItems = subgraphResponse.items;
+                console.log(
+                  `Received ${networkItems.length} items from Subgraph for network ${network}`,
+                );
+                return {
+                  items: networkItems,
+                  pageInfo: {
+                    count: networkItems.length,
+                    countTotal: networkItems.length,
+                  },
+                  error: null,
+                };
+              } else {
+                networkError = subgraphResponse.error;
+                console.warn(`Error from Subgraph for network ${network}:`, networkError);
+              }
+            } catch (subgraphError) {
+              console.error(`Failed to fetch from Subgraph for network ${network}:`, subgraphError);
+              networkError = `Failed to fetch from Subgraph: ${
+                (subgraphError as Error)?.message || 'Unknown error'
+              }`;
+            }
+          }
 
-      // Morpho API Fetch
-      if (morphoNetworks.length > 0) {
-        // morphoNetworks directly contains the numeric chain IDs (e.g., [1, ...])
-        console.log(`Queueing fetch from Morpho API for chain IDs: ${morphoNetworks.join(', ')}`);
-        const morphoFilters = {
-          ...filters,
-          chainIds: morphoNetworks, // Pass the numeric IDs directly
-          first: MAX_ITEMS_PER_SOURCE,
-          skip: 0,
-        };
-        fetchPromises.push(fetchMorphoTransactions(morphoFilters));
-      }
+          // Only reach here if both Morpho API and Subgraph failed
+          return {
+            items: networkItems,
+            pageInfo: {
+              count: networkItems.length,
+              countTotal: networkItems.length,
+            },
+            error: networkError,
+          };
+        }),
+      );
 
-      // Subgraph Fetches
-      subgraphNetworks.forEach((network) => {
-        // network is the numeric enum value (e.g., 8453)
-        console.log(`Queueing fetch from Subgraph for network ID: ${network}`);
-        const subgraphFilters = {
-          ...filters,
-          chainIds: [network], // Pass the single numeric ID for context
-          first: MAX_ITEMS_PER_SOURCE,
-          skip: 0,
-        };
-        // Pass the enum value (which is the number) to fetchSubgraphTransactions
-        fetchPromises.push(fetchSubgraphTransactions(subgraphFilters, network));
-      });
-
-      // 4. Execute promises in parallel
-      const results = await Promise.allSettled(fetchPromises);
-
-      // 5. Combine results
+      // 4. Combine results
       let combinedItems: UserTransaction[] = [];
       let combinedTotalCount = 0;
       const errors: string[] = [];
 
-      results.forEach((result, index) => {
-        const networkDescription =
-          index < (morphoNetworks.length > 0 ? 1 : 0)
-            ? `Morpho API (${morphoNetworks.join(', ')})`
-            : `Subgraph (${subgraphNetworks[index - (morphoNetworks.length > 0 ? 1 : 0)]})`; // Adjust index for subgraph networks
-
+      results.forEach((result) => {
         if (result.status === 'fulfilled') {
           const response = result.value;
           if (response.error) {
-            console.warn(`Error from ${networkDescription}: ${response.error}`);
-            errors.push(`Error from ${networkDescription}: ${response.error}`);
+            errors.push(response.error);
           } else {
             combinedItems = combinedItems.concat(response.items);
-            combinedTotalCount += response.pageInfo.countTotal; // Aggregate total count
-            console.log(`Received ${response.items.length} items from ${networkDescription}`);
+            combinedTotalCount += response.pageInfo.countTotal;
           }
         } else {
-          console.error(`Failed to fetch from ${networkDescription}:`, result.reason);
-          errors.push(
-            `Failed to fetch from ${networkDescription}: ${
-              result.reason?.message || 'Unknown error'
-            }`,
-          );
+          errors.push(`Failed to fetch transactions: ${result.reason?.message || 'Unknown error'}`);
         }
       });
 
-      // 6. Sort combined results by timestamp
+      // 5. Sort combined results by timestamp
       combinedItems.sort((a, b) => b.timestamp - a.timestamp);
 
-      // 7. Apply client-side pagination
+      // 6. Apply client-side pagination
       const skip = filters.skip ?? 0;
-      const first = filters.first ?? combinedItems.length; // Default to all items if 'first' is not provided
+      const first = filters.first ?? combinedItems.length;
       const paginatedItems = combinedItems.slice(skip, skip + first);
 
       const finalError = errors.length > 0 ? errors.join('; ') : null;
@@ -168,7 +198,7 @@ const useUserTransactions = () => {
         items: paginatedItems,
         pageInfo: {
           count: paginatedItems.length,
-          countTotal: combinedTotalCount, // Note: This is an estimated total
+          countTotal: combinedTotalCount,
         },
         error: finalError,
       };

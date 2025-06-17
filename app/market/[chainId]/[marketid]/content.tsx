@@ -131,7 +131,9 @@ function MarketContent() {
 
   // Non-async wrapper for components that expect void returns
   const handleRefreshAllSync = useCallback(() => {
-    void handleRefreshAll();
+    void handleRefreshAll().catch((error) => {
+      console.error('Failed to refresh data:', error);
+    });
   }, [handleRefreshAll]);
 
   // Unified handler for timeframe changes
@@ -200,9 +202,12 @@ function MarketContent() {
             <Button
               size="md"
               className="mb-4"
-              onClick={() =>
-                window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank')
-              }
+              onClick={() => {
+                void window.open(
+                  getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
+                  '_blank',
+                );
+              }}
             >
               View on Morpho
               <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />

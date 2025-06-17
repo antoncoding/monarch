@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getHistoricalDataSource } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import {
   fetchMorphoMarketHistoricalData,
   HistoricalDataSuccessResult,
@@ -22,33 +22,45 @@ export const useMarketHistoricalData = (
     options?.interval,
   ];
 
-  const dataSource = network ? getHistoricalDataSource(network) : null;
-
   const { data, isLoading, error, refetch } = useQuery<HistoricalDataSuccessResult | null>({
     queryKey: queryKey,
     queryFn: async (): Promise<HistoricalDataSuccessResult | null> => {
-      if (!uniqueKey || !network || !options || !dataSource) {
-        console.log('Historical data prerequisites not met or source unavailable.', {
+      if (!uniqueKey || !network || !options) {
+        console.log('Historical data prerequisites not met.', {
           uniqueKey,
           network,
           options,
-          dataSource,
         });
         return null;
       }
 
-      console.log(`Fetching historical data for ${uniqueKey} on ${network} via ${dataSource}`);
+      let historicalData: HistoricalDataSuccessResult | null = null;
 
-      if (dataSource === 'morpho') {
-        return fetchMorphoMarketHistoricalData(uniqueKey, network, options);
-      } else if (dataSource === 'subgraph') {
-        return fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
+      // Try Morpho API first if supported
+      if (supportsMorphoApi(network)) {
+        try {
+          console.log(`Attempting to fetch historical data via Morpho API for ${uniqueKey}`);
+          historicalData = await fetchMorphoMarketHistoricalData(uniqueKey, network, options);
+        } catch (morphoError) {
+          console.error(`Failed to fetch historical data via Morpho API:`, morphoError);
+          // Continue to Subgraph fallback
+        }
       }
 
-      console.warn('Unknown historical data source determined');
-      return null;
+      // If Morpho API failed or not supported, try Subgraph
+      if (!historicalData) {
+        try {
+          console.log(`Attempting to fetch historical data via Subgraph for ${uniqueKey}`);
+          historicalData = await fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
+        } catch (subgraphError) {
+          console.error(`Failed to fetch historical data via Subgraph:`, subgraphError);
+          historicalData = null;
+        }
+      }
+
+      return historicalData;
     },
-    enabled: !!uniqueKey && !!network && !!options && !!dataSource,
+    enabled: !!uniqueKey && !!network && !!options,
     staleTime: 1000 * 60 * 5,
     placeholderData: null,
     retry: 1,
@@ -59,6 +71,5 @@ export const useMarketHistoricalData = (
     isLoading: isLoading,
     error: error,
     refetch: refetch,
-    dataSource: dataSource,
   };
 };

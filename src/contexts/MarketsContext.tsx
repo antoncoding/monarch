@@ -9,7 +9,7 @@ import {
   useState,
   useMemo,
 } from 'react';
-import { getMarketDataSource } from '@/config/dataSources';
+import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
@@ -78,7 +78,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         SupportedNetworks.Mainnet,
         SupportedNetworks.Base,
         SupportedNetworks.Polygon,
-        SupportedNetworks.Unichain
+        SupportedNetworks.Unichain,
       ];
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];
@@ -88,17 +88,34 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         await Promise.all(
           networksToFetch.map(async (network) => {
             try {
-              const dataSource = getMarketDataSource(network);
               let networkMarkets: Market[] = [];
 
-              console.log(`Fetching markets for ${network} via ${dataSource}`);
+              // Try Morpho API first if supported
+              if (supportsMorphoApi(network)) {
+                try {
+                  console.log(`Attempting to fetch markets via Morpho API for ${network}`);
+                  networkMarkets = await fetchMorphoMarkets(network);
+                } catch (morphoError) {
+                  console.error(
+                    `Failed to fetch markets via Morpho API for ${network}:`,
+                    morphoError,
+                  );
+                  // Continue to Subgraph fallback
+                }
+              }
 
-              if (dataSource === 'morpho') {
-                networkMarkets = await fetchMorphoMarkets(network);
-              } else if (dataSource === 'subgraph') {
-                networkMarkets = await fetchSubgraphMarkets(network);
-              } else {
-                console.warn(`No valid data source found for network ${network}`);
+              // If Morpho API failed or not supported, try Subgraph
+              if (networkMarkets.length === 0) {
+                try {
+                  console.log(`Attempting to fetch markets via Subgraph for ${network}`);
+                  networkMarkets = await fetchSubgraphMarkets(network);
+                } catch (subgraphError) {
+                  console.error(
+                    `Failed to fetch markets via Subgraph for ${network}:`,
+                    subgraphError,
+                  );
+                  throw subgraphError; // Throw to be caught by outer catch
+                }
               }
 
               combinedMarkets.push(...networkMarkets);
@@ -114,7 +131,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         const filtered = combinedMarkets
           .filter((market) => market.collateralAsset != undefined)
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id)) // Keep this filter
-          .filter((market) => !blacklistedMarkets.includes(market.uniqueKey)); // Filter out blacklisted markets
+          .filter((market) => !blacklistedMarkets.includes(market.uniqueKey));
 
         const processedMarkets = filtered.map((market) => {
           const warningsWithDetail = getMarketWarningsWithDetail(market, true); // Recalculate warnings if needed, though fetchers might do this
@@ -166,14 +183,24 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   useEffect(() => {
     if (!liquidationsLoading && whitelistedMarkets.length === 0) {
-      fetchMarkets().catch(console.error);
+      void fetchMarkets().catch(console.error);
     }
+
+    // Set up refresh interval
+    const refreshInterval = setInterval(
+      () => {
+        void fetchMarkets(true).catch(console.error);
+      },
+      5 * 60 * 1000,
+    ); // Refresh every 5 minutes
+
+    return () => clearInterval(refreshInterval);
   }, [liquidationsLoading, fetchMarkets, whitelistedMarkets.length]);
 
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        refetchLiquidations();
+        await refetchLiquidations();
         await fetchMarkets(true);
         onSuccess?.();
       } catch (err) {
@@ -189,7 +216,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     setAllMarkets([]);
     setError(null);
     try {
-      refetchLiquidations();
+      await refetchLiquidations();
       await fetchMarkets();
     } catch (_error) {
       console.error('Failed to refresh markets:', _error);
