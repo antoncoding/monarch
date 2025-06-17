@@ -5,7 +5,7 @@ import { URLS } from '@/utils/urls';
 const liquidationsQuery = `
   query getLiquidations($first: Int, $skip: Int, $chainId: Int!) {
     transactions(
-      where: { type_in: [MarketLiquidation], chainId_in: [$chainId] } # Filter by chainId
+      where: { type_in: [MarketLiquidation], chainId_in: [$chainId] }
       first: $first
       skip: $skip
     ) {
