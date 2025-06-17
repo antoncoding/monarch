@@ -71,84 +71,85 @@ const useUserTransactions = () => {
       }
 
       // 2. Create fetch promises for each network
-      const fetchPromises: Promise<TransactionResponse>[] = [];
+      const results = await Promise.allSettled(
+        targetNetworks.map(async (network) => {
+          let networkItems: UserTransaction[] = [];
+          let networkError: string | null = null;
 
-      // Process each network
-      for (const network of targetNetworks) {
-        let networkItems: UserTransaction[] = [];
-        let networkError: string | null = null;
-
-        // Try Morpho API first if supported
-        if (supportsMorphoApi(network)) {
-          try {
-            console.log(`Attempting to fetch transactions via Morpho API for network ${network}`);
-            const morphoFilters = {
-              ...filters,
-              chainIds: [network],
-              first: MAX_ITEMS_PER_SOURCE,
-              skip: 0,
-            };
-            const morphoResponse = await fetchMorphoTransactions(morphoFilters);
-            if (!morphoResponse.error) {
-              networkItems = morphoResponse.items;
-              console.log(
-                `Received ${networkItems.length} items from Morpho API for network ${network}`,
-              );
-            } else {
-              networkError = morphoResponse.error;
-              console.warn(`Error from Morpho API for network ${network}:`, networkError);
+          // Try Morpho API first if supported
+          if (supportsMorphoApi(network)) {
+            try {
+              console.log(`Attempting to fetch transactions via Morpho API for network ${network}`);
+              const morphoFilters = {
+                ...filters,
+                chainIds: [network],
+                first: MAX_ITEMS_PER_SOURCE,
+                skip: 0,
+              };
+              const morphoResponse = await fetchMorphoTransactions(morphoFilters);
+              if (!morphoResponse.error) {
+                networkItems = morphoResponse.items;
+                console.log(
+                  `Received ${networkItems.length} items from Morpho API for network ${network}`,
+                );
+                return {
+                  items: networkItems,
+                  pageInfo: {
+                    count: networkItems.length,
+                    countTotal: networkItems.length,
+                  },
+                  error: null,
+                };
+              } else {
+                networkError = morphoResponse.error;
+                console.warn(`Error from Morpho API for network ${network}:`, networkError);
+              }
+            } catch (morphoError) {
+              console.error(`Failed to fetch from Morpho API for network ${network}:`, morphoError);
+              networkError = `Failed to fetch from Morpho API: ${
+                (morphoError as Error)?.message || 'Unknown error'
+              }`;
             }
-          } catch (morphoError) {
-            console.error(`Failed to fetch from Morpho API for network ${network}:`, morphoError);
-            networkError = `Failed to fetch from Morpho API: ${
-              (morphoError as Error)?.message || 'Unknown error'
-            }`;
           }
-        }
 
-        // If Morpho API failed or not supported, try Subgraph
-        if (networkItems.length === 0) {
-          try {
-            console.log(`Attempting to fetch transactions via Subgraph for network ${network}`);
-            const subgraphFilters = {
-              ...filters,
-              chainIds: [network],
-              first: MAX_ITEMS_PER_SOURCE,
-              skip: 0,
-            };
-            const subgraphResponse = await fetchSubgraphTransactions(subgraphFilters, network);
-            if (!subgraphResponse.error) {
-              networkItems = subgraphResponse.items;
-              console.log(
-                `Received ${networkItems.length} items from Subgraph for network ${network}`,
-              );
-            } else {
-              networkError = subgraphResponse.error;
-              console.warn(`Error from Subgraph for network ${network}:`, networkError);
+          // Only try Subgraph if Morpho API failed or is not supported
+          if (!supportsMorphoApi(network) || networkError) {
+            try {
+              console.log(`Attempting to fetch transactions via Subgraph for network ${network}`);
+              const subgraphFilters = {
+                ...filters,
+                chainIds: [network],
+                first: MAX_ITEMS_PER_SOURCE,
+                skip: 0,
+              };
+              const subgraphResponse = await fetchSubgraphTransactions(subgraphFilters, network);
+              if (!subgraphResponse.error) {
+                networkItems = subgraphResponse.items;
+                console.log(
+                  `Received ${networkItems.length} items from Subgraph for network ${network}`,
+                );
+              } else {
+                networkError = subgraphResponse.error;
+                console.warn(`Error from Subgraph for network ${network}:`, networkError);
+              }
+            } catch (subgraphError) {
+              console.error(`Failed to fetch from Subgraph for network ${network}:`, subgraphError);
+              networkError = `Failed to fetch from Subgraph: ${
+                (subgraphError as Error)?.message || 'Unknown error'
+              }`;
             }
-          } catch (subgraphError) {
-            console.error(`Failed to fetch from Subgraph for network ${network}:`, subgraphError);
-            networkError = `Failed to fetch from Subgraph: ${
-              (subgraphError as Error)?.message || 'Unknown error'
-            }`;
           }
-        }
 
-        // Add the network's results to the promises array
-        fetchPromises.push(
-          Promise.resolve({
+          return {
             items: networkItems,
             pageInfo: {
               count: networkItems.length,
               countTotal: networkItems.length,
             },
             error: networkError,
-          }),
-        );
-      }
-
-      // 3. Execute promises in parallel
-      const results = await Promise.allSettled(fetchPromises);
+          };
+        }),
+      );
 
       // 4. Combine results
       let combinedItems: UserTransaction[] = [];
