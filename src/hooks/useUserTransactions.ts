@@ -128,6 +128,14 @@ const useUserTransactions = () => {
                 console.log(
                   `Received ${networkItems.length} items from Subgraph for network ${network}`,
                 );
+                return {
+                  items: networkItems,
+                  pageInfo: {
+                    count: networkItems.length,
+                    countTotal: networkItems.length,
+                  },
+                  error: null,
+                };
               } else {
                 networkError = subgraphResponse.error;
                 console.warn(`Error from Subgraph for network ${network}:`, networkError);
@@ -140,6 +148,7 @@ const useUserTransactions = () => {
             }
           }
 
+          // Only reach here if both Morpho API and Subgraph failed
           return {
             items: networkItems,
             pageInfo: {
