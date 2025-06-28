@@ -22,9 +22,9 @@ export const fetchMorphoTransactions = async (
   };
 
   // disable cuz it's too long
-  // if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
-  //   whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
-  // }
+  if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
+    whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
+  }
   if (filters.timestampGte !== undefined && filters.timestampGte !== null) {
     whereClause.timestamp_gte = filters.timestampGte;
   }
