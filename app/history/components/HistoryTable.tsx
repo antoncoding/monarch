@@ -72,8 +72,8 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
   }, [positions, allMarkets]);
 
   // Get filtered market IDs based on selected asset
-  const filteredMarketIds = useMemo(() => {
-    if (!selectedAsset) return allMarkets.map((m) => m.uniqueKey);
+  const marketIdFilter = useMemo(() => {
+    if (!selectedAsset) return [];
 
     return allMarkets
       .filter(
@@ -86,13 +86,13 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
   useEffect(() => {
     const loadTransactions = async () => {
-      if (!account || !fetchTransactions || filteredMarketIds.length === 0) return;
+      if (!account || !fetchTransactions || allMarkets.length === 0) return;
 
       const result = await fetchTransactions({
         userAddress: [account],
         first: pageSize,
         skip: (currentPage - 1) * pageSize,
-        marketUniqueKeys: filteredMarketIds,
+        marketUniqueKeys: marketIdFilter,
       });
 
       if (result) {
@@ -103,7 +103,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
     };
 
     void loadTransactions();
-  }, [account, currentPage, fetchTransactions, filteredMarketIds]);
+  }, [account, currentPage, fetchTransactions, marketIdFilter]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

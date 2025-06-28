@@ -105,9 +105,13 @@ const transformSubgraphTransactions = (
 
   allTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
-  const filteredTransactions = filters.marketUniqueKeys
-    ? allTransactions.filter((tx) => filters.marketUniqueKeys?.includes(tx.data.market.uniqueKey))
-    : allTransactions;
+  // marketUniqueKeys is empty: all markets
+  const filteredTransactions =
+    filters.marketUniqueKeys?.length === 0
+      ? allTransactions
+      : allTransactions.filter(
+          (tx) => filters.marketUniqueKeys?.includes(tx.data.market.uniqueKey),
+        );
 
   const count = filteredTransactions.length;
   const countTotal = count;

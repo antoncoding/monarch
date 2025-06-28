@@ -7,7 +7,7 @@ import { UserTransaction } from '@/utils/types';
 
 export type TransactionFilters = {
   userAddress: string[]; // Expecting only one for subgraph compatibility
-  marketUniqueKeys?: string[];
+  marketUniqueKeys?: string[]; // empty: all markets
   chainIds?: number[]; // Optional: If provided, fetch only from these chains
   timestampGte?: number;
   timestampLte?: number;
