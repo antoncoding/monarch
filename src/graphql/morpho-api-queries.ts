@@ -14,8 +14,141 @@ export const feedFieldsFragment = `
   }
 `;
 
+// for both API type Market and MarketListItem
+const commonMarketFields = `
+lltv
+uniqueKey
+irmAddress
+oracleAddress
+collateralPrice
+whitelisted
+morphoBlue {
+  id
+  address
+  chain {
+    id
+  }
+}
+loanAsset {
+  id
+  address
+  symbol
+  name
+  decimals
+}
+collateralAsset {
+  id
+  address
+  symbol
+  name
+  decimals
+}
+state {
+  borrowAssets
+  supplyAssets
+  borrowAssetsUsd
+  supplyAssetsUsd
+  borrowShares
+  supplyShares
+  liquidityAssets
+  liquidityAssetsUsd
+  collateralAssets
+  collateralAssetsUsd
+  utilization
+  supplyApy
+  borrowApy
+  fee
+  timestamp
+  rateAtUTarget
+}
+warnings {
+  type
+  level
+  __typename
+}
+badDebt {
+  underlying
+  usd
+}
+realizedBadDebt {
+  underlying
+  usd
+}
+oracle {
+  data {
+    ... on MorphoChainlinkOracleData {
+      baseFeedOne {
+        ...FeedFields
+      }
+      baseFeedTwo {
+        ...FeedFields
+      }
+      quoteFeedOne {
+        ...FeedFields
+      }
+      quoteFeedTwo {
+        ...FeedFields
+      }
+    }
+    ... on MorphoChainlinkOracleV2Data {
+      baseFeedOne {
+        ...FeedFields
+      }
+      baseFeedTwo {
+        ...FeedFields
+      }
+      quoteFeedOne {
+        ...FeedFields
+      }
+      quoteFeedTwo {
+        ...FeedFields
+      }
+    }
+  }
+}
+riskAnalysis {
+  analysis {
+    ... on CredoraRiskAnalysis {
+      score
+      rating
+    }
+  }
+}
+`;
+
+// Market Fragement is only used type when querying a single market
 export const marketFragment = `
   fragment MarketFields on Market {
+    ${commonMarketFields}
+  }
+  ${feedFieldsFragment}
+`;
+
+export const marketsFragment = `
+  fragment MarketFields on MarketListItem {
+    ${commonMarketFields}
+  }
+  ${feedFieldsFragment}
+`;
+
+export const marketsQuery = `
+  query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
+    markets(first: $first, skip: $skip, where: $where) {
+      items {
+        ...MarketFields
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+        __typename
+      }  
+      __typename
+    }
+  }
+    
+  fragment MarketFields on MarketListItem {
     lltv
     uniqueKey
     irmAddress
@@ -116,25 +249,6 @@ export const marketFragment = `
     }
   }
   ${feedFieldsFragment}
-`;
-
-export const marketsQuery = `
-  query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
-    markets(first: $first, skip: $skip, where: $where) {
-      items {
-        ...MarketFields
-      }
-      pageInfo {
-        countTotal
-        count
-        limit
-        skip
-        __typename
-      }  
-      __typename
-    }
-  }
-  ${marketFragment}
 `;
 
 export const userPositionsQuery = `
