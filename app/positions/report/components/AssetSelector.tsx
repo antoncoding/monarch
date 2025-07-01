@@ -23,6 +23,8 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
   const [query, setQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  console.log('query', query);
+
   const filteredAssets = assets.filter((asset) =>
     asset.symbol.toLowerCase().includes(query.toLowerCase()),
   );
