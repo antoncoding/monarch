@@ -68,7 +68,20 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
           ...baseAssets.map(convertPendleAssetToToken),
         ];
 
-        setAllTokens([...supportedTokens, ...pendleTokens]);
+        // Filter out Pendle tokens that have addresses already present in supportedTokens
+        const filteredPendleTokens = pendleTokens.filter((pendleToken) => {
+          return !pendleToken.networks.some((pendleNetwork) =>
+            supportedTokens.some((supportedToken) =>
+              supportedToken.networks.some(
+                (supportedNetwork) =>
+                  supportedNetwork.address.toLowerCase() === pendleNetwork.address.toLowerCase() &&
+                  supportedNetwork.chain.id === pendleNetwork.chain.id,
+              ),
+            ),
+          );
+        });
+
+        setAllTokens([...supportedTokens, ...filteredPendleTokens]);
       } catch (err) {
         console.error('Error fetching Pendle assets:', err);
       }
