@@ -167,7 +167,7 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD' },
-      { chain: base, address: '0x5875eee11cf8398102fdad704c9e96607675467a' }
+      { chain: base, address: '0x5875eee11cf8398102fdad704c9e96607675467a' },
     ],
     peg: TokenPeg.USD,
   },

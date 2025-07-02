@@ -124,13 +124,15 @@ export const marketFragment = `
   ${feedFieldsFragment}
 `;
 
+// hotfix: remove MarketFields on MarketListItem
 export const marketsFragment = `
-  fragment MarketFields on MarketListItem {
+  fragment MarketFields on Market {
     ${commonMarketFields}
   }
   ${feedFieldsFragment}
 `;
 
+// hotfix: remove MarketFields on MarketListItem
 export const marketsQuery = `
   query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
     markets(first: $first, skip: $skip, where: $where) {
@@ -148,7 +150,7 @@ export const marketsQuery = `
     }
   }
     
-  fragment MarketFields on MarketListItem {
+  fragment MarketFields on Market {
     lltv
     uniqueKey
     irmAddress
