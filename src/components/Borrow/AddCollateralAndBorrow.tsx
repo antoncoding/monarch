@@ -275,7 +275,7 @@ export function AddCollateralAndBorrow({
                       isSelected={useEth}
                       onValueChange={setUseEth}
                       classNames={{
-                        wrapper: 'w-8 h-4',
+                        wrapper: 'w-9 h-4 mr-0',
                         thumb: 'w-3 h-3',
                       }}
                     />

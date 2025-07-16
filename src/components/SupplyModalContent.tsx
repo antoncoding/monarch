@@ -86,7 +86,10 @@ export function SupplyModalContent({
                       size="sm"
                       isSelected={useEth}
                       onValueChange={setUseEth}
-                      className="h-4 w-4"
+                      classNames={{
+                        wrapper: 'w-9 h-4 mr-0',
+                        thumb: 'w-3 h-3',
+                      }}
                     />
                   </div>
                 )}
