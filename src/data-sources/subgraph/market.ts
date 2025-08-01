@@ -285,8 +285,6 @@ const transformSubgraphMarketToMarket = (
     hasUSDPrice: hasUSDPrice,
     isProtectedByLiquidationBots: false, // Not available from subgraph
     isMonarchWhitelisted: false,
-    badDebt: undefined, // Not available from subgraph
-    realizedBadDebt: undefined, // Not available from subgraph
   };
 
   return marketDetail;

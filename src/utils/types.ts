@@ -298,14 +298,6 @@ export type Market = {
   // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
   hasUSDPrice: boolean;
   warnings: MarketWarning[];
-  badDebt?: {
-    underlying: number;
-    usd: number;
-  };
-  realizedBadDebt?: {
-    underlying: number;
-    usd: number;
-  };
 
   // appended by us
   warningsWithDetail: WarningWithDetail[];

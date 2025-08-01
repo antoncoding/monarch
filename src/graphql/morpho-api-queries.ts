@@ -66,14 +66,7 @@ warnings {
   level
   __typename
 }
-badDebt {
-  underlying
-  usd
-}
-realizedBadDebt {
-  underlying
-  usd
-}
+
 oracle {
   data {
     ... on MorphoChainlinkOracleData {
@@ -200,14 +193,6 @@ export const marketsQuery = `
       type
       level
       __typename
-    }
-    badDebt {
-      underlying
-      usd
-    }
-    realizedBadDebt {
-      underlying
-      usd
     }
     oracle {
       data {
