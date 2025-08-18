@@ -4,7 +4,7 @@ import { Button } from '@/components/common';
 
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8 text-center">
           <h2 className="text-2xl">Something went wrong</h2>

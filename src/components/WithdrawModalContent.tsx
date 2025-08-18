@@ -169,7 +169,7 @@ export function WithdrawModalContent({
                   </Button>
                 ) : (
                   <Button
-                    disabled={!isConnected || isConfirming || !position || !withdrawAmount}
+                    isDisabled={!isConnected || isConfirming || !position || !withdrawAmount}
                     onPress={() => void withdraw()}
                     className="ml-2 min-w-32"
                     variant="cta"

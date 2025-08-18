@@ -34,19 +34,20 @@ const queryClient = new QueryClient({
 // Read env at runtime inside component to avoid evaluating on the server during RSC build
 let wagmiConfig: ReturnType<typeof createWagmiConfig> | undefined;
 
+// eslint-disable-next-line @typescript-eslint/promise-function-async
 function OnchainProviders({ children }: Props) {
   const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
   if (!projectId) {
-    // Render minimal tree with an explicit error boundary in dev; avoid throwing at module scope
     if (process.env.NODE_ENV !== 'production') {
-      return children;
+      console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WagmiProvider disabled.');
     }
+    return children;
   }
-  if (!wagmiConfig && projectId) {
+  if (!wagmiConfig) {
     wagmiConfig = createWagmiConfig(projectId);
   }
   return (
-    <WagmiProvider config={wagmiConfig!}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={{

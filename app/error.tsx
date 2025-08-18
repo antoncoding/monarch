@@ -3,7 +3,13 @@
 import { useEffect } from 'react';
 import { Button } from '@/components/common';
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+export default function AppError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     // Log the error to an error reporting service in production if desired
     console.error('App error boundary caught:', error);

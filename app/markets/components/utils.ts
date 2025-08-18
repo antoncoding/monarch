@@ -25,7 +25,7 @@ export const getNestedProperty = (obj: Market, path: string | ((item: Market) =>
     return undefined;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-return, @typescript-eslint/prefer-optional-chain
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
 };
 
