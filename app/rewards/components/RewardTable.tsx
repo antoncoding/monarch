@@ -205,9 +205,8 @@ export default function RewardTable({
                           isDisabled={
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
-                          onPress={(e) => {
+                          onPress={() => {
                             void (async () => {
-                              e.stopPropagation();
                               if (!account) {
                                 toast.error(
                                   'No account connected',

@@ -11,9 +11,7 @@ type WhitelistedOracleData = MorphoChainlinkOracleData & {
 type NetworkOracleWhitelist = Record<Address, WhitelistedOracleData>;
 
 // Top-level map: Network ID -> Oracle Address -> Oracle Data (including warnings)
-export const oracleWhitelist: {
-  [network in SupportedNetworks]?: NetworkOracleWhitelist;
-} = {
+export const oracleWhitelist: Partial<Record<SupportedNetworks, NetworkOracleWhitelist>> = {
   [SupportedNetworks.Polygon]: {
     '0x1dc2444b54945064c131145cd6b8701e3454c63a': {
       baseFeedOne: {

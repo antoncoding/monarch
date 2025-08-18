@@ -311,7 +311,8 @@ export const fetchSubgraphMarket = async (
       },
     );
 
-    const marketData = response.data.market;
+    // Handle cases where GraphQL errors resulted in missing data
+    const marketData = response?.data?.market;
 
     if (!marketData) {
       console.warn(`Market with key ${uniqueKey} not found in Subgraph response.`);
@@ -361,7 +362,8 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
       variables as unknown as Record<string, unknown>,
     );
 
-    const marketsData = response.data.markets;
+    // Handle cases where GraphQL errors resulted in missing data
+    const marketsData = response?.data?.markets;
 
     if (!marketsData || !Array.isArray(marketsData)) {
       console.warn(

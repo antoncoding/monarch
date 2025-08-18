@@ -39,7 +39,7 @@ function OnchainProviders({ children }: Props) {
   if (!projectId) {
     // Render minimal tree with an explicit error boundary in dev; avoid throwing at module scope
     if (process.env.NODE_ENV !== 'production') {
-      return <>{children}</>;
+      return children;
     }
   }
   if (!wagmiConfig && projectId) {

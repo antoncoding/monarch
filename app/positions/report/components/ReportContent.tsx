@@ -209,7 +209,8 @@ export default function ReportContent({ account }: { account: Address }) {
                 {/* Date Pickers */}
                 <DatePicker
                   label="Start Date"
-                  value={startDate}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  value={startDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   onChange={handleStartDateChange as any}
                   minValue={minDate}
@@ -221,7 +222,8 @@ export default function ReportContent({ account }: { account: Address }) {
 
                 <DatePicker
                   label="End Date"
-                  value={endDate}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  value={endDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   onChange={handleEndDateChange as any}
                   minValue={minDate}
