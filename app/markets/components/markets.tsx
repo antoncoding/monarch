@@ -434,7 +434,7 @@ export default function Markets() {
               variant="light"
               size="sm"
               className="text-secondary"
-              onClick={handleRefresh}
+              onPress={handleRefresh}
             >
               <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} mr-1 h-3 w-3`} />
               Refresh
@@ -446,7 +446,7 @@ export default function Markets() {
               variant="light"
               size="sm"
               className="text-secondary"
-              onClick={onSettingsModalOpen}
+              onPress={onSettingsModalOpen}
             >
               <FiSettings size={14} />
             </Button>

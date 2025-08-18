@@ -288,7 +288,7 @@ export function FromAndToMarkets({
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
                             isDisabled={maxTransferableAmount <= 0n}
-                            onClick={(e) => {
+                            onPress={(e) => {
                               e.stopPropagation();
                               onFromMarketSelect(marketPosition.market.uniqueKey);
                               if (maxTransferableAmount > 0n) {

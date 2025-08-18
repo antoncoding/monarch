@@ -9,21 +9,44 @@ import { ConnectRedirectProvider } from './components/providers/ConnectRedirectP
 
 type Props = { children: ReactNode };
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        // Don't retry on GraphQL errors, network errors, or client errors
+        if (error?.message?.includes('GraphQL') || error?.message?.includes('Network response was not ok')) {
+          return false;
+        }
+        // Retry up to 2 times for other errors
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Prevent queries from throwing and crashing the app
+      throwOnError: false,
+    },
+    mutations: {
+      // Prevent mutations from throwing and crashing the app
+      throwOnError: false,
+    },
+  },
+});
 
-// TODO Docs ~~~
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
-if (!projectId) {
-  const providerErrMessage =
-    'To connect to all Wallets you need to provide a NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID env variable';
-  throw new Error(providerErrMessage);
-}
-
-const wagmiConfig = createWagmiConfig(projectId);
+// Read env at runtime inside component to avoid evaluating on the server during RSC build
+let wagmiConfig: ReturnType<typeof createWagmiConfig> | undefined;
 
 function OnchainProviders({ children }: Props) {
+  const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
+  if (!projectId) {
+    // Render minimal tree with an explicit error boundary in dev; avoid throwing at module scope
+    if (process.env.NODE_ENV !== 'production') {
+      return <>{children}</>;
+    }
+  }
+  if (!wagmiConfig && projectId) {
+    wagmiConfig = createWagmiConfig(projectId);
+  }
   return (
-    <WagmiProvider config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig!}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           theme={{

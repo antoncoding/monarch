@@ -42,11 +42,11 @@ export function SuccessPage({
       </div>
 
       <div className="mt-4 flex gap-4">
-        <Button variant="secondary" className="min-w-[120px]" onClick={handleFinished}>
+        <Button variant="secondary" className="min-w-[120px]" onPress={handleFinished}>
           Close
         </Button>
         {allowAgentSetting && (
-          <Button variant="cta" className="min-w-[120px]" onClick={handleGoToAgent}>
+          <Button variant="cta" className="min-w-[120px]" onPress={handleGoToAgent}>
             Set Monarch Agent
           </Button>
         )}

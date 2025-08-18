@@ -166,7 +166,7 @@ export function PositionsSummaryTable({
         <Button
           variant="light"
           size="sm"
-          onClick={handleManualRefresh}
+          onPress={handleManualRefresh}
           disabled={isRefetching}
           className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
         >
@@ -367,7 +367,7 @@ export function PositionsSummaryTable({
                           size="sm"
                           variant="interactive"
                           className="text-xs"
-                          onClick={() => {
+                          onPress={() => {
                             if (!isOwner) {
                               toast.error(
                                 'No authorization',

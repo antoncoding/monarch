@@ -205,7 +205,7 @@ export function RiskSelection() {
 
                         {/* Details Button */}
                         <Button
-                          onClick={(e) => handleMarketDetails(market, e)}
+                          onPress={(e) => handleMarketDetails(market, e)}
                           variant="interactive"
                           className="w-[80px]"
                           size="sm"

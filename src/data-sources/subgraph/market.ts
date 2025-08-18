@@ -302,25 +302,29 @@ export const fetchSubgraphMarket = async (
     throw new Error(`Subgraph URL for network ${network} is not defined.`);
   }
 
-  const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
-    subgraphApiUrl,
-    subgraphMarketQuery,
-    {
-      id: uniqueKey.toLowerCase(), // Ensure ID is lowercase for subgraph
-    },
-  );
+  try {
+    const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
+      subgraphApiUrl,
+      subgraphMarketQuery,
+      {
+        id: uniqueKey.toLowerCase(),
+      },
+    );
 
-  const marketData = response.data.market;
+    const marketData = response.data.market;
 
-  if (!marketData) {
-    console.warn(`Market with key ${uniqueKey} not found in Subgraph response.`);
-    return null; // Return null if not found, hook can handle this
+    if (!marketData) {
+      console.warn(`Market with key ${uniqueKey} not found in Subgraph response.`);
+      return null;
+    }
+
+    const majorPrices = await fetchLocalMajorPrices();
+
+    return transformSubgraphMarketToMarket(marketData, network, majorPrices);
+  } catch (error) {
+    console.error(`Error fetching subgraph market ${uniqueKey} on ${network}:`, error);
+    return null;
   }
-
-  // Fetch major prices needed for potential estimation
-  const majorPrices = await fetchLocalMajorPrices();
-
-  return transformSubgraphMarketToMarket(marketData, network, majorPrices);
 };
 
 // Define type for GraphQL variables
@@ -350,23 +354,28 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     },
   };
 
-  // Use the new marketsQuery
-  const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>( // Use the new response type
-    subgraphApiUrl,
-    subgraphMarketsQuery, // Use the new query
-    variables as unknown as Record<string, unknown>, // Convert via unknown
-  );
+  try {
+    const response = await subgraphGraphqlFetcher<SubgraphMarketsQueryResponse>(
+      subgraphApiUrl,
+      subgraphMarketsQuery,
+      variables as unknown as Record<string, unknown>,
+    );
 
-  // Assuming the response structure matches the single market query for the list
-  const marketsData = response.data.markets; // Adjust based on actual response structure
+    const marketsData = response.data.markets;
 
-  if (!marketsData || !Array.isArray(marketsData)) {
-    console.warn(`No markets found or invalid format in Subgraph response for network ${network}.`);
-    return []; // Return empty array if no markets or error
+    if (!marketsData || !Array.isArray(marketsData)) {
+      console.warn(
+        `No markets found or invalid format in Subgraph response for network ${network}.`,
+      );
+      return [];
+    }
+
+    const majorPrices = await fetchLocalMajorPrices();
+    return marketsData.map((market) =>
+      transformSubgraphMarketToMarket(market, network, majorPrices),
+    );
+  } catch (error) {
+    console.error(`Error fetching subgraph markets on ${network}:`, error);
+    return [];
   }
-
-  // Fetch major prices *once* before transforming all markets
-  const majorPrices = await fetchLocalMajorPrices();
-  // Transform each market using the fetched prices
-  return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
 };

@@ -38,18 +38,27 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
       skip,
       where: { inputToken_not_in: blacklistTokens },
     };
-    const page = await subgraphGraphqlFetcher<SubgraphMarketsLiquidationCheckResponse>(
-      subgraphApiUrl,
-      subgraphMarketsWithLiquidationCheckQuery,
-      variables,
-    );
+    let markets: SubgraphMarketLiquidationCheck[] | undefined;
+    try {
+      const page = await subgraphGraphqlFetcher<SubgraphMarketsLiquidationCheckResponse>(
+        subgraphApiUrl,
+        subgraphMarketsWithLiquidationCheckQuery,
+        variables,
+      );
 
-    if (page.errors) {
-      console.error('GraphQL errors:', page.errors);
-      throw new Error(`GraphQL error fetching liquidated market keys for network ${network}`);
+      if (page.errors) {
+        console.error('GraphQL errors:', page.errors);
+        break;
+      }
+
+      markets = page.data?.markets;
+    } catch (error) {
+      console.error(
+        `Error fetching liquidated market keys from subgraph for network ${network}:`,
+        error,
+      );
+      break;
     }
-
-    const markets = page.data?.markets;
 
     if (!markets) {
       console.warn(

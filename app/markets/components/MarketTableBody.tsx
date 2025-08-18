@@ -171,7 +171,7 @@ export function MarketTableBody({
                     size="sm"
                     variant="interactive"
                     className="text-xs"
-                    onClick={() => {
+                    onPress={() => {
                       setSelectedMarket(item);
                       setShowSupplyModal(true);
                     }}

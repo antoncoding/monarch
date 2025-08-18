@@ -90,7 +90,7 @@ export default function Positions() {
               </Button>
             </Link>
             {isOwner && hasActivePositionForAgent && (
-              <Button size="md" className="font-zen" onClick={() => setShowSetupAgentModal(true)}>
+              <Button size="md" className="font-zen" onPress={() => setShowSetupAgentModal(true)}>
                 <RiRobot2Line size={14} className="mr-2" />
                 Monarch Agent <Badge variant="success">New</Badge>
               </Button>
@@ -100,7 +100,7 @@ export default function Positions() {
                 variant="cta"
                 size="md"
                 className="font-zen"
-                onClick={() => setShowOnboardingModal(true)}
+                onPress={() => setShowOnboardingModal(true)}
               >
                 <FaPlus size={14} className="mr-2" />
                 New Position
@@ -162,7 +162,7 @@ export default function Positions() {
               <Button
                 variant="light"
                 size="sm"
-                onClick={handleRefetch}
+                onPress={handleRefetch}
                 className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 <IoRefreshOutline className="mr-2 h-4 w-4" />

@@ -205,7 +205,7 @@ export default function RewardTable({
                           isDisabled={
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
-                          onClick={(e) => {
+                          onPress={(e) => {
                             void (async () => {
                               e.stopPropagation();
                               if (!account) {

@@ -302,7 +302,7 @@ export function RebalanceModal({
             <Button
               variant="light"
               size="sm"
-              onClick={handleManualRefresh}
+              onPress={handleManualRefresh}
               isDisabled={isRefetching}
             >
               <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />

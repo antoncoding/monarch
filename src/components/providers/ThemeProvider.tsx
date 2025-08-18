@@ -12,6 +12,7 @@ export function ThemeProviders({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
       themes={['light', 'dark']}
+      suppressHydrationWarning
     >
       <NextUIProvider>{children}</NextUIProvider>
       <ToastContainer

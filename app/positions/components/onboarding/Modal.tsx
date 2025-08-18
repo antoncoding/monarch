@@ -81,7 +81,7 @@ export function OnboardingModal({
               {ONBOARDING_STEPS[currentStepIndex].description}
             </p>
           </div>
-          <Button isIconOnly onClick={onClose} className="bg-surface">
+          <Button isIconOnly onPress={onClose} className="bg-surface">
             <RxCross2 size={16} />
           </Button>
         </ModalHeader>

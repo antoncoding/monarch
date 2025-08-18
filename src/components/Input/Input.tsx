@@ -26,7 +26,7 @@ export default function Input({
 }: InputProps): JSX.Element {
   // State for the input text
   const [inputAmount, setInputAmount] = useState<string>(
-    value ? formatBalance(value, decimals).toString() : '0',
+    value ? formatBalance(value, decimals).toString() : '',
   );
 
   // Update input text when value prop changes

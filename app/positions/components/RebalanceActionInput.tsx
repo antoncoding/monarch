@@ -64,7 +64,7 @@ export function RebalanceActionInput({
         />
       </div>
       <Button
-        onClick={onAddAction}
+        onPress={onAddAction}
         variant="cta"
         isDisabled={!amount || !selectedFromMarketUniqueKey || !selectedToMarketUniqueKey}
       >

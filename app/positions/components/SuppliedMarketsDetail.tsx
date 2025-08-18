@@ -225,7 +225,7 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        onClick={() => {
+                        onPress={() => {
                           setSelectedPosition(position);
                           setShowWithdrawModal(true);
                         }}
@@ -235,7 +235,7 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        onClick={() => {
+                        onPress={() => {
                           setSelectedPosition(position);
                           setShowSupplyModal(true);
                         }}
