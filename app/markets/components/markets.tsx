@@ -1,9 +1,9 @@
 'use client';
 import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
-import { useDisclosure } from '@nextui-org/react';
+import { useDisclosure } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FiSettings } from 'react-icons/fi';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
@@ -31,9 +31,18 @@ import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
 
-export default function Markets() {
+interface MarketContentProps {
+  initialNetwork: SupportedNetworks | null;
+  initialCollaterals: string[];
+  initialLoanAssets: string[];
+}
+
+export default function Markets({ 
+  initialNetwork, 
+  initialCollaterals, 
+  initialLoanAssets 
+}: MarketContentProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const toast = useStyledToast();
 
@@ -46,17 +55,10 @@ export default function Markets() {
     onOpenChange: onSettingsModalOpenChange,
   } = useDisclosure();
 
-  const defaultNetwork = (() => {
-    const networkParam = searchParams.get('network');
-    return networkParam &&
-      Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
-      ? (Number(networkParam) as SupportedNetworks)
-      : null;
-  })();
-
-  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
-  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(defaultNetwork);
+  // Initialize state with server-parsed values
+  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(initialLoanAssets);
+  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(initialNetwork);
 
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>(
     [],
@@ -71,7 +73,6 @@ export default function Markets() {
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
-  const prevParamsRef = useRef<string>('');
 
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -108,26 +109,6 @@ export default function Markets() {
     [setUsdMinSupply, setUsdMinBorrow],
   );
 
-  useEffect(() => {
-    const currentParams = searchParams.toString();
-    if (currentParams !== prevParamsRef.current) {
-      const collaterals = searchParams.get('collaterals');
-      setSelectedCollaterals(collaterals ? collaterals.split(',').filter(Boolean) : []);
-
-      const loanAssets = searchParams.get('loanAssets');
-      setSelectedLoanAssets(loanAssets ? loanAssets.split(',').filter(Boolean) : []);
-
-      const networkParam = searchParams.get('network');
-      setSelectedNetwork(
-        networkParam &&
-          Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
-          ? (Number(networkParam) as SupportedNetworks)
-          : null,
-      );
-
-      prevParamsRef.current = currentParams;
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     // return if no markets
@@ -192,29 +173,22 @@ export default function Markets() {
 
   const updateUrlParams = useCallback(
     (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
-      const params = new URLSearchParams(Object.fromEntries(searchParams));
+      const params = new URLSearchParams();
+      
       if (collaterals.length > 0) {
         params.set('collaterals', collaterals.join(','));
-      } else {
-        params.delete('collaterals');
       }
       if (loanAssets.length > 0) {
         params.set('loanAssets', loanAssets.join(','));
-      } else {
-        params.delete('loanAssets');
       }
       if (network) {
         params.set('network', network.toString());
-      } else {
-        params.delete('network');
       }
+      
       const newParams = params.toString();
-      if (newParams !== prevParamsRef.current) {
-        router.push(`?${newParams}`, { scroll: false });
-        prevParamsRef.current = newParams;
-      }
+      router.push(`?${newParams}`, { scroll: false });
     },
-    [router, searchParams],
+    [router],
   );
 
   const applyFiltersAndSort = useCallback(() => {
@@ -322,12 +296,20 @@ export default function Markets() {
   };
 
   const handleMarketClick = (market: Market) => {
-    // Construct the current query parameters
-    const currentParams = searchParams.toString();
+    // Build URL with current state instead of searchParams
+    const params = new URLSearchParams();
+    if (selectedCollaterals.length > 0) {
+      params.set('collaterals', selectedCollaterals.join(','));
+    }
+    if (selectedLoanAssets.length > 0) {
+      params.set('loanAssets', selectedLoanAssets.join(','));
+    }
+    if (selectedNetwork) {
+      params.set('network', selectedNetwork.toString());
+    }
+    
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
-
-    // If we have query params, append them to the market detail URL
-    const targetPath = currentParams ? `${marketPath}?${currentParams}` : marketPath;
+    const targetPath = params.toString() ? `${marketPath}?${params.toString()}` : marketPath;
     window.open(targetPath, '_blank');
   };
 

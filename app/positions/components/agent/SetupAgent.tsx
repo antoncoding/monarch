@@ -6,7 +6,7 @@ import {
   DropdownMenu,
   DropdownItem,
   SharedSelection,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';

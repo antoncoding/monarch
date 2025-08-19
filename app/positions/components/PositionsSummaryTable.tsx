@@ -7,7 +7,7 @@ import {
   Tooltip,
   Switch,
   Button as NextUIButton,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';

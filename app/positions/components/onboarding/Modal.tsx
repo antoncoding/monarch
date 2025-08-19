@@ -1,4 +1,4 @@
-import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader, Button } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
 import { AssetSelection } from './AssetSelection';

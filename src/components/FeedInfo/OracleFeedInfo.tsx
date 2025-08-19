@@ -1,4 +1,4 @@
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@heroui/react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';

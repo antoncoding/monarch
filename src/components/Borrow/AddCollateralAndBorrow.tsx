@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Switch } from '@nextui-org/react';
+import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';

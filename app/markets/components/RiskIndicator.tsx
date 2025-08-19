@@ -1,4 +1,4 @@
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@heroui/react';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/TooltipContent';

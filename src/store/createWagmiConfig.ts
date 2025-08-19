@@ -9,7 +9,6 @@ import {
   trustWallet,
   ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { safe } from '@wagmi/connectors';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain } from 'wagmi/chains';
 import { getChainsForEnvironment } from './supportedChains';
@@ -58,10 +57,6 @@ export function createWagmiConfig(projectId: string) {
     },
     connectors: [
       ...connectors,
-      safe({
-        shimDisconnect: true,
-        allowedDomains: [/^app\.safe\.global$/],
-      }),
     ],
   });
 }

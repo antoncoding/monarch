@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardBody } from '@nextui-org/card';
+import { Card, CardBody } from '@heroui/react';
 import { SupportedNetworks, getNetworkName } from '@/utils/networks';
 import { PlatformStats } from '@/utils/statsUtils';
 

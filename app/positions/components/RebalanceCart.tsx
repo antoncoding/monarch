@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@heroui/react';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common';
 import { Market } from '@/utils/types';

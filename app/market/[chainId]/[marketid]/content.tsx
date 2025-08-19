@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@nextui-org/card';
+import { Card, CardHeader, CardBody } from '@heroui/react';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';

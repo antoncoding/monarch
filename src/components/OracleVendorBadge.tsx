@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { IoWarningOutline } from 'react-icons/io5';
 import { OracleVendorIcons, OracleVendors, parseOracleVendors } from '@/utils/oracle';

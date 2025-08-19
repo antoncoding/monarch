@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Checkbox } from '@nextui-org/react';
+import { Checkbox } from '@heroui/react';
 import { motion } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';

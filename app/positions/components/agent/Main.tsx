@@ -1,4 +1,4 @@
-import { Tooltip } from '@nextui-org/react';
+import { Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';

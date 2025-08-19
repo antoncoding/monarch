@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Input, Tooltip } from '@nextui-org/react';
-import { Pagination } from '@nextui-org/react';
-import { Button } from '@nextui-org/react';
+import { Input, Tooltip } from '@heroui/react';
+import { Pagination } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { FaArrowUp, FaArrowDown, FaStar, FaUser } from 'react-icons/fa';
 import { formatUnits } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';

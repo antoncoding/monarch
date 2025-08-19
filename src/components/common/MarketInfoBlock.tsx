@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@heroui/react';
 import { MdOutlineWaterDrop } from 'react-icons/md';
 import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance, formatReadable } from '@/utils/balance';

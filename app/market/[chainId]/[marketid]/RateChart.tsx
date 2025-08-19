@@ -1,8 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@nextui-org/card';
-import { Progress } from '@nextui-org/progress';
+import { Card, CardHeader, CardBody } from '@heroui/react';
+import { Progress } from '@heroui/react';
 import {
   AreaChart,
   Area,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Address } from 'viem';

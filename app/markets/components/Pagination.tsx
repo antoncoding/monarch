@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pagination as NextUIPagination } from '@nextui-org/react';
+import { Pagination as NextUIPagination } from '@heroui/react';
 
 type PaginationProps = {
   totalPages: number;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Card } from '@nextui-org/card';
-import { Switch } from '@nextui-org/switch';
+import { Card } from '@heroui/react';
+import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';

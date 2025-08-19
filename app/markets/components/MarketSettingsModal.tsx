@@ -9,7 +9,7 @@ import {
   Switch,
   Input,
   Divider,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import { useMarkets } from '@/hooks/useMarkets';
 
 type MarketSettingsModalProps = {

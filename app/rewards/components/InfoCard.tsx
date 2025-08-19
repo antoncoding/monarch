@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Tooltip } from '@nextui-org/react';
+import { Tooltip } from '@heroui/react';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Badge } from '@/components/common/Badge';
 import { TooltipContent } from '@/components/TooltipContent';
