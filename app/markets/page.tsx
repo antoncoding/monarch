@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { generateMetadata } from '@/utils/generateMetadata';
 
 import MarketContent from './components/markets';
@@ -10,5 +11,9 @@ export const metadata = generateMetadata({
 });
 
 export default function MarketPage() {
-  return <MarketContent />;
+  return (
+    <Suspense fallback={<div>Loading markets...</div>}>
+      <MarketContent />
+    </Suspense>
+  );
 }

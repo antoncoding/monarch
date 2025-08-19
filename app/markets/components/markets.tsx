@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import { useDisclosure } from '@nextui-org/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
-import storage from 'local-storage-fallback';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FiSettings } from 'react-icons/fi';
 import { Button } from '@/components/common';
@@ -31,17 +30,6 @@ import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
-
-const storedSortColumn = Number(
-  storage.getItem(keys.MarketSortColumnKey) ?? SortColumn.Supply.toString(),
-);
-
-// Ensure the sort column is a valid value
-const defaultSortColumn = Object.values(SortColumn).includes(storedSortColumn)
-  ? storedSortColumn
-  : SortColumn.Supply;
-
-const defaultSortDirection = Number(storage.getItem(keys.MarketSortDirectionKey) ?? '-1');
 
 export default function Markets() {
   const router = useRouter();
@@ -75,8 +63,8 @@ export default function Markets() {
   );
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
 
-  const [sortColumn, setSortColumn] = useState<SortColumn>(defaultSortColumn);
-  const [sortDirection, setSortDirection] = useState(defaultSortDirection);
+  const [sortColumn, setSortColumn] = useLocalStorage(keys.MarketSortColumnKey, SortColumn.Supply);
+  const [sortDirection, setSortDirection] = useLocalStorage(keys.MarketSortDirectionKey, -1);
 
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
@@ -290,14 +278,12 @@ export default function Markets() {
       }
 
       setSortColumn(column);
-      storage.setItem(keys.MarketSortColumnKey, column.toString());
 
       if (column === sortColumn) {
         setSortDirection(-sortDirection);
-        storage.setItem(keys.MarketSortDirectionKey, (-sortDirection).toString());
       }
     },
-    [sortColumn, sortDirection],
+    [sortColumn, sortDirection, setSortColumn, setSortDirection],
   );
 
   // Add keyboard shortcut for search
