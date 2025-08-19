@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useDisclosure } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
@@ -31,7 +31,7 @@ import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
 import { applyFilterAndSort } from './utils';
 
-interface MarketContentProps {
+type MarketContentProps = {
   initialNetwork: SupportedNetworks | null;
   initialCollaterals: string[];
   initialLoanAssets: string[];

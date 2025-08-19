@@ -9,8 +9,7 @@ export const metadata = generateMetadata({
   pathname: '',
 });
 
-// Next.js 15: searchParams is now a Promise
-interface PageProps {
+type PageProps = {
   searchParams: Promise<{
     network?: string;
     collaterals?: string;
