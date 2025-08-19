@@ -20,24 +20,23 @@ const rpcBase = `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 const rpcPolygon = `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 const rpcUnichain = `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 
+const wallets = (typeof indexedDB !== "undefined") ? [
+  rabbyWallet,
+  metaMaskWallet,
+  rainbowWallet,
+  coinbaseWallet,
+  argentWallet,
+  injectedWallet,
+  trustWallet,
+  ledgerWallet,
+] : [];
+
 export function createWagmiConfig(projectId: string) {
   const connectors = connectorsForWallets(
     [
       {
         groupName: 'Recommended Wallet',
-        wallets: [rabbyWallet],
-      },
-      {
-        groupName: 'Other Wallets',
-        wallets: [
-          metaMaskWallet,
-          rainbowWallet,
-          coinbaseWallet,
-          argentWallet,
-          injectedWallet,
-          trustWallet,
-          ledgerWallet,
-        ],
+        wallets,
       },
     ],
     {
