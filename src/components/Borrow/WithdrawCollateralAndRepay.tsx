@@ -327,7 +327,7 @@ export function WithdrawCollateralAndRepay({
                 <AccountConnect />
               </div>
             ) : needSwitchChain ? (
-              <Button onClick={switchToNetwork} className="min-w-32" variant="solid">
+              <Button onPress={switchToNetwork} className="min-w-32" variant="solid">
                 Switch Chain
               </Button>
             ) : (
@@ -341,7 +341,7 @@ export function WithdrawCollateralAndRepay({
                   newLTV >= lltv ||
                   isLoadingPermit2
                 }
-                onClick={() => {
+                onPress={() => {
                   if (!isApproved && !permit2Authorized) {
                     void approveAndRepay();
                   } else {

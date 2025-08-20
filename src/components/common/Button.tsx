@@ -1,5 +1,5 @@
 import React from 'react';
-import { extendVariants, Button as NextUIButton } from '@nextui-org/react';
+import { extendVariants, Button as NextUIButton } from '@heroui/react';
 
 export const Button = extendVariants(NextUIButton, {
   variants: {

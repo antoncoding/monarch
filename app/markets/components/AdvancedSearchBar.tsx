@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Input } from '@nextui-org/input';
+import { Input } from '@heroui/react';
 import Image from 'next/image';
 import { AiOutlineEnter } from 'react-icons/ai';
 import { FaSearch } from 'react-icons/fa';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/react';
+import { Tooltip } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
@@ -171,7 +171,7 @@ export function MarketTableBody({
                     size="sm"
                     variant="interactive"
                     className="text-xs"
-                    onClick={() => {
+                    onPress={() => {
                       setSelectedMarket(item);
                       setShowSupplyModal(true);
                     }}

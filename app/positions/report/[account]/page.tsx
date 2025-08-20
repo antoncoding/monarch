@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: 'View your position report on Monarch',
 };
 
-export default function ReportPage({ params }: { params: { account: Address } }) {
-  return <ReportContent account={params.account} />;
+export default async function ReportPage({ params }: { params: Promise<{ account: Address }> }) {
+  const p = await params;
+  return <ReportContent account={p.account} />;
 }

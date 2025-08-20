@@ -14,10 +14,19 @@ import {
 } from './types';
 
 const transformSubgraphTransactions = (
-  subgraphData: SubgraphAccountData,
+  subgraphData: SubgraphAccountData | null | undefined,
   filters: TransactionFilters,
 ): TransactionResponse => {
   const allTransactions: UserTransaction[] = [];
+
+  // Handle null/undefined data gracefully
+  if (!subgraphData) {
+    return {
+      items: [],
+      pageInfo: { count: 0, countTotal: 0 },
+      error: null,
+    };
+  }
 
   subgraphData.deposits.forEach((tx: SubgraphDepositTx) => {
     const type = tx.isCollateral ? UserTxTypes.MarketSupplyCollateral : UserTxTypes.MarketSupply;
@@ -200,7 +209,7 @@ export const fetchSubgraphTransactions = async (
       };
     }
 
-    return transformSubgraphTransactions(result.data.account, filters);
+    return transformSubgraphTransactions(result?.data?.account, filters);
   } catch (err) {
     console.error(`Error fetching Subgraph transactions from ${subgraphUrl}:`, err);
     return {

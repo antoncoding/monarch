@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, ModalContent, ModalHeader } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Address } from 'viem';
 import { useMarkets } from '@/contexts/MarketsContext';

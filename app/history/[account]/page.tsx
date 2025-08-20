@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: 'View your transaction history on Monarch',
 };
 
-export default function HistoryPage({ params }: { params: { account: string } }) {
-  return <HistoryContent account={params.account} />;
+export default async function HistoryPage({ params }: { params: Promise<{ account: string }> }) {
+  const p = await params;
+  return <HistoryContent account={p.account} />;
 }

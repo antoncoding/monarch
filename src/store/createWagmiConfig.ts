@@ -9,7 +9,6 @@ import {
   trustWallet,
   ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { safe } from '@wagmi/connectors';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain } from 'wagmi/chains';
 import { getChainsForEnvironment } from './supportedChains';
@@ -21,24 +20,25 @@ const rpcBase = `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 const rpcPolygon = `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 const rpcUnichain = `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 
+const wallets = (typeof window !== "undefined") ? [
+  rabbyWallet,
+  metaMaskWallet,
+  rainbowWallet,
+  coinbaseWallet,
+  argentWallet,
+  injectedWallet,
+  trustWallet,
+  ledgerWallet,
+] : [
+  injectedWallet,
+];
+
 export function createWagmiConfig(projectId: string) {
   const connectors = connectorsForWallets(
     [
       {
         groupName: 'Recommended Wallet',
-        wallets: [rabbyWallet],
-      },
-      {
-        groupName: 'Other Wallets',
-        wallets: [
-          metaMaskWallet,
-          rainbowWallet,
-          coinbaseWallet,
-          argentWallet,
-          injectedWallet,
-          trustWallet,
-          ledgerWallet,
-        ],
+        wallets,
       },
     ],
     {
@@ -58,10 +58,6 @@ export function createWagmiConfig(projectId: string) {
     },
     connectors: [
       ...connectors,
-      safe({
-        shimDisconnect: true,
-        allowedDomains: [/^app\.safe\.global$/],
-      }),
     ],
   });
 }

@@ -9,7 +9,7 @@ import {
   ModalFooter,
   Button,
   Checkbox,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 

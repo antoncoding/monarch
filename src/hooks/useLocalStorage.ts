@@ -8,6 +8,11 @@ export function useLocalStorage<T>(
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
   const [storedValue, setStoredValue] = useState<T>(() => {
+    // Return initial value during SSR
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    
     try {
       const item = storage.getItem(key);
       // Parse stored json or if none return initialValue
@@ -17,6 +22,18 @@ export function useLocalStorage<T>(
       return initialValue;
     }
   });
+
+  // Hydrate from localStorage after mount
+  useEffect(() => {
+    try {
+      const item = storage.getItem(key);
+      if (item) {
+        setStoredValue(JSON.parse(item) as T);
+      }
+    } catch (error) {
+      console.warn(`Error reading localStorage key "${key}":`, error);
+    }
+  }, [key]);
 
   // Return a wrapped version of useState's setter function that persists the new value to localStorage
   const setValue = useCallback(
@@ -39,6 +56,8 @@ export function useLocalStorage<T>(
 
   // Sync updates from other windows
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
         try {

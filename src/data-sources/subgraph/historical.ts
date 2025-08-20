@@ -134,7 +134,7 @@ export const fetchSubgraphMarketHistoricalData = async (
 
     // If no data or empty snapshots array, return null
     if (
-      !response.data ||
+      !response?.data ||
       !response.data.marketHourlySnapshots ||
       response.data.marketHourlySnapshots.length === 0
     ) {

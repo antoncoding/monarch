@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Checkbox } from '@nextui-org/react';
+import { Checkbox } from '@heroui/react';
 import { motion } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
@@ -86,8 +86,7 @@ export function RiskSelection() {
   // Check if criteria is met to show markets
   const shouldShowMarkets = selectedCollaterals.length > 0 && selectedOracles.length > 0;
 
-  const handleMarketDetails = (market: Market, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleMarketDetails = (market: Market) => {
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
     window.open(marketPath, '_blank');
   };
@@ -205,7 +204,7 @@ export function RiskSelection() {
 
                         {/* Details Button */}
                         <Button
-                          onClick={(e) => handleMarketDetails(market, e)}
+                          onPress={() => handleMarketDetails(market)}
                           variant="interactive"
                           className="w-[80px]"
                           size="sm"

@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@nextui-org/card';
+import { Card, CardHeader, CardBody } from '@heroui/react';
 import {
   AreaChart,
   Area,

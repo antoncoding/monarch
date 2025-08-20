@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Switch, Tooltip } from '@nextui-org/react';
+import { Switch, Tooltip } from '@heroui/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Address } from 'viem';

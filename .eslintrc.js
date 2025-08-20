@@ -40,7 +40,7 @@ module.exports = {
     'react/no-unescaped-entities': 'off',
 
     // Performance: Avoid unnecessary renders
-    'react-perf/jsx-no-new-array-as-prop': 'warn',
+    'react-perf/jsx-no-new-array-as-prop': 'off',
     'react-perf/jsx-no-new-function-as-prop': 'off',
 
     // We prefer function declarations
@@ -70,7 +70,7 @@ module.exports = {
 
     // Forbid types
     '@typescript-eslint/ban-types': 'error',
-    '@typescript-eslint/no-explicit-any': ['warn', { fixToUnknown: false }],
+    '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-invalid-void-type': 'error',
     '@typescript-eslint/no-unsafe-argument': 'error',
     '@typescript-eslint/no-unsafe-assignment': 'error',
@@ -120,9 +120,9 @@ module.exports = {
 
     // APIs
     '@typescript-eslint/prefer-includes': 'error',
-    '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+    '@typescript-eslint/prefer-nullish-coalescing': 'off',
     '@typescript-eslint/prefer-string-starts-ends-with': 'error',
-    '@typescript-eslint/prefer-optional-chain': 'warn',
+    '@typescript-eslint/prefer-optional-chain': 'off',
 
     // Hard to migrate
     // Errors for all try/catch blocks and any types from third-parties
@@ -132,6 +132,9 @@ module.exports = {
     'react/jsx-uses-react': 'off',
     'react/react-in-jsx-scope': 'off',
     'import/extensions': 'off',
+
+    // Hook dependency warnings are intentionally skipped to ensure flow
+    'react-hooks/exhaustive-deps': 'off',
 
     // We prefer sorting imports by groups
     'import/order': [

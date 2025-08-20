@@ -26,7 +26,7 @@ const unichainSubgraphUrl = apiKey
   : undefined;
 
 // Map network IDs (from SupportedNetworks) to Subgraph URLs
-export const SUBGRAPH_URLS: { [key in SupportedNetworks]?: string } = {
+export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: baseSubgraphUrl,
   [SupportedNetworks.Mainnet]: mainnetSubgraphUrl,
   [SupportedNetworks.Polygon]: polygonSubgraphUrl,

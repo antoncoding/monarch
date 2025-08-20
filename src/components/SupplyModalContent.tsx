@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { Switch } from '@nextui-org/react';
+import { Switch } from '@heroui/react';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -141,7 +141,7 @@ export function SupplyModalContent({
 
                     {needSwitchChain ? (
                       <Button
-                        onClick={switchToNetwork}
+                        onPress={switchToNetwork}
                         className="ml-2 min-w-32"
                         variant="secondary"
                       >
@@ -150,7 +150,7 @@ export function SupplyModalContent({
                     ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
                       <Button
                         disabled={!isConnected || isLoadingPermit2 || supplyPending}
-                        onClick={() => void approveAndSupply()}
+                        onPress={() => void approveAndSupply()}
                         className="ml-2 min-w-32"
                         variant="cta"
                       >
@@ -161,7 +161,7 @@ export function SupplyModalContent({
                         disabled={
                           !isConnected || supplyPending || inputError !== null || !supplyAmount
                         }
-                        onClick={() => void signAndSupply()}
+                        onPress={() => void signAndSupply()}
                         className="ml-2 min-w-32"
                         variant="cta"
                       >

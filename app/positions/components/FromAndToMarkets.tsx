@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Input, Tooltip } from '@nextui-org/react';
-import { Pagination } from '@nextui-org/react';
-import { Button } from '@nextui-org/react';
+import { Input, Tooltip } from '@heroui/react';
+import { Pagination } from '@heroui/react';
+import { Button } from '@heroui/react';
 import { FaArrowUp, FaArrowDown, FaStar, FaUser } from 'react-icons/fa';
 import { formatUnits } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -288,8 +288,7 @@ export function FromAndToMarkets({
                             variant="flat"
                             className="h-5 min-w-0 px-2 text-xs"
                             isDisabled={maxTransferableAmount <= 0n}
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            onPress={() => {
                               onFromMarketSelect(marketPosition.market.uniqueKey);
                               if (maxTransferableAmount > 0n) {
                                 onSelectMax?.(

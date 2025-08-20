@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@nextui-org/table';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@heroui/react';
 import Link from 'next/link';
 import { FiChevronUp, FiChevronDown, FiExternalLink } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';

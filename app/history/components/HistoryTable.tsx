@@ -1,7 +1,6 @@
 import React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Chip, Link, Pagination } from '@nextui-org/react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { Chip, Link, Pagination, Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';

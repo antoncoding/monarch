@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@nextui-org/react';
+import { Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { IoWarningOutline } from 'react-icons/io5';
@@ -225,7 +225,7 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        onClick={() => {
+                        onPress={() => {
                           setSelectedPosition(position);
                           setShowWithdrawModal(true);
                         }}
@@ -235,7 +235,7 @@ export function SuppliedMarketsDetail({
                       <Button
                         size="sm"
                         variant="interactive"
-                        onClick={() => {
+                        onPress={() => {
                           setSelectedPosition(position);
                           setShowSupplyModal(true);
                         }}

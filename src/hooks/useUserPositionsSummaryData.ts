@@ -16,9 +16,7 @@ type BlockNumbers = {
   month: number;
 };
 
-type ChainBlockNumbers = {
-  [K in SupportedNetworks]: BlockNumbers;
-};
+type ChainBlockNumbers = Record<SupportedNetworks, BlockNumbers>;
 
 // Query keys for block numbers and earnings
 export const blockKeys = {

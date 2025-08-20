@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Address } from 'viem';
@@ -205,9 +205,8 @@ export default function RewardTable({
                           isDisabled={
                             tokenReward.total.claimable === BigInt(0) || distribution === undefined
                           }
-                          onClick={(e) => {
+                          onPress={() => {
                             void (async () => {
-                              e.stopPropagation();
                               if (!account) {
                                 toast.error(
                                   'No account connected',

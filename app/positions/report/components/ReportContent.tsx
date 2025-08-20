@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { DateValue } from '@heroui/react';
 import {
   parseDate,
   getLocalTimeZone,
@@ -9,7 +10,6 @@ import {
   ZonedDateTime,
   now,
 } from '@internationalized/date';
-import { DateValue } from '@nextui-org/react';
 import { useDateFormatter } from '@react-aria/i18n';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
@@ -209,7 +209,8 @@ export default function ReportContent({ account }: { account: Address }) {
                 {/* Date Pickers */}
                 <DatePicker
                   label="Start Date"
-                  value={startDate}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  value={startDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   onChange={handleStartDateChange as any}
                   minValue={minDate}
@@ -221,7 +222,8 @@ export default function ReportContent({ account }: { account: Address }) {
 
                 <DatePicker
                   label="End Date"
-                  value={endDate}
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                  value={endDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   onChange={handleEndDateChange as any}
                   minValue={minDate}

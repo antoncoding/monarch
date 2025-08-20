@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { DateValue } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import { getLocalTimeZone } from '@internationalized/date';
-import { DateValue } from '@nextui-org/react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@nextui-org/table';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { useDateFormatter } from '@react-aria/i18n';
 import moment from 'moment';

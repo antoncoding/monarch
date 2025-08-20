@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npx next lint:*)",
+      "Bash(yarn install)",
+      "Bash(yarn build)",
+      "Bash(yarn build:*)",
+      "Bash(NEXT_TELEMETRY_DISABLED=1 yarn build)",
+      "Bash(find:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run lint:check:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm ls:*)",
+      "Bash(node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(pnpm add:*)",
+      "WebFetch(domain:www.heroui.com)"
+    ],
+    "deny": []
+  }
+}

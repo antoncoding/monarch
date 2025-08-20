@@ -1,4 +1,4 @@
-import { Modal, ModalContent, ModalHeader, Button } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader, Button } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
 import { AssetSelection } from './AssetSelection';
@@ -81,7 +81,7 @@ export function OnboardingModal({
               {ONBOARDING_STEPS[currentStepIndex].description}
             </p>
           </div>
-          <Button isIconOnly onClick={onClose} className="bg-surface">
+          <Button isIconOnly onPress={onClose} className="bg-surface">
             <RxCross2 size={16} />
           </Button>
         </ModalHeader>

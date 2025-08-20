@@ -1,6 +1,6 @@
 'use client';
 
-import { Switch } from '@nextui-org/react';
+import { Switch } from '@heroui/react';
 import Header from '@/components/layout/header/Header';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';

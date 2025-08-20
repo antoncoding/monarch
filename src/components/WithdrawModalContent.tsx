@@ -164,13 +164,13 @@ export function WithdrawModalContent({
                   )}
                 </div>
                 {needSwitchChain ? (
-                  <Button onClick={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
+                  <Button onPress={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
                     Switch Chain
                   </Button>
                 ) : (
                   <Button
-                    disabled={!isConnected || isConfirming || !position || !withdrawAmount}
-                    onClick={() => void withdraw()}
+                    isDisabled={!isConnected || isConfirming || !position || !withdrawAmount}
+                    onPress={() => void withdraw()}
                     className="ml-2 min-w-32"
                     variant="cta"
                   >

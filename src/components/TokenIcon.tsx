@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Tooltip } from '@nextui-org/tooltip';
+import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TooltipContent } from './TooltipContent';

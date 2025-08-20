@@ -3,13 +3,13 @@
 
 import type { Config } from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
-const { nextui } = require('@nextui-org/theme');
+const { heroui } = require('@heroui/theme');
 
 const config: Config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}',
+    './node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     container: {
@@ -52,7 +52,7 @@ const config: Config = {
   },
   darkMode: 'class',
   plugins: [
-    nextui({
+    heroui({
       themes: {
         light: {
           layout: {

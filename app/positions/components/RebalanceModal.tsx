@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@nextui-org/react';
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/common';
@@ -302,7 +302,7 @@ export function RebalanceModal({
             <Button
               variant="light"
               size="sm"
-              onClick={handleManualRefresh}
+              onPress={handleManualRefresh}
               isDisabled={isRefetching}
             >
               <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />

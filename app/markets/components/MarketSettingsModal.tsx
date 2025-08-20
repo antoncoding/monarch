@@ -9,7 +9,7 @@ import {
   Switch,
   Input,
   Divider,
-} from '@nextui-org/react';
+} from '@heroui/react';
 import { useMarkets } from '@/hooks/useMarkets';
 
 type MarketSettingsModalProps = {
@@ -234,7 +234,7 @@ export default function MarketSettingsModal({
                     <Button
                       key={value}
                       size="sm"
-                      onClick={() => handleEntriesChange(value)}
+                      onPress={() => handleEntriesChange(value)}
                       variant={entriesPerPage === value ? 'solid' : 'bordered'}
                       color={entriesPerPage === value ? 'primary' : 'default'}
                       className={`min-w-[40px] ${
@@ -256,7 +256,7 @@ export default function MarketSettingsModal({
                       className="w-20"
                       onKeyDown={(e) => e.key === 'Enter' && handleCustomEntriesSubmit()}
                     />
-                    <Button size="sm" onClick={handleCustomEntriesSubmit} variant="flat">
+                    <Button size="sm" onPress={handleCustomEntriesSubmit} variant="flat">
                       Set
                     </Button>
                   </div>

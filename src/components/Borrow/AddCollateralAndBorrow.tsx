@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Switch } from '@nextui-org/react';
+import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
@@ -338,7 +338,7 @@ export function AddCollateralAndBorrow({
                   <AccountConnect />
                 </div>
               ) : needSwitchChain ? (
-                <Button onClick={switchToNetwork} className="min-w-32" variant="solid">
+                <Button onPress={switchToNetwork} className="min-w-32" variant="solid">
                   Switch Chain
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
@@ -353,7 +353,7 @@ export function AddCollateralAndBorrow({
                     borrowAmount === BigInt(0) ||
                     newLTV >= lltv
                   }
-                  onClick={() => void approveAndBorrow()}
+                  onPress={() => void approveAndBorrow()}
                   className="min-w-32"
                   variant="cta"
                 >
@@ -369,7 +369,7 @@ export function AddCollateralAndBorrow({
                     (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
                     newLTV >= lltv
                   }
-                  onClick={() => void signAndBorrow()}
+                  onPress={() => void signAndBorrow()}
                   className="min-w-32"
                   variant="cta"
                 >

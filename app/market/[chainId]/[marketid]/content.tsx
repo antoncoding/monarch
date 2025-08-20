@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@nextui-org/card';
+import { Card, CardHeader, CardBody } from '@heroui/react';
 import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -191,18 +191,18 @@ function MarketContent() {
       <div className="container mx-auto px-4 py-8 pb-4 font-zen">
         {/* navigation bottons */}
         <div className="flex justify-between">
-          <Button onClick={handleBackToMarkets} size="md" className="mb-4">
+          <Button onPress={handleBackToMarkets} size="md" className="mb-4">
             <ChevronLeftIcon className="mr-2" />
             Back to Markets
           </Button>
 
           <div className="flex gap-2">
-            <Button onClick={() => setShowSupplyModal(true)}>Supply</Button>
-            <Button onClick={() => setShowBorrowModal(true)}>Borrow</Button>
+            <Button onPress={() => setShowSupplyModal(true)}>Supply</Button>
+            <Button onPress={() => setShowBorrowModal(true)}>Borrow</Button>
             <Button
               size="md"
               className="mb-4"
-              onClick={() => {
+              onPress={() => {
                 void window.open(
                   getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
                   '_blank',
