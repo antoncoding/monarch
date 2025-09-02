@@ -53,7 +53,12 @@ export function AccountDropdown() {
           wrapper: 'justify-between no-underline rounded-sm',
         }}
       >
-        <DropdownItem key="account-info" className="border-b border-primary/10 pb-4" isReadOnly showDivider={false}>
+        <DropdownItem
+          key="account-info"
+          className="border-b border-primary/10 pb-4"
+          isReadOnly
+          showDivider={false}
+        >
           <div className="flex w-full flex-col gap-2">
             <AccountWithENS address={address} />
           </div>

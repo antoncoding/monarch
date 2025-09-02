@@ -12,7 +12,7 @@ export function useLocalStorage<T>(
     if (typeof window === 'undefined') {
       return initialValue;
     }
-    
+
     try {
       const item = storage.getItem(key);
       // Parse stored json or if none return initialValue
@@ -57,7 +57,7 @@ export function useLocalStorage<T>(
   // Sync updates from other windows
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
         try {

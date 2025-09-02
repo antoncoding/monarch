@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
+import { useConfig } from 'wagmi';
+import { getPublicClient } from 'wagmi/actions';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
@@ -12,6 +14,8 @@ import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useMarkets } from './useMarkets';
+import { getClient } from '@/utils/rpc';
+import { useCustomRpc } from './useCustomRpc';
 
 // Type for market key and chain identifier
 type PositionMarket = {
@@ -140,6 +144,8 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
   const { allMarkets } = useMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
+  const { customRpcUrls } = useCustomRpc();
+
   // 1. Query for initial data: Fetch keys from sources, combine with cache, deduplicate
   const {
     data: initialData,
@@ -199,6 +205,13 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           return null;
         }
 
+        console.log('seeing custom RPC', customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined)
+        const publicClient = getClient(marketInfo.chainId, customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined);
+        if (!publicClient) {
+          console.error(`[Positions] No public client available for chain ${marketInfo.chainId}`);
+          return null;
+        }
+
         const snapshot = await queryClient.fetchQuery({
           queryKey: positionKeys.snapshot(marketInfo.marketUniqueKey, user, marketInfo.chainId),
           queryFn: async () =>
@@ -207,6 +220,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
               user as Address,
               marketInfo.chainId,
               0,
+              publicClient,
             ),
           staleTime: 30000,
           gcTime: 5 * 60 * 1000,

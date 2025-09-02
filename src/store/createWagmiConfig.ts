@@ -11,29 +11,37 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain } from 'wagmi/chains';
+import { SupportedNetworks } from '@/utils/networks';
 import { getChainsForEnvironment } from './supportedChains';
+import { DEFAULT_RPC_URLS } from '@/utils/rpc';
 
-const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
+const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];
+const defaultRpcPolygon = DEFAULT_RPC_URLS[SupportedNetworks.Polygon];
+const defaultRpcUnichain = DEFAULT_RPC_URLS[SupportedNetworks.Unichain];
 
-const rpcMainnet = `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`;
-const rpcBase = `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
-const rpcPolygon = `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`;
-const rpcUnichain = `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`;
+export type CustomRpcUrls = {
+  [SupportedNetworks.Mainnet]?: string;
+  [SupportedNetworks.Base]?: string;
+  [SupportedNetworks.Polygon]?: string;
+  [SupportedNetworks.Unichain]?: string;
+};
 
-const wallets = (typeof window !== "undefined") ? [
-  rabbyWallet,
-  metaMaskWallet,
-  rainbowWallet,
-  coinbaseWallet,
-  argentWallet,
-  injectedWallet,
-  trustWallet,
-  ledgerWallet,
-] : [
-  injectedWallet,
-];
+const wallets =
+  typeof window !== 'undefined'
+    ? [
+        rabbyWallet,
+        metaMaskWallet,
+        rainbowWallet,
+        coinbaseWallet,
+        argentWallet,
+        injectedWallet,
+        trustWallet,
+        ledgerWallet,
+      ]
+    : [injectedWallet];
 
-export function createWagmiConfig(projectId: string) {
+export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrls = {}) {
   const connectors = connectorsForWallets(
     [
       {
@@ -47,6 +55,12 @@ export function createWagmiConfig(projectId: string) {
     },
   );
 
+  // Use custom RPC URLs if provided, otherwise fall back to defaults
+  const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? defaultRpcMainnet;
+  const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? defaultRpcBase;
+  const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? defaultRpcPolygon;
+  const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? defaultRpcUnichain;
+
   return createConfig({
     ssr: true,
     chains: getChainsForEnvironment(),
@@ -56,8 +70,6 @@ export function createWagmiConfig(projectId: string) {
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),
     },
-    connectors: [
-      ...connectors,
-    ],
+    connectors: [...connectors],
   });
 }

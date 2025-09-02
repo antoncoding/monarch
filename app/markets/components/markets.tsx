@@ -35,12 +35,12 @@ type MarketContentProps = {
   initialNetwork: SupportedNetworks | null;
   initialCollaterals: string[];
   initialLoanAssets: string[];
-}
+};
 
-export default function Markets({ 
-  initialNetwork, 
-  initialCollaterals, 
-  initialLoanAssets 
+export default function Markets({
+  initialNetwork,
+  initialCollaterals,
+  initialLoanAssets,
 }: MarketContentProps) {
   const router = useRouter();
 
@@ -72,7 +72,6 @@ export default function Markets({
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
-
 
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -108,7 +107,6 @@ export default function Markets({
     },
     [setUsdMinSupply, setUsdMinBorrow],
   );
-
 
   useEffect(() => {
     // return if no markets
@@ -174,7 +172,7 @@ export default function Markets({
   const updateUrlParams = useCallback(
     (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
       const params = new URLSearchParams();
-      
+
       if (collaterals.length > 0) {
         params.set('collaterals', collaterals.join(','));
       }
@@ -184,7 +182,7 @@ export default function Markets({
       if (network) {
         params.set('network', network.toString());
       }
-      
+
       const newParams = params.toString();
       router.push(`?${newParams}`, { scroll: false });
     },
@@ -307,7 +305,7 @@ export default function Markets({
     if (selectedNetwork) {
       params.set('network', selectedNetwork.toString());
     }
-    
+
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
     const targetPath = params.toString() ? `${marketPath}?${params.toString()}` : marketPath;
     window.open(targetPath, '_blank');

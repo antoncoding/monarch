@@ -9,6 +9,7 @@ import { estimatedBlockNumber } from '@/utils/rpc';
 import { MarketPositionWithEarnings } from '@/utils/types';
 import useUserPositions, { positionKeys } from './useUserPositions';
 import useUserTransactions from './useUserTransactions';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 
 type BlockNumbers = {
   day: number;
@@ -83,6 +84,8 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
 
   const queryClient = useQueryClient();
 
+  const { customRpcUrls } = useCustomRpcContext();
+
   // Query for block numbers - this runs once and is cached
   const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
     queryKey: blockKeys.all,
@@ -122,12 +125,15 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
         const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
         const blockNumbers = blockNums[chainId];
 
+        const customRpcUrl = customRpcUrls[chainId] ?? undefined;
+
         const earned = await calculateEarnings(
           position,
           history.items,
           user as Address,
           chainId,
           blockNumbers,
+          customRpcUrl
         );
 
         console.log('✅ [EARNINGS] Completed for market:', position.market.uniqueKey);

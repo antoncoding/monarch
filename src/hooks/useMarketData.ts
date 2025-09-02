@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
@@ -11,6 +12,7 @@ export const useMarketData = (
   network: SupportedNetworks | undefined,
 ) => {
   const queryKey = ['marketData', uniqueKey, network];
+  const publicClient = usePublicClient({ chainId: network });
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
     queryKey: queryKey,
@@ -21,11 +23,16 @@ export const useMarketData = (
         return null;
       }
 
+      if (!publicClient) {
+        console.error('Public client not available');
+        return null;
+      }
+
       // 1. Try fetching the on-chain market snapshot first
       console.log(`Attempting fetchMarketSnapshot for market ${uniqueKey}`);
       let snapshot = null;
       try {
-        snapshot = await fetchMarketSnapshot(uniqueKey, network);
+        snapshot = await fetchMarketSnapshot(uniqueKey, network, publicClient, 0);
         console.log(`Market snapshot result for ${uniqueKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
         console.error(`Error fetching market snapshot for ${uniqueKey}:`, snapshotError);

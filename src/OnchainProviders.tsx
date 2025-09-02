@@ -1,11 +1,12 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { createWagmiConfig } from '@/store/createWagmiConfig';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
+import { CustomRpcProvider, useCustomRpcContext } from './components/providers/CustomRpcProvider';
 
 type Props = { children: ReactNode };
 
@@ -14,7 +15,10 @@ const queryClient = new QueryClient({
     queries: {
       retry: (failureCount, error) => {
         // Don't retry on GraphQL errors, network errors, or client errors
-        if (error?.message?.includes('GraphQL') || error?.message?.includes('Network response was not ok')) {
+        if (
+          error?.message?.includes('GraphQL') ||
+          error?.message?.includes('Network response was not ok')
+        ) {
           return false;
         }
         // Retry up to 2 times for other errors
@@ -31,21 +35,24 @@ const queryClient = new QueryClient({
   },
 });
 
-// Read env at runtime inside component to avoid evaluating on the server during RSC build
-let wagmiConfig: ReturnType<typeof createWagmiConfig> | undefined;
+const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
 
 // eslint-disable-next-line @typescript-eslint/promise-function-async
-function OnchainProviders({ children }: Props) {
-  const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
+function WagmiConfigProvider({ children }: Props) {
+  const { customRpcUrls, rpcConfigVersion } = useCustomRpcContext();
+
+  // Create wagmi config with custom RPCs, recreating when RPC config changes
+  const wagmiConfig = useMemo(() => {
+    return createWagmiConfig(projectId, customRpcUrls);
+  }, [projectId, customRpcUrls, rpcConfigVersion]);
+
   if (!projectId) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WagmiProvider disabled.');
     }
     return children;
   }
-  if (!wagmiConfig) {
-    wagmiConfig = createWagmiConfig(projectId);
-  }
+
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
@@ -66,6 +73,14 @@ function OnchainProviders({ children }: Props) {
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
+  );
+}
+
+function OnchainProviders({ children }: Props) {
+  return (
+    <CustomRpcProvider>
+      <WagmiConfigProvider>{children}</WagmiConfigProvider>
+    </CustomRpcProvider>
   );
 }
 

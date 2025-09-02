@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Address } from 'viem';
+import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
@@ -27,6 +28,7 @@ const useUserPosition = (
   const queryKey = ['userPosition', user, chainId, marketKey];
 
   const { allMarkets: markets } = useMarkets();
+  const publicClient = usePublicClient({ chainId });
 
   const {
     data,
@@ -42,11 +44,22 @@ const useUserPosition = (
         return null;
       }
 
+      if (!publicClient) {
+        console.error('Public client not available');
+        return null;
+      }
+
       // 1. Try fetching the on-chain snapshot first
       console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
       let snapshot = null;
       try {
-        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0);
+        snapshot = await fetchPositionSnapshot(
+          marketKey,
+          user as Address,
+          chainId,
+          0,
+          publicClient,
+        );
         console.log(`Snapshot result for ${marketKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
         console.error(

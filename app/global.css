@@ -1,5 +1,6 @@
 /* stylelint-disable custom-property-pattern -- RainbowKit does not use kebab-case */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Zen+Kaku+Gothic+Antique&family=Zen+Kaku+Gothic+New&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,7 +9,6 @@
   --quick-nav-display: none;
   --component-highlights-item-width: calc(100vw - 100px);
   --developer-experience-code-window-background: var(--slate-12);
-
   --palette-orange: #f45f2d;
 
   /* light theme variables */
@@ -40,7 +40,6 @@
   --color-background: var(--palette-bg-black);
   --color-background-secondary: var(--palette-bg-black-secondary);
   --color-background-hovered: var(--palette-bg-hovered);
-
   --color-text: #fff;
   --color-text-secondary: #8e8e8e;
 
@@ -155,7 +154,7 @@ code,
 kbd,
 samp,
 pre {
-  font-family: ui-monospace, 'Inter', SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+  font-family: ui-monospace, Inter, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
   font-feature-settings: normal;
   font-size: 14px;
@@ -173,6 +172,7 @@ pre {
   50% {
     opacity: 1;
   }
+
   60%,
   100% {
     opacity: 0;
@@ -225,7 +225,7 @@ pre {
   justify-content: center;
   width: 24px;
   height: 24px;
-  border: 3px solid rgba(0, 0, 0, 0.2);
+  border: 3px solid rgb(0 0 0 / 0.2);
   border-top: 3px solid #000;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -235,6 +235,7 @@ pre {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

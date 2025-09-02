@@ -1,5 +1,7 @@
-import { Address, formatUnits } from 'viem';
+import { Address, formatUnits, PublicClient } from 'viem';
+import morphoABI from '@/abis/morpho';
 import { calculateEarningsFromSnapshot } from './interest';
+import { getMorphoAddress } from './morpho';
 import { SupportedNetworks } from './networks';
 import {
   MarketPosition,
@@ -10,6 +12,7 @@ import {
   WarningWithDetail,
   UserRebalancerInfo,
 } from './types';
+import { getClient } from './rpc';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -27,33 +30,55 @@ export type MarketSnapshot = {
   liquidityAssets: string;
 };
 
-type PositionResponse = {
-  position: {
-    supplyAssets: string;
-    supplyShares: string;
-    borrowAssets: string;
-    borrowShares: string;
-    collateral: string;
-  } | null;
+// Types for contract responses
+type Position = {
+  supplyShares: bigint;
+  borrowShares: bigint;
+  collateral: bigint;
 };
 
-type MarketResponse = {
-  market: {
-    totalSupplyAssets: string;
-    totalSupplyShares: string;
-    totalBorrowAssets: string;
-    totalBorrowShares: string;
-    liquidityAssets: string;
-  } | null;
+type Market = {
+  totalSupplyAssets: bigint;
+  totalSupplyShares: bigint;
+  totalBorrowAssets: bigint;
+  totalBorrowShares: bigint;
+  lastUpdate: bigint;
+  fee: bigint;
 };
+
+// Helper functions
+function arrayToPosition(arr: readonly bigint[]): Position {
+  return {
+    supplyShares: arr[0],
+    borrowShares: arr[1],
+    collateral: arr[2],
+  };
+}
+
+function arrayToMarket(arr: readonly bigint[]): Market {
+  return {
+    totalSupplyAssets: arr[0],
+    totalSupplyShares: arr[1],
+    totalBorrowAssets: arr[2],
+    totalBorrowShares: arr[3],
+    lastUpdate: arr[4],
+    fee: arr[5],
+  };
+}
+
+function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares: bigint): bigint {
+  if (totalShares === 0n) return 0n;
+  return (shares * totalAssets) / totalShares;
+}
 
 /**
- * Fetches a position snapshot for a specific market, user, and block number
+ * Fetches a position snapshot for a specific market, user, and block number using a PublicClient
  *
  * @param marketId - The unique ID of the market
  * @param userAddress - The user's address
  * @param chainId - The chain ID of the network
  * @param blockNumber - The block number to fetch the position at (0 for latest)
+ * @param client - The viem PublicClient to use for the request
  * @returns The position snapshot or null if there was an error
  */
 export async function fetchPositionSnapshot(
@@ -61,95 +86,142 @@ export async function fetchPositionSnapshot(
   userAddress: Address,
   chainId: number,
   blockNumber: number,
+  client: PublicClient,
 ): Promise<PositionSnapshot | null> {
   try {
-    console.log('fetchPositionSnapshot called', marketId, userAddress, chainId, blockNumber);
+    const isNow = blockNumber === 0;
 
-    // Fetch the position at the specified block number
-    const positionResponse = await fetch(
-      `/api/positions/historical?` +
-        `marketId=${encodeURIComponent(marketId)}` +
-        `&userAddress=${encodeURIComponent(userAddress)}` +
-        `&blockNumber=${encodeURIComponent(blockNumber)}` +
-        `&chainId=${encodeURIComponent(chainId)}`,
-    );
-
-    if (!positionResponse.ok) {
-      const errorData = (await positionResponse.json()) as { error?: string };
-      console.error('Failed to fetch position snapshot:', errorData);
-      return null;
+    if (!isNow) {
+      console.log(`Get user position ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
+    } else {
+      console.log(`Get user position ${marketId.slice(0, 6)} at current block`);
     }
 
-    const positionData = (await positionResponse.json()) as PositionResponse;
+    console.log('requesting postiion snspahot from client', client.transport)
 
-    // If position is empty, return zeros
-    if (!positionData.position) {
+    // First get the position data
+    const positionArray = (await client.readContract({
+      address: getMorphoAddress(chainId as SupportedNetworks),
+      abi: morphoABI,
+      functionName: 'position',
+      args: [marketId as `0x${string}`, userAddress as Address],
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
+    })) as readonly bigint[];
+
+    // Convert array to position object
+    const position = arrayToPosition(positionArray);
+
+    // If position has no shares, return zeros early
+    if (
+      position.supplyShares === 0n &&
+      position.borrowShares === 0n &&
+      position.collateral === 0n
+    ) {
       return {
-        supplyAssets: '0',
         supplyShares: '0',
-        borrowAssets: '0',
+        supplyAssets: '0',
         borrowShares: '0',
+        borrowAssets: '0',
         collateral: '0',
       };
     }
 
+    // Only fetch market data if position has shares
+    const marketArray = (await client.readContract({
+      address: getMorphoAddress(chainId as SupportedNetworks),
+      abi: morphoABI,
+      functionName: 'market',
+      args: [marketId as `0x${string}`],
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
+    })) as readonly bigint[];
+
+    // Convert array to market object
+    const market = arrayToMarket(marketArray);
+
+    // Convert shares to assets
+    const supplyAssets = convertSharesToAssets(
+      position.supplyShares,
+      market.totalSupplyAssets,
+      market.totalSupplyShares,
+    );
+
+    const borrowAssets = convertSharesToAssets(
+      position.borrowShares,
+      market.totalBorrowAssets,
+      market.totalBorrowShares,
+    );
+
     return {
-      ...positionData.position,
+      supplyShares: position.supplyShares.toString(),
+      supplyAssets: supplyAssets.toString(),
+      borrowShares: position.borrowShares.toString(),
+      borrowAssets: borrowAssets.toString(),
+      collateral: position.collateral.toString(),
     };
   } catch (error) {
-    console.error('Error fetching position snapshot:', error);
+    console.error(`Error reading position:`, {
+      marketId,
+      userAddress,
+      blockNumber,
+      chainId,
+      error,
+    });
     return null;
   }
 }
 
 /**
- * Fetches a market snapshot for a specific market and block number
+ * Fetches a market snapshot for a specific market and block number using a PublicClient
  *
  * @param marketId - The unique ID of the market
  * @param chainId - The chain ID of the network
  * @param blockNumber - The block number to fetch the market at (0 for latest)
+ * @param client - The viem PublicClient to use for the request
  * @returns The market snapshot or null if there was an error
  */
 export async function fetchMarketSnapshot(
   marketId: string,
   chainId: number,
+  client: PublicClient,
   blockNumber = 0,
 ): Promise<MarketSnapshot | null> {
   try {
-    console.log('fetchMarketSnapshot called', marketId, chainId, blockNumber);
+    const isNow = !blockNumber || blockNumber === 0;
 
-    // Fetch the market at the specified block number
-    const marketResponse = await fetch(
-      `/api/market/historical?` +
-        `marketId=${encodeURIComponent(marketId)}` +
-        `&chainId=${encodeURIComponent(chainId)}` +
-        (blockNumber ? `&blockNumber=${encodeURIComponent(blockNumber)}` : ''),
-    );
-
-    if (!marketResponse.ok) {
-      const errorData = (await marketResponse.json()) as { error?: string };
-      console.error('Failed to fetch market snapshot:', errorData);
-      return null;
+    if (!isNow) {
+      console.log(`Get market snapshot ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
+    } else {
+      console.log(`Get market snapshot ${marketId.slice(0, 6)} at current block`);
     }
 
-    const marketData = (await marketResponse.json()) as MarketResponse;
+    // Get the market data
+    const marketArray = (await client.readContract({
+      address: getMorphoAddress(chainId as SupportedNetworks),
+      abi: morphoABI,
+      functionName: 'market',
+      args: [marketId as `0x${string}`],
+      blockNumber: isNow ? undefined : BigInt(blockNumber!),
+    })) as readonly bigint[];
 
-    // If market is empty, return zeros
-    if (!marketData.market) {
-      return {
-        totalSupplyAssets: '0',
-        totalSupplyShares: '0',
-        totalBorrowAssets: '0',
-        totalBorrowShares: '0',
-        liquidityAssets: '0',
-      };
-    }
+    // Convert array to market object
+    const market = arrayToMarket(marketArray);
+
+    const liquidityAssets = market.totalSupplyAssets - market.totalBorrowAssets;
 
     return {
-      ...marketData.market,
+      totalSupplyAssets: market.totalSupplyAssets.toString(),
+      totalSupplyShares: market.totalSupplyShares.toString(),
+      totalBorrowAssets: market.totalBorrowAssets.toString(),
+      totalBorrowShares: market.totalBorrowShares.toString(),
+      liquidityAssets: liquidityAssets.toString(),
     };
   } catch (error) {
-    console.error('Error fetching market snapshot:', error);
+    console.error(`Error reading market:`, {
+      marketId,
+      chainId,
+      blockNumber,
+      error,
+    });
     return null;
   }
 }
@@ -162,6 +234,7 @@ export async function fetchMarketSnapshot(
  * @param userAddress - The user's address
  * @param chainId - The chain ID
  * @param blockNumbers - Block numbers for different time periods
+ * @param client - The viem PublicClient to use for the request
  * @returns Position earnings data
  */
 export async function calculateEarningsFromPeriod(
@@ -170,6 +243,7 @@ export async function calculateEarningsFromPeriod(
   userAddress: Address,
   chainId: SupportedNetworks,
   blockNumbers: { day: number; week: number; month: number },
+  customRpcUrl?: string,
 ): Promise<PositionEarnings> {
   if (!blockNumbers) {
     return {
@@ -185,10 +259,12 @@ export async function calculateEarningsFromPeriod(
   const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
   const now = Math.floor(Date.now() / 1000);
 
+  const client = getClient(chainId)
+
   const snapshots = await Promise.all([
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day),
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week),
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month),
+    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client),
+    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week, client),
+    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month, client),
   ]);
 
   const [snapshot24h, snapshot7d, snapshot30d] = snapshots;

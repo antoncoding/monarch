@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const timestamp = searchParams.get('timestamp');
     const chainId = searchParams.get('chainId');
+    const customRpcUrl = searchParams.get('customRpcUrl') ?? undefined;
 
     if (!timestamp || !chainId) {
       return NextResponse.json(
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
     const numericTimestamp = parseInt(timestamp);
 
     // Fallback to SmartBlockFinder
-    const client = getClient(numericChainId as SupportedNetworks);
+    const client = getClient(numericChainId as SupportedNetworks, customRpcUrl);
 
     // Try Etherscan API first
     const etherscanBlock = await getBlockFromEtherscan(numericTimestamp, numericChainId);
