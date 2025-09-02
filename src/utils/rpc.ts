@@ -1,42 +1,82 @@
-import { createPublicClient, http } from 'viem';
+import { createPublicClient, http, PublicClient } from 'viem';
 import { base, mainnet, polygon, unichain } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
-// Initialize Alchemy clients for each chain
-export const mainnetClient = createPublicClient({
-  chain: mainnet,
-  transport: http(`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
+const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
-export const baseClient = createPublicClient({
-  chain: base,
-  transport: http(`https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
+// Default RPC URLs
+export const DEFAULT_RPC_URLS = {
+  [SupportedNetworks.Mainnet]: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+  [SupportedNetworks.Base]: `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+  [SupportedNetworks.Polygon]: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+  [SupportedNetworks.Unichain]: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+} as const;
 
-export const polygonClient = createPublicClient({
-  chain: polygon,
-  transport: http(`https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
+// Chain configurations
+const CHAIN_CONFIGS = {
+  [SupportedNetworks.Mainnet]: mainnet,
+  [SupportedNetworks.Base]: base,
+  [SupportedNetworks.Polygon]: polygon,
+  [SupportedNetworks.Unichain]: unichain,
+} as const;
 
-export const unichainClient = createPublicClient({
-  chain: unichain,
-  transport: http(`https://unichain-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`),
-});
+// Default clients (cached)
+let defaultClients: Partial<Record<SupportedNetworks, PublicClient>> = {};
 
-export const getClient = (chainId: SupportedNetworks) => {
-  switch (chainId) {
-    case SupportedNetworks.Mainnet:
-      return mainnetClient;
-    case SupportedNetworks.Base:
-      return baseClient;
-    case SupportedNetworks.Polygon:
-      return polygonClient;
-    case SupportedNetworks.Unichain:
-      return unichainClient;
-    default:
-      throw new Error(`Unsupported chainId: ${chainId}`);
+// Initialize default clients
+const initializeDefaultClients = () => {
+  if (Object.keys(defaultClients).length === 0) {
+    defaultClients = {
+      [SupportedNetworks.Mainnet]: createPublicClient({
+        chain: mainnet,
+        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Mainnet]),
+      }),
+      [SupportedNetworks.Base]: createPublicClient({
+        chain: base,
+        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Base]),
+      }) as PublicClient,
+      [SupportedNetworks.Polygon]: createPublicClient({
+        chain: polygon,
+        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Polygon]),
+      }),
+      [SupportedNetworks.Unichain]: createPublicClient({
+        chain: unichain,
+        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Unichain]),
+      }) as PublicClient,
+    };
   }
 };
+
+// Create a client with custom RPC URL
+export function createClientWithCustomRpc(
+  chainId: SupportedNetworks,
+  rpcUrl: string,
+): PublicClient {
+  const chain = CHAIN_CONFIGS[chainId];
+  if (!chain) {
+    throw new Error(`Unsupported chainId: ${chainId}`);
+  }
+
+  return createPublicClient({
+    chain,
+    transport: http(rpcUrl),
+  }) as PublicClient;
+}
+
+// Get client with optional custom RPC URL
+export const getClient = (chainId: SupportedNetworks, customRpcUrl?: string): PublicClient => {
+  if (customRpcUrl) {
+    return createClientWithCustomRpc(chainId, customRpcUrl);
+  }
+
+  initializeDefaultClients();
+  const client = defaultClients[chainId];
+  if (!client) {
+    throw new Error(`Unsupported chainId: ${chainId}`);
+  }
+  return client;
+};
+
 
 export const BLOCK_TIME = {
   [SupportedNetworks.Mainnet]: 12, // Ethereum mainnet: 12 seconds

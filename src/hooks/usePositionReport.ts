@@ -4,9 +4,11 @@ import {
   EarningsCalculation,
   filterTransactionsInPeriod,
 } from '@/utils/interest';
+import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
-import { estimatedBlockNumber } from '@/utils/rpc';
+import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
+import { useCustomRpc } from './useCustomRpc';
 import useUserTransactions from './useUserTransactions';
 
 export type PositionReport = {
@@ -39,6 +41,8 @@ export const usePositionReport = (
   endDate?: Date,
 ) => {
   const { fetchTransactions } = useUserTransactions();
+
+  const { customRpcUrls } = useCustomRpc();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
     if (!startDate || !endDate || !selectedAsset) return null;
@@ -103,17 +107,20 @@ export const usePositionReport = (
     const marketReports = (
       await Promise.all(
         relevantPositions.map(async (position) => {
+          const publicClient = getClient(position.market.morphoBlue.chain.id, customRpcUrls[position.market.morphoBlue.chain.id as SupportedNetworks] ?? undefined);
           const startSnapshot = await fetchPositionSnapshot(
             position.market.uniqueKey,
             account,
             position.market.morphoBlue.chain.id,
             startBlockNumber,
+            publicClient,
           );
           const endSnapshot = await fetchPositionSnapshot(
             position.market.uniqueKey,
             account,
             position.market.morphoBlue.chain.id,
             endBlockNumber,
+            publicClient,
           );
 
           if (!startSnapshot || !endSnapshot) {

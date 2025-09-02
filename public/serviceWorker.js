@@ -14,5 +14,3 @@ self.addEventListener('activate', async () => {
 });
 
 self.addEventListener('fetch', () => {});
-
-

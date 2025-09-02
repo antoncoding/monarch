@@ -2,6 +2,7 @@
 
 import { Switch } from '@heroui/react';
 import Header from '@/components/layout/header/Header';
+import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 
@@ -98,6 +99,11 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Advanced Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <AdvancedRpcSettings />
           </div>
 
           {/* Danger Zone Section */}

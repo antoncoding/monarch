@@ -112,6 +112,92 @@ Use the nextui tooltip with <TooltipContent> component for consistnet styling
 >
 ```
 
+## Input Components
+
+The codebase uses two different input approaches depending on the use case:
+
+### Numerical Inputs (Amounts, Currency)
+
+For numerical inputs with bigint values, decimals, and max validation, use the custom Input component:
+
+```typescript
+import Input from '@/components/Input/Input';
+
+<Input
+  decimals={18}
+  setValue={setAmount}
+  max={maxBalance}
+  setError={setError}
+  value={currentAmount}
+  onMaxClick={handleMaxClick}
+/>
+```
+
+This component:
+
+- Uses `bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none`
+- Includes a "Max" button when `max` prop is provided
+- Handles bigint conversion and decimal formatting
+- Validates against maximum values
+
+### Text Inputs (URLs, Strings)
+
+For simple text inputs, use native HTML input with consistent styling:
+
+```typescript
+<input
+  type="text"
+  placeholder="Enter text..."
+  value={inputValue}
+  onChange={(e) => handleChange(e.target.value)}
+  className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
+/>
+```
+
+#### With Button Inside Input
+
+```typescript
+<div className="relative flex-grow">
+  <input
+    type="text"
+    placeholder="Enter text..."
+    value={inputValue}
+    onChange={(e) => handleChange(e.target.value)}
+    className="bg-hovered h-10 w-full rounded p-2 pr-16 focus:border-primary focus:outline-none"
+  />
+  <Button
+    variant="cta"
+    size="sm"
+    onPress={handleAction}
+    className="absolute right-1 top-1/2 -translate-y-1/2 transform"
+  >
+    Save
+  </Button>
+</div>
+```
+
+#### Error States
+
+```typescript
+className={`bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none ${
+  error ? 'border border-red-500 focus:border-red-500' : ''
+}`}
+
+{error && (
+  <p className="text-sm text-red-500">{error}</p>
+)}
+```
+
+### Input Styling Guidelines
+
+- Always use `bg-hovered` for background
+- Standard height: `h-10`
+- Always use `rounded` (not `rounded-sm`)
+- Standard padding: `p-2`
+- Focus state: `focus:border-primary focus:outline-none`
+- Error state: `border border-red-500 focus:border-red-500`
+- Error text: `text-sm text-red-500`
+
 ## Toast
 
 Use `useStyledToast` hook to create toasts.

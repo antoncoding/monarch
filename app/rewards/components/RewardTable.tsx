@@ -133,12 +133,16 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
-                        <Image
-                          src={getNetworkImg(tokenReward.asset.chain_id) ?? ''}
-                          alt={`Chain ${tokenReward.asset.chain_id}`}
-                          width={20}
-                          height={20}
-                        />
+                        {getNetworkImg(tokenReward.asset.chain_id) ? (
+                          <Image
+                            src={getNetworkImg(tokenReward.asset.chain_id) as string}
+                            alt={`Chain ${tokenReward.asset.chain_id}`}
+                            width={20}
+                            height={20}
+                          />
+                        ) : (
+                          <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width: 20, height: 20 }} />
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>

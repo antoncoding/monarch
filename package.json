@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@coinbase/wallet-sdk": "^3.9.1",
+    "@heroicons/react": "^2.2.0",
     "@heroui/accordion": "^2.0.35",
     "@heroui/button": "^2.0.34",
     "@heroui/checkbox": "^2.1.2",
