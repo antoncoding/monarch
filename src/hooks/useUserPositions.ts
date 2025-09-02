@@ -203,7 +203,6 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           return null;
         }
 
-        console.log('seeing custom RPC', customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined)
         const publicClient = getClient(marketInfo.chainId, customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined);
         if (!publicClient) {
           console.error(`[Positions] No public client available for chain ${marketInfo.chainId}`);
