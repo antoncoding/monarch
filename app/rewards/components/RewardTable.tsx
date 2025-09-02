@@ -135,7 +135,7 @@ export default function RewardTable({
                       <div className="flex items-center justify-center">
                         {getNetworkImg(tokenReward.asset.chain_id) ? (
                           <Image
-                            src={getNetworkImg(tokenReward.asset.chain_id)}
+                            src={getNetworkImg(tokenReward.asset.chain_id) as string}
                             alt={`Chain ${tokenReward.asset.chain_id}`}
                             width={20}
                             height={20}
