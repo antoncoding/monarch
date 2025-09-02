@@ -97,8 +97,6 @@ export async function fetchPositionSnapshot(
       console.log(`Get user position ${marketId.slice(0, 6)} at current block`);
     }
 
-    console.log('requesting postiion snspahot from client', client.transport)
-
     // First get the position data
     const positionArray = (await client.readContract({
       address: getMorphoAddress(chainId as SupportedNetworks),
