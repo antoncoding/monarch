@@ -12,8 +12,8 @@ import {
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain } from 'wagmi/chains';
 import { SupportedNetworks } from '@/utils/networks';
-import { getChainsForEnvironment } from './supportedChains';
 import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { getChainsForEnvironment } from './supportedChains';
 
 const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
 const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];

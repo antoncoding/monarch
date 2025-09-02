@@ -1,6 +1,6 @@
 import { SupportedNetworks } from '@/utils/networks';
-import { useLocalStorage } from './useLocalStorage';
 import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { useLocalStorage } from './useLocalStorage';
 
 export type CustomRpcUrls = {
   [SupportedNetworks.Mainnet]?: string;

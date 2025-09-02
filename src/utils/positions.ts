@@ -3,6 +3,7 @@ import morphoABI from '@/abis/morpho';
 import { calculateEarningsFromSnapshot } from './interest';
 import { getMorphoAddress } from './morpho';
 import { SupportedNetworks } from './networks';
+import { getClient } from './rpc';
 import {
   MarketPosition,
   MarketPositionWithEarnings,
@@ -12,7 +13,6 @@ import {
   WarningWithDetail,
   UserRebalancerInfo,
 } from './types';
-import { getClient } from './rpc';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -234,7 +234,7 @@ export async function fetchMarketSnapshot(
  * @param userAddress - The user's address
  * @param chainId - The chain ID
  * @param blockNumbers - Block numbers for different time periods
- * @param client - The viem PublicClient to use for the request
+ * @param customRpcUrl - The custom RPC URL to use for the request
  * @returns Position earnings data
  */
 export async function calculateEarningsFromPeriod(
@@ -259,7 +259,7 @@ export async function calculateEarningsFromPeriod(
   const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
   const now = Math.floor(Date.now() / 1000);
 
-  const client = getClient(chainId)
+  const client = getClient(chainId, customRpcUrl)
 
   const snapshots = await Promise.all([
     fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client),

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
+import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { SupportedNetworks } from '@/utils/networks';
 import {
   calculateEarningsFromPeriod as calculateEarnings,
@@ -9,7 +10,6 @@ import { estimatedBlockNumber } from '@/utils/rpc';
 import { MarketPositionWithEarnings } from '@/utils/types';
 import useUserPositions, { positionKeys } from './useUserPositions';
 import useUserTransactions from './useUserTransactions';
-import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 
 type BlockNumbers = {
   day: number;

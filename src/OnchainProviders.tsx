@@ -44,7 +44,7 @@ function WagmiConfigProvider({ children }: Props) {
   // Create wagmi config with custom RPCs, recreating when RPC config changes
   const wagmiConfig = useMemo(() => {
     return createWagmiConfig(projectId, customRpcUrls);
-  }, [projectId, customRpcUrls, rpcConfigVersion]);
+  }, [customRpcUrls, rpcConfigVersion]);
 
   if (!projectId) {
     if (process.env.NODE_ENV !== 'production') {

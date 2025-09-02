@@ -4,12 +4,12 @@ import {
   EarningsCalculation,
   filterTransactionsInPeriod,
 } from '@/utils/interest';
+import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
-import useUserTransactions from './useUserTransactions';
 import { useCustomRpc } from './useCustomRpc';
-import { SupportedNetworks } from '@/utils/networks';
+import useUserTransactions from './useUserTransactions';
 
 export type PositionReport = {
   market: Market;

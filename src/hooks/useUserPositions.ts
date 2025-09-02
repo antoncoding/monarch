@@ -1,8 +1,6 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
-import { useConfig } from 'wagmi';
-import { getPublicClient } from 'wagmi/actions';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
@@ -10,12 +8,12 @@ import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
+import { getClient } from '@/utils/rpc';
 import { Market } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
-import { useMarkets } from './useMarkets';
-import { getClient } from '@/utils/rpc';
 import { useCustomRpc } from './useCustomRpc';
+import { useMarkets } from './useMarkets';
 
 // Type for market key and chain identifier
 type PositionMarket = {

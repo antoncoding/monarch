@@ -77,11 +77,6 @@ export const getClient = (chainId: SupportedNetworks, customRpcUrl?: string): Pu
   return client;
 };
 
-// Legacy exports for backward compatibility
-export const mainnetClient = () => getClient(SupportedNetworks.Mainnet);
-export const baseClient = () => getClient(SupportedNetworks.Base);
-export const polygonClient = () => getClient(SupportedNetworks.Polygon);
-export const unichainClient = () => getClient(SupportedNetworks.Unichain);
 
 export const BLOCK_TIME = {
   [SupportedNetworks.Mainnet]: 12, // Ethereum mainnet: 12 seconds
