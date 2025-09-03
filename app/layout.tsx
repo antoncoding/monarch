@@ -2,6 +2,7 @@ import './global.css';
 
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
+import { QueryProvider } from '@/components/providers/QueryProvider';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
 
@@ -30,12 +31,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body suppressHydrationWarning>
         <ThemeProviders>
-          <OnchainProviders>
-            <ClientProviders>
-              {children}
-              <RiskNotificationModal />
-            </ClientProviders>
-          </OnchainProviders>
+          <QueryProvider>
+            <OnchainProviders>
+              <ClientProviders>
+                {children}
+                <RiskNotificationModal />
+              </ClientProviders>
+            </OnchainProviders>
+          </QueryProvider>
         </ThemeProviders>
       </body>
       <GoogleAnalytics />

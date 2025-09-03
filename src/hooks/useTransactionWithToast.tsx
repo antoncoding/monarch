@@ -33,11 +33,9 @@ export function useTransactionWithToast({
     error: txError,
     sendTransactionAsync,
   } = useSendTransaction();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: isConfirmed, isError } = useWaitForTransactionReceipt({
     hash,
   });
-
-  console.log('isConfirming', isConfirming);
 
   const onClick = useCallback(() => {
     if (hash) {
@@ -58,7 +56,7 @@ export function useTransactionWithToast({
         },
       );
     }
-  }, [isConfirming, pendingText, pendingDescription, toastId, onClick]);
+  }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
     if (isConfirmed) {
@@ -80,9 +78,9 @@ export function useTransactionWithToast({
         onSuccess();
       }
     }
-    if (txError) {
+    if (isError || txError) {
       toast.update(toastId, {
-        render: <StyledToast title={errorText} message={txError.message} />,
+        render: <StyledToast title={errorText} message={txError ? txError.message : 'Transaction Failed' } />,
         type: 'error',
         isLoading: false,
         autoClose: 5000,
@@ -91,7 +89,9 @@ export function useTransactionWithToast({
       });
     }
   }, [
+    hash,
     isConfirmed,
+    isError,
     txError,
     successText,
     successDescription,
@@ -99,8 +99,6 @@ export function useTransactionWithToast({
     toastId,
     onClick,
     onSuccess,
-    toast,
-    hash,
   ]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };

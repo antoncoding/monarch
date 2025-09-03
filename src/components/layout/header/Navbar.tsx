@@ -102,7 +102,11 @@ export function Navbar() {
             </>
           )}
 
-          <Dropdown onOpenChange={setIsMoreOpen} className="rounded-sm">
+          <Dropdown 
+            onOpenChange={setIsMoreOpen} 
+            placement="bottom-end"
+            className="rounded-sm z-50"
+          >
             <DropdownTrigger>
               <button
                 type="button"
