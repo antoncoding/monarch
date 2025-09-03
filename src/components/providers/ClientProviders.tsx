@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { MarketsProvider } from '@/contexts/MarketsContext';
 import { OnboardingProvider } from 'app/positions/components/onboarding/OnboardingContext';
-import { ConnectRedirectProvider } from './ConnectRedirectProvider';
 import { ThemeProviders } from './ThemeProvider';
 import { TokenProvider } from './TokenProvider';
 
@@ -29,11 +28,9 @@ export function ClientProviders({ children }: ClientProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ThemeProviders>
         <TokenProvider>
-          <ConnectRedirectProvider>
-            <MarketsProvider>
-              <OnboardingProvider>{children}</OnboardingProvider>
-            </MarketsProvider>
-          </ConnectRedirectProvider>
+          <MarketsProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </MarketsProvider>
         </TokenProvider>
       </ThemeProviders>
       <ReactQueryDevtools initialIsOpen={false} />
