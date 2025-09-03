@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Button } from '@/components/common/Button';
+import { Spinner } from '@/components/common/Spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks, networks } from '@/utils/networks';
 import { useCustomRpcContext } from '../providers/CustomRpcProvider';
@@ -282,7 +283,7 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                       placeholder="Enter custom RPC URL (leave empty to use default)"
                       value={inputValue}
                       onChange={(e) => handleInputChange(e.target.value)}
-                      className={`bg-hovered h-10 w-full rounded p-2 pr-16 focus:border-primary focus:outline-none ${
+                      className={`bg-hovered h-10 w-full rounded p-2 pr-16 focus:border-primary focus:outline-none text-sm truncate ${
                         error ? 'border border-red-500 focus:border-red-500' : ''
                       }`}
                     />
@@ -291,9 +292,13 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                       size="sm"
                       onPress={() => void handleSave()}
                       isDisabled={isValidating}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 transform"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 transform min-w-[60px] flex items-center justify-center"
                     >
-                      {isValidating ? 'Validating...' : 'Save'}
+                      {isValidating ? (
+                        <Spinner size={14} width={2} color="text-white" />
+                      ) : (
+                        <span className="truncate">Save</span>
+                      )}
                     </Button>
                   </div>
                   {error && <p className="text-sm text-red-500">{error}</p>}
