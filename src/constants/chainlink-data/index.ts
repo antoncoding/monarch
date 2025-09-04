@@ -72,12 +72,22 @@ export const isChainlinkOracle = (chainId: number, address: string): boolean => 
 }
 
 export const getChainlinkOracle = (chainId: number, address: string): ChainlinkOracleEntry | undefined => {
-  
     if (!isSupportedChain(chainId) || !address) return undefined
   const network = chainId as SupportedNetworks
-  return CHAINLINK_ORACLES[network].find((oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase())
-  
-  
+  return CHAINLINK_ORACLES[network].find((oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase())  
+}
+
+export const getChainlinkFeedUrl = (chainId: number, rawOracleEntry: RawOracleEntry): string => {
+  if (chainId === SupportedNetworks.Mainnet) {
+    return `https://data.chain.link/feeds/ethereum/mainnet/${rawOracleEntry.ens}`
+  }
+  if (chainId === SupportedNetworks.Base) {
+    return `https://data.chain.link/feeds/base/base/${rawOracleEntry.ens}`
+  }
+  if (chainId === SupportedNetworks.Polygon) {
+    return `https://data.chain.link/feeds/polygon/mainnet/${rawOracleEntry.ens}`
+  }
+  return ''
 }
 
 export * from './types'

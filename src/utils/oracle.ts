@@ -1,4 +1,5 @@
-import { MorphoChainlinkOracleData } from './types';
+import { getChainlinkOracle } from '@/constants/chainlink-data';
+import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
   vendors: OracleVendors[];
@@ -60,4 +61,42 @@ export function parseOracleVendors(
     vendors: Array.from(vendors),
     isUnknown: vendors.has(OracleVendors.Unknown) || vendors.size === 0,
   };
+}
+
+export function checkFeedsPath(
+  oracleData: MorphoChainlinkOracleData | null | undefined, 
+  chainId: number,
+  collateralSymbol: string,
+  loanSymbol: string,
+): boolean {
+  if (!oracleData) return false;
+
+   /**
+    Price = Base Feed 1 * Base Feed 2 / Quote Feed 1 * Quote Feed 2
+    */
+
+  const baseFee1Path = getFeedPath(oracleData.baseFeedOne, chainId);
+  const baseFee2Path = getFeedPath(oracleData.baseFeedTwo, chainId);
+  const quoteFee1Path = getFeedPath(oracleData.quoteFeedOne, chainId);
+  const quoteFee2Path = getFeedPath(oracleData.quoteFeedTwo, chainId);
+
+  const nominators = [baseFee1Path.base, baseFee2Path.base, quoteFee1Path.quote, quoteFee2Path.quote];
+  const denominators = [baseFee1Path.quote, baseFee2Path.quote, quoteFee1Path.base, quoteFee2Path.base];
+
+  return false;
+}
+
+/**
+ * 
+ * @param feed 
+ * @param chainId 
+ * @returns { base: "ETH", qutoe: "USD" }
+ */
+function getFeedPath(feed: OracleFeed | null | undefined, chainId: number): { base: string, quote: string } {
+  if (!feed || !feed.address) return { base: "EMPTY", quote: "EMPTY" };
+
+  const chainlinkData = getChainlinkOracle(chainId, feed.address);
+  if (!chainlinkData) return { base: "EMPTY", quote: "EMPTY" };
+
+  return { base: chainlinkData.baseAsset.toLowerCase(), quote: chainlinkData.quoteAsset.toLowerCase() };
 }
