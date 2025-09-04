@@ -193,8 +193,8 @@ function AdvancedSearchBar({
         onFocus={handleInputFocus}
         endContent={<FaSearch className="cursor-pointer text-secondary" onClick={handleSearch} />}
         classNames={{
-          inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px]',
-          input: 'bg-surface rounded-sm text-xs',
+          inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px] focus-within:outline-none',
+          input: 'bg-surface rounded-sm text-xs focus:outline-none',
         }}
         autoComplete="off"
       />
