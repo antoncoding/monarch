@@ -9,6 +9,8 @@ import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
 import { OracleFeed } from '@/utils/types';
+import { getChainlinkOracle, isChainlinkOracle } from '@/constants/chainlink-data';
+import { useMemo } from 'react';
 
 export function OracleFeedInfo({
   feed,
@@ -18,6 +20,13 @@ export function OracleFeedInfo({
   chainId: number;
 }): JSX.Element | null {
   if (!feed) return null;
+
+  const chainlinkFeedData = useMemo(() => {
+    if (!feed || !feed.address) return undefined;
+    return getChainlinkOracle(chainId, feed.address as Address);
+  }, [chainId, feed.address])
+
+  console.log('chainlinkFeedData', chainlinkFeedData);
 
   const fromAsset = feed.pair?.[0] ?? 'Unknown';
   const toAsset = feed.pair?.[1] ?? 'Unknown';
