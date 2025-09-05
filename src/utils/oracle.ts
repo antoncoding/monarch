@@ -83,6 +83,16 @@ export function checkFeedsPath(
   const nominators = [baseFee1Path.base, baseFee2Path.base, quoteFee1Path.quote, quoteFee2Path.quote];
   const denominators = [baseFee1Path.quote, baseFee2Path.quote, quoteFee1Path.base, quoteFee2Path.base];
 
+  // go through each nominator, and try to find thethe same denominator to cancel them out
+  let finalBase;
+  for (const nominator of nominators) {
+    for (const denominator of denominators) {
+      if (nominator === denominator) {
+        
+      }
+    }
+    // no matched denominator
+  }
   return false;
 }
 

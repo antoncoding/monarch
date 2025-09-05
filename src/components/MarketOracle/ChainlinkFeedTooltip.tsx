@@ -61,7 +61,7 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
   }
 
   return (
-    <div className="flex rounded-sm p-4 max-w-md bg-surface border border-gray-200/20 dark:border-gray-600/15 shadow-sm">
+    <div className="flex rounded-sm p-4 max-w-xs bg-surface border border-gray-200/20 dark:border-gray-600/15 shadow-sm">
       <div className="flex w-full flex-col gap-3">
         {/* Header with icon and title */}
         <div className="flex items-center gap-2">

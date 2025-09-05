@@ -10,6 +10,8 @@ import { getExplorerURL } from '@/utils/external';
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
 import { OracleFeed } from '@/utils/types';
 import { getChainlinkOracle, isChainlinkOracle } from '@/constants/chainlink-data';
+import { ChainlinkFeedTooltip } from '@/components/MarketOracle/ChainlinkFeedTooltip';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useMemo } from 'react';
 
 export function OracleFeedInfo({
@@ -26,10 +28,12 @@ export function OracleFeedInfo({
     return getChainlinkOracle(chainId, feed.address as Address);
   }, [chainId, feed.address])
 
-  console.log('chainlinkFeedData', chainlinkFeedData);
+  const isChainlink = useMemo(() => {
+    return isChainlinkOracle(chainId, feed.address as Address);
+  }, [chainId, feed.address]);
 
-  const fromAsset = feed.pair?.[0] ?? 'Unknown';
-  const toAsset = feed.pair?.[1] ?? 'Unknown';
+  const fromAsset = feed.pair?.[0] ?? chainlinkFeedData?.baseAsset ?? 'Unknown';
+  const toAsset = feed.pair?.[1] ?? chainlinkFeedData?.quoteAsset ?? 'Unknown';
 
   const vendorIcon =
     OracleVendorIcons[feed.vendor as OracleVendors] ?? OracleVendorIcons[OracleVendors.Unknown];
@@ -49,10 +53,26 @@ export function OracleFeedInfo({
     </div>
   );
 
+  const getTooltipContent = () => {
+    if (isChainlink && chainlinkFeedData) {
+      return <ChainlinkFeedTooltip feed={feed} chainlinkData={chainlinkFeedData} chainId={chainId} />;
+    }
+    
+    return (
+      <TooltipContent
+        title={`${fromAsset} / ${toAsset}`}
+        detail={feed.description ?? `Oracle Address: ${getSlicedAddress(feed.address as Address)}`}
+      />
+    );
+  };
+
   return (
     <Tooltip
-      content={feed.description ?? getSlicedAddress(feed.address as Address)}
-      className="rounded-sm"
+      classNames={{
+        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+        content: 'p-0 m-0 bg-transparent shadow-sm border-none'
+      }}
+      content={getTooltipContent()}
     >
       <Link
         className="group flex w-full items-center gap-1 text-right no-underline hover:underline"

@@ -4,10 +4,13 @@ import { IoIosSwap } from 'react-icons/io'
 import { IoWarningOutline } from 'react-icons/io5'
 import { useMemo } from 'react'
 import { Address } from 'viem'
-import { getChainlinkOracle } from '@/constants/chainlink-data'
+import { getChainlinkOracle, isChainlinkOracle } from '@/constants/chainlink-data'
+import { isCompoundFeed, getCompoundFeed } from '@/constants/compound'
 import { OracleVendors, OracleVendorIcons } from '@/utils/oracle'
 import { OracleFeed } from '@/utils/types'
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip'
+import { CompoundFeedTooltip } from './CompoundFeedTooltip'
+import { UnknownFeedTooltip } from './UnknownFeedTooltip'
 
 type FeedEntryProps = {
   feed: OracleFeed | null
@@ -22,14 +25,46 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
     return getChainlinkOracle(chainId, feed.address as Address)
   }, [chainId, feed.address])
 
+  const compoundFeedData = useMemo(() => {
+    if (!feed?.address) return undefined
+    return getCompoundFeed(feed.address as Address)
+  }, [feed.address])
+
   const truncateAsset = (asset: string) => asset.length > 5 ? asset.slice(0, 5) : asset
   
-  const fromAsset = truncateAsset(feed.pair?.[0] ?? chainlinkFeedData?.baseAsset ?? 'Unknown')
-  const toAsset = truncateAsset(feed.pair?.[1] ?? chainlinkFeedData?.quoteAsset ?? 'Unknown')
+  // Determine asset names based on feed type
+  const getAssetNames = () => {
+    if (compoundFeedData) {
+      return {
+        fromAsset: truncateAsset(compoundFeedData.base),
+        toAsset: truncateAsset(compoundFeedData.quote)
+      }
+    }
+    return {
+      fromAsset: truncateAsset(feed.pair?.[0] ?? chainlinkFeedData?.baseAsset ?? 'Unknown'),
+      toAsset: truncateAsset(feed.pair?.[1] ?? chainlinkFeedData?.quoteAsset ?? 'Unknown')
+    }
+  }
+
+  const { fromAsset, toAsset } = getAssetNames()
 
   const vendorIcon = OracleVendorIcons[feed.vendor as OracleVendors]
-  const isChainlink = feed.vendor === OracleVendors.Chainlink
+  const isChainlink = isChainlinkOracle(chainId, feed.address as Address)
+  const isCompound = isCompoundFeed(feed.address as Address)
   const isSVR = chainlinkFeedData?.isSVR ?? false
+
+  const getTooltipContent = () => {
+    if (isCompound && compoundFeedData) {
+      return <CompoundFeedTooltip feed={feed} compoundData={compoundFeedData} chainId={chainId} />
+    }
+    
+    if (isChainlink && chainlinkFeedData) {
+      return <ChainlinkFeedTooltip feed={feed} chainlinkData={chainlinkFeedData} chainId={chainId} />
+    }
+    
+    // Default fallback for unknown/unsupported feeds
+    return <UnknownFeedTooltip feed={feed} chainId={chainId} />
+  }
 
   return (
     <Tooltip
@@ -37,7 +72,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         base: 'p-0 m-0 bg-transparent shadow-sm border-none',
         content: 'p-0 m-0 bg-transparent shadow-sm border-none'
       }}
-      content={<ChainlinkFeedTooltip feed={feed} chainlinkData={chainlinkFeedData} chainId={chainId} />}
+      content={getTooltipContent()}
     >
       <div className="flex w-full cursor-pointer items-center justify-between rounded-sm bg-hovered px-2 py-1 hover:bg-opacity-80">
         <div className="flex items-center gap-1">
@@ -53,8 +88,8 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
             </span>
           )}
           
-          {isChainlink && vendorIcon ? (
-            <Image src={vendorIcon} alt="Chainlink" width={12} height={12} />
+          {(isChainlink || isCompound) && vendorIcon ? (
+            <Image src={vendorIcon} alt={feed.vendor ?? 'Oracle'} width={12} height={12} />
           ) : (
             <IoWarningOutline size={12} className="text-yellow-500" />
           )}
