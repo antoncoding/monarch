@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Address } from 'viem'
 import { getExplorerURL } from '@/utils/external'
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle'
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle'
 import { OracleFeed } from '@/utils/types'
 import { getSlicedAddress } from '@/utils/address'
 import etherscanLogo from '@/imgs/etherscan.png'
@@ -16,7 +16,7 @@ export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
   const baseAsset = feed.pair?.[0] ?? 'Unknown'
   const quoteAsset = feed.pair?.[1] ?? 'Unknown'
   
-  const vendorIcon = OracleVendorIcons[feed.vendor as OracleVendors]
+  const vendorIcon = OracleVendorIcons[feed.vendor as PriceFeedVendors]
   
   return (
     <div className="flex rounded-sm p-4 max-w-md bg-surface border border-gray-200/20 dark:border-gray-600/15 shadow-sm">

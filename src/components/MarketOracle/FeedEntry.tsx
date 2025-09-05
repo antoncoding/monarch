@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { Address } from 'viem'
 import { getChainlinkOracle, isChainlinkOracle } from '@/constants/chainlink-data'
 import { isCompoundFeed, getCompoundFeed } from '@/constants/compound'
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle'
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle'
 import { OracleFeed } from '@/utils/types'
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip'
 import { CompoundFeedTooltip } from './CompoundFeedTooltip'
@@ -48,7 +48,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
 
   const { fromAsset, toAsset } = getAssetNames()
 
-  const vendorIcon = OracleVendorIcons[feed.vendor as OracleVendors]
+  const vendorIcon = OracleVendorIcons[feed.vendor as PriceFeedVendors]
   const isChainlink = isChainlinkOracle(chainId, feed.address as Address)
   const isCompound = isCompoundFeed(feed.address as Address)
   const isSVR = chainlinkFeedData?.isSVR ?? false

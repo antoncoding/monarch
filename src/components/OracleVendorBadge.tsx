@@ -2,7 +2,7 @@ import React from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { IoWarningOutline } from 'react-icons/io5';
-import { OracleVendorIcons, OracleVendors, parseOracleVendors } from '@/utils/oracle';
+import { OracleVendorIcons, PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
@@ -11,7 +11,7 @@ type OracleVendorBadgeProps = {
   showText?: boolean;
 };
 
-const renderVendorIcon = (vendor: OracleVendors) =>
+const renderVendorIcon = (vendor: PriceFeedVendors) =>
   OracleVendorIcons[vendor] ? (
     <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
   ) : (
@@ -23,7 +23,7 @@ function OracleVendorBadge({
   showText = false,
   useTooltip = true,
 }: OracleVendorBadgeProps) {
-  const { vendors, isUnknown } = parseOracleVendors(oracleData);
+  const { vendors, isUnknown } = parsePriceFeedVendors(oracleData);
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">

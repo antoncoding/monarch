@@ -3,12 +3,12 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { FaQuestionCircle } from 'react-icons/fa';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleFilterProps = {
-  selectedOracles: OracleVendors[];
-  setSelectedOracles: (oracles: OracleVendors[]) => void;
+  selectedOracles: PriceFeedVendors[];
+  setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
 };
 
 export default function OracleFilter({ selectedOracles, setSelectedOracles }: OracleFilterProps) {
@@ -30,7 +30,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  const toggleOracle = (oracle: OracleVendors) => {
+  const toggleOracle = (oracle: PriceFeedVendors) => {
     if (selectedOracles.includes(oracle)) {
       setSelectedOracles(selectedOracles.filter((o) => o !== oracle));
     } else {
@@ -84,7 +84,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         }`}
       >
         <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
-          {Object.values(OracleVendors).map((oracle) => (
+          {Object.values(PriceFeedVendors).map((oracle) => (
             <li
               key={oracle}
               className={`m-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${

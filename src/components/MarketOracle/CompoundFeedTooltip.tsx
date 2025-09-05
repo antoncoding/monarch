@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Address } from 'viem'
 import { getExplorerURL } from '@/utils/external'
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle'
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle'
 import { OracleFeed } from '@/utils/types'
 import { CompoundFeedEntry } from '@/constants/compound'
 import { ChainlinkOracleEntry, getChainlinkFeedUrl, getChainlinkOracle } from '@/constants/chainlink-data'
@@ -20,8 +20,8 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
   const baseAsset = compoundData.base
   const quoteAsset = compoundData.quote
   
-  const compoundLogo = OracleVendorIcons[OracleVendors.Compound]
-  const chainlinkLogo = OracleVendorIcons[OracleVendors.Chainlink]
+  const compoundLogo = OracleVendorIcons[PriceFeedVendors.Compound]
+  const chainlinkLogo = OracleVendorIcons[PriceFeedVendors.Chainlink]
   
   // Get the underlying Chainlink feed data
   const underlyingChainlinkData = useMemo(() => {

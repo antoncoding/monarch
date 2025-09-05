@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Address } from 'viem'
 import { getExplorerURL } from '@/utils/external'
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle'
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle'
 import { OracleFeed } from '@/utils/types'
 import { ChainlinkOracleEntry, getChainlinkFeedUrl } from '@/constants/chainlink-data'
 import { Badge } from '@/components/common/Badge'
@@ -18,7 +18,7 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
   const baseAsset = feed.pair?.[0] ?? chainlinkData?.baseAsset ?? 'Unknown'
   const quoteAsset = feed.pair?.[1] ?? chainlinkData?.quoteAsset ?? 'Unknown'
   
-  const vendorIcon = OracleVendorIcons[OracleVendors.Chainlink]
+  const vendorIcon = OracleVendorIcons[PriceFeedVendors.Chainlink]
   
   // Generate Chainlink feed URL if we have the chainlink data
   const chainlinkUrl = chainlinkData ? getChainlinkFeedUrl(chainId, {

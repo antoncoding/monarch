@@ -13,7 +13,7 @@ import { useAccount } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
-import { MarketOracleFeedInfo } from '@/components/MarketOracle';
+import { MarketOracleFeedInfo, OracleTypeInfo } from '@/components/MarketOracle';
 import Header from '@/components/layout/header/Header';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
@@ -179,11 +179,6 @@ function MarketContent() {
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
-  const hasFeed =
-    market.oracle?.data?.baseFeedOne ||
-    market.oracle?.data?.baseFeedTwo ||
-    market.oracle?.data?.quoteFeedOne ||
-    market.oracle?.data?.quoteFeedTwo;
 
   return (
     <>
@@ -326,19 +321,18 @@ function MarketContent() {
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
               <span>Oracle Info</span>
-              {market.oracle?.data && (
-                <span className="text-sm text-gray-500">
-                  <Link
-                    href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center hover:underline"
-                  >
-                    <OracleVendorBadge oracleData={market.oracle.data} showText />
-                    <ExternalLinkIcon className="ml-1" />
-                  </Link>
-                </span>
-              )}
+              
+              <span className="text-sm text-gray-500">
+                <Link
+                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center hover:underline"
+                >
+                  <ExternalLinkIcon className="ml-1" />
+                </Link>
+              </span>
+              
             </CardHeader>
             <CardBody>
               <div className="space-y-2">
@@ -348,20 +342,11 @@ function MarketContent() {
                     {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
                   </span>
                 </div>
-                {hasFeed && market.oracle?.data && (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span>Feeds Info:</span>
-                    </div>
-                    <MarketOracleFeedInfo
-                      baseFeedOne={market.oracle.data.baseFeedOne}
-                      baseFeedTwo={market.oracle.data.baseFeedTwo}
-                      quoteFeedOne={market.oracle.data.quoteFeedOne}
-                      quoteFeedTwo={market.oracle.data.quoteFeedTwo}
-                      chainId={market.morphoBlue.chain.id}
-                    />
-                  </>
-                )}
+                <OracleTypeInfo
+                  oracleData={market.oracle?.data}
+                  oracleAddress={market.oracleAddress}
+                  chainId={market.morphoBlue.chain.id}
+                />
               </div>
             </CardBody>
           </Card>

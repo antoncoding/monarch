@@ -2,11 +2,16 @@ import { getChainlinkOracle } from '@/constants/chainlink-data';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
-  vendors: OracleVendors[];
+  vendors: PriceFeedVendors[];
   isUnknown: boolean;
 };
 
-export enum OracleVendors {
+export enum OracleType {
+  Standard = 'Standard',
+  Custom = 'Custom',
+}
+
+export enum PriceFeedVendors {
   Chainlink = 'Chainlink',
   PythNetwork = 'Pyth Network',
   Redstone = 'Redstone',
@@ -16,17 +21,33 @@ export enum OracleVendors {
   Unknown = 'Unknown',
 }
 
-export const OracleVendorIcons: Record<OracleVendors, string> = {
-  [OracleVendors.Chainlink]: require('../imgs/oracles/chainlink.png') as string,
-  [OracleVendors.PythNetwork]: require('../imgs/oracles/pyth.png') as string,
-  [OracleVendors.Redstone]: require('../imgs/oracles/redstone.png') as string,
-  [OracleVendors.Oval]: require('../imgs/oracles/uma.png') as string,
-  [OracleVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
-  [OracleVendors.Lido]: require('../imgs/oracles/lido.png') as string,
-  [OracleVendors.Unknown]: '',
+export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
+  [PriceFeedVendors.Chainlink]: require('../imgs/oracles/chainlink.png') as string,
+  [PriceFeedVendors.PythNetwork]: require('../imgs/oracles/pyth.png') as string,
+  [PriceFeedVendors.Redstone]: require('../imgs/oracles/redstone.png') as string,
+  [PriceFeedVendors.Oval]: require('../imgs/oracles/uma.png') as string,
+  [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
+  [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
+  [PriceFeedVendors.Unknown]: '',
 };
 
-export function parseOracleVendors(
+export function getOracleTypeDescription(oracleType: OracleType): string {
+  if (oracleType === OracleType.Standard) return 'Standard Oracle from Price Feeds';
+
+  return 'Custom Oracle';
+}
+
+export function getOracleType(oracleData: MorphoChainlinkOracleData | null | undefined, oracleAddress: string, chainId: number) {
+  // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
+  if (oracleData?.baseFeedOne !== null || oracleData?.baseFeedTwo !== null || oracleData?.quoteFeedOne !== null || oracleData?.quoteFeedTwo !== null) return OracleType.Standard;
+
+
+  // Other logics to determin oracle types
+  console.log("Skipping logic for oracleAddress", oracleAddress, "on chainId", chainId);
+  return OracleType.Custom;
+}
+
+export function parsePriceFeedVendors(
   oracleData: MorphoChainlinkOracleData | null | undefined,
 ): VendorInfo {
   if (!oracleData) return { vendors: [], isUnknown: false };
@@ -51,15 +72,15 @@ export function parseOracleVendors(
       .filter((feed) => feed?.vendor)
       .map(
         (feed) =>
-          Object.values(OracleVendors).find(
+          Object.values(PriceFeedVendors).find(
             (v) => v.toLowerCase() === feed!.vendor!.toLowerCase(),
-          ) ?? OracleVendors.Unknown,
+          ) ?? PriceFeedVendors.Unknown,
       ),
   );
 
   return {
     vendors: Array.from(vendors),
-    isUnknown: vendors.has(OracleVendors.Unknown) || vendors.size === 0,
+    isUnknown: vendors.has(PriceFeedVendors.Unknown) || vendors.size === 0,
   };
 }
 

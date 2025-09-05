@@ -2,10 +2,10 @@ import { OracleFeed } from '@/utils/types'
 import { FeedEntry } from './FeedEntry'
 
 type MarketOracleFeedInfoProps = {
-  baseFeedOne: OracleFeed | null
-  baseFeedTwo: OracleFeed | null
-  quoteFeedOne: OracleFeed | null
-  quoteFeedTwo: OracleFeed | null
+  baseFeedOne: OracleFeed | null | undefined
+  baseFeedTwo: OracleFeed | null | undefined
+  quoteFeedOne: OracleFeed | null | undefined
+  quoteFeedTwo: OracleFeed | null | undefined
   chainId: number
 }
 
@@ -32,7 +32,7 @@ export function MarketOracleFeedInfo({
     </div>
   )
 
-  const renderFeed = (feed: OracleFeed | null) => 
+  const renderFeed = (feed: OracleFeed | null | undefined) => 
     feed ? (
       <div className="w-full">
         <FeedEntry feed={feed} chainId={chainId} />
@@ -45,7 +45,7 @@ export function MarketOracleFeedInfo({
     <div className="space-y-2">
       {(baseFeedOne || baseFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600 dark:text-gray-400">Base:</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Base Feeds:</span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(baseFeedOne)}</div>
             <div className="w-28">{renderFeed(baseFeedTwo)}</div>
@@ -55,7 +55,7 @@ export function MarketOracleFeedInfo({
       
       {(quoteFeedOne || quoteFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600 dark:text-gray-400">Quote:</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400">Quote Feeds:</span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(quoteFeedOne)}</div>
             <div className="w-28">{renderFeed(quoteFeedTwo)}</div>

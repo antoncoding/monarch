@@ -7,7 +7,7 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { OracleFeed } from '@/utils/types';
 import { getChainlinkOracle, isChainlinkOracle } from '@/constants/chainlink-data';
 import { ChainlinkFeedTooltip } from '@/components/MarketOracle/ChainlinkFeedTooltip';
@@ -36,7 +36,7 @@ export function OracleFeedInfo({
   const toAsset = feed.pair?.[1] ?? chainlinkFeedData?.quoteAsset ?? 'Unknown';
 
   const vendorIcon =
-    OracleVendorIcons[feed.vendor as OracleVendors] ?? OracleVendorIcons[OracleVendors.Unknown];
+    OracleVendorIcons[feed.vendor as PriceFeedVendors] ?? OracleVendorIcons[PriceFeedVendors.Unknown];
 
   const content = (
     <div className="ml-2 flex w-full items-center justify-between pb-1">

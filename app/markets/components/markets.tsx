@@ -17,7 +17,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
-import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
+import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -75,7 +75,7 @@ export default function Markets({
 
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
+  const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
 
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
     usePagination();
@@ -208,7 +208,7 @@ export default function Markets({
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
-      const { vendors } = parseOracleVendors(market.oracle?.data);
+      const { vendors } = parsePriceFeedVendors(market.oracle?.data);
       const vendorsName = vendors.join(',');
       return (
         market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
