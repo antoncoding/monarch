@@ -34,7 +34,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
             href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
             target="_blank"
           >
-            <OracleVendorBadge oracleData={oracleData} useTooltip />
+            <OracleVendorBadge oracleData={oracleData} chainId={market.morphoBlue.chain.id} useTooltip />
             <ExternalLinkIcon />
           </a>
         </div>

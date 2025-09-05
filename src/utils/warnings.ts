@@ -1,6 +1,6 @@
 import { MarketWarning, MorphoChainlinkOracleData } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
-import { getOracleType, OracleType } from './oracle';
+import { getOracleType, OracleType, parsePriceFeedVendors } from './oracle';
 import { WarningCategory, WarningWithDetail } from './types';
 
 // Subgraph Warnings
@@ -195,6 +195,14 @@ export const getMarketWarningsWithDetail = (
     market.morphoBlue.chain.id,
   );
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
+
+  // if any of the feeds are not null but also not recognized, return feed warning
+  if (market.oracle?.data) {
+    const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
+    if (vendorInfo.hasUnknown) {
+      result.push(UNRECOGNIZED_FEEDS);
+    }
+  }
 
   return result;
 };

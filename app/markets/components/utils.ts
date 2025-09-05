@@ -91,7 +91,7 @@ export function applyFilterAndSort(
 
       if (
         !showUnknownOracle &&
-        (!market.oracle || parsePriceFeedVendors(market.oracle.data).isUnknown)
+        (!market.oracle || parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id))
       ) {
         return false;
       }
@@ -105,7 +105,7 @@ export function applyFilterAndSort(
       }
 
       if (selectedOracles.length > 0 && !!market.oracle) {
-        const marketOracles = parsePriceFeedVendors(market.oracle.data).vendors;
+        const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id).vendors;
         if (!marketOracles.some((oracle) => selectedOracles.includes(oracle))) {
           return false;
         }

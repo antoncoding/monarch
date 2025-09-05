@@ -39,7 +39,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
           ) : (
-            <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} />
+            <OracleVendorBadge showText oracleData={market.oracle?.data} chainId={market.morphoBlue.chain.id} useTooltip={false} />
           )}
         </div>
       </div>
@@ -130,7 +130,7 @@ export function MarketInfoBlockCompact({
           {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
         </span>
       ) : (
-        <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} />
+        <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} chainId={market.morphoBlue.chain.id} />
       )}
     </div>
   );

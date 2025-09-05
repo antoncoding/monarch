@@ -208,7 +208,7 @@ export default function Markets({
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
-      const { vendors } = parsePriceFeedVendors(market.oracle?.data);
+      const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id);
       const vendorsName = vendors.join(',');
       return (
         market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||

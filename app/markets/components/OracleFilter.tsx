@@ -67,6 +67,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
                   }
                   showText={false}
                   useTooltip={false}
+                  chainId={1}
                 />
               ))}
             </div>

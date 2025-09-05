@@ -114,6 +114,7 @@ function MarketRow({
         <div className="flex justify-center">
           <OracleVendorBadge
             oracleData={position.market.oracle ? position.market.oracle.data : null}
+            chainId={position.market.morphoBlue.chain.id}
             useTooltip
           />
         </div>

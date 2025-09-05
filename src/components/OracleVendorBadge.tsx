@@ -7,6 +7,7 @@ import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
   oracleData: MorphoChainlinkOracleData | null | undefined;
+  chainId: number;
   useTooltip?: boolean;
   showText?: boolean;
 };
@@ -20,19 +21,20 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
 
 function OracleVendorBadge({
   oracleData,
+  chainId,
   showText = false,
   useTooltip = true,
 }: OracleVendorBadgeProps) {
-  const { vendors, isUnknown } = parsePriceFeedVendors(oracleData);
+  const { vendors, hasUnknown } = parsePriceFeedVendors(oracleData, chainId);
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && (
         <span className="mr-1 text-xs font-medium">
-          {isUnknown ? 'Unknown' : vendors.join(', ')}
+          {hasUnknown ? 'Unknown' : vendors.join(', ')}
         </span>
       )}
-      {isUnknown ? (
+      {hasUnknown ? (
         <IoWarningOutline className="text-secondary" size={16} />
       ) : (
         vendors.map((vendor, index) => (
@@ -48,7 +50,7 @@ function OracleVendorBadge({
         content={
           <div className="m-2">
             <p className="py-2 text-sm font-medium">
-              {isUnknown ? 'Unknown Oracle' : 'Oracle Vendors:'}
+              {hasUnknown ? 'Unknown Oracle' : 'Oracle Vendors:'}
             </p>
             <ul>
               {vendors.map((vendor, index) => (

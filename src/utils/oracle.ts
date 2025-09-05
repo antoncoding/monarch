@@ -11,7 +11,7 @@ import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
   vendors: PriceFeedVendors[];
-  isUnknown: boolean;
+  hasUnknown: boolean;
 };
 
 export enum OracleType {
@@ -69,8 +69,10 @@ export function getOracleType(
 
 export function parsePriceFeedVendors(
   oracleData: MorphoChainlinkOracleData | null | undefined,
+  chainId: number,
 ): VendorInfo {
-  if (!oracleData) return { vendors: [], isUnknown: false };
+
+  if (!oracleData) return { vendors: [], hasUnknown: false };
 
   if (
     !oracleData.baseFeedOne &&
@@ -78,7 +80,7 @@ export function parsePriceFeedVendors(
     !oracleData.quoteFeedOne &&
     !oracleData.quoteFeedTwo
   )
-    return { vendors: [], isUnknown: true };
+    return { vendors: [], hasUnknown: true };
 
   const feeds = [
     oracleData.baseFeedOne,
@@ -87,20 +89,25 @@ export function parsePriceFeedVendors(
     oracleData.quoteFeedTwo,
   ];
 
-  const vendors = new Set(
-    feeds
-      .filter((feed) => feed?.vendor)
-      .map(
-        (feed) =>
-          Object.values(PriceFeedVendors).find(
-            (v) => v.toLowerCase() === feed!.vendor!.toLowerCase(),
-          ) ?? PriceFeedVendors.Unknown,
-      ),
-  );
+  const vendors = new Set<PriceFeedVendors>();
+  let hasUnknown = false;
 
+  for (const feed of feeds) {
+    if (feed?.address) {
+      const feedResult = detectFeedVendor(feed.address, chainId);
+      vendors.add(feedResult.vendor);
+      if (feedResult.vendor === PriceFeedVendors.Unknown) {
+        hasUnknown = true;
+      }
+    }
+  }
+
+  // If we have no feeds with addresses, that should be considered as having unknown feeds
+  const hasFeeds = feeds.some(feed => feed?.address);
+  
   return {
     vendors: Array.from(vendors),
-    isUnknown: vendors.has(PriceFeedVendors.Unknown) || vendors.size === 0,
+    hasUnknown: hasUnknown || !hasFeeds,
   };
 }
 

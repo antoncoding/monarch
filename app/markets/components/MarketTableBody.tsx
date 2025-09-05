@@ -13,6 +13,7 @@ import logo from '../../../imgs/logo.png';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
+import { IoGitMerge } from 'react-icons/io5';
 
 type MarketTableBodyProps = {
   currentEntries: Market[];
@@ -103,7 +104,7 @@ export function MarketTableBody({
               />
               <td data-label="Oracle" className="z-50">
                 <div className="flex justify-center">
-                  <OracleVendorBadge oracleData={item.oracle?.data} />
+                  <OracleVendorBadge oracleData={item.oracle?.data} chainId={item.morphoBlue.chain.id} />
                 </div>
               </td>
               <td data-label="LLTV" className="z-50">
