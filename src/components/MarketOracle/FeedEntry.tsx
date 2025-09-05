@@ -33,7 +33,10 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
 
   return (
     <Tooltip
-      className="rounded-sm"
+      classNames={{
+        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+        content: 'p-0 m-0 bg-transparent shadow-sm border-none'
+      }}
       content={<ChainlinkFeedTooltip feed={feed} chainlinkData={chainlinkFeedData} chainId={chainId} />}
     >
       <div className="flex w-full cursor-pointer items-center justify-between rounded-sm bg-hovered px-2 py-1 hover:bg-opacity-80">
