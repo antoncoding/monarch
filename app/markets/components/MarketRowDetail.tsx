@@ -4,12 +4,14 @@ import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TooltipContent } from '@/components/TooltipContent';
+import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   const oracleData = market.oracle ? market.oracle.data : null;
+  const warningsWithDetail = useMarketWarnings(market, true);
 
   const hasFeeds =
     oracleData &&
@@ -87,7 +89,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         </div>
 
         <div className="w-full gap-2 ">
-          {market.warningsWithDetail.map((warning) => {
+          {warningsWithDetail.map((warning) => {
             return (
               <Info
                 key={warning.code}

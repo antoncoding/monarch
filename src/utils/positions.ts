@@ -428,14 +428,6 @@ export function groupPositionsByLoanAsset(
       if (shouldInclude) {
         groupedPosition.markets.push(position);
 
-        // Restore original logic for totals, warnings, and collaterals
-        groupedPosition.allWarnings = [
-          ...new Set([
-            ...groupedPosition.allWarnings,
-            ...(position.market.warningsWithDetail || []),
-          ]),
-        ] as WarningWithDetail[];
-
         const supplyAmount = Number(
           formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals),
         );

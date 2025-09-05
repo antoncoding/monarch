@@ -2,7 +2,6 @@ import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { morphoGraphqlFetcher } from './fetchers';
 
 type MarketGraphQLResponse = {
@@ -29,10 +28,8 @@ type MarketsGraphQLResponse = {
 };
 
 const processMarketData = (market: Market): Market => {
-  const warningsWithDetail = getMarketWarningsWithDetail(market, true);
   return {
     ...market,
-    warningsWithDetail,
     isProtectedByLiquidationBots: false,
     isMonarchWhitelisted: false,
 

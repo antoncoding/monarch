@@ -2,7 +2,8 @@ import { Tooltip } from '@heroui/react';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/TooltipContent';
-import { WarningWithDetail } from '@/utils/types';
+import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { WarningWithDetail, Market } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
 type RiskFlagProps = {
@@ -62,7 +63,10 @@ export function RiskIndicator({
   );
 
   return (
-    <Tooltip content={tooltipContent} className="max-w-[300px] rounded-sm">
+    <Tooltip content={tooltipContent} className="max-w-[300px] rounded-sm" classNames={{
+      base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+      content: 'p-0 m-0 bg-transparent shadow-sm border-none'
+    }}>
       <div className="gap flex">
         <div className={`h-4 w-[4px] ${styles.bar}`} />
       </div>
@@ -79,7 +83,7 @@ export function RiskIndicatorFromWarning({
   isBatched = false,
   mode = 'simple',
 }: {
-  market: { warningsWithDetail: WarningWithDetail[] };
+  market: Market;
   category: WarningCategory;
   greenDescription: string;
   yellowDescription: string;
@@ -87,7 +91,8 @@ export function RiskIndicatorFromWarning({
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
-  const warnings = market.warningsWithDetail.filter((w) => w.category === category);
+  const warningsWithDetail = useMarketWarnings(market, true);
+  const warnings = warningsWithDetail.filter((w) => w.category === category);
 
   if (warnings.length === 0) {
     return <RiskIndicator level="green" description={greenDescription} mode={mode} />;
@@ -120,7 +125,7 @@ export function MarketAssetIndicator({
   isBatched = false,
   mode = 'simple',
 }: {
-  market: { warningsWithDetail: WarningWithDetail[] };
+  market: Market;
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
@@ -142,7 +147,7 @@ export function MarketOracleIndicator({
   isBatched = false,
   mode = 'simple',
 }: {
-  market: { warningsWithDetail: WarningWithDetail[] };
+  market: Market;
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
@@ -164,7 +169,7 @@ export function MarketDebtIndicator({
   isBatched = false,
   mode = 'simple',
 }: {
-  market: { warningsWithDetail: WarningWithDetail[] };
+  market: Market;
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {

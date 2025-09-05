@@ -22,7 +22,6 @@ import {
 } from '@/utils/tokens';
 import { MorphoChainlinkOracleData, Market, MarketWarning } from '@/utils/types';
 import {
-  getMarketWarningsWithDetail,
   SUBGRAPH_NO_ORACLE,
   SUBGRAPH_NO_PRICE,
   UNRECOGNIZED_COLLATERAL,
@@ -276,7 +275,6 @@ const transformSubgraphMarketToMarket = (
       },
     },
     warnings: warnings, // Assign the potentially filtered warnings
-    // warningsWithDetail: warningsWithDetail,
     oracle: {
       data: oracleDataToUse, // Use the determined oracle data
     },
@@ -285,14 +283,7 @@ const transformSubgraphMarketToMarket = (
     isMonarchWhitelisted: false,
   };
 
-  // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
-  const warningsWithDetail = getMarketWarningsWithDetail(marketDetail);
-
-
-  return {
-    ...marketDetail,
-    warningsWithDetail: warningsWithDetail
-  };
+  return marketDetail;
 };
 
 // Fetcher for market details from Subgraph
