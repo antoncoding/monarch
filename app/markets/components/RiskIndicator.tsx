@@ -63,10 +63,14 @@ export function RiskIndicator({
   );
 
   return (
-    <Tooltip content={tooltipContent} className="max-w-[300px] rounded-sm" classNames={{
-      base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      content: 'p-0 m-0 bg-transparent shadow-sm border-none'
-    }}>
+    <Tooltip
+      content={tooltipContent}
+      className="max-w-[300px] rounded-sm"
+      classNames={{
+        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+      }}
+    >
       <div className="gap flex">
         <div className={`h-4 w-[4px] ${styles.bar}`} />
       </div>

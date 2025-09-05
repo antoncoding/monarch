@@ -1,5 +1,5 @@
 [
-    {
+  {
     "compareOffchain": "",
     "contractAddress": "0x00480f7Df64d3711940E956c2Ca0C47Cc48240eB",
     "contractType": "",
@@ -13,8 +13,8 @@
     "multiply": "1000000000000000000",
     "name": "sUSDS / USDS Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "susds-usds-exchange-rate",
     "proxyAddress": "0x906B24a339b848369B24Dc9Ed368b947fB9693bf",
@@ -24,24 +24,24 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "sUSDS",
-    "baseAssetClic": "sUSDS_CR",
-    "blockchainName": "Base",
-    "clicProductName": "sUSDS/USDS-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "sUSDS",
-    "quoteAssetClic": "sUSDS_CR",
-    "underlyingAsset": "USDS",
-    "underlyingAssetClic": "USDS_CR"
+      "assetClass": "Crypto",
+      "baseAsset": "sUSDS",
+      "baseAssetClic": "sUSDS_CR",
+      "blockchainName": "Base",
+      "clicProductName": "sUSDS/USDS-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "sUSDS",
+      "quoteAssetClic": "sUSDS_CR",
+      "underlyingAsset": "USDS",
+      "underlyingAssetClic": "USDS_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x00be872906C07d6d7D0eC3968b99C4e3D6Bd552a",
     "contractType": "",
@@ -55,8 +55,8 @@
     "multiply": "1000000000000000000",
     "name": "ezETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ezeth-eth",
     "proxyAddress": "0x960BDD1dFD20d7c98fa482D793C3dedD73A113a3",
@@ -66,25 +66,25 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "EZETH",
-    "baseAssetClic": "EZETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "EZETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "EZETH",
+      "baseAssetClic": "EZETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "EZETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x038fa58bd4DA1c938D2783941e657164D497C4B6",
     "contractType": "",
@@ -98,8 +98,8 @@
     "multiply": "100000000",
     "name": "AXL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "axl-usd",
     "proxyAddress": "0x676C4C6C31D97A5581D3204C04A8125B350E2F9D",
@@ -109,22 +109,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AXL",
-    "baseAssetClic": "AXL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AXL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AXL",
+      "baseAssetClic": "AXL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AXL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x04030d2F38Bc799aF9B0AaB5757ADC98000D7DeD",
     "contractType": "",
@@ -138,8 +138,8 @@
     "multiply": "1000000000000000000",
     "name": "wstETH-stETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wsteth-steth exchangerate",
     "proxyAddress": "0xB88BAc61a4Ca37C43a3725912B1f472c9A5bc061",
@@ -149,25 +149,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "wstETH",
-    "baseAssetClic": "wstETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "wstETH/stETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "stETH",
-    "quoteAssetClic": "stETH_CR",
-    "underlyingAsset": "STETH",
-    "underlyingAssetClic": "STETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "wstETH",
+      "baseAssetClic": "wstETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "wstETH/stETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "stETH",
+      "quoteAssetClic": "stETH_CR",
+      "underlyingAsset": "STETH",
+      "underlyingAssetClic": "STETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x04d3d700150E03eD1Df763363D746F0E9dEE3BDD",
     "contractType": "",
@@ -181,8 +181,8 @@
     "multiply": "1000000000000000000",
     "name": "sUSDz / USDz Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "susdz-usdz-exchange-rate",
     "proxyAddress": "0xD89c7fFB39C44b17EAecd8717a75A36c19C07582",
@@ -192,23 +192,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "sUSDz",
-    "baseAssetClic": "sUSDz_CR",
-    "blockchainName": "Base",
-    "clicProductName": "sUSDz/USDz-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USDz",
-    "quoteAssetClic": "USDz_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "sUSDz",
+      "baseAssetClic": "sUSDz_CR",
+      "blockchainName": "Base",
+      "clicProductName": "sUSDz/USDz-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USDz",
+      "quoteAssetClic": "USDz_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x05acfeE2c0b4efbBCe705932239A30613aCE42f2",
     "contractType": "",
@@ -222,8 +222,8 @@
     "multiply": "1000000000000000000",
     "name": "wOETH / OETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "woeth-oeth-exchange-rate",
     "proxyAddress": "0xe96EB1EDa83d18cbac224233319FA5071464e1b9",
@@ -233,25 +233,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "wOETH",
-    "baseAssetClic": "wOETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "wOETH/OETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "OETH",
-    "quoteAssetClic": "OETH_CR",
-    "underlyingAsset": "OETH",
-    "underlyingAssetClic": "OETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "wOETH",
+      "baseAssetClic": "wOETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "wOETH/OETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "OETH",
+      "quoteAssetClic": "OETH_CR",
+      "underlyingAsset": "OETH",
+      "underlyingAssetClic": "OETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x08F9654349B33B955133b28e35dbEcCe9950c219",
     "contractType": "",
@@ -265,8 +265,8 @@
     "multiply": "1000000000000000000",
     "name": "CBETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbeth-eth",
     "proxyAddress": "0x806b4Ac04501c29769051e42783cF04dCE41440b",
@@ -276,25 +276,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "CBETH",
-    "baseAssetClic": "CBETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CBETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "CBETH",
+      "baseAssetClic": "CBETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CBETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x093e52c967391A87732956121509b9594B02F153",
     "contractType": "",
@@ -308,8 +308,8 @@
     "multiply": "100000000",
     "name": "BRL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "brl-usd",
     "proxyAddress": "0x0b0E64c05083FdF9ED7C5D3d8262c4216eFc9394",
@@ -319,22 +319,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "BRL",
-    "baseAssetClic": "BRL_FX",
-    "blockchainName": "Base",
-    "clicProductName": "BRL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex_BRL",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "BRL",
+      "baseAssetClic": "BRL_FX",
+      "blockchainName": "Base",
+      "clicProductName": "BRL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex_BRL",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x0C731e5985798B2B8374cA7e4F7AfDD174b1b74f",
     "contractType": "",
@@ -348,8 +348,8 @@
     "multiply": "100000000",
     "name": "TBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "tbtc-usd",
     "proxyAddress": "0x6D75BFB5A5885f841b132198C9f0bE8c872057BF",
@@ -359,25 +359,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "tBTC",
-    "baseAssetClic": "tBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "tBTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "BTC",
-    "underlyingAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "tBTC",
+      "baseAssetClic": "tBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "tBTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "BTC",
+      "underlyingAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x0D4D5dC9cCf0c9e3028321a777B37Aa45Bc8fe87",
     "contractType": "",
@@ -391,8 +391,8 @@
     "multiply": "100000000",
     "name": "LBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lbtc-usd",
     "proxyAddress": "0x9e07546c9Fe8868855CD04B26051a26D1599E270",
@@ -402,22 +402,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LBTC",
-    "baseAssetClic": "LBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "LBTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "LBTC",
+      "baseAssetClic": "LBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "LBTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x0Ee7145e1370653533e2F2E824424bE2AA95A4Aa",
     "contractType": "",
@@ -431,8 +431,8 @@
     "multiply": "100000000",
     "name": "USDC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdc-usd",
     "proxyAddress": "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B",
@@ -442,25 +442,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDC",
-    "baseAssetClic": "USDC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDC",
+      "baseAssetClic": "USDC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x0F83393dB40FC0417D8aF7A2192212C57F62Be52",
     "contractType": "",
@@ -474,8 +474,8 @@
     "multiply": "100000000",
     "name": "RDNT / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "rdnt-usd",
     "proxyAddress": "0xEf2E24ba6def99B5e0b71F6CDeaF294b02163094",
@@ -485,22 +485,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "RDNT",
-    "baseAssetClic": "RDNT_CR",
-    "blockchainName": "Base",
-    "clicProductName": "RDNT/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "RDNT",
+      "baseAssetClic": "RDNT_CR",
+      "blockchainName": "Base",
+      "clicProductName": "RDNT/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x0FC7044a83a1Bd1c0661faf26A48D96902e2b5A5",
     "contractType": "",
@@ -514,8 +514,8 @@
     "multiply": "100000000",
     "name": "USR / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usr-usd",
     "proxyAddress": "0x4a595E0a62E50A2E5eC95A70c8E612F9746af006",
@@ -525,25 +525,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USR",
-    "baseAssetClic": "USR_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USR/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USR",
+      "baseAssetClic": "USR_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USR/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x11884a84125eCbC089291cA85288352feC2630de",
     "contractType": "",
@@ -557,8 +557,8 @@
     "multiply": "1000000000000000000",
     "name": "syrupUSDC-USDC Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "syrupusdc-usdc-exchange-rate",
     "proxyAddress": "0x311D3A3faA1d5939c681E33C2CDAc041FF388EB2",
@@ -568,23 +568,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "syrupUSDC",
-    "baseAssetClic": "syrupUSDC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "syrupUSDC/USDC-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USDC",
-    "quoteAssetClic": "USDC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "syrupUSDC",
+      "baseAssetClic": "syrupUSDC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "syrupUSDC/USDC-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USDC",
+      "quoteAssetClic": "USDC_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x11da1FC2BF92316931E8978A23928D058fC57f5A",
     "contractType": "",
@@ -598,8 +598,8 @@
     "multiply": "100000000",
     "name": "ZAR / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "zar-usd",
     "proxyAddress": "0x2ecc8A8B370fC6a217166b2782a35339bEBEe98B",
@@ -609,22 +609,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "ZAR",
-    "baseAssetClic": "ZAR_FX",
-    "blockchainName": "Base",
-    "clicProductName": "ZAR/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "ZAR",
+      "baseAssetClic": "ZAR_FX",
+      "blockchainName": "Base",
+      "clicProductName": "ZAR/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x12Cc14513c923dd197139E8280852c9ed2575271",
@@ -639,8 +639,8 @@
     "multiply": "100000000",
     "name": "CBXRP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbxrp-usd",
     "proxyAddress": "0xEEe1a9D5A0C36d99972C057Cb959267e88Ab9160",
@@ -650,23 +650,23 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "CBXRP",
-    "baseAssetClic": "CBXRP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CBXRP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "CBXRP",
+      "baseAssetClic": "CBXRP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CBXRP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "finalto",
     "compareOffchain": "",
     "contractAddress": "0x12c97C24eDFf0A1693ff1eF00ee413b5B8Bbae2E",
@@ -681,8 +681,8 @@
     "multiply": "100000000",
     "name": "SGD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sgd-usd",
     "proxyAddress": "0x81575495532fB311Efc5C993B612564274F0949b",
@@ -692,22 +692,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "SGD",
-    "baseAssetClic": "SGD_FX",
-    "blockchainName": "Base",
-    "clicProductName": "SGD/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "SGD",
+      "baseAssetClic": "SGD_FX",
+      "blockchainName": "Base",
+      "clicProductName": "SGD/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x1564DF754C268d6402e1d5D55C288A83ABd9f5EC",
     "contractType": "",
@@ -721,8 +721,8 @@
     "multiply": "1000000000000000000",
     "name": "tETH / wstETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "teth-wsteth-exchange-rate",
     "proxyAddress": "0x8004571d9f54dE016fc3D448e7AEe2d70947727A",
@@ -732,25 +732,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "tETH",
-    "baseAssetClic": "tETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "tETH/wstETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "wstETH",
-    "quoteAssetClic": "wstETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "tETH",
+      "baseAssetClic": "tETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "tETH/wstETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "wstETH",
+      "quoteAssetClic": "wstETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x1628C5a2c844ED77036Fd04e4BB8e9DA5A869801",
     "contractType": "",
@@ -764,8 +764,8 @@
     "multiply": "1000000000000000000",
     "name": "inETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ineth-eth-exchange-rate",
     "proxyAddress": "0x83ac12dBb5Bd7Fa597ab2FFEc9F2F13DeDdFe163",
@@ -775,25 +775,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "INETH",
-    "baseAssetClic": "INETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "INETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "INETH",
+      "baseAssetClic": "INETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "INETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x16f542BC40723DfE8976A334564eF0c3CfD602Fd",
     "contractType": "",
@@ -807,8 +807,8 @@
     "multiply": "1000000000000000000",
     "name": "cbETH-ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbeth-eth-exchange",
     "proxyAddress": "0x868a501e68F3D1E89CfC0D22F6b22E8dabce5F04",
@@ -818,25 +818,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "cbETH",
-    "baseAssetClic": "cbETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "cbETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "cbETH",
+      "baseAssetClic": "cbETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "cbETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x19e6821Ee47a4c23E5971fEBeE29f78C2e514DC8",
     "contractType": "",
@@ -850,8 +850,8 @@
     "multiply": "1000000000000000000",
     "name": "weETH / eETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "weeth-eeth-exchange-rate",
     "proxyAddress": "0x35e9D7001819Ea3B39Da906aE6b06A62cfe2c181",
@@ -861,25 +861,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "weETH",
-    "baseAssetClic": "weETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "weETH/eETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "eETH",
-    "quoteAssetClic": "eETH_CR",
-    "underlyingAsset": "eETH",
-    "underlyingAssetClic": "eETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "weETH",
+      "baseAssetClic": "weETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "weETH/eETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "eETH",
+      "quoteAssetClic": "eETH_CR",
+      "underlyingAsset": "eETH",
+      "underlyingAssetClic": "eETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x205B614B4cE3c56db1c8408ed54414f13185DD05",
     "contractType": "",
@@ -893,8 +893,8 @@
     "multiply": "1000000000000000000",
     "name": "ynETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "yneth-eth-exchange-rate",
     "proxyAddress": "0xb4482096e3cdE116C15fC0D700a73a58FEdeB8c0",
@@ -904,25 +904,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "ynETH",
-    "baseAssetClic": "ynETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ynETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "ynETH",
+      "baseAssetClic": "ynETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ynETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x21b1E4eA0E9AE2e79932662300eB12A0f90AbE59",
     "contractType": "",
@@ -936,8 +936,8 @@
     "multiply": "100000000",
     "name": "DAI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "dai-usd",
     "proxyAddress": "0x591e79239a7d679378eC8c847e5038150364C78F",
@@ -947,25 +947,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "DAI",
-    "baseAssetClic": "DAI_CR",
-    "blockchainName": "Base",
-    "clicProductName": "DAI/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "DAI",
+      "baseAssetClic": "DAI_CR",
+      "blockchainName": "Base",
+      "clicProductName": "DAI/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x222d25e4dEacAb0eE03E0cb282Ab3F602dED6EF2",
     "contractType": "",
@@ -979,8 +979,8 @@
     "multiply": "1000000000000000000",
     "name": "wrsETH-ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wrseth-eth-exchange-rate",
     "proxyAddress": "0xe8dD07CCf5BC4922424140E44Eb970F5950725ef",
@@ -990,25 +990,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "wrsETH",
-    "baseAssetClic": "wrsETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "wrsETH/rsETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "rsETH",
-    "quoteAssetClic": "rsETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "wrsETH",
+      "baseAssetClic": "wrsETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "wrsETH/rsETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "rsETH",
+      "quoteAssetClic": "rsETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x233A45BF331B35440D45e9BEB1fdF2FbB7B4e3D2",
     "contractType": "",
@@ -1022,8 +1022,8 @@
     "multiply": "1000000000000000000",
     "name": "ezETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ezeth-eth-exchange-rate",
     "proxyAddress": "0xC4300B7CF0646F0Fe4C5B2ACFCCC4dCA1346f5d8",
@@ -1033,25 +1033,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "EZETH",
-    "baseAssetClic": "EZETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "EZETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "EZETH",
+      "baseAssetClic": "EZETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "EZETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x23c463c4fB13fFC8c20a1Bdd71A928686eD3A4A2",
@@ -1066,8 +1066,8 @@
     "multiply": "100000000",
     "name": "XDC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "xdc-usd",
     "proxyAddress": "0x237A94A589DD38DF7e50CeFDa0b8916a54d01ecC",
@@ -1077,23 +1077,23 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "XDC",
-    "baseAssetClic": "XDC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "XDC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "XDC",
+      "baseAssetClic": "XDC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "XDC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x23e47A253776F1Fce32e5F2D5D342ca5D6Edd226",
     "contractType": "",
@@ -1107,8 +1107,8 @@
     "multiply": "100000000",
     "name": "OP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "op-usd",
     "proxyAddress": "0x3E3A6bD129A63564FE7abde85FA67c3950569060",
@@ -1118,22 +1118,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "OP",
-    "baseAssetClic": "OP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "OP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "OP",
+      "baseAssetClic": "OP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "OP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x253Fe73DfBa6d099d081b1caf0E2B33e02F79d9b",
     "contractType": "",
@@ -1147,8 +1147,8 @@
     "multiply": "100000000",
     "name": "NGN / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ngn-usd",
     "proxyAddress": "0xdfbb5Cbc88E382de007bfe6CE99C388176ED80aD",
@@ -1158,22 +1158,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "NGN",
-    "baseAssetClic": "NGN_FX",
-    "blockchainName": "Base",
-    "clicProductName": "NGN/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex_NGN",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "NGN",
+      "baseAssetClic": "NGN_FX",
+      "blockchainName": "Base",
+      "clicProductName": "NGN/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex_NGN",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x290B97eb30Af8Ed088659D6738e314069d71352b",
     "contractType": "",
@@ -1187,8 +1187,8 @@
     "multiply": "1000000000000000000",
     "name": "LINK / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "link-eth",
     "proxyAddress": "0xc5E65227fe3385B88468F9A01600017cDC9F3A12",
@@ -1198,22 +1198,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LINK",
-    "baseAssetClic": "LINK_CR",
-    "blockchainName": "Base",
-    "clicProductName": "LINK/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "baseAsset": "LINK",
+      "baseAssetClic": "LINK_CR",
+      "blockchainName": "Base",
+      "clicProductName": "LINK/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x29a0BF5D5e677d38f7AbBd4d292895a3574796C0",
     "contractType": "",
@@ -1227,8 +1227,8 @@
     "multiply": "100000000",
     "name": "USDe / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usde-usd",
     "proxyAddress": "0x790181e93e9F4Eedb5b864860C12e4d2CffFe73B",
@@ -1238,25 +1238,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDE",
-    "baseAssetClic": "USDE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDE",
+      "baseAssetClic": "USDE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "NONE",
     "compareOffchain": "",
     "contractAddress": "0x2Ed8E3264f82FF609bc07A1313e02aF9576d66e8",
@@ -1271,8 +1271,8 @@
     "multiply": "100000000",
     "name": "PHP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "php-usd",
     "proxyAddress": "0x0396000dc82bfAEe746A9Ac6dC69dAd3223Ca9c6",
@@ -1282,22 +1282,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "PHP",
-    "baseAssetClic": "PHP_FX",
-    "blockchainName": "Base",
-    "clicProductName": "PHP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex_PHP",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "PHP",
+      "baseAssetClic": "PHP_FX",
+      "blockchainName": "Base",
+      "clicProductName": "PHP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex_PHP",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x2a87b8BC32Abf977c713785E6389F6FaB9C5b555",
     "contractType": "",
@@ -1311,8 +1311,8 @@
     "multiply": "1000",
     "name": "Real Final Sales to Private Domestic Purchasers — Level",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "real-final-sales-to-private-domestic-purchasers-level",
     "proxyAddress": "0x65623109aA4561AD3cfF503542083548CeD7e085",
@@ -1323,16 +1323,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 3
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x3177D9723D68D900B3c74DaA6C484992142BF856",
     "contractType": "",
@@ -1346,8 +1346,8 @@
     "multiply": "100000000",
     "name": "USDS / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usds-usd",
     "proxyAddress": "0x2330aaE3bca5F05169d5f4597964D44522F62930",
@@ -1357,25 +1357,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDS",
-    "baseAssetClic": "USDS_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDS/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDS",
+      "baseAssetClic": "USDS_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDS/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x330eC3210511cC8f5A87A737A08905092e033AF3",
     "contractType": "",
@@ -1389,8 +1389,8 @@
     "multiply": "100000000",
     "name": "CBETH / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbeth-usd",
     "proxyAddress": "0xd7818272B9e248357d13057AAb0B417aF31E817d",
@@ -1400,25 +1400,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "CBETH",
-    "baseAssetClic": "CBETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CBETH/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "CBETH",
+      "baseAssetClic": "CBETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CBETH/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x334d43dA7dBb0a6b66A7282250Ff69dEC97B58B7",
     "contractType": "",
@@ -1432,8 +1432,8 @@
     "multiply": "100000000",
     "name": "WMTx / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wmtx-usd",
     "proxyAddress": "0x311681f6E0b34670Fb03e066cc08C6D09149a44c",
@@ -1443,22 +1443,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "WMTx",
-    "baseAssetClic": "WMTx_CR",
-    "blockchainName": "Base",
-    "clicProductName": "WMTx/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "WMTx",
+      "baseAssetClic": "WMTx_CR",
+      "blockchainName": "Base",
+      "clicProductName": "WMTx/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x33CDd3f7259327E0f124398A19c25Ac143776bC1",
     "contractType": "",
@@ -1472,8 +1472,8 @@
     "multiply": "1000000000000000000",
     "name": "inwstETH / wstETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "inwsteth-wsteth-exchange-rate",
     "proxyAddress": "0xb58c5C550Ba19c4CEeE071F8CeeB58f8770e6978",
@@ -1483,11 +1483,11 @@
     "feedCategory": "",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x36ef9EE769dCea734A14d0745AF7Af14969Aa5fD",
@@ -1502,8 +1502,8 @@
     "multiply": "100000000",
     "name": "SUI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sui-usd",
     "proxyAddress": "0x491a921c41d6a97C57426E0c0108a231cd6E5f60",
@@ -1513,21 +1513,21 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SUI",
-    "blockchainName": "Base",
-    "clicProductName": "SUI/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SUI",
+      "blockchainName": "Base",
+      "clicProductName": "SUI/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x3A6D121bF125Fc0909babC708E0Ca1fe4A02d2a4",
     "contractType": "",
@@ -1541,8 +1541,8 @@
     "multiply": "100000000",
     "name": "XAU / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "xau-usd",
     "proxyAddress": "0x5213eBB69743b85644dbB6E25cdF994aFBb8cF31",
@@ -1552,23 +1552,23 @@
     "feedCategory": "low",
     "feedType": "Commodities",
     "docs": {
-    "assetClass": "Commodity",
-    "assetSubClass": "Spot",
-    "baseAsset": "XAU",
-    "baseAssetClic": "XAU_CO",
-    "blockchainName": "Base",
-    "clicProductName": "XAU/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Precious_Metals",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Commodity",
+      "assetSubClass": "Spot",
+      "baseAsset": "XAU",
+      "baseAssetClic": "XAU_CO",
+      "blockchainName": "Base",
+      "clicProductName": "XAU/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Precious_Metals",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "finalto",
     "compareOffchain": "",
     "contractAddress": "0x3f9925c8c5123F7d7333B447A8909eBe0dF1B6bF",
@@ -1583,8 +1583,8 @@
     "multiply": "100000000",
     "name": "GBP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "gbp-usd",
     "proxyAddress": "0xCceA6576904C118037695eB71195a5425E69Fa15",
@@ -1594,22 +1594,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "GBP",
-    "baseAssetClic": "GBP_FX",
-    "blockchainName": "Base",
-    "clicProductName": "GBP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "GBP",
+      "baseAssetClic": "GBP_FX",
+      "blockchainName": "Base",
+      "clicProductName": "GBP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x41414C39811D9Dce7feDda7522199Fb3410EF95a",
     "contractType": "",
@@ -1623,8 +1623,8 @@
     "multiply": "1000000000000000000",
     "name": "yUSD / USD Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "yUSD-USD",
     "proxyAddress": "0xc1a849217F3BaB97F1a46b990e369D6705B4be96",
@@ -1634,23 +1634,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "yUSD",
-    "baseAssetClic": "yUSD_CR",
-    "blockchainName": "Base",
-    "clicProductName": "yUSD/USD-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "yUSD",
+      "baseAssetClic": "yUSD_CR",
+      "blockchainName": "Base",
+      "clicProductName": "yUSD/USD-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x41F3a42270f161Ad1b25Cdb06bAd6cFC123E5C99",
@@ -1665,8 +1665,8 @@
     "multiply": "100000000",
     "name": "MAG7.SSI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mag7.ssi-usd",
     "proxyAddress": "0x2B1de6AD89847C11aF2ede14edB013AA79E94aC9",
@@ -1676,22 +1676,22 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MAG7.SSI",
-    "baseAssetClic": "MAG7.SSI_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MAG7.SSI/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MAG7.SSI",
+      "baseAssetClic": "MAG7.SSI_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MAG7.SSI/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x43F92e6805196FA6cd7a19F3d769957f95Baa261",
     "contractType": "",
@@ -1705,8 +1705,8 @@
     "multiply": "100000000",
     "name": "ARKB Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "arkb-reserves",
     "proxyAddress": "0xB366E8Efb9661323ff477CedF70f55F897D6cFeA",
@@ -1717,21 +1717,21 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "ETF",
-    "assetSubClass": "US",
-    "baseAsset": "ARK_21Shares_BTC_ETF",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "21Shares",
-    "porAuditor": "Cross-chain / Bitcoin Network",
-    "porSource": "Custodian API",
-    "porType": "Cross-chain",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR"
+      "assetClass": "ETF",
+      "assetSubClass": "US",
+      "baseAsset": "ARK_21Shares_BTC_ETF",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "21Shares",
+      "porAuditor": "Cross-chain / Bitcoin Network",
+      "porSource": "Custodian API",
+      "porType": "Cross-chain",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x45867eb09bB39766eBCee7fF9dCDFb6f6CC6f8DA",
     "contractType": "",
@@ -1745,8 +1745,8 @@
     "multiply": "100000000",
     "name": "cbBTC Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbbtc-por",
     "proxyAddress": "0x0F8E057D1D7b282EF968D26E9cB432617dF52519",
@@ -1757,27 +1757,27 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "cbBTC",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "Coinbase ",
-    "marketHours": "Crypto",
-    "porAuditor": "Cross-chain",
-    "porSource": "Wallet Address Manager",
-    "porType": "Cross-chain",
-    "productSubType": "Cross-chain / Bitcoin Network",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR",
-    "reserveAsset": "BTC",
-    "reserveAssetClic": "BTC_CR",
-    "underlyingAsset": "BTC",
-    "underlyingAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "cbBTC",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "Coinbase ",
+      "marketHours": "Crypto",
+      "porAuditor": "Cross-chain",
+      "porSource": "Wallet Address Manager",
+      "porType": "Cross-chain",
+      "productSubType": "Cross-chain / Bitcoin Network",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR",
+      "reserveAsset": "BTC",
+      "reserveAssetClic": "BTC_CR",
+      "underlyingAsset": "BTC",
+      "underlyingAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x47c2FE5038bD59A3a80DA6026201F07b0eD76575",
     "contractType": "",
@@ -1791,8 +1791,8 @@
     "multiply": "100000000",
     "name": "USDM / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdm-usd",
     "proxyAddress": "0xF7742A6f36e9936CeA0E976bF6CD3930C1178775",
@@ -1802,26 +1802,26 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDM",
-    "baseAssetClic": "USDM_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDM/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDM",
+      "baseAssetClic": "USDM_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDM/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x484Cc23Fee336291E3C8803cF27e16B9BEe68744",
     "contractType": "",
@@ -1835,8 +1835,8 @@
     "multiply": "1000000000000000000",
     "name": "RETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "reth-eth",
     "proxyAddress": "0xf397bF97280B488cA19ee3093E81C0a77F02e9a5",
@@ -1846,25 +1846,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "RETH",
-    "baseAssetClic": "RETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "RETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "RETH",
+      "baseAssetClic": "RETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "RETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x4C83489A62d52eE68a800Dd09410f790A14A5d95",
     "contractType": "",
@@ -1878,8 +1878,8 @@
     "multiply": "1000000000000000000",
     "name": "wstETH-ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "weth-eth",
     "proxyAddress": "0xa669E5272E60f78299F4824495cE01a3923f4380",
@@ -1889,26 +1889,26 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "WSTETH",
-    "baseAssetClic": "WSTETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "WSTETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "WSTETH",
+      "baseAssetClic": "WSTETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "WSTETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x4D1d9223B5d6806815506b9Ba034dD35390Aad68",
     "contractType": "",
@@ -1922,8 +1922,8 @@
     "multiply": "1000000000000000000",
     "name": "weETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "weeth-eth",
     "proxyAddress": "0xFC1415403EbB0c693f9a7844b92aD2Ff24775C65",
@@ -1933,25 +1933,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "weETH",
-    "baseAssetClic": "weETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "weETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "weETH",
+      "baseAssetClic": "weETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "weETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x4a61dB12d0Cb4293d799ecdD82e5994B5746f850",
     "contractType": "",
@@ -1965,8 +1965,8 @@
     "multiply": "1000000000000000000",
     "name": "RSETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "rseth-eth",
     "proxyAddress": "0xd7221b10FBBC1e1ba95Fd0B4D031C15f7F365296",
@@ -1976,25 +1976,25 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "RSETH",
-    "blockchainName": "Base",
-    "clicProductName": "RSETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "RSETH",
+      "blockchainName": "Base",
+      "clicProductName": "RSETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x4b08a30c6208681eFF2980981057ce4C8bCB2310",
     "contractType": "",
@@ -2008,8 +2008,8 @@
     "multiply": "100000000",
     "name": "EUR / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "eur-usd",
     "proxyAddress": "0xc91D87E81faB8f93699ECf7Ee9B44D11e1D53F0F",
@@ -2019,22 +2019,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "EUR",
-    "baseAssetClic": "EUR_FX",
-    "blockchainName": "Base",
-    "clicProductName": "EUR/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "EUR",
+      "baseAssetClic": "EUR_FX",
+      "blockchainName": "Base",
+      "clicProductName": "EUR/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x4d07037b0cFeebb796e54D88F6304675FD30EB6d",
     "contractType": "",
@@ -2048,8 +2048,8 @@
     "multiply": "1000000000000000000",
     "name": "wstUSR / stUSR Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wstusr-stusr-exchange-rate",
     "proxyAddress": "0x0594c1a01375c1151c2ca78BE4870836EbFA9846",
@@ -2059,25 +2059,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "wstUSR",
-    "baseAssetClic": "wstUSR_CR",
-    "blockchainName": "Base",
-    "clicProductName": "wstUSR/stUSR-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "stUSR",
-    "quoteAssetClic": "stUSR_CR",
-    "underlyingAsset": "USR",
-    "underlyingAssetClic": "USR_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "wstUSR",
+      "baseAssetClic": "wstUSR_CR",
+      "blockchainName": "Base",
+      "clicProductName": "wstUSR/stUSR-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "stUSR",
+      "quoteAssetClic": "stUSR_CR",
+      "underlyingAsset": "USR",
+      "underlyingAssetClic": "USR_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x52A12E019826C53B1f7Fd3E6D9546c0935377B95",
     "contractType": "",
@@ -2091,8 +2091,8 @@
     "multiply": "100000000",
     "name": "cbBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbbtc-usd",
     "proxyAddress": "0x07DA0E54543a844a80ABE69c8A12F22B3aA59f9D",
@@ -2102,25 +2102,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "CBBTC",
-    "baseAssetClic": "CBBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CBBTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "BTC",
-    "underlyingAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "CBBTC",
+      "baseAssetClic": "CBBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CBBTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "BTC",
+      "underlyingAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x52baE0b6d130E1F10d48c1675AF852F28E653418",
     "contractType": "",
@@ -2134,8 +2134,8 @@
     "multiply": "1000",
     "name": "PCE Price Index — Level",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pce-price-index-level",
     "proxyAddress": "0x18A3fcA54FaC5B05837205bA4b823fc56191F793",
@@ -2145,16 +2145,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 3
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x52d743436F6bA414050bD8869C8bF6537C355A00",
     "contractType": "",
@@ -2168,8 +2168,8 @@
     "multiply": "100000000",
     "name": "dlcBTC Proof of Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "dlcbtc-por",
     "proxyAddress": "0x30A76F4E688Cf52f4A06D7AAd987A7037f3Ae6f7",
@@ -2179,23 +2179,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "dlcBTC",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "DLC.LINK",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "porAuditor": "Cross-chain",
-    "porSource": "Wallet Address Manager",
-    "porType": "Cross-chain",
-    "productSubType": "Cross-chain / Bitcoin Network",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR"
+      "assetClass": "Crypto",
+      "baseAsset": "dlcBTC",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "DLC.LINK",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "porAuditor": "Cross-chain",
+      "porSource": "Wallet Address Manager",
+      "porType": "Cross-chain",
+      "productSubType": "Cross-chain / Bitcoin Network",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x5387a1EA9361BD8A2AA1BE68E1e10bd566eECFa4",
@@ -2210,8 +2210,8 @@
     "multiply": "100000000",
     "name": "XRP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "xrp-usd",
     "proxyAddress": "0x9f0C1dD78C4CBdF5b9cf923a549A201EdC676D34",
@@ -2221,22 +2221,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "XRP",
-    "baseAssetClic": "XRP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "XRP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "XRP",
+      "baseAssetClic": "XRP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "XRP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x55012EF027ae9b4E2bb5a5f529E5a1184Bcc998D",
     "contractType": "",
@@ -2250,8 +2250,8 @@
     "multiply": "100000000",
     "name": "OGN / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ogn-usd",
     "proxyAddress": "0x91D7AEd72bF772A0DA30199B925aCB866ACD3D9e",
@@ -2261,22 +2261,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "OGN",
-    "baseAssetClic": "OGN_CR",
-    "blockchainName": "Base",
-    "clicProductName": "OGN/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "OGN",
+      "baseAssetClic": "OGN_CR",
+      "blockchainName": "Base",
+      "clicProductName": "OGN/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x5526525178A842eB07e54cAE0d30c967d74bd0b7",
     "contractType": "",
@@ -2290,8 +2290,8 @@
     "multiply": "1000000000000000000",
     "name": "rETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "reth-eth-exchange-rate",
     "proxyAddress": "0x1E6A29666288a310326B37d823Fe4Ea3937424D2",
@@ -2301,25 +2301,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "rETH",
-    "baseAssetClic": "rETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "rETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "rETH",
+      "baseAssetClic": "rETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "rETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x57d2d46Fc7ff2A7142d479F2f59e1E3F95447077",
     "contractType": "",
@@ -2333,8 +2333,8 @@
     "multiply": "100000000",
     "name": "ETH / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "eth-usd",
     "proxyAddress": "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
@@ -2344,25 +2344,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Crypto",
-    "baseAsset": "ETH",
-    "baseAssetClic": "ETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ETH/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Crypto",
+      "baseAsset": "ETH",
+      "baseAssetClic": "ETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ETH/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x59B13FabB34DD4BC398B896b5018c8714BEF7b6d",
     "contractType": "",
@@ -2376,8 +2376,8 @@
     "multiply": "100000000",
     "name": "IDR / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "idr-usd",
     "proxyAddress": "0x05A6cF213EcC5501A11a08EBefA4A8a60313ef97",
@@ -2387,23 +2387,23 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "IDR",
-    "baseAssetClic": "IDR_FX",
-    "blockchainName": "Base",
-    "clicProductName": "IDR/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Forex_IDR",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "IDR",
+      "baseAssetClic": "IDR_FX",
+      "blockchainName": "Base",
+      "clicProductName": "IDR/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Forex_IDR",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x59F798E5999c65702a417F9485863698ee1678a4",
     "contractType": "",
@@ -2417,8 +2417,8 @@
     "multiply": "100000000",
     "name": "TRY / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "try-usd",
     "proxyAddress": "0x29413773e7CD4Dfd6Ad89a50887877b88a6C592C",
@@ -2428,22 +2428,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "TRY",
-    "baseAssetClic": "TRY_FX",
-    "blockchainName": "Base",
-    "clicProductName": "TRY/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "TRY",
+      "baseAssetClic": "TRY_FX",
+      "blockchainName": "Base",
+      "clicProductName": "TRY/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x5d427E797C665Ad7413a4e0fF4ceB3E31959C4C5",
     "contractType": "",
@@ -2457,8 +2457,8 @@
     "multiply": "1000000000000000000",
     "name": "sfrxETH-frxETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sfrxETH-frxETH",
     "proxyAddress": "0x1Eba1d6941088c8FCE2CbcaC80754C77871aD093",
@@ -2468,25 +2468,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "sfrxETH",
-    "baseAssetClic": "sfrxETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "sfrxETH/frxETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "frxETH",
-    "quoteAssetClic": "frxETH_CR",
-    "underlyingAsset": "FRXETH",
-    "underlyingAssetClic": "FRXETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "sfrxETH",
+      "baseAssetClic": "sfrxETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "sfrxETH/frxETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "frxETH",
+      "quoteAssetClic": "frxETH_CR",
+      "underlyingAsset": "FRXETH",
+      "underlyingAssetClic": "FRXETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x606c6ecBD272E2174F6710b5974F23fE9899602e",
     "contractType": "",
@@ -2499,8 +2499,8 @@
     "multiply": "1",
     "name": "L2 Sequencer Uptime Status Feed",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "l2-sequencer-uptime-status-feed",
     "proxyAddress": "0xBCF85224fc0756B9Fa45aA7892530B47e10b6433",
@@ -2510,16 +2510,16 @@
     "feedCategory": "custom",
     "feedType": "",
     "docs": {
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "productSubType": "Health Check",
-    "productType": "Blockchain",
-    "productTypeCode": "Health"
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "productSubType": "Health Check",
+      "productType": "Blockchain",
+      "productTypeCode": "Health"
     },
     "decimals": 0
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x6135E62caFDCcFA9bAcA39b4C9Cbf8bb69908B5a",
     "contractType": "",
@@ -2533,8 +2533,8 @@
     "multiply": "100000000",
     "name": "AVAIL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "avail-usd",
     "proxyAddress": "0x947eD6A3664fCE27a365b720286c01074d3782E0",
@@ -2544,22 +2544,22 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AVAIL",
-    "baseAssetClic": "AVAIL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AVAIL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AVAIL",
+      "baseAssetClic": "AVAIL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AVAIL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x6228A44Cd0Ec29c3373C9742e4bBAF6f2E536B9A",
     "contractType": "",
@@ -2573,8 +2573,8 @@
     "multiply": "100000000",
     "name": "COMP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "comp-usd",
     "proxyAddress": "0x9DDa783DE64A9d1A60c49ca761EbE528C35BA428",
@@ -2584,24 +2584,24 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "COMP",
-    "baseAssetClic": "COMP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "COMP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "COMP",
+      "baseAssetClic": "COMP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "COMP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x62c9CB9Dd648d9ed28C4C243d062093571b934D7",
@@ -2616,8 +2616,8 @@
     "multiply": "100000000",
     "name": "LTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ltc-usd",
     "proxyAddress": "0x206a34e47093125fbf4C75b7c7E88b84c6A77a69",
@@ -2627,22 +2627,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LTC",
-    "baseAssetClic": "LTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "LTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "LTC",
+      "baseAssetClic": "LTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "LTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x638708d73A0Eea5dAef10155083399D24a2c92C7",
     "contractType": "",
@@ -2656,8 +2656,8 @@
     "multiply": "1000000000000000000",
     "name": "vyUSD-USD Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "vyusd-usd-exchange-rate",
     "proxyAddress": "0x99C098FA069B120dd81E56c0f2178093cc7a851f",
@@ -2667,23 +2667,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "vyUSD",
-    "baseAssetClic": "vyUSD_CR",
-    "blockchainName": "Base",
-    "clicProductName": "vyUSD/USD-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "vyUSD",
+      "baseAssetClic": "vyUSD_CR",
+      "blockchainName": "Base",
+      "clicProductName": "vyUSD/USD-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x63a3b4E2aeea2d1Cc883987AEc22E9Aa88323b3c",
     "contractType": "",
@@ -2697,8 +2697,8 @@
     "multiply": "100000000",
     "name": "sUSDe / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "susde-usd",
     "proxyAddress": "0x79cf4a31B29D69191f0b6E97916eB93FEB81E533",
@@ -2708,24 +2708,24 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SUSDE",
-    "baseAssetClic": "SUSDE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SUSDE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SUSDE",
+      "baseAssetClic": "SUSDE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SUSDE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "finalto",
     "compareOffchain": "",
     "contractAddress": "0x69c6dcBaeBAa2A82Ca02350ceD0694697D21A3f1",
@@ -2740,8 +2740,8 @@
     "multiply": "100000000",
     "name": "AUD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "aud-usd",
     "proxyAddress": "0x46e51B8cA41d709928EdA9Ae43e42193E6CDf229",
@@ -2751,22 +2751,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "AUD",
-    "baseAssetClic": "AUD_FX",
-    "blockchainName": "Base",
-    "clicProductName": "AUD/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "AUD",
+      "baseAssetClic": "AUD_FX",
+      "blockchainName": "Base",
+      "clicProductName": "AUD/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x6adE13EeacDd21e96FE2A6F4E2a5C6cf4FD30C00",
     "contractType": "",
@@ -2780,8 +2780,8 @@
     "multiply": "100000000",
     "name": "WIF / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wif-usd",
     "proxyAddress": "0x674940e1dBf7FD841b33156DA9A88afbD95AaFBa",
@@ -2791,21 +2791,21 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "WIF",
-    "blockchainName": "Base",
-    "clicProductName": "WIF/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "WIF",
+      "blockchainName": "Base",
+      "clicProductName": "WIF/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x6f22C6925b27bCf9713fAE2Ab6f4397549D684b8",
     "contractType": "",
@@ -2819,8 +2819,8 @@
     "multiply": "100000000",
     "name": "STG / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "stg-usd",
     "proxyAddress": "0x63Af8341b62E683B87bB540896bF283D96B4D385",
@@ -2830,22 +2830,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "STG",
-    "baseAssetClic": "STG_CR",
-    "blockchainName": "Base",
-    "clicProductName": "STG/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "STG",
+      "baseAssetClic": "STG_CR",
+      "blockchainName": "Base",
+      "clicProductName": "STG/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x6f9829A2278A5b017b6e997E2BafCDbCb8d6Bc04",
     "contractType": "",
@@ -2859,8 +2859,8 @@
     "multiply": "100000000",
     "name": "Total Market Cap USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mcap-usd",
     "proxyAddress": "0x962C0Df8Ca7f7C682B3872ccA31Ea9c8999ab23c",
@@ -2870,11 +2870,11 @@
     "feedCategory": "",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x721860ef887896c19003886349a785749845e38d",
@@ -2889,8 +2889,8 @@
     "multiply": "100000000",
     "name": "AAVE / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "aave-usd",
     "proxyAddress": "0x3d6774EF702A10b20FCa8Ed40FC022f7E4938e07",
@@ -2900,22 +2900,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AAVE",
-    "baseAssetClic": "AAVE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AAVE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AAVE",
+      "baseAssetClic": "AAVE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AAVE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x72FC7950A832396720736e7e08D6F74C84C6909a",
     "contractType": "",
@@ -2929,8 +2929,8 @@
     "multiply": "100000000",
     "name": "LINK / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "link-usd",
     "proxyAddress": "0x17CAb8FE31E32f08326e5E27412894e49B0f9D65",
@@ -2940,24 +2940,24 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LINK",
-    "baseAssetClic": "LINK_CR",
-    "blockchainName": "Base",
-    "clicProductName": "LINK/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "LINK",
+      "baseAssetClic": "LINK_CR",
+      "blockchainName": "Base",
+      "clicProductName": "LINK/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x72c2E05dC38b2AE47d8F87C9B99c264D9fD46A10",
     "contractType": "",
@@ -2971,8 +2971,8 @@
     "multiply": "1000000000000000000",
     "name": "xSolvBTC NAV",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "xsolvbtc-nav",
     "proxyAddress": "0x17738F7dacFc1De7d06f22cC52211EBf68744dBA",
@@ -2982,19 +2982,19 @@
     "feedCategory": "custom",
     "feedType": "",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "xSolvBTC",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "Solv",
-    "porAuditor": "Solv",
-    "porSource": "Asset Issuer",
-    "productType": "NAVLink",
-    "productTypeCode": "NAV"
+      "assetClass": "Crypto",
+      "baseAsset": "xSolvBTC",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "Solv",
+      "porAuditor": "Solv",
+      "porSource": "Asset Issuer",
+      "productType": "NAVLink",
+      "productTypeCode": "NAV"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x735326Bcc0479e3F23eD65DC83310d63eBA6250D",
     "contractType": "",
@@ -3008,8 +3008,8 @@
     "multiply": "100000000",
     "name": "SNX / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "snx-usd",
     "proxyAddress": "0xe3971Ed6F1A5903321479Ef3148B5950c0612075",
@@ -3019,22 +3019,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SNX",
-    "baseAssetClic": "SNX_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SNX/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SNX",
+      "baseAssetClic": "SNX_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SNX/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x74E60B98A3FCaBcDDC66C5727Ab4bCccbad10ce7",
     "contractType": "",
@@ -3048,8 +3048,8 @@
     "multiply": "100000000",
     "name": "VVV / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "vvv-usd",
     "proxyAddress": "0x8eC6a128a430f7A850165bcF18facc9520a9873F",
@@ -3059,22 +3059,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "VVV",
-    "baseAssetClic": "VVV_CR",
-    "blockchainName": "Base",
-    "clicProductName": "VVV/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "VVV",
+      "baseAssetClic": "VVV_CR",
+      "blockchainName": "Base",
+      "clicProductName": "VVV/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x74f70D08c92f1cd4Ed70B9aa3F8edC0bA5496a01",
     "contractType": "",
@@ -3088,8 +3088,8 @@
     "multiply": "100000000",
     "name": "POL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pol-usd",
     "proxyAddress": "0x5E988c11a4f92155C30D9fb69Ed75597f712B113",
@@ -3099,22 +3099,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "POL",
-    "baseAssetClic": "POL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "POL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "POL",
+      "baseAssetClic": "POL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "POL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x75d0797767dC2F767fE50660FD4C6FeC9a110463",
@@ -3129,8 +3129,8 @@
     "multiply": "100000000",
     "name": "AMP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "amp-usd",
     "proxyAddress": "0x1688e4B274a4CC9fD398EbA6Ae4dfb6528A9D2bc",
@@ -3140,22 +3140,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AMP",
-    "baseAssetClic": "AMP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AMP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AMP",
+      "baseAssetClic": "AMP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AMP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x79b0e87fF1C40D27a0F941296D70a91cD1553482",
     "contractType": "",
@@ -3169,8 +3169,8 @@
     "multiply": "1000000000000000000",
     "name": "STETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "steth-eth",
     "proxyAddress": "0xf586d0728a47229e747d824a939000Cf21dEF5A0",
@@ -3180,25 +3180,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "STETH",
-    "baseAssetClic": "STETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "STETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "STETH",
+      "baseAssetClic": "STETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "STETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x7F98C05C5ed1A07B39E78f7876BC343daa30233f",
     "contractType": "",
@@ -3212,8 +3212,8 @@
     "multiply": "1000000000000000000",
     "name": "ultraETHs / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ultraeths-eth-exchange-rate",
     "proxyAddress": "0xbb9786e37D54251477EbC1325b04ACdCA18C2254",
@@ -3223,23 +3223,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "ultraETHs",
-    "baseAssetClic": "ultraETHs_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ultraETHs/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "ultraETHs",
+      "baseAssetClic": "ultraETHs_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ultraETHs/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x801B6E7d186370EeE854F76481643c22c7d1da99",
     "contractType": "",
@@ -3253,8 +3253,8 @@
     "multiply": "1000000000000000000",
     "name": "sUSDe / USDe Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "susde-usde-exchange-rate",
     "proxyAddress": "0xdEd37FC1400B8022968441356f771639ad1B23aA",
@@ -3264,24 +3264,24 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SUSDE",
-    "baseAssetClic": "SUSDE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SUSDE/USDE-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USDE",
-    "quoteAssetClic": "USDE_CR",
-    "underlyingAsset": "USDE",
-    "underlyingAssetClic": "USDE_CR"
+      "assetClass": "Crypto",
+      "baseAsset": "SUSDE",
+      "baseAssetClic": "SUSDE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SUSDE/USDE-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USDE",
+      "quoteAssetClic": "USDE_CR",
+      "underlyingAsset": "USDE",
+      "underlyingAssetClic": "USDE_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x814d854de623bA3F846e97895ebC3b9aCfAAEBBc",
     "contractType": "",
@@ -3295,8 +3295,8 @@
     "multiply": "100000000",
     "name": "PEPE / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pepe-usd",
     "proxyAddress": "0xB48ac6409C0c3718b956089b0fFE295A10ACDdad",
@@ -3306,21 +3306,21 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "PEPE",
-    "blockchainName": "Base",
-    "clicProductName": "PEPE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "PEPE",
+      "blockchainName": "Base",
+      "clicProductName": "PEPE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x820E799eD8754e007E9901531b8Ac7D283d9a1A2",
     "contractType": "",
@@ -3334,8 +3334,8 @@
     "multiply": "100000000",
     "name": "CAD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cad-usd",
     "proxyAddress": "0xA840145F87572E82519d578b1F36340368a25D5d",
@@ -3345,22 +3345,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "CAD",
-    "baseAssetClic": "CAD_FX",
-    "blockchainName": "Base",
-    "clicProductName": "CAD/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "CAD",
+      "baseAssetClic": "CAD_FX",
+      "blockchainName": "Base",
+      "clicProductName": "CAD/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x834CE448A994CA9F4cfe2Bf0C6BB5Ab7F24B8920",
     "contractType": "",
@@ -3374,8 +3374,8 @@
     "multiply": "1000000000000000000",
     "name": "MEW / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mew-usd",
     "proxyAddress": "0x9FB8b5A4b3FE655564f0c76616ae79DE90Cc7382",
@@ -3385,24 +3385,24 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MEW",
-    "baseAssetClic": "MEW_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MEW/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MEW",
+      "baseAssetClic": "MEW_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MEW/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x84efF9466d371ccAB94728e8bdFcd9Bc095D7Ca6",
     "contractType": "",
@@ -3416,8 +3416,8 @@
     "multiply": "100000000",
     "name": "AVAX / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "avax-usd",
     "proxyAddress": "0xE70f2D34Fd04046aaEC26a198A35dD8F2dF5cd92",
@@ -3427,22 +3427,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AVAX",
-    "baseAssetClic": "AVAX_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AVAX/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AVAX",
+      "baseAssetClic": "AVAX_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AVAX/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x851a369f1c7e3F82a2AE8D75Ee94eaBfd9781805",
     "contractType": "",
@@ -3456,8 +3456,8 @@
     "multiply": "100000000",
     "name": "MATIC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "matic-usd",
     "proxyAddress": "0x12129aAC52D6B0f0125677D4E1435633E61fD25f",
@@ -3467,23 +3467,23 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MATIC",
-    "baseAssetClic": "MATIC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MATIC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MATIC",
+      "baseAssetClic": "MATIC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MATIC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x852aE0B1Af1aAeDB0fC4428B4B24420780976ca8",
     "contractType": "",
@@ -3497,8 +3497,8 @@
     "multiply": "100000000",
     "name": "BTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "btc-usd",
     "proxyAddress": "0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F",
@@ -3508,22 +3508,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "BTC",
-    "baseAssetClic": "BTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "BTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "BTC",
+      "baseAssetClic": "BTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "BTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x89406394615978c0FB4A969574edA675595553C4",
@@ -3538,8 +3538,8 @@
     "multiply": "1000000000000000000",
     "name": "HOME / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "home-usd",
     "proxyAddress": "0x121934C415937863d64ef93436169444633EE0d8",
@@ -3549,23 +3549,23 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "HOME",
-    "baseAssetClic": "HOME_CR",
-    "blockchainName": "Base",
-    "clicProductName": "HOME/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "HOME",
+      "baseAssetClic": "HOME_CR",
+      "blockchainName": "Base",
+      "clicProductName": "HOME/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x89B734B0f34c4697857C07CedB58afeb482F5596",
     "contractType": "",
@@ -3579,8 +3579,8 @@
     "multiply": "1000000000000000000",
     "name": "instETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "insteth-eth-exchange-rate",
     "proxyAddress": "0x9C6BF4884Ff0c7873652F7d5142FA3b9859a526D",
@@ -3590,25 +3590,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "INSTETH",
-    "baseAssetClic": "INSTETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "INSTETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "INSTETH",
+      "baseAssetClic": "INSTETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "INSTETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x8E6ec3E7d1E50db38D5690dF501530D5B2d0b58A",
     "contractType": "",
@@ -3622,8 +3622,8 @@
     "multiply": "100000000",
     "name": "CTX / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ctx-usd",
     "proxyAddress": "0x90F3676B40F6dc2C1E074985D0544Bb8e1815B00",
@@ -3633,22 +3633,22 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "CTX",
-    "baseAssetClic": "CTX_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CTX/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "CTX",
+      "baseAssetClic": "CTX_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CTX/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x8b535cC811c4E4c9CFf85b823479B1616CB5C7B5",
     "contractType": "",
@@ -3662,8 +3662,8 @@
     "multiply": "100000000",
     "name": "LBTC / BTC",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lbtc-btc",
     "proxyAddress": "0x1E6c22AAA11F507af12034A5Dc4126A6A25DC8d2",
@@ -3673,23 +3673,23 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "LBTC",
-    "baseAssetClic": "LBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "LBTC/BTC-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "LBTC",
+      "baseAssetClic": "LBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "LBTC/BTC-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x8edA55983EcbeB28ab02959AA9E7203e24bA8c19",
     "contractType": "",
@@ -3703,8 +3703,8 @@
     "multiply": "1000000000000000000",
     "name": "pufETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pufeth-eth",
     "proxyAddress": "0x9452Ca03474C6B704B4e102339B451D640f57f07",
@@ -3714,25 +3714,25 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "PUFETH",
-    "baseAssetClic": "PUFETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "PUFETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "PUFETH",
+      "baseAssetClic": "PUFETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "PUFETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x9120eFBD64713BB6Ebb5c8e560e8e56aFE712eD2",
     "contractType": "",
@@ -3746,8 +3746,8 @@
     "multiply": "100000000",
     "name": "USDX / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdx-usd",
     "proxyAddress": "0xC342785EE44b9F8a40a564200CDF14dFCefd36C3",
@@ -3757,11 +3757,11 @@
     "feedCategory": "",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x9189882B85D37f117dC125Fbcce7B61C653Fa30c",
     "contractType": "",
@@ -3775,8 +3775,8 @@
     "multiply": "100000000",
     "name": "GHO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "gho-usd",
     "proxyAddress": "0x42868EFcee13C0E71af89c04fF7d96f5bec479b0",
@@ -3786,25 +3786,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "GHO",
-    "baseAssetClic": "GHO_CR",
-    "blockchainName": "Base",
-    "clicProductName": "GHO/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "GHO",
-    "quoteAssetClic": "GHO_CR",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "GHO",
+      "baseAssetClic": "GHO_CR",
+      "blockchainName": "Base",
+      "clicProductName": "GHO/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "GHO",
+      "quoteAssetClic": "GHO_CR",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x91e936921Df850Cc8714527EBE6C45ECbD2CAd31",
@@ -3819,8 +3819,8 @@
     "multiply": "100000000",
     "name": "ADA / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ada-usd",
     "proxyAddress": "0x34cD971a092d5411bD69C10a5F0A7EEF72C69041",
@@ -3830,22 +3830,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "ADA",
-    "baseAssetClic": "ADA_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ADA/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "ADA",
+      "baseAssetClic": "ADA_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ADA/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x9465CF4b4032080434E397F42fB99A8446c35376",
     "contractType": "",
@@ -3859,8 +3859,8 @@
     "multiply": "100000000",
     "name": "USD+ / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usd+-usd",
     "proxyAddress": "0xd5Ec94430eF4170D819E0996BC53ed40d31638d8",
@@ -3870,26 +3870,26 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USD+",
-    "baseAssetClic": "USD+_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USD+/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USD+",
+      "baseAssetClic": "USD+_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USD+/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x97100bac08Ef1532401041b5F864B4De999ab6D4",
     "contractType": "",
@@ -3903,8 +3903,8 @@
     "multiply": "100000000",
     "name": "SHIB / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "shib-usd",
     "proxyAddress": "0xC8D5D660bb585b68fa0263EeD7B4224a5FC99669",
@@ -3914,22 +3914,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SHIB",
-    "baseAssetClic": "SHIB_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SHIB/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SHIB",
+      "baseAssetClic": "SHIB_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SHIB/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x98608b1AEEbFE5b3d05E14Ecd2C74AC613A3C0D7",
     "contractType": "",
@@ -3943,8 +3943,8 @@
     "multiply": "100000000",
     "name": "OUSDT / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ousdt-usd",
     "proxyAddress": "0x0E230b1077c663f8Fb5e68d84A8e3e33D97d7436",
@@ -3954,25 +3954,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "OUSDT",
-    "baseAssetClic": "OUSDT_CR",
-    "blockchainName": "Base",
-    "clicProductName": "OUSDT/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "OUSDT",
+      "baseAssetClic": "OUSDT_CR",
+      "blockchainName": "Base",
+      "clicProductName": "OUSDT/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x9FE139104eef5B113e93859F185aa3C6E04e102B",
     "contractType": "",
@@ -3986,8 +3986,8 @@
     "multiply": "100000000",
     "name": "MAVIA / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mavia-usd",
     "proxyAddress": "0x979447581b39caCA33EF0CA8208592393D16cc13",
@@ -3997,22 +3997,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MAVIA",
-    "baseAssetClic": "MAVIA_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MAVIA/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MAVIA",
+      "baseAssetClic": "MAVIA_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MAVIA/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x9eb524dA226328d8ff69440F0F4bAE7DC0BFf34C",
     "contractType": "",
@@ -4026,8 +4026,8 @@
     "multiply": "1000000000000000000",
     "name": "rswETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "rsweth-eth-exchange-rate",
     "proxyAddress": "0x97b770B0200CCe161907a9cbe0C6B177679f8F7C",
@@ -4037,25 +4037,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "RSWETH",
-    "baseAssetClic": "RSWETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "RSWETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "RSWETH",
+      "baseAssetClic": "RSWETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "RSWETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA1062b63D4097D2506650dCa3Ea442ce41BcEF8b",
     "contractType": "",
@@ -4069,8 +4069,8 @@
     "multiply": "100000000",
     "name": "VIRTUAL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "virtual-usd",
     "proxyAddress": "0xEaf310161c9eF7c813A14f8FEF6Fb271434019F7",
@@ -4080,22 +4080,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "VIRTUAL",
-    "baseAssetClic": "VIRTUAL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "VIRTUAL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "VIRTUAL",
+      "baseAssetClic": "VIRTUAL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "VIRTUAL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA31289604833866940BD063d54e31b312b223b24",
     "contractType": "",
@@ -4109,8 +4109,8 @@
     "multiply": "100000000",
     "name": "ZRO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "zro-usd",
     "proxyAddress": "0xdc31a4CCfCA039BeC6222e20BE7770E12581bfEB",
@@ -4120,21 +4120,21 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "ZRO",
-    "blockchainName": "Base",
-    "clicProductName": "ZRO/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "ZRO",
+      "blockchainName": "Base",
+      "clicProductName": "ZRO/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA54DF8Ba7212667152aBa0D21d7c3221d14126F9",
     "contractType": "",
@@ -4148,8 +4148,8 @@
     "multiply": "100000000",
     "name": "ZBU / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "zbu-usd",
     "proxyAddress": "0x19c6501ee6FF5Faf36346031A92C46AF128807d3",
@@ -4159,22 +4159,22 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "ZBU",
-    "baseAssetClic": "ZBU_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ZBU/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "ZBU",
+      "baseAssetClic": "ZBU_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ZBU/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA5925A27D3281198c0ae60a5eFcD6C44A5e47526",
     "contractType": "",
@@ -4188,8 +4188,8 @@
     "multiply": "1000000000000000000",
     "name": "WSTETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wsteth-eth",
     "proxyAddress": "0x43a5C292A453A3bF3606fa856197f09D7B74251a",
@@ -4199,25 +4199,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "WSTETH",
-    "baseAssetClic": "WSTETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "WSTETH/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "STETH",
-    "underlyingAssetClic": "STETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "WSTETH",
+      "baseAssetClic": "WSTETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "WSTETH/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "STETH",
+      "underlyingAssetClic": "STETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA59b0A11fC48250F980120a8489bf9E95e687185",
     "contractType": "",
@@ -4231,8 +4231,8 @@
     "multiply": "1000000000000000000",
     "name": "SUPEROETHB / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "superoethb-eth",
     "proxyAddress": "0x39C6E14CdE46D4FFD9F04Ff159e7ce8eC20E10B4",
@@ -4242,25 +4242,25 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "SUPEROETHB",
-    "baseAssetClic": "SUPEROETHB_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SUPEROETHB/ETH-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "SUPEROETHB",
+      "baseAssetClic": "SUPEROETHB_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SUPEROETHB/ETH-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xA9BDecf007120EBb013E223d2a4EEa4C8C35e7f1",
     "contractType": "",
@@ -4274,8 +4274,8 @@
     "multiply": "1000000000000000000",
     "name": "uniBTC / BTC Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "unibtc-btc-exchange-rate",
     "proxyAddress": "0xbC7c5023eE571e4D9C4890C90a16be05c1EEf410",
@@ -4285,23 +4285,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "uniBTC",
-    "baseAssetClic": "uniBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "uniBTC/BTC-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "uniBTC",
+      "baseAssetClic": "uniBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "uniBTC/BTC-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xAa1399A25AB0f9a5464f44963BA77626937D1523",
     "contractType": "",
@@ -4315,8 +4315,8 @@
     "multiply": "100000000",
     "name": "APT / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "apt-usd",
     "proxyAddress": "0x88a98431C25329AA422B21D147c1518b34dD36F4",
@@ -4326,22 +4326,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "APT",
-    "baseAssetClic": "APT_CR",
-    "blockchainName": "Base",
-    "clicProductName": "APT/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "APT",
+      "baseAssetClic": "APT_CR",
+      "blockchainName": "Base",
+      "clicProductName": "APT/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xB76EecECe7A7Cbf10a55Dc4284fb762577EE9e3D",
     "contractType": "",
@@ -4355,8 +4355,8 @@
     "multiply": "1000000000000000000",
     "name": "SolvBTC.BBN / SolvBTC Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "solvbtc.bbn-solvbtc-exchange-rate",
     "proxyAddress": "0x67283A47E470afbCcc4aC74ccC32401a81027691",
@@ -4366,23 +4366,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "SolvBTC.BBN",
-    "baseAssetClic": "SolvBTC.BBN_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SolvBTC.BBN/SolvBTC-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "SolvBTC",
-    "quoteAssetClic": "SolvBTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "SolvBTC.BBN",
+      "baseAssetClic": "SolvBTC.BBN_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SolvBTC.BBN/SolvBTC-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "SolvBTC",
+      "quoteAssetClic": "SolvBTC_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xB9b5C92b596F36eDfB5d510A45ABDC160c427DE6",
     "contractType": "",
@@ -4396,8 +4396,8 @@
     "multiply": "100000000",
     "name": "MLN / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mln-usd",
     "proxyAddress": "0x122b5334A8b55861dBc6729c294451471FbF318D",
@@ -4407,22 +4407,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MLN",
-    "baseAssetClic": "MLN_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MLN/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MLN",
+      "baseAssetClic": "MLN_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MLN/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xC18cC9B106A50D945024F0a25EfF16B6dC56D4B9",
     "contractType": "",
@@ -4436,8 +4436,8 @@
     "multiply": "100000000",
     "name": "AERO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "aero-usd",
     "proxyAddress": "0x4EC5970fC728C5f65ba413992CD5fF6FD70fcfF0",
@@ -4447,22 +4447,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "AERO",
-    "baseAssetClic": "AERO_CR",
-    "blockchainName": "Base",
-    "clicProductName": "AERO/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "AERO",
+      "baseAssetClic": "AERO_CR",
+      "blockchainName": "Base",
+      "clicProductName": "AERO/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xC2b36eEBE261eEEC502dFE761BA8cDB0E9bC057b",
     "contractType": "",
@@ -4476,8 +4476,8 @@
     "multiply": "1000000000000000000",
     "name": "CETH Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ceth-reserves",
     "proxyAddress": "0x0b68ac37a1668DAaab1882543368E076C38C40e9",
@@ -4488,22 +4488,22 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "ETF",
-    "assetSubClass": "US",
-    "baseAsset": "21Shares_Core_Ethereum_ETF",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "21Shares",
-    "porAuditor": "Cross-chain / Ethereum Network",
-    "porSource": "Custodian API",
-    "porType": "Cross-chain",
-    "productSubType": "Cross-chain / Ethereum Network",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR"
+      "assetClass": "ETF",
+      "assetSubClass": "US",
+      "baseAsset": "21Shares_Core_Ethereum_ETF",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "21Shares",
+      "porAuditor": "Cross-chain / Ethereum Network",
+      "porSource": "Custodian API",
+      "porType": "Cross-chain",
+      "productSubType": "Cross-chain / Ethereum Network",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "finalto",
     "compareOffchain": "",
     "contractAddress": "0xC83D70E2a016AA3C51f8047EfB2329d9c7Ed6ed7",
@@ -4518,8 +4518,8 @@
     "multiply": "100000000",
     "name": "CHF / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "chf-usd",
     "proxyAddress": "0x3A1d6444fb6a402470098E23DaD0B7E86E14252F",
@@ -4529,22 +4529,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "CHF",
-    "baseAssetClic": "CHF_FX",
-    "blockchainName": "Base",
-    "clicProductName": "CHF/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "CHF",
+      "baseAssetClic": "CHF_FX",
+      "blockchainName": "Base",
+      "clicProductName": "CHF/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xC87569d17C0640f9F921C91351C832833ad26Cef",
     "contractType": "",
@@ -4558,8 +4558,8 @@
     "multiply": "10",
     "name": "Real GDP — Percent Change (Annual Rate)",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "real-gdp-percentage",
     "proxyAddress": "0xe0eda54fC1362C0d7d0ff855E4fCEA79916Fe094",
@@ -4570,16 +4570,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 1
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xCa1a4BdF7f9f8F8F281E311028dEa7e472a7A194",
     "contractType": "",
@@ -4593,8 +4593,8 @@
     "multiply": "1000000000000000000",
     "name": "ynETHx / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ynethx-eth-exchange-rate",
     "proxyAddress": "0x4e7dB2f9a28348AB48a968dd4217D565D1F15Ba4",
@@ -4604,25 +4604,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "ynETHx",
-    "baseAssetClic": "ynETHx_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ynETHx/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ynETHx",
-    "quoteAssetClic": "ynETHx_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "ynETHx",
+      "baseAssetClic": "ynETHx_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ynETHx/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ynETHx",
+      "quoteAssetClic": "ynETHx_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xCb374B34B6b74a0b6d0d4Ef6B73E07F299387957",
     "contractType": "",
@@ -4636,8 +4636,8 @@
     "multiply": "1000",
     "name": "Real GDP — Level",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "real-gdp-level",
     "proxyAddress": "0x0df397aFE00085C138a99eFB39C498e08eB95aD1",
@@ -4648,16 +4648,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 3
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xCd867f3962c108ea2F90828a58f22D202dEAf913",
     "contractType": "",
@@ -4671,8 +4671,8 @@
     "multiply": "10",
     "name": "PCE Price Index — Percent Change (Annual Rate)",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pce-price-index-percentage",
     "proxyAddress": "0x2a18E2d46Cb067b69e0759dB39b16597fC42D962",
@@ -4683,16 +4683,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 1
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xD0407a6524C7d9075E0b040dCEf4696129B2C3B4",
     "contractType": "",
@@ -4706,8 +4706,8 @@
     "multiply": "1000000000000000000",
     "name": "LSETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lseth-eth",
     "proxyAddress": "0xeDC243c7E3c1A9dAf067C90641D2346d2694d2e5",
@@ -4717,11 +4717,11 @@
     "feedCategory": "high",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xD27766C20dF630a7D7e1e5885ae581FB0e61828A",
     "contractType": "",
@@ -4735,8 +4735,8 @@
     "multiply": "100000000",
     "name": "USDz / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdz-usd",
     "proxyAddress": "0xe25969e2Fa633a0C027fAB8F30Fc9C6A90D60B48",
@@ -4746,24 +4746,24 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDz",
-    "baseAssetClic": "USDz_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDz/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDz",
+      "baseAssetClic": "USDz_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDz/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xD41A2B9575eD27D38EC9B75B4d0DD9632a72e45b",
     "contractType": "",
@@ -4777,8 +4777,8 @@
     "multiply": "1000000000000000000",
     "name": "USDO Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdo-por",
     "proxyAddress": "0x5218Ebeb96bD2bAFe21F9b143f5672552629ba79",
@@ -4788,25 +4788,25 @@
     "feedCategory": "custom",
     "feedType": "",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDO",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "OpenEden",
-    "marketHours": "Crypto",
-    "porAuditor": "Cross-chain",
-    "porSource": "Wallet Address Manager",
-    "porType": "Cross-chain",
-    "productSubType": "Cross-chain",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR",
-    "reserveAsset": "U.S. Treasury Bills",
-    "underlyingAsset": "U.S. Treasury Bills"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDO",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "OpenEden",
+      "marketHours": "Crypto",
+      "porAuditor": "Cross-chain",
+      "porSource": "Wallet Address Manager",
+      "porType": "Cross-chain",
+      "productSubType": "Cross-chain",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR",
+      "reserveAsset": "U.S. Treasury Bills",
+      "underlyingAsset": "U.S. Treasury Bills"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xD8341Fd0F84d0E5755CD419969BbD3Bf73e6Ab43",
     "contractType": "",
@@ -4820,8 +4820,8 @@
     "multiply": "100000000",
     "name": "MORPHO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "morpho-usd",
     "proxyAddress": "0xe95e258bb6615d47515Fc849f8542dA651f12bF6",
@@ -4831,22 +4831,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MORPHO",
-    "baseAssetClic": "MORPHO_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MORPHO/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MORPHO",
+      "baseAssetClic": "MORPHO_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MORPHO/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xDC2D2fA8E7b824A2c16128446E288280dcB12844",
     "contractType": "",
@@ -4860,8 +4860,8 @@
     "multiply": "100000000",
     "name": "USDT / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdt-usd",
     "proxyAddress": "0xf19d560eB8d2ADf07BD6D13ed03e1D11215721F9",
@@ -4871,25 +4871,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDT",
-    "baseAssetClic": "USDT_CR",
-    "blockchainName": "Base",
-    "clicProductName": "USDT/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDT",
+      "baseAssetClic": "USDT_CR",
+      "blockchainName": "Base",
+      "clicProductName": "USDT/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xE186722b9d5C063625C49a4BF6Bb3d669F66A8b5",
     "contractType": "",
@@ -4903,8 +4903,8 @@
     "multiply": "100000000",
     "name": "WBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wbtc-usd",
     "proxyAddress": "0xCCADC697c55bbB68dc5bCdf8d3CBe83CdD4E071E",
@@ -4914,25 +4914,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Crypto",
-    "baseAsset": "WBTC",
-    "baseAssetClic": "WBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "WBTC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Crypto",
+      "baseAsset": "WBTC",
+      "baseAssetClic": "WBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "WBTC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xEA990BCCb5b4dA5023B6dc88480297405Fd222c3",
     "contractType": "",
@@ -4946,8 +4946,8 @@
     "multiply": "100000000",
     "name": "SOL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sol-usd",
     "proxyAddress": "0x975043adBb80fc32276CbF9Bbcfd4A601a12462D",
@@ -4957,22 +4957,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SOL",
-    "baseAssetClic": "SOL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "SOL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SOL",
+      "baseAssetClic": "SOL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "SOL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xEC1b27BAF5cc164DD8407562A0C13A7b5b931B36",
     "contractType": "",
@@ -4986,8 +4986,8 @@
     "multiply": "1000000000000000000",
     "name": "pufETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pufeth-eth-exchange-rate",
     "proxyAddress": "0x69a1d14a4e58e97EDE8337DE61eEB2e4a55886E0",
@@ -4997,25 +4997,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "PUFETH",
-    "baseAssetClic": "PUFETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "PUFETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "PUFETH",
+      "baseAssetClic": "PUFETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "PUFETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xEC509C1f0791504667972D5FF705AE4Bd2dB500F",
     "contractType": "",
@@ -5029,8 +5029,8 @@
     "multiply": "100000000",
     "name": "TRUMP / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "trump-usd",
     "proxyAddress": "0x7bAfa1Af54f17cC0775a1Cf813B9fF5dED2C51E5",
@@ -5040,22 +5040,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "TRUMP",
-    "baseAssetClic": "TRUMP_CR",
-    "blockchainName": "Base",
-    "clicProductName": "TRUMP/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "TRUMP",
+      "baseAssetClic": "TRUMP_CR",
+      "blockchainName": "Base",
+      "clicProductName": "TRUMP/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xF4f6843A8003417b04EAbDd7a1bAe2cAFCBF0aCC",
     "contractType": "",
@@ -5069,8 +5069,8 @@
     "multiply": "100000000",
     "name": "mooBIFI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "moobifi-usd",
     "proxyAddress": "0x721F1B4dc604AEA0661Aa9982AB624e5756B31f2",
@@ -5080,11 +5080,11 @@
     "feedCategory": "",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xFa7fafD062112455EBF576cFDf4005F5324b97E0",
     "contractType": "",
@@ -5098,8 +5098,8 @@
     "multiply": "100000000",
     "name": "DOGE / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "doge-usd",
     "proxyAddress": "0x8422f3d3CAFf15Ca682939310d6A5e619AE08e57",
@@ -5109,22 +5109,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "DOGE",
-    "baseAssetClic": "DOGE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "DOGE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "DOGE",
+      "baseAssetClic": "DOGE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "DOGE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xFf9D38D4a93EE585c0545635683d19ADC2Df6Ab7",
     "contractType": "",
@@ -5138,8 +5138,8 @@
     "multiply": "100000000",
     "name": "ANON / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "anon-usd",
     "proxyAddress": "0x674e028B95330E77F5cF89834254a6Bfa806f3a2",
@@ -5149,23 +5149,23 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "ANON",
-    "baseAssetClic": "ANON_CR",
-    "blockchainName": "Base",
-    "clicProductName": "ANON/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "ANON",
+      "baseAssetClic": "ANON_CR",
+      "blockchainName": "Base",
+      "clicProductName": "ANON/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xa1923f93B032BF2dFEDcdFD0dA93037D32C39F4D",
     "contractType": "",
@@ -5179,8 +5179,8 @@
     "multiply": "100000000",
     "name": "MELANIA / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "melania-usd",
     "proxyAddress": "0xFAf372CaBc765b63f6fabD436c845D965eDA1CA5",
@@ -5190,22 +5190,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MELANIA",
-    "baseAssetClic": "MELANIA_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MELANIA/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MELANIA",
+      "baseAssetClic": "MELANIA_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MELANIA/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xa24AAfb9d49d0cF43dcd8A5f2442a30391F494D2",
     "contractType": "",
@@ -5219,8 +5219,8 @@
     "multiply": "100000000",
     "name": "iBTC Proof of Reserves",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ibtc-por",
     "proxyAddress": "0x7FCED5198e43ec93Ef2179DFC70a8dcf494DcB80",
@@ -5231,22 +5231,22 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "iBTC",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "issuer": "iBTC",
-    "marketHours": "Crypto",
-    "porAuditor": "Cross-chain",
-    "porSource": "Wallet Address Manager",
-    "porType": "Cross-chain",
-    "productSubType": "Cross-chain / Bitcoin Network",
-    "productType": "Proof of Reserve",
-    "productTypeCode": "PoR"
+      "assetClass": "Crypto",
+      "baseAsset": "iBTC",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "issuer": "iBTC",
+      "marketHours": "Crypto",
+      "porAuditor": "Cross-chain",
+      "porSource": "Wallet Address Manager",
+      "porType": "Cross-chain",
+      "productSubType": "Cross-chain / Bitcoin Network",
+      "productType": "Proof of Reserve",
+      "productTypeCode": "PoR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xa47344071B503F4B3B34d768e7bAAB0631990825",
     "contractType": "",
@@ -5260,8 +5260,8 @@
     "multiply": "100000000",
     "name": "solvBTC / BTC",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "solvbtc-btc",
     "proxyAddress": "0xB4a1a7f260C9FF7fEd6A6fbb9fe5a9acFa725DBf",
@@ -5271,23 +5271,23 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "solvBTC",
-    "baseAssetClic": "solvBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "solvBTC/BTC-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "solvBTC",
+      "baseAssetClic": "solvBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "solvBTC/BTC-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xaE4602716079C0Be7948c0b84553dEE0e6564a3d",
     "contractType": "",
@@ -5301,8 +5301,8 @@
     "multiply": "100000000",
     "name": "DEGEN / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "degen-usd",
     "proxyAddress": "0xE62BcE5D7CB9d16AB8b4D622538bc0A50A5799c2",
@@ -5312,24 +5312,24 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "DEGEN",
-    "baseAssetClic": "DEGEN_CR",
-    "blockchainName": "Base",
-    "clicProductName": "DEGEN/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "DEGEN",
+      "baseAssetClic": "DEGEN_CR",
+      "blockchainName": "Base",
+      "clicProductName": "DEGEN/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xb9b743D02D173e4529051eC9dda06a0C5cb4A2a4",
     "contractType": "",
@@ -5343,8 +5343,8 @@
     "multiply": "100000000",
     "name": "MXN / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mxn-usd",
     "proxyAddress": "0x9e8Ee77c76d4fa41306056D1C3196AF5da1600bd",
@@ -5354,22 +5354,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "MXN",
-    "baseAssetClic": "MXN_FX",
-    "blockchainName": "Base",
-    "clicProductName": "MXN/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "MXN",
+      "baseAssetClic": "MXN_FX",
+      "blockchainName": "Base",
+      "clicProductName": "MXN/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xbF477e69a0adF91b6e3d6e70cb67E5D1A27e88e3",
     "contractType": "",
@@ -5383,8 +5383,8 @@
     "multiply": "100000000",
     "name": "BNB / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "bnb-usd",
     "proxyAddress": "0x4b7836916781CAAfbb7Bd1E5FDd20ED544B453b1",
@@ -5394,22 +5394,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "BNB",
-    "baseAssetClic": "BNB_CR",
-    "blockchainName": "Base",
-    "clicProductName": "BNB/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "BNB",
+      "baseAssetClic": "BNB_CR",
+      "blockchainName": "Base",
+      "clicProductName": "BNB/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xc73B7635630A94a3E9a595741cbb8A3845C27826",
     "contractType": "",
@@ -5423,8 +5423,8 @@
     "multiply": "1000000000000000000",
     "name": "rsETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "rseth-eth-exchange-rate",
     "proxyAddress": "0x99DAf760d2CFB770cc17e883dF45454FE421616b",
@@ -5434,25 +5434,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "RSETH",
-    "baseAssetClic": "RSETH_CR",
-    "blockchainName": "Base",
-    "clicProductName": "RSETH/ETH-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "RSETH",
+      "baseAssetClic": "RSETH_CR",
+      "blockchainName": "Base",
+      "clicProductName": "RSETH/ETH-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xc934f510966De1940706eA6c73B054089d2525c7",
@@ -5467,8 +5467,8 @@
     "multiply": "100000000",
     "name": "CBDOGE / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cbdoge-usd",
     "proxyAddress": "0x95051De9Db5Cac61682f64505006f2991dEaB3c2",
@@ -5478,23 +5478,23 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "CBDOGE",
-    "baseAssetClic": "CBDOGE_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CBDOGE/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "hidden": true,
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "CBDOGE",
+      "baseAssetClic": "CBDOGE_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CBDOGE/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "hidden": true,
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xc95cd3490be4af06F0A25435e21C2c91B988C482",
     "contractType": "",
@@ -5508,8 +5508,8 @@
     "multiply": "100000000",
     "name": "EURC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "eurc-usd",
     "proxyAddress": "0xDAe398520e2B67cd3f27aeF9Cf14D93D927f8250",
@@ -5519,25 +5519,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "EURC",
-    "baseAssetClic": "EURC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "EURC/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "EURC",
+      "baseAssetClic": "EURC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "EURC/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xcAd16df709bFe62D02cde5d4039684fA47Dc216c",
     "contractType": "",
@@ -5551,8 +5551,8 @@
     "multiply": "100000000",
     "name": "WELL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "well-usd",
     "proxyAddress": "0xc15d9944dAefE2dB03e53bef8DDA25a56832C5fe",
@@ -5562,22 +5562,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "WELL",
-    "baseAssetClic": "WELL_CR",
-    "blockchainName": "Base",
-    "clicProductName": "WELL/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "WELL",
+      "baseAssetClic": "WELL_CR",
+      "blockchainName": "Base",
+      "clicProductName": "WELL/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xd7640cCAda34152220662780493E310DDA6e0d3D",
     "contractType": "",
@@ -5591,8 +5591,8 @@
     "multiply": "100000000",
     "name": "CUSDO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "cusdo-usd",
     "proxyAddress": "0xBbdA526258856c06f167399097e13D79E8f88ba8",
@@ -5602,25 +5602,25 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "CUSDO",
-    "baseAssetClic": "CUSDO_CR",
-    "blockchainName": "Base",
-    "clicProductName": "CUSDO/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "CUSDO",
+      "baseAssetClic": "CUSDO_CR",
+      "blockchainName": "Base",
+      "clicProductName": "CUSDO/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xdB793acA8bE40a123c34300Bb21b02F21F8ef501",
     "contractType": "",
@@ -5634,8 +5634,8 @@
     "multiply": "100000000",
     "name": "YFI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "yfi-usd",
     "proxyAddress": "0xD40e758b5eC80820B68DFC302fc5Ce1239083548",
@@ -5645,22 +5645,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "YFI",
-    "baseAssetClic": "YFI_CR",
-    "blockchainName": "Base",
-    "clicProductName": "YFI/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "YFI",
+      "baseAssetClic": "YFI_CR",
+      "blockchainName": "Base",
+      "clicProductName": "YFI/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xdD24Cd0F5243800a7b29Decd58736cbEa92AbBc0",
     "contractType": "",
@@ -5674,8 +5674,8 @@
     "multiply": "10",
     "name": "Real Final Sales to Private Domestic Purchasers — Percent Change (Annual Rate)",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "real-final-sales-to-private-domestic-purchasers-percentage",
     "proxyAddress": "0xe2b3688371130f333443428Cf03f27Ce0378F9dC",
@@ -5686,16 +5686,16 @@
     "feedCategory": "custom",
     "feedType": "Macroeconomics",
     "docs": {
-    "assetClass": "Macroeconomics",
-    "blockchainName": "Base",
-    "deliveryChannelCode": "DF",
-    "productSubType": "Reference",
-    "productType": "Macroeconomics",
-    "productTypeCode": "RefMacro"
+      "assetClass": "Macroeconomics",
+      "blockchainName": "Base",
+      "deliveryChannelCode": "DF",
+      "productSubType": "Reference",
+      "productType": "Macroeconomics",
+      "productTypeCode": "RefMacro"
     },
     "decimals": 1
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xe09bE26CF556F7211c16B75BE9fB4DB433A0d37E",
     "contractType": "",
@@ -5709,8 +5709,8 @@
     "multiply": "100000000",
     "name": "NZD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "nzd-usd",
     "proxyAddress": "0x06bdFe07E71C476157FC025d3cCD4BBe08e83EF9",
@@ -5720,22 +5720,22 @@
     "feedCategory": "low",
     "feedType": "Forex",
     "docs": {
-    "assetClass": "Fiat",
-    "baseAsset": "NZD",
-    "baseAssetClic": "NZD_FX",
-    "blockchainName": "Base",
-    "clicProductName": "NZD/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Forex",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Fiat",
+      "baseAsset": "NZD",
+      "baseAssetClic": "NZD_FX",
+      "blockchainName": "Base",
+      "clicProductName": "NZD/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Forex",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xeCA1EBFb5CA472C76328f5DdE011c6CcCF2a66F4",
     "contractType": "",
@@ -5749,8 +5749,8 @@
     "multiply": "1000000000000000000",
     "name": "MOG / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "mog-usd",
     "proxyAddress": "0x4aeb6D15769EaD32D0c5Be2940F40c7CFf53801d",
@@ -5760,24 +5760,24 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MOG",
-    "baseAssetClic": "MOG_CR",
-    "blockchainName": "Base",
-    "clicProductName": "MOG/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MOG",
+      "baseAssetClic": "MOG_CR",
+      "blockchainName": "Base",
+      "clicProductName": "MOG/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xf2d85ee7CD9e75f3FFFF4B44ADE48581d2dbDFDd",
     "contractType": "",
@@ -5791,8 +5791,8 @@
     "multiply": "100000000",
     "name": "swBTC / WBTC Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "swbtc-wbtc-exchange-rate",
     "proxyAddress": "0xBD867487712ADeC5A59b9Ae475Ee942f652B4C91",
@@ -5802,23 +5802,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "swBTC",
-    "baseAssetClic": "swBTC_CR",
-    "blockchainName": "Base",
-    "clicProductName": "swBTC/WBTC-ExRate-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "WBTC",
-    "quoteAssetClic": "WBTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "swBTC",
+      "baseAssetClic": "swBTC_CR",
+      "blockchainName": "Base",
+      "clicProductName": "swBTC/WBTC-ExRate-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "WBTC",
+      "quoteAssetClic": "WBTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xf3764B1fc0Ab831f75D3edd7435ABFE4Af675c9A",
     "contractType": "",
@@ -5832,8 +5832,8 @@
     "multiply": "100000000",
     "name": "RSR / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "rsr-usd",
     "proxyAddress": "0xAa98aE504658766Dfe11F31c5D95a0bdcABDe0b1",
@@ -5843,22 +5843,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "RSR",
-    "baseAssetClic": "RSR_CR",
-    "blockchainName": "Base",
-    "clicProductName": "RSR/USD-RefPrice-DF-Base-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "RSR",
+      "baseAssetClic": "RSR_CR",
+      "blockchainName": "Base",
+      "clicProductName": "RSR/USD-RefPrice-DF-Base-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xf45821111c1Ef3e116Ca108c0F06014216Ed39c4",
     "contractType": "",
@@ -5872,8 +5872,8 @@
     "multiply": "1000000000000000000",
     "name": "LsETH / ETH Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lseth-eth-exchange-rate",
     "proxyAddress": "0x2621897C993fdE08873Ef58dA1453aEE49a70144",
@@ -5883,8 +5883,8 @@
     "feedCategory": "",
     "feedType": "",
     "docs": {
-    "hidden": true
+      "hidden": true
     },
     "decimals": 18
-    }
-    ]
+  }
+]

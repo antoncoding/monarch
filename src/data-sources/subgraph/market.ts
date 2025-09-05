@@ -234,7 +234,6 @@ const transformSubgraphMarketToMarket = (
   // Use whitelisted oracle data (feeds) if available, otherwise default
   const oracleDataToUse = whitelistedOracleData ?? defaultOracleData;
 
-  
   const marketDetail = {
     id: marketId,
     uniqueKey: marketId,

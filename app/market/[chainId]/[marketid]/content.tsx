@@ -13,8 +13,8 @@ import { useAccount } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
-import { MarketOracleFeedInfo, OracleTypeInfo } from '@/components/MarketOracle';
 import Header from '@/components/layout/header/Header';
+import { MarketOracleFeedInfo, OracleTypeInfo } from '@/components/MarketOracle';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -179,7 +179,6 @@ function MarketContent() {
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
-
   return (
     <>
       <Header />
@@ -321,7 +320,7 @@ function MarketContent() {
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
               <span>Oracle Info</span>
-              
+
               <span className="text-sm text-gray-500">
                 <Link
                   href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
@@ -332,7 +331,6 @@ function MarketContent() {
                   <ExternalLinkIcon className="ml-1" />
                 </Link>
               </span>
-              
             </CardHeader>
             <CardBody>
               <div className="space-y-2">

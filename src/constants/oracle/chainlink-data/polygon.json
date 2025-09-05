@@ -1,5 +1,5 @@
 [
-    {
+  {
     "compareOffchain": "",
     "contractAddress": "0x2C7aA4B8509A45d5395EBC792C5F1f6A8e24b02e",
     "contractType": "",
@@ -13,8 +13,8 @@
     "multiply": "1000000000000000000",
     "name": "SFRXUSD-FRXUSD Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sfrxusd-frxusd-exchange-rate",
     "proxyAddress": "0xCf7824ed30bd7a3844F4a644aB996bE5380dEE76",
@@ -24,25 +24,25 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "SFRXUSD",
-    "baseAssetClic": "SFRXUSD_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "SFRXUSD/FRXUSD-ExRate-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "FRXUSD",
-    "quoteAssetClic": "FRXUSD_CR",
-    "underlyingAsset": "FRXUSD",
-    "underlyingAssetClic": "FRXUSD_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "SFRXUSD",
+      "baseAssetClic": "SFRXUSD_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "SFRXUSD/FRXUSD-ExRate-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "FRXUSD",
+      "quoteAssetClic": "FRXUSD_CR",
+      "underlyingAsset": "FRXUSD",
+      "underlyingAssetClic": "FRXUSD_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x2F584c39F33A28A5fd70388Ebd119c57c91F0A53",
@@ -57,8 +57,8 @@
     "multiply": "100000000",
     "name": "weETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "weeth-eth",
     "proxyAddress": "0x3Eae75C0a2f9b1038C7c9993C1Da36281E838811",
@@ -68,25 +68,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "weETH",
-    "baseAssetClic": "weETH_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "weETH/ETH-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "ETH",
-    "underlyingAssetClic": "ETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "weETH",
+      "baseAssetClic": "weETH_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "weETH/ETH-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "ETH",
+      "underlyingAssetClic": "ETH_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x315D8643084C6b8C10d78DD7E62B576A4CE35fB2",
@@ -101,8 +101,8 @@
     "multiply": "100000000",
     "name": "wstETH / ETH",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wsteth-eth",
     "proxyAddress": "0xCB568C33EA2B0B81852655d722E3a52d9D44e7De",
@@ -112,25 +112,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "WSTETH",
-    "baseAssetClic": "WSTETH_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "WSTETH/ETH-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "ETH",
-    "quoteAssetClic": "ETH_CR",
-    "underlyingAsset": "STETH",
-    "underlyingAssetClic": "STETH_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "WSTETH",
+      "baseAssetClic": "WSTETH_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "WSTETH/ETH-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "ETH",
+      "quoteAssetClic": "ETH_CR",
+      "underlyingAsset": "STETH",
+      "underlyingAssetClic": "STETH_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x345551718a054FA05Ba665261A189102AcfeCB7B",
@@ -145,8 +145,8 @@
     "multiply": "100000000",
     "name": "SFRXUSD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sfrxusd-usd",
     "proxyAddress": "0xC68bBBf73F5d3F0D455f03509522cfA7A8cc2706",
@@ -156,22 +156,22 @@
     "feedCategory": "high",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "sfrxUSD",
-    "baseAssetClic": "sfrxUSD_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "sfrxUSD/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "sfrxUSD",
+      "baseAssetClic": "sfrxUSD_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "sfrxUSD/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x433c0516fAE1a55E750d701C9F9031b2359bc647",
@@ -186,8 +186,8 @@
     "multiply": "100000000",
     "name": "WBTC / BTC",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wbtc-btc",
     "proxyAddress": "0xAd2937e7D25c237856B03319265465C0291b1895",
@@ -197,25 +197,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "WBTC",
-    "baseAssetClic": "WBTC_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "WBTC/BTC-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR",
-    "underlyingAsset": "BTC",
-    "underlyingAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "WBTC",
+      "baseAssetClic": "WBTC_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "WBTC/BTC-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR",
+      "underlyingAsset": "BTC",
+      "underlyingAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x47522E7273344f1016a1e67e496DdB4F77D852C9",
@@ -230,8 +230,8 @@
     "multiply": "100000000",
     "name": "ETH / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "eth-usd",
     "proxyAddress": "0x7BdBDB772f4a073BadD676A567C6ED82049a8eEE",
@@ -241,22 +241,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "ETH",
-    "baseAssetClic": "ETH_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "ETH/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "ETH",
+      "baseAssetClic": "ETH_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "ETH/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x49bb123E42330baE0e2B40D7f0bACB77d24f9403",
@@ -271,8 +271,8 @@
     "multiply": "100000000",
     "name": "POL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "pol-usd",
     "proxyAddress": "0xF6630799b5387e0E9ACe92a5E82673021781B440",
@@ -282,22 +282,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "POL",
-    "baseAssetClic": "POL_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "POL/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "POL",
+      "baseAssetClic": "POL_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "POL/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x56Ac2b1b78225d47993e8866795A34Ad540a515C",
@@ -312,8 +312,8 @@
     "multiply": "100000000",
     "name": "BTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "btc-usd",
     "proxyAddress": "0x41DdB7F8F5e1b2bD28193B84C1C36Be698dEd162",
@@ -323,21 +323,21 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "BTC",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "BTC/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "BTC",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "BTC/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x681EDcE7cE1c3E01833AEa6678C95bb83c2a29EF",
@@ -352,8 +352,8 @@
     "multiply": "100000000",
     "name": "JITOSOL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "jitosol-usd",
     "proxyAddress": "0x36E03469335b7F2eF51aAeB914b76c038645679A",
@@ -363,22 +363,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "JITOSOL",
-    "baseAssetClic": "JITOSOL_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "JITOSOL/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "JITOSOL",
+      "baseAssetClic": "JITOSOL_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "JITOSOL/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x6e3dAB4DC369E337A8302A008cb15B7Cd1309956",
@@ -393,8 +393,8 @@
     "multiply": "100000000",
     "name": "USDT / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdt-usd",
     "proxyAddress": "0xF03E1566Fc6B0eBFA3dD3aA197759C4c6617ec78",
@@ -404,25 +404,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDT",
-    "baseAssetClic": "USDT_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "USDT/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDT",
+      "baseAssetClic": "USDT_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "USDT/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x70576Bf8FE28A1EB5A9349F8b4509370eA38C46e",
@@ -437,8 +437,8 @@
     "multiply": "100000000",
     "name": "LINK / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "link-usd",
     "proxyAddress": "0x06bD6464e94Bee9393Ae15B5Dd5eCDFAa4F299C1",
@@ -448,21 +448,21 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LINK",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "LINK/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "LINK",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "LINK/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x729bc72F6a6e37394d64d8c98f0637Ea92983921",
@@ -477,8 +477,8 @@
     "multiply": "100000000",
     "name": "YFI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "yfi-usd",
     "proxyAddress": "0xfcDcCF5C2BEAB72FDb910481beaE807F5453686B",
@@ -488,22 +488,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "YFI",
-    "baseAssetClic": "YFI_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "YFI/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "YFI",
+      "baseAssetClic": "YFI_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "YFI/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0x74237D00F3a8BfEDc8a1a6aD5E550a738e664d14",
@@ -518,8 +518,8 @@
     "multiply": "100000000",
     "name": "WBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "wbtc-usd",
     "proxyAddress": "0x0D03E26E0B5D09E24E5a45696D0FcA12E9648FBB",
@@ -529,25 +529,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "WBTC",
-    "baseAssetClic": "WBTC_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "WBTC/BTC-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR",
-    "underlyingAsset": "BTC",
-    "underlyingAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "WBTC",
+      "baseAssetClic": "WBTC_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "WBTC/BTC-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR",
+      "underlyingAsset": "BTC",
+      "underlyingAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0x766faDCc743BF3646A9f0db9cC7Be456E123F341",
@@ -562,8 +562,8 @@
     "multiply": "100000000",
     "name": "USDC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usdc-usd",
     "proxyAddress": "0xbe5CE90e16B9d9d988D64b0E1f6ed46EbAfb9606",
@@ -573,25 +573,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDC",
-    "baseAssetClic": "USDC_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "USDC/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDC",
+      "baseAssetClic": "USDC_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "USDC/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0x91616662d719dB85EFd931556cbFd453824448Ef",
     "contractType": "",
@@ -605,8 +605,8 @@
     "multiply": "1000000000000000000",
     "name": "yUSD / USD Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "yusd-usd-exchange-rate",
     "proxyAddress": "0xe61b585418B92917771c89D4d3957707cfFE6154",
@@ -616,23 +616,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "yUSD",
-    "baseAssetClic": "yUSD_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "yUSD/USD-ExRate-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "yUSD",
+      "baseAssetClic": "yUSD_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "yUSD/USD-ExRate-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xA3E7CF38E05F6eD4E9C96A477263c984E2e30326",
@@ -647,8 +647,8 @@
     "multiply": "100000000",
     "name": "LBTC / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lbtc-usd",
     "proxyAddress": "0x5C2c6A77310C7750fCc5c3f13a3f9C3b18a68d3e",
@@ -658,22 +658,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "LBTC",
-    "baseAssetClic": "LBTC_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "LBTC/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "LBTC",
+      "baseAssetClic": "LBTC_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "LBTC/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xC7c94c13fe86f3B9DEAcaab7fE62d107112c0408",
@@ -688,8 +688,8 @@
     "multiply": "100000000",
     "name": "USDS / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "usds-usd",
     "proxyAddress": "0x44cdCd6F81cEe5BAC68B21845Fc82846ee09A369",
@@ -699,25 +699,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "USDS",
-    "baseAssetClic": "USDS_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "USDS/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "USDS",
+      "baseAssetClic": "USDS_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "USDS/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xE18707ea3D3b430b757aa9190b26a9fC39Dd9500",
@@ -732,8 +732,8 @@
     "multiply": "1000000000000000000",
     "name": "JitoSOL / SOL",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "jitosol-sol",
     "proxyAddress": "0x1C0a310cf42F357087Be122e69ee402D19A265dC",
@@ -743,25 +743,25 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "JITOSOL",
-    "baseAssetClic": "JITOSOL_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "JITOSOL/ETH-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "SOL",
-    "quoteAssetClic": "SOL_CR",
-    "underlyingAsset": "SOL",
-    "underlyingAssetClic": "SOL_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "JITOSOL",
+      "baseAssetClic": "JITOSOL_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "JITOSOL/ETH-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "SOL",
+      "quoteAssetClic": "SOL_CR",
+      "underlyingAsset": "SOL",
+      "underlyingAssetClic": "SOL_CR"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xEc9eDC8321c9aB7880aDA1084f54C846a17aD748",
@@ -776,8 +776,8 @@
     "multiply": "100000000",
     "name": "LBTC / BTC",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "lbtc-btc",
     "proxyAddress": "0x6830BfE63F8804B4972D92826b9088d2fb6AFe5b",
@@ -787,23 +787,23 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "LBTC",
-    "baseAssetClic": "LBTC_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "LBTC/BTC-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "BTC",
-    "quoteAssetClic": "BTC_CR"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "LBTC",
+      "baseAssetClic": "LBTC_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "LBTC/BTC-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "BTC",
+      "quoteAssetClic": "BTC_CR"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0xba984fb6452fEB34132B905BD2E20bfb49cF0020",
@@ -818,8 +818,8 @@
     "multiply": "100000000",
     "name": "MORPHO / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "morpho-usd",
     "proxyAddress": "0xdFd824A5Dcad8667142d58FE4aF115d5d052f26c",
@@ -829,22 +829,22 @@
     "feedCategory": "medium",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "MORPHO",
-    "baseAssetClic": "MORPHO_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "MORPHO/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "MORPHO",
+      "baseAssetClic": "MORPHO_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "MORPHO/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0xc714e4493525F4E0996E8dfc3E8F16De74e5201E",
@@ -859,8 +859,8 @@
     "multiply": "100000000",
     "name": "SUSHI / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sushi-usd",
     "proxyAddress": "0xA30C356781E5e1b455b274cdDe524FB7BF3809da",
@@ -870,22 +870,22 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SUSHI",
-    "baseAssetClic": "SUSHI_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "SUSHI/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SUSHI",
+      "baseAssetClic": "SUSHI_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "SUSHI/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "compareOffchain": "",
     "contractAddress": "0xc943c5F7455379Dea16634949B2E2458C6a3bce8",
     "contractType": "",
@@ -899,8 +899,8 @@
     "multiply": "1000000000000000000",
     "name": "vyUSD-USD-Exchange Rate",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "vyusd-usd-exchange-rate",
     "proxyAddress": "0xA3c605120295cdf90064A25A7689dB15Ca80Ee12",
@@ -910,23 +910,23 @@
     "feedCategory": "custom",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Pegged Asset",
-    "baseAsset": "vyUSD",
-    "baseAssetClic": "vyUSD_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "vyUSD/USD-ExRate-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Exchange Rate",
-    "productType": "Price",
-    "productTypeCode": "ExRate",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Pegged Asset",
+      "baseAsset": "vyUSD",
+      "baseAssetClic": "vyUSD_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "vyUSD/USD-ExRate-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Exchange Rate",
+      "productType": "Price",
+      "productTypeCode": "ExRate",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 18
-    },
-    {
+  },
+  {
     "benchmark": "dex-state",
     "compareOffchain": "",
     "contractAddress": "0xe6Cd972DbD5Fd921Bb1FdBf4829F0CEB16aDC4d2",
@@ -941,8 +941,8 @@
     "multiply": "100000000",
     "name": "AUSD / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "ausd-usd",
     "proxyAddress": "0x3A49D4e23868222785f148BA2bd0bAEc80d36a2A",
@@ -952,25 +952,25 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "assetSubClass": "Stablecoin",
-    "baseAsset": "AUSD",
-    "baseAssetClic": "AUSD_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "AUSD/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX",
-    "underlyingAsset": "USD",
-    "underlyingAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "assetSubClass": "Stablecoin",
+      "baseAsset": "AUSD",
+      "baseAssetClic": "AUSD_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "AUSD/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX",
+      "underlyingAsset": "USD",
+      "underlyingAssetClic": "USD_FX"
     },
     "decimals": 8
-    },
-    {
+  },
+  {
     "benchmark": "cex-lwba",
     "compareOffchain": "",
     "contractAddress": "0xf70c1677D31a2593bB8beEdf3BE0BC5FD5492Da6",
@@ -985,8 +985,8 @@
     "multiply": "100000000",
     "name": "SOL / USD",
     "pair": [
-    "",
-    ""
+      "",
+      ""
     ],
     "path": "sol-usd",
     "proxyAddress": "0x709c4dc298322916eaE59bfdc2e3d750B55C864B",
@@ -996,19 +996,19 @@
     "feedCategory": "low",
     "feedType": "Crypto",
     "docs": {
-    "assetClass": "Crypto",
-    "baseAsset": "SOL",
-    "baseAssetClic": "SOL_CR",
-    "blockchainName": "Polygon-Katana",
-    "clicProductName": "SOL/USD-RefPrice-DF-Polygon-Katana-001",
-    "deliveryChannelCode": "DF",
-    "marketHours": "Crypto",
-    "productSubType": "Reference",
-    "productType": "Price",
-    "productTypeCode": "RefPrice",
-    "quoteAsset": "USD",
-    "quoteAssetClic": "USD_FX"
+      "assetClass": "Crypto",
+      "baseAsset": "SOL",
+      "baseAssetClic": "SOL_CR",
+      "blockchainName": "Polygon-Katana",
+      "clicProductName": "SOL/USD-RefPrice-DF-Polygon-Katana-001",
+      "deliveryChannelCode": "DF",
+      "marketHours": "Crypto",
+      "productSubType": "Reference",
+      "productType": "Price",
+      "productTypeCode": "RefPrice",
+      "quoteAsset": "USD",
+      "quoteAssetClic": "USD_FX"
     },
     "decimals": 8
-    }
-    ]
+  }
+]

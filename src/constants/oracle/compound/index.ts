@@ -1,9 +1,9 @@
 export type CompoundFeedEntry = {
-  address: string
-  base: string
-  quote: string
-  underlyingChainlinkFeed: string
-}
+  address: string;
+  base: string;
+  quote: string;
+  underlyingChainlinkFeed: string;
+};
 
 const compoundFeeds: CompoundFeedEntry[] = [
   {
@@ -12,12 +12,12 @@ const compoundFeeds: CompoundFeedEntry[] = [
     quote: 'ETH',
     underlyingChainlinkFeed: '0x86392dC19c0b719886221c78AB11eb8Cf5c52812',
   },
-]
+];
 
 export function isCompoundFeed(address: string): boolean {
-  return compoundFeeds.some(feed => feed.address.toLowerCase() === address.toLowerCase())
+  return compoundFeeds.some((feed) => feed.address.toLowerCase() === address.toLowerCase());
 }
 
 export function getCompoundFeed(address: string): CompoundFeedEntry | undefined {
-  return compoundFeeds.find(feed => feed.address.toLowerCase() === address.toLowerCase())
+  return compoundFeeds.find((feed) => feed.address.toLowerCase() === address.toLowerCase());
 }

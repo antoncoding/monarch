@@ -104,13 +104,9 @@ Use the nextui tooltip with <TooltipContent> component for consistent styling. A
 <Tooltip
   classNames={{
     base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-    content: 'p-0 m-0 bg-transparent shadow-sm border-none'
+    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
   }}
-  content={<TooltipContent
-    icon={<GrStatusGood />}
-    title="Tooltip Title"
-    detail="Tooltip Detail"
-  />}
+  content={<TooltipContent icon={<GrStatusGood />} title="Tooltip Title" detail="Tooltip Detail" />}
 >
   {/* Your trigger element */}
 </Tooltip>

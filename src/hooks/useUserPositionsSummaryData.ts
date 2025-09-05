@@ -133,7 +133,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
           user as Address,
           chainId,
           blockNumbers,
-          customRpcUrl
+          customRpcUrl,
         );
 
         console.log('✅ [EARNINGS] Completed for market:', position.market.uniqueKey);

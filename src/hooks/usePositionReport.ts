@@ -107,7 +107,10 @@ export const usePositionReport = (
     const marketReports = (
       await Promise.all(
         relevantPositions.map(async (position) => {
-          const publicClient = getClient(position.market.morphoBlue.chain.id, customRpcUrls[position.market.morphoBlue.chain.id as SupportedNetworks] ?? undefined);
+          const publicClient = getClient(
+            position.market.morphoBlue.chain.id,
+            customRpcUrls[position.market.morphoBlue.chain.id as SupportedNetworks] ?? undefined,
+          );
           const startSnapshot = await fetchPositionSnapshot(
             position.market.uniqueKey,
             account,

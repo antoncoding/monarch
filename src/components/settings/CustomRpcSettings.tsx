@@ -283,7 +283,7 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                       placeholder="Enter custom RPC URL (leave empty to use default)"
                       value={inputValue}
                       onChange={(e) => handleInputChange(e.target.value)}
-                      className={`bg-hovered h-10 w-full rounded p-2 pr-16 focus:border-primary focus:outline-none text-sm truncate ${
+                      className={`bg-hovered h-10 w-full truncate rounded p-2 pr-16 text-sm focus:border-primary focus:outline-none ${
                         error ? 'border border-red-500 focus:border-red-500' : ''
                       }`}
                     />
@@ -292,7 +292,7 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                       size="sm"
                       onPress={() => void handleSave()}
                       isDisabled={isValidating}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 transform min-w-[60px] flex items-center justify-center"
+                      className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
                     >
                       {isValidating ? (
                         <Spinner size={14} width={2} color="text-white" />

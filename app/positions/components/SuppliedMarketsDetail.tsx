@@ -54,7 +54,7 @@ function MarketRow({
   setSelectedPosition: (position: MarketPosition) => void;
 }) {
   const warningsWithDetail = useMarketWarnings(position.market, true);
-  
+
   const getWarningColor = (warnings: WarningWithDetail[]) => {
     if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
     if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
@@ -64,8 +64,7 @@ function MarketRow({
   const suppliedAmount = Number(
     formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
   );
-  const percentageOfPortfolio =
-    totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
+  const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
   const warningColor = getWarningColor(warningsWithDetail);
 
   return (
@@ -136,9 +135,7 @@ function MarketRow({
               style={{ width: `${percentageOfPortfolio}%` }}
             />
           </div>
-          <span className="whitespace-nowrap">
-            {formatReadable(percentageOfPortfolio)}%
-          </span>
+          <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
       </td>
       <td data-label="Actions" className="justify-center px-4 py-3">

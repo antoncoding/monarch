@@ -257,7 +257,7 @@ export async function calculateEarningsFromPeriod(
   const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
   const now = Math.floor(Date.now() / 1000);
 
-  const client = getClient(chainId, customRpcUrl)
+  const client = getClient(chainId, customRpcUrl);
 
   const snapshots = await Promise.all([
     fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client),

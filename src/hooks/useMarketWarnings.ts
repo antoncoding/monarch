@@ -12,7 +12,14 @@ export const useMarketWarnings = (
 ): WarningWithDetail[] => {
   return useMemo(() => {
     return getMarketWarningsWithDetail(market, considerWhitelist);
-  }, [market.warnings, market.uniqueKey, market.oracle, market.oracleAddress, market.morphoBlue?.chain?.id, considerWhitelist]);
+  }, [
+    market.warnings,
+    market.uniqueKey,
+    market.oracle,
+    market.oracleAddress,
+    market.morphoBlue?.chain?.id,
+    considerWhitelist,
+  ]);
 };
 
 /**

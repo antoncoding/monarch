@@ -1,7 +1,7 @@
 import { MarketWarning, MorphoChainlinkOracleData } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
-import { WarningCategory, WarningWithDetail } from './types';
 import { getOracleType, OracleType } from './oracle';
+import { WarningCategory, WarningWithDetail } from './types';
 
 // Subgraph Warnings
 
@@ -116,49 +116,48 @@ const UNRECOGNIZED_ORACLE: WarningWithDetail = {
   level: 'alert',
   description: 'This market is using a custom oracle contract that is not recognized.',
   category: WarningCategory.oracle,
-}
+};
 
 const INCOMPATIBLE_ORACLE_FEEDS: WarningWithDetail = {
   code: 'incompatible_oracle_feeds',
   level: 'alert',
   description: 'The market is using oracle feeds which do not match with each other.',
   category: WarningCategory.oracle,
-}
+};
 
 const UNRECOGNIZED_FEEDS: WarningWithDetail = {
   code: 'unknown feeds',
   level: 'alert',
   description: 'This market oracle has feed(s) that are not part of our recognized feeds list.',
-  category: WarningCategory.oracle
-}
+  category: WarningCategory.oracle,
+};
 
-  // {
-  //   code: 'incorrect_loan_exchange_rate',
-  //   level: 'warning',
-  //   description: 'The market is using the exchange rate from a token different from the loan one.	',
-  //   category: WarningCategory.oracle,
-  // },
-  // {
-  //   code: 'incorrect_collateral_exchange_rate',
-  //   level: 'warning',
-  //   description:
-  //     'The market is using the exchange rate from a token different from the collateral one.',
-  //   category: WarningCategory.oracle,
-  // },
-  
+// {
+//   code: 'incorrect_loan_exchange_rate',
+//   level: 'warning',
+//   description: 'The market is using the exchange rate from a token different from the loan one.	',
+//   category: WarningCategory.oracle,
+// },
+// {
+//   code: 'incorrect_collateral_exchange_rate',
+//   level: 'warning',
+//   description:
+//     'The market is using the exchange rate from a token different from the collateral one.',
+//   category: WarningCategory.oracle,
+// },
 
 export const getMarketWarningsWithDetail = (
-  market: { 
-    warnings: MarketWarning[]; 
-    uniqueKey: string, 
-    oracle?: {data: MorphoChainlinkOracleData}, 
-    oracleAddress?: string, 
-    morphoBlue: {chain: {id:number}} 
+  market: {
+    warnings: MarketWarning[];
+    uniqueKey: string;
+    oracle?: { data: MorphoChainlinkOracleData };
+    oracleAddress?: string;
+    morphoBlue: { chain: { id: number } };
   },
   considerWhitelist = false,
 ) => {
   const result = [];
-  
+
   const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
 
   const whitelistedMarketData = considerWhitelist
@@ -190,9 +189,12 @@ export const getMarketWarningsWithDetail = (
   }
 
   // append our own oracle warnings
-  const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id)
-  if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE)
-
+  const oracleType = getOracleType(
+    market.oracle?.data,
+    market.oracleAddress,
+    market.morphoBlue.chain.id,
+  );
+  if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
   return result;
 };

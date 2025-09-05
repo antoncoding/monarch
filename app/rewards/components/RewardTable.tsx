@@ -141,7 +141,10 @@ export default function RewardTable({
                             height={20}
                           />
                         ) : (
-                          <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width: 20, height: 20 }} />
+                          <div
+                            className="rounded-full bg-gray-300 dark:bg-gray-700"
+                            style={{ width: 20, height: 20 }}
+                          />
                         )}
                       </div>
                     </TableCell>
