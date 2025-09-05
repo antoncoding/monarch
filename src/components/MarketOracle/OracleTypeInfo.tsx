@@ -9,7 +9,7 @@ type OracleTypeInfoProps = {
 }
 
 export function OracleTypeInfo({ oracleData, oracleAddress, chainId }: OracleTypeInfoProps) {
-  const oracleType = getOracleType(oracleData, oracleAddress, chainId)
+  const oracleType = getOracleType(oracleData)
   const typeDescription = getOracleTypeDescription(oracleType)
   
   return (

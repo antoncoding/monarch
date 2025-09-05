@@ -235,10 +235,8 @@ const transformSubgraphMarketToMarket = (
   // Use whitelisted oracle data (feeds) if available, otherwise default
   const oracleDataToUse = whitelistedOracleData ?? defaultOracleData;
 
-  // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
-  const warningsWithDetail = getMarketWarningsWithDetail({ warnings, uniqueKey: marketId });
-
-  const marketDetail: Market = {
+  
+  const marketDetail = {
     id: marketId,
     uniqueKey: marketId,
     lltv: lltv,
@@ -278,7 +276,7 @@ const transformSubgraphMarketToMarket = (
       },
     },
     warnings: warnings, // Assign the potentially filtered warnings
-    warningsWithDetail: warningsWithDetail,
+    // warningsWithDetail: warningsWithDetail,
     oracle: {
       data: oracleDataToUse, // Use the determined oracle data
     },
@@ -287,7 +285,14 @@ const transformSubgraphMarketToMarket = (
     isMonarchWhitelisted: false,
   };
 
-  return marketDetail;
+  // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
+  const warningsWithDetail = getMarketWarningsWithDetail(marketDetail);
+
+
+  return {
+    ...marketDetail,
+    warningsWithDetail: warningsWithDetail
+  };
 };
 
 // Fetcher for market details from Subgraph

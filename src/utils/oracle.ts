@@ -1,5 +1,7 @@
 import { getChainlinkOracle } from '@/constants/chainlink-data';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
+import { zeroAddress } from 'viem';
+import { isSupportedChain } from './networks';
 
 type VendorInfo = {
   vendors: PriceFeedVendors[];
@@ -37,13 +39,15 @@ export function getOracleTypeDescription(oracleType: OracleType): string {
   return 'Custom Oracle';
 }
 
-export function getOracleType(oracleData: MorphoChainlinkOracleData | null | undefined, oracleAddress: string, chainId: number) {
+export function getOracleType(oracleData: MorphoChainlinkOracleData | null | undefined, oracleAddress?: string, chainId?: number) {
   // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
-  if (oracleData?.baseFeedOne !== null || oracleData?.baseFeedTwo !== null || oracleData?.quoteFeedOne !== null || oracleData?.quoteFeedTwo !== null) return OracleType.Standard;
+  if (!oracleData) return OracleType.Custom
+  
+  if (oracleData.baseFeedOne !== null || oracleData.baseFeedTwo !== null || oracleData.quoteFeedOne !== null || oracleData.quoteFeedTwo !== null) return OracleType.Standard;
 
 
   // Other logics to determin oracle types
-  console.log("Skipping logic for oracleAddress", oracleAddress, "on chainId", chainId);
+  if (oracleAddress === zeroAddress || (chainId && isSupportedChain(chainId))) return OracleType.Custom
   return OracleType.Custom;
 }
 

@@ -9,7 +9,7 @@ import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positi
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
-import { Market } from '@/utils/types';
+import { Market, WarningWithDetail } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useCustomRpc } from './useCustomRpc';
@@ -29,7 +29,7 @@ type InitialDataResponse = {
 // Type for the final processed position data
 type EnhancedMarketPosition = {
   state: PositionSnapshot;
-  market: Market & { warningsWithDetail: ReturnType<typeof getMarketWarningsWithDetail> };
+  market: Market & { warningsWithDetail: WarningWithDetail[] };
 };
 
 // --- Query Keys (adjusted for two-step process) ---
