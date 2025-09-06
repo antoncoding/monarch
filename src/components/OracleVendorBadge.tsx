@@ -1,8 +1,8 @@
 import React from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
-import { IoWarningOutline } from 'react-icons/io5';
-import { OracleVendorIcons, PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
+import { IoWarningOutline, IoHelpCircleOutline } from 'react-icons/io5';
+import { OracleType, OracleVendorIcons, PriceFeedVendors, getOracleType, parsePriceFeedVendors } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
 
 type OracleVendorBadgeProps = {
@@ -16,8 +16,13 @@ const renderVendorIcon = (vendor: PriceFeedVendors) =>
   OracleVendorIcons[vendor] ? (
     <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
   ) : (
-    <IoWarningOutline className="text-secondary" size={16} />
+    <IoHelpCircleOutline className="text-secondary" size={18} />
   );
+
+/**
+ * IoWarningOutline: Unknown Oracles
+ * IoHelpCircleOutline: For unknown feeds
+ */
 
 function OracleVendorBadge({
   oracleData,
@@ -25,6 +30,10 @@ function OracleVendorBadge({
   showText = false,
   useTooltip = true,
 }: OracleVendorBadgeProps) {
+
+  // check whether it's standard oracle or not.
+  const isCustom = getOracleType(oracleData) === OracleType.Custom
+
   const { vendors, hasUnknown } = parsePriceFeedVendors(oracleData, chainId);
 
   const content = (
@@ -34,7 +43,7 @@ function OracleVendorBadge({
           {hasUnknown ? 'Unknown' : vendors.join(', ')}
         </span>
       )}
-      {hasUnknown ? (
+      {isCustom ? (
         <IoWarningOutline className="text-secondary" size={16} />
       ) : (
         vendors.map((vendor, index) => (
@@ -45,22 +54,46 @@ function OracleVendorBadge({
   );
 
   if (useTooltip) {
+    const getTooltipContent = () => {
+      if (isCustom) {
+        return (
+          <div className="m-2">
+            <p className="py-2 text-sm font-medium">Custom Oracle</p>
+            <p className="text-xs text-secondary">Uses an unrecognized oracle contract.</p>
+          </div>
+        );
+      }
+
+      if (hasUnknown) {
+        const knownVendors = vendors.filter(v => v !== PriceFeedVendors.Unknown);
+        const unknownCount = vendors.filter(v => v === PriceFeedVendors.Unknown).length;
+        
+        let description = '';
+        if (knownVendors.length > 0) {
+          description = `Uses feeds from ${knownVendors.join(', ')}, plus ${unknownCount} unknown feed${unknownCount > 1 ? 's' : ''}.`;
+        } else {
+          description = `Uses ${unknownCount} unknown feed${unknownCount > 1 ? 's' : ''} only.`;
+        }
+        
+        return (
+          <div className="m-2">
+            <p className="py-2 text-sm font-medium">Standard Oracle</p>
+            <p className="text-xs text-secondary">{description}</p>
+          </div>
+        );
+      }
+
+      return (
+        <div className="m-2">
+          <p className="py-2 text-sm font-medium">Standard Oracle</p>
+          <p className="text-xs text-secondary">Uses feeds from {vendors.join(', ')}.</p>
+        </div>
+      );
+    };
+
     return (
       <Tooltip
-        content={
-          <div className="m-2">
-            <p className="py-2 text-sm font-medium">
-              {hasUnknown ? 'Unknown Oracle' : 'Oracle Vendors:'}
-            </p>
-            <ul>
-              {vendors.map((vendor, index) => (
-                <li key={index} className="text-xs">
-                  {vendor}
-                </li>
-              ))}
-            </ul>
-          </div>
-        }
+        content={getTooltipContent()}
         className="rounded-sm"
       >
         {content}

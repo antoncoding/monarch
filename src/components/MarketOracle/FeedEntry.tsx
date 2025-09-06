@@ -32,6 +32,8 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
 
   if (!feedVendorResult) return null;
 
+  console.log('feedVendorResult', feedVendorResult)
+
   const { vendor, data, assetPair } = feedVendorResult;
   const { fromAsset, toAsset } = {
     fromAsset: getTruncatedAssetName(assetPair.fromAsset),

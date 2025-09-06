@@ -197,7 +197,7 @@ export const getMarketWarningsWithDetail = (
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
   // if any of the feeds are not null but also not recognized, return feed warning
-  if (market.oracle?.data) {
+  if (oracleType === OracleType.Standard && market.oracle?.data) {
     const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
     if (vendorInfo.hasUnknown) {
       result.push(UNRECOGNIZED_FEEDS);
