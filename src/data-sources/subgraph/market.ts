@@ -149,10 +149,8 @@ const transformSubgraphMarketToMarket = (
       chain: {
         id: network,
       },
-      description: null,
       id: zeroAddress,
       pair: null,
-      vendor: 'Unknown',
     },
     baseFeedTwo: null,
     quoteFeedOne: null,

@@ -238,11 +238,10 @@ export const getMarketWarningsWithDetail = (
       );
 
       if (feedsPathResult.hasUnknownFeed) {
-        
-         // only append this error if it's doesn't already have "UNRECOGNIZED_FEEDS" 
-         if (result.find(w => w === UNRECOGNIZED_FEEDS) === undefined) {
-            result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
-         }
+        // only append this error if it doesn't already have "UNRECOGNIZED_FEEDS"
+        if (result.find((w) => w === UNRECOGNIZED_FEEDS) === undefined) {
+          result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
+        }
       } else if (!feedsPathResult.isValid) {
         // Create a dynamic warning with the specific error message
         const incompatibleFeedsWarning: WarningWithDetail = {
