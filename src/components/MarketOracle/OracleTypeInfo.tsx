@@ -14,7 +14,7 @@ type OracleTypeInfoProps = {
 };
 
 export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, showCustom }: OracleTypeInfoProps) {
-  const oracleType = getOracleType(oracleData);
+  const oracleType = getOracleType(oracleData, oracleAddress, chainId);
   const typeDescription = getOracleTypeDescription(oracleType);
 
   return (
@@ -29,11 +29,11 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, s
               rel="noopener noreferrer"
               className="flex items-center text-sm font-medium no-underline hover:underline"
             >
-              {oracleType}
+              {typeDescription}
               <FiExternalLink className="ml-1 h-3 w-3" />
             </Link>)
           ): 
-          (<span className="text-sm font-medium">{oracleType}</span>)
+          (<span className="text-sm font-medium">{typeDescription}</span>)
           }
       </div>
 

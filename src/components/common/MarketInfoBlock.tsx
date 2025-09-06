@@ -34,7 +34,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
               {formatUnits(BigInt(market.lltv), 16)}% LTV
             </span>
           </div>
-          {amount && amount !== maxUint256 ? (
+          {amount !== undefined && amount !== maxUint256 ? (
             <span className="text-xs text-gray-500">
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
@@ -125,7 +125,7 @@ export function MarketInfoBlockCompact({
           </div>
         </div>
       </div>
-      {amount && amount !== maxUint256 ? (
+      {amount !== undefined && amount !== maxUint256 ? (
         <span className="text-xs text-gray-500">
           {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
         </span>

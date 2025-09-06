@@ -203,7 +203,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         }
 
         const publicClient = getClient(
-          marketInfo.chainId,
+          marketInfo.chainId as SupportedNetworks,
           customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined,
         );
         if (!publicClient) {

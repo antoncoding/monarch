@@ -225,7 +225,9 @@ function getFeedPath(
   if (!feed || !feed.address) return { base: 'EMPTY', quote: 'EMPTY' };
 
   const data = detectFeedVendor(feed.address, chainId);
-  return { base: data.assetPair.baseAsset, quote: data.assetPair.quoteAsset }
+  const base = data.assetPair.baseAsset || 'Unknown';
+  const quote = data.assetPair.quoteAsset || 'Unknown';
+  return { base, quote };
 }
 
 export function getOracleType(
