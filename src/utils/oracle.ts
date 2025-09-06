@@ -160,53 +160,164 @@ export function parsePriceFeedVendors(
   };
 }
 
+type CheckFeedsPathResult = {
+  isValid: boolean;
+  hasUnknownFeed?: boolean;
+  missingPath?: string;
+  expectedPath?: string;
+};
+
+/**
+ * Normalize asset symbols for comparison
+ * - Convert to lowercase
+ * - Map WETH to ETH for equivalency
+ */
+function normalizeSymbol(symbol: string): string {
+  const normalized = symbol.toLowerCase();
+  return normalized === 'weth' ? 'eth' : normalized;
+}
+
 export function checkFeedsPath(
   oracleData: MorphoChainlinkOracleData | null | undefined,
   chainId: number,
   collateralSymbol: string,
   loanSymbol: string,
-): boolean {
-  if (!oracleData) return false;
+): CheckFeedsPathResult {
+  if (!oracleData) {
+    return {
+      isValid: false,
+      missingPath: 'No oracle data provided',
+    };
+  }
 
   /**
-    Price = Base Feed 1 * Base Feed 2 / Quote Feed 1 * Quote Feed 2
-    */
+   * Price calculation: baseFeed1 * baseFeed2 / (quoteFeed1 * quoteFeed2)
+   * Each feed represents baseAsset/quoteAsset
+   * Final formula: (baseFeed1.base * baseFeed2.base * quoteFeed1.quote * quoteFeed2.quote) / 
+   *                (baseFeed1.quote * baseFeed2.quote * quoteFeed1.base * quoteFeed2.base)
+   */
 
-  const baseFee1Path = getFeedPath(oracleData.baseFeedOne, chainId);
-  const baseFee2Path = getFeedPath(oracleData.baseFeedTwo, chainId);
-  const quoteFee1Path = getFeedPath(oracleData.quoteFeedOne, chainId);
-  const quoteFee2Path = getFeedPath(oracleData.quoteFeedTwo, chainId);
-
-  const nominators = [
-    baseFee1Path.base,
-    baseFee2Path.base,
-    quoteFee1Path.quote,
-    quoteFee2Path.quote,
-  ];
-  const denominators = [
-    baseFee1Path.quote,
-    baseFee2Path.quote,
-    quoteFee1Path.base,
-    quoteFee2Path.base,
+  const feeds = [
+    { feed: oracleData.baseFeedOne, type: 'base1' as const },
+    { feed: oracleData.baseFeedTwo, type: 'base2' as const },
+    { feed: oracleData.quoteFeedOne, type: 'quote1' as const },
+    { feed: oracleData.quoteFeedTwo, type: 'quote2' as const },
   ];
 
-  // go through each nominator, and try to find thethe same denominator to cancel them out
-  let finalBase;
-  for (const nominator of nominators) {
-    for (const denominator of denominators) {
-      if (nominator === denominator) {
+  // Check for unknown or empty feeds
+  const feedPaths = feeds.map(({ feed, type }) => {
+    const path = getFeedPath(feed, chainId);
+    return { path, type, hasData: !!feed?.address };
+  });
+
+  // Check for unknown assets
+  const hasUnknownAssets = feedPaths.some(
+    ({ path }) => path.base === 'Unknown' || path.quote === 'Unknown'
+  );
+
+  if (hasUnknownAssets) {
+    return {
+      isValid: false,
+      hasUnknownFeed: true,
+    };
+  }
+
+  // Count asset occurrences in numerator and denominator
+  const numeratorCounts = new Map<string, number>();
+  const denominatorCounts = new Map<string, number>();
+
+  // Helper function to increment count with normalized symbols
+  const incrementCount = (map: Map<string, number>, asset: string) => {
+    if (asset !== 'EMPTY') {
+      const normalizedAsset = normalizeSymbol(asset);
+      map.set(normalizedAsset, (map.get(normalizedAsset) ?? 0) + 1);
+    }
+  };
+
+  feedPaths.forEach(({ path, type, hasData }) => {
+    if (!hasData) return;
+
+    if (type === 'base1' || type === 'base2') {
+      // For base feeds: base goes to numerator, quote goes to denominator
+      incrementCount(numeratorCounts, path.base);
+      incrementCount(denominatorCounts, path.quote);
+    } else {
+      // For quote feeds: base goes to denominator, quote goes to numerator  
+      incrementCount(denominatorCounts, path.base);
+      incrementCount(numeratorCounts, path.quote);
+    }
+  });
+
+  // Cancel out matching terms
+  const cancelOut = (num: Map<string, number>, den: Map<string, number>) => {
+    const assets = new Set([...num.keys(), ...den.keys()]);
+    
+    for (const asset of assets) {
+      const numCount = num.get(asset) ?? 0;
+      const denCount = den.get(asset) ?? 0;
+      const minCount = Math.min(numCount, denCount);
+      
+      if (minCount > 0) {
+        num.set(asset, numCount - minCount);
+        den.set(asset, denCount - minCount);
+        
+        // Remove zeros
+        if (num.get(asset) === 0) num.delete(asset);
+        if (den.get(asset) === 0) den.delete(asset);
       }
     }
-    // no matched denominator
+  };
+
+  cancelOut(numeratorCounts, denominatorCounts);
+
+  // Check if remaining terms match expected collateral/loan path
+  const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter(
+    asset => (numeratorCounts.get(asset) ?? 0) > 0
+  );
+  const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter(
+    asset => (denominatorCounts.get(asset) ?? 0) > 0
+  );
+
+  // Normalize the expected collateral and loan symbols for comparison
+  const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
+  const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
+  
+  const expectedPath = `${normalizedCollateralSymbol}/${normalizedLoanSymbol}`;
+
+  // Perfect match: exactly one asset in numerator (collateral) and one in denominator (loan)
+  const isValid = 
+    remainingNumeratorAssets.length === 1 &&
+    remainingDenominatorAssets.length === 1 &&
+    remainingNumeratorAssets[0] === normalizedCollateralSymbol &&
+    remainingDenominatorAssets[0] === normalizedLoanSymbol &&
+    (numeratorCounts.get(normalizedCollateralSymbol) ?? 0) === 1 &&
+    (denominatorCounts.get(normalizedLoanSymbol) ?? 0) === 1;
+
+  if (isValid) {
+    return { isValid: true };
   }
-  return false;
+
+  // Generate helpful error message
+  let missingPath = '';
+  if (remainingNumeratorAssets.length === 0 && remainingDenominatorAssets.length === 0) {
+    missingPath = 'All assets canceled out - no price path found';
+  } else {
+    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
+    missingPath = `Path mismatch: got ${actualPath}, expected ${expectedPath}`;
+  }
+
+  return {
+    isValid: false,
+    missingPath,
+    expectedPath,
+  };
 }
 
 /**
  *
  * @param feed
  * @param chainId
- * @returns { base: "ETH", qutoe: "USD" }
+ * @returns { base: "ETH", quote: "USD" }
  */
 function getFeedPath(
   feed: OracleFeed | null | undefined,

@@ -33,6 +33,7 @@ import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
+import { getTruncatedAssetName } from '@/utils/oracle';
 
 const NOW = Math.floor(Date.now() / 1000);
 const DAY_IN_SECONDS = 24 * 60 * 60;
@@ -284,7 +285,6 @@ function MarketContent() {
                       symbol={market.collateralAsset.symbol}
                       width={20}
                       height={20}
-                      truncated
                     />
                     <Link
                       href={getExplorerURL(
@@ -295,7 +295,7 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {market.collateralAsset.symbol} <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.collateralAsset.symbol)} <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>

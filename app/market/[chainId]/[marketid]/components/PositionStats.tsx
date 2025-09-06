@@ -8,6 +8,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { Market, MarketPosition } from '@/utils/types';
+import { getTruncatedAssetName } from '@/utils/oracle';
 
 type PositionStatsProps = {
   market: Market;
@@ -66,14 +67,13 @@ export function PositionStats({
                 symbol={market.loanAsset.symbol}
                 width={16}
                 height={16}
-                truncated
               />
               <span>
                 {formatBalance(
                   BigInt(userPosition.state.supplyAssets || 0),
                   market.loanAsset.decimals,
                 ).toString()}{' '}
-                {market.loanAsset.symbol}
+                {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
           </div>
@@ -86,14 +86,13 @@ export function PositionStats({
                 symbol={market.loanAsset.symbol}
                 width={16}
                 height={16}
-                truncated
               />
               <span>
                 {formatBalance(
                   BigInt(userPosition.state.borrowAssets || 0),
                   market.loanAsset.decimals,
                 ).toString()}{' '}
-                {market.loanAsset.symbol}
+                {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
           </div>

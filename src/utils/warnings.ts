@@ -1,6 +1,6 @@
 import { MarketWarning, MorphoChainlinkOracleData } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
-import { getOracleType, OracleType, parsePriceFeedVendors } from './oracle';
+import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
 import { WarningCategory, WarningWithDetail } from './types';
 
 // Subgraph Warnings
@@ -120,8 +120,15 @@ const UNRECOGNIZED_ORACLE: WarningWithDetail = {
 
 const INCOMPATIBLE_ORACLE_FEEDS: WarningWithDetail = {
   code: 'incompatible_oracle_feeds',
-  level: 'alert',
-  description: 'The market is using oracle feeds which do not match with each other.',
+  level: 'warning',
+  description: 'The oracle feeds cannot produce a valid price path for this market.',
+  category: WarningCategory.oracle,
+};
+
+const UNKNOWN_FEED_FOR_PAIR_MATCHING: WarningWithDetail = {
+  code: 'unknown_oracle_feeds',
+  level: 'warning',
+  description: 'The oracle contains feeds with unknown asset pairs.',
   category: WarningCategory.oracle,
 };
 
@@ -162,6 +169,8 @@ export const getMarketWarningsWithDetail = (
     oracle?: { data: MorphoChainlinkOracleData };
     oracleAddress?: string;
     morphoBlue: { chain: { id: number } };
+    loanAsset?: { symbol: string };
+    collateralAsset?: { symbol: string };
   },
   considerWhitelist = false,
 ) => {
@@ -217,6 +226,31 @@ export const getMarketWarningsWithDetail = (
     // Tagged but not core vendors get the milder warning
     if (vendorInfo.hasTaggedUnknown) {
       result.push(UNRECOGNIZED_FEEDS_TAGGED);
+    }
+
+    // Check if oracle feeds can produce a valid price path
+    if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
+      const feedsPathResult = checkFeedsPath(
+        market.oracle.data,
+        market.morphoBlue.chain.id,
+        market.collateralAsset.symbol,
+        market.loanAsset.symbol
+      );
+
+      if (feedsPathResult.hasUnknownFeed) {
+        
+         // only append this error if it's doesn't already have "UNRECOGNIZED_FEEDS" 
+         if (result.find(w => w === UNRECOGNIZED_FEEDS) === undefined) {
+            result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
+         }
+      } else if (!feedsPathResult.isValid) {
+        // Create a dynamic warning with the specific error message
+        const incompatibleFeedsWarning: WarningWithDetail = {
+          ...INCOMPATIBLE_ORACLE_FEEDS,
+          description: feedsPathResult.missingPath ?? INCOMPATIBLE_ORACLE_FEEDS.description,
+        };
+        result.push(incompatibleFeedsWarning);
+      }
     }
   }
 

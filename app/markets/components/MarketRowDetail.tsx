@@ -64,7 +64,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         </div>
         {
           // if no warning
-          market.warnings.length === 0 && (
+          warningsWithDetail.length === 0 && (
             <Info description="No warning flagged for this market!" level="success" />
           )
         }

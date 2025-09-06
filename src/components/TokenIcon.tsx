@@ -11,10 +11,9 @@ type TokenIconProps = {
   height: number;
   opacity?: number;
   symbol?: string;
-  truncated?: boolean
 };
 
-export function TokenIcon({ address, chainId, width, height, opacity, truncated }: TokenIconProps) {
+export function TokenIcon({ address, chainId, width, height, opacity }: TokenIconProps) {
   const { findToken } = useTokens();
 
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
@@ -36,7 +35,7 @@ export function TokenIcon({ address, chainId, width, height, opacity, truncated 
       : `This token is whitelisted by Monarch`;
 
     return (
-      <Tooltip content={<TooltipContent title={truncated ? getTruncatedAssetName(token.symbol) : token.symbol} detail={detail} icon={img} />}>
+      <Tooltip content={<TooltipContent title={token.symbol} detail={detail} icon={img} />}>
         <Image
           className="rounded-full"
           src={token.img}
