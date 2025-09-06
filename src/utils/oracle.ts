@@ -45,7 +45,7 @@ export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
 };
 
 export function getOracleTypeDescription(oracleType: OracleType): string {
-  if (oracleType === OracleType.Standard) return 'Standard Oracle from Price Feeds';
+  if (oracleType === OracleType.Standard) return 'Standard Oracle';
 
   return 'Custom Oracle';
 }
