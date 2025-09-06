@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { SupportedNetworks } from '@/utils/networks';
-import { parseOracleVendors, OracleVendors } from '@/utils/oracle';
+import { parsePriceFeedVendors, PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
 import { ERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { SortColumn } from './constants';
@@ -61,7 +61,7 @@ export function applyFilterAndSort(
   showUnknownOracle: boolean,
   selectedCollaterals: string[],
   selectedLoanAssets: string[],
-  selectedOracles: OracleVendors[],
+  selectedOracles: PriceFeedVendors[],
   staredIds: string[],
   findToken: (address: string, chainId: number) => ERC20Token | undefined,
   usdFilters: UsdFilters,
@@ -89,11 +89,15 @@ export function applyFilterAndSort(
         return false;
       }
 
-      if (
-        !showUnknownOracle &&
-        (!market.oracle || parseOracleVendors(market.oracle.data).isUnknown)
-      ) {
-        return false;
+      if (!showUnknownOracle) {
+        const info = market.oracle
+          ? parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id)
+          : null;
+        const isCustom =
+          getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id) ===
+          OracleType.Custom;
+        const isUnknown = isCustom || (info?.hasUnknown ?? false);
+        if (!market.oracle || isUnknown) return false;
       }
 
       if (
@@ -105,7 +109,7 @@ export function applyFilterAndSort(
       }
 
       if (selectedOracles.length > 0 && !!market.oracle) {
-        const marketOracles = parseOracleVendors(market.oracle.data).vendors;
+        const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id).vendors;
         if (!marketOracles.some((oracle) => selectedOracles.includes(oracle))) {
           return false;
         }

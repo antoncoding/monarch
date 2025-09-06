@@ -6,7 +6,7 @@ import { Button } from '@/components/common/Button';
 import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { formatReadable } from '@/utils/balance';
-import { OracleVendors, parseOracleVendors } from '@/utils/oracle';
+import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import { Market } from '@/utils/types';
 import AssetFilter from 'app/markets/components/AssetFilter';
 import OracleFilter from 'app/markets/components/OracleFilter';
@@ -27,7 +27,7 @@ export function RiskSelection() {
     goToPrevStep,
   } = useOnboarding();
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>([]);
-  const [selectedOracles, setSelectedOracles] = useState<OracleVendors[]>([]);
+  const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
 
   const { findToken, getUniqueTokens } = useTokens();
 
@@ -63,11 +63,11 @@ export function RiskSelection() {
 
         // Check if oracle is selected (if any are selected)
         if (selectedOracles.length > 0) {
-          const { vendors } = parseOracleVendors(market.oracle?.data);
+          const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id);
 
           // if vendors is empty, push "unknown oracle" into list that needed to be selected
           if (vendors.length === 0) {
-            vendors.push(OracleVendors.Unknown);
+            vendors.push(PriceFeedVendors.Unknown);
           }
 
           // Check if all vendors are selected

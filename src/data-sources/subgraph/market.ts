@@ -22,7 +22,6 @@ import {
 } from '@/utils/tokens';
 import { MorphoChainlinkOracleData, Market, MarketWarning } from '@/utils/types';
 import {
-  getMarketWarningsWithDetail,
   SUBGRAPH_NO_ORACLE,
   SUBGRAPH_NO_PRICE,
   UNRECOGNIZED_COLLATERAL,
@@ -150,10 +149,8 @@ const transformSubgraphMarketToMarket = (
       chain: {
         id: network,
       },
-      description: null,
       id: zeroAddress,
       pair: null,
-      vendor: 'Unknown',
     },
     baseFeedTwo: null,
     quoteFeedOne: null,
@@ -235,10 +232,7 @@ const transformSubgraphMarketToMarket = (
   // Use whitelisted oracle data (feeds) if available, otherwise default
   const oracleDataToUse = whitelistedOracleData ?? defaultOracleData;
 
-  // Regenerate warningsWithDetail *after* potentially adding whitelist warnings
-  const warningsWithDetail = getMarketWarningsWithDetail({ warnings, uniqueKey: marketId });
-
-  const marketDetail: Market = {
+  const marketDetail = {
     id: marketId,
     uniqueKey: marketId,
     lltv: lltv,
@@ -278,7 +272,6 @@ const transformSubgraphMarketToMarket = (
       },
     },
     warnings: warnings, // Assign the potentially filtered warnings
-    warningsWithDetail: warningsWithDetail,
     oracle: {
       data: oracleDataToUse, // Use the determined oracle data
     },

@@ -17,7 +17,6 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { monarchWhitelistedMarkets, blacklistedMarkets } from '@/utils/markets';
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 // Export the type definition
 export type MarketsContextType = {
@@ -134,7 +133,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           .filter((market) => !blacklistedMarkets.includes(market.uniqueKey));
 
         const processedMarkets = filtered.map((market) => {
-          const warningsWithDetail = getMarketWarningsWithDetail(market, true); // Recalculate warnings if needed, though fetchers might do this
           const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
 
           // only show this indicator when it's not already whitelisted
@@ -147,8 +145,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           return {
             ...market,
             whitelisted: market.whitelisted || isMonarchWhitelisted,
-            // Ensure warningsWithDetail from fetchers are used or recalculated consistently
-            warningsWithDetail: market.warningsWithDetail ?? warningsWithDetail,
             isProtectedByLiquidationBots,
             isMonarchWhitelisted,
           };

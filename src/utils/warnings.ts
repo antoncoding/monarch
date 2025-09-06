@@ -1,5 +1,6 @@
-import { MarketWarning } from '@/utils/types';
+import { MarketWarning, MorphoChainlinkOracleData } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
+import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
 import { WarningCategory, WarningWithDetail } from './types';
 
 // Subgraph Warnings
@@ -45,37 +46,6 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     code: 'hardcoded_oracle_feed',
     level: 'warning',
     description: 'This market is using a hardcoded value in one or more of its feed routes',
-    category: WarningCategory.oracle,
-  },
-  {
-    code: 'unrecognized_oracle',
-    level: 'alert',
-    description: 'The oracle is not recognized',
-    category: WarningCategory.oracle,
-  },
-  {
-    code: 'unrecognized_oracle_feed',
-    level: 'alert',
-    description: 'This market oracle has feed(s) that are not part of our recognized feeds list.',
-    category: WarningCategory.oracle,
-  },
-  {
-    code: 'incorrect_loan_exchange_rate',
-    level: 'warning',
-    description: 'The market is using the exchange rate from a token different from the loan one.	',
-    category: WarningCategory.oracle,
-  },
-  {
-    code: 'incorrect_collateral_exchange_rate',
-    level: 'warning',
-    description:
-      'The market is using the exchange rate from a token different from the collateral one.',
-    category: WarningCategory.oracle,
-  },
-  {
-    code: 'incompatible_oracle_feeds',
-    level: 'alert',
-    description: 'The market is using oracle feeds which do not match with each other.',
     category: WarningCategory.oracle,
   },
   // asset types
@@ -141,8 +111,67 @@ const subgraphWarnings: WarningWithDetail[] = [
   },
 ];
 
+const UNRECOGNIZED_ORACLE: WarningWithDetail = {
+  code: 'unrecognized_oracle',
+  level: 'alert',
+  description: 'This market is using a custom oracle contract that is not recognized.',
+  category: WarningCategory.oracle,
+};
+
+const INCOMPATIBLE_ORACLE_FEEDS: WarningWithDetail = {
+  code: 'incompatible_oracle_feeds',
+  level: 'warning',
+  description: 'The oracle feeds cannot produce a valid price path for this market.',
+  category: WarningCategory.oracle,
+};
+
+const UNKNOWN_FEED_FOR_PAIR_MATCHING: WarningWithDetail = {
+  code: 'unknown_oracle_feeds',
+  level: 'warning',
+  description: 'The oracle contains feeds with unknown asset pairs.',
+  category: WarningCategory.oracle,
+};
+
+// not on any list: Danger (alert level)
+const UNRECOGNIZED_FEEDS: WarningWithDetail = {
+  code: 'unknown feeds',
+  level: 'alert',
+  description: 'This market oracle has feed(s) that are not part of any recognized feeds list.',
+  category: WarningCategory.oracle,
+};
+
+// morpho config list
+const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
+  code: 'unknown feeds tagged',
+  level: 'warning',
+  description: 'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
+  category: WarningCategory.oracle,
+};
+
+// {
+//   code: 'incorrect_loan_exchange_rate',
+//   level: 'warning',
+//   description: 'The market is using the exchange rate from a token different from the loan one.	',
+//   category: WarningCategory.oracle,
+// },
+// {
+//   code: 'incorrect_collateral_exchange_rate',
+//   level: 'warning',
+//   description:
+//     'The market is using the exchange rate from a token different from the collateral one.',
+//   category: WarningCategory.oracle,
+// },
+
 export const getMarketWarningsWithDetail = (
-  market: { warnings: MarketWarning[]; uniqueKey: string },
+  market: {
+    warnings: MarketWarning[];
+    uniqueKey: string;
+    oracle?: { data: MorphoChainlinkOracleData };
+    oracleAddress?: string;
+    morphoBlue: { chain: { id: number } };
+    loanAsset?: { symbol: string };
+    collateralAsset?: { symbol: string };
+  },
   considerWhitelist = false,
 ) => {
   const result = [];
@@ -176,5 +205,53 @@ export const getMarketWarningsWithDetail = (
       result.push(foundWarning);
     }
   }
+
+  // append our own oracle warnings
+  const oracleType = getOracleType(
+    market.oracle?.data,
+    market.oracleAddress,
+    market.morphoBlue.chain.id,
+  );
+  if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
+
+  // if any of the feeds are not null but also not recognized, return appropriate feed warning
+  if (oracleType === OracleType.Standard && market.oracle?.data) {
+    const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
+    
+    // Completely unknown feeds get the stronger warning
+    if (vendorInfo.hasCompletelyUnknown) {
+      result.push(UNRECOGNIZED_FEEDS);
+    }
+    
+    // Tagged but not core vendors get the milder warning
+    if (vendorInfo.hasTaggedUnknown) {
+      result.push(UNRECOGNIZED_FEEDS_TAGGED);
+    }
+
+    // Check if oracle feeds can produce a valid price path
+    if (market.collateralAsset?.symbol && market.loanAsset?.symbol) {
+      const feedsPathResult = checkFeedsPath(
+        market.oracle.data,
+        market.morphoBlue.chain.id,
+        market.collateralAsset.symbol,
+        market.loanAsset.symbol
+      );
+
+      if (feedsPathResult.hasUnknownFeed) {
+        // only append this error if it doesn't already have "UNRECOGNIZED_FEEDS"
+        if (result.find((w) => w === UNRECOGNIZED_FEEDS) === undefined) {
+          result.push(UNKNOWN_FEED_FOR_PAIR_MATCHING);
+        }
+      } else if (!feedsPathResult.isValid) {
+        // Create a dynamic warning with the specific error message
+        const incompatibleFeedsWarning: WarningWithDetail = {
+          ...INCOMPATIBLE_ORACLE_FEEDS,
+          description: feedsPathResult.missingPath ?? INCOMPATIBLE_ORACLE_FEEDS.description,
+        };
+        result.push(incompatibleFeedsWarning);
+      }
+    }
+  }
+
   return result;
 };

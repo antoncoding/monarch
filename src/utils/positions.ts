@@ -10,7 +10,6 @@ import {
   PositionEarnings,
   UserTransaction,
   GroupedPosition,
-  WarningWithDetail,
   UserRebalancerInfo,
 } from './types';
 
@@ -257,7 +256,7 @@ export async function calculateEarningsFromPeriod(
   const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
   const now = Math.floor(Date.now() / 1000);
 
-  const client = getClient(chainId, customRpcUrl)
+  const client = getClient(chainId, customRpcUrl);
 
   const snapshots = await Promise.all([
     fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client),
@@ -427,14 +426,6 @@ export function groupPositionsByLoanAsset(
 
       if (shouldInclude) {
         groupedPosition.markets.push(position);
-
-        // Restore original logic for totals, warnings, and collaterals
-        groupedPosition.allWarnings = [
-          ...new Set([
-            ...groupedPosition.allWarnings,
-            ...(position.market.warningsWithDetail || []),
-          ]),
-        ] as WarningWithDetail[];
 
         const supplyAmount = Number(
           formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals),

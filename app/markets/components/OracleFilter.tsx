@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { FaQuestionCircle } from 'react-icons/fa';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { OracleVendors, OracleVendorIcons } from '@/utils/oracle';
-import { MorphoChainlinkOracleData } from '@/utils/types';
+import { IoHelpCircleOutline } from 'react-icons/io5';
+import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 
 type OracleFilterProps = {
-  selectedOracles: OracleVendors[];
-  setSelectedOracles: (oracles: OracleVendors[]) => void;
+  selectedOracles: PriceFeedVendors[];
+  setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
 };
 
 export default function OracleFilter({ selectedOracles, setSelectedOracles }: OracleFilterProps) {
@@ -30,7 +28,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  const toggleOracle = (oracle: OracleVendors) => {
+  const toggleOracle = (oracle: PriceFeedVendors) => {
     if (selectedOracles.includes(oracle)) {
       setSelectedOracles(selectedOracles.filter((o) => o !== oracle));
     } else {
@@ -58,16 +56,20 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         <span className="absolute left-2 top-2 px-1 text-xs">Oracle</span>
         <div className="flex items-center justify-between pt-4">
           {selectedOracles.length > 0 ? (
-            <div className="flex-scroll flex gap-2 px-1">
-              {selectedOracles.map((oracle) => (
-                <OracleVendorBadge
-                  key={oracle}
-                  oracleData={
-                    { baseFeedOne: { vendor: oracle } } as unknown as MorphoChainlinkOracleData
-                  }
-                  showText={false}
-                  useTooltip={false}
-                />
+            <div className="flex-scroll flex gap-2 p-1">
+              {selectedOracles.map((oracle, index) => (
+                <div key={index}>
+                  {OracleVendorIcons[oracle] ? (
+                    <Image
+                      src={OracleVendorIcons[oracle]}
+                      alt={oracle}
+                      height={16}
+                      width={16}
+                    />
+                  ) : (
+                    <IoHelpCircleOutline className="text-secondary" size={16} />
+                  )}
+                </div>
               ))}
             </div>
           ) : (
@@ -84,7 +86,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         }`}
       >
         <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
-          {Object.values(OracleVendors).map((oracle) => (
+          {Object.values(PriceFeedVendors).map((oracle) => (
             <li
               key={oracle}
               className={`m-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
@@ -110,9 +112,9 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
                     className="rounded-full"
                   />
                 ) : (
-                  <FaQuestionCircle className="h-4 w-4 text-gray-400" />
+                  <IoHelpCircleOutline className="text-secondary" size={16} />
                 )}
-                <span>{oracle}</span>
+                <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
               </div>
             </li>
           ))}

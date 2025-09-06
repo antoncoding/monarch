@@ -98,19 +98,21 @@ import { Button } from '@/components/common/Button';
 
 ## Tooltip
 
-Use the nextui tooltip with <TooltipContent> component for consistnet styling
+Use the nextui tooltip with <TooltipContent> component for consistent styling. Always use the classNames configuration to remove HeroUI's default wrapper styling:
 
-```
+```tsx
 <Tooltip
-  className="rounded-sm" // for consistent styling
-  content={<TooltipContent
-    icon={<GrStatusGood />}
-    title="Tooltip Title"
-    detail="Tooltip Detail"
-  />}
-
+  classNames={{
+    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+  }}
+  content={<TooltipContent icon={<GrStatusGood />} title="Tooltip Title" detail="Tooltip Detail" />}
 >
+  {/* Your trigger element */}
+</Tooltip>
 ```
+
+**Important:** The `classNames` configuration removes HeroUI's default padding, background, and borders to prevent double-wrapper styling issues. This ensures only your `TooltipContent` component handles the visual styling.
 
 ## Input Components
 

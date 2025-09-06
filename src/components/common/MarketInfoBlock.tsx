@@ -34,12 +34,12 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
               {formatUnits(BigInt(market.lltv), 16)}% LTV
             </span>
           </div>
-          {amount && amount !== maxUint256 ? (
+          {amount !== undefined && amount !== maxUint256 ? (
             <span className="text-xs text-gray-500">
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
           ) : (
-            <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} />
+            <OracleVendorBadge showText oracleData={market.oracle?.data} chainId={market.morphoBlue.chain.id} useTooltip={false} />
           )}
         </div>
       </div>
@@ -125,12 +125,12 @@ export function MarketInfoBlockCompact({
           </div>
         </div>
       </div>
-      {amount && amount !== maxUint256 ? (
+      {amount !== undefined && amount !== maxUint256 ? (
         <span className="text-xs text-gray-500">
           {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
         </span>
       ) : (
-        <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} />
+        <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} chainId={market.morphoBlue.chain.id} />
       )}
     </div>
   );

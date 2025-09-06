@@ -10,7 +10,6 @@ import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import { Market } from '@/utils/types';
-import { getMarketWarningsWithDetail } from '@/utils/warnings';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useCustomRpc } from './useCustomRpc';
 import { useMarkets } from './useMarkets';
@@ -29,7 +28,7 @@ type InitialDataResponse = {
 // Type for the final processed position data
 type EnhancedMarketPosition = {
   state: PositionSnapshot;
-  market: Market & { warningsWithDetail: ReturnType<typeof getMarketWarningsWithDetail> };
+  market: Market;
 };
 
 // --- Query Keys (adjusted for two-step process) ---
@@ -203,7 +202,10 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
           return null;
         }
 
-        const publicClient = getClient(marketInfo.chainId, customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined);
+        const publicClient = getClient(
+          marketInfo.chainId as SupportedNetworks,
+          customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined,
+        );
         if (!publicClient) {
           console.error(`[Positions] No public client available for chain ${marketInfo.chainId}`);
           return null;
@@ -242,10 +244,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
         })
         .map((position) => ({
           state: position.state,
-          market: {
-            ...position.market,
-            warningsWithDetail: getMarketWarningsWithDetail(position.market, true),
-          },
+          market: position.market,
         }));
 
       // Update market cache

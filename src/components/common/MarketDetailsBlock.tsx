@@ -85,7 +85,7 @@ export function MarketDetailsBlock({
             {!isExpanded && (
               <div className="flex items-center gap-2 text-xs opacity-70">
                 <span>·</span>
-                <OracleVendorBadge oracleData={market.oracle?.data} showText={false} useTooltip />
+                <OracleVendorBadge oracleData={market.oracle?.data} showText={false} chainId={market.morphoBlue.chain.id} />
                 <span>·</span>
                 <span>{getAPY()}% APY</span>
                 <span>·</span>
@@ -116,6 +116,7 @@ export function MarketDetailsBlock({
                       oracleData={market.oracle?.data}
                       showText
                       useTooltip={false}
+                      chainId={market.morphoBlue.chain.id}
                     />
                     <span className="text-xs opacity-50">·</span>
                     <span className="text-xs opacity-70">{getIRMTitle(market.irmAddress)}</span>

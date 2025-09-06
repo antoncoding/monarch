@@ -7,6 +7,7 @@ import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { getTruncatedAssetName } from '@/utils/oracle';
 import { Market, MarketPosition } from '@/utils/types';
 
 type PositionStatsProps = {
@@ -72,7 +73,7 @@ export function PositionStats({
                   BigInt(userPosition.state.supplyAssets || 0),
                   market.loanAsset.decimals,
                 ).toString()}{' '}
-                {market.loanAsset.symbol}
+                {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
           </div>
@@ -91,7 +92,7 @@ export function PositionStats({
                   BigInt(userPosition.state.borrowAssets || 0),
                   market.loanAsset.decimals,
                 ).toString()}{' '}
-                {market.loanAsset.symbol}
+                {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
           </div>

@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
       // From ClientProviders - good for caching and UX
       staleTime: 30000, // 30 seconds
       refetchOnWindowFocus: false,
-      
+
       retry: (failureCount, error) => {
         // Don't retry on GraphQL errors, network errors, or client errors
         if (
@@ -28,7 +28,7 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-      
+
       throwOnError: false,
     },
     mutations: {

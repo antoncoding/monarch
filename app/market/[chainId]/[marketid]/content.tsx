@@ -13,9 +13,8 @@ import { useAccount } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
-import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import Header from '@/components/layout/header/Header';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { OracleTypeInfo } from '@/components/MarketOracle';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketData } from '@/hooks/useMarketData';
@@ -26,6 +25,7 @@ import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getTruncatedAssetName } from '@/utils/oracle';
 import { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
 import { LiquidationsTable } from './components/LiquidationsTable';
@@ -179,12 +179,6 @@ function MarketContent() {
   // 8. Derived values that depend on market data
   const cardStyle = 'bg-surface rounded shadow-sm p-4';
 
-  const hasFeed =
-    market.oracle?.data?.baseFeedOne ||
-    market.oracle?.data?.baseFeedTwo ||
-    market.oracle?.data?.quoteFeedOne ||
-    market.oracle?.data?.quoteFeedTwo;
-
   return (
     <>
       <Header />
@@ -300,7 +294,7 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {market.collateralAsset.symbol} <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.collateralAsset.symbol)} <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>
@@ -324,54 +318,33 @@ function MarketContent() {
           </Card>
 
           <Card className={cardStyle}>
-            <CardHeader className="text-xl">Oracle Info</CardHeader>
+            <CardHeader className="flex items-center justify-between text-xl">
+              <span>Oracle Info</span>
+
+              <span className="text-sm text-gray-500">
+                <Link
+                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center hover:underline"
+                >
+                  <ExternalLinkIcon className="ml-1" />
+                </Link>
+              </span>
+            </CardHeader>
             <CardBody>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span>Vendor:</span>
-                  {market.oracle?.data && (
-                    <Link
-                      href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center hover:underline"
-                    >
-                      <OracleVendorBadge oracleData={market.oracle.data} showText />{' '}
-                      <ExternalLinkIcon className="ml-1" />
-                    </Link>
-                  )}
-                </div>
                 <div className="flex items-center justify-between">
                   <span>Live Price:</span>
                   <span className="text-sm text-secondary">
                     {Number(formattedOraclePrice).toFixed(4)} {market.loanAsset.symbol}
                   </span>
                 </div>
-                {hasFeed && (
-                  <div>
-                    <h4 className="mb-1 text-sm font-semibold">Feed Routes:</h4>
-                    {market.oracle?.data && (
-                      <div>
-                        <OracleFeedInfo
-                          feed={market.oracle.data.baseFeedOne}
-                          chainId={market.morphoBlue.chain.id}
-                        />
-                        <OracleFeedInfo
-                          feed={market.oracle.data.baseFeedTwo}
-                          chainId={market.morphoBlue.chain.id}
-                        />
-                        <OracleFeedInfo
-                          feed={market.oracle.data.quoteFeedOne}
-                          chainId={market.morphoBlue.chain.id}
-                        />
-                        <OracleFeedInfo
-                          feed={market.oracle.data.quoteFeedTwo}
-                          chainId={market.morphoBlue.chain.id}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                <OracleTypeInfo
+                  oracleData={market.oracle?.data}
+                  oracleAddress={market.oracleAddress}
+                  chainId={market.morphoBlue.chain.id}
+                />
               </div>
             </CardBody>
           </Card>

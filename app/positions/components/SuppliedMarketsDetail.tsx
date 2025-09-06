@@ -6,6 +6,7 @@ import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
+import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
@@ -39,6 +40,133 @@ function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
   );
 }
 
+function MarketRow({
+  position,
+  totalSupply,
+  setShowWithdrawModal,
+  setShowSupplyModal,
+  setSelectedPosition,
+}: {
+  position: MarketPosition;
+  totalSupply: number;
+  setShowWithdrawModal: (show: boolean) => void;
+  setShowSupplyModal: (show: boolean) => void;
+  setSelectedPosition: (position: MarketPosition) => void;
+}) {
+  const warningsWithDetail = useMarketWarnings(position.market, true);
+
+  const getWarningColor = (warnings: WarningWithDetail[]) => {
+    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
+    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
+    return '';
+  };
+
+  const suppliedAmount = Number(
+    formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
+  );
+  const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
+  const warningColor = getWarningColor(warningsWithDetail);
+
+  return (
+    <tr key={position.market.uniqueKey} className="gap-1">
+      <td data-label="Market" className="text-center">
+        <div className="flex items-center justify-center">
+          <div className="mr-1 w-4">
+            {warningsWithDetail.length > 0 ? (
+              <Tooltip
+                className="rounded-sm"
+                content={<WarningTooltip warnings={warningsWithDetail} />}
+                placement="top"
+              >
+                <div>
+                  <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
+                </div>
+              </Tooltip>
+            ) : (
+              <div className="h-4 w-4" />
+            )}
+          </div>
+          <Link
+            className="group flex items-center justify-center no-underline hover:underline"
+            href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
+          >
+            {position.market.uniqueKey.slice(2, 8)}
+          </Link>
+        </div>
+      </td>
+      <td data-label="Collateral" className="text-center">
+        {position.market.collateralAsset ? (
+          <div className="flex items-center justify-center gap-1">
+            <TokenIcon
+              address={position.market.collateralAsset.address}
+              chainId={position.market.morphoBlue.chain.id}
+              symbol={position.market.collateralAsset.symbol}
+              width={18}
+              height={18}
+            />
+            {position.market.collateralAsset.symbol}
+          </div>
+        ) : (
+          'N/A'
+        )}
+      </td>
+      <td data-label="Oracle" className="text-center">
+        <div className="flex justify-center">
+          <OracleVendorBadge
+            oracleData={position.market.oracle ? position.market.oracle.data : null}
+            chainId={position.market.morphoBlue.chain.id}
+            useTooltip
+          />
+        </div>
+      </td>
+      <td data-label="LLTV" className="text-center">
+        {formatBalance(position.market.lltv, 16)}%
+      </td>
+      <td data-label="APY" className="text-center">
+        {formatReadable(position.market.state.supplyApy * 100)}%
+      </td>
+      <td data-label="Supplied" className="text-center">
+        {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
+      </td>
+      <td data-label="% of Portfolio" className="text-center">
+        <div className="flex items-center">
+          <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full bg-blue-500"
+              style={{ width: `${percentageOfPortfolio}%` }}
+            />
+          </div>
+          <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
+        </div>
+      </td>
+      <td data-label="Actions" className="justify-center px-4 py-3">
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            size="sm"
+            variant="interactive"
+            onPress={() => {
+              setSelectedPosition(position);
+              setShowWithdrawModal(true);
+            }}
+          >
+            Withdraw
+          </Button>
+          <Button
+            size="sm"
+            variant="interactive"
+            onPress={() => {
+              setSelectedPosition(position);
+              setShowSupplyModal(true);
+            }}
+          >
+            Supply
+          </Button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export function SuppliedMarketsDetail({
   groupedPosition,
   setShowWithdrawModal,
@@ -64,12 +192,6 @@ export function SuppliedMarketsDetail({
       );
 
   const totalSupply = groupedPosition.totalSupply;
-
-  const getWarningColor = (warnings: WarningWithDetail[]) => {
-    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
-    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
-    return '';
-  };
 
   return (
     <motion.div
@@ -137,116 +259,16 @@ export function SuppliedMarketsDetail({
             </tr>
           </thead>
           <tbody className="table-body text-xs">
-            {filteredMarkets.map((position) => {
-              const suppliedAmount = Number(
-                formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
-              );
-              const percentageOfPortfolio =
-                totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
-              const warningColor = getWarningColor(position.market.warningsWithDetail);
-
-              return (
-                <tr key={position.market.uniqueKey} className="gap-1">
-                  <td data-label="Market" className="text-center">
-                    <div className="flex items-center justify-center">
-                      <div className="mr-1 w-4">
-                        {position.market.warningsWithDetail.length > 0 ? (
-                          <Tooltip
-                            className="rounded-sm"
-                            content={
-                              <WarningTooltip warnings={position.market.warningsWithDetail} />
-                            }
-                            placement="top"
-                          >
-                            <div>
-                              <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
-                            </div>
-                          </Tooltip>
-                        ) : (
-                          <div className="h-4 w-4" />
-                        )}
-                      </div>
-                      <Link
-                        className="group flex items-center justify-center no-underline hover:underline"
-                        href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
-                      >
-                        {position.market.uniqueKey.slice(2, 8)}
-                      </Link>
-                    </div>
-                  </td>
-                  <td data-label="Collateral" className="text-center">
-                    {position.market.collateralAsset ? (
-                      <div className="flex items-center justify-center gap-1">
-                        <TokenIcon
-                          address={position.market.collateralAsset.address}
-                          chainId={position.market.morphoBlue.chain.id}
-                          symbol={position.market.collateralAsset.symbol}
-                          width={18}
-                          height={18}
-                        />
-                        {position.market.collateralAsset.symbol}
-                      </div>
-                    ) : (
-                      'N/A'
-                    )}
-                  </td>
-                  <td data-label="Oracle" className="text-center">
-                    <div className="flex justify-center">
-                      <OracleVendorBadge
-                        oracleData={position.market.oracle ? position.market.oracle.data : null}
-                        useTooltip
-                      />
-                    </div>
-                  </td>
-                  <td data-label="LLTV" className="text-center">
-                    {formatBalance(position.market.lltv, 16)}%
-                  </td>
-                  <td data-label="APY" className="text-center">
-                    {formatReadable(position.market.state.supplyApy * 100)}%
-                  </td>
-                  <td data-label="Supplied" className="text-center">
-                    {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
-                  </td>
-                  <td data-label="% of Portfolio" className="text-center">
-                    <div className="flex items-center">
-                      <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
-                        <div
-                          className="h-full rounded-full bg-blue-500"
-                          style={{ width: `${percentageOfPortfolio}%` }}
-                        />
-                      </div>
-                      <span className="whitespace-nowrap">
-                        {formatReadable(percentageOfPortfolio)}%
-                      </span>
-                    </div>
-                  </td>
-                  <td data-label="Actions" className="justify-center px-4 py-3">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="interactive"
-                        onPress={() => {
-                          setSelectedPosition(position);
-                          setShowWithdrawModal(true);
-                        }}
-                      >
-                        Withdraw
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="interactive"
-                        onPress={() => {
-                          setSelectedPosition(position);
-                          setShowSupplyModal(true);
-                        }}
-                      >
-                        Supply
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {filteredMarkets.map((position) => (
+              <MarketRow
+                key={position.market.uniqueKey}
+                position={position}
+                totalSupply={totalSupply}
+                setShowWithdrawModal={setShowWithdrawModal}
+                setShowSupplyModal={setShowSupplyModal}
+                setSelectedPosition={setSelectedPosition}
+              />
+            ))}
           </tbody>
         </table>
       </div>

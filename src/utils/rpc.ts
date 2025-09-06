@@ -77,7 +77,6 @@ export const getClient = (chainId: SupportedNetworks, customRpcUrl?: string): Pu
   return client;
 };
 
-
 export const BLOCK_TIME = {
   [SupportedNetworks.Mainnet]: 12, // Ethereum mainnet: 12 seconds
   [SupportedNetworks.Base]: 2, // Base: 2 seconds

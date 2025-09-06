@@ -22,6 +22,7 @@ import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -37,14 +38,86 @@ import {
   GroupedPosition,
   MarketPositionWithEarnings,
   UserRebalancerInfo,
+  WarningWithDetail,
+  WarningCategory,
 } from '@/utils/types';
-import {
-  MarketAssetIndicator,
-  MarketOracleIndicator,
-  MarketDebtIndicator,
-} from 'app/markets/components/RiskIndicator';
+import { RiskIndicator } from 'app/markets/components/RiskIndicator';
 import { RebalanceModal } from './RebalanceModal';
 import { SuppliedMarketsDetail } from './SuppliedMarketsDetail';
+
+// Component to compute and display aggregated risk indicators for a group of positions
+function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: GroupedPosition }) {
+  // Compute warnings for all markets in the group
+  const allWarnings: WarningWithDetail[] = [];
+
+  for (const position of groupedPosition.markets) {
+    const marketWarnings = computeMarketWarnings(position.market, true);
+    allWarnings.push(...marketWarnings);
+  }
+
+  // Remove duplicates based on warning code
+  const uniqueWarnings = allWarnings.filter(
+    (warning, index, array) => array.findIndex((w) => w.code === warning.code) === index,
+  );
+
+  // Helper to get warnings by category and determine risk level
+  const getWarningIndicator = (
+    category: WarningCategory,
+    greenDesc: string,
+    yellowDesc: string,
+    redDesc: string,
+  ) => {
+    const categoryWarnings = uniqueWarnings.filter((w) => w.category === category);
+
+    if (categoryWarnings.length === 0) {
+      return <RiskIndicator level="green" description={greenDesc} mode="complex" />;
+    }
+
+    if (categoryWarnings.some((w) => w.level === 'alert')) {
+      const alertWarning = categoryWarnings.find((w) => w.level === 'alert');
+      return (
+        <RiskIndicator
+          level="red"
+          description={`One or more markets have: ${redDesc}`}
+          mode="complex"
+          warningDetail={alertWarning}
+        />
+      );
+    }
+
+    return (
+      <RiskIndicator
+        level="yellow"
+        description={`One or more markets have: ${yellowDesc}`}
+        mode="complex"
+        warningDetail={categoryWarnings[0]}
+      />
+    );
+  };
+
+  return (
+    <>
+      {getWarningIndicator(
+        WarningCategory.asset,
+        'Recognized asset',
+        'Asset with warning',
+        'High-risk asset',
+      )}
+      {getWarningIndicator(
+        WarningCategory.oracle,
+        'Recognized oracles',
+        'Oracle warning',
+        'Oracle warning',
+      )}
+      {getWarningIndicator(
+        WarningCategory.debt,
+        'No bad debt',
+        'Bad debt has occurred',
+        'Bad debt higher than 1% of supply',
+      )}
+    </>
+  );
+}
 
 type PositionsSummaryTableProps = {
   account: string;
@@ -344,21 +417,7 @@ export function PositionsSummaryTable({
                     </td>
                     <td data-label="Warnings" className="align-middle">
                       <div className="flex items-center justify-center gap-1">
-                        <MarketAssetIndicator
-                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                          isBatched
-                          mode="complex"
-                        />
-                        <MarketOracleIndicator
-                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                          isBatched
-                          mode="complex"
-                        />
-                        <MarketDebtIndicator
-                          market={{ warningsWithDetail: groupedPosition.allWarnings }}
-                          isBatched
-                          mode="complex"
-                        />
+                        <AggregatedRiskIndicators groupedPosition={groupedPosition} />
                       </div>
                     </td>
                     <td data-label="Actions" className="justify-center px-4 py-3">

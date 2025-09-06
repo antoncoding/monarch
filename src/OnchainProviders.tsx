@@ -9,7 +9,6 @@ import { CustomRpcProvider, useCustomRpcContext } from './components/providers/C
 
 type Props = { children: ReactNode };
 
-
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
 if (!projectId) {
   if (process.env.NODE_ENV !== 'production') {
@@ -22,11 +21,11 @@ const staticWagmiConfig = createWagmiConfig(projectId);
 
 function WagmiConfigProvider({ children }: Props) {
   const { customRpcUrls } = useCustomRpcContext();
-  
+
   // Only use dynamic config when custom RPCs are explicitly set
   const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs 
-    ? createWagmiConfig(projectId, customRpcUrls) 
+  const wagmiConfig = hasCustomRpcs
+    ? createWagmiConfig(projectId, customRpcUrls)
     : staticWagmiConfig;
 
   return (
@@ -44,9 +43,7 @@ function WagmiConfigProvider({ children }: Props) {
         }}
         modalSize="compact"
       >
-        <ConnectRedirectProvider>
-          {children}
-        </ConnectRedirectProvider>
+        <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
       </RainbowKitProvider>
     </WagmiProvider>
   );

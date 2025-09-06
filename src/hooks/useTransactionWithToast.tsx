@@ -33,7 +33,11 @@ export function useTransactionWithToast({
     error: txError,
     sendTransactionAsync,
   } = useSendTransaction();
-  const { isLoading: isConfirming, isSuccess: isConfirmed, isError } = useWaitForTransactionReceipt({
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    isError,
+  } = useWaitForTransactionReceipt({
     hash,
   });
 
@@ -80,7 +84,12 @@ export function useTransactionWithToast({
     }
     if (isError || txError) {
       toast.update(toastId, {
-        render: <StyledToast title={errorText} message={txError ? txError.message : 'Transaction Failed' } />,
+        render: (
+          <StyledToast
+            title={errorText}
+            message={txError ? txError.message : 'Transaction Failed'}
+          />
+        ),
         type: 'error',
         isLoading: false,
         autoClose: 5000,

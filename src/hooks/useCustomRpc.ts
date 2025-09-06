@@ -12,7 +12,6 @@ export type CustomRpcUrls = {
 export function useCustomRpc() {
   const [customRpcUrls, setCustomRpcUrls] = useLocalStorage<CustomRpcUrls>('customRpcUrls', {});
 
-  
   const setRpcUrl = (chainId: SupportedNetworks, url: string | undefined) => {
     setCustomRpcUrls((prev) => {
       const newUrls = { ...prev };
