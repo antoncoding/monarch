@@ -1,9 +1,9 @@
+import Link from 'next/link';
+import { FiExternalLink } from 'react-icons/fi';
 import { MarketOracleFeedInfo } from '@/components/MarketOracle';
 import { getExplorerURL } from '@/utils/external';
 import { getOracleType, getOracleTypeDescription, OracleType } from '@/utils/oracle';
 import { MorphoChainlinkOracleData } from '@/utils/types';
-import Link from 'next/link';
-import { FiExternalLink } from 'react-icons/fi';
 
 type OracleTypeInfoProps = {
   oracleData: MorphoChainlinkOracleData | null | undefined;
@@ -53,7 +53,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, s
             feed structure.
           </div>
         </div>
-      ) : (<></>)}
+      ) : null}
     </>
   );
 }

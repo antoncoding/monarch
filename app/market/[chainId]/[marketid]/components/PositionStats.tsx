@@ -7,8 +7,8 @@ import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { Market, MarketPosition } from '@/utils/types';
 import { getTruncatedAssetName } from '@/utils/oracle';
+import { Market, MarketPosition } from '@/utils/types';
 
 type PositionStatsProps = {
   market: Market;

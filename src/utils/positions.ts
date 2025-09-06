@@ -10,7 +10,6 @@ import {
   PositionEarnings,
   UserTransaction,
   GroupedPosition,
-  WarningWithDetail,
   UserRebalancerInfo,
 } from './types';
 

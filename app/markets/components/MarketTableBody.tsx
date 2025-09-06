@@ -13,7 +13,6 @@ import logo from '../../../imgs/logo.png';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
-import { IoGitMerge } from 'react-icons/io5';
 
 type MarketTableBodyProps = {
   currentEntries: Market[];

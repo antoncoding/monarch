@@ -50,6 +50,184 @@ export function getOracleTypeDescription(oracleType: OracleType): string {
   return 'Custom Oracle';
 }
 
+// Discriminated union types for feed detection results
+export type ChainlinkFeedResult = {
+  vendor: PriceFeedVendors.Chainlink;
+  data: ChainlinkOracleEntry;
+  assetPair: {
+    baseAsset: string;
+    quoteAsset: string;
+  };
+};
+
+export type CompoundFeedResult = {
+  vendor: PriceFeedVendors.Compound;
+  data: CompoundFeedEntry;
+  assetPair: {
+    baseAsset: string;
+    quoteAsset: string;
+  };
+};
+
+export type GeneralFeedResult = {
+  vendor:
+    | PriceFeedVendors.Redstone
+    | PriceFeedVendors.PythNetwork
+    | PriceFeedVendors.Oval
+    | PriceFeedVendors.Lido;
+  data: GeneralPriceFeed;
+  assetPair: {
+    baseAsset: string;
+    quoteAsset: string;
+  };
+};
+
+export type UnknownFeedResult = {
+  vendor: PriceFeedVendors.Unknown;
+  data: GeneralPriceFeed | null;
+  assetPair: {
+    baseAsset: string;
+    quoteAsset: string;
+  };
+};
+
+// Discriminated union - ensures vendor and data types are always matched correctly
+export type FeedVendorResult =
+  | ChainlinkFeedResult
+  | CompoundFeedResult
+  | GeneralFeedResult
+  | UnknownFeedResult;
+
+/**
+ * Centralized function to detect feed vendor and retrieve corresponding data
+ * @param feedAddress - The feed contract address
+ * @param chainId - The chain ID
+ * @returns FeedVendorResult with vendor, data, and asset pair information
+ */
+export function detectFeedVendor(feedAddress: Address | string, chainId: number): FeedVendorResult {
+  const address = feedAddress as Address;
+
+  // Check if it's a Chainlink feed
+  if (isChainlinkOracle(chainId, address)) {
+    const chainlinkData = getChainlinkOracle(chainId, address);
+    if (chainlinkData) {
+      return {
+        vendor: PriceFeedVendors.Chainlink,
+        data: chainlinkData,
+        assetPair: {
+          baseAsset: chainlinkData.baseAsset,
+          quoteAsset: chainlinkData.quoteAsset,
+        },
+      } satisfies ChainlinkFeedResult;
+    }
+  }
+
+  // Check if it's a Compound feed
+  if (isCompoundFeed(address)) {
+    const compoundData = getCompoundFeed(address);
+    if (compoundData) {
+      return {
+        vendor: PriceFeedVendors.Compound,
+        data: compoundData,
+        assetPair: {
+          baseAsset: compoundData.base,
+          quoteAsset: compoundData.quote,
+        },
+      } satisfies CompoundFeedResult;
+    }
+  }
+
+  // Check if it's a general price feed (from various vendors via Morpho's API data)
+  if (isGeneralFeed(address, chainId)) {
+    const generalFeedData = getGeneralFeed(address, chainId);
+    if (generalFeedData) {
+      // Map the vendor name from the general feed data to our enum
+      const vendorName = generalFeedData.vendor.toLowerCase();
+
+      // Return proper discriminated union based on vendor
+      if (vendorName === 'redstone') {
+        return {
+          vendor: PriceFeedVendors.Redstone,
+          data: generalFeedData,
+          assetPair: {
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
+          },
+        } satisfies GeneralFeedResult;
+      }
+
+      if (vendorName === 'pyth network' || vendorName === 'pyth') {
+        return {
+          vendor: PriceFeedVendors.PythNetwork,
+          data: generalFeedData,
+          assetPair: {
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
+          },
+        } satisfies GeneralFeedResult;
+      }
+
+      if (vendorName === 'oval') {
+        return {
+          vendor: PriceFeedVendors.Oval,
+          data: generalFeedData,
+          assetPair: {
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
+          },
+        } satisfies GeneralFeedResult;
+      }
+
+      if (vendorName === 'lido') {
+        return {
+          vendor: PriceFeedVendors.Lido,
+          data: generalFeedData,
+          assetPair: {
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
+          },
+        } satisfies GeneralFeedResult;
+      }
+
+      // For vendors not in our enum (like Pendle), return as unknown but with data
+      return {
+        vendor: PriceFeedVendors.Unknown,
+        data: generalFeedData,
+        assetPair: {
+          baseAsset: generalFeedData.pair[0],
+          quoteAsset: generalFeedData.pair[1],
+        },
+      } satisfies UnknownFeedResult;
+    }
+  }
+
+  // Unknown feed - use fallback pair or default to Unknown
+  return {
+    vendor: PriceFeedVendors.Unknown,
+    data: null,
+    assetPair: {
+      baseAsset: 'Unknown',
+      quoteAsset: 'Unknown',
+    },
+  } satisfies UnknownFeedResult;
+}
+
+/**
+ *
+ * @param feed
+ * @param chainId
+ * @returns { base: "ETH", quote: "USD" }
+ */
+function getFeedPath(
+  feed: OracleFeed | null | undefined,
+  chainId: number,
+): { base: string; quote: string } {
+  if (!feed || !feed.address) return { base: 'EMPTY', quote: 'EMPTY' };
+
+  const data = detectFeedVendor(feed.address, chainId);
+  return { base: data.assetPair.baseAsset, quote: data.assetPair.quoteAsset }
+}
+
 export function getOracleType(
   oracleData: MorphoChainlinkOracleData | null | undefined,
   oracleAddress?: string,
@@ -303,7 +481,7 @@ export function checkFeedsPath(
     missingPath = 'All assets canceled out - no price path found';
   } else {
     const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
-    missingPath = `Path mismatch: got ${actualPath}, expected ${expectedPath}`;
+    missingPath = `Feed path mismatch: got ${actualPath}, expected ${expectedPath}`;
   }
 
   return {
@@ -311,184 +489,6 @@ export function checkFeedsPath(
     missingPath,
     expectedPath,
   };
-}
-
-/**
- *
- * @param feed
- * @param chainId
- * @returns { base: "ETH", quote: "USD" }
- */
-function getFeedPath(
-  feed: OracleFeed | null | undefined,
-  chainId: number,
-): { base: string; quote: string } {
-  if (!feed || !feed.address) return { base: 'EMPTY', quote: 'EMPTY' };
-
-  const data = detectFeedVendor(feed.address, chainId);
-  return { base: data.assetPair.baseAsset, quote: data.assetPair.quoteAsset }
-}
-
-// Discriminated union types for feed detection results
-export type ChainlinkFeedResult = {
-  vendor: PriceFeedVendors.Chainlink;
-  data: ChainlinkOracleEntry;
-  assetPair: {
-    baseAsset: string;
-    quoteAsset: string;
-  };
-};
-
-export type CompoundFeedResult = {
-  vendor: PriceFeedVendors.Compound;
-  data: CompoundFeedEntry;
-  assetPair: {
-    baseAsset: string;
-    quoteAsset: string;
-  };
-};
-
-export type GeneralFeedResult = {
-  vendor:
-    | PriceFeedVendors.Redstone
-    | PriceFeedVendors.PythNetwork
-    | PriceFeedVendors.Oval
-    | PriceFeedVendors.Lido;
-  data: GeneralPriceFeed;
-  assetPair: {
-    baseAsset: string;
-    quoteAsset: string;
-  };
-};
-
-export type UnknownFeedResult = {
-  vendor: PriceFeedVendors.Unknown;
-  data: GeneralPriceFeed | null;
-  assetPair: {
-    baseAsset: string;
-    quoteAsset: string;
-  };
-};
-
-// Discriminated union - ensures vendor and data types are always matched correctly
-export type FeedVendorResult =
-  | ChainlinkFeedResult
-  | CompoundFeedResult
-  | GeneralFeedResult
-  | UnknownFeedResult;
-
-/**
- * Centralized function to detect feed vendor and retrieve corresponding data
- * @param feedAddress - The feed contract address
- * @param chainId - The chain ID
- * @returns FeedVendorResult with vendor, data, and asset pair information
- */
-export function detectFeedVendor(feedAddress: Address | string, chainId: number): FeedVendorResult {
-  const address = feedAddress as Address;
-
-  // Check if it's a Chainlink feed
-  if (isChainlinkOracle(chainId, address)) {
-    const chainlinkData = getChainlinkOracle(chainId, address);
-    if (chainlinkData) {
-      return {
-        vendor: PriceFeedVendors.Chainlink,
-        data: chainlinkData,
-        assetPair: {
-          baseAsset: chainlinkData.baseAsset,
-          quoteAsset: chainlinkData.quoteAsset,
-        },
-      } satisfies ChainlinkFeedResult;
-    }
-  }
-
-  // Check if it's a Compound feed
-  if (isCompoundFeed(address)) {
-    const compoundData = getCompoundFeed(address);
-    if (compoundData) {
-      return {
-        vendor: PriceFeedVendors.Compound,
-        data: compoundData,
-        assetPair: {
-          baseAsset: compoundData.base,
-          quoteAsset: compoundData.quote,
-        },
-      } satisfies CompoundFeedResult;
-    }
-  }
-
-  // Check if it's a general price feed (from various vendors via Morpho's API data)
-  if (isGeneralFeed(address, chainId)) {
-    const generalFeedData = getGeneralFeed(address, chainId);
-    if (generalFeedData) {
-      // Map the vendor name from the general feed data to our enum
-      const vendorName = generalFeedData.vendor.toLowerCase();
-
-      // Return proper discriminated union based on vendor
-      if (vendorName === 'redstone') {
-        return {
-          vendor: PriceFeedVendors.Redstone,
-          data: generalFeedData,
-          assetPair: {
-            baseAsset: generalFeedData.pair[0],
-            quoteAsset: generalFeedData.pair[1],
-          },
-        } satisfies GeneralFeedResult;
-      }
-
-      if (vendorName === 'pyth network' || vendorName === 'pyth') {
-        return {
-          vendor: PriceFeedVendors.PythNetwork,
-          data: generalFeedData,
-          assetPair: {
-            baseAsset: generalFeedData.pair[0],
-            quoteAsset: generalFeedData.pair[1],
-          },
-        } satisfies GeneralFeedResult;
-      }
-
-      if (vendorName === 'oval') {
-        return {
-          vendor: PriceFeedVendors.Oval,
-          data: generalFeedData,
-          assetPair: {
-            baseAsset: generalFeedData.pair[0],
-            quoteAsset: generalFeedData.pair[1],
-          },
-        } satisfies GeneralFeedResult;
-      }
-
-      if (vendorName === 'lido') {
-        return {
-          vendor: PriceFeedVendors.Lido,
-          data: generalFeedData,
-          assetPair: {
-            baseAsset: generalFeedData.pair[0],
-            quoteAsset: generalFeedData.pair[1],
-          },
-        } satisfies GeneralFeedResult;
-      }
-
-      // For vendors not in our enum (like Pendle), return as unknown but with data
-      return {
-        vendor: PriceFeedVendors.Unknown,
-        data: generalFeedData,
-        assetPair: {
-          baseAsset: generalFeedData.pair[0],
-          quoteAsset: generalFeedData.pair[1],
-        },
-      } satisfies UnknownFeedResult;
-    }
-  }
-
-  // Unknown feed - use fallback pair or default to Unknown
-  return {
-    vendor: PriceFeedVendors.Unknown,
-    data: null,
-    assetPair: {
-      baseAsset: 'Unknown',
-      quoteAsset: 'Unknown',
-    },
-  } satisfies UnknownFeedResult;
 }
 
 /**

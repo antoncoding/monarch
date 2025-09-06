@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Address } from 'viem';
 import { IoHelpCircleOutline } from 'react-icons/io5';
+import { Address } from 'viem';
 import etherscanLogo from '@/imgs/etherscan.png';
-import { getSlicedAddress } from '@/utils/address';
 import { getExplorerURL } from '@/utils/external';
 import { OracleFeed } from '@/utils/types';
 

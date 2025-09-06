@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { Address } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import {
-  ChainlinkOracleEntry,
   getChainlinkFeedUrl,
   getChainlinkOracle,
 } from '@/constants/oracle/chainlink-data';

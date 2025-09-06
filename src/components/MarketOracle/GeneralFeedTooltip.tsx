@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Address } from 'viem';
-import { Badge } from '@/components/common/Badge';
 import { GeneralPriceFeed } from '@/constants/oracle/general-feeds';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';

@@ -104,7 +104,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
           )}
 
           {(isChainlink || isCompound) && vendorIcon ? (
-            <Image src={vendorIcon} alt={'Oracle'} width={12} height={12} className="flex-shrink-0" />
+            <Image src={vendorIcon} alt="Oracle" width={12} height={12} className="flex-shrink-0" />
           ) : (
             <IoHelpCircleOutline size={14} className="text-secondary flex-shrink-0" />
           )}

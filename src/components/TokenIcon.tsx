@@ -3,7 +3,6 @@ import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TooltipContent } from './TooltipContent';
-import { getTruncatedAssetName } from '@/utils/oracle';
 type TokenIconProps = {
   address: string;
   chainId: number;
