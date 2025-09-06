@@ -1,66 +1,27 @@
-import { Tooltip } from '@heroui/react';
-import { ExternalLinkIcon, QuestionMarkCircledIcon } from '@radix-ui/react-icons';
-import { OracleFeedInfo } from '@/components/FeedInfo/OracleFeedInfo';
 import { Info } from '@/components/Info/info';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { TooltipContent } from '@/components/TooltipContent';
+import { OracleTypeInfo } from '@/components/MarketOracle';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable } from '@/utils/balance';
-import { getExplorerURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   const oracleData = market.oracle ? market.oracle.data : null;
   const warningsWithDetail = useMarketWarnings(market, true);
 
-  const hasFeeds =
-    oracleData &&
-    (oracleData.baseFeedOne ||
-      oracleData.baseFeedTwo ||
-      oracleData.quoteFeedOne ||
-      oracleData.quoteFeedTwo);
-
   return (
     <div className="m-4 flex max-w-xs flex-col gap-2 sm:max-w-sm lg:max-w-none lg:flex-row">
-      {/* Oracle info */}
       <div className="m-4 lg:w-1/3">
         <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Oracle Info</p>
         </div>
-        <div className="flex items-start justify-between">
-          <p className="font-inter text-sm opacity-80">Vendors:</p>
-          <a
-            className="group flex items-center gap-1 no-underline hover:underline"
-            href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-            target="_blank"
-          >
-            <OracleVendorBadge oracleData={oracleData} chainId={market.morphoBlue.chain.id} useTooltip />
-            <ExternalLinkIcon />
-          </a>
-        </div>
-        {hasFeeds && (
-          <div className="">
-            <div className="mb-1 flex items-center">
-              <p className="text-left font-inter text-sm opacity-80">Feed Routes:</p>
-              <Tooltip
-                content={
-                  <TooltipContent
-                    icon={<QuestionMarkCircledIcon className="h-4 w-4" />}
-                    title="Feed Routes"
-                    detail="Feed routes show how asset prices are derived from different oracle providers"
-                  />
-                }
-                className="max-w-[400px] rounded-sm p-2"
-              >
-                <QuestionMarkCircledIcon className="ml-2 h-4 w-4 cursor-help text-secondary" />
-              </Tooltip>
-            </div>
-            <OracleFeedInfo feed={oracleData.baseFeedOne} chainId={market.morphoBlue.chain.id} />
-            <OracleFeedInfo feed={oracleData.baseFeedTwo} chainId={market.morphoBlue.chain.id} />
-            <OracleFeedInfo feed={oracleData.quoteFeedOne} chainId={market.morphoBlue.chain.id} />
-            <OracleFeedInfo feed={oracleData.quoteFeedTwo} chainId={market.morphoBlue.chain.id} />
-          </div>
-        )}
+
+        {/* contains: Oracle Info:    Standard (Custom...etc) */}
+        <OracleTypeInfo
+          oracleData={oracleData}
+          oracleAddress={market.oracleAddress}
+          chainId={market.morphoBlue.chain.id}
+          showLink
+        />
       </div>
 
       {/* market info */}

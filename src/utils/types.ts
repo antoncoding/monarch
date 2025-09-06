@@ -245,10 +245,8 @@ export type OracleFeed = {
   chain: {
     id: number;
   };
-  description: string | null;
   id: string;
   pair: string[] | null;
-  vendor: string | null;
 };
 
 export type MorphoChainlinkOracleData = {

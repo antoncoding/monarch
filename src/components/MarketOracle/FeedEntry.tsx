@@ -28,11 +28,12 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
     return detectFeedVendor(feed.address as Address, chainId);
   }, [feed?.address, chainId, feed?.pair]);
 
+  console.log('feedVendorResult', feedVendorResult)
+
   if (!feed) return null;
 
   if (!feedVendorResult) return null;
 
-  console.log('feedVendorResult', feedVendorResult)
 
   const { vendor, data, assetPair } = feedVendorResult;
   const { fromAsset, toAsset } = {
@@ -96,7 +97,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
           )}
 
           {(isChainlink || isCompound) && vendorIcon ? (
-            <Image src={vendorIcon} alt={feed.vendor ?? 'Oracle'} width={12} height={12} />
+            <Image src={vendorIcon} alt={'Oracle'} width={12} height={12} />
           ) : (
             <IoWarningOutline size={12} className="text-yellow-500" />
           )}
