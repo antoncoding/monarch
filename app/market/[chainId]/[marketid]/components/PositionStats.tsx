@@ -66,6 +66,7 @@ export function PositionStats({
                 symbol={market.loanAsset.symbol}
                 width={16}
                 height={16}
+                truncated
               />
               <span>
                 {formatBalance(
@@ -85,6 +86,7 @@ export function PositionStats({
                 symbol={market.loanAsset.symbol}
                 width={16}
                 height={16}
+                truncated
               />
               <span>
                 {formatBalance(

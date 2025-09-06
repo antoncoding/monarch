@@ -10,6 +10,11 @@ import { isSupportedChain } from './networks';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
+  coreVendors: PriceFeedVendors[];           // Well-known vendors (Chainlink, Redstone, etc.)
+  taggedVendors: string[];                   // Tagged by Morpho but not core (Pendle, Spectra, etc.)
+  hasCompletelyUnknown: boolean;             // True unknown feeds (no data found)
+  hasTaggedUnknown: boolean;                 // Tagged but not in core vendors
+  // Legacy properties for backward compatibility
   vendors: PriceFeedVendors[];
   hasUnknown: boolean;
 };
@@ -72,15 +77,34 @@ export function parsePriceFeedVendors(
   chainId: number,
 ): VendorInfo {
 
-  if (!oracleData) return { vendors: [], hasUnknown: false };
+  if (!oracleData) {
+    return { 
+      coreVendors: [], 
+      taggedVendors: [], 
+      hasCompletelyUnknown: false, 
+      hasTaggedUnknown: false,
+      // Legacy properties
+      vendors: [], 
+      hasUnknown: false 
+    };
+  }
 
   if (
     !oracleData.baseFeedOne &&
     !oracleData.baseFeedTwo &&
     !oracleData.quoteFeedOne &&
     !oracleData.quoteFeedTwo
-  )
-    return { vendors: [], hasUnknown: true };
+  ) {
+    return { 
+      coreVendors: [], 
+      taggedVendors: [], 
+      hasCompletelyUnknown: true, 
+      hasTaggedUnknown: false,
+      // Legacy properties
+      vendors: [], 
+      hasUnknown: true 
+    };
+  }
 
   const feeds = [
     oracleData.baseFeedOne,
@@ -89,25 +113,50 @@ export function parsePriceFeedVendors(
     oracleData.quoteFeedTwo,
   ];
 
-  const vendors = new Set<PriceFeedVendors>();
-  let hasUnknown = false;
+  const coreVendors = new Set<PriceFeedVendors>();
+  const taggedVendors = new Set<string>();
+  let hasCompletelyUnknown = false;
+  let hasTaggedUnknown = false;
 
   for (const feed of feeds) {
     if (feed?.address) {
       const feedResult = detectFeedVendor(feed.address, chainId);
-      vendors.add(feedResult.vendor);
+      
       if (feedResult.vendor === PriceFeedVendors.Unknown) {
-        hasUnknown = true;
+        // Check if this unknown feed actually has data (tagged by Morpho)
+        if (feedResult.data) {
+          // It's tagged by Morpho but not in our core vendors enum
+          taggedVendors.add(feedResult.data.vendor);
+          hasTaggedUnknown = true;
+        } else {
+          // Completely unknown feed
+          hasCompletelyUnknown = true;
+        }
+      } else {
+        // It's a core vendor
+        coreVendors.add(feedResult.vendor);
       }
     }
   }
 
-  // If we have no feeds with addresses, that should be considered as having unknown feeds
+  // If we have no feeds with addresses, that should be considered as completely unknown
   const hasFeeds = feeds.some(feed => feed?.address);
+  if (!hasFeeds) {
+    hasCompletelyUnknown = true;
+  }
+  
+  // Legacy support - combine all vendors for backward compatibility
+  const legacyVendors = Array.from(coreVendors);
+  const legacyHasUnknown = hasCompletelyUnknown || hasTaggedUnknown;
   
   return {
-    vendors: Array.from(vendors),
-    hasUnknown: hasUnknown || !hasFeeds,
+    coreVendors: Array.from(coreVendors),
+    taggedVendors: Array.from(taggedVendors),
+    hasCompletelyUnknown,
+    hasTaggedUnknown,
+    // Legacy properties for backward compatibility
+    vendors: legacyVendors,
+    hasUnknown: legacyHasUnknown,
   };
 }
 

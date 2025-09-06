@@ -13,39 +13,24 @@ type UnknownFeedTooltipProps = {
 };
 
 export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
-  const baseAsset = feed.pair?.[0] ?? 'Unknown';
-  const quoteAsset = feed.pair?.[1] ?? 'Unknown';
-
   return (
-    <div className="bg-surface flex max-w-md rounded-sm border border-gray-200/20 p-4 shadow-sm dark:border-gray-600/15">
+    <div className="bg-surface flex max-w-xs rounded-sm border border-gray-200/20 p-4 shadow-sm dark:border-gray-600/15">
       <div className="flex w-full flex-col gap-3">
         {/* Header with icon and title */}
         <div className="flex items-center gap-2">
           <IoHelpCircleOutline className="text-secondary" size={16} />
-          <div className="font-zen font-bold">Unknown Feed Details</div>
+          <div className="font-zen font-bold">Unknown Price Feed</div>
         </div>
 
-        {/* Feed pair name */}
-        <div className="flex items-center gap-2">
-          <div className="font-zen text-base font-semibold text-gray-800 dark:text-gray-200">
-            {baseAsset} / {quoteAsset}
-          </div>
-        </div>
-
-        {/* Oracle Information */}
-        <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          <div className="flex justify-between font-zen text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Address:</span>
-            <span className="font-mono text-xs font-medium">
-              {getSlicedAddress(feed.address as Address)}
-            </span>
-          </div>
+        {/* Description */}
+        <div className="font-zen text-sm text-gray-600 dark:text-gray-400">
+          This oracle uses an unrecognized price feed contract.
         </div>
 
         {/* External Links */}
         <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
           <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">
-            View on:
+            View contract:
           </div>
           <div className="flex items-center gap-2">
             <Link

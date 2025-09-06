@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
-import { IoWarningOutline } from 'react-icons/io5';
+import { IoHelpCircleOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import {
   detectFeedVendor,
@@ -28,8 +28,6 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
     return detectFeedVendor(feed.address as Address, chainId);
   }, [feed?.address, chainId, feed?.pair]);
 
-  console.log('feedVendorResult', feedVendorResult)
-
   if (!feed) return null;
 
   if (!feedVendorResult) return null;
@@ -40,6 +38,9 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
     fromAsset: getTruncatedAssetName(assetPair.fromAsset),
     toAsset: getTruncatedAssetName(assetPair.toAsset),
   };
+  
+  // Don't show asset pair if it's unknown
+  const showAssetPair = !(assetPair.fromAsset === 'Unknown' && assetPair.toAsset === 'Unknown');
 
   const vendorIcon = OracleVendorIcons[vendor];
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
@@ -83,23 +84,29 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
       content={getTooltipContent()}
     >
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
-        <div className="flex items-center gap-1">
-          <span className="text-xs">{fromAsset}</span>
-          <IoIosSwap className="text-xs text-gray-500" size={10} />
-          <span className="text-xs">{toAsset}</span>
-        </div>
+        {showAssetPair ? (
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{fromAsset}</span>
+            <IoIosSwap className="text-xs text-gray-500 flex-shrink-0" size={10} />
+            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{toAsset}</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <span className="text-xs font-medium text-gray-500">Unknown Feed</span>
+          </div>
+        )}
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0">
           {isSVR && (
-            <span className="rounded bg-orange-100 px-1 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+            <span className="rounded bg-orange-100 px-1 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900 dark:text-orange-200 whitespace-nowrap">
               SVR
             </span>
           )}
 
           {(isChainlink || isCompound) && vendorIcon ? (
-            <Image src={vendorIcon} alt={'Oracle'} width={12} height={12} />
+            <Image src={vendorIcon} alt={'Oracle'} width={12} height={12} className="flex-shrink-0" />
           ) : (
-            <IoWarningOutline size={12} className="text-yellow-500" />
+            <IoHelpCircleOutline size={14} className="text-secondary flex-shrink-0" />
           )}
         </div>
       </div>

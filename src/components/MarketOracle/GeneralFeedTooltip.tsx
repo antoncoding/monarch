@@ -21,26 +21,6 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
     OracleVendorIcons[feedData.vendor as PriceFeedVendors] ||
     OracleVendorIcons[PriceFeedVendors.Unknown];
 
-  // Get vendor badge variant based on vendor type
-  const getVendorBadge = (vendor: string) => {
-    const variantMap = {
-      redstone: 'danger' as const,
-      'pyth network': 'primary' as const,
-      pyth: 'primary' as const,
-      oval: 'warning' as const,
-      lido: 'success' as const,
-      pendle: 'secondary' as const,
-    };
-
-    const variant = variantMap[vendor.toLowerCase() as keyof typeof variantMap] || 'primary';
-
-    return (
-      <Badge variant={variant} size="sm">
-        {vendor.toUpperCase()}
-      </Badge>
-    );
-  };
-
   return (
     <div className="bg-surface flex max-w-xs rounded-sm border border-gray-200/20 p-4 shadow-sm dark:border-gray-600/15">
       <div className="flex w-full flex-col gap-3">
@@ -59,7 +39,6 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
           <div className="font-zen text-base font-semibold text-gray-800 dark:text-gray-200">
             {baseAsset} / {quoteAsset}
           </div>
-          {getVendorBadge(feedData.vendor)}
         </div>
 
         {/* Feed Details */}
@@ -67,14 +46,6 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
           <div className="flex justify-between font-zen text-sm">
             <span className="text-gray-600 dark:text-gray-400">Vendor:</span>
             <span className="font-medium">{feedData.vendor}</span>
-          </div>
-          <div className="flex justify-between font-zen text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Decimals:</span>
-            <span className="font-medium">{feedData.decimals}</span>
-          </div>
-          <div className="flex justify-between font-zen text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Chain ID:</span>
-            <span className="font-medium">{feedData.chainId}</span>
           </div>
         </div>
 

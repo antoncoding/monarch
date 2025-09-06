@@ -10,9 +10,10 @@ type OracleTypeInfoProps = {
   oracleAddress: string;
   chainId: number;
   showLink?: boolean;
+  showCustom?: boolean
 };
 
-export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink }: OracleTypeInfoProps) {
+export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink, showCustom }: OracleTypeInfoProps) {
   const oracleType = getOracleType(oracleData);
   const typeDescription = getOracleTypeDescription(oracleType);
 
@@ -44,7 +45,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink }:
           quoteFeedTwo={oracleData?.quoteFeedTwo}
           chainId={chainId}
         />
-      ) : (
+      ) : showCustom ? (
         <div className="space-y-1">
           <div className="text-xs text-gray-600 dark:text-gray-400">{typeDescription}</div>
           <div className="text-xs text-gray-500 dark:text-gray-500">
@@ -52,7 +53,7 @@ export function OracleTypeInfo({ oracleData, oracleAddress, chainId, showLink }:
             feed structure.
           </div>
         </div>
-      )}
+      ) : (<></>)}
     </>
   );
 }

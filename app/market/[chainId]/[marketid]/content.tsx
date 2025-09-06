@@ -284,6 +284,7 @@ function MarketContent() {
                       symbol={market.collateralAsset.symbol}
                       width={20}
                       height={20}
+                      truncated
                     />
                     <Link
                       href={getExplorerURL(

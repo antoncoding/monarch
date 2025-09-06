@@ -125,10 +125,19 @@ const INCOMPATIBLE_ORACLE_FEEDS: WarningWithDetail = {
   category: WarningCategory.oracle,
 };
 
+// not on any list: Danger (alert level)
 const UNRECOGNIZED_FEEDS: WarningWithDetail = {
   code: 'unknown feeds',
   level: 'alert',
-  description: 'This market oracle has feed(s) that are not part of our recognized feeds list.',
+  description: 'This market oracle has feed(s) that are not part of any recognized feeds list.',
+  category: WarningCategory.oracle,
+};
+
+// morpho config list
+const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
+  code: 'unknown feeds tagged',
+  level: 'warning',
+  description: 'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
   category: WarningCategory.oracle,
 };
 
@@ -196,11 +205,18 @@ export const getMarketWarningsWithDetail = (
   );
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
-  // if any of the feeds are not null but also not recognized, return feed warning
+  // if any of the feeds are not null but also not recognized, return appropriate feed warning
   if (oracleType === OracleType.Standard && market.oracle?.data) {
     const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
-    if (vendorInfo.hasUnknown) {
+    
+    // Completely unknown feeds get the stronger warning
+    if (vendorInfo.hasCompletelyUnknown) {
       result.push(UNRECOGNIZED_FEEDS);
+    }
+    
+    // Tagged but not core vendors get the milder warning
+    if (vendorInfo.hasTaggedUnknown) {
+      result.push(UNRECOGNIZED_FEEDS_TAGGED);
     }
   }
 

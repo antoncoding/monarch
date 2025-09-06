@@ -34,7 +34,8 @@ function OracleVendorBadge({
   // check whether it's standard oracle or not.
   const isCustom = getOracleType(oracleData) === OracleType.Custom
 
-  const { vendors, hasUnknown } = parsePriceFeedVendors(oracleData, chainId);
+  const vendorInfo = parsePriceFeedVendors(oracleData, chainId);
+  const { coreVendors, taggedVendors, hasCompletelyUnknown, hasTaggedUnknown, vendors, hasUnknown } = vendorInfo;
 
   const content = (
     <div className="flex items-center space-x-1 rounded p-1">
@@ -45,8 +46,17 @@ function OracleVendorBadge({
       )}
       {isCustom ? (
         <IoWarningOutline className="text-secondary" size={16} />
+      ) : hasCompletelyUnknown || hasTaggedUnknown ? (
+        // Show core vendor icons plus question mark for any unknown types
+        <>
+          {coreVendors.map((vendor, index) => (
+            <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
+          ))}
+          <IoHelpCircleOutline className="text-secondary" size={18} />
+        </>
       ) : (
-        vendors.map((vendor, index) => (
+        // Only core vendors, show their icons
+        coreVendors.map((vendor, index) => (
           <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
         ))
       )}
@@ -64,16 +74,24 @@ function OracleVendorBadge({
         );
       }
 
-      if (hasUnknown) {
-        const knownVendors = vendors.filter(v => v !== PriceFeedVendors.Unknown);
-        const unknownCount = vendors.filter(v => v === PriceFeedVendors.Unknown).length;
-        
+      if (hasCompletelyUnknown || hasTaggedUnknown) {
         let description = '';
-        if (knownVendors.length > 0) {
-          description = `Uses feeds from ${knownVendors.join(', ')}, plus ${unknownCount} unknown feed${unknownCount > 1 ? 's' : ''}.`;
-        } else {
-          description = `Uses ${unknownCount} unknown feed${unknownCount > 1 ? 's' : ''} only.`;
+        const parts = [];
+        
+        if (coreVendors.length > 0) {
+          parts.push(`${coreVendors.join(', ')}`);
         }
+        
+        if (taggedVendors.length > 0) {
+          parts.push(`${taggedVendors.join(', ')} (third-party)`);
+        }
+        
+        if (hasCompletelyUnknown) {
+          const unknownCount = 1; // Simplified for now
+          parts.push(`${unknownCount} unrecognized feed${unknownCount > 1 ? 's' : ''}`);
+        }
+        
+        description = `Uses feeds from: ${parts.join(', ')}.`;
         
         return (
           <div className="m-2">
@@ -83,10 +101,12 @@ function OracleVendorBadge({
         );
       }
 
+      // All core vendors - clean case
+      const allVendors = [...coreVendors, ...taggedVendors];
       return (
         <div className="m-2">
           <p className="py-2 text-sm font-medium">Standard Oracle</p>
-          <p className="text-xs text-secondary">Uses feeds from {vendors.join(', ')}.</p>
+          <p className="text-xs text-secondary">Uses feeds from {allVendors.join(', ')}.</p>
         </div>
       );
     };

@@ -21,6 +21,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
           oracleAddress={market.oracleAddress}
           chainId={market.morphoBlue.chain.id}
           showLink
+          showCustom={false}
         />
       </div>
 
