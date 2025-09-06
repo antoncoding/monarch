@@ -214,13 +214,8 @@ function getFeedPath(
 ): { base: string; quote: string } {
   if (!feed || !feed.address) return { base: 'EMPTY', quote: 'EMPTY' };
 
-  const chainlinkData = getChainlinkOracle(chainId, feed.address);
-  if (!chainlinkData) return { base: 'EMPTY', quote: 'EMPTY' };
-
-  return {
-    base: chainlinkData.baseAsset.toLowerCase(),
-    quote: chainlinkData.quoteAsset.toLowerCase(),
-  };
+  const data = detectFeedVendor(feed.address, chainId);
+  return { base: data.assetPair.baseAsset, quote: data.assetPair.quoteAsset }
 }
 
 // Discriminated union types for feed detection results
@@ -228,8 +223,8 @@ export type ChainlinkFeedResult = {
   vendor: PriceFeedVendors.Chainlink;
   data: ChainlinkOracleEntry;
   assetPair: {
-    fromAsset: string;
-    toAsset: string;
+    baseAsset: string;
+    quoteAsset: string;
   };
 };
 
@@ -237,8 +232,8 @@ export type CompoundFeedResult = {
   vendor: PriceFeedVendors.Compound;
   data: CompoundFeedEntry;
   assetPair: {
-    fromAsset: string;
-    toAsset: string;
+    baseAsset: string;
+    quoteAsset: string;
   };
 };
 
@@ -250,8 +245,8 @@ export type GeneralFeedResult = {
     | PriceFeedVendors.Lido;
   data: GeneralPriceFeed;
   assetPair: {
-    fromAsset: string;
-    toAsset: string;
+    baseAsset: string;
+    quoteAsset: string;
   };
 };
 
@@ -259,8 +254,8 @@ export type UnknownFeedResult = {
   vendor: PriceFeedVendors.Unknown;
   data: GeneralPriceFeed | null;
   assetPair: {
-    fromAsset: string;
-    toAsset: string;
+    baseAsset: string;
+    quoteAsset: string;
   };
 };
 
@@ -288,8 +283,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
         vendor: PriceFeedVendors.Chainlink,
         data: chainlinkData,
         assetPair: {
-          fromAsset: chainlinkData.baseAsset,
-          toAsset: chainlinkData.quoteAsset,
+          baseAsset: chainlinkData.baseAsset,
+          quoteAsset: chainlinkData.quoteAsset,
         },
       } satisfies ChainlinkFeedResult;
     }
@@ -303,8 +298,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
         vendor: PriceFeedVendors.Compound,
         data: compoundData,
         assetPair: {
-          fromAsset: compoundData.base,
-          toAsset: compoundData.quote,
+          baseAsset: compoundData.base,
+          quoteAsset: compoundData.quote,
         },
       } satisfies CompoundFeedResult;
     }
@@ -323,8 +318,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
           vendor: PriceFeedVendors.Redstone,
           data: generalFeedData,
           assetPair: {
-            fromAsset: generalFeedData.pair[0],
-            toAsset: generalFeedData.pair[1],
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
           },
         } satisfies GeneralFeedResult;
       }
@@ -334,8 +329,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
           vendor: PriceFeedVendors.PythNetwork,
           data: generalFeedData,
           assetPair: {
-            fromAsset: generalFeedData.pair[0],
-            toAsset: generalFeedData.pair[1],
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
           },
         } satisfies GeneralFeedResult;
       }
@@ -345,8 +340,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
           vendor: PriceFeedVendors.Oval,
           data: generalFeedData,
           assetPair: {
-            fromAsset: generalFeedData.pair[0],
-            toAsset: generalFeedData.pair[1],
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
           },
         } satisfies GeneralFeedResult;
       }
@@ -356,8 +351,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
           vendor: PriceFeedVendors.Lido,
           data: generalFeedData,
           assetPair: {
-            fromAsset: generalFeedData.pair[0],
-            toAsset: generalFeedData.pair[1],
+            baseAsset: generalFeedData.pair[0],
+            quoteAsset: generalFeedData.pair[1],
           },
         } satisfies GeneralFeedResult;
       }
@@ -367,8 +362,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
         vendor: PriceFeedVendors.Unknown,
         data: generalFeedData,
         assetPair: {
-          fromAsset: generalFeedData.pair[0],
-          toAsset: generalFeedData.pair[1],
+          baseAsset: generalFeedData.pair[0],
+          quoteAsset: generalFeedData.pair[1],
         },
       } satisfies UnknownFeedResult;
     }
@@ -379,8 +374,8 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
     vendor: PriceFeedVendors.Unknown,
     data: null,
     assetPair: {
-      fromAsset: 'Unknown',
-      toAsset: 'Unknown',
+      baseAsset: 'Unknown',
+      quoteAsset: 'Unknown',
     },
   } satisfies UnknownFeedResult;
 }

@@ -34,13 +34,13 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
 
 
   const { vendor, data, assetPair } = feedVendorResult;
-  const { fromAsset, toAsset } = {
-    fromAsset: getTruncatedAssetName(assetPair.fromAsset),
-    toAsset: getTruncatedAssetName(assetPair.toAsset),
+  const { baseAsset, quoteAsset } = {
+    baseAsset: getTruncatedAssetName(assetPair.baseAsset),
+    quoteAsset: getTruncatedAssetName(assetPair.quoteAsset),
   };
   
   // Don't show asset pair if it's unknown
-  const showAssetPair = !(assetPair.fromAsset === 'Unknown' && assetPair.toAsset === 'Unknown');
+  const showAssetPair = !(assetPair.baseAsset === 'Unknown' && assetPair.quoteAsset === 'Unknown');
 
   const vendorIcon = OracleVendorIcons[vendor];
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
@@ -86,9 +86,9 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
         {showAssetPair ? (
           <div className="flex items-center gap-1 min-w-0 flex-1">
-            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{fromAsset}</span>
+            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{baseAsset}</span>
             <IoIosSwap className="text-xs text-gray-500 flex-shrink-0" size={10} />
-            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{toAsset}</span>
+            <span className="text-xs font-medium whitespace-nowrap truncate max-w-[2.5rem]">{quoteAsset}</span>
           </div>
         ) : (
           <div className="flex items-center gap-1 min-w-0 flex-1">
