@@ -30,6 +30,7 @@ import { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
 import { LiquidationsTable } from './components/LiquidationsTable';
 import { PositionStats } from './components/PositionStats';
+import { RewardsInfo } from './components/RewardsInfo';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
@@ -234,6 +235,14 @@ function MarketContent() {
           {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
         </h1>
 
+        <div className="mb-8">
+          <RewardsInfo
+            marketId={marketid as string}
+            loanTokenAddress={market.loanAsset.address}
+            chainId={market.morphoBlue.chain.id}
+          />
+        </div>
+
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
@@ -271,7 +280,7 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {market.loanAsset.symbol} <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.loanAsset.symbol)} <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>

@@ -1,0 +1,1 @@
+export { useMerklCampaigns } from '@/contexts/MerklCampaignsContext';

@@ -81,6 +81,7 @@ export function SupplyModalV2({
               showDetailsLink={!isMarketPage}
               defaultCollapsed
               mode="supply"
+              showRewards
             />
           </div>
 

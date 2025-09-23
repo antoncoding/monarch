@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
+import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getIRMTitle } from '@/utils/morpho';
+import { getTruncatedAssetName } from '@/utils/oracle';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
@@ -13,6 +15,7 @@ type MarketDetailsBlockProps = {
   showDetailsLink?: boolean;
   defaultCollapsed?: boolean;
   mode?: 'supply' | 'borrow';
+  showRewards?: boolean;
 };
 
 export function MarketDetailsBlock({
@@ -20,8 +23,15 @@ export function MarketDetailsBlock({
   showDetailsLink = false,
   defaultCollapsed = false,
   mode = 'supply',
+  showRewards = false,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed);
+
+  const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
+    marketId: market.uniqueKey,
+    loanTokenAddress: market.loanAsset.address,
+    chainId: market.morphoBlue.chain.id,
+  });
 
   // Helper to format APY based on mode
   const getAPY = () => {
@@ -69,8 +79,8 @@ export function MarketDetailsBlock({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{market.loanAsset.symbol}</span>
-              <span className="text-xs opacity-50">/ {market.collateralAsset.symbol}</span>
+              <span className="text-sm font-medium">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
+              <span className="text-xs opacity-50">/ {getTruncatedAssetName(market.collateralAsset.symbol)}</span>
               {showDetailsLink && (
                 <a
                   href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
@@ -135,6 +145,28 @@ export function MarketDetailsBlock({
                       </p>
                       <p className="text-right text-sm font-bold">{getAPY()}%</p>
                     </div>
+                    {showRewards && hasActiveRewards && (
+                      <div className="flex items-start justify-between">
+                        <p className="font-zen text-sm opacity-50 flex items-center gap-1">
+                          Extra Rewards:
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
+                            +{activeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
+                          </p>
+                          {activeCampaigns.map((campaign, index) => (
+                            <TokenIcon
+                              key={index}
+                              address={campaign.rewardToken.address}
+                              chainId={campaign.chainId}
+                              symbol={campaign.rewardToken.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Total Supply:</p>
                       <p className="text-right text-sm">

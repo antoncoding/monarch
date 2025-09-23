@@ -111,7 +111,7 @@ export function PositionStats({
                   BigInt(userPosition.state.collateral || 0),
                   market.collateralAsset.decimals,
                 ).toString()}{' '}
-                {market.collateralAsset.symbol}
+                {getTruncatedAssetName(market.collateralAsset.symbol)}
               </span>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function PositionStats({
                   market.loanAsset.decimals,
                 ).toString(),
               )}{' '}
-              {market.loanAsset.symbol}
+              {getTruncatedAssetName(market.loanAsset.symbol)}
             </span>
           </div>
         </div>
@@ -181,7 +181,7 @@ export function PositionStats({
                   market.collateralAsset.decimals,
                 ).toString(),
               )}{' '}
-              {market.collateralAsset.symbol}
+              {getTruncatedAssetName(market.collateralAsset.symbol)}
             </span>
           </div>
         </div>
