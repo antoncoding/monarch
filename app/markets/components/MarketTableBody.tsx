@@ -12,6 +12,7 @@ import { Market } from '@/utils/types';
 import logo from '../../../imgs/logo.png';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
+import { RewardsIndicator } from './RewardsIndicator';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 
 type MarketTableBodyProps = {
@@ -163,6 +164,10 @@ export function MarketTableBody({
                       </div>
                     </Tooltip>
                   )}
+                  <RewardsIndicator
+                    chainId={item.morphoBlue.chain.id}
+                    marketId={item.uniqueKey}
+                  />
                 </div>
               </td>
               <td data-label="Actions" className="justify-center px-4 py-3">

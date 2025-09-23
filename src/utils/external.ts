@@ -44,6 +44,26 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
   }
 };
 
+const getChainNameForMerkl = (chainId: number): string => {
+  switch (chainId) {
+    case 1:
+      return 'ethereum';
+    case 8453:
+      return 'base';
+    case 137:
+      return 'polygon';
+    case 1301:
+      return 'unichain';
+    default:
+      return 'ethereum';
+  }
+};
+
+export const getMerklCampaignURL = (chainId: number, type: string, campaignId: string): string => {
+  const chainName = getChainNameForMerkl(chainId);
+  return `https://app.merkl.xyz/opportunities/${chainName}/${type}/${campaignId}`;
+};
+
 export const EXTERNAL_LINKS = {
   docs: 'https://monarch-lend.gitbook.io/monarch-lend/',
   discord: 'https://discord.gg/Ur4dwN3aPS',
