@@ -106,8 +106,8 @@ export function RewardsInfo({ marketId, loanTokenAddress, chainId }: RewardsInfo
 
       {/* Campaign Rows */}
       <div className={activeCampaigns.length > 1 ? "space-y-1" : "space-y-2"}>
-        {activeCampaigns.map((campaign, index) => (
-          <RewardCampaignRow key={index} campaign={campaign} />
+        {activeCampaigns.map((campaign) => (
+          <RewardCampaignRow key={campaign.campaignId} campaign={campaign} />
         ))}
       </div>
     </div>

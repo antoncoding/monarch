@@ -96,21 +96,4 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
   return baseResult;
 }
 
-export function groupCampaignsByMarket(campaigns: MerklCampaign[]): Map<string, SimplifiedCampaign[]> {
-  const marketMap = new Map<string, SimplifiedCampaign[]>();
-
-  campaigns.forEach(campaign => {
-    const marketKey = `${campaign.computeChainId}-${campaign.params.market}`;
-    const simplified = simplifyMerklCampaign(campaign);
-
-    if (!marketMap.has(marketKey)) {
-      marketMap.set(marketKey, []);
-    }
-
-    marketMap.get(marketKey)!.push(simplified);
-  });
-
-  return marketMap;
-}
-
 export const merklApiClient = new MerklApiClient();
