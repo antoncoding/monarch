@@ -27,7 +27,11 @@ export function MarketDetailsBlock({
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed);
 
-  const { activeCampaigns, hasActiveRewards } = useMarketCampaigns(market.uniqueKey);
+  const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
+    marketId: market.uniqueKey,
+    loanTokenAddress: market.loanAsset.address,
+    chainId: market.morphoBlue.chain.id,
+  });
 
   // Helper to format APY based on mode
   const getAPY = () => {
@@ -146,9 +150,21 @@ export function MarketDetailsBlock({
                         <p className="font-zen text-sm opacity-50 flex items-center gap-1">
                           Extra Rewards:
                         </p>
-                        <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
-                          +{activeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
-                        </p>
+                        <div className="flex items-center gap-1">
+                          <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
+                            +{activeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
+                          </p>
+                          {activeCampaigns.map((campaign, index) => (
+                            <TokenIcon
+                              key={index}
+                              address={campaign.rewardToken.address}
+                              chainId={campaign.chainId}
+                              symbol={campaign.rewardToken.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          ))}
+                        </div>
                       </div>
                     )}
                     <div className="flex items-start justify-between">

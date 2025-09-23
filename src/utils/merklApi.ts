@@ -57,8 +57,13 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
   const now = Math.floor(Date.now() / 1000);
   const isActive = campaign.startTimestamp <= now && campaign.endTimestamp > now;
 
-  return {
-    marketId: campaign.params.market,
+  // For SINGLETOKEN campaigns, use targetToken as the identifier
+  const marketId = campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+    ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
+    : campaign.params.market;
+
+  const baseResult: SimplifiedCampaign = {
+    marketId,
     chainId: campaign.computeChainId,
     campaignId: campaign.campaignId,
     type: campaign.type,
@@ -68,16 +73,27 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
       icon: campaign.rewardToken.icon,
       address: campaign.rewardToken.address,
     },
-    collateralToken: {
-      symbol: campaign.params.symbolCollateralToken,
-    },
-    loanToken: {
-      symbol: campaign.params.symbolLoanToken,
-    },
     startTimestamp: campaign.startTimestamp,
     endTimestamp: campaign.endTimestamp,
     isActive,
   };
+
+  // Add type-specific fields
+  if (campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') {
+    baseResult.targetToken = {
+      symbol: campaign.params.symbolTargetToken,
+      address: campaign.params.targetToken,
+    };
+  } else {
+    baseResult.collateralToken = {
+      symbol: campaign.params.symbolCollateralToken,
+    };
+    baseResult.loanToken = {
+      symbol: campaign.params.symbolLoanToken,
+    };
+  }
+
+  return baseResult;
 }
 
 export function groupCampaignsByMarket(campaigns: MerklCampaign[]): Map<string, SimplifiedCampaign[]> {

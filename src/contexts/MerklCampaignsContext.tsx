@@ -31,9 +31,10 @@ export function MerklCampaignsProvider({
     try {
       const allRawCampaigns: MerklCampaign[] = [];
 
-      // Only fetch MORPHOSUPPLY to start simple
-      const typeCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY' });
-      allRawCampaigns.push(...typeCampaigns);
+      // Fetch both MORPHOSUPPLY and MORPHOSUPPLY_SINGLETOKEN campaigns
+      const supplyCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY' });
+      const singleTokenCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY_SINGLETOKEN' });
+      allRawCampaigns.push(...supplyCampaigns, ...singleTokenCampaigns);
 
       // Convert to simplified campaigns and normalize market IDs
       const simplifiedCampaigns = allRawCampaigns.map(campaign => {

@@ -236,7 +236,11 @@ function MarketContent() {
         </h1>
 
         <div className="mb-8">
-          <RewardsInfo marketId={marketid as string} />
+          <RewardsInfo
+            marketId={marketid as string}
+            loanTokenAddress={market.loanAsset.address}
+            chainId={market.morphoBlue.chain.id}
+          />
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">

@@ -11,29 +11,52 @@ type UseMarketCampaignsReturn = {
   error: string | null;
 };
 
-export function useMarketCampaigns(marketId: string): UseMarketCampaignsReturn {
+type MarketCampaignsOptions = {
+  marketId: string;
+  loanTokenAddress?: string;
+  chainId?: number;
+};
+
+export function useMarketCampaigns(
+  options: string | MarketCampaignsOptions
+): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaigns();
 
   const result = useMemo(() => {
+    // Handle both string and object parameters for backward compatibility
+    const marketId = typeof options === 'string' ? options : options.marketId;
+    const loanTokenAddress = typeof options === 'string' ? undefined : options.loanTokenAddress;
+    const chainId = typeof options === 'string' ? undefined : options.chainId;
+
     const normalizedMarketId = marketId.toLowerCase();
 
     // Filter campaigns for this specific market
-    const marketCampaigns = allCampaigns.filter(
+    const directMarketCampaigns = allCampaigns.filter(
       campaign => campaign.marketId.toLowerCase() === normalizedMarketId
     );
 
-    const activeCampaigns = marketCampaigns.filter(campaign => campaign.isActive);
+    // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
+    const singleTokenCampaigns = loanTokenAddress && chainId
+      ? allCampaigns.filter(campaign =>
+          campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&
+          campaign.chainId === chainId &&
+          campaign.targetToken?.address.toLowerCase() === loanTokenAddress.toLowerCase()
+        )
+      : [];
 
+    // Combine both types of campaigns
+    const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns];
+    const activeCampaigns = allMarketCampaigns.filter(campaign => campaign.isActive);
 
     return {
-      campaigns: marketCampaigns,
+      campaigns: allMarketCampaigns,
       activeCampaigns,
-      hasRewards: marketCampaigns.length > 0,
+      hasRewards: allMarketCampaigns.length > 0,
       hasActiveRewards: activeCampaigns.length > 0,
       loading,
       error,
     };
-  }, [allCampaigns, marketId, loading, error]);
+  }, [allCampaigns, options, loading, error]);
 
   return result;
 }

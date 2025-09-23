@@ -8,10 +8,15 @@ import merklLogo from '@/imgs/merkl.jpg';
 type RewardsIndicatorProps = {
   chainId: number;
   marketId: string;
+  loanTokenAddress?: string;
 };
 
-export function RewardsIndicator({ marketId }: RewardsIndicatorProps) {
-  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(marketId);
+export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: RewardsIndicatorProps) {
+  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(
+    loanTokenAddress
+      ? { marketId, loanTokenAddress, chainId }
+      : marketId
+  );
 
   if (loading || !hasActiveRewards) {
     return null;
@@ -19,7 +24,7 @@ export function RewardsIndicator({ marketId }: RewardsIndicatorProps) {
 
   // Create tooltip detail with all rewards
   const rewardsList = activeCampaigns.map(campaign => {
-    const rewardType = campaign.type === 'MORPHOSUPPLY' ? 'supplier' : 'borrower';
+    const rewardType = (campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') ? 'supplier' : 'borrower';
     return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
   }).join('\n');
 

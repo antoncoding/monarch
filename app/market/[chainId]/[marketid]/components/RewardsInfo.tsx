@@ -11,12 +11,21 @@ import { SimplifiedCampaign } from '@/utils/merklTypes';
 
 type RewardsInfoProps = {
   marketId: string;
+  loanTokenAddress?: string;
+  chainId?: number;
 };
 
 function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
-  const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, campaign.marketId.slice(0, 42));
-  const actionType = campaign.type === 'MORPHOSUPPLY' ? 'suppliers' : 'borrowers';
-  const actionVerb = campaign.type === 'MORPHOSUPPLY' ? 'supply' : 'borrow';
+  // For SINGLETOKEN campaigns, use the campaignId directly, for others use first 42 chars of marketId
+  const urlIdentifier = campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+    ? campaign.campaignId
+    : campaign.marketId.slice(0, 42);
+  const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
+
+  const actionType = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+    ? 'suppliers' : 'borrowers';
+  const actionVerb = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+    ? 'supply' : 'borrow';
 
   return (
     <Tooltip
@@ -36,7 +45,7 @@ function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         <div className="flex items-center gap-3">
           {/* Campaign Type Badge */}
           <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-800 dark:text-green-300">
-            {campaign.type === 'MORPHOSUPPLY' ? 'Supply' : 'Borrow'}
+            {campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'Supply' : 'Borrow'}
           </span>
 
           {/* Reward Token */}
@@ -74,8 +83,12 @@ function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
   );
 }
 
-export function RewardsInfo({ marketId }: RewardsInfoProps) {
-  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(marketId);
+export function RewardsInfo({ marketId, loanTokenAddress, chainId }: RewardsInfoProps) {
+  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(
+    loanTokenAddress && chainId
+      ? { marketId, loanTokenAddress, chainId }
+      : marketId
+  );
 
   if (loading || !hasActiveRewards) {
     return null;

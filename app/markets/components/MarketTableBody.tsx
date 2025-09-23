@@ -167,6 +167,7 @@ export function MarketTableBody({
                   <RewardsIndicator
                     chainId={item.morphoBlue.chain.id}
                     marketId={item.uniqueKey}
+                    loanTokenAddress={item.loanAsset.address}
                   />
                 </div>
               </td>

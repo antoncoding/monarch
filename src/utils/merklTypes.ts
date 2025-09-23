@@ -1,4 +1,4 @@
-export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW';
+export type MerklCampaignType = 'MORPHOSUPPLY' | 'MORPHOBORROW' | 'MORPHOSUPPLY_SINGLETOKEN';
 
 export type MerklCampaignStatus = {
   status: string;
@@ -123,11 +123,15 @@ export type SimplifiedCampaign = {
     icon: string;
     address: string;
   };
-  collateralToken: {
+  collateralToken?: {
     symbol: string;
   };
-  loanToken: {
+  loanToken?: {
     symbol: string;
+  };
+  targetToken?: {
+    symbol: string;
+    address: string;
   };
   startTimestamp: number;
   endTimestamp: number;
