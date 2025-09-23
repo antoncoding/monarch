@@ -16,9 +16,9 @@ type RewardsInfoProps = {
 };
 
 function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
-  // For SINGLETOKEN campaigns, use the campaignId directly, for others use first 42 chars of marketId
+  // For SINGLETOKEN campaigns, use the targetToken address, for others use first 42 chars of marketId
   const urlIdentifier = campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-    ? campaign.campaignId
+    ? campaign.targetToken?.address || campaign.campaignId
     : campaign.marketId.slice(0, 42);
   const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
 
@@ -41,7 +41,7 @@ function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         />
       }
     >
-      <div className="flex cursor-help items-center justify-between rounded p-3 transition-all duration-200 ease-in-out">
+      <div className="flex cursor-help items-center justify-between rounded p-1 px-2 transition-all duration-200 ease-in-out">
         <div className="flex items-center gap-3">
           {/* Campaign Type Badge */}
           <span className="rounded-sm bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-800 dark:text-green-300">
@@ -63,7 +63,7 @@ function RewardCampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
           </div>
 
           {/* APR */}
-          <span className="font-bold text-green-600 dark:text-green-400 text-sm">
+          <span className="text-green-600 dark:text-green-400 text-sm">
             +{campaign.apr.toFixed(2)}% APR
           </span>
         </div>
@@ -97,7 +97,7 @@ export function RewardsInfo({ marketId, loanTokenAddress, chainId }: RewardsInfo
   return (
     <div className="rounded border border-green-200 bg-green-50/50 p-4 dark:border-green-700 dark:bg-green-900/20">
       {/* Header */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 px-3">
         <FaGift className="text-green-600 dark:text-green-400" size={16} />
         <span className="font-medium text-green-800 dark:text-green-200">
           Reward Campaign
@@ -105,7 +105,7 @@ export function RewardsInfo({ marketId, loanTokenAddress, chainId }: RewardsInfo
       </div>
 
       {/* Campaign Rows */}
-      <div className="space-y-2">
+      <div className={activeCampaigns.length > 1 ? "space-y-1" : "space-y-2"}>
         {activeCampaigns.map((campaign, index) => (
           <RewardCampaignRow key={index} campaign={campaign} />
         ))}

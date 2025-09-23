@@ -59,9 +59,9 @@ const getChainNameForMerkl = (chainId: number): string => {
   }
 };
 
-export const getMerklCampaignURL = (chainId: number, type: string, campaignId: string): string => {
+export const getMerklCampaignURL = (chainId: number, type: string, identifier: string): string => {
   const chainName = getChainNameForMerkl(chainId);
-  return `https://app.merkl.xyz/opportunities/${chainName}/${type}/${campaignId}`;
+  return `https://app.merkl.xyz/opportunities/${chainName}/${type}/${identifier}`;
 };
 
 export const EXTERNAL_LINKS = {
