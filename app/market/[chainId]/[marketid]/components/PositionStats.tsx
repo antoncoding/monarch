@@ -6,9 +6,12 @@ import { FiUser } from 'react-icons/fi';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
+import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
+import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { Market, MarketPosition } from '@/utils/types';
+import { APYBreakdownTooltip } from 'app/markets/components/APYBreakdownTooltip';
 
 type PositionStatsProps = {
   market: Market;
@@ -37,6 +40,13 @@ export function PositionStats({
 }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition ? 'user' : 'global');
+
+  const { showFullRewardAPY } = useMarkets();
+  const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
+    marketId: market.uniqueKey,
+    loanTokenAddress: market.loanAsset.address,
+    chainId: market.morphoBlue.chain.id,
+  });
 
   const toggleView = () => {
     setViewMode((prev) => (prev === 'global' ? 'user' : 'global'));
@@ -119,7 +129,16 @@ export function PositionStats({
       );
     }
 
-    // Global stats
+    // Global stats - calculate APYs
+    const baseSupplyAPY = market.state.supplyApy * 100;
+    const extraRewards = hasActiveRewards
+      ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0)
+      : 0;
+    const fullSupplyAPY = baseSupplyAPY + extraRewards;
+    const displaySupplyAPY = showFullRewardAPY && hasActiveRewards ? fullSupplyAPY : baseSupplyAPY;
+
+    const borrowAPY = market.state.borrowApy * 100;
+
     return (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -165,24 +184,30 @@ export function PositionStats({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span>Total Collateral:</span>
+          <span>Supply APY:</span>
           <div className="flex items-center gap-2">
-            <TokenIcon
-              address={market.collateralAsset.address}
-              chainId={market.morphoBlue.chain.id}
-              symbol={market.collateralAsset.symbol}
-              width={16}
-              height={16}
-            />
-            <span>
-              {formatReadable(
-                formatBalance(
-                  BigInt(market.state.collateralAssets || 0),
-                  market.collateralAsset.decimals,
-                ).toString(),
-              )}{' '}
-              {getTruncatedAssetName(market.collateralAsset.symbol)}
-            </span>
+            {hasActiveRewards ? (
+              <APYBreakdownTooltip
+                baseAPY={baseSupplyAPY}
+                activeCampaigns={activeCampaigns}
+                fullAPY={fullSupplyAPY}
+              >
+                <span className="cursor-help">
+                  {baseSupplyAPY.toFixed(2)}%
+                  <span className="text-green-600 dark:text-green-400">
+                    {' '}(+{extraRewards.toFixed(2)}%)
+                  </span>
+                </span>
+              </APYBreakdownTooltip>
+            ) : (
+              <span>{displaySupplyAPY.toFixed(2)}%</span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span>Borrow APY:</span>
+          <div className="flex items-center gap-2">
+            <span>{borrowAPY.toFixed(2)}%</span>
           </div>
         </div>
       </div>
