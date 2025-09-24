@@ -69,7 +69,7 @@ export default function MarketSettingsModal({
   onEntriesPerPageChange,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
 
   const handleEntriesChange = (value: number) => {
     onEntriesPerPageChange(value);
@@ -224,11 +224,27 @@ export default function MarketSettingsModal({
                 </SettingItem>
               </div>
 
-              {/* --- Pagination Settings Section --- */}
+              {/* --- View Options Section --- */}
               <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
                 {/* Section Header: Adjusted style & position */}
                 <h3 className="mb-1 font-zen text-xs uppercase text-secondary">View Options</h3>
-                <p className="-mt-1 w-full text-left text-sm">Entries per page:</p>
+
+                {/* Full Reward APY Setting */}
+                <SettingItem
+                  title="Show Full Reward APY"
+                  description="Display total APY including base rate plus external reward campaigns (instead of base APY only)."
+                >
+                  <Switch
+                    isSelected={showFullRewardAPY}
+                    onValueChange={setShowFullRewardAPY}
+                    size="sm"
+                    color="primary"
+                  />
+                </SettingItem>
+                <Divider />
+
+                {/* Pagination Settings */}
+                <p className="w-full text-left text-sm">Entries per page:</p>
                 <div className="flex flex-row flex-wrap items-center justify-start gap-2">
                   {[8, 10, 15].map((value) => (
                     <Button

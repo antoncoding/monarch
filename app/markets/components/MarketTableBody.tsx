@@ -10,6 +10,7 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { getNetworkImg } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import logo from '../../../imgs/logo.png';
+import { APYCell } from './APYBreakdownTooltip';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { RewardsIndicator } from './RewardsIndicator';
@@ -38,6 +39,7 @@ export function MarketTableBody({
   unstarMarket,
   onMarketClick,
 }: MarketTableBodyProps) {
+
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
@@ -124,7 +126,9 @@ export function MarketTableBody({
                 decimals={item.loanAsset.decimals}
                 symbol={item.loanAsset.symbol}
               />
-              <td data-label="APY">{(item.state.supplyApy * 100).toFixed(2)} %</td>
+              <td data-label="APY">
+                <APYCell market={item} />
+              </td>
               <td>
                 <div className="flex items-center justify-center gap-1">
                   <MarketAssetIndicator market={item} />

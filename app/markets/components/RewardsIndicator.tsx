@@ -2,6 +2,7 @@ import React from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { FiGift } from 'react-icons/fi';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import merklLogo from '@/imgs/merkl.jpg';
 
@@ -30,22 +31,24 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: Reward
 
   return (
     <Tooltip
+      classNames={{
+        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+      }}
       content={
-        <div className="flex items-center gap-2 p-2">
-          <Image
-            src={merklLogo}
-            alt="Merkl"
-            width={24}
-            height={24}
-            className="rounded-full"
-          />
-          <div>
-            <div className="font-medium text-sm">External Rewards</div>
-            <div className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line">
-              {rewardsList}
-            </div>
-          </div>
-        </div>
+        <TooltipContent
+          icon={
+            <Image
+              src={merklLogo}
+              alt="Merkl"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+          }
+          title="External Rewards"
+          detail={rewardsList}
+        />
       }
     >
       <div>

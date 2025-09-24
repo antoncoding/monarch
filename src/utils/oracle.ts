@@ -497,5 +497,5 @@ export function checkFeedsPath(
  * Helper function to get truncated asset names (max 5 chars)
  */
 export function getTruncatedAssetName(asset: string): string {
-  return asset.length > 5 ? asset.slice(0, 5) + '...' : asset;
+  return asset.length > 5 ? asset.slice(0, 5) + '..' : asset;
 }

@@ -471,6 +471,14 @@ const supportedTokens = [
     ],
   },
   {
+    symbol: 'FNX',
+    img: require('../imgs/tokens/fx.webp') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: "0x365accfca291e7d3914637abf1f7635db165bb09" },
+    ],
+  },
+  {
     symbol: 'AERO',
     img: require('../imgs/tokens/AERO.png') as string,
     decimals: 18,

@@ -30,6 +30,8 @@ export type MarketsContextType = {
   refresh: () => Promise<void>;
   showUnwhitelistedMarkets: boolean;
   setShowUnwhitelistedMarkets: (value: boolean) => void;
+  showFullRewardAPY: boolean;
+  setShowFullRewardAPY: (value: boolean) => void;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
@@ -48,6 +50,12 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   // Global setting for showing unwhitelisted markets
   const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage(
     'showUnwhitelistedMarkets',
+    false,
+  );
+
+  // Global setting for showing full reward APY (base + external rewards)
+  const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage(
+    'showFullRewardAPY',
     false,
   );
 
@@ -238,6 +246,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       refresh,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
+      showFullRewardAPY,
+      setShowFullRewardAPY,
     }),
     [
       markets,
@@ -250,6 +260,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       refresh,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
+      showFullRewardAPY,
+      setShowFullRewardAPY,
     ],
   );
 
