@@ -79,8 +79,12 @@ export function MarketDetailsBlock({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
-              <span className="text-xs opacity-50">/ {getTruncatedAssetName(market.collateralAsset.symbol)}</span>
+              <span className="text-sm font-medium">
+                {getTruncatedAssetName(market.loanAsset.symbol)}
+              </span>
+              <span className="text-xs opacity-50">
+                / {getTruncatedAssetName(market.collateralAsset.symbol)}
+              </span>
               {showDetailsLink && (
                 <a
                   href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
@@ -95,7 +99,11 @@ export function MarketDetailsBlock({
             {!isExpanded && (
               <div className="flex items-center gap-2 text-xs opacity-70">
                 <span>·</span>
-                <OracleVendorBadge oracleData={market.oracle?.data} showText={false} chainId={market.morphoBlue.chain.id} />
+                <OracleVendorBadge
+                  oracleData={market.oracle?.data}
+                  showText={false}
+                  chainId={market.morphoBlue.chain.id}
+                />
                 <span>·</span>
                 <span>{getAPY()}% APY</span>
                 <span>·</span>
@@ -147,7 +155,7 @@ export function MarketDetailsBlock({
                     </div>
                     {showRewards && hasActiveRewards && (
                       <div className="flex items-start justify-between">
-                        <p className="font-zen text-sm opacity-50 flex items-center gap-1">
+                        <p className="flex items-center gap-1 font-zen text-sm opacity-50">
                           Extra Rewards:
                         </p>
                         <div className="flex items-center gap-1">

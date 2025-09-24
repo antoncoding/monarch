@@ -1,4 +1,9 @@
-import { MerklCampaignsResponse, MerklApiParams, MerklCampaign, SimplifiedCampaign } from './merklTypes';
+import {
+  MerklCampaignsResponse,
+  MerklApiParams,
+  MerklCampaign,
+  SimplifiedCampaign,
+} from './merklTypes';
 
 const MERKL_API_BASE_URL = 'https://api.merkl.xyz/v4';
 
@@ -31,7 +36,7 @@ export class MerklApiClient {
         throw new Error(`Merkl API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json() as MerklCampaignsResponse;
+      const data = (await response.json()) as MerklCampaignsResponse;
       return data;
     } catch (error) {
       console.error('Error fetching Merkl campaigns:', error);
@@ -39,7 +44,9 @@ export class MerklApiClient {
     }
   }
 
-  async fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaignsResponse> {
+  async fetchActiveCampaigns(
+    params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {},
+  ): Promise<MerklCampaignsResponse> {
     const now = Math.floor(Date.now() / 1000);
 
     // Single API call with reasonable limit, no pagination loop
@@ -48,7 +55,7 @@ export class MerklApiClient {
       items: 100, // Get up to 100 campaigns in one call
       page: 0,
       startTimestamp: 0,
-      endTimestamp: now
+      endTimestamp: now,
     });
   }
 }
@@ -58,9 +65,10 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
   const isActive = campaign.startTimestamp <= now && campaign.endTimestamp > now;
 
   // For SINGLETOKEN campaigns, use targetToken as the identifier
-  const marketId = campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-    ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
-    : campaign.params.market;
+  const marketId =
+    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+      ? `singletoken_${campaign.params.targetToken}_${campaign.computeChainId}`
+      : campaign.params.market;
 
   const baseResult: SimplifiedCampaign = {
     marketId,

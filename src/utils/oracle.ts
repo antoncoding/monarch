@@ -10,10 +10,10 @@ import { isSupportedChain } from './networks';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
-  coreVendors: PriceFeedVendors[];           // Well-known vendors (Chainlink, Redstone, etc.)
-  taggedVendors: string[];                   // Tagged by Morpho but not core (Pendle, Spectra, etc.)
-  hasCompletelyUnknown: boolean;             // True unknown feeds (no data found)
-  hasTaggedUnknown: boolean;                 // Tagged but not in core vendors
+  coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
+  taggedVendors: string[]; // Tagged by Morpho but not core (Pendle, Spectra, etc.)
+  hasCompletelyUnknown: boolean; // True unknown feeds (no data found)
+  hasTaggedUnknown: boolean; // Tagged but not in core vendors
   // Legacy properties for backward compatibility
   vendors: PriceFeedVendors[];
   hasUnknown: boolean;
@@ -256,16 +256,15 @@ export function parsePriceFeedVendors(
   oracleData: MorphoChainlinkOracleData | null | undefined,
   chainId: number,
 ): VendorInfo {
-
   if (!oracleData) {
-    return { 
-      coreVendors: [], 
-      taggedVendors: [], 
-      hasCompletelyUnknown: false, 
+    return {
+      coreVendors: [],
+      taggedVendors: [],
+      hasCompletelyUnknown: false,
       hasTaggedUnknown: false,
       // Legacy properties
-      vendors: [], 
-      hasUnknown: false 
+      vendors: [],
+      hasUnknown: false,
     };
   }
 
@@ -275,14 +274,14 @@ export function parsePriceFeedVendors(
     !oracleData.quoteFeedOne &&
     !oracleData.quoteFeedTwo
   ) {
-    return { 
-      coreVendors: [], 
-      taggedVendors: [], 
-      hasCompletelyUnknown: true, 
+    return {
+      coreVendors: [],
+      taggedVendors: [],
+      hasCompletelyUnknown: true,
       hasTaggedUnknown: false,
       // Legacy properties
-      vendors: [], 
-      hasUnknown: true 
+      vendors: [],
+      hasUnknown: true,
     };
   }
 
@@ -301,7 +300,7 @@ export function parsePriceFeedVendors(
   for (const feed of feeds) {
     if (feed?.address) {
       const feedResult = detectFeedVendor(feed.address, chainId);
-      
+
       if (feedResult.vendor === PriceFeedVendors.Unknown) {
         // Check if this unknown feed actually has data (tagged by Morpho)
         if (feedResult.data) {
@@ -320,15 +319,15 @@ export function parsePriceFeedVendors(
   }
 
   // If we have no feeds with addresses, that should be considered as completely unknown
-  const hasFeeds = feeds.some(feed => feed?.address);
+  const hasFeeds = feeds.some((feed) => feed?.address);
   if (!hasFeeds) {
     hasCompletelyUnknown = true;
   }
-  
+
   // Legacy support - combine all vendors for backward compatibility
   const legacyVendors = Array.from(coreVendors);
   const legacyHasUnknown = hasCompletelyUnknown || hasTaggedUnknown;
-  
+
   return {
     coreVendors: Array.from(coreVendors),
     taggedVendors: Array.from(taggedVendors),
@@ -373,7 +372,7 @@ export function checkFeedsPath(
   /**
    * Price calculation: baseFeed1 * baseFeed2 / (quoteFeed1 * quoteFeed2)
    * Each feed represents baseAsset/quoteAsset
-   * Final formula: (baseFeed1.base * baseFeed2.base * quoteFeed1.quote * quoteFeed2.quote) / 
+   * Final formula: (baseFeed1.base * baseFeed2.base * quoteFeed1.quote * quoteFeed2.quote) /
    *                (baseFeed1.quote * baseFeed2.quote * quoteFeed1.base * quoteFeed2.base)
    */
 
@@ -392,7 +391,7 @@ export function checkFeedsPath(
 
   // Check for unknown assets
   const hasUnknownAssets = feedPaths.some(
-    ({ path }) => path.base === 'Unknown' || path.quote === 'Unknown'
+    ({ path }) => path.base === 'Unknown' || path.quote === 'Unknown',
   );
 
   if (hasUnknownAssets) {
@@ -422,7 +421,7 @@ export function checkFeedsPath(
       incrementCount(numeratorCounts, path.base);
       incrementCount(denominatorCounts, path.quote);
     } else {
-      // For quote feeds: base goes to denominator, quote goes to numerator  
+      // For quote feeds: base goes to denominator, quote goes to numerator
       incrementCount(denominatorCounts, path.base);
       incrementCount(numeratorCounts, path.quote);
     }
@@ -431,16 +430,16 @@ export function checkFeedsPath(
   // Cancel out matching terms
   const cancelOut = (num: Map<string, number>, den: Map<string, number>) => {
     const assets = new Set([...num.keys(), ...den.keys()]);
-    
+
     for (const asset of assets) {
       const numCount = num.get(asset) ?? 0;
       const denCount = den.get(asset) ?? 0;
       const minCount = Math.min(numCount, denCount);
-      
+
       if (minCount > 0) {
         num.set(asset, numCount - minCount);
         den.set(asset, denCount - minCount);
-        
+
         // Remove zeros
         if (num.get(asset) === 0) num.delete(asset);
         if (den.get(asset) === 0) den.delete(asset);
@@ -452,20 +451,20 @@ export function checkFeedsPath(
 
   // Check if remaining terms match expected collateral/loan path
   const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter(
-    asset => (numeratorCounts.get(asset) ?? 0) > 0
+    (asset) => (numeratorCounts.get(asset) ?? 0) > 0,
   );
   const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter(
-    asset => (denominatorCounts.get(asset) ?? 0) > 0
+    (asset) => (denominatorCounts.get(asset) ?? 0) > 0,
   );
 
   // Normalize the expected collateral and loan symbols for comparison
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
   const normalizedLoanSymbol = normalizeSymbol(loanSymbol);
-  
+
   const expectedPath = `${normalizedCollateralSymbol}/${normalizedLoanSymbol}`;
 
   // Perfect match: exactly one asset in numerator (collateral) and one in denominator (loan)
-  const isValid = 
+  const isValid =
     remainingNumeratorAssets.length === 1 &&
     remainingDenominatorAssets.length === 1 &&
     remainingNumeratorAssets[0] === normalizedCollateralSymbol &&
@@ -482,7 +481,9 @@ export function checkFeedsPath(
   if (remainingNumeratorAssets.length === 0 && remainingDenominatorAssets.length === 0) {
     missingPath = 'All assets canceled out - no price path found';
   } else {
-    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
+    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join(
+      '*',
+    )}`;
     missingPath = `Feed path mismatch: got ${actualPath}, expected ${expectedPath}`;
   }
 

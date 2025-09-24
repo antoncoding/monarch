@@ -60,12 +60,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
               {selectedOracles.map((oracle, index) => (
                 <div key={index}>
                   {OracleVendorIcons[oracle] ? (
-                    <Image
-                      src={OracleVendorIcons[oracle]}
-                      alt={oracle}
-                      height={16}
-                      width={16}
-                    />
+                    <Image src={OracleVendorIcons[oracle]} alt={oracle} height={16} width={16} />
                   ) : (
                     <IoHelpCircleOutline className="text-secondary" size={16} />
                   )}

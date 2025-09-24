@@ -63,7 +63,10 @@ export function RiskSelection() {
 
         // Check if oracle is selected (if any are selected)
         if (selectedOracles.length > 0) {
-          const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id);
+          const { vendors } = parsePriceFeedVendors(
+            market.oracle?.data,
+            market.morphoBlue.chain.id,
+          );
 
           // if vendors is empty, push "unknown oracle" into list that needed to be selected
           if (vendors.length === 0) {

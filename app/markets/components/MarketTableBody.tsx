@@ -39,7 +39,6 @@ export function MarketTableBody({
   unstarMarket,
   onMarketClick,
 }: MarketTableBodyProps) {
-
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
@@ -106,7 +105,10 @@ export function MarketTableBody({
               />
               <td data-label="Oracle" className="z-50">
                 <div className="flex justify-center">
-                  <OracleVendorBadge oracleData={item.oracle?.data} chainId={item.morphoBlue.chain.id} />
+                  <OracleVendorBadge
+                    oracleData={item.oracle?.data}
+                    chainId={item.morphoBlue.chain.id}
+                  />
                 </div>
               </td>
               <td data-label="LLTV" className="z-50">
@@ -140,7 +142,10 @@ export function MarketTableBody({
                 <div className="flex items-center justify-center gap-2">
                   {item.isProtectedByLiquidationBots && (
                     <Tooltip
-                      className="rounded-sm"
+                      classNames={{
+                        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                      }}
                       content={
                         <TooltipContent
                           icon={<FaShieldAlt size={16} className="text-primary text-opacity-50" />}
@@ -155,7 +160,10 @@ export function MarketTableBody({
                   )}
                   {item.isMonarchWhitelisted && (
                     <Tooltip
-                      className="rounded-sm"
+                      classNames={{
+                        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                      }}
                       content={
                         <TooltipContent
                           icon={<Image src={logo} alt="Monarch" width={16} height={16} />}

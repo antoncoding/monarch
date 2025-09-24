@@ -54,10 +54,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   );
 
   // Global setting for showing full reward APY (base + external rewards)
-  const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage(
-    'showFullRewardAPY',
-    false,
-  );
+  const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
 
   const {
     loading: liquidationsLoading,

@@ -10,9 +10,11 @@ type MarketOracleFeedInfoProps = {
 };
 
 function EmptyFeedSlot() {
-  return <div className="flex w-full cursor-default items-center gap-1 rounded-sm bg-gray-100 px-2 py-1 opacity-30 dark:bg-gray-800">
-    <span className="text-xs text-gray-400">--</span>
-  </div>
+  return (
+    <div className="flex w-full cursor-default items-center gap-1 rounded-sm bg-gray-100 px-2 py-1 opacity-30 dark:bg-gray-800">
+      <span className="text-xs text-gray-400">--</span>
+    </div>
+  );
 }
 
 export function MarketOracleFeedInfo({
@@ -45,7 +47,9 @@ export function MarketOracleFeedInfo({
     <div className="space-y-2">
       {(baseFeedOne || baseFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">Base:</span>
+          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
+            Base:
+          </span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(baseFeedOne)}</div>
             <div className="w-28">{renderFeed(baseFeedTwo)}</div>
@@ -55,7 +59,9 @@ export function MarketOracleFeedInfo({
 
       {(quoteFeedOne || quoteFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">Quote:</span>
+          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
+            Quote:
+          </span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(quoteFeedOne)}</div>
             <div className="w-28">{renderFeed(quoteFeedTwo)}</div>

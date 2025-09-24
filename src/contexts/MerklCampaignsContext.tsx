@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  useMemo,
+} from 'react';
 import { merklApiClient, simplifyMerklCampaign } from '@/utils/merklApi';
 import { MerklCampaign, SimplifiedCampaign } from '@/utils/merklTypes';
 
@@ -17,9 +25,7 @@ type MerklCampaignsProviderProps = {
   children: ReactNode;
 };
 
-export function MerklCampaignsProvider({
-  children
-}: MerklCampaignsProviderProps) {
+export function MerklCampaignsProvider({ children }: MerklCampaignsProviderProps) {
   const [campaigns, setCampaigns] = useState<SimplifiedCampaign[]>([]);
   const [loading, setLoading] = useState(true); // Start as true like MarketsContext
   const [error, setError] = useState<string | null>(null);
@@ -33,15 +39,17 @@ export function MerklCampaignsProvider({
 
       // Fetch both MORPHOSUPPLY and MORPHOSUPPLY_SINGLETOKEN campaigns
       const supplyCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY' });
-      const singleTokenCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY_SINGLETOKEN' });
+      const singleTokenCampaigns = await merklApiClient.fetchActiveCampaigns({
+        type: 'MORPHOSUPPLY_SINGLETOKEN',
+      });
       allRawCampaigns.push(...supplyCampaigns, ...singleTokenCampaigns);
 
       // Convert to simplified campaigns and normalize market IDs
-      const simplifiedCampaigns = allRawCampaigns.map(campaign => {
+      const simplifiedCampaigns = allRawCampaigns.map((campaign) => {
         const simplified = simplifyMerklCampaign(campaign);
         return {
           ...simplified,
-          marketId: simplified.marketId.toLowerCase() // Normalize to lowercase
+          marketId: simplified.marketId.toLowerCase(), // Normalize to lowercase
         };
       });
 
@@ -66,18 +74,17 @@ export function MerklCampaignsProvider({
     await fetchCampaigns();
   }, [fetchCampaigns]);
 
-  const value = useMemo((): MerklCampaignsContextType => ({
-    campaigns,
-    loading,
-    error,
-    refetch,
-  }), [campaigns, loading, error, refetch]);
-
-  return (
-    <MerklCampaignsContext.Provider value={value}>
-      {children}
-    </MerklCampaignsContext.Provider>
+  const value = useMemo(
+    (): MerklCampaignsContextType => ({
+      campaigns,
+      loading,
+      error,
+      refetch,
+    }),
+    [campaigns, loading, error, refetch],
   );
+
+  return <MerklCampaignsContext.Provider value={value}>{children}</MerklCampaignsContext.Provider>;
 }
 
 export function useMerklCampaigns(): MerklCampaignsContextType {

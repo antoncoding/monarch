@@ -18,7 +18,7 @@ type MarketCampaignsOptions = {
 };
 
 export function useMarketCampaigns(
-  options: string | MarketCampaignsOptions
+  options: string | MarketCampaignsOptions,
 ): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaigns();
 
@@ -32,21 +32,23 @@ export function useMarketCampaigns(
 
     // Filter campaigns for this specific market
     const directMarketCampaigns = allCampaigns.filter(
-      campaign => campaign.marketId.toLowerCase() === normalizedMarketId
+      (campaign) => campaign.marketId.toLowerCase() === normalizedMarketId,
     );
 
     // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
-    const singleTokenCampaigns = loanTokenAddress && chainId
-      ? allCampaigns.filter(campaign =>
-          campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&
-          campaign.chainId === chainId &&
-          campaign.targetToken?.address.toLowerCase() === loanTokenAddress.toLowerCase()
-        )
-      : [];
+    const singleTokenCampaigns =
+      loanTokenAddress && chainId
+        ? allCampaigns.filter(
+            (campaign) =>
+              campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&
+              campaign.chainId === chainId &&
+              campaign.targetToken?.address.toLowerCase() === loanTokenAddress.toLowerCase(),
+          )
+        : [];
 
     // Combine both types of campaigns
     const allMarketCampaigns = [...directMarketCampaigns, ...singleTokenCampaigns];
-    const activeCampaigns = allMarketCampaigns.filter(campaign => campaign.isActive);
+    const activeCampaigns = allMarketCampaigns.filter((campaign) => campaign.isActive);
 
     return {
       campaigns: allMarketCampaigns,

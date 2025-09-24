@@ -24,36 +24,35 @@ export function APYBreakdownTooltip({
   children,
 }: APYBreakdownTooltipProps) {
   const content = (
-    
-    <div className='bg-surface flex flex-col rounded-sm p-4 lg:min-w-[200px]'>
-    <div className="font-bold text-primary mb-2 px-1">APY Breakdown</div>
-    <div className="space-y-3 p-1">
-      <div className="flex justify-between items-center text-xs">
-        <span>Base APY</span>
-        <span className="ml-6">{baseAPY.toFixed(2)}%</span>
-      </div>
-      {activeCampaigns.map((campaign, index) => (
-        <div key={index} className="flex justify-between items-center text-xs">
-          <div className="flex items-center gap-2">
-            <span>{campaign.rewardToken.symbol}</span>
-            <TokenIcon
-              address={campaign.rewardToken.address}
-              chainId={campaign.chainId}
-              symbol={campaign.rewardToken.symbol}
-              width={14}
-              height={14}
-            />
+    <div className="bg-surface flex flex-col rounded-sm p-4 lg:min-w-[200px]">
+      <div className="mb-2 px-1 font-bold text-primary">APY Breakdown</div>
+      <div className="space-y-3 p-1">
+        <div className="flex items-center justify-between text-xs">
+          <span>Base APY</span>
+          <span className="ml-6">{baseAPY.toFixed(2)}%</span>
+        </div>
+        {activeCampaigns.map((campaign, index) => (
+          <div key={index} className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <span>{campaign.rewardToken.symbol}</span>
+              <TokenIcon
+                address={campaign.rewardToken.address}
+                chainId={campaign.chainId}
+                symbol={campaign.rewardToken.symbol}
+                width={14}
+                height={14}
+              />
+            </div>
+            <span className="ml-6">{campaign.apr.toFixed(2)}%</span>
           </div>
-          <span className="ml-6">{campaign.apr.toFixed(2)}%</span>
-        </div>
-      ))}
-      <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
-        <div className="flex justify-between items-center text-xs">
-          <span>Total</span>
-          <span className="ml-6">{fullAPY.toFixed(2)}%</span>
+        ))}
+        <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
+          <div className="flex items-center justify-between text-xs">
+            <span>Total</span>
+            <span className="ml-6">{fullAPY.toFixed(2)}%</span>
+          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 
@@ -88,11 +87,7 @@ export function APYCell({ market }: APYCellProps) {
 
   if (hasActiveRewards) {
     return (
-      <APYBreakdownTooltip
-        baseAPY={baseAPY}
-        activeCampaigns={activeCampaigns}
-        fullAPY={fullAPY}
-      >
+      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns} fullAPY={fullAPY}>
         <span className="cursor-help">{displayAPY.toFixed(2)}%</span>
       </APYBreakdownTooltip>
     );

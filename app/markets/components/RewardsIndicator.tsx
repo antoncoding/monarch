@@ -14,9 +14,7 @@ type RewardsIndicatorProps = {
 
 export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: RewardsIndicatorProps) {
   const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(
-    loanTokenAddress
-      ? { marketId, loanTokenAddress, chainId }
-      : marketId
+    loanTokenAddress ? { marketId, loanTokenAddress, chainId } : marketId,
   );
 
   if (loading || !hasActiveRewards) {
@@ -24,10 +22,15 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: Reward
   }
 
   // Create tooltip detail with all rewards
-  const rewardsList = activeCampaigns.map(campaign => {
-    const rewardType = (campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN') ? 'supplier' : 'borrower';
-    return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
-  }).join('\n');
+  const rewardsList = activeCampaigns
+    .map((campaign) => {
+      const rewardType =
+        campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+          ? 'supplier'
+          : 'borrower';
+      return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
+    })
+    .join('\n');
 
   return (
     <Tooltip
@@ -38,13 +41,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: Reward
       content={
         <TooltipContent
           icon={
-            <Image
-              src={merklLogo}
-              alt="Merkl"
-              width={24}
-              height={24}
-              className="rounded-full"
-            />
+            <Image src={merklLogo} alt="Merkl" width={24} height={24} className="rounded-full" />
           }
           title="External Rewards"
           detail={rewardsList}

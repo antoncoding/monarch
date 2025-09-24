@@ -94,7 +94,10 @@ function MarketSummaryBlock({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Oracle: </span>
-            <OracleVendorBadge oracleData={market.oracle?.data} chainId={market.morphoBlue.chain.id} />
+            <OracleVendorBadge
+              oracleData={market.oracle?.data}
+              chainId={market.morphoBlue.chain.id}
+            />
           </div>
         </div>
       </div>

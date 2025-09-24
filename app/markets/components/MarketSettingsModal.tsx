@@ -69,7 +69,12 @@ export default function MarketSettingsModal({
   onEntriesPerPageChange,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
+  const {
+    showUnwhitelistedMarkets,
+    setShowUnwhitelistedMarkets,
+    showFullRewardAPY,
+    setShowFullRewardAPY,
+  } = useMarkets();
 
   const handleEntriesChange = (value: number) => {
     onEntriesPerPageChange(value);

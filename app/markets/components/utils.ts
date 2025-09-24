@@ -109,7 +109,10 @@ export function applyFilterAndSort(
       }
 
       if (selectedOracles.length > 0 && !!market.oracle) {
-        const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id).vendors;
+        const marketOracles = parsePriceFeedVendors(
+          market.oracle.data,
+          market.morphoBlue.chain.id,
+        ).vendors;
         if (!marketOracles.some((oracle) => selectedOracles.includes(oracle))) {
           return false;
         }

@@ -3,10 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Address } from 'viem';
 import { Badge } from '@/components/common/Badge';
-import {
-  getChainlinkFeedUrl,
-  getChainlinkOracle,
-} from '@/constants/oracle/chainlink-data';
+import { getChainlinkFeedUrl, getChainlinkOracle } from '@/constants/oracle/chainlink-data';
 import { CompoundFeedEntry } from '@/constants/oracle/compound';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';

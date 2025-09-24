@@ -144,7 +144,8 @@ const UNRECOGNIZED_FEEDS: WarningWithDetail = {
 const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
   code: 'unknown feeds tagged',
   level: 'warning',
-  description: 'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
+  description:
+    'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
   category: WarningCategory.oracle,
 };
 
@@ -217,12 +218,12 @@ export const getMarketWarningsWithDetail = (
   // if any of the feeds are not null but also not recognized, return appropriate feed warning
   if (oracleType === OracleType.Standard && market.oracle?.data) {
     const vendorInfo = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
-    
+
     // Completely unknown feeds get the stronger warning
     if (vendorInfo.hasCompletelyUnknown) {
       result.push(UNRECOGNIZED_FEEDS);
     }
-    
+
     // Tagged but not core vendors get the milder warning
     if (vendorInfo.hasTaggedUnknown) {
       result.push(UNRECOGNIZED_FEEDS_TAGGED);
@@ -234,7 +235,7 @@ export const getMarketWarningsWithDetail = (
         market.oracle.data,
         market.morphoBlue.chain.id,
         market.collateralAsset.symbol,
-        market.loanAsset.symbol
+        market.loanAsset.symbol,
       );
 
       if (feedsPathResult.hasUnknownFeed) {

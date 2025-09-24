@@ -280,7 +280,8 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {getTruncatedAssetName(market.loanAsset.symbol)} <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.loanAsset.symbol)}{' '}
+                      <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>
@@ -303,7 +304,8 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {getTruncatedAssetName(market.collateralAsset.symbol)} <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.collateralAsset.symbol)}{' '}
+                      <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>
