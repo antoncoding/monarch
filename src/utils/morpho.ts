@@ -18,7 +18,7 @@ export const getMorphoAddress = (chain: SupportedNetworks) => {
     case SupportedNetworks.Unichain:
       return '0x8f5ae9cddb9f68de460c77730b018ae7e04a140a';
     case SupportedNetworks.Arbitrum:
-        return '0x6c247b1F6182318877311737BaC0844bAa518F5e';
+      return '0x6c247b1F6182318877311737BaC0844bAa518F5e';
     default:
       return zeroAddress;
   }
@@ -35,6 +35,8 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
       // ChainAgnosticBundlerV2
       return '0x5738366B9348f22607294007e75114922dF2a16A';
     case SupportedNetworks.Unichain:
+      return '0x5738366B9348f22607294007e75114922dF2a16A';
+    case SupportedNetworks.Arbitrum:
       return '0x5738366B9348f22607294007e75114922dF2a16A';
     default:
       return zeroAddress;
