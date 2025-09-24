@@ -1,8 +1,8 @@
-import { SupportedNetworks } from './networks';
+import { getNetworkName, SupportedNetworks } from './networks';
 
 export const getMarketURL = (id: string, chainId: number): string => {
-  const chain = chainId === 1 ? 'mainnet' : 'base';
-  return `https://app.morpho.org/market?id=${id}&network=${chain}`;
+  const network = chainId === SupportedNetworks.Mainnet ? 'ethereum' : getNetworkName(chainId)?.toLowerCase()    
+  return `https://app.morpho.org/${network}/market/${id}`;
 };
 
 export const getAssetURL = (address: string, chain: SupportedNetworks): string => {

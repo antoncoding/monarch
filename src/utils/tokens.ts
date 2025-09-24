@@ -630,9 +630,10 @@ const isWETH = (address: string, chainId: number) => {
   if (chainId === SupportedNetworks.Mainnet) {
     return address.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
   }
-  if (chainId === SupportedNetworks.Base) {
+  if (chainId === SupportedNetworks.Base || chainId === SupportedNetworks.Unichain) {
     return address.toLowerCase() === '0x4200000000000000000000000000000000000006';
   }
+  
   if (chainId === SupportedNetworks.Arbitrum) {
     return address.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
   }
