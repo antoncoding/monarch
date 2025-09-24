@@ -52,6 +52,9 @@ export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
   if (chainId === SupportedNetworks.Polygon) {
     return `https://data.chain.link/feeds/polygon/mainnet/${ens}`;
   }
+  if (chainId === SupportedNetworks.Arbitrum) {
+    return `https://data.chain.link/feeds/arbitrum/mainnet/${ens}`
+  }
   return '';
 };
 
