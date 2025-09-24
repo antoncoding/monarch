@@ -28,9 +28,9 @@ import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networ
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
+import { CampaignBadge } from './components/CampaignBadge';
 import { LiquidationsTable } from './components/LiquidationsTable';
 import { PositionStats } from './components/PositionStats';
-import { RewardsInfo } from './components/RewardsInfo';
 import { SuppliesTable } from './components/SuppliesTable';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
@@ -231,12 +231,11 @@ function MarketContent() {
           />
         )}
 
-        <h1 className="mb-8 text-center text-3xl">
-          {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
-        </h1>
-
-        <div className="mb-8">
-          <RewardsInfo
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <h1 className="text-3xl">
+            {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
+          </h1>
+          <CampaignBadge
             marketId={marketid as string}
             loanTokenAddress={market.loanAsset.address}
             chainId={market.morphoBlue.chain.id}

@@ -30,6 +30,10 @@ function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?:
   );
 }
 
+const hasPosition = (position: MarketPosition) => {
+  return position.state.borrowAssets !== "0" || position.state.collateral !== "0" || position.state.supplyAssets !== "0"
+}
+
 export function PositionStats({
   market,
   userPosition,
@@ -39,7 +43,7 @@ export function PositionStats({
   isRefreshing = false,
 }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
-  const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition ? 'user' : 'global');
+  const [viewMode, setViewMode] = useState<'global' | 'user'>((userPosition && hasPosition(userPosition)) ? 'user' : 'global');
 
   const { showFullRewardAPY } = useMarkets();
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({

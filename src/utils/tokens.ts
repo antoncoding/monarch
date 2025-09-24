@@ -576,6 +576,10 @@ const supportedTokens = [
         address: MORPHO_TOKEN_BASE,
         chain: base,
       },
+      {
+        address: '0x40bd670a58238e6e230c430bbb5ce6ec0d40df48', // not used in "reward" as MORPHO_ARBITRUM just yet
+        chain: arbitrum
+      }
     ],
   },
   {
