@@ -139,7 +139,7 @@
     "threshold": 0.5,
     "feedCategory": "low",
     "baseAsset": "WBTC",
-    "quoteAsset": "BTC",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {

@@ -45,6 +45,12 @@ const ENDPOINTS = {
 } as const;
 
 const cleanOracleEntry = (entry: RawOracleEntry): CleanOracleEntry => {
+
+  // this data entry is coorupted as teh time we generate
+  if (entry.proxyAddress === "0x0D03E26E0B5D09E24E5a45696D0FcA12E9648FBB") {
+    entry.docs.quoteAsset = 'USD'
+  }
+
   return {
     ens: entry.ens,
     heartbeat: entry.heartbeat,
