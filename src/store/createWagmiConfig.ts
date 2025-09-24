@@ -9,8 +9,8 @@ import {
   trustWallet,
   ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { createConfig, http } from 'wagmi';
-import { base, mainnet, polygon, unichain } from 'wagmi/chains';
+import { createConfig, custom, http } from 'wagmi';
+import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
 import { SupportedNetworks } from '@/utils/networks';
 import { DEFAULT_RPC_URLS } from '@/utils/rpc';
 import { getChainsForEnvironment } from './supportedChains';
@@ -19,12 +19,14 @@ const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
 const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];
 const defaultRpcPolygon = DEFAULT_RPC_URLS[SupportedNetworks.Polygon];
 const defaultRpcUnichain = DEFAULT_RPC_URLS[SupportedNetworks.Unichain];
+const defaultRPCArbitrum = DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum]
 
 export type CustomRpcUrls = {
   [SupportedNetworks.Mainnet]?: string;
   [SupportedNetworks.Base]?: string;
   [SupportedNetworks.Polygon]?: string;
   [SupportedNetworks.Unichain]?: string;
+  [SupportedNetworks.Arbitrum]?: string
 };
 
 const wallets =
@@ -60,6 +62,7 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
   const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? defaultRpcBase;
   const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? defaultRpcPolygon;
   const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? defaultRpcUnichain;
+  const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? defaultRPCArbitrum;
 
   return createConfig({
     ssr: true,
@@ -69,6 +72,7 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
       [base.id]: http(rpcBase),
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),
+      [arbitrum.id]: http(rpcArbitrum)
     },
     connectors: [...connectors],
   });

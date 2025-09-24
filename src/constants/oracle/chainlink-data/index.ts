@@ -2,6 +2,7 @@ import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import baseRawData from './base.json';
 import mainnetRawData from './mainnet.json';
 import polygonRawData from './polygon.json';
+import arbitrumRawData from './arbitrum.json'
 import { ChainlinkOracleEntry } from './types';
 
 type RawOracleEntry = {
@@ -53,6 +54,7 @@ export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Mainnet]: transformOracleData(mainnetRawData as RawOracleEntry[]),
   [SupportedNetworks.Base]: transformOracleData(baseRawData as RawOracleEntry[]),
   [SupportedNetworks.Polygon]: transformOracleData(polygonRawData as RawOracleEntry[]),
+  [SupportedNetworks.Arbitrum]: transformOracleData(arbitrumRawData as RawOracleEntry[]),
   [SupportedNetworks.Unichain]: [] as ChainlinkOracleEntry[],
 } as const;
 

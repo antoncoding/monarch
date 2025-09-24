@@ -1,5 +1,5 @@
 import { createPublicClient, http, PublicClient } from 'viem';
-import { base, mainnet, polygon, unichain } from 'viem/chains';
+import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
@@ -10,14 +10,16 @@ export const DEFAULT_RPC_URLS = {
   [SupportedNetworks.Base]: `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`,
   [SupportedNetworks.Polygon]: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
   [SupportedNetworks.Unichain]: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+  [SupportedNetworks.Arbitrum]: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
 } as const;
 
 // Chain configurations
-const CHAIN_CONFIGS = {
+export const CHAIN_CONFIGS = {
   [SupportedNetworks.Mainnet]: mainnet,
   [SupportedNetworks.Base]: base,
   [SupportedNetworks.Polygon]: polygon,
   [SupportedNetworks.Unichain]: unichain,
+  [SupportedNetworks.Arbitrum]: arbitrum
 } as const;
 
 // Default clients (cached)
@@ -42,6 +44,10 @@ const initializeDefaultClients = () => {
       [SupportedNetworks.Unichain]: createPublicClient({
         chain: unichain,
         transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Unichain]),
+      }) as PublicClient,
+      [SupportedNetworks.Arbitrum]: createPublicClient({
+        chain: unichain,
+        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum]),
       }) as PublicClient,
     };
   }
@@ -82,6 +88,7 @@ export const BLOCK_TIME = {
   [SupportedNetworks.Base]: 2, // Base: 2 seconds
   [SupportedNetworks.Polygon]: 2, // Polygon: 2 seconds
   [SupportedNetworks.Unichain]: 1, // Unichain: 2 seconds
+  [SupportedNetworks.Arbitrum]: 2, 
 } as const;
 
 export const GENESIS_BLOCK = {
@@ -89,6 +96,7 @@ export const GENESIS_BLOCK = {
   [SupportedNetworks.Base]: 13977148, // Base
   [SupportedNetworks.Polygon]: 66931042, // Polygon
   [SupportedNetworks.Unichain]: 9139027, // Unichain
+  [SupportedNetworks.Arbitrum]: 296446593, // Arbitrum
 } as const;
 
 export const LATEST_BLOCK_DELAY = {
@@ -96,6 +104,7 @@ export const LATEST_BLOCK_DELAY = {
   [SupportedNetworks.Base]: 20, // Base
   [SupportedNetworks.Polygon]: 20, // Polygon
   [SupportedNetworks.Unichain]: 20, // Unichain
+  [SupportedNetworks.Arbitrum]: 20,
 };
 
 type BlockResponse = {

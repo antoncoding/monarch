@@ -17,6 +17,8 @@ export const getMorphoAddress = (chain: SupportedNetworks) => {
       return '0x1bf0c2541f820e775182832f06c0b7fc27a25f67';
     case SupportedNetworks.Unichain:
       return '0x8f5ae9cddb9f68de460c77730b018ae7e04a140a';
+    case SupportedNetworks.Arbitrum:
+        return '0x6c247b1F6182318877311737BaC0844bAa518F5e';
     default:
       return zeroAddress;
   }
@@ -49,6 +51,8 @@ export const getIRMTitle = (address: string) => {
       return 'Adaptive Curve';
     case '0x9a6061d51743b31d2c3be75d83781fa423f53f0e': // on unichain
       return 'Adaptive Curve';
+    case '0x66F30587FB8D4206918deb78ecA7d5eBbafD06DA': // on arbitrum
+      return 'Adaptive Curve'
     default:
       return 'Unknown IRM';
   }

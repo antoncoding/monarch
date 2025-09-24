@@ -3,6 +3,8 @@ import { mainnet, base } from 'viem/chains';
 import { z } from 'zod';
 import { supportedTokens } from '@/utils/tokens';
 import type { ERC20Token } from '@/utils/tokens';
+import { SupportedNetworks } from '@/utils/networks';
+import { CHAIN_CONFIGS } from '@/utils/rpc';
 
 // Only parse the fields we need
 const PendleAssetSchema = z.object({
@@ -35,14 +37,14 @@ async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
   }
 }
 
-function convertPendleAssetToToken(asset: PendleAsset): ERC20Token {
+function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetworks): ERC20Token {
   return {
     symbol: asset.symbol,
     decimals: asset.decimals,
     img: asset.proIcon ?? undefined,
     networks: [
       {
-        chain: asset.chainId === 1 ? mainnet : base,
+        chain: CHAIN_CONFIGS[chainId], 
         address: asset.address,
       },
     ],
@@ -59,13 +61,15 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function fetchAllAssets() {
       try {
-        const [mainnetAssets, baseAssets] = await Promise.all([
-          fetchPendleAssets(1),
-          fetchPendleAssets(8453),
+        const [mainnetAssets, baseAssets, arbitrumAssets] = await Promise.all([
+          fetchPendleAssets(SupportedNetworks.Mainnet),
+          fetchPendleAssets(SupportedNetworks.Base),
+          fetchPendleAssets(SupportedNetworks.Arbitrum)
         ]);
         const pendleTokens = [
-          ...mainnetAssets.map(convertPendleAssetToToken),
-          ...baseAssets.map(convertPendleAssetToToken),
+          ...mainnetAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Mainnet)),
+          ...baseAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Base)),
+          ...arbitrumAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Arbitrum))
         ];
 
         // Filter out Pendle tokens that have addresses already present in supportedTokens
