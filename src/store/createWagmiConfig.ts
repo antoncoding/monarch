@@ -9,11 +9,10 @@ import {
   trustWallet,
   ledgerWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { createConfig, custom, http } from 'wagmi';
+import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
 import { SupportedNetworks } from '@/utils/networks';
 import { DEFAULT_RPC_URLS } from '@/utils/rpc';
-import { getChainsForEnvironment } from './supportedChains';
 
 const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
 const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];
@@ -66,7 +65,7 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
 
   return createConfig({
     ssr: true,
-    chains: getChainsForEnvironment(),
+    chains: [mainnet, base, polygon, unichain, arbitrum],
     transports: {
       [mainnet.id]: http(rpcMainnet),
       [base.id]: http(rpcBase),

@@ -1,60 +1,15 @@
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
+import arbitrumRawData from './arbitrum.json'
 import baseRawData from './base.json';
 import mainnetRawData from './mainnet.json';
 import polygonRawData from './polygon.json';
-import arbitrumRawData from './arbitrum.json'
 import { ChainlinkOracleEntry } from './types';
 
-type RawOracleEntry = {
-  contractAddress: string;
-  contractVersion: number;
-  ens: string;
-  heartbeat: number;
-  multiply: string;
-  name: string;
-  path: string;
-  proxyAddress: string;
-  threshold: number;
-  valuePrefix: string;
-  assetName: string;
-  feedCategory: 'low' | 'medium' | 'high' | 'custom';
-  feedType: string;
-  decimals: number;
-  docs: {
-    baseAsset?: string;
-    quoteAsset?: string;
-    [key: string]: any;
-  };
-  [key: string]: any;
-};
-
-const transformOracleData = (rawData: RawOracleEntry[]): ChainlinkOracleEntry[] => {
-  return rawData.map((entry) => ({
-    contractAddress: entry.contractAddress,
-    contractVersion: entry.contractVersion,
-    ens: entry.ens,
-    heartbeat: entry.heartbeat,
-    multiply: entry.multiply,
-    name: entry.name,
-    path: entry.path,
-    proxyAddress: entry.proxyAddress ?? '',
-    threshold: entry.threshold,
-    valuePrefix: entry.valuePrefix,
-    assetName: entry.assetName,
-    feedCategory: entry.feedCategory,
-    feedType: entry.feedType,
-    decimals: entry.decimals,
-    baseAsset: entry.docs?.baseAsset ?? '',
-    quoteAsset: entry.docs?.quoteAsset ?? '',
-    isSVR: entry.path.endsWith('-svr'),
-  }));
-};
-
 export const CHAINLINK_ORACLES = {
-  [SupportedNetworks.Mainnet]: transformOracleData(mainnetRawData as RawOracleEntry[]),
-  [SupportedNetworks.Base]: transformOracleData(baseRawData as RawOracleEntry[]),
-  [SupportedNetworks.Polygon]: transformOracleData(polygonRawData as RawOracleEntry[]),
-  [SupportedNetworks.Arbitrum]: transformOracleData(arbitrumRawData as RawOracleEntry[]),
+  [SupportedNetworks.Mainnet]: mainnetRawData as ChainlinkOracleEntry[],
+  [SupportedNetworks.Base]: baseRawData as ChainlinkOracleEntry[],
+  [SupportedNetworks.Polygon]: polygonRawData as ChainlinkOracleEntry[],
+  [SupportedNetworks.Arbitrum]: arbitrumRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Unichain]: [] as ChainlinkOracleEntry[],
 } as const;
 
@@ -87,15 +42,15 @@ export const getChainlinkOracle = (
   );
 };
 
-export const getChainlinkFeedUrl = (chainId: number, rawOracleEntry: RawOracleEntry): string => {
+export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
   if (chainId === SupportedNetworks.Mainnet) {
-    return `https://data.chain.link/feeds/ethereum/mainnet/${rawOracleEntry.ens}`;
+    return `https://data.chain.link/feeds/ethereum/mainnet/${ens}`;
   }
   if (chainId === SupportedNetworks.Base) {
-    return `https://data.chain.link/feeds/base/base/${rawOracleEntry.ens}`;
+    return `https://data.chain.link/feeds/base/base/${ens}`;
   }
   if (chainId === SupportedNetworks.Polygon) {
-    return `https://data.chain.link/feeds/polygon/mainnet/${rawOracleEntry.ens}`;
+    return `https://data.chain.link/feeds/polygon/mainnet/${ens}`;
   }
   return '';
 };

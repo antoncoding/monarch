@@ -1,10 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { mainnet, base } from 'viem/chains';
 import { z } from 'zod';
-import { supportedTokens } from '@/utils/tokens';
-import type { ERC20Token } from '@/utils/tokens';
 import { SupportedNetworks } from '@/utils/networks';
 import { CHAIN_CONFIGS } from '@/utils/rpc';
+import { supportedTokens } from '@/utils/tokens';
+import type { ERC20Token } from '@/utils/tokens';
 
 // Only parse the fields we need
 const PendleAssetSchema = z.object({

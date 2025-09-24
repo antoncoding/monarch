@@ -17,7 +17,9 @@
       "Bash(npx tsc:*)",
       "Bash(pnpm add:*)",
       "WebFetch(domain:www.heroui.com)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(pnpm generate:chainlink:*)",
+      "Bash(pnpm lint:check:*)"
     ],
     "deny": []
   }

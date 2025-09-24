@@ -7,6 +7,7 @@ export type CustomRpcUrls = {
   [SupportedNetworks.Base]?: string;
   [SupportedNetworks.Polygon]?: string;
   [SupportedNetworks.Unichain]?: string;
+  [SupportedNetworks.Arbitrum]?: string;
 };
 
 export function useCustomRpc() {

@@ -30,26 +30,7 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
 
   // Generate Chainlink feed URL if we have the underlying chainlink data
   const chainlinkUrl = underlyingChainlinkData
-    ? getChainlinkFeedUrl(chainId, {
-        ens: underlyingChainlinkData.ens,
-        contractAddress: underlyingChainlinkData.contractAddress,
-        contractVersion: underlyingChainlinkData.contractVersion,
-        heartbeat: underlyingChainlinkData.heartbeat,
-        multiply: underlyingChainlinkData.multiply,
-        name: underlyingChainlinkData.name,
-        path: underlyingChainlinkData.path,
-        proxyAddress: underlyingChainlinkData.proxyAddress,
-        threshold: underlyingChainlinkData.threshold,
-        valuePrefix: underlyingChainlinkData.valuePrefix,
-        assetName: underlyingChainlinkData.assetName,
-        feedCategory: underlyingChainlinkData.feedCategory,
-        feedType: underlyingChainlinkData.feedType,
-        decimals: underlyingChainlinkData.decimals,
-        docs: {
-          baseAsset: underlyingChainlinkData.baseAsset,
-          quoteAsset: underlyingChainlinkData.quoteAsset,
-        },
-      })
+    ? getChainlinkFeedUrl(chainId, underlyingChainlinkData.ens)
     : '';
 
   // Risk tier badge using Badge component

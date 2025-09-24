@@ -21,28 +21,7 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
   const vendorIcon = OracleVendorIcons[PriceFeedVendors.Chainlink];
 
   // Generate Chainlink feed URL if we have the chainlink data
-  const chainlinkUrl = chainlinkData
-    ? getChainlinkFeedUrl(chainId, {
-        ens: chainlinkData.ens,
-        contractAddress: chainlinkData.contractAddress,
-        contractVersion: chainlinkData.contractVersion,
-        heartbeat: chainlinkData.heartbeat,
-        multiply: chainlinkData.multiply,
-        name: chainlinkData.name,
-        path: chainlinkData.path,
-        proxyAddress: chainlinkData.proxyAddress,
-        threshold: chainlinkData.threshold,
-        valuePrefix: chainlinkData.valuePrefix,
-        assetName: chainlinkData.assetName,
-        feedCategory: chainlinkData.feedCategory,
-        feedType: chainlinkData.feedType,
-        decimals: chainlinkData.decimals,
-        docs: {
-          baseAsset: chainlinkData.baseAsset,
-          quoteAsset: chainlinkData.quoteAsset,
-        },
-      })
-    : '';
+  const chainlinkUrl = chainlinkData ? getChainlinkFeedUrl(chainId, chainlinkData.ens) : '';
 
   // Risk tier badge using Badge component
   const getRiskTierBadge = (category: string) => {
