@@ -1,4 +1,4 @@
-import { Chain, base, mainnet, polygon, unichain } from 'viem/chains';
+import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
 import { SupportedNetworks } from './networks';
 
 export type SingleChainERC20Basic = {
@@ -53,6 +53,7 @@ const supportedTokens = [
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
       { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
+      { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' } 
     ],
     peg: TokenPeg.USD,
   },
@@ -210,6 +211,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
       { chain: base, address: '0x4200000000000000000000000000000000000006' },
       { chain: unichain, address: '0x4200000000000000000000000000000000000006' },
+      { chain: arbitrum, address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' },
       // wrapped eth on polygon, defined here as it will not be interpreted as "WETH Contract"
       // which is determined by isWETH function
       // This is solely for displaying and linking to eth.
@@ -236,6 +238,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0' },
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
+      { chain: arbitrum, address: '0x5979D7b546E38E414F7E9822514be443A4800529' },
     ],
     peg: TokenPeg.ETH,
   },
@@ -280,6 +283,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
+      { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'}
     ],
     peg: TokenPeg.BTC,
   },
@@ -437,6 +441,15 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xA469B7Ee9ee773642b3e93E842e5D9b5BaA10067' },
       { chain: base, address: '0x04D5ddf5f3a8939889F11E97f8c4BB48317F1938' },
+    ],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'syrupUSDC',
+    img: require('../imgs/tokens/syrupUSDC.svg') as string,
+    decimals: 18,
+    networks: [
+      { chain: arbitrum, address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5' },
     ],
     peg: TokenPeg.USD,
   },
@@ -617,8 +630,12 @@ const isWETH = (address: string, chainId: number) => {
   if (chainId === SupportedNetworks.Mainnet) {
     return address.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
   }
-  if (chainId === SupportedNetworks.Base) {
+  if (chainId === SupportedNetworks.Base || chainId === SupportedNetworks.Unichain) {
     return address.toLowerCase() === '0x4200000000000000000000000000000000000006';
+  }
+  
+  if (chainId === SupportedNetworks.Arbitrum) {
+    return address.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
   }
   return false;
 };

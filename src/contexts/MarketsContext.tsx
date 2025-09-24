@@ -83,6 +83,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         SupportedNetworks.Base,
         SupportedNetworks.Polygon,
         SupportedNetworks.Unichain,
+        SupportedNetworks.Arbitrum
       ];
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];

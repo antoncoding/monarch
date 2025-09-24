@@ -147,7 +147,7 @@ export function SupplyModalContent({
                       >
                         Switch Chain
                       </Button>
-                    ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
+                    ) : ((!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved)) ? (
                       <Button
                         disabled={!isConnected || isLoadingPermit2 || supplyPending}
                         onPress={() => void approveAndSupply()}

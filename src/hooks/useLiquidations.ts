@@ -22,6 +22,7 @@ const useLiquidations = () => {
     const networksToCheck: SupportedNetworks[] = [
       SupportedNetworks.Mainnet,
       SupportedNetworks.Base,
+      SupportedNetworks.Arbitrum
     ];
 
     const combinedLiquidatedKeys = new Set<string>();

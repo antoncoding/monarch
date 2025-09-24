@@ -7,8 +7,10 @@ export const supportsMorphoApi = (network: SupportedNetworks): boolean => {
   switch (network) {
     case SupportedNetworks.Mainnet:
     case SupportedNetworks.Base:
+    case SupportedNetworks.Arbitrum:
       return true;
-    default:
+    
+      default:
       return false;
   }
 };

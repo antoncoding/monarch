@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY;
-const ALCHEMY_URLS = {
-  '1': `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-  '8453': `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-  '137': `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-  '130': `https://unichain-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
-};
+import { SupportedNetworks } from '@/utils/networks';
+import { DEFAULT_RPC_URLS } from '@/utils/rpc';
 
 type TokenBalance = {
   contractAddress: string;
@@ -23,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const alchemyUrl = ALCHEMY_URLS[chainId as keyof typeof ALCHEMY_URLS];
+    const alchemyUrl = DEFAULT_RPC_URLS[Number(chainId) as SupportedNetworks];
     if (!alchemyUrl) {
       throw new Error(`Chain ${chainId} not supported`);
     }

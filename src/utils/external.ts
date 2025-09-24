@@ -1,8 +1,8 @@
-import { SupportedNetworks } from './networks';
+import { getNetworkName, SupportedNetworks } from './networks';
 
 export const getMarketURL = (id: string, chainId: number): string => {
-  const chain = chainId === 1 ? 'mainnet' : 'base';
-  return `https://app.morpho.org/market?id=${id}&network=${chain}`;
+  const network = chainId === SupportedNetworks.Mainnet ? 'ethereum' : getNetworkName(chainId)?.toLowerCase()    
+  return `https://app.morpho.org/${network}/market/${id}`;
 };
 
 export const getAssetURL = (address: string, chain: SupportedNetworks): string => {
@@ -13,6 +13,8 @@ export const getAssetURL = (address: string, chain: SupportedNetworks): string =
       return `https://polygonscan.com/token/${address}`;
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/token/${address}`;
+    case SupportedNetworks.Arbitrum:
+      return `https://arbiscan.io/token/${address}`
     default:
       return `https://etherscan.io/token/${address}`;
   }
@@ -26,6 +28,8 @@ export const getExplorerURL = (address: string, chain: SupportedNetworks): strin
       return `https://polygonscan.com/address/${address}`;
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/address/${address}`;
+    case SupportedNetworks.Arbitrum:
+      return `https://arbiscan.io/address/${address}`
     default:
       return `https://etherscan.io/address/${address}`;
   }
@@ -39,6 +43,8 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
       return `https://polygonscan.com/tx/${hash}`;
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/tx/${hash}`;
+    case SupportedNetworks.Arbitrum:
+      return `https://arbiscan.io/tx/${hash}`
     default:
       return `https://etherscan.io/tx/${hash}`;
   }
@@ -46,14 +52,16 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
 
 const getChainNameForMerkl = (chainId: number): string => {
   switch (chainId) {
-    case 1:
+    case SupportedNetworks.Mainnet:
       return 'ethereum';
-    case 8453:
+    case SupportedNetworks.Base:
       return 'base';
-    case 137:
+    case SupportedNetworks.Polygon:
       return 'polygon';
-    case 1301:
+    case SupportedNetworks.Unichain:
       return 'unichain';
+    case SupportedNetworks.Arbitrum:
+        return 'arbitrum';
     default:
       return 'ethereum';
   }
