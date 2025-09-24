@@ -46,7 +46,7 @@ const initializeDefaultClients = () => {
         transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Unichain]),
       }) as PublicClient,
       [SupportedNetworks.Arbitrum]: createPublicClient({
-        chain: unichain,
+        chain: arbitrum,
         transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum]),
       }) as PublicClient,
     };
