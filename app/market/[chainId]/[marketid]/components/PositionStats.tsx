@@ -31,8 +31,12 @@ function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?:
 }
 
 const hasPosition = (position: MarketPosition) => {
-  return position.state.borrowAssets !== "0" || position.state.collateral !== "0" || position.state.supplyAssets !== "0"
-}
+  return (
+    position.state.borrowAssets !== '0' ||
+    position.state.collateral !== '0' ||
+    position.state.supplyAssets !== '0'
+  );
+};
 
 export function PositionStats({
   market,
@@ -43,7 +47,9 @@ export function PositionStats({
   isRefreshing = false,
 }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
-  const [viewMode, setViewMode] = useState<'global' | 'user'>((userPosition && hasPosition(userPosition)) ? 'user' : 'global');
+  const [viewMode, setViewMode] = useState<'global' | 'user'>(
+    userPosition && hasPosition(userPosition) ? 'user' : 'global',
+  );
 
   const { showFullRewardAPY } = useMarkets();
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
@@ -199,7 +205,8 @@ export function PositionStats({
                 <span className="cursor-help">
                   {baseSupplyAPY.toFixed(2)}%
                   <span className="text-green-600 dark:text-green-400">
-                    {' '}(+{extraRewards.toFixed(2)}%)
+                    {' '}
+                    (+{extraRewards.toFixed(2)}%)
                   </span>
                 </span>
               </APYBreakdownTooltip>

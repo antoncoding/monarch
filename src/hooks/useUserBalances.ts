@@ -2,12 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { SupportedNetworks } from '@/utils/networks';
-type TokenBalance = {
+
+export type TokenBalance = {
   address: string;
   balance: string;
   chainId: number;
   decimals: number;
-  logoURI?: string;
+
   symbol: string;
 };
 
@@ -51,13 +52,13 @@ export function useUserBalances() {
 
     try {
       // Fetch balances from both chains
-      const [mainnetBalances, baseBalances, polygonBalances, unichainBalances, arbitrumBalances] = await Promise.all([
-        fetchBalances(SupportedNetworks.Mainnet),
-        fetchBalances(SupportedNetworks.Base),
-        fetchBalances(SupportedNetworks.Polygon),
-        fetchBalances(SupportedNetworks.Unichain),
-        fetchBalances(SupportedNetworks.Arbitrum)
-      ]);
+      const [mainnetBalances, baseBalances, polygonBalances, arbitrumBalances] =
+        await Promise.all([
+          fetchBalances(SupportedNetworks.Mainnet),
+          fetchBalances(SupportedNetworks.Base),
+          fetchBalances(SupportedNetworks.Polygon),
+          fetchBalances(SupportedNetworks.Arbitrum),
+        ]);
 
       // Process and filter tokens
       const processedBalances: TokenBalance[] = [];
@@ -71,7 +72,6 @@ export function useUserBalances() {
               balance: token.balance,
               chainId,
               decimals: tokenInfo.decimals,
-              logoURI: tokenInfo.img,
               symbol: tokenInfo.symbol,
             });
           }
@@ -81,8 +81,8 @@ export function useUserBalances() {
       processTokens(mainnetBalances, SupportedNetworks.Mainnet);
       processTokens(baseBalances, SupportedNetworks.Base);
       processTokens(polygonBalances, SupportedNetworks.Polygon);
-      processTokens(unichainBalances, SupportedNetworks.Unichain);
-      processTokens(arbitrumBalances, SupportedNetworks.Arbitrum)
+      // processTokens(unichainBalances, SupportedNetworks.Unichain);
+      processTokens(arbitrumBalances, SupportedNetworks.Arbitrum);
       setBalances(processedBalances);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));

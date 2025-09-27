@@ -5,13 +5,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
-import { RiRobot2Line } from 'react-icons/ri';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
-import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -19,10 +17,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
-import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
-import { isAgentAvailable } from '@/utils/networks';
 import { MarketPosition } from '@/utils/types';
-import { SetupAgentModal } from './agent/SetupAgentModal';
 import { OnboardingModal } from './onboarding/Modal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -30,12 +25,10 @@ export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
-  const [showSetupAgentModal, setShowSetupAgentModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
 
   const { account } = useParams<{ account: string }>();
   const { address } = useAccount();
-  const { rebalancerInfos, refetch: refetchRebalancerInfo } = useUserRebalancerInfo(account);
 
   const isOwner = useMemo(() => {
     if (!account) return false;
@@ -55,13 +48,6 @@ export default function Positions() {
   const loading = isMarketsLoading || isPositionsLoading;
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
-
-  const hasActivePositionForAgent = marketPositions?.some((position) => {
-    return (
-      isAgentAvailable(position.market.morphoBlue.chain.id) &&
-      BigInt(position.state.supplyShares) > 0
-    );
-  });
 
   const handleRefetch = () => {
     void refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
@@ -89,12 +75,6 @@ export default function Positions() {
                 Report
               </Button>
             </Link>
-            {isOwner && hasActivePositionForAgent && (
-              <Button size="md" className="font-zen" onPress={() => setShowSetupAgentModal(true)}>
-                <RiRobot2Line size={14} className="mr-2" />
-                Monarch Agent <Badge variant="success">New</Badge>
-              </Button>
-            )}
             {isOwner && (
               <Button
                 variant="cta"
@@ -139,19 +119,6 @@ export default function Positions() {
         <OnboardingModal
           isOpen={showOnboardingModal}
           onClose={() => setShowOnboardingModal(false)}
-          goToAgentSetup={() => {
-            setShowSetupAgentModal(true);
-          }}
-        />
-
-        <SetupAgentModal
-          isOpen={showSetupAgentModal}
-          onClose={() => {
-            void refetchRebalancerInfo();
-            setShowSetupAgentModal(false);
-          }}
-          account={account as Address}
-          userRebalancerInfos={rebalancerInfos}
         />
 
         {loading ? (
@@ -184,7 +151,6 @@ export default function Positions() {
               refetch={() => void refetch()}
               isRefetching={isRefetching}
               isLoadingEarnings={isEarningsLoading}
-              rebalancerInfos={rebalancerInfos}
             />
           </div>
         )}

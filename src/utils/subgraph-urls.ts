@@ -35,7 +35,7 @@ export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Mainnet]: mainnetSubgraphUrl,
   [SupportedNetworks.Polygon]: polygonSubgraphUrl,
   [SupportedNetworks.Unichain]: unichainSubgraphUrl,
-  [SupportedNetworks.Arbitrum]: arbitrumSubgraph
+  [SupportedNetworks.Arbitrum]: arbitrumSubgraph,
 };
 
 export const getSubgraphUrl = (network: SupportedNetworks): string | undefined => {

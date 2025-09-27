@@ -32,11 +32,10 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId }: CampaignB
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className="transition-opacity hover:opacity-80 flex items-center"
+        className="flex items-center transition-opacity hover:opacity-80"
       >
-        <Badge variant="success" size="md" className="cursor-pointer flex items-center py-1 px-2">
-          <FaGift size={15} className='mr-1'/>
-          +{totalBonus.toFixed(1)}%
+        <Badge variant="success" size="md" className="flex cursor-pointer items-center px-2 py-1">
+          <FaGift size={15} className="mr-1" />+{totalBonus.toFixed(1)}%
         </Badge>
       </button>
 

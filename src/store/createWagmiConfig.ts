@@ -18,14 +18,14 @@ const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
 const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];
 const defaultRpcPolygon = DEFAULT_RPC_URLS[SupportedNetworks.Polygon];
 const defaultRpcUnichain = DEFAULT_RPC_URLS[SupportedNetworks.Unichain];
-const defaultRPCArbitrum = DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum]
+const defaultRPCArbitrum = DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum];
 
 export type CustomRpcUrls = {
   [SupportedNetworks.Mainnet]?: string;
   [SupportedNetworks.Base]?: string;
   [SupportedNetworks.Polygon]?: string;
   [SupportedNetworks.Unichain]?: string;
-  [SupportedNetworks.Arbitrum]?: string
+  [SupportedNetworks.Arbitrum]?: string;
 };
 
 const wallets =
@@ -71,7 +71,7 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
       [base.id]: http(rpcBase),
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),
-      [arbitrum.id]: http(rpcArbitrum)
+      [arbitrum.id]: http(rpcArbitrum),
     },
     connectors: [...connectors],
   });

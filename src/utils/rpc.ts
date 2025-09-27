@@ -19,7 +19,7 @@ export const CHAIN_CONFIGS = {
   [SupportedNetworks.Base]: base,
   [SupportedNetworks.Polygon]: polygon,
   [SupportedNetworks.Unichain]: unichain,
-  [SupportedNetworks.Arbitrum]: arbitrum
+  [SupportedNetworks.Arbitrum]: arbitrum,
 } as const;
 
 // Default clients (cached)
@@ -88,7 +88,7 @@ export const BLOCK_TIME = {
   [SupportedNetworks.Base]: 2, // Base: 2 seconds
   [SupportedNetworks.Polygon]: 2, // Polygon: 2 seconds
   [SupportedNetworks.Unichain]: 1, // Unichain: 2 seconds
-  [SupportedNetworks.Arbitrum]: 2, 
+  [SupportedNetworks.Arbitrum]: 2,
 } as const;
 
 export const GENESIS_BLOCK = {

@@ -50,7 +50,7 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
               height={20}
               className="rounded-full"
             />
-            <span className='text-normal'>{campaign.rewardToken.symbol}</span>
+            <span className="text-normal">{campaign.rewardToken.symbol}</span>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
 
           <div className="space-y-4">
             {campaigns.map((campaign) => (
-              <CampaignRow key={campaign.campaignId} campaign={campaign}/>
+              <CampaignRow key={campaign.campaignId} campaign={campaign} />
             ))}
           </div>
         </div>
