@@ -14,7 +14,7 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
 
   // Load balances and tokens at modal level
   const { balances, loading: balancesLoading } = useUserBalances();
-  const { whitelistedMarkets } = useMarkets();
+  const { whitelistedMarkets, loading: marketsLoading } = useMarkets();
 
   // If deployment is complete, show success
   if (deployedVaultAddress) {
@@ -86,6 +86,7 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
                   balances={balances}
                   balancesLoading={balancesLoading}
                   whitelistedMarkets={whitelistedMarkets}
+                  marketsLoading={marketsLoading}
                 />
               </div>
 
@@ -99,7 +100,7 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
                 <Button
                   variant="cta"
                   onPress={needSwitchChain ? switchToNetwork : () => void createVault()}
-                  isDisabled={!selectedTokenAndNetwork || isDeploying || balancesLoading}
+                  isDisabled={!selectedTokenAndNetwork || isDeploying || balancesLoading || marketsLoading}
                   className="min-w-[140px]"
                 >
                   {isDeploying ? (
@@ -107,7 +108,7 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
                       <Spinner />
                       Deploying...
                     </div>
-                  ) : balancesLoading ? (
+                  ) : balancesLoading || marketsLoading ? (
                     'Loading...'
                   ) : needSwitchChain && selectedTokenAndNetwork ? (
                     `Switch to ${getNetworkName(selectedTokenAndNetwork.networkId)}`

@@ -38,9 +38,10 @@ type TokenSelectionProps = {
   balances: TokenBalance[] | null;
   balancesLoading: boolean;
   whitelistedMarkets: Market[] | null;
+  marketsLoading: boolean;
 };
 
-export function TokenSelection({ balances, balancesLoading, whitelistedMarkets }: TokenSelectionProps) {
+export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading }: TokenSelectionProps) {
   const { selectedTokenAndNetwork, setSelectedTokenAndNetwork } = useDeployment();
 
   const { allTokens, findToken } = useTokens()
@@ -107,13 +108,19 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets }
     });
   };
 
-  // Show loading state while fetching
-  if (balancesLoading) {
+  // Show loading state while fetching balances or markets
+  if (balancesLoading || marketsLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
           <Spinner/>
-          <p className="mt-3 text-sm text-secondary">Fetching your token balances across networks</p>
+          <p className="mt-3 text-sm text-secondary">
+            {balancesLoading && marketsLoading
+              ? 'Loading token balances and markets...'
+              : balancesLoading
+              ? 'Fetching your token balances across networks'
+              : 'Loading available markets...'}
+          </p>
         </div>
       </div>
     );
