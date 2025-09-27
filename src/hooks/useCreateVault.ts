@@ -1,17 +1,10 @@
 import { useCallback, useState } from 'react';
 import { Address, encodeFunctionData, keccak256, toBytes } from 'viem';
 import { useAccount, useReadContract } from 'wagmi';
-import { abi as vaultV2Abi } from '@/abis/vaultv2';
+import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-
-// TODO: Move to contracts file
-const VAULT_V2_FACTORY_ADDRESS: Record<number, Address> = {
-  1: '0x0000000000000000000000000000000000000000',
-  8453: '0x0000000000000000000000000000000000000000',
-  137: '0x0000000000000000000000000000000000000000',
-  42161: '0x0000000000000000000000000000000000000000',
-};
+import { getAgentConfig } from '@/utils/networks';
 
 export type CreateVaultStepType = 'deploy' | 'deploying';
 
@@ -24,7 +17,6 @@ export type UseCreateVaultReturn = {
 
   // Actions
   createVault: (asset: Address, salt?: string) => Promise<Address | null>;
-  calculateVaultAddress: (owner: Address, asset: Address, salt?: string) => Address | undefined;
 };
 
 export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Address) => void): UseCreateVaultReturn {
@@ -32,6 +24,9 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
 
   const { address: account } = useAccount();
   const toast = useStyledToast();
+
+  // Get agent config for this network
+  const agentConfig = getAgentConfig(chainId);
 
   // Transaction handler
   const { isConfirming: isDeploying, sendTransactionAsync } = useTransactionWithToast({
@@ -47,29 +42,15 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
     },
   });
 
-  // Calculate vault address before deployment
-  const calculateVaultAddress = useCallback((owner: Address, asset: Address, salt?: string): Address | undefined => {
-    try {
-      const saltBytes = salt ? keccak256(toBytes(salt)) : keccak256(toBytes('default'));
-
-      // This should call the vaultV2 view function to get the predicted address
-      // For now, we'll return undefined and let the actual contract call handle it
-      return undefined;
-    } catch (error) {
-      console.error('Error calculating vault address:', error);
-      return undefined;
-    }
-  }, []);
-
   // Get predicted vault address using contract call
   const { data: predictedVaultAddress } = useReadContract({
-    address: VAULT_V2_FACTORY_ADDRESS[chainId] as Address,
-    abi: vaultV2Abi,
+    address: agentConfig?.factoryAddress,
+    abi: vaultFactoryAbi,
     functionName: 'vaultV2',
     args: account && [account, '0x0000000000000000000000000000000000000000' as Address, keccak256(toBytes('default'))],
     chainId,
     query: {
-      enabled: !!account,
+      enabled: !!account && !!agentConfig?.factoryAddress,
     },
   }) as { data: Address | undefined };
 
@@ -80,20 +61,25 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
       return null;
     }
 
+    if (!agentConfig?.factoryAddress) {
+      toast.error('Network Not Supported', 'Vault deployment is not available on this network');
+      return null;
+    }
+
     try {
       setCurrentStep('deploying');
 
       const saltBytes = salt ? keccak256(toBytes(salt)) : keccak256(toBytes('default'));
 
       const txData = encodeFunctionData({
-        abi: vaultV2Abi,
+        abi: vaultFactoryAbi,
         functionName: 'createVaultV2',
         args: [account, asset, saltBytes],
       });
 
-      const hash = await sendTransactionAsync({
+      await sendTransactionAsync({
         account,
-        to: VAULT_V2_FACTORY_ADDRESS[chainId] as Address,
+        to: agentConfig.factoryAddress,
         data: txData,
       });
 
@@ -124,7 +110,7 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
     }
   }, [
     account,
-    chainId,
+    agentConfig,
     predictedVaultAddress,
     sendTransactionAsync,
     toast,
@@ -135,6 +121,5 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
     currentStep,
     isDeploying,
     createVault,
-    calculateVaultAddress,
   };
 }

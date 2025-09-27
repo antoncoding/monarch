@@ -10,7 +10,7 @@ import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
-import { useUserBalances } from '@/hooks/useUserBalances';
+import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
@@ -30,7 +30,7 @@ function NetworkIcon({ networkId }: { networkId: number }) {
 }
 
 export function AssetSelection() {
-  const { balances, loading: balancesLoading } = useUserBalances();
+  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
   const { markets, loading: marketsLoading } = useMarkets();
   const { setSelectedToken, setSelectedMarkets, goToNextStep } = useOnboarding();
 

@@ -1,3 +1,5 @@
+import { Address } from 'viem';
+
 enum SupportedNetworks {
   Mainnet = 1,
   Base = 8453,
@@ -6,17 +8,21 @@ enum SupportedNetworks {
   Arbitrum = 42161,
 }
 
-const isSupportedChain = (chainId: number) => {
-  return Object.values(SupportedNetworks).includes(chainId);
+type NetworkAgentConfig = {
+  factoryAddress: Address;
+  regularRebalancer?: Address;
+  rebalanceWindow?: number;
+  strategies?: Address[];
 };
 
-const agentNetworks = [SupportedNetworks.Base, SupportedNetworks.Polygon];
-
-const isAgentAvailable = (chainId: number) => {
-  return agentNetworks.includes(chainId);
+type NetworkConfig = {
+  network: SupportedNetworks;
+  logo: string;
+  name: string;
+  agent?: NetworkAgentConfig;
 };
 
-const networks = [
+const networks: NetworkConfig[] = [
   {
     network: SupportedNetworks.Mainnet,
     logo: require('../imgs/chains/eth.svg') as string,
@@ -26,6 +32,12 @@ const networks = [
     network: SupportedNetworks.Base,
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
+    agent: {
+      factoryAddress: '0x0000000000000000000000000000000000000000', // TODO: Set actual factory address
+      regularRebalancer: '0x0000000000000000000000000000000000000000', // TODO: Set actual rebalancer
+      rebalanceWindow: 3600, // 1 hour in seconds
+      strategies: [], // TODO: Add strategy addresses
+    },
   },
   {
     network: SupportedNetworks.Polygon,
@@ -44,6 +56,24 @@ const networks = [
   },
 ];
 
+const isSupportedChain = (chainId: number) => {
+  return Object.values(SupportedNetworks).includes(chainId);
+};
+
+const getNetworkConfig = (chainId: number): NetworkConfig | undefined => {
+  return networks.find((network) => network.network === chainId);
+};
+
+const isAgentAvailable = (chainId: number): boolean => {
+  const config = getNetworkConfig(chainId);
+  return !!config?.agent;
+};
+
+const getAgentConfig = (chainId: number): NetworkAgentConfig | undefined => {
+  const config = getNetworkConfig(chainId);
+  return config?.agent;
+};
+
 const getNetworkImg = (chainId: number) => {
   const target = networks.find((network) => network.network === chainId);
   return target?.logo;
@@ -59,7 +89,10 @@ export {
   isSupportedChain,
   getNetworkImg,
   getNetworkName,
+  getNetworkConfig,
+  getAgentConfig,
   networks,
   isAgentAvailable,
-  agentNetworks,
 };
+
+export type { NetworkConfig, NetworkAgentConfig };

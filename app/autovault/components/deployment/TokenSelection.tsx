@@ -2,13 +2,13 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 import { Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
-import { TokenIcon } from '@/components/TokenIcon';
-import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
-import { useDeployment, SelectedToken, SelectedTokenAndNetwork } from './DeploymentContext';
-import { TokenBalance } from '@/hooks/useUserBalances';
-import type { Market } from '@/utils/types';
 import { useTokens } from '@/components/providers/TokenProvider';
+import { TokenIcon } from '@/components/TokenIcon';
+import { TokenBalance } from '@/hooks/useUserBalances';
+import { formatReadable } from '@/utils/balance';
+import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
+import type { Market } from '@/utils/types';
+import { useDeployment, SelectedToken } from './DeploymentContext';
 
 type TokenNetwork = {
   symbol: string;
@@ -107,12 +107,13 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets }
     });
   };
 
+  // Show loading state while fetching
   if (balancesLoading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-center">
           <Spinner/>
-          <p className="mt-3 text-sm text-secondary">Fetching your token balances</p>
+          <p className="mt-3 text-sm text-secondary">Fetching your token balances across networks</p>
         </div>
       </div>
     );

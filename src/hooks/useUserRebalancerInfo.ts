@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userRebalancerInfoQuery } from '@/graphql/morpho-api-queries';
-import { agentNetworks } from '@/utils/networks';
+import { networks, isAgentAvailable } from '@/utils/networks';
 import { UserRebalancerInfo } from '@/utils/types';
 import { getMonarchAgentUrl } from '@/utils/urls';
 
@@ -19,6 +19,10 @@ export function useUserRebalancerInfo(account: string | undefined) {
     try {
       setLoading(true);
       setError(null);
+
+      const agentNetworks = networks
+        .filter(network => isAgentAvailable(network.network))
+        .map(network => network.network);
 
       const promises = agentNetworks.map(async (networkId) => {
         const apiUrl = getMonarchAgentUrl(networkId);

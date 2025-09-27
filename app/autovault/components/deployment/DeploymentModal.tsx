@@ -1,13 +1,13 @@
 import { Modal, ModalContent, ModalHeader } from '@heroui/react';
 import { RxCross2 } from 'react-icons/rx';
+import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
-import { useUserBalances } from '@/hooks/useUserBalances';
 import { useMarkets } from '@/contexts/MarketsContext';
+import { useUserBalances } from '@/hooks/useUserBalances';
 import { getNetworkName } from '@/utils/networks';
-import { DeploymentProvider, useDeployment, DeploymentStep } from './DeploymentContext';
+import { DeploymentProvider, useDeployment } from './DeploymentContext';
 import { DeploymentSuccess } from './DeploymentSuccess';
 import { TokenSelection } from './TokenSelection';
-import { Button } from '@/components/common';
 
 function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { selectedTokenAndNetwork, needSwitchChain, switchToNetwork, createVault, isDeploying, deployedVaultAddress } = useDeployment();

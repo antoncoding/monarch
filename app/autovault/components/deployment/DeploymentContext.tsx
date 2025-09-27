@@ -1,9 +1,9 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
-import { SupportedNetworks } from '@/utils/networks';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useCreateVault } from '@/hooks/useCreateVault';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
+import { SupportedNetworks } from '@/utils/networks';
 
 // Keeping enum for backwards compatibility but not using steps anymore
 export enum DeploymentStep {
@@ -71,21 +71,32 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
     setPredictedVaultAddress(null);
   }, []);
 
+  const contextValue = useMemo(() => ({
+    selectedTokenAndNetwork,
+    deployedVaultAddress,
+    predictedVaultAddress,
+    needSwitchChain,
+    switchToNetwork,
+    createVault,
+    isDeploying,
+    setSelectedTokenAndNetwork,
+    setDeployedVaultAddress,
+    resetDeployment,
+  }), [
+    selectedTokenAndNetwork,
+    deployedVaultAddress,
+    predictedVaultAddress,
+    needSwitchChain,
+    switchToNetwork,
+    createVault,
+    isDeploying,
+    setSelectedTokenAndNetwork,
+    setDeployedVaultAddress,
+    resetDeployment,
+  ]);
+
   return (
-    <DeploymentContext.Provider
-      value={{
-        selectedTokenAndNetwork,
-        deployedVaultAddress,
-        predictedVaultAddress,
-        needSwitchChain,
-        switchToNetwork,
-        createVault,
-        isDeploying,
-        setSelectedTokenAndNetwork,
-        setDeployedVaultAddress,
-        resetDeployment,
-      }}
-    >
+    <DeploymentContext.Provider value={contextValue}>
       {children}
     </DeploymentContext.Provider>
   );

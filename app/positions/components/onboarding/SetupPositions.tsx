@@ -10,7 +10,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useUserBalances } from '@/hooks/useUserBalances';
+import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
@@ -18,7 +18,7 @@ import { useOnboarding } from './OnboardingContext';
 export function SetupPositions() {
   const toast = useStyledToast();
   const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
-  const { balances } = useUserBalances();
+  const { balances } = useUserBalancesAllNetworks();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
