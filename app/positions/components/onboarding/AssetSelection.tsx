@@ -8,10 +8,10 @@ import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName } from '@/utils/networks';
+import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
-import { findToken } from '@/utils/tokens';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);

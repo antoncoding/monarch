@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { formatUnits } from 'viem';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/common/Button';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import { Market } from '@/utils/types';
-import AssetFilter from 'app/markets/components/AssetFilter';
-import OracleFilter from 'app/markets/components/OracleFilter';
 import { APYCell } from 'app/markets/components/APYBreakdownTooltip';
+import AssetFilter from 'app/markets/components/AssetFilter';
 import { TDAsset } from 'app/markets/components/MarketTableUtils';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
+import OracleFilter from 'app/markets/components/OracleFilter';
 import {
   MarketDebtIndicator,
   MarketAssetIndicator,
@@ -126,7 +125,6 @@ export function RiskSelection() {
           {!shouldShowMarkets ? (
             <div className="h-full flex flex-col items-center justify-center text-gray-400">
               <div className="text-center">
-                <div className="mb-4 text-4xl">📊</div>
                 <p className="text-lg font-medium mb-2">Select your risk preferences</p>
                 <p className="text-sm max-w-md">
                   {selectedCollaterals.length === 0 && 'Choose at least one collateral asset to view available markets'}
@@ -146,7 +144,7 @@ export function RiskSelection() {
               <table className="responsive w-full rounded-md font-zen">
                 <thead className="table-header">
                   <tr>
-                    <th className="font-normal w-8"></th>
+                    <th className="font-normal w-8" />
                     <th className="font-normal">Collateral</th>
                     <th className="font-normal">Oracle</th>
                     <th className="font-normal">LLTV</th>

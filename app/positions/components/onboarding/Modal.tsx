@@ -55,7 +55,7 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       size="3xl"
       scrollBehavior="inside"
       classNames={{
-        base: 'bg-background dark:border border-gray-700',
+        base: 'bg-surface',
         body: 'py-6',
         closeButton: 'hidden',
         wrapper: 'z-50', // Higher than header

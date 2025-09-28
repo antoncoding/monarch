@@ -4,8 +4,10 @@ import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/common';
-import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
+import Input from '@/components/Input/Input';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
+import { TokenIcon } from '@/components/TokenIcon';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
@@ -13,6 +15,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
+import { APYCell } from 'app/markets/components/APYBreakdownTooltip';
 import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
@@ -22,6 +25,7 @@ export function SetupPositions() {
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
+  const [totalAmountBigInt, setTotalAmountBigInt] = useState<bigint>(0n);
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
@@ -43,6 +47,12 @@ export function SetupPositions() {
   }, [balances, selectedToken]);
 
   const tokenDecimals = useMemo(() => selectedToken?.decimals ?? 0, [selectedToken]);
+
+  // Sync BigInt value to string value for calculations
+  useEffect(() => {
+    const formattedAmount = formatUnits(totalAmountBigInt, tokenDecimals);
+    setTotalAmount(formattedAmount);
+  }, [totalAmountBigInt, tokenDecimals]);
 
   // Initialize percentages evenly
   useEffect(() => {
@@ -73,25 +83,6 @@ export function SetupPositions() {
     }
   }, [totalAmount, percentages, tokenDecimals]);
 
-  const handleTotalAmountChange = (value: string) => {
-    // Remove any non-numeric characters except decimal point
-    const cleanValue = value.replace(/[^0-9.]/g, '');
-
-    // Ensure only one decimal point
-    const parts = cleanValue.split('.');
-    if (parts.length > 2) return;
-
-    // Limit decimal places to token decimals
-    if (parts[1] && parts[1].length > tokenDecimals) return;
-
-    try {
-      // Validate the new amount can be converted to BigInt
-      parseUnits(cleanValue || '0', tokenDecimals);
-      setTotalAmount(cleanValue);
-    } catch (e) {
-      setError('Invalid amount');
-    }
-  };
 
   const toggleLockAmount = useCallback(
     (marketKey: string) => {
@@ -254,20 +245,27 @@ export function SetupPositions() {
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-1">
             <div className="relative max-w-lg flex-1">
-              <input
-                type="text"
-                value={totalAmount}
-                onChange={(e) => handleTotalAmountChange(e.target.value)}
-                placeholder="0.0"
-                className="w-full rounded border border-gray-200 bg-white px-3 py-2 pr-20 font-mono dark:border-gray-700 dark:bg-gray-800"
-              />
-              <button
-                type="button"
-                onClick={() => handleTotalAmountChange(formatUnits(tokenBalance, tokenDecimals))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded bg-gray-100 px-2 py-1 text-xs hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
-              >
-                Max
-              </button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="opacity-80">Supply amount</span>
+                </div>
+                <Input
+                  decimals={tokenDecimals}
+                  max={tokenBalance}
+                  setValue={setTotalAmountBigInt}
+                  setError={setError}
+                  exceedMaxErrMessage={
+                    totalAmountBigInt > tokenBalance
+                      ? 'Insufficient Balance'
+                      : undefined
+                  }
+                />
+                {error && (
+                  <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
+                    {error}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex min-w-[200px] flex-col items-end">
@@ -291,96 +289,122 @@ export function SetupPositions() {
       </div>
 
       {/* Markets Distribution */}
-      <div className="mt-6 min-h-0 flex-1">
-        <div className="h-[calc(100vh-500px)] overflow-auto rounded border border-gray-200 dark:border-gray-700">
-          <table className="w-full font-zen">
-            <thead className="sticky top-0 z-[1] bg-gray-50 text-sm dark:bg-gray-800">
-              <tr>
-                <th className="whitespace-nowrap px-4 py-3 text-left font-normal">Market</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-normal">Distribution</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 text-sm dark:divide-gray-700">
-              {selectedMarkets.map((market) => {
-                const currentPercentage = percentages[market.uniqueKey] ?? 0;
-                const isLocked = lockedAmounts.has(market.uniqueKey);
+      <div className="mt-6 h-96 overflow-y-auto">
+        <table className="responsive w-full rounded-md font-zen">
+          <thead className="table-header">
+            <tr>
+              <th className="font-normal">Collateral</th>
+              <th className="font-normal">Oracle</th>
+              <th className="font-normal">LLTV</th>
+              <th className="font-normal">APY</th>
+              <th className="font-normal">Distribution</th>
+            </tr>
+          </thead>
+          <tbody className="table-body text-sm">
+            {selectedMarkets.map((market) => {
+              const currentPercentage = percentages[market.uniqueKey] ?? 0;
+              const isLocked = lockedAmounts.has(market.uniqueKey);
+              const collatToShow = market.collateralAsset.symbol
+                .slice(0, 6)
+                .concat(market.collateralAsset.symbol.length > 6 ? '...' : '');
 
-                return (
-                  <tr key={market.uniqueKey}>
-                    <td className="whitespace-nowrap font-mono text-xs">
-                      <a
-                        href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="no-underline"
-                      >
-                        <MarketInfoBlock
-                          market={market}
-                          className="bg-surface max-w-[300px] border-none no-underline"
+              return (
+                <tr key={market.uniqueKey} className="hover:bg-hovered">
+                  {/* Collateral Asset */}
+                  <td data-label="Collateral" className="z-50">
+                    <div className="flex items-center justify-center gap-1">
+                      <TokenIcon
+                        address={market.collateralAsset.address}
+                        chainId={market.morphoBlue.chain.id}
+                        width={18}
+                        height={18}
+                        symbol={market.collateralAsset.symbol}
+                      />
+                      <span className="whitespace-nowrap">
+                        {collatToShow}
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Oracle */}
+                  <td data-label="Oracle" className="z-50">
+                    <div className="flex justify-center">
+                      <OracleVendorBadge
+                        oracleData={market.oracle?.data}
+                        chainId={market.morphoBlue.chain.id}
+                      />
+                    </div>
+                  </td>
+
+                  {/* LLTV */}
+                  <td data-label="LLTV" className="z-50">
+                    <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium">
+                      {Number(market.lltv) / 1e16}%
+                    </span>
+                  </td>
+
+                  {/* APY */}
+                  <td data-label="APY">
+                    <APYCell market={market} />
+                  </td>
+
+                  {/* Distribution Controls */}
+                  <td data-label="Distribution" className="z-50">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 min-w-[120px]">
+                        <Slider
+                          size="sm"
+                          step={1}
+                          maxValue={100}
+                          minValue={0}
+                          value={currentPercentage}
+                          onChange={(value) =>
+                            handlePercentageChange(market.uniqueKey, Number(value))
+                          }
+                          className="w-full"
+                          classNames={{
+                            base: 'w-full gap-2',
+                          }}
+                          isDisabled={isLocked}
                         />
-                      </a>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">
-                      <div className="flex items-center gap-4">
-                        <div className="flex flex-1 items-center gap-2">
-                          <div className="flex-1">
-                            <Slider
-                              size="sm"
-                              step={1}
-                              maxValue={100}
-                              minValue={0}
-                              value={currentPercentage}
-                              onChange={(value) =>
-                                handlePercentageChange(market.uniqueKey, Number(value))
-                              }
-                              className="max-w-md"
-                              classNames={{
-                                base: 'max-w-md gap-3',
-                                track: 'bg-default-500/30',
-                                thumb: 'bg-primary',
-                              }}
-                              isDisabled={isLocked}
-                            />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="w-24">
-                              <input
-                                type="text"
-                                value={amounts[market.uniqueKey] ?? ''}
-                                onChange={(e) =>
-                                  handleAmountChange(market.uniqueKey, e.target.value)
-                                }
-                                placeholder="0.0"
-                                className="bg-hovered focus:border-monarch-orange h-8 w-full rounded p-2 text-right font-mono focus:outline-none"
-                                disabled={isLocked}
-                              />
-                            </div>
-                            <span className="w-8 text-right font-mono text-gray-500">
-                              {Math.round(currentPercentage)}%
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => toggleLockAmount(market.uniqueKey)}
-                              className={`text-primary hover:text-primary-400 ${
-                                isLocked ? 'opacity-100' : 'opacity-60'
-                              }`}
-                            >
-                              {isLocked ? (
-                                <LockClosedIcon className="h-4 w-4" />
-                              ) : (
-                                <LockOpen1Icon className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20">
+                          <input
+                            type="text"
+                            value={amounts[market.uniqueKey] ?? ''}
+                            onChange={(e) =>
+                              handleAmountChange(market.uniqueKey, e.target.value)
+                            }
+                            placeholder="0.0"
+                            className="bg-hovered focus:border-primary h-7 w-full rounded px-2 text-right font-mono text-xs focus:outline-none"
+                            disabled={isLocked}
+                          />
+                        </div>
+                        <span className="w-8 text-right font-mono text-xs text-gray-500">
+                          {Math.round(currentPercentage)}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleLockAmount(market.uniqueKey)}
+                          className={`text-primary hover:text-primary-400 ${
+                            isLocked ? 'opacity-100' : 'opacity-60'
+                          }`}
+                        >
+                          {isLocked ? (
+                            <LockClosedIcon className="h-3 w-3" />
+                          ) : (
+                            <LockOpen1Icon className="h-3 w-3" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {error && <div className="mt-4 text-sm text-red-500">{error}</div>}
@@ -404,7 +428,7 @@ export function SetupPositions() {
         </Button>
         <Button
           variant="cta"
-          isDisabled={error !== null || !totalAmount || supplies.length === 0}
+          isDisabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
           onPress={() => void handleSupply()}
           className="min-w-[120px]"
