@@ -255,6 +255,7 @@ export function RiskSelection() {
                         {/* Actions */}
                         <td data-label="Actions" className="z-50">
                           <button
+                            type='button'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleMarketDetails(market);

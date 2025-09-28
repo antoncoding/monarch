@@ -12,7 +12,6 @@ import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { useVaultDetails } from '@/hooks/useAutovaultData';
-import { formatReadable } from '@/utils/balance';
 import { VaultSettings } from './components/VaultSettings';
 
 export default function VaultContent() {
@@ -119,16 +118,6 @@ export default function VaultContent() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-secondary">Total Value</span>
-                  <span className="font-semibold">${formatReadable(vault.totalValue)} USD</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">Current APY</span>
-                  <span className="font-semibold text-green-500">
-                    {vault.currentApy.toFixed(2)}%
-                  </span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-secondary">Active Agents</span>
                   <span className="font-semibold">
                     {vault.agents.filter((agent) => agent.status === 'active').length}
@@ -154,16 +143,6 @@ export default function VaultContent() {
                     {vault.currentApy.toFixed(2)}%
                   </p>
                   <p className="text-sm text-secondary">Current APY</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-4">
-                  <div className="text-center">
-                    <p className="text-lg font-semibold">${formatReadable(vault.totalValue)}</p>
-                    <p className="text-xs text-secondary">Total Value Locked</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-semibold">{vault.rebalanceHistory.length}</p>
-                    <p className="text-xs text-secondary">Total Rebalances</p>
-                  </div>
                 </div>
               </div>
             </CardBody>
@@ -199,37 +178,6 @@ export default function VaultContent() {
                       >
                         {agent.status}
                       </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardBody>
-          </Card>
-
-          {/* Recent Rebalances Card */}
-          <Card className="bg-surface">
-            <CardHeader>
-              <h3 className="text-lg font-semibold">Recent Rebalances</h3>
-            </CardHeader>
-            <CardBody>
-              {vault.rebalanceHistory.length === 0 ? (
-                <p className="py-4 text-center text-secondary">No rebalances yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {vault.rebalanceHistory.slice(0, 5).map((rebalance, index) => (
-                    <div key={index} className="border-b border-divider pb-3 last:border-b-0">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-secondary">
-                          {rebalance.fromMarket} → {rebalance.toMarket}
-                        </span>
-                        <span className="font-medium">${formatReadable(rebalance.amount)}</span>
-                      </div>
-                      <div className="mt-1 flex justify-between text-xs">
-                        <span className="text-secondary">{rebalance.reason}</span>
-                        <span className="text-secondary">
-                          {rebalance.timestamp.toLocaleDateString()}
-                        </span>
-                      </div>
                     </div>
                   ))}
                 </div>

@@ -52,8 +52,6 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }, [currentStep, selectedToken, selectedMarkets]);
 
-  console.log('canGoNext', canGoNext)
-
   const goToNextStep = () => {
     const nextStep = ONBOARDING_STEPS[currentStepIndex + 1];
     if (nextStep) {
