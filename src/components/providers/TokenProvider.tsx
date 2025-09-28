@@ -43,7 +43,7 @@ function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetwork
     img: asset.proIcon ?? undefined,
     networks: [
       {
-        chain: CHAIN_CONFIGS[chainId], 
+        chain: CHAIN_CONFIGS[chainId],
         address: asset.address,
       },
     ],
@@ -63,12 +63,12 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
         const [mainnetAssets, baseAssets, arbitrumAssets] = await Promise.all([
           fetchPendleAssets(SupportedNetworks.Mainnet),
           fetchPendleAssets(SupportedNetworks.Base),
-          fetchPendleAssets(SupportedNetworks.Arbitrum)
+          fetchPendleAssets(SupportedNetworks.Arbitrum),
         ]);
         const pendleTokens = [
           ...mainnetAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Mainnet)),
           ...baseAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Base)),
-          ...arbitrumAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Arbitrum))
+          ...arbitrumAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Arbitrum)),
         ];
 
         // Filter out Pendle tokens that have addresses already present in supportedTokens
@@ -95,10 +95,11 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
 
   const findToken = useCallback(
     (address: string, chainId: number) => {
+      if (!address || !chainId) return undefined;
       return allTokens.find((token) =>
         token.networks.some(
           (network) =>
-            network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
+            network.address?.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
         ),
       );
     },

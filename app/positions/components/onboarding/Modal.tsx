@@ -42,15 +42,7 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
   );
 }
 
-export function OnboardingModal({
-  isOpen,
-  onClose,
-  goToAgentSetup,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  goToAgentSetup: () => void;
-}) {
+export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { step } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
 
@@ -63,7 +55,7 @@ export function OnboardingModal({
       size="3xl"
       scrollBehavior="inside"
       classNames={{
-        base: 'bg-background dark:border border-gray-700',
+        base: 'bg-surface',
         body: 'py-6',
         closeButton: 'hidden',
         wrapper: 'z-50', // Higher than header
@@ -97,7 +89,7 @@ export function OnboardingModal({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              <CurrentStepComponent onClose={onClose} goToAgentSetup={goToAgentSetup} />
+              <CurrentStepComponent onClose={onClose} />
             </motion.div>
           </AnimatePresence>
         </div>

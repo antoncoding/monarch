@@ -53,7 +53,7 @@ const supportedTokens = [
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
       { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
-      { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' } 
+      { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' },
     ],
     peg: TokenPeg.USD,
   },
@@ -283,7 +283,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
-      { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f'}
+      { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
     ],
     peg: TokenPeg.BTC,
   },
@@ -448,9 +448,7 @@ const supportedTokens = [
     symbol: 'syrupUSDC',
     img: require('../imgs/tokens/syrupUSDC.svg') as string,
     decimals: 18,
-    networks: [
-      { chain: arbitrum, address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5' },
-    ],
+    networks: [{ chain: arbitrum, address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5' }],
     peg: TokenPeg.USD,
   },
   {
@@ -578,8 +576,8 @@ const supportedTokens = [
       },
       {
         address: '0x40bd670a58238e6e230c430bbb5ce6ec0d40df48', // not used in "reward" as MORPHO_ARBITRUM just yet
-        chain: arbitrum
-      }
+        chain: arbitrum,
+      },
     ],
   },
   {
@@ -637,9 +635,9 @@ const isWETH = (address: string, chainId: number) => {
   if (chainId === SupportedNetworks.Base || chainId === SupportedNetworks.Unichain) {
     return address.toLowerCase() === '0x4200000000000000000000000000000000000006';
   }
-  
+
   if (chainId === SupportedNetworks.Arbitrum) {
-    return address.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'
+    return address.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1';
   }
   return false;
 };

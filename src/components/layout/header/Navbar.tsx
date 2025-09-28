@@ -89,6 +89,9 @@ export function Navbar() {
               <NavbarLink href={address ? `/positions/${address}` : '/positions'}>
                 Portfolio
               </NavbarLink>
+              {/* <NavbarLink href="/autovault" matchKey="/autovault">
+                Autovault
+              </NavbarLink> */}
               <NavbarLink href={address ? `/rewards/${address}` : '/rewards'} matchKey="/rewards">
                 Rewards
               </NavbarLink>
@@ -96,6 +99,9 @@ export function Navbar() {
           ) : (
             <>
               <NavbarLink href="/positions">Portfolio</NavbarLink>
+              <NavbarLink href="/autovault" matchKey="/autovault">
+                Autovault
+              </NavbarLink>
               <NavbarLink href="/rewards" matchKey="/rewards">
                 Rewards
               </NavbarLink>

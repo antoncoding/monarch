@@ -83,7 +83,7 @@ export default function Input({
         onChange={onInputChange}
         className="bg-hovered h-10 w-full rounded p-2 focus:border-primary focus:outline-none"
       />
-      {(max !== undefined && max !== BigInt(0)) && (
+      {max !== undefined && max !== BigInt(0) && (
         <button
           type="button"
           onClick={handleMax}

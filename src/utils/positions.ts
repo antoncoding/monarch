@@ -10,7 +10,6 @@ import {
   PositionEarnings,
   UserTransaction,
   GroupedPosition,
-  UserRebalancerInfo,
 } from './types';
 
 export type PositionSnapshot = {
@@ -369,23 +368,13 @@ export function getGroupedEarnings(
  * Group positions by loan asset
  *
  * @param positions - Array of positions with earnings
- * @param rebalancerInfos - Array of rebalancer info objects for different networks
  * @returns Array of grouped positions
  */
 export function groupPositionsByLoanAsset(
   positions: MarketPositionWithEarnings[],
-  rebalancerInfos: UserRebalancerInfo[] = [],
 ): GroupedPosition[] {
   return positions
-    .filter((position) => {
-      const networkRebalancerInfo = rebalancerInfos.find(
-        (info) => info.network === position.market.morphoBlue.chain.id,
-      );
-      return (
-        BigInt(position.state.supplyShares) > 0 ||
-        networkRebalancerInfo?.marketCaps.some((c) => c.marketId === position.market.uniqueKey)
-      );
-    })
+    .filter((position) => BigInt(position.state.supplyShares) > 0)
     .reduce((acc: GroupedPosition[], position) => {
       const loanAssetAddress = position.market.loanAsset.address;
       const loanAssetDecimals = position.market.loanAsset.decimals;
@@ -412,17 +401,10 @@ export function groupPositionsByLoanAsset(
         acc.push(groupedPosition);
       }
 
-      const networkRebalancerInfoForAdd = rebalancerInfos.find(
-        (info) => info.network === position.market.morphoBlue.chain.id,
-      );
-
       // Check if position should be included in the group
       const shouldInclude =
         BigInt(position.state.supplyShares) > 0 ||
-        getEarningsForPeriod(position, EarningsPeriod.All) !== '0' ||
-        networkRebalancerInfoForAdd?.marketCaps.some(
-          (c) => c.marketId === position.market.uniqueKey,
-        );
+        getEarningsForPeriod(position, EarningsPeriod.All) !== '0';
 
       if (shouldInclude) {
         groupedPosition.markets.push(position);

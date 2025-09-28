@@ -1,22 +1,30 @@
+import { Address } from 'viem';
+import { v2AgentsBase } from './monarch-agent';
+import { AgentMetadata } from './types';
+
 enum SupportedNetworks {
   Mainnet = 1,
   Base = 8453,
   Polygon = 137,
   Unichain = 130,
-  Arbitrum = 42161
+  Arbitrum = 42161,
 }
 
-const isSupportedChain = (chainId: number) => {
-  return Object.values(SupportedNetworks).includes(chainId);
+type VaultAgentConfig = {
+  v2FactoryAddress: Address;
+  subgraphEndpoint?: string // temporary to allow fetching deployed vaults from subgraph
+  strategies?: AgentMetadata[];
 };
 
-const agentNetworks = [SupportedNetworks.Base, SupportedNetworks.Polygon];
-
-const isAgentAvailable = (chainId: number) => {
-  return agentNetworks.includes(chainId);
+type NetworkConfig = {
+  network: SupportedNetworks;
+  logo: string;
+  name: string;
+  vaultConfig?: VaultAgentConfig;
 };
 
-const networks = [
+
+const networks: NetworkConfig[] = [
   {
     network: SupportedNetworks.Mainnet,
     logo: require('../imgs/chains/eth.svg') as string,
@@ -26,6 +34,11 @@ const networks = [
     network: SupportedNetworks.Base,
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
+    vaultConfig: {
+      v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
+      strategies: v2AgentsBase,
+      subgraphEndpoint: "https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest"
+    },
   },
   {
     network: SupportedNetworks.Polygon,
@@ -40,9 +53,29 @@ const networks = [
   {
     network: SupportedNetworks.Arbitrum,
     logo: require('../imgs/chains/arbitrum.png') as string,
-    name: 'Arbitrum'
-  }
+    name: 'Arbitrum',
+  },
 ];
+
+const isSupportedChain = (chainId: number) => {
+  return Object.values(SupportedNetworks).includes(chainId);
+};
+
+const getNetworkConfig = (chainId: number): NetworkConfig | undefined => {
+  return networks.find((network) => network.network === chainId);
+};
+
+const isAgentAvailable = (chainId: number): boolean => {
+  const network = getNetworkConfig(chainId);
+  if (!network || !network.vaultConfig) return false
+
+  return network.vaultConfig.subgraphEndpoint !== undefined
+};
+
+const getAgentConfig = (chainId: number): VaultAgentConfig | undefined => {
+  const network = getNetworkConfig(chainId);
+  return network?.vaultConfig;
+};
 
 const getNetworkImg = (chainId: number) => {
   const target = networks.find((network) => network.network === chainId);
@@ -59,7 +92,10 @@ export {
   isSupportedChain,
   getNetworkImg,
   getNetworkName,
+  getNetworkConfig,
+  getAgentConfig,
   networks,
   isAgentAvailable,
-  agentNetworks,
 };
+
+export type { NetworkConfig };

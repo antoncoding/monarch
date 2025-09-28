@@ -37,7 +37,6 @@ import {
   MarketPosition,
   GroupedPosition,
   MarketPositionWithEarnings,
-  UserRebalancerInfo,
   WarningWithDetail,
   WarningCategory,
 } from '@/utils/types';
@@ -128,7 +127,6 @@ type PositionsSummaryTableProps = {
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
   isLoadingEarnings?: boolean;
-  rebalancerInfos: UserRebalancerInfo[];
 };
 
 export function PositionsSummaryTable({
@@ -140,7 +138,6 @@ export function PositionsSummaryTable({
   isRefetching,
   isLoadingEarnings,
   account,
-  rebalancerInfos,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -174,8 +171,8 @@ export function PositionsSummaryTable({
   };
 
   const groupedPositions = useMemo(
-    () => groupPositionsByLoanAsset(marketPositions, rebalancerInfos),
-    [marketPositions, rebalancerInfos],
+    () => groupPositionsByLoanAsset(marketPositions),
+    [marketPositions],
   );
 
   const processedPositions = useMemo(

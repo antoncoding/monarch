@@ -54,7 +54,7 @@ export const getIRMTitle = (address: string) => {
     case '0x9a6061d51743b31d2c3be75d83781fa423f53f0e': // on unichain
       return 'Adaptive Curve';
     case '0x66f30587fb8d4206918deb78eca7d5ebbafd06da': // on arbitrum
-      return 'Adaptive Curve'
+      return 'Adaptive Curve';
     default:
       return 'Unknown IRM';
   }

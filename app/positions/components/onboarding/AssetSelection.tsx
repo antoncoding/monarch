@@ -1,18 +1,15 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
-import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
-import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
-import { useUserBalances } from '@/hooks/useUserBalances';
+import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName } from '@/utils/networks';
+import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
 
@@ -30,7 +27,7 @@ function NetworkIcon({ networkId }: { networkId: number }) {
 }
 
 export function AssetSelection() {
-  const { balances, loading: balancesLoading } = useUserBalances();
+  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
   const { markets, loading: marketsLoading } = useMarkets();
   const { setSelectedToken, setSelectedMarkets, goToNextStep } = useOnboarding();
 
@@ -57,12 +54,15 @@ export function AssetSelection() {
       // Get network name
       const network = balance.chainId;
 
+      const token = findToken(balance.address, balance.chainId)
+      if (!token) return;
+
       result.push({
         symbol: balance.symbol,
         markets: relevantMarkets,
         minApy,
         maxApy,
-        logoURI: balance.logoURI,
+        logoURI: token.img,
         decimals: balance.decimals,
         network,
         address: balance.address,
@@ -136,24 +136,6 @@ export function AssetSelection() {
                       <NetworkIcon networkId={token.network} />
                       <span>{getNetworkName(token.network)}</span>
                     </div>
-
-                    {/* if base network, show agent badge */}
-                    {token.network === SupportedNetworks.Base && (
-                      <Tooltip
-                        className="max-w-[400px] rounded-sm"
-                        content={
-                          <TooltipContent
-                            icon={<RiRobot2Line size={16} />}
-                            title="Monarch Agents"
-                            detail="Monarch agents is now in beta on Base! Auto-reallocation enabled for positions created with this token."
-                          />
-                        }
-                      >
-                        <span className="flex items-center">
-                          <Badge variant="success">🤖 beta</Badge>
-                        </span>
-                      </Tooltip>
-                    )}
                   </div>
                 </div>
 

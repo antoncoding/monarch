@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { SupportedNetworks } from '@/utils/networks';
-type TokenBalance = {
+import { SupportedNetworks, networks, isAgentAvailable } from '@/utils/networks';
+
+export type TokenBalance = {
   address: string;
   balance: string;
   chainId: number;
   decimals: number;
-  logoURI?: string;
+
   symbol: string;
 };
 
@@ -18,13 +19,24 @@ type TokenResponse = {
   }[];
 };
 
-export function useUserBalances() {
+type UseUserBalancesOptions = {
+  networkIds?: SupportedNetworks[];
+};
+
+export function useUserBalances(options: UseUserBalancesOptions = {}) {
   const { address } = useAccount();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const { findToken } = useTokens();
+
+  // Get networks to fetch from - either specified ones or agent-enabled networks
+  const networksToFetch = useMemo(() => {
+    return options.networkIds ?? networks
+      .filter(network => isAgentAvailable(network.network))
+      .map(network => network.network);
+  }, [options.networkIds]);
 
   const fetchBalances = useCallback(
     async (chainId: number): Promise<TokenResponse['tokens']> => {
@@ -44,20 +56,25 @@ export function useUserBalances() {
   );
 
   const fetchAllBalances = useCallback(async () => {
-    if (!address) return;
+    if (!address) {
+      setBalances([]);
+      setLoading(false);
+      return;
+    }
+
+    if (networksToFetch.length === 0) {
+      setBalances([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch balances from both chains
-      const [mainnetBalances, baseBalances, polygonBalances, unichainBalances, arbitrumBalances] = await Promise.all([
-        fetchBalances(SupportedNetworks.Mainnet),
-        fetchBalances(SupportedNetworks.Base),
-        fetchBalances(SupportedNetworks.Polygon),
-        fetchBalances(SupportedNetworks.Unichain),
-        fetchBalances(SupportedNetworks.Arbitrum)
-      ]);
+      // Fetch balances from specified networks only
+      const balancePromises = networksToFetch.map(async (chainId) => fetchBalances(chainId));
+      const networkBalances = await Promise.all(balancePromises);
 
       // Process and filter tokens
       const processedBalances: TokenBalance[] = [];
@@ -71,26 +88,28 @@ export function useUserBalances() {
               balance: token.balance,
               chainId,
               decimals: tokenInfo.decimals,
-              logoURI: tokenInfo.img,
               symbol: tokenInfo.symbol,
             });
           }
         });
       };
 
-      processTokens(mainnetBalances, SupportedNetworks.Mainnet);
-      processTokens(baseBalances, SupportedNetworks.Base);
-      processTokens(polygonBalances, SupportedNetworks.Polygon);
-      processTokens(unichainBalances, SupportedNetworks.Unichain);
-      processTokens(arbitrumBalances, SupportedNetworks.Arbitrum)
+      // Process each network's results
+      networkBalances.forEach((tokens, index) => {
+        const chainId = networksToFetch[index];
+        if (chainId) {
+          processTokens(tokens, chainId);
+        }
+      });
+
       setBalances(processedBalances);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));
-      console.error('Error fetching all balances:', err);
+      console.error('Error fetching balances:', err);
     } finally {
       setLoading(false);
     }
-  }, [address, fetchBalances]);
+  }, [address, fetchBalances, networksToFetch]);
 
   useEffect(() => {
     void fetchAllBalances();
@@ -102,4 +121,20 @@ export function useUserBalances() {
     error,
     refetch: fetchAllBalances,
   };
+}
+
+// Constant array to prevent re-creation on every render
+const ALL_NETWORKS = [
+  SupportedNetworks.Mainnet,
+  SupportedNetworks.Base,
+  SupportedNetworks.Polygon,
+  SupportedNetworks.Arbitrum,
+  SupportedNetworks.Unichain,
+];
+
+// Helper function to fetch balances from all networks (for backward compatibility)
+export function useUserBalancesAllNetworks() {
+  return useUserBalances({
+    networkIds: ALL_NETWORKS
+  });
 }

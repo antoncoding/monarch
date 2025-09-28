@@ -1,5 +1,5 @@
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
-import arbitrumRawData from './arbitrum.json'
+import arbitrumRawData from './arbitrum.json';
 import baseRawData from './base.json';
 import mainnetRawData from './mainnet.json';
 import polygonRawData from './polygon.json';
@@ -53,7 +53,7 @@ export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
     return `https://data.chain.link/feeds/polygon/mainnet/${ens}`;
   }
   if (chainId === SupportedNetworks.Arbitrum) {
-    return `https://data.chain.link/feeds/arbitrum/mainnet/${ens}`
+    return `https://data.chain.link/feeds/arbitrum/mainnet/${ens}`;
   }
   return '';
 };

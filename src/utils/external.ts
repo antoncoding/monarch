@@ -1,7 +1,8 @@
 import { getNetworkName, SupportedNetworks } from './networks';
 
 export const getMarketURL = (id: string, chainId: number): string => {
-  const network = chainId === SupportedNetworks.Mainnet ? 'ethereum' : getNetworkName(chainId)?.toLowerCase()    
+  const network =
+    chainId === SupportedNetworks.Mainnet ? 'ethereum' : getNetworkName(chainId)?.toLowerCase();
   return `https://app.morpho.org/${network}/market/${id}`;
 };
 
@@ -14,7 +15,7 @@ export const getAssetURL = (address: string, chain: SupportedNetworks): string =
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/token/${address}`;
     case SupportedNetworks.Arbitrum:
-      return `https://arbiscan.io/token/${address}`
+      return `https://arbiscan.io/token/${address}`;
     default:
       return `https://etherscan.io/token/${address}`;
   }
@@ -29,7 +30,7 @@ export const getExplorerURL = (address: string, chain: SupportedNetworks): strin
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/address/${address}`;
     case SupportedNetworks.Arbitrum:
-      return `https://arbiscan.io/address/${address}`
+      return `https://arbiscan.io/address/${address}`;
     default:
       return `https://etherscan.io/address/${address}`;
   }
@@ -44,7 +45,7 @@ export const getExplorerTxURL = (hash: string, chain: SupportedNetworks): string
     case SupportedNetworks.Unichain:
       return `https://uniscan.xyz/tx/${hash}`;
     case SupportedNetworks.Arbitrum:
-      return `https://arbiscan.io/tx/${hash}`
+      return `https://arbiscan.io/tx/${hash}`;
     default:
       return `https://etherscan.io/tx/${hash}`;
   }
@@ -61,7 +62,7 @@ const getChainNameForMerkl = (chainId: number): string => {
     case SupportedNetworks.Unichain:
       return 'unichain';
     case SupportedNetworks.Arbitrum:
-        return 'arbitrum';
+      return 'arbitrum';
     default:
       return 'ethereum';
   }

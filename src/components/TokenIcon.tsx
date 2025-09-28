@@ -34,7 +34,13 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
       : `This token is whitelisted by Monarch`;
 
     return (
-      <Tooltip content={<TooltipContent title={token.symbol} detail={detail} icon={img} />}>
+      <Tooltip 
+        classNames={{
+          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+        }}
+        content={<TooltipContent title={token.symbol} detail={detail} icon={img} />}
+      >
         <Image
           className="rounded-full"
           src={token.img}

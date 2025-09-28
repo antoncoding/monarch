@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Checkbox } from '@heroui/react';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { motion } from 'framer-motion';
-import { formatUnits } from 'viem';
 import { Button } from '@/components/common/Button';
-import { MarketInfoBlock } from '@/components/common/MarketInfoBlock';
+import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { formatReadable } from '@/utils/balance';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import { Market } from '@/utils/types';
+import { APYCell } from 'app/markets/components/APYBreakdownTooltip';
 import AssetFilter from 'app/markets/components/AssetFilter';
+import { TDAsset } from 'app/markets/components/MarketTableUtils';
 import OracleFilter from 'app/markets/components/OracleFilter';
 import {
   MarketDebtIndicator,
@@ -87,7 +88,7 @@ export function RiskSelection() {
   }, [selectedToken, selectedCollaterals, selectedOracles]);
 
   // Check if criteria is met to show markets
-  const shouldShowMarkets = selectedCollaterals.length > 0 && selectedOracles.length > 0;
+  const shouldShowMarkets = selectedCollaterals.length > 0;
 
   const handleMarketDetails = (market: Market) => {
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
@@ -96,13 +97,14 @@ export function RiskSelection() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Input Section */}
+      {/* Description Section */}
       <div>
-        <p className="mt-2 font-zen text-gray-400">Choose collateral and oracle you trust</p>
-        <p />
+        <p className="mt-2 font-zen text-gray-400">
+          Filter markets by your risk preferences and select the ones you want to use for your position.
+        </p>
       </div>
 
-      <div className="mt-2 flex gap-4">
+      <div className="mt-4 flex gap-4">
         <div className="flex-1">
           <AssetFilter
             label="Collateral Assets"
@@ -118,25 +120,17 @@ export function RiskSelection() {
         </div>
       </div>
 
-      {shouldShowMarkets && (
-        <div>
-          <p className="mt-4 text-gray-400">Choose markets</p>
-          <p className="mt-2 text-sm text-gray-400"> selected markets: {selectedMarkets.length} </p>
-        </div>
-      )}
-
-      {/* Markets List - Scrollable Section */}
-      <div className="mt-6 flex-1">
-        <div className="h-[calc(100vh-560px)] overflow-y-auto px-2 scrollbar-hide">
+      {/* Markets Table Section - FIXED HEIGHT */}
+      <div className="mt-6 h-96 overflow-y-auto">
           {!shouldShowMarkets ? (
-            <div className="flex h-full flex-col items-center justify-center text-gray-400">
+            <div className="h-full flex flex-col items-center justify-center text-gray-400">
               <div className="text-center">
-                <p className="text-lg">Select your preferences</p>
-                <p className="mt-2 text-sm">
-                  {selectedCollaterals.length === 0 && 'Choose at least one collateral asset'}
+                <p className="text-lg font-medium mb-2">Select your risk preferences</p>
+                <p className="text-sm max-w-md">
+                  {selectedCollaterals.length === 0 && 'Choose at least one collateral asset to view available markets'}
                   {selectedCollaterals.length > 0 &&
                     selectedOracles.length === 0 &&
-                    'Now select oracle vendors'}
+                    'Now select oracle vendors to filter markets'}
                 </p>
               </div>
             </div>
@@ -144,99 +138,162 @@ export function RiskSelection() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="-mx-2 flex flex-col space-y-4"
+              transition={{ duration: 0.3 }}
+              className="w-full"
             >
-              {filteredMarkets.map((market, index) => {
-                const collateralToken = findToken(
-                  market.collateralAsset.address,
-                  market.morphoBlue.chain.id,
-                );
-                if (!collateralToken) return null;
+              <table className="responsive w-full rounded-md font-zen">
+                <thead className="table-header">
+                  <tr>
+                    <th className="font-normal w-8" />
+                    <th className="font-normal">Collateral</th>
+                    <th className="font-normal">Oracle</th>
+                    <th className="font-normal">LLTV</th>
+                    <th className="font-normal">Total Supply</th>
+                    <th className="font-normal">APY</th>
+                    <th className="font-normal">Risk</th>
+                    <th className="font-normal">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="table-body text-sm">
+                  {filteredMarkets.map((market, index) => {
+                    const collateralToken = findToken(
+                      market.collateralAsset.address,
+                      market.morphoBlue.chain.id,
+                    );
+                    if (!collateralToken) return null;
 
-                const isSelected = selectedMarkets.some((m) => m.uniqueKey === market.uniqueKey);
+                    const isSelected = selectedMarkets.some((m) => m.uniqueKey === market.uniqueKey);
+                    const collatToShow = market.collateralAsset.symbol
+                      .slice(0, 6)
+                      .concat(market.collateralAsset.symbol.length > 6 ? '...' : '');
 
-                return (
-                  <motion.div
-                    key={market.uniqueKey}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    className="group flex items-center justify-between rounded-lg px-2 py-1 hover:bg-content2"
-                  >
-                    <div className="flex flex-1 items-center gap-3">
-                      <Checkbox
-                        isSelected={isSelected}
-                        onValueChange={(checked) => {
-                          if (checked) {
-                            setSelectedMarkets([...selectedMarkets, market]);
-                          } else {
+                    return (
+                      <motion.tr
+                        key={market.uniqueKey}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className={`cursor-pointer transition-colors duration-200 ${
+                          isSelected
+                            ? 'bg-primary/5 border-l-2 border-primary'
+                            : 'hover:bg-hovered'
+                        }`}
+                        onClick={() => {
+                          if (isSelected) {
                             setSelectedMarkets(
                               selectedMarkets.filter((m) => m.uniqueKey !== market.uniqueKey),
                             );
+                          } else {
+                            setSelectedMarkets([...selectedMarkets, market]);
                           }
                         }}
-                      />
-                      <div className="w-[280px]">
-                        <MarketInfoBlock market={market} className="border-none bg-transparent" />
-                      </div>
+                      >
+                        {/* Selection Indicator */}
+                        <td className="z-50 w-8">
+                          <div className="flex items-center justify-center">
+                            {isSelected && (
+                              <div className="h-4 w-4 rounded-full bg-primary flex items-center justify-center">
+                                <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-                      <div className="flex flex-1 items-center justify-end gap-4">
-                        {/* Risk Indicators */}
-                        <div className="flex w-[80px] justify-end gap-1">
-                          <MarketAssetIndicator market={market} mode="complex" />
-                          <MarketOracleIndicator market={market} mode="complex" />
-                          <MarketDebtIndicator market={market} mode="complex" />
-                        </div>
+                        {/* Collateral Asset */}
+                        <TDAsset
+                          dataLabel="Collateral"
+                          asset={market.collateralAsset.address}
+                          chainId={market.morphoBlue.chain.id}
+                          symbol={collatToShow}
+                        />
+
+                        {/* Oracle */}
+                        <td data-label="Oracle" className="z-50">
+                          <div className="flex justify-center">
+                            <OracleVendorBadge
+                              oracleData={market.oracle?.data}
+                              chainId={market.morphoBlue.chain.id}
+                            />
+                          </div>
+                        </td>
+
+                        {/* LLTV */}
+                        <td data-label="LLTV" className="z-50">
+                          <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium">
+                            {Number(market.lltv) / 1e16}%
+                          </span>
+                        </td>
 
                         {/* Total Supply */}
-                        <div className="w-[140px] text-right text-xs text-gray-500">
-                          <span>Total Supply:</span>
-                          <div className="font-mono">
-                            {formatReadable(
-                              Number(
-                                formatUnits(
-                                  BigInt(market.state.supplyAssets),
-                                  market.loanAsset.decimals,
-                                ),
-                              ),
-                            )}{' '}
-                            {market.loanAsset.symbol}
-                          </div>
-                        </div>
+                        <td data-label="Total Supply" className="z-50">
+                          <p className="z-50">${formatReadable(Number(market.state.supplyAssetsUsd))}</p>
+                          <p className="z-50 opacity-70 text-xs">
+                            {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))} {market.loanAsset.symbol}
+                          </p>
+                        </td>
 
-                        {/* Details Button */}
-                        <Button
-                          onPress={() => handleMarketDetails(market)}
-                          variant="interactive"
-                          className="w-[80px]"
-                          size="sm"
-                        >
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+                        {/* APY */}
+                        <td data-label="APY">
+                          <APYCell market={market} />
+                        </td>
+
+                        {/* Risk Indicators */}
+                        <td>
+                          <div className="flex items-center justify-center gap-1">
+                            <MarketAssetIndicator market={market} />
+                            <MarketOracleIndicator market={market} />
+                            <MarketDebtIndicator market={market} />
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td data-label="Actions" className="z-50">
+                          <button
+                            type='button'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarketDetails(market);
+                            }}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-primary transition-colors"
+                          >
+                            <ExternalLinkIcon className="w-3 h-3" />
+                          </button>
+                        </td>
+                      </motion.tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </motion.div>
           )}
-        </div>
       </div>
 
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between gap-4">
+      {/* Navigation - ALWAYS VISIBLE */}
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
         <Button variant="light" onPress={goToPrevStep} className="min-w-[120px]">
           Back
         </Button>
-        <Button
-          variant="cta"
-          onPress={goToNextStep}
-          isDisabled={!canGoNext}
-          className="min-w-[120px]"
-        >
-          Continue
-        </Button>
+        <div className="flex items-center gap-4">
+          {selectedMarkets.length > 0 && (
+            <span className="text-sm text-gray-500">
+              {selectedMarkets.length} market{selectedMarkets.length !== 1 ? 's' : ''} selected
+            </span>
+          )}
+          <Button
+            variant="cta"
+            onPress={goToNextStep}
+            isDisabled={!canGoNext}
+            className="min-w-[120px]"
+          >
+            Continue
+          </Button>
+        </div>
       </div>
     </div>
   );

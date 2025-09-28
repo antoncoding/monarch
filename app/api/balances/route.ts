@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupportedNetworks } from '@/utils/networks';
 import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { supportedTokens } from '@/utils/tokens';
 
 type TokenBalance = {
   contractAddress: string;
@@ -22,7 +23,18 @@ export async function GET(req: NextRequest) {
       throw new Error(`Chain ${chainId} not supported`);
     }
 
-    // Get token balances
+    // Get supported token addresses for this chain
+    const tokenAddresses = supportedTokens
+      .filter(token =>
+        token.networks.some(network => network.chain.id === Number(chainId))
+      )
+      .flatMap(token =>
+        token.networks
+          .filter(network => network.chain.id === Number(chainId))
+          .map(network => network.address)
+      );
+
+    // Get token balances for specific tokens only
     const balancesResponse = await fetch(alchemyUrl, {
       method: 'POST',
       headers: {
@@ -33,7 +45,7 @@ export async function GET(req: NextRequest) {
         id: 1,
         jsonrpc: '2.0',
         method: 'alchemy_getTokenBalances',
-        params: [address],
+        params: [address, tokenAddresses],
       }),
     });
 
