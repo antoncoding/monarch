@@ -1,4 +1,6 @@
 import { Address } from 'viem';
+import { AgentMetadata } from './types';
+import { v2AgentsBase } from './monarch-agent';
 
 enum SupportedNetworks {
   Mainnet = 1,
@@ -9,10 +11,8 @@ enum SupportedNetworks {
 }
 
 type NetworkAgentConfig = {
-  factoryAddress: Address;
-  regularRebalancer?: Address;
-  rebalanceWindow?: number;
-  strategies?: Address[];
+  v2FactoryAddress: Address;
+  strategies?: AgentMetadata[];
 };
 
 type NetworkConfig = {
@@ -21,6 +21,7 @@ type NetworkConfig = {
   name: string;
   agent?: NetworkAgentConfig;
 };
+
 
 const networks: NetworkConfig[] = [
   {
@@ -33,10 +34,8 @@ const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
     agent: {
-      factoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
-      regularRebalancer: '0xe0e04468A54937244BEc3bc6C1CA8Bc36ECE6704', // TODO: Set actual rebalancer
-      rebalanceWindow: 3600, // 1 hour in seconds
-      strategies: [], // TODO: Add strategy addresses
+      v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
+      strategies: v2AgentsBase,
     },
   },
   {

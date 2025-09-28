@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Address, encodeFunctionData, keccak256, toBytes } from 'viem';
-import { useAccount, useReadContract } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -16,10 +16,10 @@ export type UseCreateVaultReturn = {
   isDeploying: boolean;
 
   // Actions
-  createVault: (asset: Address, salt?: string) => Promise<Address | null>;
+  createVault: (asset: Address, salt?: string) => Promise<void>;
 };
 
-export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Address) => void): UseCreateVaultReturn {
+export function useCreateVault(chainId: number): UseCreateVaultReturn {
   const [currentStep, setCurrentStep] = useState<CreateVaultStepType>('deploy');
 
   const { address: account } = useAccount();
@@ -42,28 +42,17 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
     },
   });
 
-  // Get predicted vault address using contract call
-  const { data: predictedVaultAddress } = useReadContract({
-    address: agentConfig?.factoryAddress,
-    abi: vaultFactoryAbi,
-    functionName: 'vaultV2',
-    args: account && [account, '0x0000000000000000000000000000000000000000' as Address, keccak256(toBytes('default'))],
-    chainId,
-    query: {
-      enabled: !!account && !!agentConfig?.factoryAddress,
-    },
-  }) as { data: Address | undefined };
 
   // Execute vault creation
-  const createVault = useCallback(async (asset: Address, salt?: string): Promise<Address | null> => {
+  const createVault = useCallback(async (asset: Address, salt?: string): Promise<void> => {
     if (!account) {
       toast.error('No Account', 'Please connect your wallet to deploy a vault');
-      return null;
+      return;
     }
 
-    if (!agentConfig?.factoryAddress) {
+    if (!agentConfig?.v2FactoryAddress) {
       toast.error('Network Not Supported', 'Vault deployment is not available on this network');
-      return null;
+      return;
     }
 
     try {
@@ -79,19 +68,11 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
 
       await sendTransactionAsync({
         account,
-        to: agentConfig.factoryAddress,
+        to: agentConfig.v2FactoryAddress,
         data: txData,
       });
 
-      // Get the vault address from the transaction receipt
-      // For now, we'll use the predicted address
-      const vaultAddress = predictedVaultAddress;
-
-      if (vaultAddress && onSuccess) {
-        onSuccess(vaultAddress);
-      }
-
-      return vaultAddress ?? null;
+      setCurrentStep('deploy');
     } catch (error: unknown) {
       setCurrentStep('deploy');
       console.error('Error creating vault:', error);
@@ -105,16 +86,12 @@ export function useCreateVault(chainId: number, onSuccess?: (vaultAddress: Addre
       } else {
         toast.error('Deployment Error', 'An unexpected error occurred');
       }
-
-      return null;
     }
   }, [
     account,
     agentConfig,
-    predictedVaultAddress,
     sendTransactionAsync,
     toast,
-    onSuccess,
   ]);
 
   return {

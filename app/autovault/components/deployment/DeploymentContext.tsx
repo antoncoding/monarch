@@ -26,14 +26,11 @@ export type SelectedTokenAndNetwork = {
 
 type DeploymentContextType = {
   selectedTokenAndNetwork: SelectedTokenAndNetwork | null;
-  deployedVaultAddress: Address | null;
-  predictedVaultAddress: Address | null;
   needSwitchChain: boolean;
   switchToNetwork: () => void;
   createVault: () => Promise<void>;
   isDeploying: boolean;
   setSelectedTokenAndNetwork: (selection: SelectedTokenAndNetwork) => void;
-  setDeployedVaultAddress: (address: Address) => void;
   resetDeployment: () => void;
 };
 
@@ -41,8 +38,6 @@ const DeploymentContext = createContext<DeploymentContextType | null>(null);
 
 export function DeploymentProvider({ children }: { children: React.ReactNode }) {
   const [selectedTokenAndNetwork, setSelectedTokenAndNetwork] = useState<SelectedTokenAndNetwork | null>(null);
-  const [deployedVaultAddress, setDeployedVaultAddress] = useState<Address | null>(null);
-  const [predictedVaultAddress, setPredictedVaultAddress] = useState<Address | null>(null);
 
   const { address: account } = useAccount();
 
@@ -53,10 +48,7 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
   // Vault creation logic
   const { createVault: createVaultTx, isDeploying } = useCreateVault(
-    selectedTokenAndNetwork?.networkId ?? 1,
-    (vaultAddress: Address) => {
-      setDeployedVaultAddress(vaultAddress);
-    }
+    selectedTokenAndNetwork?.networkId ?? 1
   );
 
   const createVault = useCallback(async () => {
@@ -67,31 +59,23 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
   const resetDeployment = useCallback(() => {
     setSelectedTokenAndNetwork(null);
-    setDeployedVaultAddress(null);
-    setPredictedVaultAddress(null);
   }, []);
 
   const contextValue = useMemo(() => ({
     selectedTokenAndNetwork,
-    deployedVaultAddress,
-    predictedVaultAddress,
     needSwitchChain,
     switchToNetwork,
     createVault,
     isDeploying,
     setSelectedTokenAndNetwork,
-    setDeployedVaultAddress,
     resetDeployment,
   }), [
     selectedTokenAndNetwork,
-    deployedVaultAddress,
-    predictedVaultAddress,
     needSwitchChain,
     switchToNetwork,
     createVault,
     isDeploying,
     setSelectedTokenAndNetwork,
-    setDeployedVaultAddress,
     resetDeployment,
   ]);
 
