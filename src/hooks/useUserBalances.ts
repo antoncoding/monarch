@@ -123,15 +123,18 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
   };
 }
 
+// Constant array to prevent re-creation on every render
+const ALL_NETWORKS = [
+  SupportedNetworks.Mainnet,
+  SupportedNetworks.Base,
+  SupportedNetworks.Polygon,
+  SupportedNetworks.Arbitrum,
+  SupportedNetworks.Unichain,
+];
+
 // Helper function to fetch balances from all networks (for backward compatibility)
 export function useUserBalancesAllNetworks() {
   return useUserBalances({
-    networkIds: [
-      SupportedNetworks.Mainnet,
-      SupportedNetworks.Base,
-      SupportedNetworks.Polygon,
-      SupportedNetworks.Arbitrum,
-      SupportedNetworks.Unichain,
-    ]
+    networkIds: ALL_NETWORKS
   });
 }

@@ -1,14 +1,10 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
-import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
-import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
@@ -140,24 +136,6 @@ export function AssetSelection() {
                       <NetworkIcon networkId={token.network} />
                       <span>{getNetworkName(token.network)}</span>
                     </div>
-
-                    {/* if base network, show agent badge */}
-                    {token.network === SupportedNetworks.Base && (
-                      <Tooltip
-                        className="max-w-[400px] rounded-sm"
-                        content={
-                          <TooltipContent
-                            icon={<RiRobot2Line size={16} />}
-                            title="Monarch Agents"
-                            detail="Monarch agents is now in beta on Base! Auto-reallocation enabled for positions created with this token."
-                          />
-                        }
-                      >
-                        <span className="flex items-center">
-                          <Badge variant="success">🤖 beta</Badge>
-                        </span>
-                      </Tooltip>
-                    )}
                   </div>
                 </div>
 

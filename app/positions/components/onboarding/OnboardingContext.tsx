@@ -8,7 +8,7 @@ export const ONBOARDING_STEPS = [
     title: 'Select Asset',
     description: 'Choose the asset you want to supply',
   },
-  { id: 'risk-selection', title: 'Select Markets', description: 'Set your risk preferences' },
+  { id: 'risk-selection', title: 'Select Markets', description: '' },
   { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
@@ -51,6 +51,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         return false;
     }
   }, [currentStep, selectedToken, selectedMarkets]);
+
+  console.log('canGoNext', canGoNext)
 
   const goToNextStep = () => {
     const nextStep = ONBOARDING_STEPS[currentStepIndex + 1];
