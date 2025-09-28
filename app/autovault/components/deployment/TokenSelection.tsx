@@ -141,7 +141,9 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
             {availableTokenNetworks.map((tokenNetwork) => {
-              const isSelected = selectedTokenAndNetwork?.token.address.toLowerCase() === tokenNetwork.address.toLowerCase() && selectedTokenAndNetwork?.networkId === tokenNetwork.networkId;
+              const isSelected =
+                selectedTokenAndNetwork?.token?.address?.toLowerCase?.() === tokenNetwork.address.toLowerCase() &&
+                selectedTokenAndNetwork?.networkId === tokenNetwork.networkId;
 
               return (
                 <div

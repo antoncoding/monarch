@@ -10,8 +10,6 @@ export async function getERC20Balance(
   try {
 
     const client = getClient(networkId)
-
-    // Read the user's balance in the vault (vault shares)
     const balance = await client.readContract({
       address: asset,
       abi: erc20Abi,
@@ -22,7 +20,7 @@ export async function getERC20Balance(
     return balance;
   } catch (error) {
     console.error(
-      `Error reading vault balance for ${asset} on network ${networkId}:`,
+      `Error reading ERC20 balance for ${asset} on network ${networkId}:`,
       error
     );
     return null;

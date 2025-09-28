@@ -65,7 +65,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   {/* ID */}
                   <td data-label="ID">
                     <div className="flex items-center justify-center gap-1 font-monospace text-xs">
-                      {networkImg && <Image src={networkImg} alt="icon" width="15" height="15" />}
+                      {networkImg && <Image src={networkImg} alt="icon" width={15} height={15} />}
                       <span>{vault.newVaultV2.slice(2, 8)}</span>
                     </div>
                   </td>
