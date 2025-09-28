@@ -73,7 +73,7 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
 
     try {
       // Fetch balances from specified networks only
-      const balancePromises = networksToFetch.map(async (chainId) => await fetchBalances(chainId));
+      const balancePromises = networksToFetch.map(async (chainId) => fetchBalances(chainId));
       const networkBalances = await Promise.all(balancePromises);
 
       // Process and filter tokens

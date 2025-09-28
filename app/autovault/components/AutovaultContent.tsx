@@ -6,14 +6,15 @@ import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
-import { useAutovaultData } from '@/hooks/useAutovaultData';
+import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
 import { DeploymentModal } from './deployment/DeploymentModal';
+import { VaultListV2 } from './VaultListV2';
 
 export default function AutovaultContent() {
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
 
-  const { autovaults } = useAutovaultData(address);
+  const { vaults, loading: vaultsLoading } = useUserVaultsV2();
 
   const handleCreateVault = () => {
     setShowDeploymentModal(true);
@@ -71,15 +72,7 @@ export default function AutovaultContent() {
         </div>
 
         <div className="mt-4">
-          {/* TODO: Vault list will be implemented here */}
-          {autovaults.length === 0 ? (
-            <div className="py-16">{/* Empty state - just empty space as requested */}</div>
-          ) : (
-            <div>
-              {/* TODO: Add autovault table/list component */}
-              <p className="text-center text-secondary">Vault list coming soon...</p>
-            </div>
-          )}
+          <VaultListV2 vaults={vaults} loading={vaultsLoading} />
         </div>
 
         {/* Deployment Modal */}

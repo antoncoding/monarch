@@ -1,6 +1,6 @@
 import { Address } from 'viem';
-import { AgentMetadata } from './types';
 import { v2AgentsBase } from './monarch-agent';
+import { AgentMetadata } from './types';
 
 enum SupportedNetworks {
   Mainnet = 1,
@@ -10,8 +10,9 @@ enum SupportedNetworks {
   Arbitrum = 42161,
 }
 
-type NetworkAgentConfig = {
+type VaultAgentConfig = {
   v2FactoryAddress: Address;
+  subgraphEndpoint?: string // temporary to allow fetching deployed vaults from subgraph
   strategies?: AgentMetadata[];
 };
 
@@ -19,7 +20,7 @@ type NetworkConfig = {
   network: SupportedNetworks;
   logo: string;
   name: string;
-  agent?: NetworkAgentConfig;
+  vaultConfig?: VaultAgentConfig;
 };
 
 
@@ -33,9 +34,10 @@ const networks: NetworkConfig[] = [
     network: SupportedNetworks.Base,
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
-    agent: {
+    vaultConfig: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
+      subgraphEndpoint: "https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest"
     },
   },
   {
@@ -64,13 +66,15 @@ const getNetworkConfig = (chainId: number): NetworkConfig | undefined => {
 };
 
 const isAgentAvailable = (chainId: number): boolean => {
-  const config = getNetworkConfig(chainId);
-  return !!config?.agent;
+  const network = getNetworkConfig(chainId);
+  if (!network || !network.vaultConfig) return false
+
+  return network.vaultConfig.subgraphEndpoint !== undefined
 };
 
-const getAgentConfig = (chainId: number): NetworkAgentConfig | undefined => {
-  const config = getNetworkConfig(chainId);
-  return config?.agent;
+const getAgentConfig = (chainId: number): VaultAgentConfig | undefined => {
+  const network = getNetworkConfig(chainId);
+  return network?.vaultConfig;
 };
 
 const getNetworkImg = (chainId: number) => {
@@ -94,4 +98,4 @@ export {
   isAgentAvailable,
 };
 
-export type { NetworkConfig, NetworkAgentConfig };
+export type { NetworkConfig };

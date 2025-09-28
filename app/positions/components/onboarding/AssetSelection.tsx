@@ -15,6 +15,7 @@ import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import { useOnboarding } from './OnboardingContext';
 import { TokenWithMarkets } from './types';
+import { findToken } from '@/utils/tokens';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
@@ -57,12 +58,15 @@ export function AssetSelection() {
       // Get network name
       const network = balance.chainId;
 
+      const token = findToken(balance.address, balance.chainId)
+      if (!token) return;
+
       result.push({
         symbol: balance.symbol,
         markets: relevantMarkets,
         minApy,
         maxApy,
-        logoURI: balance.logoURI,
+        logoURI: token.img,
         decimals: balance.decimals,
         network,
         address: balance.address,
