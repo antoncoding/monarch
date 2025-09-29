@@ -11,22 +11,9 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
-import { SupportedNetworks } from '@/utils/networks';
-import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { SupportedNetworks, getDefaultRPC, hyperevm } from '@/utils/networks';
 
-const defaultRpcMainnet = DEFAULT_RPC_URLS[SupportedNetworks.Mainnet];
-const defaultRpcBase = DEFAULT_RPC_URLS[SupportedNetworks.Base];
-const defaultRpcPolygon = DEFAULT_RPC_URLS[SupportedNetworks.Polygon];
-const defaultRpcUnichain = DEFAULT_RPC_URLS[SupportedNetworks.Unichain];
-const defaultRPCArbitrum = DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum];
-
-export type CustomRpcUrls = {
-  [SupportedNetworks.Mainnet]?: string;
-  [SupportedNetworks.Base]?: string;
-  [SupportedNetworks.Polygon]?: string;
-  [SupportedNetworks.Unichain]?: string;
-  [SupportedNetworks.Arbitrum]?: string;
-};
+import { CustomRpcUrls } from '@/hooks/useCustomRpc';
 
 const wallets =
   typeof window !== 'undefined'
@@ -57,21 +44,23 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
   );
 
   // Use custom RPC URLs if provided, otherwise fall back to defaults
-  const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? defaultRpcMainnet;
-  const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? defaultRpcBase;
-  const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? defaultRpcPolygon;
-  const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? defaultRpcUnichain;
-  const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? defaultRPCArbitrum;
+  const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? getDefaultRPC(SupportedNetworks.Mainnet);
+  const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base)
+  const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? getDefaultRPC(SupportedNetworks.Polygon)
+  const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? getDefaultRPC(SupportedNetworks.Unichain)
+  const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? getDefaultRPC(SupportedNetworks.Arbitrum)
+  const rpcHyperEVM = customRpcUrls[SupportedNetworks.HyperEVM] ?? getDefaultRPC(SupportedNetworks.HyperEVM)
 
   return createConfig({
     ssr: true,
-    chains: [mainnet, base, polygon, unichain, arbitrum],
+    chains: [mainnet, base, polygon, unichain, arbitrum, hyperevm],
     transports: {
       [mainnet.id]: http(rpcMainnet),
       [base.id]: http(rpcBase),
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),
       [arbitrum.id]: http(rpcArbitrum),
+      [hyperevm.id]: http(rpcHyperEVM)
     },
     connectors: [...connectors],
   });

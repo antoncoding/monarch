@@ -73,7 +73,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwind-variants": "^2.1.0",
     "unified": "^11.0.4",
-    "viem": "2.31.0",
+    "viem": "2.37.9",
     "wagmi": "^2.16.4",
     "zod": "^3.24.2"
   },

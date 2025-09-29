@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SupportedNetworks } from '@/utils/networks';
-import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
 
 type TokenBalance = {
@@ -18,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const alchemyUrl = DEFAULT_RPC_URLS[Number(chainId) as SupportedNetworks];
+    const alchemyUrl = getDefaultRPC(Number(chainId) as SupportedNetworks);
     if (!alchemyUrl) {
       throw new Error(`Chain ${chainId} not supported`);
     }

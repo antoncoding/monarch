@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
-import { SupportedNetworks } from '@/utils/networks';
-import { CHAIN_CONFIGS } from '@/utils/rpc';
+import { SupportedNetworks, getViemChain } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
 import type { ERC20Token } from '@/utils/tokens';
 
@@ -43,7 +42,7 @@ function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetwork
     img: asset.proIcon ?? undefined,
     networks: [
       {
-        chain: CHAIN_CONFIGS[chainId],
+        chain: getViemChain(chainId),
         address: asset.address,
       },
     ],
