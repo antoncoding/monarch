@@ -10,12 +10,16 @@ type RewardsIndicatorProps = {
   chainId: number;
   marketId: string;
   loanTokenAddress?: string;
+  whitelisted: boolean // whitelisted by morpho
 };
 
-export function RewardsIndicator({ marketId, chainId, loanTokenAddress }: RewardsIndicatorProps) {
-  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns(
-    loanTokenAddress ? { marketId, loanTokenAddress, chainId } : marketId,
-  );
+export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted }: RewardsIndicatorProps) {
+  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({ 
+    marketId, 
+    loanTokenAddress, 
+    chainId,
+    whitelisted
+  });
 
   if (loading || !hasActiveRewards) {
     return null;

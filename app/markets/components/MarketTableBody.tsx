@@ -180,6 +180,7 @@ export function MarketTableBody({
                     chainId={item.morphoBlue.chain.id}
                     marketId={item.uniqueKey}
                     loanTokenAddress={item.loanAsset.address}
+                    whitelisted={item.whitelisted && !item.isMonarchWhitelisted}
                   />
                 </div>
               </td>

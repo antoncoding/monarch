@@ -75,6 +75,7 @@ export function APYCell({ market }: APYCellProps) {
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
+    whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
   const baseAPY = market.state.supplyApy * 100;

@@ -239,6 +239,7 @@ function MarketContent() {
             marketId={marketid as string}
             loanTokenAddress={market.loanAsset.address}
             chainId={market.morphoBlue.chain.id}
+            whitelisted={market.whitelisted && !market.isMonarchWhitelisted}
           />
         </div>
 

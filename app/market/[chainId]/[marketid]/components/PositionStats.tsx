@@ -56,6 +56,7 @@ export function PositionStats({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
+    whitelisted: (market.whitelisted && !market.isMonarchWhitelisted)
   });
 
   const toggleView = () => {

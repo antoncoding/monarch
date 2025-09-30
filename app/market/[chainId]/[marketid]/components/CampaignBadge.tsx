@@ -10,15 +10,17 @@ type CampaignBadgeProps = {
   marketId: string;
   loanTokenAddress: string;
   chainId: number;
+  whitelisted: boolean
 };
 
-export function CampaignBadge({ marketId, loanTokenAddress, chainId }: CampaignBadgeProps) {
+export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted }: CampaignBadgeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({
     marketId,
     loanTokenAddress,
     chainId,
+    whitelisted
   });
 
   if (loading || !hasActiveRewards) {

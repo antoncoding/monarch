@@ -15,18 +15,17 @@ type MarketCampaignsOptions = {
   marketId: string;
   loanTokenAddress?: string;
   chainId?: number;
+  whitelisted: boolean
 };
 
 export function useMarketCampaigns(
-  options: string | MarketCampaignsOptions,
+  options: MarketCampaignsOptions,
 ): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaigns();
 
   const result = useMemo(() => {
     // Handle both string and object parameters for backward compatibility
-    const marketId = typeof options === 'string' ? options : options.marketId;
-    const loanTokenAddress = typeof options === 'string' ? undefined : options.loanTokenAddress;
-    const chainId = typeof options === 'string' ? undefined : options.chainId;
+    const { marketId, loanTokenAddress, chainId, whitelisted } = options
 
     const normalizedMarketId = marketId.toLowerCase();
 
@@ -36,8 +35,9 @@ export function useMarketCampaigns(
     );
 
     // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
+    // the market has to be whitelisted
     const singleTokenCampaigns =
-      loanTokenAddress && chainId
+      loanTokenAddress && chainId && whitelisted
         ? allCampaigns.filter(
             (campaign) =>
               campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' &&

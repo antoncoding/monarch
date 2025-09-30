@@ -31,6 +31,7 @@ export function MarketDetailsBlock({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
+    whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
   // Helper to format APY based on mode
