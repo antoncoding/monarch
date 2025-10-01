@@ -1,7 +1,7 @@
 import { Address, Chain, defineChain } from 'viem';
+import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
 import { v2AgentsBase } from './monarch-agent';
 import { AgentMetadata } from './types';
-import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 

@@ -11,9 +11,9 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
+import { CustomRpcUrls } from '@/hooks/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperevm } from '@/utils/networks';
 
-import { CustomRpcUrls } from '@/hooks/useCustomRpc';
 
 const wallets =
   typeof window !== 'undefined'

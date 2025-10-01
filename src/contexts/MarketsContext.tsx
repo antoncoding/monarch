@@ -15,7 +15,7 @@ import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { monarchWhitelistedMarkets, blacklistedMarkets } from '@/utils/markets';
-import { ALL_SUPPORTED_NETWORKS, isSupportedChain, SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import { Market } from '@/utils/types';
 
 // Export the type definition

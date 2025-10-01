@@ -1,6 +1,5 @@
 import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
-import { SupportedNetworks, getWrappedNativeToken, getNativeTokenSymbol, hyperevm } from './networks';
-import { symbol } from 'zod';
+import { getWrappedNativeToken, hyperevm } from './networks';
 
 export type SingleChainERC20Basic = {
   symbol: string;
