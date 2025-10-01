@@ -54,6 +54,13 @@ type NetworkConfig = {
   chain: Chain
   defaultRPC: string
   vaultConfig?: VaultAgentConfig;
+
+  // used to estimate block number from blocktime
+  blocktime: number; 
+  
+  // current blocknumber - this number used when trying to find blocks. 
+  // Make it larger if blockFinder keeps having block find block issues
+  maxBlockDelay?: number
 };
 
 
@@ -63,7 +70,9 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/eth.svg') as string,
     name: 'Mainnet',
     chain: mainnet,
-    defaultRPC: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`
+    defaultRPC: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    blocktime: 12,
+    maxBlockDelay: 0,
   },
   {
     network: SupportedNetworks.Base,
@@ -76,6 +85,8 @@ export const networks: NetworkConfig[] = [
       strategies: v2AgentsBase,
       subgraphEndpoint: "https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest"
     },
+    blocktime: 2,
+    maxBlockDelay: 5,
   },
   {
     network: SupportedNetworks.Polygon,
@@ -83,6 +94,8 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/polygon.png') as string,
     name: 'Polygon',
     defaultRPC: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    blocktime: 2,
+    maxBlockDelay: 20,
   },
   {
     network: SupportedNetworks.Unichain,
@@ -90,32 +103,28 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/unichain.svg') as string,
     defaultRPC: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     name: 'Unichain',
+    blocktime: 1,
+    maxBlockDelay: 10,
   },
   {
     network: SupportedNetworks.Arbitrum,
     chain: arbitrum,
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
-    defaultRPC: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`
+    defaultRPC: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    blocktime: 2,
+    maxBlockDelay: 2,
   },
   {
     network: SupportedNetworks.HyperEVM,
     chain: hyperevm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'Arbitrum',
-    defaultRPC: `https://hyperliquid-mainnet.g.alchemy.com/v2/${alchemyKey}`
+    defaultRPC: `https://hyperliquid-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    blocktime: 2,
+    maxBlockDelay: 5,
   },
 ];
-
-// Default RPC URLs
-// export const DEFAULT_RPC_URLS = {
-//   [SupportedNetworks.Mainnet]: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-//   [SupportedNetworks.Base]: `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-//   [SupportedNetworks.Polygon]: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-//   [SupportedNetworks.Unichain]: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-//   [SupportedNetworks.Arbitrum]: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-
-// } as const;
 
 export const isSupportedChain = (chainId: number) => {
   return Object.values(SupportedNetworks).includes(chainId);
@@ -131,6 +140,14 @@ export const getViemChain = (chainId: SupportedNetworks): Chain => {
 
 export const getDefaultRPC = (chainId: SupportedNetworks): string => {
   return getNetworkConfig(chainId).defaultRPC
+}
+
+export const getBlocktime = (chainId: SupportedNetworks): number => {
+  return getNetworkConfig(chainId).blocktime
+}
+
+export const getMaxBlockDelay = (chainId: SupportedNetworks): number => {
+  return getNetworkConfig(chainId).maxBlockDelay || 0
 }
 
 export const isAgentAvailable = (chainId: number): boolean => {

@@ -1,6 +1,5 @@
 import { type PublicClient } from 'viem';
-import { SupportedNetworks } from './networks';
-import { BLOCK_TIME, LATEST_BLOCK_DELAY } from './rpc';
+import { SupportedNetworks, getBlocktime, getMaxBlockDelay } from './networks';
 
 type BlockInfo = {
   number: bigint;
@@ -18,8 +17,8 @@ export class SmartBlockFinder {
 
   constructor(client: PublicClient, chainId: SupportedNetworks) {
     this.client = client;
-    this.averageBlockTime = BLOCK_TIME[chainId] || 12;
-    this.latestBlockDelay = LATEST_BLOCK_DELAY[chainId] || 0;
+    this.averageBlockTime = getBlocktime(chainId) || 12;
+    this.latestBlockDelay = getMaxBlockDelay(chainId) || 0;
   }
 
   private async getBlock(blockNumber: bigint): Promise<BlockInfo> {

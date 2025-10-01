@@ -1,9 +1,6 @@
 import { zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { UserTxTypes } from './types';
-
-// export const MORPHO = '0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb';
-
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -32,12 +29,11 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
       // ChainAgnosticBundlerV2
       return '0x23055618898e202386e6c13955a58D3C68200BFB';
     case SupportedNetworks.Polygon:
-      // ChainAgnosticBundlerV2
-      return '0x5738366B9348f22607294007e75114922dF2a16A';
+      return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Unichain:
-      return '0x5738366B9348f22607294007e75114922dF2a16A';
+      return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Arbitrum:
-      return '0x5738366B9348f22607294007e75114922dF2a16A';
+      return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     default:
       return zeroAddress;
   }

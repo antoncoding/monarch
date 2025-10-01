@@ -2,6 +2,7 @@ import { zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { AgentMetadata } from './types';
 
+// todo: remove this after v2 agent config refactor
 export const getAgentContract = (chain: SupportedNetworks) => {
   switch (chain) {
     case SupportedNetworks.Base:

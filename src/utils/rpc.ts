@@ -1,26 +1,6 @@
 import { createPublicClient, http, PublicClient } from 'viem';
 import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
-import { SupportedNetworks } from './networks';
-
-const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
-
-// Default RPC URLs
-export const DEFAULT_RPC_URLS = {
-  [SupportedNetworks.Mainnet]: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-  [SupportedNetworks.Base]: `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-  [SupportedNetworks.Polygon]: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-  [SupportedNetworks.Unichain]: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-  [SupportedNetworks.Arbitrum]: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-} as const;
-
-// Chain configurations
-export const CHAIN_CONFIGS = {
-  [SupportedNetworks.Mainnet]: mainnet,
-  [SupportedNetworks.Base]: base,
-  [SupportedNetworks.Polygon]: polygon,
-  [SupportedNetworks.Unichain]: unichain,
-  [SupportedNetworks.Arbitrum]: arbitrum,
-} as const;
+import { getDefaultRPC, getViemChain, SupportedNetworks, hyperevm } from './networks';
 
 // Default clients (cached)
 let defaultClients: Partial<Record<SupportedNetworks, PublicClient>> = {};
@@ -31,34 +11,38 @@ const initializeDefaultClients = () => {
     defaultClients = {
       [SupportedNetworks.Mainnet]: createPublicClient({
         chain: mainnet,
-        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Mainnet]),
+        transport: http(getDefaultRPC(SupportedNetworks.Mainnet)),
       }),
       [SupportedNetworks.Base]: createPublicClient({
         chain: base,
-        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Base]),
+        transport: http(getDefaultRPC(SupportedNetworks.Base)),
       }) as PublicClient,
       [SupportedNetworks.Polygon]: createPublicClient({
         chain: polygon,
-        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Polygon]),
+        transport: http(getDefaultRPC(SupportedNetworks.Polygon)),
       }),
       [SupportedNetworks.Unichain]: createPublicClient({
         chain: unichain,
-        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Unichain]),
+        transport: http(getDefaultRPC(SupportedNetworks.Unichain)),
       }) as PublicClient,
       [SupportedNetworks.Arbitrum]: createPublicClient({
         chain: arbitrum,
-        transport: http(DEFAULT_RPC_URLS[SupportedNetworks.Arbitrum]),
+        transport: http(getDefaultRPC(SupportedNetworks.Arbitrum)),
+      }) as PublicClient,
+      [SupportedNetworks.HyperEVM]: createPublicClient({
+        chain: hyperevm,
+        transport: http(getDefaultRPC(SupportedNetworks.HyperEVM)),
       }) as PublicClient,
     };
   }
 };
 
 // Create a client with custom RPC URL
-export function createClientWithCustomRpc(
+function createClientWithCustomRpc(
   chainId: SupportedNetworks,
   rpcUrl: string,
 ): PublicClient {
-  const chain = CHAIN_CONFIGS[chainId];
+  const chain = getViemChain(chainId);
   if (!chain) {
     throw new Error(`Unsupported chainId: ${chainId}`);
   }
@@ -81,30 +65,6 @@ export const getClient = (chainId: SupportedNetworks, customRpcUrl?: string): Pu
     throw new Error(`Unsupported chainId: ${chainId}`);
   }
   return client;
-};
-
-export const BLOCK_TIME = {
-  [SupportedNetworks.Mainnet]: 12, // Ethereum mainnet: 12 seconds
-  [SupportedNetworks.Base]: 2, // Base: 2 seconds
-  [SupportedNetworks.Polygon]: 2, // Polygon: 2 seconds
-  [SupportedNetworks.Unichain]: 1, // Unichain: 2 seconds
-  [SupportedNetworks.Arbitrum]: 2,
-} as const;
-
-export const GENESIS_BLOCK = {
-  [SupportedNetworks.Mainnet]: 18883124, // Ethereum mainnet
-  [SupportedNetworks.Base]: 13977148, // Base
-  [SupportedNetworks.Polygon]: 66931042, // Polygon
-  [SupportedNetworks.Unichain]: 9139027, // Unichain
-  [SupportedNetworks.Arbitrum]: 296446593, // Arbitrum
-} as const;
-
-export const LATEST_BLOCK_DELAY = {
-  [SupportedNetworks.Mainnet]: 0, // Ethereum mainnet
-  [SupportedNetworks.Base]: 20, // Base
-  [SupportedNetworks.Polygon]: 20, // Polygon
-  [SupportedNetworks.Unichain]: 20, // Unichain
-  [SupportedNetworks.Arbitrum]: 20,
 };
 
 type BlockResponse = {
