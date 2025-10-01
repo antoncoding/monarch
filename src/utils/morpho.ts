@@ -16,6 +16,8 @@ export const getMorphoAddress = (chain: SupportedNetworks) => {
       return '0x8f5ae9cddb9f68de460c77730b018ae7e04a140a';
     case SupportedNetworks.Arbitrum:
       return '0x6c247b1F6182318877311737BaC0844bAa518F5e';
+    case SupportedNetworks.HyperEVM:
+      return '0x68e37dE8d93d3496ae143F2E900490f6280C57cD';
     default:
       return zeroAddress;
   }
@@ -33,6 +35,8 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
     case SupportedNetworks.Unichain:
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Arbitrum:
+      return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
+    case SupportedNetworks.HyperEVM:
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     default:
       return zeroAddress;
@@ -70,20 +74,17 @@ export const actionTypeToText = (type: UserTxTypes) => {
 };
 
 const MAINNET_GENESIS_DATE = new Date('2023-12-28T09:09:23.000Z');
-const BASE_GENESIS_DATE = new Date('2024-05-03T13:40:43.000Z');
-const POLYGON_GENESIS_DATE = new Date('2025-01-20T02:03:12.000Z');
-const UNICHAIN_GENESIS_DATE = new Date('2025-02-18T02:03:6.000Z');
 
 export function getMorphoGenesisDate(chainId: number): Date {
   switch (chainId) {
-    case SupportedNetworks.Mainnet: // mainnet
-      return MAINNET_GENESIS_DATE;
-    case SupportedNetworks.Base: // base
-      return BASE_GENESIS_DATE;
+    case SupportedNetworks.Mainnet:
+      return new Date('2023-12-28T09:09:23.000Z');
+    case SupportedNetworks.Base:
+      return new Date('2024-05-03T13:40:43.000Z');
     case SupportedNetworks.Polygon:
-      return POLYGON_GENESIS_DATE;
+      return new Date('2025-01-20T02:03:12.000Z');;
     case SupportedNetworks.Unichain:
-      return UNICHAIN_GENESIS_DATE;
+      return new Date('2025-02-18T02:03:6.000Z');
     default:
       return MAINNET_GENESIS_DATE; // default to mainnet
   }

@@ -1,5 +1,6 @@
 import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
-import { SupportedNetworks, getWrappedNativeToken, getNativeTokenSymbol } from './networks';
+import { SupportedNetworks, getWrappedNativeToken, getNativeTokenSymbol, hyperevm } from './networks';
+import { symbol } from 'zod';
 
 export type SingleChainERC20Basic = {
   symbol: string;
@@ -560,6 +561,47 @@ const supportedTokens = [
     img: require('../imgs/oracles/pyth.png') as string,
     decimals: 18,
     networks: [{ chain: base, address: '0x4c5d8A75F3762c1561D96f177694f67378705E98' }],
+  },
+  // HyperEVM
+  {
+    symbol: 'USD₮0',
+    img: require('../imgs/tokens/usdt0.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'WHYPE',
+    img: require('../imgs/tokens/whype.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0x5555555555555555555555555555555555555555' }],
+  },
+  {
+    symbol: 'UETH',
+    img: require('../imgs/tokens/ueth.svg') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0xBe6727B535545C67d5cAa73dEa54865B92CF7907' }],
+    peg: TokenPeg.ETH,
+  },
+  {
+    symbol: 'UBTC',
+    img: require('../imgs/tokens/ubtc.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463' }],
+    peg: TokenPeg.BTC,
+  },
+  {
+    symbol: 'wstHYPE',
+    img: require('../imgs/tokens/wsthype.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0x94e8396e0869c9f2200760af0621afd240e1cf38' }],
+  },
+  {
+    symbol: 'hbUSDT',
+    img: require('../imgs/tokens/hbusdt.svg') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb' }],
+    peg: TokenPeg.USD,
   },
   {
     symbol: 'MORPHO',

@@ -1,14 +1,7 @@
 import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { useLocalStorage } from './useLocalStorage';
 
-export type CustomRpcUrls = {
-  [SupportedNetworks.Mainnet]?: string;
-  [SupportedNetworks.Base]?: string;
-  [SupportedNetworks.Polygon]?: string;
-  [SupportedNetworks.Unichain]?: string;
-  [SupportedNetworks.Arbitrum]?: string;
-  [SupportedNetworks.HyperEVM]?: string
-};
+export type CustomRpcUrls = Partial<Record<SupportedNetworks, string>>;
 
 export function useCustomRpc() {
   const [customRpcUrls, setCustomRpcUrls] = useLocalStorage<CustomRpcUrls>('customRpcUrls', {});

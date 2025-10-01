@@ -14,6 +14,14 @@ export enum SupportedNetworks {
   HyperEVM = 999
 }
 
+export const ALL_SUPPORTED_NETWORKS = [
+  SupportedNetworks.Mainnet,
+  SupportedNetworks.Base,
+  SupportedNetworks.Polygon,
+  SupportedNetworks.Unichain,
+  SupportedNetworks.Arbitrum,
+  SupportedNetworks.HyperEVM,
+];
 
 // use hyperevm as costom chain 
 export const hyperevm = defineChain({
@@ -140,6 +148,7 @@ export const networks: NetworkConfig[] = [
     maxBlockDelay: 5,
     nativeTokenSymbol: 'WHYPE',
     wrappedNativeToken: '0x5555555555555555555555555555555555555555',
+    explorerUrl: 'https://hyperevmscan.io',
   },
 ];
 

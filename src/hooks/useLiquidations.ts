@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoApiLiquidatedMarketKeys } from '@/data-sources/morpho-api/liquidations';
 import { fetchSubgraphLiquidatedMarketKeys } from '@/data-sources/subgraph/liquidations';
-import { SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
 const useLiquidations = () => {
   const [loading, setLoading] = useState(true);
@@ -19,18 +19,13 @@ const useLiquidations = () => {
     setError(null); // Reset error
 
     // Define the networks to check for liquidations
-    const networksToCheck: SupportedNetworks[] = [
-      SupportedNetworks.Mainnet,
-      SupportedNetworks.Base,
-      SupportedNetworks.Arbitrum,
-    ];
-
+    
     const combinedLiquidatedKeys = new Set<string>();
     let fetchErrors: unknown[] = [];
 
     try {
       await Promise.all(
-        networksToCheck.map(async (network) => {
+        ALL_SUPPORTED_NETWORKS.map(async (network) => {
           try {
             let networkLiquidatedKeys: Set<string>;
 
