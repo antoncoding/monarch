@@ -11,7 +11,8 @@ import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { isWETH } from '@/utils/tokens';
+import { getNativeTokenSymbol } from '@/utils/networks';
+import { isWrappedNativeToken } from '@/utils/tokens';
 import { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from '../BorrowProcessModal';
 import { TokenIcon } from '../TokenIcon';
@@ -263,13 +264,13 @@ export function AddCollateralAndBorrow({
                           collateralTokenBalance ? collateralTokenBalance : '0',
                           market.collateralAsset.decimals,
                         )}{' '}
-                    {useEth ? 'ETH' : market.collateralAsset.symbol}
+                    {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
                   </p>
                 </div>
 
-                {isWETH(market.collateralAsset.address, market.morphoBlue.chain.id) && (
+                {isWrappedNativeToken(market.collateralAsset.address, market.morphoBlue.chain.id) && (
                   <div className="mb-2 mt-1 flex items-center justify-end">
-                    <div className="mr-2 font-inter text-xs opacity-50">Use ETH instead</div>
+                    <div className="mr-2 font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
                     <Switch
                       size="sm"
                       isSelected={useEth}

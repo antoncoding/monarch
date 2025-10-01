@@ -7,7 +7,8 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance } from '@/utils/balance';
-import { isWETH } from '@/utils/tokens';
+import { getNativeTokenSymbol } from '@/utils/networks';
+import { isWrappedNativeToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Button } from './common';
 import { SupplyProcessModal } from './SupplyProcessModal';
@@ -79,9 +80,9 @@ export function SupplyModalContent({
             <>
               {/* Supply Input Section */}
               <div className="mt-12 space-y-4">
-                {isWETH(market.loanAsset.address, market.morphoBlue.chain.id) && (
+                {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
                   <div className="flex items-center justify-end gap-2">
-                    <div className="font-inter text-xs opacity-50">Use ETH instead</div>
+                    <div className="font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
                     <Switch
                       size="sm"
                       isSelected={useEth}
@@ -102,7 +103,7 @@ export function SupplyModalContent({
                       {useEth
                         ? formatBalance(ethBalance ?? BigInt(0), 18)
                         : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
-                      {useEth ? 'ETH' : market.loanAsset.symbol}
+                      {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
                     </p>
                   </div>
 

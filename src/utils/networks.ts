@@ -56,11 +56,15 @@ type NetworkConfig = {
   vaultConfig?: VaultAgentConfig;
 
   // used to estimate block number from blocktime
-  blocktime: number; 
-  
-  // current blocknumber - this number used when trying to find blocks. 
+  blocktime: number;
+
+  // current blocknumber - this number used when trying to find blocks.
   // Make it larger if blockFinder keeps having block find block issues
   maxBlockDelay?: number
+
+  explorerUrl?: string;
+  nativeTokenSymbol?: string;
+  wrappedNativeToken?: Address;
 };
 
 
@@ -73,6 +77,8 @@ export const networks: NetworkConfig[] = [
     defaultRPC: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     blocktime: 12,
     maxBlockDelay: 0,
+    explorerUrl: 'https://etherscan.io',
+    wrappedNativeToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
   },
   {
     network: SupportedNetworks.Base,
@@ -87,6 +93,8 @@ export const networks: NetworkConfig[] = [
     },
     blocktime: 2,
     maxBlockDelay: 5,
+    explorerUrl: 'https://basescan.org',
+    wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
     network: SupportedNetworks.Polygon,
@@ -96,6 +104,9 @@ export const networks: NetworkConfig[] = [
     defaultRPC: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     blocktime: 2,
     maxBlockDelay: 20,
+    explorerUrl: 'https://polygonscan.com',
+    nativeTokenSymbol: 'POL',
+    wrappedNativeToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
   },
   {
     network: SupportedNetworks.Unichain,
@@ -105,6 +116,8 @@ export const networks: NetworkConfig[] = [
     name: 'Unichain',
     blocktime: 1,
     maxBlockDelay: 10,
+    explorerUrl: 'https://uniscan.xyz',
+    wrappedNativeToken: '0x4200000000000000000000000000000000000006',
   },
   {
     network: SupportedNetworks.Arbitrum,
@@ -114,15 +127,19 @@ export const networks: NetworkConfig[] = [
     defaultRPC: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     blocktime: 2,
     maxBlockDelay: 2,
+    explorerUrl: 'https://arbiscan.io',
+    wrappedNativeToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
   },
   {
     network: SupportedNetworks.HyperEVM,
     chain: hyperevm,
     logo: require('../imgs/chains/hyperevm.png') as string,
-    name: 'Arbitrum',
+    name: 'HyperEVM',
     defaultRPC: `https://hyperliquid-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     blocktime: 2,
     maxBlockDelay: 5,
+    nativeTokenSymbol: 'WHYPE',
+    wrappedNativeToken: '0x5555555555555555555555555555555555555555',
   },
 ];
 
@@ -170,6 +187,18 @@ export const getNetworkImg = (chainId: number) => {
 export const getNetworkName = (chainId: number) => {
   const target = networks.find((network) => network.network === chainId);
   return target?.name;
+};
+
+export const getExplorerUrl = (chainId: SupportedNetworks): string => {
+  return getNetworkConfig(chainId).explorerUrl ?? 'https://etherscan.io';
+};
+
+export const getNativeTokenSymbol = (chainId: SupportedNetworks): string => {
+  return getNetworkConfig(chainId).nativeTokenSymbol ?? 'ETH';
+};
+
+export const getWrappedNativeToken = (chainId: SupportedNetworks): Address | undefined => {
+  return getNetworkConfig(chainId).wrappedNativeToken;
 };
 
 export type { NetworkConfig };

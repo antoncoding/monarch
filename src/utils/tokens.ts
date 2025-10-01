@@ -1,5 +1,5 @@
 import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
-import { SupportedNetworks } from './networks';
+import { SupportedNetworks, getWrappedNativeToken, getNativeTokenSymbol } from './networks';
 
 export type SingleChainERC20Basic = {
   symbol: string;
@@ -628,18 +628,10 @@ const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
   });
 };
 
-const isWETH = (address: string, chainId: number) => {
-  if (chainId === SupportedNetworks.Mainnet) {
-    return address.toLowerCase() === '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
-  }
-  if (chainId === SupportedNetworks.Base || chainId === SupportedNetworks.Unichain) {
-    return address.toLowerCase() === '0x4200000000000000000000000000000000000006';
-  }
-
-  if (chainId === SupportedNetworks.Arbitrum) {
-    return address.toLowerCase() === '0x82af49447d8a07e3bd95bd0d56f35241523fbab1';
-  }
-  return false;
+const isWrappedNativeToken = (address: string, chainId: number) => {
+  const wrappedToken = getWrappedNativeToken(chainId);
+  if (!wrappedToken) return false;
+  return address.toLowerCase() === wrappedToken.toLowerCase();
 };
 
 // Scam tokens
@@ -650,7 +642,7 @@ const blacklistTokens = [
 
 export {
   supportedTokens,
-  isWETH,
+  isWrappedNativeToken,
   findTokenWithKey,
   findToken,
   getUniqueTokens,
