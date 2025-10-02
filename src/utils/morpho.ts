@@ -55,6 +55,8 @@ export const getIRMTitle = (address: string) => {
       return 'Adaptive Curve';
     case '0x66f30587fb8d4206918deb78eca7d5ebbafd06da': // on arbitrum
       return 'Adaptive Curve';
+    case '0xd4a426f010986dcad727e8dd6eed44ca4a9b7483': // on hyperevm
+      return 'Adaptive Curve';
     default:
       return 'Unknown IRM';
   }
