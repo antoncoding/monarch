@@ -84,7 +84,10 @@ const useLiquidations = () => {
   }, []);
 
   useEffect(() => {
-    fetchLiquidations().catch(console.error);
+    fetchLiquidations().catch((err) => {
+      console.error('Error in fetchLiquidations effect:', err);
+      // Explicitly catch and handle - prevents React error boundary from triggering
+    });
   }, [fetchLiquidations]);
 
   return {
