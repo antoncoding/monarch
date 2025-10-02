@@ -1,4 +1,4 @@
-import { Address, zeroAddress } from 'viem';
+import { Address } from 'viem';
 import { getWhitelistedOracleData } from '@/config/oracle-whitelist'; // Import the whitelist helper
 import {
   marketQuery as subgraphMarketQuery,
