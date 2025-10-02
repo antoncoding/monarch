@@ -109,9 +109,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                   console.log(`Attempting to fetch markets via Subgraph for ${network}`);
                   networkMarkets = await fetchSubgraphMarkets(network);
                   console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
-                  if (network  === 999) {
-                    console.log(networkMarkets);
-                  }
                 } catch (subgraphError) {
                   console.error(
                     `Failed to fetch markets via Subgraph for ${network}:`,
