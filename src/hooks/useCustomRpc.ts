@@ -1,14 +1,7 @@
-import { SupportedNetworks } from '@/utils/networks';
-import { DEFAULT_RPC_URLS } from '@/utils/rpc';
+import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { useLocalStorage } from './useLocalStorage';
 
-export type CustomRpcUrls = {
-  [SupportedNetworks.Mainnet]?: string;
-  [SupportedNetworks.Base]?: string;
-  [SupportedNetworks.Polygon]?: string;
-  [SupportedNetworks.Unichain]?: string;
-  [SupportedNetworks.Arbitrum]?: string;
-};
+export type CustomRpcUrls = Partial<Record<SupportedNetworks, string>>;
 
 export function useCustomRpc() {
   const [customRpcUrls, setCustomRpcUrls] = useLocalStorage<CustomRpcUrls>('customRpcUrls', {});
@@ -16,7 +9,7 @@ export function useCustomRpc() {
   const setRpcUrl = (chainId: SupportedNetworks, url: string | undefined) => {
     setCustomRpcUrls((prev) => {
       const newUrls = { ...prev };
-      if (url === undefined || url === '' || url === DEFAULT_RPC_URLS[chainId]) {
+      if (url === undefined || url === '' || url === getDefaultRPC(chainId)) {
         delete newUrls[chainId];
       } else {
         newUrls[chainId] = url;

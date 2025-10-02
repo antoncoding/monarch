@@ -5,14 +5,12 @@ const apiKey = process.env.NEXT_PUBLIC_THEGRAPH_API_KEY;
 // Ensure the API key is available
 if (!apiKey) {
   console.error('NEXT_PUBLIC_THEGRAPH_API_KEY is not set in environment variables.');
-  // Potentially throw an error or handle this case as needed
 }
 
 const baseSubgraphUrl = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/71ZTy1veF9twER9CLMnPWeLQ7GZcwKsjmygejrgKirqs`
   : undefined;
 
-// TODO: Replace 'YOUR_MAINNET_SUBGRAPH_ID' with the actual Mainnet Subgraph ID
 const mainnetSubgraphUrl = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/8Lz789DP5VKLXumTMTgygjU2xtuzx8AhbaacgN5PYCAs`
   : undefined;
@@ -29,6 +27,8 @@ const arbitrumSubgraph = apiKey
   ? `https://gateway.thegraph.com/api/${apiKey}/subgraphs/id/XsJn88DNCHJ1kgTqYeTgHMQSK4LuG1LR75339QVeQ26`
   : undefined;
 
+const hyperevmSubgraph = `https://api.goldsky.com/api/public/project_cmg4ky61ivud801r23qsug3es/subgraphs/morpho-blue-hyperevm/1.0.3/gn`
+
 // Map network IDs (from SupportedNetworks) to Subgraph URLs
 export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Base]: baseSubgraphUrl,
@@ -36,6 +36,7 @@ export const SUBGRAPH_URLS: Partial<Record<SupportedNetworks, string>> = {
   [SupportedNetworks.Polygon]: polygonSubgraphUrl,
   [SupportedNetworks.Unichain]: unichainSubgraphUrl,
   [SupportedNetworks.Arbitrum]: arbitrumSubgraph,
+  [SupportedNetworks.HyperEVM]: hyperevmSubgraph,
 };
 
 export const getSubgraphUrl = (network: SupportedNetworks): string | undefined => {

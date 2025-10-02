@@ -1,4 +1,4 @@
-import { Address, zeroAddress } from 'viem';
+import { Address } from 'viem';
 import { getWhitelistedOracleData } from '@/config/oracle-whitelist'; // Import the whitelist helper
 import {
   marketQuery as subgraphMarketQuery,
@@ -144,14 +144,7 @@ const transformSubgraphMarketToMarket = (
   const collateralAsset = mapToken(subgraphMarket.inputToken);
 
   const defaultOracleData: MorphoChainlinkOracleData = {
-    baseFeedOne: {
-      address: zeroAddress,
-      chain: {
-        id: network,
-      },
-      id: zeroAddress,
-      pair: null,
-    },
+    baseFeedOne: null,
     baseFeedTwo: null,
     quoteFeedOne: null,
     quoteFeedTwo: null,

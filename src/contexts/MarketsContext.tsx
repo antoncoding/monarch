@@ -15,7 +15,7 @@ import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { monarchWhitelistedMarkets, blacklistedMarkets } from '@/utils/markets';
-import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import { Market } from '@/utils/types';
 
 // Export the type definition
@@ -78,20 +78,14 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setError(null); // Reset error at the start
 
       // Define the networks to fetch markets for
-      const networksToFetch: SupportedNetworks[] = [
-        SupportedNetworks.Mainnet,
-        SupportedNetworks.Base,
-        SupportedNetworks.Polygon,
-        SupportedNetworks.Unichain,
-        SupportedNetworks.Arbitrum,
-      ];
+      
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];
 
       try {
         // Fetch markets for each network based on its data source
         await Promise.all(
-          networksToFetch.map(async (network) => {
+          ALL_SUPPORTED_NETWORKS.map(async (network) => {
             try {
               let networkMarkets: Market[] = [];
 
@@ -114,6 +108,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                 try {
                   console.log(`Attempting to fetch markets via Subgraph for ${network}`);
                   networkMarkets = await fetchSubgraphMarkets(network);
+                  console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
                 } catch (subgraphError) {
                   console.error(
                     `Failed to fetch markets via Subgraph for ${network}:`,

@@ -78,7 +78,7 @@ function MarketContent() {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeseriesOptions>(
     calculateTimeRange('7d'), // Initialize based on default timeframe
   );
-  const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('USD');
+  const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('Asset');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // 4. Data fetching hooks - use unified time range

@@ -11,6 +11,7 @@ export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Polygon]: polygonRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Arbitrum]: arbitrumRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Unichain]: [] as ChainlinkOracleEntry[],
+  [SupportedNetworks.HyperEVM]: [] as ChainlinkOracleEntry[],
 } as const;
 
 export const getAllOracles = (): Record<SupportedNetworks, ChainlinkOracleEntry[]> =>
