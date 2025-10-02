@@ -85,6 +85,10 @@ export function getMorphoGenesisDate(chainId: number): Date {
       return new Date('2025-01-20T02:03:12.000Z');;
     case SupportedNetworks.Unichain:
       return new Date('2025-02-18T02:03:6.000Z');
+    case SupportedNetworks.Arbitrum:
+      return new Date('2025-01-17T06:04:51.000Z');
+    case SupportedNetworks.HyperEVM:
+      return new Date('2025-04-03T04:52:00.000Z');
     default:
       return MAINNET_GENESIS_DATE; // default to mainnet
   }

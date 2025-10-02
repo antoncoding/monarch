@@ -59,15 +59,17 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function fetchAllAssets() {
       try {
-        const [mainnetAssets, baseAssets, arbitrumAssets] = await Promise.all([
+        const [mainnetAssets, baseAssets, arbitrumAssets, hyperevmAssets] = await Promise.all([
           fetchPendleAssets(SupportedNetworks.Mainnet),
           fetchPendleAssets(SupportedNetworks.Base),
           fetchPendleAssets(SupportedNetworks.Arbitrum),
+          fetchPendleAssets(SupportedNetworks.HyperEVM),
         ]);
         const pendleTokens = [
           ...mainnetAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Mainnet)),
           ...baseAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Base)),
           ...arbitrumAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Arbitrum)),
+          ...hyperevmAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.HyperEVM)),
         ];
 
         // Filter out Pendle tokens that have addresses already present in supportedTokens

@@ -97,13 +97,6 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
 
 const subgraphWarnings: WarningWithDetail[] = [
   {
-    code: 'subgraph_unrecognized_oracle',
-    level: 'alert',
-    description:
-      'The underlying data source (subgraph) does not provide any details on this oralce address.',
-    category: WarningCategory.oracle,
-  },
-  {
     code: 'subgraph_no_price',
     level: 'warning',
     description: 'The USD value of the market is estimated with an offchain price source.',

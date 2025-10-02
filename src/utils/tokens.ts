@@ -54,6 +54,7 @@ const supportedTokens = [
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
       { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
       { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' },
+      { chain: hyperevm, address: '0xb88339cb7199b77e23db6e890353e22632ba630f' },
     ],
     peg: TokenPeg.USD,
   },
@@ -596,12 +597,33 @@ const supportedTokens = [
     networks: [{ chain: hyperevm, address: '0x94e8396e0869c9f2200760af0621afd240e1cf38' }],
   },
   {
+    symbol: 'kHYPE',
+    img: require('../imgs/tokens/khype.svg') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0xfd739d4e423301ce9385c1fb8850539d657c296d' }],
+  },
+  {
     symbol: 'hbUSDT',
     img: require('../imgs/tokens/hbusdt.svg') as string,
     decimals: 18,
     networks: [{ chain: hyperevm, address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb' }],
     peg: TokenPeg.USD,
   },
+  {
+    symbol: 'USH',
+    img: require('../imgs/tokens/ush.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0x8ff0dd9f9c40a0d76ef1bcfaf5f98c1610c74bd8' }],
+    peg: TokenPeg.USD,
+  },
+  {
+    symbol: 'USDHL',
+    img: require('../imgs/tokens/usdhl.png') as string,
+    decimals: 18,
+    networks: [{ chain: hyperevm, address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5' }],
+    peg: TokenPeg.USD,
+  },
+  // End of HyperEVM
   {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,

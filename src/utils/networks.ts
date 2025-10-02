@@ -23,10 +23,10 @@ export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.HyperEVM,
 ];
 
-// use hyperevm as costom chain 
+// use hyperevm as custom chain 
 export const hyperevm = defineChain({
   id: 999,
-  name: 'Hyperevm',
+  name: 'hyperevm',
   nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
   rpcUrls: {
     default: {
