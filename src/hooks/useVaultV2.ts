@@ -175,13 +175,16 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
         return true;
-      } catch (error) {
-        if (error instanceof Error && error.message.toLowerCase().includes('reject')) {
+      } catch (finalizeError) {
+        if (
+          finalizeError instanceof Error &&
+          finalizeError.message.toLowerCase().includes('reject')
+        ) {
           // user rejected the transaction; treat as graceful cancellation
           return false;
         }
-        console.error('Failed to finalize vault setup', error);
-        throw error;
+        console.error('Failed to finalize vault setup', finalizeError);
+        throw finalizeError;
       }
     },
     [account, chainIdToUse, currentCurator, sendFinalizeTx, vaultAddress],
@@ -237,12 +240,15 @@ export function useVaultV2({
           chainId: chainIdToUse,
         });
         return true;
-      } catch (error) {
-        if (error instanceof Error && error.message.toLowerCase().includes('reject')) {
+      } catch (metadataUpdateError) {
+        if (
+          metadataUpdateError instanceof Error &&
+          metadataUpdateError.message.toLowerCase().includes('reject')
+        ) {
           return false;
         }
-        console.error('Failed to update vault metadata', error);
-        throw error;
+        console.error('Failed to update vault metadata', metadataUpdateError);
+        throw metadataUpdateError;
       }
     },
     [account, chainIdToUse, sendMetadataTx, vaultAddress],

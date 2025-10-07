@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Address, zeroAddress } from 'viem';
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { Address, zeroAddress } from 'viem';
 import { Button } from '@/components/common';
-import { Spinner } from '@/components/common/Spinner';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { Spinner } from '@/components/common/Spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { getMorphoAddress } from '@/utils/morpho';
 import { useVaultV2 } from '@/hooks/useVaultV2';
+import { getMorphoAddress } from '@/utils/morpho';
+import { SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 
 const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) =>

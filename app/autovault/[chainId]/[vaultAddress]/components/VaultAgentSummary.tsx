@@ -1,7 +1,7 @@
-import { Button } from '@/components/common';
 import { Tooltip } from '@heroui/react';
 import clsx from 'clsx';
 import { GrStatusGood } from 'react-icons/gr';
+import { Button } from '@/components/common';
 import { TooltipContent } from '@/components/TooltipContent';
 
 type VaultAgentSummaryProps = {

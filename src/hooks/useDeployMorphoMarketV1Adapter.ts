@@ -2,9 +2,9 @@ import { useCallback, useMemo } from 'react';
 import { Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useAccount, useChainId } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
-import { useTransactionWithToast } from './useTransactionWithToast';
-import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
 import { getMorphoAddress } from '@/utils/morpho';
+import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
+import { useTransactionWithToast } from './useTransactionWithToast';
 
 const TX_TOAST_ID = 'deploy-morpho-market-adapter';
 

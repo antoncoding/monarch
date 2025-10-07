@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
 import { Input } from '@heroui/react';
+import { createPortal } from 'react-dom';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
@@ -42,6 +42,8 @@ export function VaultSettingsModal({
   currentSymbol,
 }: VaultSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  const nameInputId = useId();
+  const symbolInputId = useId();
   const previousName = useMemo(() => currentName.trim(), [currentName]);
   const previousSymbol = useMemo(() => currentSymbol.trim(), [currentSymbol]);
   const [nameInput, setNameInput] = useState(previousName || defaultName);
@@ -108,7 +110,9 @@ export function VaultSettingsModal({
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary">Vault name</label>
+          <label className="text-[11px] uppercase text-secondary" htmlFor={nameInputId}>
+            Vault name
+          </label>
           <Input
             size="sm"
             radius="sm"
@@ -117,6 +121,7 @@ export function VaultSettingsModal({
             onChange={(event) => setNameInput(event.target.value)}
             placeholder={defaultName}
             isDisabled={!isOwner}
+            id={nameInputId}
             classNames={{
               input: 'text-sm',
               inputWrapper:
@@ -125,7 +130,9 @@ export function VaultSettingsModal({
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary">Vault symbol</label>
+          <label className="text-[11px] uppercase text-secondary" htmlFor={symbolInputId}>
+            Vault symbol
+          </label>
           <Input
             size="sm"
             radius="sm"
@@ -135,6 +142,7 @@ export function VaultSettingsModal({
             placeholder={defaultSymbol}
             maxLength={16}
             isDisabled={!isOwner}
+            id={symbolInputId}
             classNames={{
               input: 'text-sm',
               inputWrapper:
@@ -261,11 +269,11 @@ export function VaultSettingsModal({
   return createPortal(
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-4 font-zen"
-      onClick={onClose}
+      onMouseDown={onClose}
     >
       <div
         className="relative flex w-full max-w-4xl min-h-[480px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex flex-1 flex-col bg-background/95">
           <div className="flex items-center justify-between border-b border-divider/30 px-8 pt-8 pb-4">

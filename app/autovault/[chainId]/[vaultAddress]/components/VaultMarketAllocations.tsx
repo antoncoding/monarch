@@ -1,5 +1,5 @@
-import { TokenIcon } from '@/components/TokenIcon';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { TokenIcon } from '@/components/TokenIcon';
 import { VaultAllocation } from '@/hooks/useAutovaultData';
 
 const formatPercent = (value: number | null | undefined) =>

@@ -1,6 +1,6 @@
 import { Address } from 'viem';
-import { subgraphGraphqlFetcher } from './fetchers';
 import { morphoMarketV1AdaptersQuery } from '@/graphql/morpho-market-v1-adapter-queries';
+import { subgraphGraphqlFetcher } from './fetchers';
 
 type MorphoMarketV1AdaptersResponse = {
   data?: {

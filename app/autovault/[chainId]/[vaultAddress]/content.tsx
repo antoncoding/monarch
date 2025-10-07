@@ -11,17 +11,17 @@ import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { AutovaultData, VaultAllocation, useVaultDetails } from '@/hooks/useAutovaultData';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
+import { VaultAgentSummary } from './components/VaultAgentSummary';
 import { VaultApyHistory } from './components/VaultApyHistory';
 import { VaultAssetMovements, VaultAssetMovement } from './components/VaultAssetMovements';
+import { VaultInitializationModal } from './components/VaultInitializationModal';
 import { VaultMarketAllocations } from './components/VaultMarketAllocations';
+import { VaultRolesModal } from './components/VaultRolesModal';
 import { VaultRole } from './components/VaultRolesOverview';
 import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics, VaultMetric } from './components/VaultSummaryMetrics';
-import { VaultAgentSummary } from './components/VaultAgentSummary';
-import { VaultRolesModal } from './components/VaultRolesModal';
-import { useVaultV2 } from '@/hooks/useVaultV2';
-import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { VaultInitializationModal } from './components/VaultInitializationModal';
 
 function formatUsd(value: number | bigint): string {
   const numeric = typeof value === 'bigint' ? Number(value) : value;
@@ -54,7 +54,6 @@ export default function VaultContent() {
   }, [supportedChainId]);
 
   const {
-    adapter,
     needsSetup,
     isLoading: adapterLoading,
     refetch: refetchAdapter,
