@@ -46,13 +46,35 @@ export function useVaultV2({
     },
   });
 
+  const { data: rawName } = useReadContract({
+    address: vaultAddress,
+    abi: vaultv2Abi,
+    functionName: 'name',
+    args: [],
+    chainId: chainIdToUse,
+    query: {
+      enabled: Boolean(vaultAddress),
+    },
+  });
+
+  const { data: rawSymbol } = useReadContract({
+    address: vaultAddress,
+    abi: vaultv2Abi,
+    functionName: 'symbol',
+    args: [],
+    chainId: chainIdToUse,
+    query: {
+      enabled: Boolean(vaultAddress),
+    },
+  });
+
   const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
 
   const handleFinalizeSuccess = useCallback(() => {
     void refetch();
   }, [refetch]);
 
-  const { isConfirming: isFinalizing, sendTransactionAsync } = useTransactionWithToast({
+  const { isConfirming: isFinalizing, sendTransactionAsync: sendFinalizeTx } = useTransactionWithToast({
     toastId: 'finalizeSetup',
     pendingText: 'Finalizing setup',
     successText: 'Setup finalized',
@@ -61,6 +83,16 @@ export function useVaultV2({
     successDescription: 'Setup finalized',
     chainId: chainIdToUse,
     onSuccess: handleFinalizeSuccess,
+  });
+
+  const { isConfirming: isUpdatingMetadata, sendTransactionAsync: sendMetadataTx } = useTransactionWithToast({
+    toastId: 'update-vault-metadata',
+    pendingText: 'Updating vault metadata',
+    successText: 'Vault metadata updated',
+    errorText: 'Failed to update vault metadata',
+    pendingDescription: 'Applying new name and symbol',
+    successDescription: 'Vault metadata saved',
+    chainId: chainIdToUse,
   });
 
  
@@ -136,7 +168,7 @@ export function useVaultV2({
       });
 
       try {
-        await sendTransactionAsync({
+        await sendFinalizeTx({
           account,
           to: vaultAddress,
           data: multicallTx,
@@ -152,13 +184,84 @@ export function useVaultV2({
         throw error;
       }
     },
-    [account, chainIdToUse, currentCurator, sendTransactionAsync, vaultAddress],
+    [account, chainIdToUse, currentCurator, sendFinalizeTx, vaultAddress],
+  );
+
+  const updateNameAndSymbol = useCallback(
+    async ({ name, symbol }: { name?: string; symbol?: string }): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const nextName = name?.trim();
+      const nextSymbol = symbol?.trim();
+
+      const calls: `0x${string}`[] = [];
+
+      if (nextName) {
+        calls.push(
+          encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setName',
+            args: [nextName],
+          }),
+        );
+      }
+
+      if (nextSymbol) {
+        calls.push(
+          encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setSymbol',
+            args: [nextSymbol],
+          }),
+        );
+      }
+
+      if (calls.length === 0) {
+        return false;
+      }
+
+      const txData =
+        calls.length === 1
+          ? calls[0]
+          : encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'multicall',
+              args: [calls],
+            });
+
+      try {
+        await sendMetadataTx({
+          account,
+          to: vaultAddress,
+          data: txData,
+          chainId: chainIdToUse,
+        });
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to update vault metadata', error);
+        throw error;
+      }
+    },
+    [account, chainIdToUse, sendMetadataTx, vaultAddress],
   );
 
   const adapter = useMemo(() => {
     if (!data) return zeroAddress;
     return data as Address;
   }, [data]);
+
+  const name = useMemo(() => {
+    if (!rawName) return '';
+    return String(rawName);
+  }, [rawName]);
+
+  const symbol = useMemo(() => {
+    if (!rawSymbol) return '';
+    return String(rawSymbol);
+  }, [rawSymbol]);
 
   const needsSetup = adapter === zeroAddress;
 
@@ -170,5 +273,9 @@ export function useVaultV2({
     error: error as Error | null,
     finalizeSetup,
     isFinalizing,
+    name,
+    symbol,
+    updateNameAndSymbol,
+    isUpdatingMetadata,
   };
 }

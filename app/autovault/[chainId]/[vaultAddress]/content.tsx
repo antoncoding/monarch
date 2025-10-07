@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Card } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -16,7 +15,7 @@ import { VaultApyHistory } from './components/VaultApyHistory';
 import { VaultAssetMovements, VaultAssetMovement } from './components/VaultAssetMovements';
 import { VaultMarketAllocations } from './components/VaultMarketAllocations';
 import { VaultRole } from './components/VaultRolesOverview';
-import { VaultSettings } from './components/VaultSettings';
+import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics, VaultMetric } from './components/VaultSummaryMetrics';
 import { VaultAgentSummary } from './components/VaultAgentSummary';
 import { VaultRolesModal } from './components/VaultRolesModal';
@@ -54,11 +53,21 @@ export default function VaultContent() {
     }
   }, [supportedChainId]);
 
-  const { adapter, needsSetup, isLoading: adapterLoading, refetch: refetchAdapter } = useVaultV2({
+  const {
+    adapter,
+    needsSetup,
+    isLoading: adapterLoading,
+    refetch: refetchAdapter,
+    updateNameAndSymbol,
+    isUpdatingMetadata,
+    name: onChainName,
+    symbol: onChainSymbol,
+  } = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
   });
 
+  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'allocations'>('general');
   const [showSettings, setShowSettings] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
   const [showInitializationModal, setShowInitializationModal] = useState(false);
@@ -102,7 +111,8 @@ export default function VaultContent() {
   const placeholderVault: AutovaultData = {
     id: 'placeholder',
     address: vaultAddress as Address,
-    name: 'Autovault strategy overview',
+    name: 'Monarch Auto Vault',
+    symbol: 'mAUTO',
     description: 'Track how your automation is performing and what still needs configuration.',
     totalValue: BigInt(2_100_000_000),
     currentApy: 7.4,
@@ -161,6 +171,10 @@ export default function VaultContent() {
 
   const marketAllocations: VaultAllocation[] = displayVault.allocations ?? [];
   const vaultAssetSymbol = marketAllocations[0]?.assetSymbol ?? '—';
+  const fallbackSymbol = vaultAssetSymbol !== '—' ? `m${vaultAssetSymbol}` : 'mAUTO';
+  const fallbackName = `Monarch Auto ${vaultAssetSymbol !== '—' ? vaultAssetSymbol : 'Vault'}`;
+  const effectiveName = (onChainName?.trim() || displayVault.name || fallbackName).trim();
+  const effectiveSymbol = (onChainSymbol?.trim() || displayVault.symbol || fallbackSymbol).trim();
 
   const assetMovements: VaultAssetMovement[] = isPlaceholder
     ? []
@@ -220,7 +234,10 @@ export default function VaultContent() {
         <div className="space-y-8">
           <div className="flex items-start gap-4 pt-6">
             <div className="flex-1">
-              <h1 className="font-zen text-2xl">{displayVault.name}</h1>
+              <div className="flex items-center gap-3">
+                <h1 className="font-zen text-2xl">{effectiveName}</h1>
+                <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{effectiveSymbol}</span>
+              </div>
               <p className="text-sm text-secondary">{displayVault.description}</p>
               <div className="mt-2 text-xs text-secondary">Automation service overview • vault analytics</div>
             </div>
@@ -228,7 +245,10 @@ export default function VaultContent() {
               <Button
                 variant="light"
                 size="sm"
-                onPress={() => setShowSettings(true)}
+                onPress={() => {
+                  setSettingsTab('general');
+                  setShowSettings(true);
+                }}
                 className="flex items-center gap-2"
               >
                 <GearIcon className="h-4 w-4" />
@@ -281,11 +301,18 @@ export default function VaultContent() {
                       .join(', ')}`
                   : 'All critical roles are assigned to safe wallets.'
             }
-            onManageAgents={() =>
-              needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory
-                ? setShowInitializationModal(true)
-                : setShowSettings(true)
-            }
+            onManageAgents={() => {
+              if (needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
+                setShowInitializationModal(true);
+                return;
+              }
+              setSettingsTab('agents');
+              setShowSettings(true);
+            }}
+            onManageAllocations={() => {
+              setSettingsTab('allocations');
+              setShowSettings(true);
+            }}
             onViewRoles={() => setShowRolesModal(true)}
           />
 
@@ -296,11 +323,19 @@ export default function VaultContent() {
           <VaultApyHistory timeframes={['7D', '30D', '90D']} />
           <VaultAssetMovements history={assetMovements} />
 
-          {showSettings && (
-            <Card className="bg-surface">
-              <VaultSettings vault={displayVault} onClose={() => setShowSettings(false)} />
-            </Card>
-          )}
+          <VaultSettingsModal
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            initialTab={settingsTab}
+            vault={displayVault}
+            isOwner={isOwner}
+            onUpdateMetadata={updateNameAndSymbol}
+            updatingMetadata={isUpdatingMetadata}
+            defaultName={fallbackName}
+            defaultSymbol={fallbackSymbol}
+            currentName={onChainName ?? ''}
+            currentSymbol={onChainSymbol ?? ''}
+          />
         </div>
       </div>
 

@@ -9,6 +9,7 @@ type VaultAgentSummaryProps = {
   activeAgents: number;
   description: string;
   onManageAgents: () => void;
+  onManageAllocations?: () => void;
   onViewRoles: () => void;
   roleStatusText: string;
 };
@@ -18,6 +19,7 @@ export function VaultAgentSummary({
   activeAgents,
   description,
   onManageAgents,
+  onManageAllocations,
   onViewRoles,
   roleStatusText,
 }: VaultAgentSummaryProps) {
@@ -57,10 +59,15 @@ export function VaultAgentSummary({
         </p>
         <p className="text-xs uppercase text-secondary">{roleStatusText}</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button variant="interactive" size="sm" onPress={onManageAgents}>
           Manage agents
         </Button>
+        {onManageAllocations && (
+          <Button variant="light" size="sm" onPress={onManageAllocations}>
+            Allocation caps
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onPress={onViewRoles}>
           View role assignments
         </Button>

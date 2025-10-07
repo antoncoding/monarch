@@ -33,6 +33,7 @@ export type AutovaultData = {
   id: string;
   address: Address;
   name: string;
+  symbol?: string;
   description: string;
   totalValue: bigint;
   currentApy: number;
