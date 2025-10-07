@@ -23,5 +23,8 @@ Default to the simplest viable implementation first. Reach for straightforward d
 ## Git Ownership
 Never run git commits, pushes, or other history-altering commands—leave all git operations to the maintainers.
 
+## Contract Interaction TL;DR
+When writing new on-chain hooks, mirror the structure in `src/hooks/useERC20Approval.ts` and `src/hooks/useTransactionWithToast.tsx`: compute chain/address context up front, reuse `useTransactionWithToast` for consistent toast + confirmation handling, and expose a minimal hook surface (`{ action, isLoading }`) with refetch callbacks for follow-up reads.
+
 ## Commit & Pull Request Guidelines
 Mirror the Conventional Commits style in history (`feat:`, `fix:`, `chore:`), keeping messages imperative and scoped. Sync with `main`, run `pnpm check`, and capture UI evidence (screenshots or short clips) for anything user-facing. Reference the relevant Linear/Jira ticket with closing keywords, call out risk areas, and flag required follow-ups. Tag reviewers who understand the touched protocol surfaces to speed feedback.

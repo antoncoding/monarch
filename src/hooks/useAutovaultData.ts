@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';
+import { MorphoChainlinkOracleData } from '@/utils/types';
+
+export type VaultAllocation = {
+  marketId: string;
+  chainId: number;
+  collateralAddress: Address;
+  collateralSymbol: string;
+  assetSymbol: string;
+  allocationFormatted: string;
+  apy: number | null;
+  lltv: number | null;
+  oracleData: MorphoChainlinkOracleData | null;
+  allocationPercent: number | null;
+};
 
 export type AutovaultStatus = 'active' | 'paused' | 'inactive';
 
@@ -34,6 +48,7 @@ export type AutovaultData = {
     amount: bigint;
     reason: string;
   }[];
+  allocations?: VaultAllocation[];
 };
 
 type UseAutovaultDataResult = {

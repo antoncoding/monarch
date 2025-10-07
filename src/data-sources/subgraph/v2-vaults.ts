@@ -30,12 +30,12 @@ export const fetchUserVaultsV2 = async (
 ): Promise<UserVaultV2[]> => {
   const agentConfig = getAgentConfig(network);
 
-  if (!agentConfig?.subgraphEndpoint) {
+  if (!agentConfig?.vaultsSubgraphEndpoint) {
     console.log(`No subgraph endpoint configured for network ${network}`);
     return [];
   }
 
-  const subgraphUrl = agentConfig.subgraphEndpoint;
+  const subgraphUrl = agentConfig.vaultsSubgraphEndpoint;
   const userVaults: UserVaultV2[] = [];
 
   try {

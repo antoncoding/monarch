@@ -114,6 +114,11 @@ Use the nextui tooltip with <TooltipContent> component for consistent styling. A
 
 **Important:** The `classNames` configuration removes HeroUI's default padding, background, and borders to prevent double-wrapper styling issues. This ensures only your `TooltipContent` component handles the visual styling.
 
+## Shared UI Elements
+
+- Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
+- Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
+
 ## Input Components
 
 The codebase uses two different input approaches depending on the use case:

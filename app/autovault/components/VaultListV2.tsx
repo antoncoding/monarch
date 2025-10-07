@@ -1,5 +1,7 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { formatUnits } from 'viem';
+import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -53,6 +55,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
               <th className="font-normal">APY</th>
               <th className="font-normal">Agents</th>
               <th className="font-normal">Collaterals</th>
+              <th className="font-normal">Action</th>
             </tr>
           </thead>
           <tbody className="table-body text-sm">
@@ -101,6 +104,17 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   {/* Collaterals */}
                   <td data-label="Collaterals">
                     <span className="font-zen text-sm">--</span>
+                  </td>
+
+                  {/* Action */}
+                  <td data-label="Action">
+                    <div className="flex justify-center">
+                      <Link href={`/autovault/${vault.newVaultV2}`}>
+                        <Button variant="interactive" size="sm">
+                          Manage
+                        </Button>
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );
