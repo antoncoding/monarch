@@ -1,19 +1,55 @@
-import { Modal, ModalContent, ModalHeader } from '@heroui/react';
+import { useEffect, useMemo, useState } from 'react';
+import { Checkbox, Modal, ModalContent, ModalHeader } from '@heroui/react';
 import { RxCross2 } from 'react-icons/rx';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
+import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { getNetworkName } from '@/utils/networks';
+import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from './DeploymentContext';
 import { TokenSelection } from './TokenSelection';
 
-function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.filter((network) =>
+  isAgentAvailable(network),
+);
+
+type DeploymentModalContentProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  existingVaults: UserVaultV2[];
+};
+
+function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentModalContentProps) {
   const { selectedTokenAndNetwork, needSwitchChain, switchToNetwork, createVault, isDeploying } = useDeployment();
 
   // Load balances and tokens at modal level
-  const { balances, loading: balancesLoading } = useUserBalances();
+  const { balances, loading: balancesLoading } = useUserBalances({
+    networkIds: VAULT_SUPPORTED_NETWORKS,
+  });
   const { whitelistedMarkets, loading: marketsLoading } = useMarkets();
+
+  const [ackExistingVault, setAckExistingVault] = useState(false);
+
+  const userAlreadyHasVault = useMemo(() => {
+    if (!selectedTokenAndNetwork) return false;
+
+    return existingVaults.some(
+      (vault) =>
+        vault.networkId === selectedTokenAndNetwork.networkId &&
+        vault.asset.toLowerCase() === selectedTokenAndNetwork.token.address.toLowerCase(),
+    );
+  }, [existingVaults, selectedTokenAndNetwork]);
+
+  useEffect(() => {
+    setAckExistingVault(false);
+  }, [selectedTokenAndNetwork]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setAckExistingVault(false);
+    }
+  }, [isOpen]);
 
   return (
     <Modal
@@ -49,6 +85,7 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
                   balancesLoading={balancesLoading}
                   whitelistedMarkets={whitelistedMarkets}
                   marketsLoading={marketsLoading}
+                  existingVaults={existingVaults}
                 />
               </div>
 
@@ -58,11 +95,33 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
                 </div>
               )}
 
+              {userAlreadyHasVault && selectedTokenAndNetwork && (
+                <div className="rounded bg-primary/5 p-3">
+                  <Checkbox
+                    isSelected={ackExistingVault}
+                    onValueChange={setAckExistingVault}
+                    className="gap-2 items-center"
+                    size="sm"
+                  >
+                    <span className="text-sm leading-5 text-secondary">
+                      I understand I already deployed an autovault for this token on{' '}
+                      {getNetworkName(selectedTokenAndNetwork.networkId)}.
+                    </span>
+                  </Checkbox>
+                </div>
+              )}
+
               <div className="flex justify-end pt-2">
                 <Button
                   variant="cta"
                   onPress={needSwitchChain ? switchToNetwork : () => void createVault()}
-                  isDisabled={!selectedTokenAndNetwork || isDeploying || balancesLoading || marketsLoading}
+                  isDisabled={
+                    !selectedTokenAndNetwork ||
+                    isDeploying ||
+                    balancesLoading ||
+                    marketsLoading ||
+                    (userAlreadyHasVault && !ackExistingVault)
+                  }
                   className="min-w-[140px]"
                 >
                   {isDeploying ? (
@@ -89,10 +148,16 @@ function DeploymentModalContent({ isOpen, onClose }: { isOpen: boolean; onClose:
   );
 }
 
-export function DeploymentModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+type DeploymentModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  existingVaults: UserVaultV2[];
+};
+
+export function DeploymentModal({ isOpen, onClose, existingVaults }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
-      <DeploymentModalContent isOpen={isOpen} onClose={onClose} />
+      <DeploymentModalContent isOpen={isOpen} onClose={onClose} existingVaults={existingVaults} />
     </DeploymentProvider>
   );
 }

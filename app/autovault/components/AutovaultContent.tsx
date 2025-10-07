@@ -15,6 +15,7 @@ export default function AutovaultContent() {
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
 
   const { vaults, loading: vaultsLoading } = useUserVaultsV2();
+  const hasExistingVaults = vaults.length > 0;
 
   const handleCreateVault = () => {
     setShowDeploymentModal(true);
@@ -64,7 +65,12 @@ export default function AutovaultContent() {
             </p>
           </div>
           <div className="flex gap-4">
-            <Button variant="cta" size="md" className="font-zen" onPress={handleCreateVault}>
+            <Button
+              variant={hasExistingVaults ? 'secondary' : 'cta'}
+              size="md"
+              className="font-zen"
+              onPress={handleCreateVault}
+            >
               <FaPlus size={14} className="mr-2" />
               Create Autovault
             </Button>
@@ -79,6 +85,7 @@ export default function AutovaultContent() {
         <DeploymentModal
           isOpen={showDeploymentModal}
           onClose={() => setShowDeploymentModal(false)}
+          existingVaults={vaults}
         />
       </div>
     </div>
