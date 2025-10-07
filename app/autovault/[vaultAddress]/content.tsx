@@ -235,12 +235,6 @@ export default function VaultContent() {
             )}
           </div>
 
-          {isPlaceholder && (
-            <div className="rounded border border-dashed border-secondary/40 bg-secondary/5 p-4 text-sm text-secondary">
-              No on-chain telemetry yet—this layout shows where we will surface performance, allocations, and role status once data is wired in.
-            </div>
-          )}
-
           <AddressDisplay address={vaultAddressValue} />
 
           {needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory && (

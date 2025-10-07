@@ -15,7 +15,7 @@ Next.js routes live in `app/`. Shared logic sits in `src/` with UI in `src/compo
 Run `pnpm format` to apply the Prettier profile (100-char width, 2-space indent, single quotes, trailing commas, Tailwind-aware ordering). ESLint (Airbnb + Next.js) enforces hook safety and import hygiene; Stylelint keeps CSS utilities consistent. Use PascalCase for React components (`VaultBanner.tsx`), camelCase for helpers (`formatApr`), and SCREAMING_SNAKE_CASE for shared constants. Keep Tailwind classlists purposeful and lean; consolidate patterns with `tailwind-merge` helpers when they repeat.
 
 ## Styling Discipline
-Consult `docs/Styling.md` before touching UI. Always follow the documented design tokens, Tailwind composition patterns, and variant rules—no exceptions. Mirror the examples in that guide for component structure, prop naming, and class ordering so the design system stays coherent.
+Consult `docs/Styling.md` before touching UI. Always follow the documented design tokens, Tailwind composition patterns, and variant rules—no exceptions. Mirror the examples in that guide for component structure, prop naming, and class ordering so the design system stays coherent. When using the shared `Spinner` component, pass numeric pixel values (e.g. `size={12}`)—it does not accept semantic strings.
 
 ## Implementation Mindset
 Default to the simplest viable implementation first. Reach for straightforward data flows, avoid premature abstractions, and only layer on complexity when the trivial approach no longer meets requirements.

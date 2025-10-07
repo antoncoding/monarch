@@ -6,9 +6,9 @@ import { Spinner } from '@/components/common/Spinner';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { useVaultV2 } from '@/hooks/useVaultV2';
 import { SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { getMorphoAddress } from '@/utils/morpho';
+import { useVaultV2 } from '@/hooks/useVaultV2';
 
 const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) =>
@@ -66,21 +66,25 @@ function DeployAdapterStep({
 }
 
 function FinalizeSetupStep({
-  chainId,
   adapter,
+  registryAddress,
+  isFinalizing,
 }: {
-  chainId: SupportedNetworks;
   adapter: Address;
+  registryAddress: Address;
+  isFinalizing: boolean;
 }) {
-  const registryAddress = getNetworkConfig(chainId).vaultConfig?.morphoRegistry ?? ZERO_ADDRESS;
   const adapterIsReady = adapter !== ZERO_ADDRESS;
 
   return (
     <div className="space-y-4 px-2 font-zen">
-      <p className="text-sm text-secondary">
-        Finalize setup to link the vault to the adapter and commit to the Morpho registry. This permanently
-        opts the vault into Morpho-approved adapters.
-      </p>
+      <div className="flex items-center gap-2 text-sm text-secondary">
+        {isFinalizing && <Spinner size={12} />}
+        <span>
+          Finalize setup to link the vault to the adapter and commit to the Morpho registry. This permanently
+          opts the vault into Morpho-approved adapters.
+        </span>
+      </div>
       <div className="rounded bg-hovered/60 p-4 text-sm space-y-4">
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter</span>
@@ -117,18 +121,29 @@ export function VaultInitializationModal({
   chainId: SupportedNetworks;
   onAdapterConfigured: () => void;
 }) {
+  
   const [stepIndex, setStepIndex] = useState(0);
+  const [statusVisible, setStatusVisible] = useState(false);
   const currentStep = STEP_SEQUENCE[stepIndex];
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
+  const registryAddress = useMemo(() => {
+    const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
+    return (configured as Address | undefined) ?? ZERO_ADDRESS;
+  }, [chainId]);
   const {
     adapters,
     loading: adaptersLoading,
     refetch: refetchAdapters,
   } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
-  const subgraphAdapter = adapters[0]?.adapter ?? ZERO_ADDRESS;
+  const subgraphAdapter = (adapters[0]?.adapter as Address | undefined) ?? ZERO_ADDRESS;
 
-  const { adapter: onChainAdapter, refetch: refetchVault } = useVaultV2({
+  const {
+    adapter: onChainAdapter,
+    refetch: refetchVault,
+    finalizeSetup,
+    isFinalizing,
+  } = useVaultV2({
     vaultAddress,
     chainId,
   });
@@ -147,18 +162,34 @@ export function VaultInitializationModal({
     morphoAddress,
   });
 
-  const [statusVisible, setStatusVisible] = useState(false);
-
-  const handleAdapterDetected = useCallback(async () => {
-    await refetchVault();
-    onAdapterConfigured();
-  }, [onAdapterConfigured, refetchVault]);
 
   const handleDeploy = useCallback(async () => {
     setStatusVisible(true);
     await deploy();
     await refetchAdapters();
   }, [deploy, refetchAdapters]);
+
+  const handleAdapterDetected = useCallback(async () => {
+    await refetchVault();
+    onAdapterConfigured();
+  }, [onAdapterConfigured, refetchVault]);
+
+  const handleFinalize = useCallback(async () => {
+    if (unifiedAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
+
+    try {
+      const success = await finalizeSetup(registryAddress, unifiedAdapter);
+      if (!success) {
+        return;
+      }
+
+      await refetchVault();
+      onAdapterConfigured();
+      onClose();
+    } catch (error) {
+      console.error('Failed to finalize setup', error);
+    }
+  }, [finalizeSetup, onAdapterConfigured, onClose, refetchVault, registryAddress, unifiedAdapter]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -185,6 +216,7 @@ export function VaultInitializationModal({
     }
   }, [currentStep]);
 
+  const canFinalize = adapterDetected && registryAddress !== ZERO_ADDRESS;
   const showLoading = statusVisible && (isDeploying || adaptersLoading);
   const showBackButton = stepIndex > 0;
   const renderCta = () => {
@@ -209,8 +241,20 @@ export function VaultInitializationModal({
     }
 
     return (
-      <Button variant="cta" size="sm" className="min-w-[160px]" isDisabled>
-        Finalize (coming soon)
+      <Button
+        variant="cta"
+        size="sm"
+        className="min-w-[170px]"
+        isDisabled={!canFinalize || isFinalizing}
+        onPress={() => void handleFinalize()}
+      >
+        {isFinalizing ? (
+          <span className="flex items-center gap-2">
+            <Spinner size={12} /> Finalizing...
+          </span>
+        ) : (
+          'Finalize setup'
+        )}
       </Button>
     );
   };
@@ -243,7 +287,11 @@ export function VaultInitializationModal({
             />
           )}
           {currentStep === 'finalize' && (
-            <FinalizeSetupStep chainId={chainId} adapter={unifiedAdapter} />
+            <FinalizeSetupStep
+              adapter={unifiedAdapter}
+              registryAddress={registryAddress}
+              isFinalizing={isFinalizing}
+            />
           )}
         </ModalBody>
 
