@@ -7,7 +7,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg } from '@/utils/networks';
+import { SupportedNetworks, getNetworkImg } from '@/utils/networks';
 
 type VaultListV2Props = {
   vaults: UserVaultV2[];
@@ -109,7 +109,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   {/* Action */}
                   <td data-label="Action">
                     <div className="flex justify-center">
-                      <Link href={`/autovault/${vault.newVaultV2}`}>
+                      <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.newVaultV2}`}>
                         <Button variant="interactive" size="sm">
                           Manage
                         </Button>

@@ -6,7 +6,7 @@ import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Address } from 'viem';
-import { useAccount, useChainId } from 'wagmi';
+import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
@@ -35,14 +35,16 @@ function formatUsd(value: number | bigint): string {
 }
 
 export default function VaultContent() {
-  const { vaultAddress } = useParams<{ vaultAddress: string }>();
+  const { chainId: chainIdParam, vaultAddress } = useParams<{ chainId: string; vaultAddress: string }>();
   const vaultAddressValue = vaultAddress as Address;
   const { address } = useAccount();
-  const chainId = useChainId();
   const supportedChainId = useMemo(() => {
-    const maybe = chainId as SupportedNetworks;
-    return ALL_SUPPORTED_NETWORKS.includes(maybe) ? maybe : SupportedNetworks.Base;
-  }, [chainId]);
+    const parsed = Number(chainIdParam);
+    if (Number.isFinite(parsed) && ALL_SUPPORTED_NETWORKS.includes(parsed as SupportedNetworks)) {
+      return parsed as SupportedNetworks;
+    }
+    return SupportedNetworks.Base;
+  }, [chainIdParam]);
 
   const networkConfig = useMemo(() => {
     try {
