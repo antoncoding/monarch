@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
+import { Address } from 'viem';
 import { Input } from '@heroui/react';
 import { createPortal } from 'react-dom';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common/Button';
+import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { Spinner } from '@/components/common/Spinner';
 
 type SettingsTab = 'general' | 'agents' | 'allocations';
@@ -85,30 +87,68 @@ export function VaultSettingsModal({
     return hasNewName || hasNewSymbol;
   }, [previousName, previousSymbol, trimmedName, trimmedSymbol]);
 
-  const renderAddress = (address: string | undefined, emptyLabel: string) => {
-    if (!address) {
-      return <span className="text-xs text-secondary">{emptyLabel}</span>;
-    }
+  const renderSingleRole = (
+    label: string,
+    description: string,
+    addressValue?: string,
+  ) => {
+    const normalized = addressValue ? (addressValue as Address) : undefined;
 
     return (
-      <span className="rounded bg-surface px-2 py-1 font-monospace text-xs">
-        {address}
-      </span>
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <p className="text-xs uppercase text-secondary">{label}</p>
+          <p className="text-xs text-secondary">{description}</p>
+        </div>
+        {normalized ? (
+          <AddressDisplay
+            address={normalized}
+            size="sm"
+            showExplorerLink
+            copyable
+          />
+        ) : (
+          <span className="text-xs text-secondary">Not assigned</span>
+        )}
+      </div>
     );
   };
 
-  const renderAddressGroup = (addresses: string[], emptyLabel: string) => {
+  const renderRoleList = (
+    label: string,
+    description: string,
+    addresses: string[],
+    emptyLabel: string,
+  ) => {
     if (!addresses.length) {
-      return <span className="text-xs text-secondary">{emptyLabel}</span>;
+      return (
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <p className="text-xs uppercase text-secondary">{label}</p>
+            <p className="text-xs text-secondary">{description}</p>
+          </div>
+          <span className="text-xs text-secondary">{emptyLabel}</span>
+        </div>
+      );
     }
 
     return (
-      <div className="flex flex-wrap gap-2">
-        {addresses.map((address) => (
-          <span key={address} className="rounded bg-surface px-2 py-1 font-monospace text-xs">
-            {address}
-          </span>
-        ))}
+      <div className="space-y-2">
+        <div className="space-y-1">
+          <p className="text-xs uppercase text-secondary">{label}</p>
+          <p className="text-xs text-secondary">{description}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {addresses.map((entry) => (
+            <AddressDisplay
+              key={entry}
+              address={entry as Address}
+              size="sm"
+              showExplorerLink
+              copyable
+            />
+          ))}
+        </div>
       </div>
     );
   };
@@ -205,44 +245,20 @@ export function VaultSettingsModal({
 
   const renderAgentTab = () => (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <p className="text-sm text-secondary">Automation agent</p>
-        <p className="text-xs text-secondary">
-          Authorize the allocator address that executes deposits and withdrawals between enabled adapters.
-        </p>
-      </div>
-      <div className="rounded bg-hovered/40 p-4 text-sm">
-        <div className="flex items-center justify-between">
-          <p className="text-xs uppercase text-secondary">Authorized allocators</p>
-          {renderAddressGroup(allocatorAddresses, 'No allocators assigned')}
-        </div>
-        <div className="mt-3 space-y-1 text-xs text-secondary">
-          <p className="uppercase">Authorized allocators</p>
-          {renderAddressGroup(allocatorAddresses, 'No allocators assigned')}
-        </div>
-        <p className="mt-3 text-xs text-secondary">
-          Allocators handle on-chain execution based on the curator’s guardrails. Add your automation agent or desk wallet
-          here so it can rebalance adapters.
-        </p>
-      </div>
-
-      <div className="rounded border border-divider/30 bg-hovered/40 p-4 text-sm">
-        <p className="text-xs uppercase text-secondary">Role assignments</p>
-        <div className="mt-3 space-y-3 text-xs text-secondary">
-          <div className="space-y-1">
-            <p className="text-secondary">Owner</p>
-            {renderAddress(ownerAddress, 'Owner not assigned')}
-          </div>
-          <div className="space-y-1">
-            <p className="text-secondary">Risk curator</p>
-            {renderAddress(curatorAddress, 'Curator not assigned')}
-          </div>
-          <div className="space-y-1">
-            <p className="text-secondary">Guardian(s)</p>
-            {renderAddressGroup(guardianAddresses, 'No guardians configured')}
-          </div>
-        </div>
-      </div>
+      {renderSingleRole('Owner', 'Primary controller of vault permissions.', ownerAddress)}
+      {renderSingleRole('Curator', 'Defines risk guardrails for automation.', curatorAddress)}
+      {renderRoleList(
+        'Allocators',
+        'Automation agents executing the configured strategy.',
+        allocatorAddresses,
+        'No allocators assigned',
+      )}
+      {renderRoleList(
+        'Guardians',
+        'Sentinels able to pause automation when safeguards trigger.',
+        guardianAddresses,
+        'No guardians configured',
+      )}
     </div>
   );
 
@@ -319,7 +335,7 @@ export function VaultSettingsModal({
       onMouseDown={onClose}
     >
       <div
-        className="relative flex w-full max-w-4xl min-h-[480px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
+        className="relative flex w-full max-w-4xl min-h-[560px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex flex-1 flex-col bg-background/95">
@@ -355,7 +371,7 @@ export function VaultSettingsModal({
             </aside>
 
             <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
-              <div className="min-h-[320px] space-y-6">{renderActiveTab()}</div>
+              <div className="min-h-[360px] space-y-6">{renderActiveTab()}</div>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import clsx from 'clsx';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink } from 'react-icons/lu';
@@ -10,6 +10,7 @@ import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
+import { useStyledToast } from '@/hooks/useStyledToast';
 
 type AddressDisplayProps = {
   address: Address;
@@ -17,6 +18,7 @@ type AddressDisplayProps = {
   size?: 'md' | 'sm';
   showExplorerLink?: boolean;
   className?: string;
+  copyable?: boolean;
 };
 
 export function AddressDisplay({
@@ -25,9 +27,11 @@ export function AddressDisplay({
   size = 'md',
   showExplorerLink = false,
   className,
+  copyable = false,
 }: AddressDisplayProps) {
   const { address: connectedAddress, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
+  const { success: toastSuccess } = useStyledToast();
 
   useEffect(() => {
     setMounted(true);
@@ -44,9 +48,36 @@ export function AddressDisplay({
     return getExplorerURL(address as `0x${string}`, numericChainId as SupportedNetworks);
   }, [address, chainId, showExplorerLink]);
 
+  const handleCopy = useCallback(async () => {
+    if (!copyable) return;
+
+    try {
+      await navigator.clipboard.writeText(address);
+      toastSuccess('Address copied', `${address.slice(0, 6)}...${address.slice(-4)}`);
+    } catch (error) {
+      console.error('Failed to copy address', error);
+    }
+  }, [address, copyable, toastSuccess]);
+
   if (size === 'sm') {
     return (
-      <div className={clsx('flex items-center gap-2', className)}>
+      <div
+        className={clsx(
+          'flex items-center gap-2',
+          copyable && 'cursor-pointer transition-colors hover:brightness-110',
+          className,
+        )}
+        onClick={copyable ? handleCopy : undefined}
+        role={copyable ? 'button' : undefined}
+        tabIndex={copyable ? 0 : undefined}
+        onKeyDown={(event) => {
+          if (!copyable) return;
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            void handleCopy();
+          }
+        }}
+      >
         <Name
           address={address as `0x${string}`}
           className={clsx(
@@ -63,6 +94,7 @@ export function AddressDisplay({
             rel="noreferrer"
             className="text-secondary transition-colors hover:text-primary"
             aria-label="View on explorer"
+            onClick={(event) => event.stopPropagation()}
           >
             <LuExternalLink className="h-3.5 w-3.5" />
           </a>
@@ -72,7 +104,23 @@ export function AddressDisplay({
   }
 
   return (
-    <div className={clsx('flex items-start gap-4', className)}>
+    <div
+      className={clsx(
+        'flex items-start gap-4',
+        copyable && 'cursor-pointer transition-colors hover:brightness-110',
+        className,
+      )}
+      onClick={copyable ? handleCopy : undefined}
+      role={copyable ? 'button' : undefined}
+      tabIndex={copyable ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (!copyable) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          void handleCopy();
+        }
+      }}
+    >
       <div className="relative overflow-hidden rounded">
         <Avatar address={address} size={36} rounded={false} />
         {mounted && isOwner && isConnected && (
@@ -101,6 +149,7 @@ export function AddressDisplay({
               rel="noreferrer"
               className="text-secondary transition-colors hover:text-primary"
               aria-label="View on explorer"
+              onClick={(event) => event.stopPropagation()}
             >
               <LuExternalLink className="h-4 w-4" />
             </a>

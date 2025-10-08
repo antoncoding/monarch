@@ -76,14 +76,12 @@ export default function VaultContent() {
 
   const marketAllocations: VaultAllocation[] = vaultDetails.allocations ?? [];
   const vaultAssetSymbol = marketAllocations[0]?.assetSymbol ?? '—';
-  const vaultName = vaultDetails.name?.trim();
-  const vaultSymbol = vaultDetails.symbol?.trim();
   const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const { data: vaultData, loading: vaultDataLoading } = useVaultV2Data({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
-    fallbackName: vaultName,
-    fallbackSymbol: vaultSymbol,
+    fallbackName: vaultDetails.name?.trim(),
+    fallbackSymbol: vaultDetails.symbol?.trim(),
     onChainName,
     onChainSymbol,
     ownerAddress: vaultDetails.owner,
@@ -91,8 +89,8 @@ export default function VaultContent() {
   });
   const isFetchingSummary = isLoading || vaultDataLoading;
 
-  const title = vaultName || fallbackTitle;
-  const symbolToDisplay = vaultSymbol ? vaultSymbol : '';
+  const title = vaultData.displayName || fallbackTitle;
+  const symbolToDisplay = vaultData.displaySymbol;
   const allocatorAddresses = vaultData.allocatorAddresses;
   const guardianAddresses = vaultData.guardianAddresses;
   const allocatorCount = vaultData.allocatorCount;
@@ -104,24 +102,24 @@ export default function VaultContent() {
   }, [allocatorCount, needsSetup, vaultData.curatorAddress]);
 
   const assetAddress = vaultData.assetAddress;
+
   const totalSupplyLabel = useMemo(() => {
-    if (!vaultData.totalSupplyRaw || vaultData.tokenDecimals === undefined) {
-      return '--';
-    }
+    if (!vaultData.totalSupplyRaw || vaultData.tokenDecimals === undefined) return '--';
 
     try {
-      const rawValue = BigInt(vaultData.totalSupplyRaw);
-      const numericSupply = formatBalance(rawValue, vaultData.tokenDecimals);
-      const formatted = new Intl.NumberFormat('en-US', {
+      const rawSupply = BigInt(vaultData.totalSupplyRaw);
+      const numericSupply = formatBalance(rawSupply, vaultData.tokenDecimals);
+      const formattedSupply = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 2,
       }).format(numericSupply);
-      return `${formatted}${vaultData.tokenSymbol ? ` ${vaultData.tokenSymbol}` : ''}`.trim();
+
+      return `${formattedSupply}${vaultData.tokenSymbol ? ` ${vaultData.tokenSymbol}` : ''}`.trim();
     } catch (_error) {
       return '--';
     }
   }, [vaultData.tokenDecimals, vaultData.tokenSymbol, vaultData.totalSupplyRaw]);
 
-  const apyDisplay = vaultDetails.currentApy ? `${vaultDetails.currentApy.toFixed(2)}%` : '0%';
+  const apyLabel = vaultDetails.currentApy ? `${vaultDetails.currentApy.toFixed(2)}%` : '0%';
 
   if (isError) {
     return (
@@ -147,141 +145,138 @@ export default function VaultContent() {
       <Header />
       <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12">
         <div className="space-y-8">
-          {isFetchingSummary && (
-            <div className="rounded bg-surface p-6 shadow-sm">
+          {isFetchingSummary ? (
+            <div className="rounded bg-surface p-6 pt-8 shadow-sm">
               <LoadingScreen message="Loading vault insights..." className="mx-auto max-w-md" />
             </div>
-          )}
-
-          <div className="flex items-start justify-between gap-4 pt-6">
-            <div className="flex items-center gap-3">
-              <h1 className="font-zen text-2xl">{title}</h1>
-              {symbolToDisplay && (
-                <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>
-              )}
-              {assetAddress && (
-                <TokenIcon address={assetAddress} chainId={supportedChainId} width={22} height={22} />
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <AddressDisplay
-                address={vaultAddressValue}
-                chainId={supportedChainId}
-                size="sm"
-                showExplorerLink
-              />
-              {isOwner && (
-                <Button
-                  variant="light"
-                  size="sm"
-                  onPress={() => {
-                    setSettingsTab('general');
-                    setShowSettings(true);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <GearIcon className="h-4 w-4" />
-                  Settings
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
-            <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <p className="text-sm text-primary">Adapter not configured</p>
-                <p className="text-sm text-secondary">
-                  Finish the initialization process to begin configuring strategies for this vault.
-                </p>
-              </div>
-              <Button
-                variant="cta"
-                size="sm"
-                className="mt-3 sm:mt-0"
-                onPress={() => setShowInitializationModal(true)}
-                isDisabled={adapterLoading}
-              >
-                Start setup
-              </Button>
-            </div>
-          )}
-
-          {!isFetchingSummary && (
-            <VaultSummaryMetrics>
-              <div className="bg-surface rounded p-4 shadow-sm">
-                <span className="text-xs uppercase tracking-wide text-secondary">Total supply</span>
-                <div className="mt-3 flex items-center gap-2 text-2xl text-primary">
-                  <span>{totalSupplyLabel}</span>
-                  {assetAddress && (
-                    <TokenIcon address={assetAddress} chainId={supportedChainId} width={20} height={20} />
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-4 pt-6">
+                <div className="flex items-center gap-3">
+                  <h1 className="font-zen text-2xl">{title}</h1>
+                  {symbolToDisplay && (
+                    <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>
                   )}
                 </div>
-                <div className="mt-1 text-sm text-secondary">
-                  {vaultData.tokenSymbol ? `${vaultData.tokenSymbol} vault supply` : 'Vault token supply'}
+                <div className="flex items-center gap-3">
+                  <AddressDisplay
+                    address={vaultAddressValue}
+                    chainId={supportedChainId}
+                    size="sm"
+                    showExplorerLink
+                  />
+                  {isOwner && (
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onPress={() => {
+                        setSettingsTab('general');
+                        setShowSettings(true);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <GearIcon className="h-4 w-4" />
+                      Settings
+                    </Button>
+                  )}
                 </div>
               </div>
-              <div className="bg-surface rounded p-4 shadow-sm">
-                <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
-                <div className="mt-3 text-2xl text-primary">{apyDisplay}</div>
-                <div className="mt-1 text-sm text-secondary">Live APY coming soon</div>
-              </div>
-              <div className="bg-surface rounded p-4 shadow-sm">
-                <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
-                <div className="mt-3 text-2xl text-primary">{allocatorCount}</div>
-                <div className="mt-1 text-sm text-secondary">
-                  {allocatorCount > 0 ? 'Active automation agents' : 'Add an allocator to enable automation'}
+
+              {needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+                <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm text-primary">Adapter not configured</p>
+                    <p className="text-sm text-secondary">
+                      Finish the initialization process to begin configuring strategies for this vault.
+                    </p>
+                  </div>
+                  <Button
+                    variant="cta"
+                    size="sm"
+                    className="mt-3 sm:mt-0"
+                    onPress={() => setShowInitializationModal(true)}
+                    isDisabled={adapterLoading}
+                  >
+                    Start setup
+                  </Button>
                 </div>
-              </div>
-            </VaultSummaryMetrics>
+              )}
+
+              <VaultSummaryMetrics>
+                <div className="rounded bg-surface p-4 shadow-sm">
+                  <span className="text-xs uppercase tracking-wide text-secondary">Total supply</span>
+                  <div className="mt-3 flex items-center gap-2 text-2xl text-primary">
+                    <span>{totalSupplyLabel}</span>
+                    {assetAddress && (
+                      <TokenIcon address={assetAddress} chainId={supportedChainId} width={20} height={20} />
+                    )}
+                  </div>
+                  <div className="mt-1 text-sm text-secondary">
+                    {vaultData.tokenSymbol ? `${vaultData.tokenSymbol} vault supply` : 'Vault token supply'}
+                  </div>
+                </div>
+                <div className="rounded bg-surface p-4 shadow-sm">
+                  <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
+                  <div className="mt-3 text-2xl text-primary">{apyLabel}</div>
+                  <div className="mt-1 text-sm text-secondary">Live APY coming soon</div>
+                </div>
+                <div className="rounded bg-surface p-4 shadow-sm">
+                  <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
+                  <div className="mt-3 text-2xl text-primary">{allocatorCount}</div>
+                  <div className="mt-1 text-sm text-secondary">
+                    {allocatorCount > 0 ? 'Active automation agents' : 'Add an allocator to enable automation'}
+                  </div>
+                </div>
+              </VaultSummaryMetrics>
+
+              <VaultAgentSummary
+                isActive={vaultDetails.status === 'active'}
+                activeAgents={allocatorCount}
+                description={
+                  needsSetup
+                    ? 'Deploy the vault adapter before allocating capital.'
+                    : vaultDetails.status === 'active'
+                      ? 'Allocators are authorized and rebalancing within curator caps.'
+                      : 'Authorize an allocator to resume automated portfolio management.'
+                }
+                roleStatusText={roleStatusText}
+                onManageAgents={() => {
+                  if (needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
+                    setShowInitializationModal(true);
+                    return;
+                  }
+                  setSettingsTab('agents');
+                  setShowSettings(true);
+                }}
+                onManageAllocations={() => {
+                  setSettingsTab('allocations');
+                  setShowSettings(true);
+                }}
+              />
+
+              <VaultMarketAllocations
+                allocations={marketAllocations}
+                vaultAssetSymbol={vaultAssetSymbol}
+              />
+              <VaultApyHistory timeframes={['7D', '30D', '90D']} />
+              <VaultSettingsModal
+                isOpen={showSettings}
+                onClose={() => setShowSettings(false)}
+                initialTab={settingsTab}
+                isOwner={isOwner}
+                onUpdateMetadata={updateNameAndSymbol}
+                updatingMetadata={isUpdatingMetadata}
+                defaultName={vaultData.displayName}
+                defaultSymbol={vaultData.displaySymbol}
+                currentName={onChainName ?? ''}
+                currentSymbol={onChainSymbol ?? ''}
+                ownerAddress={vaultData.ownerAddress}
+                curatorAddress={vaultData.curatorAddress}
+                allocatorAddresses={allocatorAddresses}
+                guardianAddresses={guardianAddresses}
+              />
+            </>
           )}
-
-          <VaultAgentSummary
-            isActive={vaultDetails.status === 'active'}
-            activeAgents={allocatorCount}
-            description={
-              needsSetup
-                ? 'Deploy the vault adapter before allocating capital.'
-                : vaultDetails.status === 'active'
-                  ? 'Allocators are authorized and rebalancing within curator caps.'
-                  : 'Authorize an allocator to resume automated portfolio management.'
-            }
-            roleStatusText={roleStatusText}
-            onManageAgents={() => {
-              if (needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
-                setShowInitializationModal(true);
-                return;
-              }
-              setSettingsTab('agents');
-              setShowSettings(true);
-            }}
-            onManageAllocations={() => {
-              setSettingsTab('allocations');
-              setShowSettings(true);
-            }}
-          />
-
-          <VaultMarketAllocations
-            allocations={marketAllocations}
-            vaultAssetSymbol={vaultAssetSymbol}
-          />
-          <VaultApyHistory timeframes={['7D', '30D', '90D']} />
-          <VaultSettingsModal
-            isOpen={showSettings}
-            onClose={() => setShowSettings(false)}
-            initialTab={settingsTab}
-            isOwner={isOwner}
-            onUpdateMetadata={updateNameAndSymbol}
-            updatingMetadata={isUpdatingMetadata}
-            defaultName={vaultName || ''}
-            defaultSymbol={vaultSymbol || ''}
-            currentName={onChainName ?? ''}
-            currentSymbol={onChainSymbol ?? ''}
-            ownerAddress={vaultData.ownerAddress}
-            curatorAddress={vaultData.curatorAddress}
-            allocatorAddresses={allocatorAddresses}
-            guardianAddresses={guardianAddresses}
-          />
         </div>
       </div>
 

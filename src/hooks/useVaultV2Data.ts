@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Address, formatUnits } from 'viem';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { fetchVaultV2 } from '@/data-sources/morpho-api/vaults';
-import { getSlicedAddress } from '@/utils/address';
+import { fetchVaultV2ViaRpc } from '@/data-sources/rpc/vaults';
 import { formatReadable } from '@/utils/balance';
+import { getSlicedAddress } from '@/utils/address';
+import { SupportedNetworks } from '@/utils/networks';
 
 const normalize = (value?: string | null) => value?.toLowerCase().trim() ?? undefined;
 
@@ -75,6 +77,7 @@ export function useVaultV2Data({
       assetDecimals?: number;
       allocatorAddresses: string[];
       curatorAddress?: string;
+      ownerAddress?: string;
     } | null): VaultV2ComputedData => {
       const assetAddress = item?.assetAddress;
       const token = assetAddress ? findToken(assetAddress, chainId) : undefined;
@@ -102,7 +105,7 @@ export function useVaultV2Data({
 
       const allocatorAddresses = Array.from(new Set(normalizedAllocators));
 
-      const owner = normalizedOwner;
+      const owner = item?.ownerAddress ? normalize(item.ownerAddress) : normalizedOwner;
       const curator = item?.curatorAddress ?? undefined;
       const curatorDisplay = curator ? getSlicedAddress(curator as `0x${string}`) : '--';
 
@@ -161,16 +164,39 @@ export function useVaultV2Data({
 
       const result = await fetchVaultV2({ address: vaultAddress, chainId });
 
-      if (!result) {
+      if (result) {
         setData(
           buildData({
-            name: onChainName ?? undefined,
-            symbol: onChainSymbol ?? undefined,
-            totalSupply: undefined,
-            assetAddress: undefined,
-            assetDecimals: undefined,
+            name: result.name ?? undefined,
+            symbol: result.symbol ?? undefined,
+            totalSupply: result.totalSupply ?? undefined,
+            assetAddress: normalize(result.asset?.id),
+            assetDecimals: result.asset?.decimals ?? undefined,
+            allocatorAddresses: (result.allocators ?? [])
+              .map((entry) => normalize(entry?.allocator?.address))
+              .filter((addr): addr is string => Boolean(addr)),
+            curatorAddress: normalize(result.curator?.address),
+          }),
+        );
+        return;
+      }
+
+      const rpcFallback = await fetchVaultV2ViaRpc({
+        address: vaultAddress,
+        chainId: chainId as SupportedNetworks,
+      });
+
+      if (rpcFallback) {
+        setData(
+          buildData({
+            name: rpcFallback.name,
+            symbol: rpcFallback.symbol,
+            totalSupply: rpcFallback.totalSupply?.toString(),
+            assetAddress: normalize(rpcFallback.assetAddress),
+            assetDecimals: rpcFallback.assetDecimals,
             allocatorAddresses: defaultAllocators,
-            curatorAddress: undefined,
+            curatorAddress: normalize(rpcFallback.curator),
+            ownerAddress: rpcFallback.owner,
           }),
         );
         return;
@@ -178,19 +204,41 @@ export function useVaultV2Data({
 
       setData(
         buildData({
-          name: result.name ?? undefined,
-          symbol: result.symbol ?? undefined,
-          totalSupply: result.totalSupply ?? undefined,
-          assetAddress: normalize(result.asset?.id),
-          assetDecimals: result.asset?.decimals ?? undefined,
-          allocatorAddresses: (result.allocators ?? [])
-            .map((entry) => normalize(entry?.allocator?.address))
-            .filter((addr): addr is string => Boolean(addr)),
-          curatorAddress: normalize(result.curator?.address),
+          name: onChainName ?? undefined,
+          symbol: onChainSymbol ?? undefined,
+          totalSupply: undefined,
+          assetAddress: undefined,
+          assetDecimals: undefined,
+          allocatorAddresses: defaultAllocators,
+          curatorAddress: undefined,
         }),
       );
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch vault data'));
+
+      if (vaultAddress) {
+        const rpcFallback = await fetchVaultV2ViaRpc({
+          address: vaultAddress,
+          chainId: chainId as SupportedNetworks,
+        });
+
+        if (rpcFallback) {
+          setData(
+            buildData({
+              name: rpcFallback.name,
+              symbol: rpcFallback.symbol,
+              totalSupply: rpcFallback.totalSupply?.toString(),
+              assetAddress: normalize(rpcFallback.assetAddress),
+              assetDecimals: rpcFallback.assetDecimals,
+              allocatorAddresses: defaultAllocators,
+              curatorAddress: normalize(rpcFallback.curator),
+              ownerAddress: rpcFallback.owner,
+            }),
+          );
+          return;
+        }
+      }
+
       setData(
         buildData({
           name: onChainName ?? undefined,
