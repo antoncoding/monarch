@@ -25,11 +25,11 @@ export function VaultMarketAllocations({ allocations, vaultAssetSymbol }: VaultM
     <div className="bg-surface rounded p-4 shadow-sm font-zen">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-lg font-semibold">Active Markets</h3>
+          <p className="text-lg text-secondary">Active Markets</p>
           <p className="text-xs text-secondary">Supply allocations managed by this vault.</p>
         </div>
         <div className="rounded bg-hovered px-3 py-1 text-xs uppercase text-secondary">
-          Vault asset: <span className="font-semibold text-primary">{vaultAssetSymbol}</span>
+          Vault asset: {vaultAssetSymbol}
         </div>
       </div>
 

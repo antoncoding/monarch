@@ -10,7 +10,6 @@ type VaultAgentSummaryProps = {
   description: string;
   onManageAgents: () => void;
   onManageAllocations?: () => void;
-  onViewRoles: () => void;
   roleStatusText: string;
 };
 
@@ -20,7 +19,6 @@ export function VaultAgentSummary({
   description,
   onManageAgents,
   onManageAllocations,
-  onViewRoles,
   roleStatusText,
 }: VaultAgentSummaryProps) {
   return (
@@ -68,9 +66,6 @@ export function VaultAgentSummary({
             Allocation caps
           </Button>
         )}
-        <Button variant="ghost" size="sm" onPress={onViewRoles}>
-          View role assignments
-        </Button>
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
-import { AutovaultData } from '@/hooks/useAutovaultData';
 
 type SettingsTab = 'general' | 'agents' | 'allocations';
 
@@ -18,7 +17,6 @@ type VaultSettingsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   initialTab?: SettingsTab;
-  vault: AutovaultData;
   isOwner: boolean;
   onUpdateMetadata: (values: { name?: string; symbol?: string }) => Promise<boolean>;
   updatingMetadata: boolean;
@@ -26,13 +24,16 @@ type VaultSettingsModalProps = {
   defaultSymbol: string;
   currentName: string;
   currentSymbol: string;
+  ownerAddress?: string;
+  curatorAddress?: string;
+  allocatorAddresses: string[];
+  guardianAddresses?: string[];
 };
 
 export function VaultSettingsModal({
   isOpen,
   onClose,
   initialTab = 'general',
-  vault,
   isOwner,
   onUpdateMetadata,
   updatingMetadata,
@@ -40,6 +41,10 @@ export function VaultSettingsModal({
   defaultSymbol,
   currentName,
   currentSymbol,
+  ownerAddress,
+  curatorAddress,
+  allocatorAddresses,
+  guardianAddresses = [],
 }: VaultSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const nameInputId = useId();
@@ -80,7 +85,33 @@ export function VaultSettingsModal({
     return hasNewName || hasNewSymbol;
   }, [previousName, previousSymbol, trimmedName, trimmedSymbol]);
 
-  const allocatorCount = vault.agents.length;
+  const renderAddress = (address: string | undefined, emptyLabel: string) => {
+    if (!address) {
+      return <span className="text-xs text-secondary">{emptyLabel}</span>;
+    }
+
+    return (
+      <span className="rounded bg-surface px-2 py-1 font-monospace text-xs">
+        {address}
+      </span>
+    );
+  };
+
+  const renderAddressGroup = (addresses: string[], emptyLabel: string) => {
+    if (!addresses.length) {
+      return <span className="text-xs text-secondary">{emptyLabel}</span>;
+    }
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {addresses.map((address) => (
+          <span key={address} className="rounded bg-surface px-2 py-1 font-monospace text-xs">
+            {address}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (metadataError && metadataChanged) {
@@ -175,26 +206,42 @@ export function VaultSettingsModal({
   const renderAgentTab = () => (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h3 className="text-sm text-secondary">Automation agent</h3>
+        <p className="text-sm text-secondary">Automation agent</p>
         <p className="text-xs text-secondary">
           Authorize the allocator address that executes deposits and withdrawals between enabled adapters.
         </p>
       </div>
       <div className="rounded bg-hovered/40 p-4 text-sm">
         <div className="flex items-center justify-between">
-          <span className="text-secondary">
-            {allocatorCount === 0
-              ? 'No allocator assigned yet'
-              : `${allocatorCount} allocator${allocatorCount > 1 ? 's' : ''} authorized`}
-          </span>
-          <Button variant="interactive" size="sm">
-            {allocatorCount === 0 ? 'Add allocator' : 'Update allocators'}
-          </Button>
+          <p className="text-xs uppercase text-secondary">Authorized allocators</p>
+          {renderAddressGroup(allocatorAddresses, 'No allocators assigned')}
+        </div>
+        <div className="mt-3 space-y-1 text-xs text-secondary">
+          <p className="uppercase">Authorized allocators</p>
+          {renderAddressGroup(allocatorAddresses, 'No allocators assigned')}
         </div>
         <p className="mt-3 text-xs text-secondary">
           Allocators handle on-chain execution based on the curator’s guardrails. Add your automation agent or desk wallet
           here so it can rebalance adapters.
         </p>
+      </div>
+
+      <div className="rounded border border-divider/30 bg-hovered/40 p-4 text-sm">
+        <p className="text-xs uppercase text-secondary">Role assignments</p>
+        <div className="mt-3 space-y-3 text-xs text-secondary">
+          <div className="space-y-1">
+            <p className="text-secondary">Owner</p>
+            {renderAddress(ownerAddress, 'Owner not assigned')}
+          </div>
+          <div className="space-y-1">
+            <p className="text-secondary">Risk curator</p>
+            {renderAddress(curatorAddress, 'Curator not assigned')}
+          </div>
+          <div className="space-y-1">
+            <p className="text-secondary">Guardian(s)</p>
+            {renderAddressGroup(guardianAddresses, 'No guardians configured')}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -202,7 +249,7 @@ export function VaultSettingsModal({
   const renderAllocationsTab = () => (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h3 className="text-sm text-secondary">Allocation caps</h3>
+        <p className="text-sm text-secondary">Allocation caps</p>
         <p className="text-xs text-secondary">Configure market-level caps and guardrails for the automation agent.</p>
       </div>
       <div className="rounded bg-hovered/40 p-4 text-sm text-secondary">

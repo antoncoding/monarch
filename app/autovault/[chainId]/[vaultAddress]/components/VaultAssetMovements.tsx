@@ -1,5 +1,3 @@
-import { Button } from '@/components/common';
-
 export type VaultAssetMovement = {
   timestamp: string;
   action: 'allocate' | 'deallocate';
@@ -16,14 +14,9 @@ type VaultAssetMovementsProps = {
 export function VaultAssetMovements({ history }: VaultAssetMovementsProps) {
   return (
     <div className="bg-surface rounded p-4 shadow-sm font-zen">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold">Asset Movements</h3>
-          <p className="text-xs text-secondary">Track how the allocator rebalanced capital.</p>
-        </div>
-        <Button variant="ghost" size="sm">
-          Export CSV
-        </Button>
+      <div className="mb-4">
+        <h3 className="text-lg text-secondary">Asset Movements</h3>
+        <p className="text-xs text-secondary">Track how the allocator rebalanced capital.</p>
       </div>
       {history.length === 0 ? (
         <div className="rounded bg-hovered py-12 text-center text-secondary">

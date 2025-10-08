@@ -9,7 +9,7 @@ export function VaultApyHistory({ timeframes }: VaultApyHistoryProps) {
     <div className="bg-surface flex h-full flex-col rounded p-4 shadow-sm font-zen">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Historical APY</h3>
+        <h3 className="text-lg text-secondary">Historical APY</h3>
           <p className="text-xs text-secondary">Performance data updates every epoch.</p>
         </div>
         <div className="flex gap-2">

@@ -28,3 +28,6 @@ When writing new on-chain hooks, mirror the structure in `src/hooks/useERC20Appr
 
 ## Commit & Pull Request Guidelines
 Mirror the Conventional Commits style in history (`feat:`, `fix:`, `chore:`), keeping messages imperative and scoped. Sync with `main`, run `pnpm check`, and capture UI evidence (screenshots or short clips) for anything user-facing. Reference the relevant Linear/Jira ticket with closing keywords, call out risk areas, and flag required follow-ups. Tag reviewers who understand the touched protocol surfaces to speed feedback.
+
+## Incident Log
+- Autovault settings refactor: we unintentionally spammed the Morpho API because we passed fresh array literals (`defaultAllocatorAddresses`) into `useVaultV2Data`. That array was part of the hook’s memoised fetch dependencies, so every render produced a new reference, rebuilt the `useCallback`, and re-triggered the fetch effect. **Guardrail:** before handing arrays or objects to hooks that fire network requests, memoize the props (or pass a stable key) so React’s dependency checks only change when the underlying data truly changes.

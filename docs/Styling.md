@@ -217,3 +217,8 @@ const { success, error } = useStyledToast();
 success('Success', 'Detail of the success');
 error('Error', 'Detail of the error');
 ```
+
+### Typography Notes
+
+- Avoid bold weights for emphasis. Use color, size, or layout treatments (e.g., `text-secondary`, `text-primary`, spacing) instead of `font-semibold`/`font-bold`.
+- Prefer `font-zen` for vault UI surfaces; keep typography consistent with existing components.
