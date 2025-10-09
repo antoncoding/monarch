@@ -3,10 +3,12 @@ import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@herou
 import { Address, zeroAddress } from 'viem';
 import { Button } from '@/components/common';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AllocatorCard } from '@/components/common/AllocatorCard';
 import { Spinner } from '@/components/common/Spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { useVaultV2 } from '@/hooks/useVaultV2';
+import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 
@@ -14,7 +16,7 @@ const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) =>
   value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`;
 
-const STEP_SEQUENCE = ['deploy', 'finalize'] as const;
+const STEP_SEQUENCE = ['deploy', 'finalize', 'agents'] as const;
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -68,21 +70,21 @@ function DeployAdapterStep({
 function FinalizeSetupStep({
   adapter,
   registryAddress,
-  isFinalizing,
+  isInitializing,
 }: {
   adapter: Address;
   registryAddress: Address;
-  isFinalizing: boolean;
+  isInitializing: boolean;
 }) {
   const adapterIsReady = adapter !== ZERO_ADDRESS;
 
   return (
     <div className="space-y-4 px-2 font-zen">
       <div className="flex items-center gap-2 text-sm text-secondary">
-        {isFinalizing && <Spinner size={12} />}
+        {isInitializing && <Spinner size={12} />}
         <span>
-          Finalize setup to link the vault to the adapter and commit to the Morpho registry. This permanently
-          opts the vault into Morpho-approved adapters.
+          Link the vault to the adapter and commit to the Morpho registry. This permanently opts
+          the vault into Morpho-approved adapters.
         </span>
       </div>
       <div className="rounded bg-hovered/60 p-4 text-sm space-y-4">
@@ -101,9 +103,44 @@ function FinalizeSetupStep({
         <ul className="list-disc space-y-1 pl-4 text-xs text-secondary">
           <li>Only Morpho-approved adapters can be enabled after this step.</li>
           <li>Registry configuration is abdicated and cannot be reversed.</li>
-          <li>This step also registers the adapter on the vault.</li>
         </ul>
       </div>
+    </div>
+  );
+}
+
+function AgentSelectionStep({
+  selectedAgent,
+  onSelectAgent,
+}: {
+  selectedAgent: Address | null;
+  onSelectAgent: (agent: Address | null) => void;
+}) {
+  return (
+    <div className="space-y-4 px-2 font-zen">
+      <p className="text-sm text-secondary">
+        Choose an agent to automate your vault's allocations. You can change this later in settings.
+      </p>
+      <div className="space-y-3">
+        {v2AgentsBase.map((agent) => (
+          <AllocatorCard
+            key={agent.address}
+            name={agent.name}
+            address={agent.address as Address}
+            description={agent.strategyDescription}
+            isSelected={selectedAgent === (agent.address as Address)}
+            onSelect={() =>
+              onSelectAgent(
+                selectedAgent === (agent.address as Address) ? null : (agent.address as Address),
+              )
+            }
+          />
+        ))}
+      </div>
+      <p className="text-xs text-secondary italic">
+        💡 Tip: Agents help maximize returns by rebalancing between markets. You can skip this and
+        configure later.
+      </p>
     </div>
   );
 }
@@ -121,9 +158,9 @@ export function VaultInitializationModal({
   chainId: SupportedNetworks;
   onAdapterConfigured: () => void;
 }) {
-  
   const [stepIndex, setStepIndex] = useState(0);
   const [statusVisible, setStatusVisible] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>(null);
   const currentStep = STEP_SEQUENCE[stepIndex];
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
@@ -141,8 +178,8 @@ export function VaultInitializationModal({
   const {
     adapter: onChainAdapter,
     refetch: refetchVault,
-    finalizeSetup,
-    isFinalizing,
+    completeInitialization,
+    isInitializing,
   } = useVaultV2({
     vaultAddress,
     chainId,
@@ -174,11 +211,15 @@ export function VaultInitializationModal({
     onAdapterConfigured();
   }, [onAdapterConfigured, refetchVault]);
 
-  const handleFinalize = useCallback(async () => {
+  const handleCompleteInitialization = useCallback(async () => {
     if (unifiedAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
 
     try {
-      const success = await finalizeSetup(registryAddress, unifiedAdapter);
+      const success = await completeInitialization(
+        registryAddress,
+        unifiedAdapter,
+        selectedAgent ?? undefined,
+      );
       if (!success) {
         return;
       }
@@ -187,14 +228,23 @@ export function VaultInitializationModal({
       onAdapterConfigured();
       onClose();
     } catch (error) {
-      console.error('Failed to finalize setup', error);
+      console.error('Failed to complete initialization', error);
     }
-  }, [finalizeSetup, onAdapterConfigured, onClose, refetchVault, registryAddress, unifiedAdapter]);
+  }, [
+    completeInitialization,
+    onAdapterConfigured,
+    onClose,
+    refetchVault,
+    registryAddress,
+    selectedAgent,
+    unifiedAdapter,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
       setStatusVisible(false);
+      setSelectedAgent(null);
     }
   }, [isOpen]);
 
@@ -210,16 +260,20 @@ export function VaultInitializationModal({
       case 'deploy':
         return 'Deploy Morpho Market adapter';
       case 'finalize':
-        return 'Finalize setup';
+        return 'Configure vault registry';
+      case 'agents':
+        return 'Choose an agent (optional)';
       default:
         return '';
     }
   }, [currentStep]);
 
-  const canFinalize = adapterDetected && registryAddress !== ZERO_ADDRESS;
+  const canProceedToAgents = adapterDetected && registryAddress !== ZERO_ADDRESS;
   const showLoading = statusVisible && (isDeploying || adaptersLoading);
-  const showBackButton = stepIndex > 0;
+  const showBackButton = stepIndex > 0 && stepIndex < 2;
+
   const renderCta = () => {
+    // Step 0: Deploy adapter
     if (stepIndex === 0) {
       return (
         <Button
@@ -240,22 +294,49 @@ export function VaultInitializationModal({
       );
     }
 
+    // Step 1: Finalize setup -> move to agent selection
+    if (stepIndex === 1) {
+      return (
+        <Button
+          variant="cta"
+          size="sm"
+          className="min-w-[170px]"
+          isDisabled={!canProceedToAgents}
+          onPress={() => setStepIndex(2)}
+        >
+          Next: Choose agent
+        </Button>
+      );
+    }
+
+    // Step 2: Agent selection -> complete with optional agent
     return (
-      <Button
-        variant="cta"
-        size="sm"
-        className="min-w-[170px]"
-        isDisabled={!canFinalize || isFinalizing}
-        onPress={() => void handleFinalize()}
-      >
-        {isFinalizing ? (
-          <span className="flex items-center gap-2">
-            <Spinner size={12} /> Finalizing...
-          </span>
-        ) : (
-          'Finalize setup'
-        )}
-      </Button>
+      <>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="min-w-[120px]"
+          onPress={() => void handleCompleteInitialization()}
+          isDisabled={isInitializing}
+        >
+          Skip for now
+        </Button>
+        <Button
+          variant="cta"
+          size="sm"
+          className="min-w-[170px]"
+          isDisabled={isInitializing}
+          onPress={() => void handleCompleteInitialization()}
+        >
+          {isInitializing ? (
+            <span className="flex items-center gap-2">
+              <Spinner size={12} /> Completing...
+            </span>
+          ) : (
+            'Complete setup'
+          )}
+        </Button>
+      </>
     );
   };
 
@@ -274,7 +355,11 @@ export function VaultInitializationModal({
         <ModalHeader className="flex-col items-start gap-2">
           <div>
             <h2 className="text-2xl font-normal">{stepTitle}</h2>
-            <p className="mt-1 text-sm text-secondary">Initialize this vault once before configuring strategies.</p>
+            <p className="mt-1 text-sm text-secondary">
+              {stepIndex < 2
+                ? 'Complete these steps to activate your vault.'
+                : 'Optionally choose an agent now, or configure later in settings.'}
+            </p>
           </div>
         </ModalHeader>
 
@@ -290,8 +375,11 @@ export function VaultInitializationModal({
             <FinalizeSetupStep
               adapter={unifiedAdapter}
               registryAddress={registryAddress}
-              isFinalizing={isFinalizing}
+              isInitializing={isInitializing}
             />
+          )}
+          {currentStep === 'agents' && (
+            <AgentSelectionStep selectedAgent={selectedAgent} onSelectAgent={setSelectedAgent} />
           )}
         </ModalBody>
 

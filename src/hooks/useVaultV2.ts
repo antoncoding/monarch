@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
 import { useAccount, useChainId, useReadContract } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
+import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
@@ -10,9 +11,11 @@ const ADAPTER_INDEX = 0n;
 export function useVaultV2({
   vaultAddress,
   chainId,
+  onTransactionSuccess,
 }: {
   vaultAddress?: Address;
   chainId?: SupportedNetworks | number;
+  onTransactionSuccess?: () => void;
 }) {
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
@@ -70,19 +73,20 @@ export function useVaultV2({
 
   const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
 
-  const handleFinalizeSuccess = useCallback(() => {
+  const handleInitializationSuccess = useCallback(() => {
     void refetch();
-  }, [refetch]);
+    onTransactionSuccess?.();
+  }, [refetch, onTransactionSuccess]);
 
-  const { isConfirming: isFinalizing, sendTransactionAsync: sendFinalizeTx } = useTransactionWithToast({
-    toastId: 'finalizeSetup',
-    pendingText: 'Finalizing setup',
-    successText: 'Setup finalized',
-    errorText: 'Failed to finalize setup',
-    pendingDescription: 'Finalizing setup',
-    successDescription: 'Setup finalized',
+  const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
+    toastId: 'completeInitialization',
+    pendingText: 'Completing vault initialization',
+    successText: 'Vault initialized successfully',
+    errorText: 'Failed to initialize vault',
+    pendingDescription: 'Setting up adapter, registry, and optional allocator',
+    successDescription: 'Vault is ready to use',
     chainId: chainIdToUse,
-    onSuccess: handleFinalizeSuccess,
+    onSuccess: handleInitializationSuccess,
   });
 
   const { isConfirming: isUpdatingMetadata, sendTransactionAsync: sendMetadataTx } = useTransactionWithToast({
@@ -95,10 +99,41 @@ export function useVaultV2({
     chainId: chainIdToUse,
   });
 
- 
+  const handleAllocatorOrCapSuccess = useCallback(() => {
+    void refetch();
+    onTransactionSuccess?.();
+  }, [refetch, onTransactionSuccess]);
+
+  const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({
+    toastId: 'update-allocator',
+    pendingText: 'Updating allocator',
+    successText: 'Allocator updated',
+    errorText: 'Failed to update allocator',
+    pendingDescription: 'Updating allocator status',
+    successDescription: 'Allocator status changed',
+    chainId: chainIdToUse,
+    onSuccess: handleAllocatorOrCapSuccess,
+  });
+
+  const { isConfirming: isUpdatingCaps, sendTransactionAsync: sendCapsTx } = useTransactionWithToast({
+    toastId: 'update-caps',
+    pendingText: 'Updating market caps',
+    successText: 'Market caps updated',
+    errorText: 'Failed to update caps',
+    pendingDescription: 'Applying new market caps',
+    successDescription: 'Caps updated successfully',
+    chainId: chainIdToUse,
+    onSuccess: handleAllocatorOrCapSuccess,
+  });
+
+
   // All morpho v2 vault operations have to be proposed first, and then execute
-  const finalizeSetup = useCallback(
-    async (morphoRegistry: Address, marketV1Adapter: Address): Promise<boolean> => {
+  const completeInitialization = useCallback(
+    async (
+      morphoRegistry: Address,
+      marketV1Adapter: Address,
+      allocator?: Address,
+    ): Promise<boolean> => {
       if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
@@ -160,7 +195,24 @@ export function useVaultV2({
 
       txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
-      // Step 5. Execute multicall with all steps.
+      // Step 5 (Optional). Set initial allocator if provided.
+      if (allocator && allocator !== zeroAddress) {
+        const setAllocatorTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setIsAllocator',
+          args: [allocator, true],
+        });
+
+        const submitSetAllocatorTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'submit',
+          args: [setAllocatorTx],
+        });
+
+        txs.push(submitSetAllocatorTx, setAllocatorTx);
+      }
+
+      // Step 6. Execute multicall with all steps.
       const multicallTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'multicall',
@@ -168,26 +220,26 @@ export function useVaultV2({
       });
 
       try {
-        await sendFinalizeTx({
+        await sendInitializationTx({
           account,
           to: vaultAddress,
           data: multicallTx,
           chainId: chainIdToUse,
         });
         return true;
-      } catch (finalizeError) {
+      } catch (initError) {
         if (
-          finalizeError instanceof Error &&
-          finalizeError.message.toLowerCase().includes('reject')
+          initError instanceof Error &&
+          initError.message.toLowerCase().includes('reject')
         ) {
           // user rejected the transaction; treat as graceful cancellation
           return false;
         }
-        console.error('Failed to finalize vault setup', finalizeError);
-        throw finalizeError;
+        console.error('Failed to complete vault initialization', initError);
+        throw initError;
       }
     },
-    [account, chainIdToUse, currentCurator, sendFinalizeTx, vaultAddress],
+    [account, chainIdToUse, currentCurator, sendInitializationTx, vaultAddress],
   );
 
   const updateNameAndSymbol = useCallback(
@@ -254,6 +306,117 @@ export function useVaultV2({
     [account, chainIdToUse, sendMetadataTx, vaultAddress],
   );
 
+  const setAllocator = useCallback(
+    async (allocator: Address, isAllocator: boolean): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const setAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setIsAllocator',
+        args: [allocator, isAllocator],
+      });
+
+      const submitSetAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [setAllocatorTx],
+      });
+
+      const multicallTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'multicall',
+        args: [[submitSetAllocatorTx, setAllocatorTx]],
+      });
+
+      try {
+        await sendAllocatorTx({
+          account,
+          to: vaultAddress,
+          data: multicallTx,
+          chainId: chainIdToUse,
+        });
+        return true;
+      } catch (allocatorError) {
+        if (allocatorError instanceof Error && allocatorError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to update allocator', allocatorError);
+        throw allocatorError;
+      }
+    },
+    [account, chainIdToUse, sendAllocatorTx, vaultAddress],
+  );
+
+  const updateCaps = useCallback(
+    async (caps: VaultV2Cap[]): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const txs: `0x${string}`[] = [];
+
+      caps.forEach((cap) => {
+        const relativeCapBigInt = BigInt(cap.relativeCap);
+        const absoluteCapBigInt = BigInt(cap.absoluteCap);
+        const idData = cap.marketId as `0x${string}`;
+
+        // For updates, we always increase caps (curator can decrease if needed)
+        if (relativeCapBigInt > 0n) {
+          const increaseRelativeCapTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'increaseRelativeCap',
+            args: [idData, relativeCapBigInt],
+          });
+
+          const submitIncreaseRelativeCapTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'submit',
+            args: [increaseRelativeCapTx],
+          });
+
+          txs.push(submitIncreaseRelativeCapTx, increaseRelativeCapTx);
+        }
+
+        if (absoluteCapBigInt > 0n) {
+          const increaseAbsoluteCapTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'increaseAbsoluteCap',
+            args: [idData, absoluteCapBigInt],
+          });
+
+          const submitIncreaseAbsoluteCapTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'submit',
+            args: [increaseAbsoluteCapTx],
+          });
+
+          txs.push(submitIncreaseAbsoluteCapTx, increaseAbsoluteCapTx);
+        }
+      });
+
+      const multicallTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'multicall',
+        args: [txs],
+      });
+
+      try {
+        await sendCapsTx({
+          account,
+          to: vaultAddress,
+          data: multicallTx,
+          chainId: chainIdToUse,
+        });
+        return true;
+      } catch (capsError) {
+        if (capsError instanceof Error && capsError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to update caps', capsError);
+        throw capsError;
+      }
+    },
+    [account, chainIdToUse, sendCapsTx, vaultAddress],
+  );
+
   const adapter = useMemo(() => {
     if (!data) return zeroAddress;
     return data as Address;
@@ -277,11 +440,15 @@ export function useVaultV2({
     isLoading: isLoading || isFetching,
     refetch,
     error: error as Error | null,
-    finalizeSetup,
-    isFinalizing,
+    completeInitialization,
+    isInitializing,
     name,
     symbol,
     updateNameAndSymbol,
     isUpdatingMetadata,
+    setAllocator,
+    isUpdatingAllocator,
+    updateCaps,
+    isUpdatingCaps,
   };
 }

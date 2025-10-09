@@ -11,7 +11,7 @@ import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { TokenIcon } from '@/components/TokenIcon';
-import { VaultAllocation, useVaultDetails } from '@/hooks/useAutovaultData';
+// Removed useVaultDetails (was mock data)
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { getSlicedAddress } from '@/utils/address';
@@ -20,7 +20,7 @@ import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/u
 import { VaultAgentSummary } from './components/VaultAgentSummary';
 import { VaultApyHistory } from './components/VaultApyHistory';
 import { VaultInitializationModal } from './components/VaultInitializationModal';
-import { VaultMarketAllocations } from './components/VaultMarketAllocations';
+// Removed VaultMarketAllocations - will be re-added when real data is available
 import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics } from './components/VaultSummaryMetrics';
 
@@ -59,55 +59,63 @@ export default function VaultContent() {
     isUpdatingMetadata,
     name: onChainName,
     symbol: onChainSymbol,
+    setAllocator,
+    isUpdatingAllocator,
+    updateCaps,
+    isUpdatingCaps,
   } = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
+    onTransactionSuccess: () => void refetchVaultData(),
   });
 
   const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'allocations'>('general');
   const [showSettings, setShowSettings] = useState(false);
   const [showInitializationModal, setShowInitializationModal] = useState(false);
 
-  const { vault: vaultDetails, isLoading, isError } = useVaultDetails(vaultAddressValue);
-
-  const isOwner = Boolean(
-    vaultDetails.owner && connectedAddress && vaultDetails.owner.toLowerCase() === connectedAddress.toLowerCase(),
-  );
-
-  const marketAllocations: VaultAllocation[] = vaultDetails.allocations ?? [];
-  const vaultAssetSymbol = marketAllocations[0]?.assetSymbol ?? '—';
   const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
-  const { data: vaultData, loading: vaultDataLoading } = useVaultV2Data({
+  const {
+    data: vaultData,
+    loading: vaultDataLoading,
+    error: vaultDataError,
+    refetch: refetchVaultData,
+  } = useVaultV2Data({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
-    fallbackName: vaultDetails.name?.trim(),
-    fallbackSymbol: vaultDetails.symbol?.trim(),
-    onChainName,
-    onChainSymbol,
-    ownerAddress: vaultDetails.owner,
-    defaultAllocatorAddresses: vaultDetails.agents.map((agent) => agent.id),
   });
-  const isFetchingSummary = isLoading || vaultDataLoading;
 
-  const title = vaultData.displayName || fallbackTitle;
-  const symbolToDisplay = vaultData.displaySymbol;
-  const allocatorAddresses = vaultData.allocatorAddresses;
-  const guardianAddresses = vaultData.guardianAddresses;
-  const allocatorCount = vaultData.allocatorCount;
+  // Use vaultData for owner check (from subgraph)
+  const isOwner = Boolean(
+    vaultData?.owner && connectedAddress && vaultData.owner.toLowerCase() === connectedAddress.toLowerCase(),
+  );
+
+  const isFetchingSummary = vaultDataLoading;
+  const isError = !!vaultDataError;
+
+  const title = vaultData?.displayName ?? fallbackTitle;
+  const symbolToDisplay = vaultData?.displaySymbol;
+  const allocators = vaultData?.allocators ?? [];
+  const sentinels = vaultData?.sentinels ?? [];
+  const caps = vaultData?.caps ?? [];
+  const allocatorCount = allocators.length;
+  const hasNoAllocators = !needsSetup && allocatorCount === 0;
+  const hasNoCaps = !needsSetup && allocatorCount > 0 && caps.length === 0;
+
   const roleStatusText = useMemo(() => {
     if (needsSetup) return 'Adapter pending deployment';
-    if (!vaultData.curatorAddress) return 'Curator not assigned yet';
-    if (allocatorCount === 0) return 'Add an allocator to enable automation';
-    return 'All critical roles are assigned to safe wallets.';
-  }, [allocatorCount, needsSetup, vaultData.curatorAddress]);
+    if (hasNoAllocators) return 'Choose agents to enable automation';
+    if (hasNoCaps) return 'Set market caps to complete strategy';
+    if (!vaultData?.curator) return 'Curator not assigned yet';
+    return 'Vault is configured and ready';
+  }, [hasNoAllocators, hasNoCaps, needsSetup, vaultData?.curator]);
 
-  const assetAddress = vaultData.assetAddress;
+  const assetAddress = vaultData?.assetAddress;
 
   const totalSupplyLabel = useMemo(() => {
-    if (!vaultData.totalSupplyRaw || vaultData.tokenDecimals === undefined) return '--';
+    if (!vaultData?.totalSupply || vaultData?.tokenDecimals === undefined) return '--';
 
     try {
-      const rawSupply = BigInt(vaultData.totalSupplyRaw);
+      const rawSupply = BigInt(vaultData.totalSupply);
       const numericSupply = formatBalance(rawSupply, vaultData.tokenDecimals);
       const formattedSupply = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 2,
@@ -117,9 +125,10 @@ export default function VaultContent() {
     } catch (_error) {
       return '--';
     }
-  }, [vaultData.tokenDecimals, vaultData.tokenSymbol, vaultData.totalSupplyRaw]);
+  }, [vaultData?.tokenDecimals, vaultData?.tokenSymbol, vaultData?.totalSupply]);
 
-  const apyLabel = vaultDetails.currentApy ? `${vaultDetails.currentApy.toFixed(2)}%` : '0%';
+  // TODO: Get real APY from subgraph or calculate from market allocations
+  const apyLabel = '0%';
 
   if (isError) {
     return (
@@ -185,9 +194,10 @@ export default function VaultContent() {
               {needsSetup && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
                 <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
                   <div className="space-y-1">
-                    <p className="text-sm text-primary">Adapter not configured</p>
+                    <p className="text-sm text-primary">Complete vault initialization</p>
                     <p className="text-sm text-secondary">
-                      Finish the initialization process to begin configuring strategies for this vault.
+                      Deploy adapter, configure registry, and optionally choose an agent to automate
+                      this vault.
                     </p>
                   </div>
                   <Button
@@ -202,6 +212,51 @@ export default function VaultContent() {
                 </div>
               )}
 
+              {hasNoAllocators && isOwner && (
+                <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm text-primary">Choose an agent</p>
+                    <p className="text-sm text-secondary">
+                      Add an agent to enable automated allocation and rebalancing.
+                    </p>
+                  </div>
+                  <Button
+                    variant="cta"
+                    size="sm"
+                    className="mt-3 sm:mt-0"
+                    onPress={() => {
+                      setSettingsTab('agents');
+                      setShowSettings(true);
+                    }}
+                  >
+                    Configure agents
+                  </Button>
+                </div>
+              )}
+
+              {hasNoCaps && isOwner && (
+                <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm text-primary">Set market caps</p>
+                    <p className="text-sm text-secondary">
+                      Define caps for markets to complete your vault strategy and activate
+                      automation.
+                    </p>
+                  </div>
+                  <Button
+                    variant="cta"
+                    size="sm"
+                    className="mt-3 sm:mt-0"
+                    onPress={() => {
+                      setSettingsTab('allocations');
+                      setShowSettings(true);
+                    }}
+                  >
+                    Set caps
+                  </Button>
+                </div>
+              )}
+
               <VaultSummaryMetrics>
                 <div className="rounded bg-surface p-4 shadow-sm">
                   <span className="text-xs uppercase tracking-wide text-secondary">Total supply</span>
@@ -212,7 +267,7 @@ export default function VaultContent() {
                     )}
                   </div>
                   <div className="mt-1 text-sm text-secondary">
-                    {vaultData.tokenSymbol ? `${vaultData.tokenSymbol} vault supply` : 'Vault token supply'}
+                    {vaultData?.tokenSymbol ? `${vaultData.tokenSymbol} vault supply` : 'Vault token supply'}
                   </div>
                 </div>
                 <div className="rounded bg-surface p-4 shadow-sm">
@@ -230,12 +285,12 @@ export default function VaultContent() {
               </VaultSummaryMetrics>
 
               <VaultAgentSummary
-                isActive={vaultDetails.status === 'active'}
+                isActive={allocatorCount > 0 && caps.length > 0}
                 activeAgents={allocatorCount}
                 description={
                   needsSetup
                     ? 'Deploy the vault adapter before allocating capital.'
-                    : vaultDetails.status === 'active'
+                    : allocatorCount > 0 && caps.length > 0
                       ? 'Allocators are authorized and rebalancing within curator caps.'
                       : 'Authorize an allocator to resume automated portfolio management.'
                 }
@@ -254,10 +309,8 @@ export default function VaultContent() {
                 }}
               />
 
-              <VaultMarketAllocations
-                allocations={marketAllocations}
-                vaultAssetSymbol={vaultAssetSymbol}
-              />
+              {/* TODO: Get real market allocations from subgraph */}
+              {/* <VaultMarketAllocations allocations={[]} vaultAssetSymbol="--" /> */}
               <VaultApyHistory timeframes={['7D', '30D', '90D']} />
               <VaultSettingsModal
                 isOpen={showSettings}
@@ -266,14 +319,21 @@ export default function VaultContent() {
                 isOwner={isOwner}
                 onUpdateMetadata={updateNameAndSymbol}
                 updatingMetadata={isUpdatingMetadata}
-                defaultName={vaultData.displayName}
-                defaultSymbol={vaultData.displaySymbol}
+                defaultName={vaultData?.displayName ?? ''}
+                defaultSymbol={vaultData?.displaySymbol ?? ''}
                 currentName={onChainName ?? ''}
                 currentSymbol={onChainSymbol ?? ''}
-                ownerAddress={vaultData.ownerAddress}
-                curatorAddress={vaultData.curatorAddress}
-                allocatorAddresses={allocatorAddresses}
-                guardianAddresses={guardianAddresses}
+                owner={vaultData?.owner}
+                curator={vaultData?.curator}
+                allocators={allocators}
+                sentinels={sentinels}
+                chainId={supportedChainId}
+                vaultAsset={assetAddress as Address | undefined}
+                existingCaps={caps}
+                onSetAllocator={setAllocator}
+                onUpdateCaps={updateCaps}
+                isUpdatingAllocator={isUpdatingAllocator}
+                isUpdatingCaps={isUpdatingCaps}
               />
             </>
           )}
@@ -286,7 +346,10 @@ export default function VaultContent() {
           onClose={() => setShowInitializationModal(false)}
           vaultAddress={vaultAddressValue}
           chainId={supportedChainId}
-          onAdapterConfigured={() => void refetchAdapter()}
+          onAdapterConfigured={() => {
+            void refetchAdapter();
+            void refetchVaultData();
+          }}
         />
       )}
     </div>

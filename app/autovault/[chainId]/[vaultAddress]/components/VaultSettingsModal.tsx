@@ -1,13 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useId } from 'react';
-import { Address } from 'viem';
-import { Input } from '@heroui/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LuX } from 'react-icons/lu';
-import { Button } from '@/components/common/Button';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
-import { Spinner } from '@/components/common/Spinner';
-
-type SettingsTab = 'general' | 'agents' | 'allocations';
+import { Address } from 'viem';
+import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { SupportedNetworks } from '@/utils/networks';
+import { GeneralTab, AgentsTab, AllocationsTab, SettingsTab } from './settings';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -26,10 +23,17 @@ type VaultSettingsModalProps = {
   defaultSymbol: string;
   currentName: string;
   currentSymbol: string;
-  ownerAddress?: string;
-  curatorAddress?: string;
-  allocatorAddresses: string[];
-  guardianAddresses?: string[];
+  owner?: string;
+  curator?: string;
+  allocators: string[];
+  sentinels?: string[];
+  chainId: SupportedNetworks;
+  vaultAsset?: Address;
+  existingCaps?: VaultV2Cap[];
+  onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
+  onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
+  isUpdatingAllocator: boolean;
+  isUpdatingCaps: boolean;
 };
 
 export function VaultSettingsModal({
@@ -43,22 +47,23 @@ export function VaultSettingsModal({
   defaultSymbol,
   currentName,
   currentSymbol,
-  ownerAddress,
-  curatorAddress,
-  allocatorAddresses,
-  guardianAddresses = [],
+  owner,
+  curator,
+  allocators,
+  sentinels = [],
+  chainId,
+  vaultAsset,
+  existingCaps = [],
+  onSetAllocator,
+  onUpdateCaps,
+  isUpdatingAllocator,
+  isUpdatingCaps,
 }: VaultSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
-  const nameInputId = useId();
-  const symbolInputId = useId();
-  const previousName = useMemo(() => currentName.trim(), [currentName]);
-  const previousSymbol = useMemo(() => currentSymbol.trim(), [currentSymbol]);
-  const [nameInput, setNameInput] = useState(previousName || defaultName);
-  const [symbolInput, setSymbolInput] = useState(previousSymbol || defaultSymbol);
-  const [metadataError, setMetadataError] = useState<string | null>(null);
-
+  const [mounted, setMounted] = useState(false);
   const wasOpenRef = useRef(false);
 
+  // Reset to initial tab when modal opens
   useEffect(() => {
     const wasOpen = wasOpenRef.current;
 
@@ -66,240 +71,15 @@ export function VaultSettingsModal({
       setActiveTab(initialTab);
     }
 
-    if (!isOpen && wasOpen) {
-      setMetadataError(null);
-      setNameInput(previousName || defaultName);
-      setSymbolInput(previousSymbol || defaultSymbol);
-    }
-
     wasOpenRef.current = isOpen;
-  }, [defaultName, defaultSymbol, initialTab, isOpen, previousName, previousSymbol]);
+  }, [initialTab, isOpen]);
 
-  const handleTabChange = useCallback((tab: SettingsTab) => {
-    setActiveTab(tab);
-  }, []);
-
-  const trimmedName = nameInput.trim();
-  const trimmedSymbol = symbolInput.trim();
-  const metadataChanged = useMemo(() => {
-    const hasNewName = trimmedName !== previousName;
-    const hasNewSymbol = trimmedSymbol !== previousSymbol;
-    return hasNewName || hasNewSymbol;
-  }, [previousName, previousSymbol, trimmedName, trimmedSymbol]);
-
-  const renderSingleRole = (
-    label: string,
-    description: string,
-    addressValue?: string,
-  ) => {
-    const normalized = addressValue ? (addressValue as Address) : undefined;
-
-    return (
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <p className="text-xs uppercase text-secondary">{label}</p>
-          <p className="text-xs text-secondary">{description}</p>
-        </div>
-        {normalized ? (
-          <AddressDisplay
-            address={normalized}
-            size="sm"
-            showExplorerLink
-            copyable
-          />
-        ) : (
-          <span className="text-xs text-secondary">Not assigned</span>
-        )}
-      </div>
-    );
-  };
-
-  const renderRoleList = (
-    label: string,
-    description: string,
-    addresses: string[],
-    emptyLabel: string,
-  ) => {
-    if (!addresses.length) {
-      return (
-        <div className="space-y-2">
-          <div className="space-y-1">
-            <p className="text-xs uppercase text-secondary">{label}</p>
-            <p className="text-xs text-secondary">{description}</p>
-          </div>
-          <span className="text-xs text-secondary">{emptyLabel}</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <p className="text-xs uppercase text-secondary">{label}</p>
-          <p className="text-xs text-secondary">{description}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {addresses.map((entry) => (
-            <AddressDisplay
-              key={entry}
-              address={entry as Address}
-              size="sm"
-              showExplorerLink
-              copyable
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  useEffect(() => {
-    if (metadataError && metadataChanged) {
-      setMetadataError(null);
-    }
-  }, [metadataChanged, metadataError]);
-
-  const handleMetadataSubmit = useCallback(async () => {
-    if (!metadataChanged) {
-      setMetadataError('No changes detected.');
-      return;
-    }
-
-    setMetadataError(null);
-
-    const success = await onUpdateMetadata({
-      name: trimmedName !== previousName ? trimmedName || undefined : undefined,
-      symbol: trimmedSymbol !== previousSymbol ? trimmedSymbol || undefined : undefined,
-    });
-
-    if (success) {
-      setMetadataError(null);
-    }
-  }, [metadataChanged, onUpdateMetadata, previousName, previousSymbol, trimmedName, trimmedSymbol]);
-
-  const renderGeneralTab = () => (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary" htmlFor={nameInputId}>
-            Vault name
-          </label>
-          <Input
-            size="sm"
-            radius="sm"
-            variant="flat"
-            value={nameInput}
-            onChange={(event) => setNameInput(event.target.value)}
-            placeholder={defaultName}
-            isDisabled={!isOwner}
-            id={nameInputId}
-            classNames={{
-              input: 'text-sm',
-              inputWrapper:
-                'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
-            }}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary" htmlFor={symbolInputId}>
-            Vault symbol
-          </label>
-          <Input
-            size="sm"
-            radius="sm"
-            variant="flat"
-            value={symbolInput}
-            onChange={(event) => setSymbolInput(event.target.value)}
-            placeholder={defaultSymbol}
-            maxLength={16}
-            isDisabled={!isOwner}
-            id={symbolInputId}
-            classNames={{
-              input: 'text-sm',
-              inputWrapper:
-                'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
-            }}
-          />
-        </div>
-
-        {metadataError && <p className="text-xs text-danger">{metadataError}</p>}
-
-        <Button
-          className="ml-auto"
-          variant="interactive"
-          size="sm"
-          isDisabled={!metadataChanged || updatingMetadata || !isOwner}
-          onPress={() => void handleMetadataSubmit()}
-        >
-          {updatingMetadata ? (
-            <span className="flex items-center gap-2">
-              <Spinner size={12} /> Saving...
-            </span>
-          ) : (
-            'Save changes'
-          )}
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderAgentTab = () => (
-    <div className="space-y-6">
-      {renderSingleRole('Owner', 'Primary controller of vault permissions.', ownerAddress)}
-      {renderSingleRole('Curator', 'Defines risk guardrails for automation.', curatorAddress)}
-      {renderRoleList(
-        'Allocators',
-        'Automation agents executing the configured strategy.',
-        allocatorAddresses,
-        'No allocators assigned',
-      )}
-      {renderRoleList(
-        'Guardians',
-        'Sentinels able to pause automation when safeguards trigger.',
-        guardianAddresses,
-        'No guardians configured',
-      )}
-    </div>
-  );
-
-  const renderAllocationsTab = () => (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <p className="text-sm text-secondary">Allocation caps</p>
-        <p className="text-xs text-secondary">Configure market-level caps and guardrails for the automation agent.</p>
-      </div>
-      <div className="rounded bg-hovered/40 p-4 text-sm text-secondary">
-        Allocation management coming soon. You’ll be able to set per-market caps and minimum cash buffers here.
-      </div>
-    </div>
-  );
-
-  const renderActiveTab = () => {
-    switch (activeTab) {
-      case 'general':
-        return renderGeneralTab();
-      case 'agents':
-        return renderAgentTab();
-      case 'allocations':
-        return renderAllocationsTab();
-      default:
-        return null;
-    }
-  };
-
-  const [mounted, setMounted] = useState(false);
-
+  // Handle mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (isOpen) {
-      setNameInput(previousName || defaultName);
-      setSymbolInput(previousSymbol || defaultSymbol);
-    }
-  }, [defaultName, defaultSymbol, isOpen, previousName, previousSymbol]);
-
+  // Prevent body scroll when modal is open
   useEffect(() => {
     if (!isOpen) return;
     const originalOverflow = document.body.style.overflow;
@@ -309,6 +89,7 @@ export function VaultSettingsModal({
     };
   }, [isOpen]);
 
+  // Handle ESC key
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
@@ -325,6 +106,53 @@ export function VaultSettingsModal({
     };
   }, [isOpen, onClose]);
 
+  const handleTabChange = useCallback((tab: SettingsTab) => {
+    setActiveTab(tab);
+  }, []);
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case 'general':
+        return (
+          <GeneralTab
+            isOwner={isOwner}
+            defaultName={defaultName}
+            defaultSymbol={defaultSymbol}
+            currentName={currentName}
+            currentSymbol={currentSymbol}
+            onUpdateMetadata={onUpdateMetadata}
+            updatingMetadata={updatingMetadata}
+          />
+        );
+      case 'agents':
+        return (
+          <AgentsTab
+            isOwner={isOwner}
+            owner={owner}
+            curator={curator}
+            allocators={allocators}
+            sentinels={sentinels}
+            onSetAllocator={onSetAllocator}
+            isUpdatingAllocator={isUpdatingAllocator}
+          />
+        );
+      case 'allocations':
+        return (
+          <AllocationsTab
+            isOwner={isOwner}
+            chainId={chainId}
+            vaultAsset={vaultAsset}
+            existingCaps={existingCaps}
+            onUpdateCaps={onUpdateCaps}
+            isUpdatingCaps={isUpdatingCaps}
+            isOpen={isOpen}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   if (!mounted || !isOpen) {
     return null;
   }
@@ -335,10 +163,11 @@ export function VaultSettingsModal({
       onMouseDown={onClose}
     >
       <div
-        className="relative flex w-full max-w-4xl min-h-[560px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
+        className="relative flex w-full max-w-6xl min-h-[560px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="flex flex-1 flex-col bg-background/95">
+          {/* Header */}
           <div className="flex items-center justify-between border-b border-divider/30 px-8 pt-8 pb-4">
             <h2 className="text-2xl font-normal">Vault Settings</h2>
             <button
@@ -351,7 +180,9 @@ export function VaultSettingsModal({
             </button>
           </div>
 
+          {/* Content */}
           <div className="flex flex-1 overflow-hidden">
+            {/* Sidebar */}
             <aside className="flex w-40 flex-col gap-2 border-r border-divider/30 bg-hovered/40 p-6">
               {TABS.map((tab) => {
                 const isActive = tab.id === activeTab;
@@ -370,6 +201,7 @@ export function VaultSettingsModal({
               })}
             </aside>
 
+            {/* Tab Content */}
             <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
               <div className="min-h-[360px] space-y-6">{renderActiveTab()}</div>
             </div>

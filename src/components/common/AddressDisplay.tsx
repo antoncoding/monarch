@@ -8,9 +8,9 @@ import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 import { SupportedNetworks } from '@/utils/networks';
-import { useStyledToast } from '@/hooks/useStyledToast';
 
 type AddressDisplayProps = {
   address: Address;

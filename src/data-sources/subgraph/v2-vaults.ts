@@ -1,4 +1,4 @@
-import { userVaultsV2Query } from '@/graphql/morpho-v2-subgraph-queries';
+import { userVaultsV2Query, vaultV2Query } from '@/graphql/morpho-v2-subgraph-queries';
 import { SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
 import { subgraphGraphqlFetcher } from './fetchers';
 
@@ -22,6 +22,46 @@ type SubgraphUserVaultsV2Response = {
 export type UserVaultV2 = SubgraphVaultV2 & {
   networkId: SupportedNetworks;
   balance?: bigint; // vault total assets
+};
+
+// Vault V2 details from subgraph
+export type VaultV2Cap = {
+  relativeCap: string;
+  absoluteCap: string;
+  marketId: string;
+};
+
+export type VaultV2Details = {
+  id: string;
+  asset: string;
+  symbol: string;
+  name: string;
+  curator: string;
+  owner: string;
+  allocators: string[];
+  sentinels: string[];
+  caps: VaultV2Cap[];
+  totalSupply: string;
+  adopters: string[];
+};
+
+type SubgraphVaultV2Response = {
+  data: {
+    vaultV2: {
+      id: string;
+      asset: string;
+      symbol: string;
+      name: string;
+      curator: string;
+      owner: string;
+      allocators: { account: string }[];
+      sentinels: { account: string }[];
+      caps: VaultV2Cap[];
+      totalSupply: string;
+      adopters: { address: string }[];
+    } | null;
+  };
+  errors?: any[];
 };
 
 export const fetchUserVaultsV2 = async (
@@ -91,4 +131,62 @@ export const fetchUserVaultsV2AllNetworks = async (owner: string): Promise<UserV
 
   const results = await Promise.all(promises);
   return results.flat();
+};
+
+export const fetchVaultV2Details = async (
+  vaultAddress: string,
+  network: SupportedNetworks,
+): Promise<VaultV2Details | null> => {
+  const agentConfig = getAgentConfig(network);
+
+  // fetch from the adapter 
+  if (!agentConfig?.adapterSubgraphEndpoint) {
+    console.log(`No subgraph endpoint configured for network ${network}`);
+    return null;
+  }
+
+  const subgraphUrl = agentConfig.adapterSubgraphEndpoint;
+
+  try {
+    const variables = {
+      id: vaultAddress.toLowerCase(),
+    };
+
+    const response = await subgraphGraphqlFetcher<SubgraphVaultV2Response>(
+      subgraphUrl,
+      vaultV2Query,
+      variables,
+    );
+
+    if (response.errors) {
+      console.error('GraphQL errors:', response.errors);
+      return null;
+    }
+
+    const vault = response.data?.vaultV2;
+    if (!vault) {
+      console.log(`No V2 vault found for address ${vaultAddress} on network ${network}`);
+      return null;
+    }
+
+    return {
+      id: vault.id,
+      asset: vault.asset,
+      symbol: vault.symbol,
+      name: vault.name,
+      curator: vault.curator,
+      owner: vault.owner,
+      allocators: vault.allocators.map((a) => a.account),
+      sentinels: vault.sentinels.map((s) => s.account),
+      caps: vault.caps,
+      totalSupply: vault.totalSupply,
+      adopters: vault.adopters.map((a) => a.address),
+    };
+  } catch (error) {
+    console.error(
+      `Error fetching V2 vault details for ${vaultAddress} on network ${network}:`,
+      error,
+    );
+    return null;
+  }
 };

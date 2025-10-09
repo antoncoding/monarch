@@ -5,9 +5,9 @@ import VaultContent from './content';
 export async function generateMetadata({
   params,
 }: {
-  params: { chainId: string; vaultAddress: string };
+  params: Promise<{ chainId: string; vaultAddress: string }>;
 }) {
-  const { chainId, vaultAddress } = params;
+  const { chainId, vaultAddress } = await params;
 
   return buildMetadata({
     title: 'Vault Details | Monarch',
