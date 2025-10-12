@@ -145,7 +145,6 @@ export function VaultSettingsModal({
             existingCaps={existingCaps}
             onUpdateCaps={onUpdateCaps}
             isUpdatingCaps={isUpdatingCaps}
-            isOpen={isOpen}
           />
         );
       default:

@@ -41,14 +41,6 @@ export function AllocationsTab({
           relativeCap: existingCap
             ? (parseFloat(existingCap.relativeCap) / 1e16).toString()
             : '',
-          absoluteCap: existingCap
-            ? (
-                parseFloat(
-                  ((BigInt(existingCap.absoluteCap) * 10000n) /
-                    BigInt(10 ** market.loanAsset.decimals)).toString(),
-                ) / 10000
-              ).toString()
-            : '',
           isSelected: !!existingCap,
         };
       }),
@@ -71,14 +63,11 @@ export function AllocationsTab({
     );
   }, []);
 
-  const handleUpdateCapField = useCallback(
-    (marketId: string, field: 'relativeCap' | 'absoluteCap', value: string) => {
-      setMarketCaps((prev) =>
-        prev.map((c) => (c.market.uniqueKey === marketId ? { ...c, [field]: value } : c)),
-      );
-    },
-    [],
-  );
+  const handleUpdateCapField = useCallback((marketId: string, value: string) => {
+    setMarketCaps((prev) =>
+      prev.map((c) => (c.market.uniqueKey === marketId ? { ...c, relativeCap: value } : c)),
+    );
+  }, []);
 
   const handleSaveCaps = useCallback(async () => {
     const capsToUpdate = marketCaps
@@ -89,15 +78,10 @@ export function AllocationsTab({
             ? parseUnits(c.relativeCap, 16)
             : 0n;
 
-        const absoluteCapBigInt =
-          c.absoluteCap && parseFloat(c.absoluteCap) > 0
-            ? parseUnits(c.absoluteCap, c.market.loanAsset.decimals)
-            : 0n;
-
         return {
           marketId: c.market.uniqueKey,
           relativeCap: relativeCapBigInt.toString(),
-          absoluteCap: absoluteCapBigInt.toString(),
+          absoluteCap: '0',
         } as VaultV2Cap;
       });
 
@@ -138,15 +122,7 @@ export function AllocationsTab({
       const existingRelative = existingCap
         ? (parseFloat(existingCap.relativeCap) / 1e16).toString()
         : '';
-      const existingAbsolute = existingCap
-        ? (
-            parseFloat(
-              ((BigInt(existingCap.absoluteCap) * 10000n) /
-                BigInt(10 ** c.market.loanAsset.decimals)).toString(),
-            ) / 10000
-          ).toString()
-        : '';
-      return c.relativeCap !== existingRelative || c.absoluteCap !== existingAbsolute;
+      return c.relativeCap !== existingRelative;
     }
     return false;
   });
@@ -261,7 +237,7 @@ export function AllocationsTab({
                       if (value === '' || /^\d*\.?\d*$/.test(value)) {
                         const numValue = parseFloat(value);
                         if (value === '' || (numValue >= 0 && numValue <= 100)) {
-                          handleUpdateCapField(market.uniqueKey, 'relativeCap', value);
+                          handleUpdateCapField(market.uniqueKey, value);
                         }
                       }
                     }}

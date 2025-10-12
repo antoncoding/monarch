@@ -8,7 +8,6 @@ export type SettingsTab = 'general' | 'agents' | 'allocations';
 export type MarketCapState = {
   market: Market;
   relativeCap: string;
-  absoluteCap: string;
   isSelected: boolean;
 };
 
@@ -39,5 +38,4 @@ export type AllocationsTabProps = {
   existingCaps: VaultV2Cap[];
   onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingCaps: boolean;
-  isOpen: boolean;
 };
