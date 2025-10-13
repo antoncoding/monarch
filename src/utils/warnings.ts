@@ -1,4 +1,4 @@
-import { MarketWarning, MorphoChainlinkOracleData } from '@/utils/types';
+import { Market, MarketWarning } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
 import { WarningCategory, WarningWithDetail } from './types';
@@ -68,12 +68,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     description: 'This market has some unrealized bad debt',
     category: WarningCategory.debt,
   },
-  {
-    code: 'bad_debt_realized',
-    level: 'warning',
-    description: 'This market has some realized bad debt (>10 BPS of total supply)',
-    category: WarningCategory.debt,
-  },
+  
   {
     code: 'not_whitelisted',
     level: 'alert',
@@ -103,6 +98,13 @@ const subgraphWarnings: WarningWithDetail[] = [
     category: WarningCategory.general,
   },
 ];
+
+const BAD_DEBT: WarningWithDetail = {
+  code: 'bad_debt_realized',
+  level: 'warning',
+  description: 'This market has some realized bad debt',
+  category: WarningCategory.debt,
+}
 
 const UNRECOGNIZED_ORACLE: WarningWithDetail = {
   code: 'unrecognized_oracle',
@@ -142,30 +144,9 @@ const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
   category: WarningCategory.oracle,
 };
 
-// {
-//   code: 'incorrect_loan_exchange_rate',
-//   level: 'warning',
-//   description: 'The market is using the exchange rate from a token different from the loan one.	',
-//   category: WarningCategory.oracle,
-// },
-// {
-//   code: 'incorrect_collateral_exchange_rate',
-//   level: 'warning',
-//   description:
-//     'The market is using the exchange rate from a token different from the collateral one.',
-//   category: WarningCategory.oracle,
-// },
 
 export const getMarketWarningsWithDetail = (
-  market: {
-    warnings: MarketWarning[];
-    uniqueKey: string;
-    oracle?: { data: MorphoChainlinkOracleData };
-    oracleAddress?: string;
-    morphoBlue: { chain: { id: number } };
-    loanAsset?: { symbol: string };
-    collateralAsset?: { symbol: string };
-  },
+  market: Market,
   considerWhitelist = false,
 ) => {
   const result = [];
@@ -198,6 +179,11 @@ export const getMarketWarningsWithDetail = (
     if (foundWarning && !isOffset) {
       result.push(foundWarning);
     }
+  }
+
+  // append bad debt warnings // deprecated from Morpho API
+  if (BigInt(market.realizedBadDebt.underlying) > 0n) {
+    result.push(BAD_DEBT)
   }
 
   // append our own oracle warnings

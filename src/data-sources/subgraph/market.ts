@@ -108,12 +108,6 @@ const transformSubgraphMarketToMarket = (
   const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
   const oracleAddress = (subgraphMarket.oracle?.oracleAddress ?? '0x') as Address;
 
-  if (
-    marketId.toLowerCase() === '0x9103c3b4e834476c9a62ea009ba2c884ee42e94e6e314a26f04d312434191836'
-  ) {
-    console.log('subgraphMarket', subgraphMarket);
-  }
-
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
@@ -271,6 +265,11 @@ const transformSubgraphMarketToMarket = (
     hasUSDPrice: hasUSDPrice,
     isProtectedByLiquidationBots: false, // Not available from subgraph
     isMonarchWhitelisted: false,
+
+    // todo: not able to parse bad debt now
+    realizedBadDebt: {
+      underlying: '0'
+    }
   };
 
   return marketDetail;
