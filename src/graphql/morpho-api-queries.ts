@@ -67,6 +67,15 @@ warnings {
   __typename
 }
 
+realizedBadDebt {
+  underlying
+  usd
+}
+badDebt {
+  underlying
+  usd
+}
+
 oracle {
   data {
     ... on MorphoChainlinkOracleData {
@@ -170,6 +179,14 @@ export const marketsQuery = `
       symbol
       name
       decimals
+    }
+    badDebt {
+      underlying
+      usd
+    }
+    realizedBadDebt {
+      underlying
+      usd
     }
     state {
       borrowAssets

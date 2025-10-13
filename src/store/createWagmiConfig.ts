@@ -8,6 +8,7 @@ import {
   injectedWallet,
   trustWallet,
   ledgerWallet,
+  walletConnectWallet
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
@@ -26,6 +27,7 @@ const wallets =
         injectedWallet,
         trustWallet,
         ledgerWallet,
+        walletConnectWallet
       ]
     : [injectedWallet];
 

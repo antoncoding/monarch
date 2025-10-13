@@ -7,7 +7,7 @@ import { getMarketWarningsWithDetail } from '@/utils/warnings';
  * This separates data fetching concerns from presentation logic
  */
 export const useMarketWarnings = (
-  market: Pick<Market, 'warnings' | 'uniqueKey' | 'oracle' | 'oracleAddress' | 'morphoBlue'>,
+  market: Market,
   considerWhitelist = false,
 ): WarningWithDetail[] => {
   return useMemo(() => {
@@ -18,6 +18,7 @@ export const useMarketWarnings = (
     market.oracle,
     market.oracleAddress,
     market.morphoBlue?.chain?.id,
+    market.realizedBadDebt.underlying,
     considerWhitelist,
   ]);
 };
@@ -27,7 +28,7 @@ export const useMarketWarnings = (
  * Use this in contexts where you can't use hooks
  */
 export const computeMarketWarnings = (
-  market: Pick<Market, 'warnings' | 'uniqueKey' | 'oracle' | 'oracleAddress' | 'morphoBlue'>,
+  market: Market,
   considerWhitelist = false,
 ): WarningWithDetail[] => {
   return getMarketWarningsWithDetail(market, considerWhitelist);
