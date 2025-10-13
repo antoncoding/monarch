@@ -102,7 +102,7 @@ const subgraphWarnings: WarningWithDetail[] = [
 const BAD_DEBT: WarningWithDetail = {
   code: 'bad_debt_realized',
   level: 'warning',
-  description: 'This market has some realized bad debt',
+  description: 'This market has some realized bad debt (>10 BPS of total supply)',
   category: WarningCategory.debt,
 }
 
@@ -183,7 +183,11 @@ export const getMarketWarningsWithDetail = (
 
   // append bad debt warnings // deprecated from Morpho API
   if (BigInt(market.realizedBadDebt.underlying) > 0n) {
-    result.push(BAD_DEBT)
+
+    // only push the bad debt error is it's > 10BPS
+    if (BigInt(market.realizedBadDebt.underlying) * BigInt(1000) > BigInt(market.state.supplyAssets)) {
+      result.push(BAD_DEBT)
+    }
   }
 
   // append our own oracle warnings
