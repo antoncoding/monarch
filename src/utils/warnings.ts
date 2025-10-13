@@ -181,16 +181,24 @@ export const getMarketWarningsWithDetail = (
     }
   }
 
-  // append bad debt warnings // deprecated from Morpho API
-  if (BigInt(market.realizedBadDebt.underlying) > 0n) {
-
-    // only push the bad debt error is it's > 10BPS
-    if (BigInt(market.realizedBadDebt.underlying) * BigInt(1000) > BigInt(market.state.supplyAssets)) {
-      result.push(BAD_DEBT)
+  // Append bad debt warnings
+  try {
+    const badDebtUnderlying = market.realizedBadDebt.underlying;
+    if (badDebtUnderlying != null) {
+      const badDebt = BigInt(badDebtUnderlying);
+      if (badDebt > 0n) {
+        // only push the bad debt error is it's > 10BPS
+        const supplyAssets = BigInt(market.state.supplyAssets);
+        if (badDebt * 1000n > supplyAssets) {
+          result.push(BAD_DEBT);
+        }
+      }
     }
+  } catch {
+    // ignore invalid BigInt values (e.g., decimal strings like "0.00")
   }
 
-  // append our own oracle warnings
+  // Append our own oracle warnings
   const oracleType = getOracleType(
     market.oracle?.data,
     market.oracleAddress,
