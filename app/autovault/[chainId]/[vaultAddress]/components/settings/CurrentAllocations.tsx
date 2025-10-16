@@ -5,9 +5,10 @@ import { Spinner } from '@/components/common/Spinner';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { parseCapIdParams } from '@/utils/morpho';
+import { CapData } from '@/hooks/useVaultV2Data';
 
 type CurrentAllocationsProps = {
-  existingCaps: VaultV2Cap[];
+  existingCaps?: CapData;
   isOwner: boolean;
   onStartEdit: () => void;
 };

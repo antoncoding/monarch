@@ -9,9 +9,10 @@ import { useMarkets } from '@/hooks/useMarkets';
 import { getMarketCapId, parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketCapState } from './types';
+import { CapData } from '@/hooks/useVaultV2Data';
 
 type EditAllocationsProps = {
-  existingCaps: VaultV2Cap[];
+  existingCaps?: CapData;
   vaultAsset?: Address;
   chainId: SupportedNetworks;
   isOwner: boolean;

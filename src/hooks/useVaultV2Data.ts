@@ -13,6 +13,13 @@ type UseVaultV2DataArgs = {
   fallbackSymbol?: string;
 };
 
+export type CapData = {
+  adapterCap: VaultV2Cap | null,
+  collateralCaps: VaultV2Cap[],
+  marketCaps: VaultV2Cap[],
+  needSetupCaps: boolean
+}
+
 export type VaultV2Data = {
   displayName: string;
   displaySymbol: string;
@@ -24,13 +31,9 @@ export type VaultV2Data = {
   sentinels: string[];
   owner: string;
   curator: string;
-  caps: VaultV2Cap[];
+  capsData: CapData
   adopters: string[];
   curatorDisplay: string;
-  // Parsed caps by level
-  adapterCap: VaultV2Cap | null;
-  collateralCaps: VaultV2Cap[];
-  marketCaps: VaultV2Cap[];
 };
 
 type UseVaultV2DataReturn = {
@@ -89,6 +92,9 @@ export function useVaultV2Data({
         }
       });
 
+      // if any one of the caps is not set, it means it still need setup!
+      const needSetupCaps = !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0
+
       setData({
         displayName: result.name || fallbackName,
         displaySymbol: result.symbol || fallbackSymbol,
@@ -100,12 +106,14 @@ export function useVaultV2Data({
         sentinels: result.sentinels,
         owner: result.owner,
         curator: result.curator,
-        caps: result.caps,
+        capsData: {
+          adapterCap,
+          collateralCaps,
+          marketCaps,
+          needSetupCaps
+        },
         adopters: result.adopters,
         curatorDisplay,
-        adapterCap,
-        collateralCaps,
-        marketCaps,
       });
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch vault data'));

@@ -166,7 +166,7 @@ export function getMarketCapId(adopterAddress: Address, marketParams: MarketPara
  * @returns Object containing the cap type and extracted addresses/marketId
  */
 export function parseCapIdParams(idParams: string): {
-  type: 'adapter' | 'collateral' | 'market';
+  type: 'adapter' | 'collateral' | 'market' | 'unknown';
   adapterAddress?: Address;
   collateralToken?: Address;
   marketParams?: MarketParams;
@@ -237,10 +237,9 @@ export function parseCapIdParams(idParams: string): {
     }
 
     // Fallback: could not decode
-    console.warn('Could not decode idParams:', idParams);
-    return { type: 'market' };
+    return { type: 'unknown' };
   } catch (error) {
     console.error('Error parsing idParams:', error);
-    return { type: 'market' };
+    return { type: 'unknown' };
   }
 }

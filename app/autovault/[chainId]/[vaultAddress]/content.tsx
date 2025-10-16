@@ -101,20 +101,19 @@ export default function VaultContent() {
   const symbolToDisplay = vaultData?.displaySymbol;
   const allocators = vaultData?.allocators ?? [];
   const sentinels = vaultData?.sentinels ?? [];
-  const caps = vaultData?.caps ?? [];
   const allocatorCount = allocators.length;
   const hasNoAllocators = !needsSetup && allocatorCount === 0;
-  const hasNoCaps = !needsSetup && allocatorCount > 0 && caps.length === 0;
+  const capsUninitialized = !vaultData?.capsData.needSetupCaps
+  const capData = vaultData?.capsData
 
-  console.log('caps', caps)
 
   const roleStatusText = useMemo(() => {
     if (needsSetup) return 'Adapter pending deployment';
     if (hasNoAllocators) return 'Choose agents to enable automation';
-    if (hasNoCaps) return 'Set market caps to complete strategy';
+    if (capsUninitialized) return 'Set market caps to complete strategy';
     if (!vaultData?.curator) return 'Curator not assigned yet';
     return 'Vault is configured and ready';
-  }, [hasNoAllocators, hasNoCaps, needsSetup, vaultData?.curator]);
+  }, [hasNoAllocators, capsUninitialized, needsSetup, vaultData?.curator]);
 
   const assetAddress = vaultData?.assetAddress;
 
@@ -241,7 +240,7 @@ export default function VaultContent() {
                 </div>
               )}
 
-              {hasNoCaps && isOwner && (
+              {capsUninitialized && isOwner && (
                 <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <p className="text-sm text-primary">Set market caps</p>
@@ -292,12 +291,12 @@ export default function VaultContent() {
               </VaultSummaryMetrics>
 
               <VaultAgentSummary
-                isActive={allocatorCount > 0 && caps.length > 0}
+                isActive={allocatorCount > 0 && !capsUninitialized}
                 activeAgents={allocatorCount}
                 description={
                   needsSetup
                     ? 'Deploy the vault adapter before allocating capital.'
-                    : allocatorCount > 0 && caps.length > 0
+                    : allocatorCount > 0 && !capsUninitialized
                       ? 'Allocators are authorized and rebalancing within curator caps.'
                       : 'Authorize an allocator to resume automated portfolio management.'
                 }
@@ -336,7 +335,7 @@ export default function VaultContent() {
                 chainId={supportedChainId}
                 vaultAsset={assetAddress as Address | undefined}
                 adapterAddress={adapter}
-                existingCaps={caps}
+                capData={capData}
                 onSetAllocator={setAllocator}
                 onUpdateCaps={updateCaps}
                 isUpdatingAllocator={isUpdatingAllocator}

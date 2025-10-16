@@ -2,6 +2,7 @@ import { Address } from 'viem';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
+import { CapData } from '@/hooks/useVaultV2Data';
 
 export type SettingsTab = 'general' | 'agents' | 'allocations';
 
@@ -38,7 +39,7 @@ export type AllocationsTabProps = {
   chainId: SupportedNetworks;
   vaultAsset?: Address;
   adapterAddress?: Address;
-  existingCaps: VaultV2Cap[];
+  existingCaps?: CapData;
   onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingCaps: boolean;
 };

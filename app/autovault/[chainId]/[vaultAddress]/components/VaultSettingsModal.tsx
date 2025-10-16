@@ -5,6 +5,7 @@ import { Address } from 'viem';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { GeneralTab, AgentsTab, AllocationsTab, SettingsTab } from './settings';
+import { CapData } from '@/hooks/useVaultV2Data';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -30,7 +31,7 @@ type VaultSettingsModalProps = {
   chainId: SupportedNetworks;
   vaultAsset?: Address;
   adapterAddress?: Address;
-  existingCaps?: VaultV2Cap[];
+  capData?: CapData;
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
   onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingAllocator: boolean;
@@ -55,7 +56,7 @@ export function VaultSettingsModal({
   chainId,
   vaultAsset,
   adapterAddress,
-  existingCaps = [],
+  capData = undefined,
   onSetAllocator,
   onUpdateCaps,
   isUpdatingAllocator,
@@ -147,7 +148,7 @@ export function VaultSettingsModal({
             chainId={chainId}
             vaultAsset={vaultAsset}
             adapterAddress={adapterAddress}
-            existingCaps={existingCaps}
+            existingCaps={capData}
             onUpdateCaps={onUpdateCaps}
             isUpdatingCaps={isUpdatingCaps}
           />
