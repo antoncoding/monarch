@@ -6,7 +6,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
-import { getMarketCapId, parseCapId } from '@/utils/morpho';
+import { getMarketCapId, parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketCapState } from './types';
 
@@ -48,7 +48,7 @@ export function EditAllocations({
     setMarketCaps(
       filteredMarkets.map((market) => {
         const existingCap = existingCaps.find((c) => {
-          const parsed = parseCapId(c.capId);
+          const parsed = parseCapIdParams(c.idParams);
           return parsed.marketId?.toLowerCase() === market.uniqueKey.toLowerCase();
         });
         return {
@@ -85,7 +85,7 @@ export function EditAllocations({
   const hasChanges = useMemo(() => {
     return marketCaps.some((c) => {
       const existingCap = existingCaps.find((ec) => {
-        const parsed = parseCapId(ec.capId);
+        const parsed = parseCapIdParams(ec.idParams);
         return parsed.marketId?.toLowerCase() === c.market.uniqueKey.toLowerCase();
       });
       if (c.isSelected !== !!existingCap) return true;
@@ -120,11 +120,20 @@ export function EditAllocations({
         const relativeCapBigInt =
           c.relativeCap && parseFloat(c.relativeCap) > 0 ? parseUnits(c.relativeCap, 16) : 0n;
 
-        const capId = getMarketCapId(adapterAddress, c.market.uniqueKey);
+        // Create MarketParams from the market object
+        const marketParams = {
+          loanToken: c.market.loanAsset.address as Address,
+          collateralToken: c.market.collateralAsset.address as Address,
+          oracle: c.market.oracleAddress as Address,
+          irm: c.market.irmAddress as Address,
+          lltv: BigInt(c.market.lltv),
+        };
+
+        const { params, id } = getMarketCapId(adapterAddress, marketParams);
 
         return {
-          capId,
-          idParams: c.market.uniqueKey, // Store the market ID as idParams for reference
+          capId: id,
+          idParams: params,
           relativeCap: relativeCapBigInt.toString(),
           absoluteCap: '0',
         } as VaultV2Cap;

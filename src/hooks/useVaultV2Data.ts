@@ -3,7 +3,7 @@ import { Address } from 'viem';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { fetchVaultV2Details, VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
-import { parseCapId } from '@/utils/morpho';
+import { parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 
 type UseVaultV2DataArgs = {
@@ -72,14 +72,13 @@ export function useVaultV2Data({
       const token = result.asset ? findToken(result.asset, chainId) : undefined;
       const curatorDisplay = result.curator ? getSlicedAddress(result.curator as Address) : '--';
 
-      // Parse caps by level using parseCapId
-      // TODO: User will implement the actual parsing logic in parseCapId function
+      // Parse caps by level using parseCapIdParams
       let adapterCap: VaultV2Cap | null = null;
       const collateralCaps: VaultV2Cap[] = [];
       const marketCaps: VaultV2Cap[] = [];
 
       result.caps.forEach((cap) => {
-        const parsed = parseCapId(cap.idParams, cap.capId);
+        const parsed = parseCapIdParams(cap.idParams);
 
         if (parsed.type === 'adapter') {
           adapterCap = cap;
