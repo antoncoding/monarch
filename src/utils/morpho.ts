@@ -1,6 +1,7 @@
-import { zeroAddress } from 'viem';
+import { Address, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
-import { UserTxTypes } from './types';
+import { MarketParams, UserTxTypes } from './types';
+import abi from '@/abis/permit2';
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -100,69 +101,59 @@ export function getMorphoGenesisDate(chainId: number): Date {
 // Cap ID Utilities for Morpho Market Adapters
 // ============================================================================
 
-/**
- * Generates the cap ID for an adapter-level cap.
- * This is the highest level cap that applies to all markets under this adapter.
- *
- * @param adapterAddress - The address of the Morpho market adapter
- * @returns The hashed cap ID for the adapter
- *
- * TODO: Implement the actual hashing logic
- */
-export function getAdapterCapId(adapterAddress: string): string {
-  // TODO: Implement hashing logic for adapter cap ID
-  // This should hash the adapter address to create a unique cap ID
-  return `adapter-${adapterAddress}`;
+
+export function getAdapterCapId(adapterAddress: Address): {params: string, id: string} {
+  // Solidity 
+  // adapterId = keccak256(abi.encode("this", address(this)));
+  const params = encodeAbiParameters(
+    [{ type: 'string' }, { type: 'address' }],
+    ["this", adapterAddress]
+  )
+
+  return { params, id: keccak256(params)}
 }
 
-/**
- * Generates the cap ID for a collateral-level cap.
- * This aggregates all markets with the same collateral token.
- *
- * @param adapterAddress - The address of the Morpho market adapter
- * @param collateralToken - The address of the collateral token
- * @returns The hashed cap ID for the collateral
- *
- * TODO: Implement the actual hashing logic
- */
-export function getCollateralCapId(adapterAddress: string, collateralToken: string): string {
-  // TODO: Implement hashing logic for collateral cap ID
-  // This should hash adapter + collateral token to create a unique cap ID
-  return `collateral-${adapterAddress}-${collateralToken}`;
+export function getCollateralCapId(collateralToken: Address): {params: string, id: string} {
+  // Solidity
+  // id = keccak256(abi.encode("collateralToken", marketParams.collateralToken));
+  const params = encodeAbiParameters(
+    [{ type: 'string' }, { type: 'address' }],
+    ["collateralToken", collateralToken]
+  )
+
+  return { params, id: keccak256(params)}
 }
 
-/**
- * Generates the cap ID for a market-level cap.
- * This is the most granular level, specific to individual markets.
- *
- * @param adapterAddress - The address of the Morpho market adapter
- * @param marketId - The unique market identifier
- * @returns The hashed cap ID for the market
- *
- * TODO: Implement the actual hashing logic
- */
-export function getMarketCapId(adapterAddress: string, marketId: string): string {
-  // TODO: Implement hashing logic for market cap ID
-  // This should hash adapter + market ID to create a unique cap ID
-  return `market-${adapterAddress}-${marketId}`;
+export function getMarketCapId(adopterAddress: Address, marketParams: MarketParams): {params: string, id: string} {
+  // Solidity
+  // id = keccak256(abi.encode("this/marketParams", address(this), marketParams));
+  const marketParamsType = parseAbiParameters('(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)')
+
+  const encoded = encodeAbiParameters(
+    [
+      { type: 'string' },
+      { type: 'address' },
+      { type: 'tuple', components: marketParamsType }
+    ],
+    [
+      'this/marketParams',
+      adopterAddress,
+      [marketParams]
+    ]
+  )
+  const id = keccak256(encoded)
+
+  return { params: encoded, id }
 }
 
-/**
- * Parses a cap ID to determine its type and extract the original parameters.
- *
- * @param capId - The hashed cap ID to parse
- * @returns An object containing the cap type and extracted parameters
- *
- * TODO: Implement the actual parsing logic
- */
-export function parseCapId(capId: string): {
+export function parseCapId(idParams: string, capId: string): {
   type: 'adapter' | 'collateral' | 'market';
   adapterAddress?: string;
   collateralToken?: string;
   marketId?: string;
 } {
-  // TODO: Implement parsing logic to reverse-engineer the cap ID
-  // This should determine what type of cap it is and extract the relevant addresses/IDs
+  
+
 
   // Temporary placeholder logic for development
   if (capId.startsWith('adapter-')) {

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
 import { useAccount, useChainId, useReadContract } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 

@@ -3,7 +3,7 @@ import { Address, parseUnits } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
 import { Spinner } from '@/components/common/Spinner';
-import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
 import { getMarketCapId, parseCapId } from '@/utils/morpho';

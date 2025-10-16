@@ -1,5 +1,5 @@
 import { Address } from 'viem';
-import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 

@@ -493,3 +493,48 @@ export const marketBorrowsQuery = `
     }   
   }
 `;
+
+// Query for VaultV2 details from Morpho API
+export const vaultV2Query = `
+  query VaultV2Query($address: String!, $chainId: Int!) {
+    vaultV2s(where: {
+      chainId_in: [$chainId],
+      address_in: [$address]
+    }) {
+      items {
+        id
+        address
+        name
+        symbol
+        avgApy
+        totalSupply
+        asset {
+          id
+          address
+          symbol
+          name
+          decimals
+        }
+        curator {
+          address
+        }
+        owner {
+          address
+        }
+        allocators {
+          allocator {
+            address
+          }
+        }
+        caps {
+          items {
+            id
+            idData
+            absoluteCap
+            relativeCap
+          }
+        }
+      }
+    }
+  }
+`;

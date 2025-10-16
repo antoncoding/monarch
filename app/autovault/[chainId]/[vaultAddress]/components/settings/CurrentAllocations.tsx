@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { Spinner } from '@/components/common/Spinner';
-import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { parseCapId } from '@/utils/morpho';
 
@@ -27,7 +27,7 @@ export function CurrentAllocations({
     const marketCaps: VaultV2Cap[] = [];
 
     existingCaps.forEach((cap) => {
-      const parsed = parseCapId(cap.capId);
+      const parsed = parseCapId(cap.idParams, cap.capId);
       if (parsed.type === 'adapter') {
         adapterCap = cap;
       } else if (parsed.type === 'collateral') {
@@ -47,7 +47,7 @@ export function CurrentAllocations({
   // Map collateral caps to display data
   const collateralCapsWithData = useMemo(() => {
     return collateralCaps.map((cap) => {
-      const parsed = parseCapId(cap.capId);
+      const parsed = parseCapId(cap.idParams, cap.capId)
       return {
         cap,
         collateralToken: parsed.collateralToken ?? 'Unknown',
@@ -61,7 +61,7 @@ export function CurrentAllocations({
   const marketsWithCaps = useMemo(() => {
     return marketCaps
       .map((cap) => {
-        const parsed = parseCapId(cap.capId);
+        const parsed = parseCapId(cap.idParams, cap.capId)
         // Use case-insensitive matching for marketId
         const market = markets.find(
           (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()

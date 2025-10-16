@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Address } from 'viem';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { fetchVaultV2Details, VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
+import { fetchVaultV2Details, VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
 import { parseCapId } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
@@ -79,7 +79,7 @@ export function useVaultV2Data({
       const marketCaps: VaultV2Cap[] = [];
 
       result.caps.forEach((cap) => {
-        const parsed = parseCapId(cap.capId);
+        const parsed = parseCapId(cap.idParams, cap.capId);
 
         if (parsed.type === 'adapter') {
           adapterCap = cap;
