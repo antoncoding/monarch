@@ -19,6 +19,7 @@ export type GeneralTabProps = {
   currentSymbol: string;
   onUpdateMetadata: (values: { name?: string; symbol?: string }) => Promise<boolean>;
   updatingMetadata: boolean;
+  chainId: SupportedNetworks;
 };
 
 export type AgentsTabProps = {
@@ -29,6 +30,7 @@ export type AgentsTabProps = {
   sentinels?: string[];
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
   isUpdatingAllocator: boolean;
+  chainId: SupportedNetworks;
 };
 
 export type AllocationsTabProps = {

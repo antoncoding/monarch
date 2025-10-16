@@ -3,6 +3,7 @@ import { Address } from 'viem';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { AgentsTabProps } from './types';
 
@@ -14,31 +15,48 @@ export function AgentsTab({
   sentinels = [],
   onSetAllocator,
   isUpdatingAllocator,
+  chainId,
 }: AgentsTabProps) {
   const [allocatorToAdd, setAllocatorToAdd] = useState<Address | null>(null);
   const [allocatorToRemove, setAllocatorToRemove] = useState<Address | null>(null);
   const [isEditingAllocators, setIsEditingAllocators] = useState(false);
 
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: chainId,
+  });
+
   const handleAddAllocator = useCallback(
     async (allocator: Address) => {
+      // Switch network if needed
+      if (needSwitchChain) {
+        switchToNetwork();
+        return;
+      }
+
       setAllocatorToAdd(allocator);
       const success = await onSetAllocator(allocator, true);
       if (success) {
         setAllocatorToAdd(null);
       }
     },
-    [onSetAllocator],
+    [onSetAllocator, needSwitchChain, switchToNetwork],
   );
 
   const handleRemoveAllocator = useCallback(
     async (allocator: Address) => {
+      // Switch network if needed
+      if (needSwitchChain) {
+        switchToNetwork();
+        return;
+      }
+
       setAllocatorToRemove(allocator);
       const success = await onSetAllocator(allocator, false);
       if (success) {
         setAllocatorToRemove(null);
       }
     },
-    [onSetAllocator],
+    [onSetAllocator, needSwitchChain, switchToNetwork],
   );
 
   const renderSingleRole = (
@@ -198,6 +216,8 @@ export function AgentsTab({
                           <span className="flex items-center gap-2">
                             <Spinner size={12} /> Removing...
                           </span>
+                        ) : needSwitchChain ? (
+                          'Switch Network'
                         ) : (
                           'Remove'
                         )}
@@ -235,6 +255,8 @@ export function AgentsTab({
                         <span className="flex items-center gap-2">
                           <Spinner size={12} /> Adding...
                         </span>
+                      ) : needSwitchChain ? (
+                        'Switch Network'
                       ) : (
                         'Add'
                       )}

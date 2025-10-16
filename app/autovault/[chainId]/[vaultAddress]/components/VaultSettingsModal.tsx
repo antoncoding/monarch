@@ -122,6 +122,7 @@ export function VaultSettingsModal({
             currentSymbol={currentSymbol}
             onUpdateMetadata={onUpdateMetadata}
             updatingMetadata={updatingMetadata}
+            chainId={chainId}
           />
         );
       case 'agents':
@@ -134,6 +135,7 @@ export function VaultSettingsModal({
             sentinels={sentinels}
             onSetAllocator={onSetAllocator}
             isUpdatingAllocator={isUpdatingAllocator}
+            chainId={chainId}
           />
         );
       case 'allocations':

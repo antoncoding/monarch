@@ -18,7 +18,6 @@ import { getSlicedAddress } from '@/utils/address';
 import { formatBalance } from '@/utils/balance';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { VaultAgentSummary } from './components/VaultAgentSummary';
-import { VaultApyHistory } from './components/VaultApyHistory';
 import { VaultInitializationModal } from './components/VaultInitializationModal';
 // Removed VaultMarketAllocations - will be re-added when real data is available
 import { VaultSettingsModal } from './components/VaultSettingsModal';
@@ -176,7 +175,7 @@ export default function VaultContent() {
                   />
                   {isOwner && (
                     <Button
-                      variant="light"
+                      variant="subtle"
                       size="sm"
                       onPress={() => {
                         setSettingsTab('general');
@@ -311,7 +310,6 @@ export default function VaultContent() {
 
               {/* TODO: Get real market allocations from subgraph */}
               {/* <VaultMarketAllocations allocations={[]} vaultAssetSymbol="--" /> */}
-              <VaultApyHistory timeframes={['7D', '30D', '90D']} />
               <VaultSettingsModal
                 isOpen={showSettings}
                 onClose={() => setShowSettings(false)}

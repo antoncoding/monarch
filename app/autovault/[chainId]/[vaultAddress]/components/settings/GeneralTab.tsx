@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Input } from '@heroui/react';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { GeneralTabProps } from './types';
 
 export function GeneralTab({
@@ -12,6 +13,7 @@ export function GeneralTab({
   currentSymbol,
   onUpdateMetadata,
   updatingMetadata,
+  chainId,
 }: GeneralTabProps) {
   const nameInputId = useId();
   const symbolInputId = useId();
@@ -22,6 +24,10 @@ export function GeneralTab({
   const [nameInput, setNameInput] = useState(previousName || defaultName);
   const [symbolInput, setSymbolInput] = useState(previousSymbol || defaultSymbol);
   const [metadataError, setMetadataError] = useState<string | null>(null);
+
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: chainId,
+  });
 
   // Reset inputs when current values change
   useEffect(() => {
@@ -53,6 +59,12 @@ export function GeneralTab({
 
     setMetadataError(null);
 
+    // Switch network if needed
+    if (needSwitchChain) {
+      switchToNetwork();
+      return;
+    }
+
     const success = await onUpdateMetadata({
       name: trimmedName !== previousName ? trimmedName || undefined : undefined,
       symbol: trimmedSymbol !== previousSymbol ? trimmedSymbol || undefined : undefined,
@@ -61,7 +73,7 @@ export function GeneralTab({
     if (success) {
       setMetadataError(null);
     }
-  }, [metadataChanged, onUpdateMetadata, previousName, previousSymbol, trimmedName, trimmedSymbol]);
+  }, [metadataChanged, onUpdateMetadata, previousName, previousSymbol, trimmedName, trimmedSymbol, needSwitchChain, switchToNetwork]);
 
   return (
     <div className="space-y-6">
@@ -122,6 +134,8 @@ export function GeneralTab({
             <span className="flex items-center gap-2">
               <Spinner size={12} /> Saving...
             </span>
+          ) : needSwitchChain ? (
+            'Switch Network'
           ) : (
             'Save changes'
           )}

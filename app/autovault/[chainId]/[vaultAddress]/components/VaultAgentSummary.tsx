@@ -58,11 +58,11 @@ export function VaultAgentSummary({
         <p className="text-xs uppercase text-secondary">{roleStatusText}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button variant="interactive" size="sm" onPress={onManageAgents}>
+        <Button variant="subtle" size="sm" onPress={onManageAgents}>
           Manage agents
         </Button>
         {onManageAllocations && (
-          <Button variant="light" size="sm" onPress={onManageAllocations}>
+          <Button variant="subtle" size="sm" onPress={onManageAllocations}>
             Allocation caps
           </Button>
         )}
