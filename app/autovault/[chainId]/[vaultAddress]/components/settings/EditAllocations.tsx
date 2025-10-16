@@ -6,6 +6,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
+import { getMarketCapId, parseCapId } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 import { MarketCapState } from './types';
 
@@ -15,6 +16,7 @@ type EditAllocationsProps = {
   chainId: SupportedNetworks;
   isOwner: boolean;
   isUpdating: boolean;
+  adapterAddress?: Address;
   onCancel: () => void;
   onSave: (caps: VaultV2Cap[]) => Promise<boolean>;
 };
@@ -25,6 +27,7 @@ export function EditAllocations({
   chainId,
   isOwner,
   isUpdating,
+  adapterAddress,
   onCancel,
   onSave,
 }: EditAllocationsProps) {
@@ -44,9 +47,10 @@ export function EditAllocations({
 
     setMarketCaps(
       filteredMarkets.map((market) => {
-        const existingCap = existingCaps.find(
-          (c) => c.marketId.toLowerCase() === market.uniqueKey.toLowerCase()
-        );
+        const existingCap = existingCaps.find((c) => {
+          const parsed = parseCapId(c.capId);
+          return parsed.marketId?.toLowerCase() === market.uniqueKey.toLowerCase();
+        });
         return {
           market,
           relativeCap: existingCap ? (parseFloat(existingCap.relativeCap) / 1e16).toString() : '',
@@ -80,9 +84,10 @@ export function EditAllocations({
 
   const hasChanges = useMemo(() => {
     return marketCaps.some((c) => {
-      const existingCap = existingCaps.find(
-        (ec) => ec.marketId.toLowerCase() === c.market.uniqueKey.toLowerCase()
-      );
+      const existingCap = existingCaps.find((ec) => {
+        const parsed = parseCapId(ec.capId);
+        return parsed.marketId?.toLowerCase() === c.market.uniqueKey.toLowerCase();
+      });
       if (c.isSelected !== !!existingCap) return true;
       if (c.isSelected) {
         const existingRelative = existingCap
@@ -104,14 +109,22 @@ export function EditAllocations({
       return;
     }
 
+    if (!adapterAddress) {
+      console.error('Adapter address is required to save caps');
+      return;
+    }
+
     const capsToUpdate = marketCaps
       .filter((c) => c.isSelected)
       .map((c) => {
         const relativeCapBigInt =
           c.relativeCap && parseFloat(c.relativeCap) > 0 ? parseUnits(c.relativeCap, 16) : 0n;
 
+        const capId = getMarketCapId(adapterAddress, c.market.uniqueKey);
+
         return {
-          marketId: c.market.uniqueKey,
+          capId,
+          idParams: c.market.uniqueKey, // Store the market ID as idParams for reference
           relativeCap: relativeCapBigInt.toString(),
           absoluteCap: '0',
         } as VaultV2Cap;

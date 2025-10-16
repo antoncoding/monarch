@@ -28,7 +28,8 @@ export type UserVaultV2 = SubgraphVaultV2 & {
 export type VaultV2Cap = {
   relativeCap: string;
   absoluteCap: string;
-  marketId: string;
+  capId: string;
+  idParams: string;
 };
 
 export type VaultV2Details = {

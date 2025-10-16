@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -50,7 +50,28 @@ export default function VaultContent() {
     }
   }, [supportedChainId]);
 
+  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'allocations'>('general');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showInitializationModal, setShowInitializationModal] = useState(false);
+
+  const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
   const {
+    data: vaultData,
+    loading: vaultDataLoading,
+    error: vaultDataError,
+    refetch: refetchVaultData,
+  } = useVaultV2Data({
+    vaultAddress: vaultAddressValue,
+    chainId: supportedChainId,
+  });
+
+  // Stabilize the callback to prevent infinite re-renders
+  const handleTransactionSuccess = useCallback(() => {
+    void refetchVaultData();
+  }, [refetchVaultData]);
+
+  const {
+    adapter,
     needsSetup,
     isLoading: adapterLoading,
     refetch: refetchAdapter,
@@ -65,22 +86,7 @@ export default function VaultContent() {
   } = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
-    onTransactionSuccess: () => void refetchVaultData(),
-  });
-
-  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'allocations'>('general');
-  const [showSettings, setShowSettings] = useState(false);
-  const [showInitializationModal, setShowInitializationModal] = useState(false);
-
-  const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
-  const {
-    data: vaultData,
-    loading: vaultDataLoading,
-    error: vaultDataError,
-    refetch: refetchVaultData,
-  } = useVaultV2Data({
-    vaultAddress: vaultAddressValue,
-    chainId: supportedChainId,
+    onTransactionSuccess: handleTransactionSuccess,
   });
 
   // Use vaultData for owner check (from subgraph)
@@ -99,6 +105,8 @@ export default function VaultContent() {
   const allocatorCount = allocators.length;
   const hasNoAllocators = !needsSetup && allocatorCount === 0;
   const hasNoCaps = !needsSetup && allocatorCount > 0 && caps.length === 0;
+
+  console.log('caps', caps)
 
   const roleStatusText = useMemo(() => {
     if (needsSetup) return 'Adapter pending deployment';
@@ -327,6 +335,7 @@ export default function VaultContent() {
                 sentinels={sentinels}
                 chainId={supportedChainId}
                 vaultAsset={assetAddress as Address | undefined}
+                adapterAddress={adapter}
                 existingCaps={caps}
                 onSetAllocator={setAllocator}
                 onUpdateCaps={updateCaps}

@@ -37,6 +37,7 @@ export type AllocationsTabProps = {
   isOwner: boolean;
   chainId: SupportedNetworks;
   vaultAsset?: Address;
+  adapterAddress?: Address;
   existingCaps: VaultV2Cap[];
   onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingCaps: boolean;

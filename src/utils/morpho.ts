@@ -95,3 +95,88 @@ export function getMorphoGenesisDate(chainId: number): Date {
       return MAINNET_GENESIS_DATE; // default to mainnet
   }
 }
+
+// ============================================================================
+// Cap ID Utilities for Morpho Market Adapters
+// ============================================================================
+
+/**
+ * Generates the cap ID for an adapter-level cap.
+ * This is the highest level cap that applies to all markets under this adapter.
+ *
+ * @param adapterAddress - The address of the Morpho market adapter
+ * @returns The hashed cap ID for the adapter
+ *
+ * TODO: Implement the actual hashing logic
+ */
+export function getAdapterCapId(adapterAddress: string): string {
+  // TODO: Implement hashing logic for adapter cap ID
+  // This should hash the adapter address to create a unique cap ID
+  return `adapter-${adapterAddress}`;
+}
+
+/**
+ * Generates the cap ID for a collateral-level cap.
+ * This aggregates all markets with the same collateral token.
+ *
+ * @param adapterAddress - The address of the Morpho market adapter
+ * @param collateralToken - The address of the collateral token
+ * @returns The hashed cap ID for the collateral
+ *
+ * TODO: Implement the actual hashing logic
+ */
+export function getCollateralCapId(adapterAddress: string, collateralToken: string): string {
+  // TODO: Implement hashing logic for collateral cap ID
+  // This should hash adapter + collateral token to create a unique cap ID
+  return `collateral-${adapterAddress}-${collateralToken}`;
+}
+
+/**
+ * Generates the cap ID for a market-level cap.
+ * This is the most granular level, specific to individual markets.
+ *
+ * @param adapterAddress - The address of the Morpho market adapter
+ * @param marketId - The unique market identifier
+ * @returns The hashed cap ID for the market
+ *
+ * TODO: Implement the actual hashing logic
+ */
+export function getMarketCapId(adapterAddress: string, marketId: string): string {
+  // TODO: Implement hashing logic for market cap ID
+  // This should hash adapter + market ID to create a unique cap ID
+  return `market-${adapterAddress}-${marketId}`;
+}
+
+/**
+ * Parses a cap ID to determine its type and extract the original parameters.
+ *
+ * @param capId - The hashed cap ID to parse
+ * @returns An object containing the cap type and extracted parameters
+ *
+ * TODO: Implement the actual parsing logic
+ */
+export function parseCapId(capId: string): {
+  type: 'adapter' | 'collateral' | 'market';
+  adapterAddress?: string;
+  collateralToken?: string;
+  marketId?: string;
+} {
+  // TODO: Implement parsing logic to reverse-engineer the cap ID
+  // This should determine what type of cap it is and extract the relevant addresses/IDs
+
+  // Temporary placeholder logic for development
+  if (capId.startsWith('adapter-')) {
+    return { type: 'adapter', adapterAddress: capId.replace('adapter-', '') };
+  }
+  if (capId.startsWith('collateral-')) {
+    const parts = capId.replace('collateral-', '').split('-');
+    return { type: 'collateral', adapterAddress: parts[0], collateralToken: parts[1] };
+  }
+  if (capId.startsWith('market-')) {
+    const parts = capId.replace('market-', '').split('-');
+    return { type: 'market', adapterAddress: parts[0], marketId: parts[1] };
+  }
+
+  // Default fallback
+  return { type: 'market' };
+}

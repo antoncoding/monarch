@@ -7,6 +7,7 @@ export function AllocationsTab({
   isOwner,
   chainId,
   vaultAsset,
+  adapterAddress,
   existingCaps,
   onUpdateCaps,
   isUpdatingCaps,
@@ -20,6 +21,7 @@ export function AllocationsTab({
       chainId={chainId}
       isOwner={isOwner}
       isUpdating={isUpdatingCaps}
+      adapterAddress={adapterAddress}
       onCancel={() => setIsEditing(false)}
       onSave={async (caps) => {
         const success = await onUpdateCaps(caps);

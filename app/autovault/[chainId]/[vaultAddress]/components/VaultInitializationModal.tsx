@@ -16,7 +16,7 @@ const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) =>
   value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`;
 
-const STEP_SEQUENCE = ['deploy', 'finalize', 'agents'] as const;
+const STEP_SEQUENCE = ['deploy', 'adapter-cap', 'finalize', 'agents'] as const;
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -62,6 +62,54 @@ function DeployAdapterStep({
             ? `Adapter detected: ${shortenAddress(adapterAddress)}`
             : 'Adapter not detected yet.'}
         </span>
+      </div>
+    </div>
+  );
+}
+
+function AdapterCapStep({
+  adapterAddress,
+  adapterCapRelative,
+  onSetAdapterCap,
+}: {
+  adapterAddress: Address;
+  adapterCapRelative: string;
+  onSetAdapterCap: (relativeCap: string) => void;
+}) {
+  const handleCapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty or valid numbers between 0-100
+    if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0 && parseFloat(value) <= 100)) {
+      onSetAdapterCap(value);
+    }
+  };
+
+  return (
+    <div className="space-y-4 px-2 font-zen">
+      <p className="text-sm text-secondary">
+        Set a maximum allocation cap for the Morpho adapter. This controls the total percentage of vault assets that can be allocated through this adapter.
+      </p>
+      <div className="rounded bg-hovered/60 p-4 space-y-4">
+        <div className="space-y-1">
+          <span className="text-xs uppercase text-secondary">Adapter address</span>
+          <AddressDisplay address={adapterAddress} />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs uppercase text-secondary">Adapter cap (%)</label>
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={adapterCapRelative}
+            onChange={handleCapChange}
+            className="w-full rounded border border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            placeholder="e.g., 80"
+          />
+          <p className="text-xs text-secondary">
+            Maximum percentage of vault assets that can be allocated via this adapter (0-100%)
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -161,6 +209,7 @@ export function VaultInitializationModal({
   const [stepIndex, setStepIndex] = useState(0);
   const [statusVisible, setStatusVisible] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Address | null>(null);
+  const [adapterCapRelative, setAdapterCapRelative] = useState<string>('100');
   const currentStep = STEP_SEQUENCE[stepIndex];
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
@@ -245,6 +294,7 @@ export function VaultInitializationModal({
       setStepIndex(0);
       setStatusVisible(false);
       setSelectedAgent(null);
+      setAdapterCapRelative('100');
     }
   }, [isOpen]);
 
@@ -259,6 +309,8 @@ export function VaultInitializationModal({
     switch (currentStep) {
       case 'deploy':
         return 'Deploy Morpho Market adapter';
+      case 'adapter-cap':
+        return 'Set adapter allocation cap';
       case 'finalize':
         return 'Configure vault registry';
       case 'agents':
@@ -270,7 +322,8 @@ export function VaultInitializationModal({
 
   const canProceedToAgents = adapterDetected && registryAddress !== ZERO_ADDRESS;
   const showLoading = statusVisible && (isDeploying || adaptersLoading);
-  const showBackButton = stepIndex > 0 && stepIndex < 2;
+  const showBackButton = stepIndex > 0 && stepIndex < 3;
+  const canProceedFromAdapterCap = adapterCapRelative !== '' && parseFloat(adapterCapRelative) > 0;
 
   const renderCta = () => {
     // Step 0: Deploy adapter
@@ -294,22 +347,37 @@ export function VaultInitializationModal({
       );
     }
 
-    // Step 1: Finalize setup -> move to agent selection
+    // Step 1: Set adapter cap
     if (stepIndex === 1) {
+      return (
+        <Button
+          variant="cta"
+          size="sm"
+          className="min-w-[150px]"
+          isDisabled={!canProceedFromAdapterCap}
+          onPress={() => setStepIndex(2)}
+        >
+          Next: Finalize setup
+        </Button>
+      );
+    }
+
+    // Step 2: Finalize setup -> move to agent selection
+    if (stepIndex === 2) {
       return (
         <Button
           variant="cta"
           size="sm"
           className="min-w-[170px]"
           isDisabled={!canProceedToAgents}
-          onPress={() => setStepIndex(2)}
+          onPress={() => setStepIndex(3)}
         >
           Next: Choose agent
         </Button>
       );
     }
 
-    // Step 2: Agent selection -> complete with optional agent
+    // Step 3: Agent selection -> complete with optional agent
     return (
       <>
         <Button
@@ -356,7 +424,7 @@ export function VaultInitializationModal({
           <div>
             <h2 className="text-2xl font-normal">{stepTitle}</h2>
             <p className="mt-1 text-sm text-secondary">
-              {stepIndex < 2
+              {stepIndex < 3
                 ? 'Complete these steps to activate your vault.'
                 : 'Optionally choose an agent now, or configure later in settings.'}
             </p>
@@ -369,6 +437,13 @@ export function VaultInitializationModal({
               loading={showLoading}
               adapterDetected={adapterDetected}
               adapterAddress={unifiedAdapter}
+            />
+          )}
+          {currentStep === 'adapter-cap' && (
+            <AdapterCapStep
+              adapterAddress={unifiedAdapter}
+              adapterCapRelative={adapterCapRelative}
+              onSetAdapterCap={setAdapterCapRelative}
             />
           )}
           {currentStep === 'finalize' && (

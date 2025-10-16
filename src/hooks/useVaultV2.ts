@@ -356,7 +356,7 @@ export function useVaultV2({
       caps.forEach((cap) => {
         const relativeCapBigInt = BigInt(cap.relativeCap);
         const absoluteCapBigInt = BigInt(cap.absoluteCap);
-        const idData = cap.marketId as `0x${string}`;
+        const idData = cap.capId as `0x${string}`;
 
         // For updates, we always increase caps (curator can decrease if needed)
         if (relativeCapBigInt > 0n) {

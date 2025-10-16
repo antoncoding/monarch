@@ -29,6 +29,7 @@ type VaultSettingsModalProps = {
   sentinels?: string[];
   chainId: SupportedNetworks;
   vaultAsset?: Address;
+  adapterAddress?: Address;
   existingCaps?: VaultV2Cap[];
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
   onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
@@ -53,6 +54,7 @@ export function VaultSettingsModal({
   sentinels = [],
   chainId,
   vaultAsset,
+  adapterAddress,
   existingCaps = [],
   onSetAllocator,
   onUpdateCaps,
@@ -144,6 +146,7 @@ export function VaultSettingsModal({
             isOwner={isOwner}
             chainId={chainId}
             vaultAsset={vaultAsset}
+            adapterAddress={adapterAddress}
             existingCaps={existingCaps}
             onUpdateCaps={onUpdateCaps}
             isUpdatingCaps={isUpdatingCaps}

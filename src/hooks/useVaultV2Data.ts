@@ -3,6 +3,7 @@ import { Address } from 'viem';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { fetchVaultV2Details, VaultV2Cap } from '@/data-sources/subgraph/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
+import { parseCapId } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
 
 type UseVaultV2DataArgs = {
@@ -26,6 +27,10 @@ export type VaultV2Data = {
   caps: VaultV2Cap[];
   adopters: string[];
   curatorDisplay: string;
+  // Parsed caps by level
+  adapterCap: VaultV2Cap | null;
+  collateralCaps: VaultV2Cap[];
+  marketCaps: VaultV2Cap[];
 };
 
 type UseVaultV2DataReturn = {
@@ -67,6 +72,24 @@ export function useVaultV2Data({
       const token = result.asset ? findToken(result.asset, chainId) : undefined;
       const curatorDisplay = result.curator ? getSlicedAddress(result.curator as Address) : '--';
 
+      // Parse caps by level using parseCapId
+      // TODO: User will implement the actual parsing logic in parseCapId function
+      let adapterCap: VaultV2Cap | null = null;
+      const collateralCaps: VaultV2Cap[] = [];
+      const marketCaps: VaultV2Cap[] = [];
+
+      result.caps.forEach((cap) => {
+        const parsed = parseCapId(cap.capId);
+
+        if (parsed.type === 'adapter') {
+          adapterCap = cap;
+        } else if (parsed.type === 'collateral') {
+          collateralCaps.push(cap);
+        } else if (parsed.type === 'market') {
+          marketCaps.push(cap);
+        }
+      });
+
       setData({
         displayName: result.name || fallbackName,
         displaySymbol: result.symbol || fallbackSymbol,
@@ -81,6 +104,9 @@ export function useVaultV2Data({
         caps: result.caps,
         adopters: result.adopters,
         curatorDisplay,
+        adapterCap,
+        collateralCaps,
+        marketCaps,
       });
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch vault data'));
@@ -88,10 +114,16 @@ export function useVaultV2Data({
     } finally {
       setLoading(false);
     }
-  }, [vaultAddress, chainId, fallbackName, fallbackSymbol, findToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaultAddress, chainId]);
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  // Memoize the refetch function to prevent unnecessary re-renders in parent components
+  const refetch = useCallback(async () => {
+    await load();
   }, [load]);
 
   return useMemo(
@@ -99,8 +131,8 @@ export function useVaultV2Data({
       data,
       loading,
       error,
-      refetch: load,
+      refetch,
     }),
-    [data, error, load, loading],
+    [data, error, loading, refetch],
   );
 }
