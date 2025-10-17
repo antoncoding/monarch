@@ -16,6 +16,7 @@ type MarketDetailsBlockProps = {
   defaultCollapsed?: boolean;
   mode?: 'supply' | 'borrow';
   showRewards?: boolean;
+  disableExpansion?: boolean;
 };
 
 export function MarketDetailsBlock({
@@ -24,8 +25,9 @@ export function MarketDetailsBlock({
   defaultCollapsed = false,
   mode = 'supply',
   showRewards = false,
+  disableExpansion = false,
 }: MarketDetailsBlockProps): JSX.Element {
-  const [isExpanded, setIsExpanded] = useState(!defaultCollapsed);
+  const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
     marketId: market.uniqueKey,
@@ -44,18 +46,18 @@ export function MarketDetailsBlock({
     <div>
       {/* Collapsible Market Details */}
       <div
-        className="bg-hovered cursor-pointer rounded transition-colors"
-        onClick={() => setIsExpanded(!isExpanded)}
+        className={`bg-hovered rounded transition-colors ${disableExpansion ? '' : 'cursor-pointer'}`}
+        onClick={() => !disableExpansion && setIsExpanded(!isExpanded)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
+          if (!disableExpansion && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             setIsExpanded(!isExpanded);
           }
         }}
-        role="button"
-        tabIndex={0}
-        aria-expanded={isExpanded}
-        aria-label={`${isExpanded ? 'Collapse' : 'Expand'} market details`}
+        role={disableExpansion ? undefined : "button"}
+        tabIndex={disableExpansion ? undefined : 0}
+        aria-expanded={disableExpansion ? undefined : isExpanded}
+        aria-label={disableExpansion ? undefined : `${isExpanded ? 'Collapse' : 'Expand'} market details`}
       >
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-2">
@@ -113,9 +115,11 @@ export function MarketDetailsBlock({
             )}
           </div>
 
-          <div className="text-primary opacity-70 hover:opacity-100">
-            {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-          </div>
+          {!disableExpansion && (
+            <div className="text-primary opacity-70 hover:opacity-100">
+              {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
+            </div>
+          )}
         </div>
 
         {/* Expanded Market Details */}

@@ -9,6 +9,8 @@ export type VaultV2Cap = {
   absoluteCap: string;
   capId: string;
   idParams: string;
+  oldRelativeCap?: string; // For delta calculation
+  oldAbsoluteCap?: string; // For delta calculation
 };
 
 export type VaultV2Details = {

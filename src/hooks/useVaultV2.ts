@@ -354,42 +354,87 @@ export function useVaultV2({
       const txs: `0x${string}`[] = [];
 
       caps.forEach((cap) => {
-        const relativeCapBigInt = BigInt(cap.relativeCap);
-        const absoluteCapBigInt = BigInt(cap.absoluteCap);
+        const newRelativeCap = BigInt(cap.relativeCap);
+        const newAbsoluteCap = BigInt(cap.absoluteCap);
+        const oldRelativeCap = cap.oldRelativeCap ? BigInt(cap.oldRelativeCap) : 0n;
+        const oldAbsoluteCap = cap.oldAbsoluteCap ? BigInt(cap.oldAbsoluteCap) : 0n;
         const idData = cap.idParams as `0x${string}`;
 
-        if (relativeCapBigInt > 0n) {
-          const increaseRelativeCapTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'increaseRelativeCap',
-            args: [idData, relativeCapBigInt],
-          });
+        // Handle relative cap delta
+        if (newRelativeCap !== oldRelativeCap) {
+          if (newRelativeCap > oldRelativeCap) {
+            // Increase
+            const increaseRelativeCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'increaseRelativeCap',
+              args: [idData, newRelativeCap],
+            });
 
-          const submitIncreaseRelativeCapTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'submit',
-            args: [increaseRelativeCapTx],
-          });
+            const submitIncreaseRelativeCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'submit',
+              args: [increaseRelativeCapTx],
+            });
 
-          txs.push(submitIncreaseRelativeCapTx, increaseRelativeCapTx);
+            txs.push(submitIncreaseRelativeCapTx, increaseRelativeCapTx);
+          } else if (newRelativeCap < oldRelativeCap) {
+            // Decrease
+            const decreaseRelativeCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'decreaseRelativeCap',
+              args: [idData, newRelativeCap],
+            });
+
+            const submitDecreaseRelativeCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'submit',
+              args: [decreaseRelativeCapTx],
+            });
+
+            txs.push(submitDecreaseRelativeCapTx, decreaseRelativeCapTx);
+          }
         }
 
-        if (absoluteCapBigInt > 0n) {
-          const increaseAbsoluteCapTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'increaseAbsoluteCap',
-            args: [idData, absoluteCapBigInt],
-          });
+        // Handle absolute cap delta
+        if (newAbsoluteCap !== oldAbsoluteCap) {
+          if (newAbsoluteCap > oldAbsoluteCap) {
+            // Increase
+            const increaseAbsoluteCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'increaseAbsoluteCap',
+              args: [idData, newAbsoluteCap],
+            });
 
-          const submitIncreaseAbsoluteCapTx = encodeFunctionData({
-            abi: vaultv2Abi,
-            functionName: 'submit',
-            args: [increaseAbsoluteCapTx],
-          });
+            const submitIncreaseAbsoluteCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'submit',
+              args: [increaseAbsoluteCapTx],
+            });
 
-          txs.push(submitIncreaseAbsoluteCapTx, increaseAbsoluteCapTx);
+            txs.push(submitIncreaseAbsoluteCapTx, increaseAbsoluteCapTx);
+          } else if (newAbsoluteCap < oldAbsoluteCap) {
+            // Decrease
+            const decreaseAbsoluteCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'decreaseAbsoluteCap',
+              args: [idData, newAbsoluteCap],
+            });
+
+            const submitDecreaseAbsoluteCapTx = encodeFunctionData({
+              abi: vaultv2Abi,
+              functionName: 'submit',
+              args: [decreaseAbsoluteCapTx],
+            });
+
+            txs.push(submitDecreaseAbsoluteCapTx, decreaseAbsoluteCapTx);
+          }
         }
       });
+
+      if (txs.length === 0) {
+        console.log('No cap changes detected');
+        return false;
+      }
 
       const multicallTx = encodeFunctionData({
         abi: vaultv2Abi,

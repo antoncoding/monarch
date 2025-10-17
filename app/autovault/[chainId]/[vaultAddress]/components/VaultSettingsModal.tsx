@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { LuX } from 'react-icons/lu';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { Address } from 'viem';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
@@ -36,6 +37,8 @@ type VaultSettingsModalProps = {
   updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingAllocator: boolean;
   isUpdatingCaps: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 };
 
 export function VaultSettingsModal({
@@ -61,6 +64,8 @@ export function VaultSettingsModal({
   updateCaps,
   isUpdatingAllocator,
   isUpdatingCaps,
+  onRefresh,
+  isRefreshing = false,
 }: VaultSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [mounted, setMounted] = useState(false);
@@ -175,14 +180,27 @@ export function VaultSettingsModal({
           {/* Header */}
           <div className="flex items-center justify-between border-b border-divider/30 px-8 pt-8 pb-4">
             <h2 className="text-2xl font-normal">Vault Settings</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:text-primary"
-              aria-label="Close settings"
-            >
-              <LuX className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {onRefresh && (
+                <button
+                  type="button"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:text-primary disabled:opacity-50"
+                  aria-label="Refresh vault data"
+                >
+                  <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:text-primary"
+                aria-label="Close settings"
+              >
+                <LuX className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}

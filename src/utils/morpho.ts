@@ -213,22 +213,18 @@ export function parseCapIdParams(idParams: string): {
       );
 
       if (decoded[0] === 'this/marketParams') {
-        const marketParams = decoded[2] as any;
-        const [loanToken, collateralToken, oracle, irm, lltv] = marketParams;
+        const marketParamsBlock = decoded[2] as any;
+        const marketParams = marketParamsBlock[0] as any as MarketParams;
 
         // Create a market ID hash from the market params
-        const marketId = keccak256(encodeAbiParameters(marketParamsType, marketParams));
+        const marketId = keccak256(encodeAbiParameters(marketParamsType, [marketParams]));
+
+        console.log('market param', marketParams)
 
         return {
           type: 'market',
           adapterAddress: decoded[1] as Address,
-          marketParams: {
-            loanToken: loanToken as Address,
-            collateralToken: collateralToken as Address,
-            oracle: oracle as Address,
-            irm: irm as Address,
-            lltv: lltv as bigint,
-          },
+          marketParams,
           marketId,
         };
       }

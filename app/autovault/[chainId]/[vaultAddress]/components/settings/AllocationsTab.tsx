@@ -24,7 +24,7 @@ export function AllocationsTab({
       adapterAddress={adapterAddress}
       onCancel={() => setIsEditing(false)}
       onSave={async (caps) => {
-        const success = await onUpdateCaps(caps);
+        const success = await updateCaps(caps);
         if (success) {
           setIsEditing(false);
         }
@@ -37,7 +37,7 @@ export function AllocationsTab({
       isOwner={isOwner}
       onStartEdit={() => setIsEditing(true)}
       vaultAsset={vaultAsset}
-      networkId=
+      chainId={chainId}
     />
   );
 }

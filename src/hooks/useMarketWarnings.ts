@@ -18,7 +18,7 @@ export const useMarketWarnings = (
     market.oracle,
     market.oracleAddress,
     market.morphoBlue?.chain?.id,
-    market.realizedBadDebt.underlying,
+    market.realizedBadDebt?.underlying,
     considerWhitelist,
   ]);
 };
