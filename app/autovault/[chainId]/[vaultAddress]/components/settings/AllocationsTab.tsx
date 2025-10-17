@@ -9,7 +9,7 @@ export function AllocationsTab({
   vaultAsset,
   adapterAddress,
   existingCaps,
-  onUpdateCaps,
+  updateCaps,
   isUpdatingCaps,
 }: AllocationsTabProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +36,8 @@ export function AllocationsTab({
       existingCaps={existingCaps}
       isOwner={isOwner}
       onStartEdit={() => setIsEditing(true)}
+      vaultAsset={vaultAsset}
+      networkId=
     />
   );
 }

@@ -2,81 +2,104 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { Spinner } from '@/components/common/Spinner';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { parseCapIdParams } from '@/utils/morpho';
 import { CapData } from '@/hooks/useVaultV2Data';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { Address } from 'viem';
+import { findToken } from '@/utils/tokens';
 
 type CurrentAllocationsProps = {
   existingCaps?: CapData;
   isOwner: boolean;
   onStartEdit: () => void;
+  vaultAsset?: Address;
+  chainId: number
 };
 
 export function CurrentAllocations({
   existingCaps,
   isOwner,
   onStartEdit,
+  chainId,
+  vaultAsset
 }: CurrentAllocationsProps) {
   const { markets, loading: marketsLoading } = useMarkets();
-  const [showDetailed, setShowDetailed] = useState(false);
+  const [expandedCollaterals, setExpandedCollaterals] = useState<Set<string>>(new Set());
 
-  // Separate caps by level
-  const { adapterCap, collateralCaps, marketCaps } = useMemo(() => {
-    let adapterCap: VaultV2Cap | null = null;
-    const collateralCaps: VaultV2Cap[] = [];
-    const marketCaps: VaultV2Cap[] = [];
+  const token = vaultAsset ? findToken(vaultAsset, chainId) : undefined
 
-    existingCaps.forEach((cap) => {
+  const hasAnyCaps = existingCaps && (
+    existingCaps.adapterCap !== null ||
+    existingCaps.collateralCaps.length > 0 ||
+    existingCaps.marketCaps.length > 0
+  );
+
+  // Group market caps by collateral
+  const marketCapsByCollateral = useMemo(() => {
+    const grouped = new Map<string, Array<{
+      cap: NonNullable<typeof existingCaps>['marketCaps'][0];
+      market: typeof markets[0] | null;
+      capPercent: string;
+    }>>();
+
+    if (!existingCaps) return grouped;
+
+    existingCaps.marketCaps.forEach((cap) => {
       const parsed = parseCapIdParams(cap.idParams);
-      if (parsed.type === 'adapter') {
-        adapterCap = cap;
-      } else if (parsed.type === 'collateral') {
-        collateralCaps.push(cap);
-      } else if (parsed.type === 'market') {
-        marketCaps.push(cap);
+      if (parsed.type === 'market' && parsed.marketParams) {
+        const collateralAddr = parsed.marketParams.collateralToken.toLowerCase();
+
+        const market = markets.find(
+          (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()
+        ) ?? null;
+
+        if (!grouped.has(collateralAddr)) {
+          grouped.set(collateralAddr, []);
+        }
+
+        grouped.get(collateralAddr)!.push({
+          cap,
+          market,
+          capPercent: (parseFloat(cap.relativeCap) / 1e16).toFixed(2),
+        });
       }
     });
 
-    return { adapterCap, collateralCaps, marketCaps };
-  }, [existingCaps]);
+    return grouped;
+  }, [existingCaps, markets]);
 
-  const hasAnyCaps = existingCaps.length > 0;
-
-  console.log('existingCaps', existingCaps);
-
-  // Map collateral caps to display data
-  const collateralCapsWithData = useMemo(() => {
-    return collateralCaps.map((cap) => {
+  // Map collateral caps with their markets
+  const collateralCapsWithMarkets = useMemo(() => {
+    return existingCaps?.collateralCaps.map((cap) => {
       const parsed = parseCapIdParams(cap.idParams);
+      const collateralAddr = parsed.collateralToken?.toLowerCase() ?? '';
+      const marketsForCollateral = marketCapsByCollateral.get(collateralAddr) || [];
+
+      // Get collateral symbol from first market
+      const collateralSymbol = marketsForCollateral[0]?.market?.collateralAsset.symbol || 'Unknown';
+
       return {
         cap,
         collateralToken: parsed.collateralToken ?? 'Unknown',
+        collateralSymbol,
         capPercent: (parseFloat(cap.relativeCap) / 1e16).toFixed(2),
-        absoluteCapFormatted: cap.absoluteCap,
+        markets: marketsForCollateral,
       };
-    });
-  }, [collateralCaps]);
+    }) || [];
+  }, [existingCaps, marketCapsByCollateral]);
 
-  // Map market caps to their market data (for detailed view)
-  const marketsWithCaps = useMemo(() => {
-    return marketCaps
-      .map((cap) => {
-        const parsed = parseCapIdParams(cap.idParams);
-        // Use case-insensitive matching for marketId
-        const market = markets.find(
-          (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()
-        );
-        if (!market) return null;
-        return {
-          market,
-          cap,
-          capPercent: (parseFloat(cap.relativeCap) / 1e16).toFixed(2),
-          absoluteCapFormatted: cap.absoluteCap,
-        };
-      })
-      .filter((item) => item !== null);
-  }, [marketCaps, markets]);
+  const toggleCollateral = (collateralAddr: string) => {
+    setExpandedCollaterals((prev) => {
+      const next = new Set(prev);
+      if (next.has(collateralAddr)) {
+        next.delete(collateralAddr);
+      } else {
+        next.add(collateralAddr);
+      }
+      return next;
+    });
+  };
 
   if (marketsLoading) {
     return (
@@ -92,19 +115,10 @@ export function CurrentAllocations({
         <div>
           <h3 className="text-base font-medium">Allocation Caps</h3>
           <p className="text-xs text-secondary">
-            Maximum allocation limits for adapter, collateral, and markets
+            Set limits on how much of each asset can be allocated across markets and collaterals.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {collateralCaps.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onPress={() => setShowDetailed(!showDetailed)}
-            >
-              {showDetailed ? 'Show collateral view' : 'Show detailed markets'}
-            </Button>
-          )}
           {isOwner && (
             <Button variant="subtle" size="sm" onPress={onStartEdit}>
               {hasAnyCaps ? 'Edit caps' : 'Add caps'}
@@ -121,98 +135,212 @@ export function CurrentAllocations({
           </p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Adapter Cap (if exists) */}
-          {adapterCap && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-secondary">Adapter Cap</h4>
-              <div className="rounded border border-divider/40 bg-hovered/30 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p className="text-xs text-secondary">Total adapter allocation limit</p>
+        <div className="space-y-4">
+          {/* Adapter Cap (Level 1) */}
+          {existingCaps?.adapterCap && (
+            <div className="rounded border-2 border-primary/30 bg-primary/5 p-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-primary">Adapter Cap</h4>
+                    <span className="rounded bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+                      Level 1
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-primary">
-                      {(parseFloat((adapterCap as VaultV2Cap).relativeCap) / 1e16).toFixed(2)}%
-                    </div>
-                    <div className="text-xs text-secondary">Relative cap</div>
+                  <p className="text-xs text-secondary">Total allocation limit for this adapter</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-primary">
+                    {(parseFloat(existingCaps.adapterCap.relativeCap) / 1e16).toFixed(2)}%
                   </div>
+                  <div className="text-xs text-secondary">Relative cap</div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Collateral Caps or Market Caps based on toggle */}
-          {!showDetailed ? (
-            // Collateral-level caps (default view)
-            collateralCaps.length > 0 && (
+          {/* Collateral Caps (Level 2) */}
+          {collateralCapsWithMarkets.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-medium text-secondary">Collateral Caps</h4>
+                <span className="rounded bg-hovered px-2 py-0.5 text-xs font-medium text-secondary">
+                  Level 2
+                </span>
+                <span className="text-xs text-secondary">
+                  ({collateralCapsWithMarkets.length})
+                </span>
+              </div>
+
               <div className="space-y-2">
-                <h4 className="text-sm font-medium text-secondary">
-                  Collateral Caps ({collateralCaps.length})
-                </h4>
-                <div className="space-y-3">
-                  {collateralCapsWithData.map((item, index) => (
+                {collateralCapsWithMarkets.map((item) => {
+                  const collateralAddr = item.collateralToken.toLowerCase();
+                  const isExpanded = expandedCollaterals.has(collateralAddr);
+                  const hasMarkets = item.markets.length > 0;
+
+                  return (
                     <div
                       key={item.cap.capId}
-                      className="rounded border border-divider/40 bg-hovered/20 p-4"
+                      className="rounded border border-divider/40 bg-surface overflow-hidden"
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            Collateral {index + 1}
-                          </p>
-                          <p className="font-mono text-xs text-secondary">
-                            {item.collateralToken}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-primary">
-                            {item.capPercent}%
+                      {/* Collateral Cap Header */}
+                      <div
+                        className={`p-4 ${hasMarkets ? 'cursor-pointer hover:bg-hovered/30' : ''}`}
+                        onClick={() => hasMarkets && toggleCollateral(collateralAddr)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium">{item.collateralSymbol}</p>
+                                {hasMarkets && (
+                                  <span className="text-xs text-secondary">
+                                    ({item.markets.length} market{item.markets.length !== 1 ? 's' : ''})
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-mono text-xs text-secondary mt-1">
+                                {item.collateralToken}
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-xs text-secondary">
-                            Abs: {item.absoluteCapFormatted}
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className="text-sm font-semibold text-primary">
+                                {item.capPercent}%
+                              </div>
+                              <div className="text-xs text-secondary">Collateral cap</div>
+                            </div>
+                            {hasMarkets && (
+                              <div className="text-secondary">
+                                {isExpanded ? (
+                                  <ChevronUpIcon className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDownIcon className="h-4 w-4" />
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          ) : (
-            // Market-level caps (detailed view)
-            marketCaps.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-secondary">
-                  Market Caps ({marketCaps.length})
-                </h4>
-                <div className="space-y-3">
-                  {marketsWithCaps.map((item) => {
-                    if (!item) return null;
-                    const { market, capPercent, absoluteCapFormatted } = item;
 
-                    return (
-                      <div key={market.uniqueKey} className="space-y-2">
-                        <MarketDetailsBlock
-                          market={market}
-                          showDetailsLink={false}
-                          defaultCollapsed
-                          mode="supply"
-                          showRewards={false}
-                        />
-                        <div className="flex items-center justify-between rounded bg-primary/5 px-3 py-2">
-                          <span className="text-xs text-secondary">Maximum allocation cap</span>
-                          <div className="text-right">
-                            <span className="text-sm font-semibold text-primary">{capPercent}%</span>
-                            <div className="text-xs text-secondary">Abs: {absoluteCapFormatted}</div>
+                      {/* Market Caps (Level 3) - Expandable */}
+                      {isExpanded && hasMarkets && (
+                        <div className="border-t border-divider/30 bg-hovered/10 p-3">
+                          <div className="flex items-center gap-2 mb-3 px-1">
+                            <h5 className="text-xs font-medium text-secondary">Market Caps</h5>
+                            <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
+                              Level 3
+                            </span>
+                          </div>
+                          <div className="space-y-3">
+                            {item.markets.map((marketItem) => {
+                              if (!marketItem.market) {
+                                return (
+                                  <div
+                                    key={marketItem.cap.capId}
+                                    className="rounded bg-surface p-3 text-xs text-secondary"
+                                  >
+                                    Market data not available
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div
+                                  key={marketItem.cap.capId}
+                                  className="rounded bg-surface border border-divider/20 overflow-hidden"
+                                >
+                                  <MarketDetailsBlock
+                                    market={marketItem.market}
+                                    showDetailsLink={false}
+                                    defaultCollapsed
+                                    mode="supply"
+                                    showRewards={false}
+                                  />
+                                  <div className="flex items-center justify-between bg-primary/5 px-3 py-2 border-t border-divider/20">
+                                    <span className="text-xs text-secondary">Market allocation cap</span>
+                                    <div className="text-right">
+                                      <span className="text-sm font-semibold text-primary">
+                                        {marketItem.capPercent}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )
+            </div>
+          )}
+
+          {/* Orphaned Market Caps (markets without collateral caps) */}
+          {existingCaps?.marketCaps.length > 0 && (
+            (() => {
+              const collateralsWithCaps = new Set(
+                collateralCapsWithMarkets.map((c) => c.collateralToken.toLowerCase())
+              );
+
+              const orphanedMarkets = existingCaps.marketCaps.filter((cap) => {
+                const parsed = parseCapIdParams(cap.idParams);
+                if (parsed.type === 'market' && parsed.marketParams) {
+                  const collateralAddr = parsed.marketParams.collateralToken.toLowerCase();
+                  return !collateralsWithCaps.has(collateralAddr);
+                }
+                return false;
+              });
+
+              if (orphanedMarkets.length === 0) return null;
+
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-secondary">Direct Market Caps</h4>
+                    <span className="text-xs text-secondary">
+                      (without collateral caps)
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {orphanedMarkets.map((cap) => {
+                      const parsed = parseCapIdParams(cap.idParams);
+                      const market = markets.find(
+                        (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()
+                      );
+
+                      if (!market) return null;
+
+                      return (
+                        <div
+                          key={cap.capId}
+                          className="rounded border border-divider/40 bg-surface overflow-hidden"
+                        >
+                          <MarketDetailsBlock
+                            market={market}
+                            showDetailsLink={false}
+                            defaultCollapsed
+                            mode="supply"
+                            showRewards={false}
+                          />
+                          <div className="flex items-center justify-between bg-primary/5 px-3 py-2 border-t border-divider/20">
+                            <span className="text-xs text-secondary">Market cap</span>
+                            <div className="text-right">
+                              <span className="text-sm font-semibold text-primary">
+                                {(parseFloat(cap.relativeCap) / 1e16).toFixed(2)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()
           )}
         </div>
       )}

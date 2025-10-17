@@ -337,7 +337,7 @@ export default function VaultContent() {
                 adapterAddress={adapter}
                 capData={capData}
                 onSetAllocator={setAllocator}
-                onUpdateCaps={updateCaps}
+                updateCaps={updateCaps}
                 isUpdatingAllocator={isUpdatingAllocator}
                 isUpdatingCaps={isUpdatingCaps}
               />

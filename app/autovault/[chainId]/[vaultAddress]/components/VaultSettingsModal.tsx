@@ -33,7 +33,7 @@ type VaultSettingsModalProps = {
   adapterAddress?: Address;
   capData?: CapData;
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
-  onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
+  updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingAllocator: boolean;
   isUpdatingCaps: boolean;
 };
@@ -58,7 +58,7 @@ export function VaultSettingsModal({
   adapterAddress,
   capData = undefined,
   onSetAllocator,
-  onUpdateCaps,
+  updateCaps,
   isUpdatingAllocator,
   isUpdatingCaps,
 }: VaultSettingsModalProps) {
@@ -149,7 +149,7 @@ export function VaultSettingsModal({
             vaultAsset={vaultAsset}
             adapterAddress={adapterAddress}
             existingCaps={capData}
-            onUpdateCaps={onUpdateCaps}
+            updateCaps={updateCaps}
             isUpdatingCaps={isUpdatingCaps}
           />
         );

@@ -40,6 +40,6 @@ export type AllocationsTabProps = {
   vaultAsset?: Address;
   adapterAddress?: Address;
   existingCaps?: CapData;
-  onUpdateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
+  updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
   isUpdatingCaps: boolean;
 };
