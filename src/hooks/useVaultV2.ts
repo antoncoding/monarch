@@ -461,6 +461,86 @@ export function useVaultV2({
     [account, chainIdToUse, sendCapsTx, vaultAddress],
   );
 
+  const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({
+    toastId: 'vault-deposit',
+    pendingText: 'Depositing to vault',
+    successText: 'Deposit successful',
+    errorText: 'Failed to deposit',
+    pendingDescription: 'Depositing assets to vault',
+    successDescription: 'Assets deposited successfully',
+    chainId: chainIdToUse,
+    onSuccess: handleAllocatorOrCapSuccess,
+  });
+
+  const { isConfirming: isWithdrawing, sendTransactionAsync: sendWithdrawTx } = useTransactionWithToast({
+    toastId: 'vault-withdraw',
+    pendingText: 'Withdrawing from vault',
+    successText: 'Withdrawal successful',
+    errorText: 'Failed to withdraw',
+    pendingDescription: 'Withdrawing assets from vault',
+    successDescription: 'Assets withdrawn successfully',
+    chainId: chainIdToUse,
+    onSuccess: handleAllocatorOrCapSuccess,
+  });
+
+  const deposit = useCallback(
+    async (amount: bigint, receiver: Address): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const depositTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'deposit',
+        args: [amount, receiver],
+      });
+
+      try {
+        await sendDepositTx({
+          account,
+          to: vaultAddress,
+          data: depositTx,
+          chainId: chainIdToUse,
+        });
+        return true;
+      } catch (depositError) {
+        if (depositError instanceof Error && depositError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to deposit to vault', depositError);
+        throw depositError;
+      }
+    },
+    [account, chainIdToUse, sendDepositTx, vaultAddress],
+  );
+
+  const withdraw = useCallback(
+    async (amount: bigint, receiver: Address, owner: Address): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const withdrawTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'withdraw',
+        args: [amount, receiver, owner],
+      });
+
+      try {
+        await sendWithdrawTx({
+          account,
+          to: vaultAddress,
+          data: withdrawTx,
+          chainId: chainIdToUse,
+        });
+        return true;
+      } catch (withdrawError) {
+        if (withdrawError instanceof Error && withdrawError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to withdraw from vault', withdrawError);
+        throw withdrawError;
+      }
+    },
+    [account, chainIdToUse, sendWithdrawTx, vaultAddress],
+  );
+
   const adapter = useMemo(() => {
     if (!data) return zeroAddress;
     return data as Address;
@@ -494,5 +574,9 @@ export function useVaultV2({
     isUpdatingAllocator,
     updateCaps,
     isUpdatingCaps,
+    deposit,
+    isDepositing,
+    withdraw,
+    isWithdrawing,
   };
 }

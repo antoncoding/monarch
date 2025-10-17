@@ -17,6 +17,7 @@ import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { getSlicedAddress } from '@/utils/address';
 import { formatBalance } from '@/utils/balance';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
+import { TotalSupplyCard } from './components/TotalSupplyCard';
 import { VaultAllocatorCard } from './components/VaultAllocatorCard';
 import { VaultCollateralsCard } from './components/VaultCollateralsCard';
 import { VaultInitializationModal } from './components/VaultInitializationModal';
@@ -111,22 +112,6 @@ export default function VaultContent() {
 
 
   const assetAddress = vaultData?.assetAddress;
-
-  const totalSupplyLabel = useMemo(() => {
-    if (!vaultData?.totalSupply || vaultData?.tokenDecimals === undefined) return '--';
-
-    try {
-      const rawSupply = BigInt(vaultData.totalSupply);
-      const numericSupply = formatBalance(rawSupply, vaultData.tokenDecimals);
-      const formattedSupply = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 2,
-      }).format(numericSupply);
-
-      return `${formattedSupply}${vaultData.tokenSymbol ? ` ${vaultData.tokenSymbol}` : ''}`.trim();
-    } catch (_error) {
-      return '--';
-    }
-  }, [vaultData?.tokenDecimals, vaultData?.tokenSymbol, vaultData?.totalSupply]);
 
   // TODO: Get real APY from subgraph or calculate from market allocations
   const apyLabel = '0%';
@@ -253,22 +238,18 @@ export default function VaultContent() {
           )}
 
           <VaultSummaryMetrics columns={4}>
-            <div className="rounded bg-surface p-4 shadow-sm">
-              <span className="text-xs uppercase tracking-wide text-secondary">Total supply</span>
-              <div className="mt-3 flex items-center gap-2 text-2xl text-primary">
-                <span>{totalSupplyLabel}</span>
-                {assetAddress && (
-                  <TokenIcon address={assetAddress} chainId={supportedChainId} width={20} height={20} />
-                )}
-              </div>
-              <div className="mt-1 text-sm text-secondary">
-                {vaultData?.tokenSymbol ? `${vaultData.tokenSymbol} vault supply` : 'Vault token supply'}
-              </div>
-            </div>
+            <TotalSupplyCard
+              tokenDecimals={vaultData?.tokenDecimals}
+              tokenSymbol={vaultData?.tokenSymbol}
+              assetAddress={assetAddress}
+              chainId={supportedChainId}
+              vaultAddress={vaultAddressValue}
+              vaultName={title}
+              onRefresh={() => void refetchVaultData()}
+            />
             <div className="rounded bg-surface p-4 shadow-sm">
               <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
               <div className="mt-3 text-2xl text-primary">{apyLabel}</div>
-              <div className="mt-1 text-sm text-secondary">Live APY coming soon</div>
             </div>
             <VaultAllocatorCard
               allocators={allocators}
