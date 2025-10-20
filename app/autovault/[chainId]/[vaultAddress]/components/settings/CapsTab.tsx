@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { CurrentAllocations } from './CurrentAllocations';
-import { EditAllocations } from './EditAllocations';
-import { AllocationsTabProps } from './types';
+import { CurrentCaps } from './CurrentCaps';
+import { EditCaps } from './EditCaps';
+import { CapsTabProps } from './types';
 
-export function AllocationsTab({
+export function CapsTab({
   isOwner,
   chainId,
   vaultAsset,
@@ -11,11 +11,11 @@ export function AllocationsTab({
   existingCaps,
   updateCaps,
   isUpdatingCaps,
-}: AllocationsTabProps) {
+}: CapsTabProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   return isEditing ? (
-    <EditAllocations
+    <EditCaps
       existingCaps={existingCaps}
       vaultAsset={vaultAsset}
       chainId={chainId}
@@ -32,7 +32,7 @@ export function AllocationsTab({
       }}
     />
   ) : (
-    <CurrentAllocations
+    <CurrentCaps
       existingCaps={existingCaps}
       isOwner={isOwner}
       onStartEdit={() => setIsEditing(true)}

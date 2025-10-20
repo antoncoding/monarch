@@ -17,7 +17,7 @@ import { Market } from '@/utils/types';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { Badge } from '@/components/common/Badge';
 
-type EditAllocationsProps = {
+type EditCapsProps = {
   existingCaps?: CapData;
   vaultAsset?: Address;
   chainId: SupportedNetworks;
@@ -43,7 +43,7 @@ type MarketCapInfo = {
   existingCapId?: string;
 };
 
-export function EditAllocations({
+export function EditCaps({
   existingCaps,
   vaultAsset,
   chainId,
@@ -52,7 +52,7 @@ export function EditAllocations({
   adapterAddress,
   onCancel,
   onSave
-}: EditAllocationsProps) {
+}: EditCapsProps) {
   const [marketCaps, setMarketCaps] = useState<Map<string, MarketCapInfo>>(new Map());
   const [collateralCaps, setCollateralCaps] = useState<Map<string, CollateralCapInfo>>(new Map());
   const [showAddMarketModal, setShowAddMarketModal] = useState(false);
@@ -357,8 +357,8 @@ export function EditAllocations({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-medium">Edit Allocation Caps</h3>
-            <p className="text-xs text-secondary">Modify existing caps or add new market caps</p>
+            <h3 className="text-base font-medium">Edit Cap Settings</h3>
+            <p className="text-xs text-secondary">Modify allocation limits or add new market caps</p>
           </div>
         </div>
 

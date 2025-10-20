@@ -4,7 +4,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import { CapData } from '@/hooks/useVaultV2Data';
 
-export type SettingsTab = 'general' | 'agents' | 'allocations';
+export type SettingsTab = 'general' | 'agents' | 'caps';
 
 export type MarketCapState = {
   market: Market;
@@ -34,7 +34,7 @@ export type AgentsTabProps = {
   chainId: SupportedNetworks;
 };
 
-export type AllocationsTabProps = {
+export type CapsTabProps = {
   isOwner: boolean;
   chainId: SupportedNetworks;
   vaultAsset?: Address;

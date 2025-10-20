@@ -12,7 +12,7 @@ import { MarketCapsTable } from './MarketCapsTable';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { CollateralCapTooltip } from './Tooltips';
 
-type CurrentAllocationsProps = {
+type CurrentCapsProps = {
   existingCaps?: CapData;
   isOwner: boolean;
   onStartEdit: () => void;
@@ -20,13 +20,13 @@ type CurrentAllocationsProps = {
   chainId: number
 };
 
-export function CurrentAllocations({
+export function CurrentCaps({
   existingCaps,
   isOwner,
   onStartEdit,
   chainId,
   vaultAsset
-}: CurrentAllocationsProps) {
+}: CurrentCapsProps) {
   const { markets, loading: marketsLoading } = useMarkets();
   const [expandedCollaterals, setExpandedCollaterals] = useState<Set<string>>(new Set());
 
@@ -140,9 +140,9 @@ export function CurrentAllocations({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium">Allocation Caps</h3>
+          <h3 className="text-base font-medium">Cap Settings</h3>
           <p className="text-xs text-secondary">
-            Set limits on how much of each asset can be allocated across markets and collaterals.
+            Define allocation limits across markets and collaterals to control agent behavior.
           </p>
         </div>
         <div className="flex items-center gap-2">

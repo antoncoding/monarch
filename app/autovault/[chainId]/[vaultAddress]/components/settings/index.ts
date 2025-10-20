@@ -1,4 +1,4 @@
 export { GeneralTab } from './GeneralTab';
 export { AgentsTab } from './AgentsTab';
-export { AllocationsTab } from './AllocationsTab';
+export { CapsTab } from './CapsTab';
 export * from './types';

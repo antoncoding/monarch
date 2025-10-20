@@ -52,7 +52,7 @@ export default function VaultContent() {
     }
   }, [supportedChainId]);
 
-  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'allocations'>('general');
+  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'caps'>('general');
   const [showSettings, setShowSettings] = useState(false);
   const [showInitializationModal, setShowInitializationModal] = useState(false);
 
@@ -217,10 +217,9 @@ export default function VaultContent() {
           {capsUninitialized && isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
-                <p className="text-sm text-primary">Set market caps</p>
+                <p className="text-sm text-primary">Configure allocation caps</p>
                 <p className="text-sm text-secondary">
-                  Define caps for markets to complete your vault strategy and activate
-                  automation.
+                  Set allocation limits for markets to complete your vault strategy and activate automation.
                 </p>
               </div>
               <Button
@@ -228,11 +227,11 @@ export default function VaultContent() {
                 size="sm"
                 className="mt-3 sm:mt-0"
                 onPress={() => {
-                  setSettingsTab('allocations');
+                  setSettingsTab('caps');
                   setShowSettings(true);
                 }}
               >
-                Set caps
+                Configure caps
               </Button>
             </div>
           )}
@@ -241,7 +240,7 @@ export default function VaultContent() {
             <TotalSupplyCard
               tokenDecimals={vaultData?.tokenDecimals}
               tokenSymbol={vaultData?.tokenSymbol}
-              assetAddress={assetAddress}
+              assetAddress={assetAddress as Address | undefined}
               chainId={supportedChainId}
               vaultAddress={vaultAddressValue}
               vaultName={title}
@@ -270,7 +269,7 @@ export default function VaultContent() {
               collateralCaps={collateralCaps}
               chainId={supportedChainId}
               onManageCaps={() => {
-                setSettingsTab('allocations');
+                setSettingsTab('caps');
                 setShowSettings(true);
               }}
               needsSetup={needsSetup}

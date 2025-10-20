@@ -5,13 +5,13 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { Address } from 'viem';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
-import { GeneralTab, AgentsTab, AllocationsTab, SettingsTab } from './settings';
+import { GeneralTab, AgentsTab, CapsTab, SettingsTab } from './settings';
 import { CapData } from '@/hooks/useVaultV2Data';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'agents', label: 'Agent' },
-  { id: 'allocations', label: 'Allocation' },
+  { id: 'caps', label: 'Caps' },
 ];
 
 type VaultSettingsModalProps = {
@@ -146,9 +146,9 @@ export function VaultSettingsModal({
             chainId={chainId}
           />
         );
-      case 'allocations':
+      case 'caps':
         return (
-          <AllocationsTab
+          <CapsTab
             isOwner={isOwner}
             chainId={chainId}
             vaultAsset={vaultAsset}

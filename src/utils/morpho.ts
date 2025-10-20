@@ -219,8 +219,6 @@ export function parseCapIdParams(idParams: string): {
         // Create a market ID hash from the market params
         const marketId = keccak256(encodeAbiParameters(marketParamsType, [marketParams]));
 
-        console.log('market param', marketParams)
-
         return {
           type: 'market',
           adapterAddress: decoded[1] as Address,
