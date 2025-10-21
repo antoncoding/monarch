@@ -71,6 +71,18 @@ export function useVaultV2({
     },
   });
 
+
+  // Read totalAssets directly from the vault contract
+  const { data: totalAssets } = useReadContract({
+    address: vaultAddress,
+    abi: vaultv2Abi,
+    functionName: 'totalAssets',
+    chainId,
+    query: {
+      enabled: Boolean(vaultAddress)
+    },
+  });
+
   const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
 
   const handleInitializationSuccess = useCallback(() => {
@@ -378,20 +390,13 @@ export function useVaultV2({
 
             txs.push(submitIncreaseRelativeCapTx, increaseRelativeCapTx);
           } else if (newRelativeCap < oldRelativeCap) {
-            // Decrease
+            // Decrease, no need to use submit for timelock
             const decreaseRelativeCapTx = encodeFunctionData({
               abi: vaultv2Abi,
               functionName: 'decreaseRelativeCap',
               args: [idData, newRelativeCap],
             });
-
-            const submitDecreaseRelativeCapTx = encodeFunctionData({
-              abi: vaultv2Abi,
-              functionName: 'submit',
-              args: [decreaseRelativeCapTx],
-            });
-
-            txs.push(submitDecreaseRelativeCapTx, decreaseRelativeCapTx);
+            txs.push(decreaseRelativeCapTx);
           }
         }
 
@@ -578,5 +583,6 @@ export function useVaultV2({
     isDepositing,
     withdraw,
     isWithdrawing,
+    totalAssets,
   };
 }

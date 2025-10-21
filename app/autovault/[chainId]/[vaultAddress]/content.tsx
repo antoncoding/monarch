@@ -9,13 +9,11 @@ import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import Header from '@/components/layout/header/Header';
-import LoadingScreen from '@/components/Status/LoadingScreen';
-import { TokenIcon } from '@/components/TokenIcon';
 // Removed useVaultDetails (was mock data)
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useAllocations } from '@/hooks/useAllocations';
 import { getSlicedAddress } from '@/utils/address';
-import { formatBalance } from '@/utils/balance';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { TotalSupplyCard } from './components/TotalSupplyCard';
 import { VaultAllocatorCard } from './components/VaultAllocatorCard';
@@ -24,6 +22,7 @@ import { VaultInitializationModal } from './components/VaultInitializationModal'
 // Removed VaultMarketAllocations - will be re-added when real data is available
 import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics } from './components/VaultSummaryMetrics';
+import { VaultMarketAllocations } from './components/VaultMarketAllocations';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{ chainId: string; vaultAddress: string }>();
@@ -85,6 +84,7 @@ export default function VaultContent() {
     isUpdatingAllocator,
     updateCaps,
     isUpdatingCaps,
+    totalAssets
   } = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId: supportedChainId,
@@ -107,9 +107,21 @@ export default function VaultContent() {
   const capsUninitialized = vaultData?.capsData?.needSetupCaps ?? true;
   const capData = vaultData?.capsData;
   const collateralCaps = capData?.collateralCaps ?? [];
+  const marketCaps = capData?.marketCaps ?? [];
 
-  console.log('vaultData', vaultData)
 
+  // Memoize the caps array to prevent unnecessary refetches
+  const allCaps = useMemo(() => {
+    return [...collateralCaps, ...marketCaps];
+  }, [collateralCaps, marketCaps]);
+
+  // Fetch current allocations for all caps
+  const { allocations: allAllocations, loading: allocationsLoading } = useAllocations({
+    vaultAddress: vaultAddressValue,
+    chainId: supportedChainId,
+    caps: allCaps,
+    enabled: !needsSetup && !!capData,
+  });
 
   const assetAddress = vaultData?.assetAddress;
 
@@ -240,6 +252,7 @@ export default function VaultContent() {
             <TotalSupplyCard
               tokenDecimals={vaultData?.tokenDecimals}
               tokenSymbol={vaultData?.tokenSymbol}
+              totalAssets={totalAssets}
               assetAddress={assetAddress as Address | undefined}
               chainId={supportedChainId}
               vaultAddress={vaultAddressValue}
@@ -278,8 +291,17 @@ export default function VaultContent() {
             />
           </VaultSummaryMetrics>
 
-          {/* TODO: Get real market allocations from subgraph */}
-          {/* <VaultMarketAllocations allocations={[]} vaultAssetSymbol="--" /> */}
+          {/* Market Allocations - Show current allocation state */}
+          <VaultMarketAllocations
+            marketCaps={marketCaps}
+            collateralCaps={collateralCaps}
+            allocations={allAllocations}
+            totalAssets={totalAssets}
+            vaultAssetSymbol={vaultData?.tokenSymbol ?? '--'}
+            vaultAssetDecimals={vaultData?.tokenDecimals ?? 18}
+            chainId={supportedChainId}
+            isLoading={allocationsLoading || vaultDataLoading}
+          />
           <VaultSettingsModal
             isOpen={showSettings}
             onClose={() => setShowSettings(false)}

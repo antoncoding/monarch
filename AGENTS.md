@@ -20,6 +20,13 @@ Consult `docs/Styling.md` before touching UI. Always follow the documented desig
 ## Implementation Mindset
 Default to the simplest viable implementation first. Reach for straightforward data flows, avoid premature abstractions, and only layer on complexity when the trivial approach no longer meets requirements.
 
+## Function Organization & Separation of Concerns
+Never define utility functions or business logic inside hooks, components, or classes. Extract them into dedicated utility files in `src/utils/`. This principle—often called **Single Responsibility Principle** or **Separation of Concerns**—keeps code testable, reusable, and maintainable. For example:
+- ❌ Bad: Defining `readAllocation()` inside `useAllocations.ts`
+- ✅ Good: Creating `src/utils/vaultAllocation.ts` with `readAllocation()`, `formatAllocationAmount()`, etc., then importing into the hook
+
+Hooks should orchestrate effects and state; components should render UI; utilities should handle pure logic. Keep each layer focused on its single responsibility.
+
 ## Git Ownership
 Never run git commits, pushes, or other history-altering commands—leave all git operations to the maintainers.
 

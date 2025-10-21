@@ -15,7 +15,7 @@ export const getAgentContract = (chain: SupportedNetworks) => {
 };
 
 export enum KnownAgents {
-  MAX_APY = '0xe0e04468A54937244BEc3bc6C1CA8Bc36ECE6704',
+  MAX_APY = '0x038cC0fFf3aBc20dcd644B1136F42A33df135c52',
 }
 
 

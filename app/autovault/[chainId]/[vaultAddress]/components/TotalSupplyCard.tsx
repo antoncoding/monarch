@@ -8,6 +8,7 @@ import { formatBalance } from '@/utils/balance';
 import { DepositToVaultModal } from './DepositToVaultModal';
 
 type VaultTotalAssetsCardProps = {
+  totalAssets?: bigint
   tokenDecimals?: number;
   tokenSymbol?: string;
   assetAddress?: Address;
@@ -24,20 +25,11 @@ export function TotalSupplyCard({
   chainId,
   vaultAddress,
   vaultName,
+  totalAssets,
   onRefresh,
 }: VaultTotalAssetsCardProps): JSX.Element {
   const [showDepositModal, setShowDepositModal] = useState(false);
 
-  // Read totalAssets directly from the vault contract
-  const { data: totalAssets, refetch: refetchTotalAssets } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'totalAssets',
-    chainId,
-    query: {
-      refetchInterval: 10000, // Refetch every 10 seconds
-    },
-  });
 
   const totalAssetsLabel = useMemo(() => {
     if (totalAssets === undefined || tokenDecimals === undefined) return '--';
@@ -56,7 +48,6 @@ export function TotalSupplyCard({
 
   const handleDepositSuccess = () => {
     setShowDepositModal(false);
-    void refetchTotalAssets();
     onRefresh?.();
   };
 
