@@ -1,11 +1,13 @@
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
+import { HiQuestionMarkCircle } from 'react-icons/hi';
 import { Address } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { TooltipContent } from '@/components/TooltipContent';
 import { SupportedNetworks } from '@/utils/networks';
+import { findAgent } from '@/utils/monarch-agent';
+import Image from 'next/image';
 
 type VaultAllocatorCardProps = {
   allocators: string[];
@@ -45,26 +47,30 @@ export function VaultAllocatorCard({
             <Spinner size={16} />
           </div>
         ) : hasAllocators ? (
-          <div className="space-y-3">
-            {allocators.map((allocatorAddress) => (
-              <div key={allocatorAddress} className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full bg-green-500"
-                      title="Active"
-                    />
-                    <AddressDisplay
-                      address={allocatorAddress as Address}
-                      chainId={chainId}
-                      size="sm"
-                      showExplorerLink
-                    />
+          <div className="flex flex-wrap gap-1.5">
+            {allocators.map((allocatorAddress) => {
+              const agent = findAgent(allocatorAddress);
+              return (
+                <Tooltip
+                  key={allocatorAddress}
+                  content={agent?.name ?? allocatorAddress}
+                >
+                  <div className="flex items-center justify-center rounded-full bg-hovered/50">
+                    {agent ? (
+                      <Image
+                        src={agent.image}
+                        alt={agent.name}
+                        width={24}
+                        height={24}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <HiQuestionMarkCircle className="h-6 w-6 text-secondary" />
+                    )}
                   </div>
-                  <p className="text-xs text-secondary">Authorized for rebalancing</p>
-                </div>
-              </div>
-            ))}
+                </Tooltip>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-2">

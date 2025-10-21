@@ -25,6 +25,7 @@ export const v2AgentsBase: AgentMetadata[] = [
     name: 'Max APY Agent',
     address: KnownAgents.MAX_APY,
     strategyDescription: 'Rebalance every 8 hours, always move to the highest APY',
+    image: '/placeholder-agent.png',
   },
 ];
 

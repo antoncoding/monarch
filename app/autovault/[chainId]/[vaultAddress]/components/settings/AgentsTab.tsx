@@ -6,6 +6,7 @@ import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { AgentsTabProps } from './types';
+import { AgentListItem } from './AgentListItem';
 
 export function AgentsTab({
   isOwner,
@@ -161,24 +162,14 @@ export function AgentsTab({
             <p className="text-sm text-secondary">No allocators assigned</p>
           ) : (
             <div className="space-y-2">
-              {allocators.map((address) => {
-                const agent = v2AgentsBase.find((a) => a.address.toLowerCase() === address.toLowerCase());
-                return (
-                  <div
-                    key={address}
-                    className="flex items-center gap-3 rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
-                  >
-                    {agent ? (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">{agent.name}</span>
-                        <AddressDisplay address={address as Address} size="sm" />
-                      </div>
-                    ) : (
-                      <AddressDisplay address={address as Address} size="sm" />
-                    )}
-                  </div>
-                );
-              })}
+              {allocators.map((address) => (
+                <div
+                  key={address}
+                  className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                >
+                  <AgentListItem address={address as Address} />
+                </div>
+              ))}
             </div>
           )
         ) : (
@@ -187,44 +178,32 @@ export function AgentsTab({
             {allocators.length > 0 && (
               <div className="space-y-3">
                 <p className="text-xs font-medium text-secondary">Current Allocators</p>
-                {allocators.map((address) => {
-                  const agent = v2AgentsBase.find((a) => a.address.toLowerCase() === address.toLowerCase());
-                  return (
-                    <div
-                      key={address}
-                      className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                {allocators.map((address) => (
+                  <div
+                    key={address}
+                    className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                  >
+                    <AgentListItem address={address as Address} />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onPress={() => void handleRemoveAllocator(address as Address)}
+                      isDisabled={
+                        isUpdatingAllocator && allocatorToRemove === (address as Address)
+                      }
                     >
-                      <div className="flex flex-col gap-1">
-                        {agent ? (
-                          <>
-                            <span className="text-sm font-medium">{agent.name}</span>
-                            <AddressDisplay address={address as Address} size="sm" />
-                          </>
-                        ) : (
-                          <AddressDisplay address={address as Address} size="sm" />
-                        )}
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onPress={() => void handleRemoveAllocator(address as Address)}
-                        isDisabled={
-                          isUpdatingAllocator && allocatorToRemove === (address as Address)
-                        }
-                      >
-                        {isUpdatingAllocator && allocatorToRemove === (address as Address) ? (
-                          <span className="flex items-center gap-2">
-                            <Spinner size={12} /> Removing...
-                          </span>
-                        ) : needSwitchChain ? (
-                          'Switch Network'
-                        ) : (
-                          'Remove'
-                        )}
-                      </Button>
-                    </div>
-                  );
-                })}
+                      {isUpdatingAllocator && allocatorToRemove === (address as Address) ? (
+                        <span className="flex items-center gap-2">
+                          <Spinner size={12} /> Removing...
+                        </span>
+                      ) : needSwitchChain ? (
+                        'Switch Network'
+                      ) : (
+                        'Remove'
+                      )}
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -239,9 +218,8 @@ export function AgentsTab({
                     className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
                   >
                     <div className="flex flex-col gap-2">
-                      <span className="text-sm font-medium">{agent.name}</span>
-                      <AddressDisplay address={agent.address as Address} size="sm" />
-                      <p className="text-xs text-secondary">{agent.strategyDescription}</p>
+                      <AgentListItem address={agent.address as Address} />
+                      <p className="ml-8 text-xs text-secondary">{agent.strategyDescription}</p>
                     </div>
                     <Button
                       variant="interactive"

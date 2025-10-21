@@ -369,6 +369,7 @@ export type AgentMetadata = {
   address: Address;
   name: string;
   strategyDescription: string;
+  image: string;
 };
 
 // Define the comprehensive Market Activity Transaction type

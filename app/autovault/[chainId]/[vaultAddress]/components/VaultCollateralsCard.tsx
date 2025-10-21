@@ -53,9 +53,9 @@ export function VaultCollateralsCard({
             <Spinner size={16} />
           </div>
         ) : hasCollaterals ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {collateralTokens.map((tokenAddress) => (
-              <div key={tokenAddress} className="flex items-center gap-1">
+              <div key={tokenAddress} className="flex items-center">
                 <TokenIcon
                   address={tokenAddress}
                   chainId={chainId}
