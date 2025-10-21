@@ -34,7 +34,7 @@ export const vaultV2Query = `
         marketId
       }
       totalSupply
-      adopters(where: {isAdopter: true}) {
+      adapters(where: {isAdapter: true}) {
         address
       }
     }

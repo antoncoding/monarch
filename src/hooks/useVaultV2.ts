@@ -6,8 +6,6 @@ import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
-const ADAPTER_INDEX = 0n;
-
 export function useVaultV2({
   vaultAddress,
   chainId,
@@ -20,23 +18,6 @@ export function useVaultV2({
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useAccount();
-
-  const {
-    data,
-    isLoading,
-    isFetching,
-    refetch,
-    error,
-  } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'adapters',
-    args: [ADAPTER_INDEX],
-    chainId: chainIdToUse,
-    query: {
-      enabled: Boolean(vaultAddress),
-    },
-  });
 
   const { data: curator } = useReadContract({
     address: vaultAddress,
@@ -73,7 +54,7 @@ export function useVaultV2({
 
 
   // Read totalAssets directly from the vault contract
-  const { data: totalAssets } = useReadContract({
+  const { data: totalAssets, refetch: refetchBalance, isLoading: loadingBalance } = useReadContract({
     address: vaultAddress,
     abi: vaultv2Abi,
     functionName: 'totalAssets',
@@ -85,10 +66,14 @@ export function useVaultV2({
 
   const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
 
+  const refetchAll = useCallback(() => {
+    refetchBalance()
+  }, [refetchBalance])
+
   const handleInitializationSuccess = useCallback(() => {
-    void refetch();
+    void refetchAll();
     onTransactionSuccess?.();
-  }, [refetch, onTransactionSuccess]);
+  }, [refetchAll, onTransactionSuccess]);
 
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: 'completeInitialization',
@@ -111,11 +96,6 @@ export function useVaultV2({
     chainId: chainIdToUse,
   });
 
-  const handleAllocatorOrCapSuccess = useCallback(() => {
-    void refetch();
-    onTransactionSuccess?.();
-  }, [refetch, onTransactionSuccess]);
-
   const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({
     toastId: 'update-allocator',
     pendingText: 'Updating allocator',
@@ -124,7 +104,7 @@ export function useVaultV2({
     pendingDescription: 'Updating allocator status',
     successDescription: 'Allocator status changed',
     chainId: chainIdToUse,
-    onSuccess: handleAllocatorOrCapSuccess,
+    onSuccess: onTransactionSuccess,
   });
 
   const { isConfirming: isUpdatingCaps, sendTransactionAsync: sendCapsTx } = useTransactionWithToast({
@@ -135,7 +115,7 @@ export function useVaultV2({
     pendingDescription: 'Applying new market caps',
     successDescription: 'Caps updated successfully',
     chainId: chainIdToUse,
-    onSuccess: handleAllocatorOrCapSuccess,
+    onSuccess: onTransactionSuccess,
   });
 
 
@@ -474,7 +454,7 @@ export function useVaultV2({
     pendingDescription: 'Depositing assets to vault',
     successDescription: 'Assets deposited successfully',
     chainId: chainIdToUse,
-    onSuccess: handleAllocatorOrCapSuccess,
+    onSuccess: onTransactionSuccess,
   });
 
   const { isConfirming: isWithdrawing, sendTransactionAsync: sendWithdrawTx } = useTransactionWithToast({
@@ -485,7 +465,7 @@ export function useVaultV2({
     pendingDescription: 'Withdrawing assets from vault',
     successDescription: 'Assets withdrawn successfully',
     chainId: chainIdToUse,
-    onSuccess: handleAllocatorOrCapSuccess,
+    onSuccess: onTransactionSuccess,
   });
 
   const deposit = useCallback(
@@ -546,11 +526,6 @@ export function useVaultV2({
     [account, chainIdToUse, sendWithdrawTx, vaultAddress],
   );
 
-  const adapter = useMemo(() => {
-    if (!data) return zeroAddress;
-    return data as Address;
-  }, [data]);
-
   const name = useMemo(() => {
     if (!rawName) return '';
     return String(rawName);
@@ -561,14 +536,10 @@ export function useVaultV2({
     return String(rawSymbol);
   }, [rawSymbol]);
 
-  const needsSetup = adapter === zeroAddress;
-
+  
   return {
-    adapter,
-    needsSetup,
-    isLoading: isLoading || isFetching,
-    refetch,
-    error: error as Error | null,
+    isLoading: loadingBalance,
+    refetch: refetchAll,
     completeInitialization,
     isInitializing,
     name,

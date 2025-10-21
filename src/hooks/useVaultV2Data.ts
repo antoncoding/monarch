@@ -32,7 +32,7 @@ export type VaultV2Data = {
   owner: string;
   curator: string;
   capsData: CapData
-  adopters: string[];
+  adapters: string[];
   curatorDisplay: string;
 };
 
@@ -112,7 +112,7 @@ export function useVaultV2Data({
           marketCaps,
           needSetupCaps
         },
-        adopters: result.adopters,
+        adapters: result.adapters,
         curatorDisplay,
       });
     } catch (err) {

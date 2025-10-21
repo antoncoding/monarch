@@ -24,7 +24,7 @@ export type VaultV2Details = {
   sentinels: string[];
   caps: VaultV2Cap[];
   totalSupply: string;
-  adopters: string[];
+  adapters: string[];
   avgApy?: number;
 };
 
@@ -102,7 +102,7 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
     sentinels: [], // Not available in API response
     caps: apiVault.caps.items.map(transformCap),
     totalSupply: String(apiVault.totalSupply),
-    adopters: [], // Not available in API response
+    adapters: [], // Not available in API response
     avgApy: apiVault.avgApy,
   };
 }

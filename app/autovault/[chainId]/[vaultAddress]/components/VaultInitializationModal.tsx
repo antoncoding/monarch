@@ -197,10 +197,16 @@ export function VaultInitializationModal({
   isOpen,
   onClose,
   vaultAddress,
+  marketAdapter, // address of MorphoMakretV1Aapater
+  marketAdapterLoading, // 
+  refetchMarketAdapter, // refetch all "depolyed market adapter"
   chainId,
   onAdapterConfigured,
 }: {
   isOpen: boolean;
+  marketAdapter: Address;
+  marketAdapterLoading: boolean;
+  refetchMarketAdapter: () => void;
   onClose: () => void;
   vaultAddress: Address;
   chainId: SupportedNetworks;
@@ -217,16 +223,8 @@ export function VaultInitializationModal({
     const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
+  
   const {
-    adapters,
-    loading: adaptersLoading,
-    refetch: refetchAdapters,
-  } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
-  const subgraphAdapter = (adapters[0]?.adapter as Address | undefined) ?? ZERO_ADDRESS;
-
-  const {
-    adapter: onChainAdapter,
-    refetch: refetchVault,
     completeInitialization,
     isInitializing,
   } = useVaultV2({
@@ -234,13 +232,8 @@ export function VaultInitializationModal({
     chainId,
   });
 
-  const unifiedAdapter = useMemo(() => {
-    if (subgraphAdapter !== ZERO_ADDRESS) return subgraphAdapter;
-    if (onChainAdapter && onChainAdapter !== ZERO_ADDRESS) return onChainAdapter;
-    return ZERO_ADDRESS;
-  }, [onChainAdapter, subgraphAdapter]);
 
-  const adapterDetected = unifiedAdapter !== ZERO_ADDRESS;
+  const adapterDetected = marketAdapter !== ZERO_ADDRESS;
 
   const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
     vaultAddress,
@@ -248,32 +241,25 @@ export function VaultInitializationModal({
     morphoAddress,
   });
 
-
   const handleDeploy = useCallback(async () => {
     setStatusVisible(true);
     await deploy();
-    await refetchAdapters();
-  }, [deploy, refetchAdapters]);
+    await refetchMarketAdapter();
+  }, [deploy, refetchMarketAdapter]);
 
-  const handleAdapterDetected = useCallback(async () => {
-    await refetchVault();
-    onAdapterConfigured();
-  }, [onAdapterConfigured, refetchVault]);
 
   const handleCompleteInitialization = useCallback(async () => {
-    if (unifiedAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
+    if (marketAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
 
     try {
       const success = await completeInitialization(
         registryAddress,
-        unifiedAdapter,
+        marketAdapter,
         selectedAgent ?? undefined,
       );
       if (!success) {
         return;
       }
-
-      await refetchVault();
       onAdapterConfigured();
       onClose();
     } catch (error) {
@@ -283,10 +269,9 @@ export function VaultInitializationModal({
     completeInitialization,
     onAdapterConfigured,
     onClose,
-    refetchVault,
     registryAddress,
     selectedAgent,
-    unifiedAdapter,
+    marketAdapter,
   ]);
 
   useEffect(() => {
@@ -301,9 +286,8 @@ export function VaultInitializationModal({
   useEffect(() => {
     if (adapterDetected && stepIndex === 0) {
       setStepIndex(1);
-      void handleAdapterDetected();
     }
-  }, [adapterDetected, handleAdapterDetected, stepIndex]);
+  }, [adapterDetected, stepIndex]);
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {
@@ -321,7 +305,7 @@ export function VaultInitializationModal({
   }, [currentStep]);
 
   const canProceedToAgents = adapterDetected && registryAddress !== ZERO_ADDRESS;
-  const showLoading = statusVisible && (isDeploying || adaptersLoading);
+  const showLoading = statusVisible && (isDeploying || marketAdapterLoading);
   const showBackButton = stepIndex > 0 && stepIndex < 3;
   const canProceedFromAdapterCap = adapterCapRelative !== '' && parseFloat(adapterCapRelative) > 0;
 
@@ -436,19 +420,19 @@ export function VaultInitializationModal({
             <DeployAdapterStep
               loading={showLoading}
               adapterDetected={adapterDetected}
-              adapterAddress={unifiedAdapter}
+              adapterAddress={marketAdapter}
             />
           )}
           {currentStep === 'adapter-cap' && (
             <AdapterCapStep
-              adapterAddress={unifiedAdapter}
+              adapterAddress={marketAdapter}
               adapterCapRelative={adapterCapRelative}
               onSetAdapterCap={setAdapterCapRelative}
             />
           )}
           {currentStep === 'finalize' && (
             <FinalizeSetupStep
-              adapter={unifiedAdapter}
+              adapter={marketAdapter}
               registryAddress={registryAddress}
               isInitializing={isInitializing}
             />

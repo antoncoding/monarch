@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Address } from 'viem';
+import { Address, zeroAddress } from 'viem';
 import { fetchMorphoMarketV1Adapters, MorphoMarketV1AdapterRecord } from '@/data-sources/subgraph/morpho-market-v1-adapters';
 import { getMorphoAddress } from '@/utils/morpho';
 import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
@@ -55,8 +55,11 @@ export function useMorphoMarketV1Adapters({
     void fetchAdapters();
   }, [fetchAdapters]);
 
+  const morphoMarketV1Adapter = useMemo(() => adapters.length == 0? zeroAddress : adapters[0].adapter, [adapters])
+
   return {
-    adapters,
+    morphoMarketV1Adapter,
+    adapters, // all market adapters (should only be just one)
     loading,
     error,
     refetch: fetchAdapters,

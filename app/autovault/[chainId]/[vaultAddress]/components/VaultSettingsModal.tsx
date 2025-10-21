@@ -7,6 +7,7 @@ import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { SupportedNetworks } from '@/utils/networks';
 import { GeneralTab, AgentsTab, CapsTab, SettingsTab } from './settings';
 import { CapData } from '@/hooks/useVaultV2Data';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -31,7 +32,7 @@ type VaultSettingsModalProps = {
   sentinels?: string[];
   chainId: SupportedNetworks;
   vaultAsset?: Address;
-  adapterAddress?: Address;
+  marketAdapter: Address; // the deploy morpho market v1 adapter 
   capData?: CapData;
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
   updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
@@ -58,7 +59,7 @@ export function VaultSettingsModal({
   sentinels = [],
   chainId,
   vaultAsset,
-  adapterAddress,
+  marketAdapter,
   capData = undefined,
   onSetAllocator,
   updateCaps,
@@ -152,7 +153,7 @@ export function VaultSettingsModal({
             isOwner={isOwner}
             chainId={chainId}
             vaultAsset={vaultAsset}
-            adapterAddress={adapterAddress}
+            adapterAddress={marketAdapter}
             existingCaps={capData}
             updateCaps={updateCaps}
             isUpdatingCaps={isUpdatingCaps}

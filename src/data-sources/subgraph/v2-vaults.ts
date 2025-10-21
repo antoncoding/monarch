@@ -43,7 +43,7 @@ export type VaultV2Details = {
   sentinels: string[];
   caps: VaultV2Cap[];
   totalSupply: string;
-  adopters: string[];
+  adapters: string[];
 };
 
 type SubgraphVaultV2Response = {
@@ -59,7 +59,7 @@ type SubgraphVaultV2Response = {
       sentinels: { account: string }[];
       caps: VaultV2Cap[];
       totalSupply: string;
-      adopters: { address: string }[];
+      adapters: { address: string }[];
     } | null;
   };
   errors?: any[];
@@ -181,7 +181,7 @@ export const fetchVaultV2Details = async (
       sentinels: vault.sentinels.map((s) => s.account),
       caps: vault.caps,
       totalSupply: vault.totalSupply,
-      adopters: vault.adopters.map((a) => a.address),
+      adapters: vault.adapters.map((a) => a.address),
     };
   } catch (error) {
     console.error(
