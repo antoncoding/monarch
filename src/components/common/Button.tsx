@@ -11,6 +11,7 @@ export const Button = extendVariants(NextUIButton, {
       interactive:
         'bg-hovered text-foreground hover:bg-primary hover:text-white transition-all duration-200 ease-in-out', // Starts subtle, strong hover effect
       ghost: 'bg-transparent hover:bg-surface/5 transition-all duration-200 ease-in-out', // Most subtle variant
+      subtle: 'bg-surface shadow-sm hover:shadow text-foreground hover:bg-default-100 transition-all duration-200 ease-in-out', // Subtle button with shadow, background and shadow change on hover
     },
     // Size variants
     size: {

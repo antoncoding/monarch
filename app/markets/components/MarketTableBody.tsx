@@ -5,9 +5,9 @@ import Image from 'next/image';
 import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { Button } from '@/components/common/Button';
+import { MarketIdBadge } from '@/components/MarketIdBadge';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TooltipContent } from '@/components/TooltipContent';
-import { getNetworkImg } from '@/utils/networks';
 import { Market } from '@/utils/types';
 import logo from '../../../imgs/logo.png';
 import { APYCell } from './APYBreakdownTooltip';
@@ -46,7 +46,6 @@ export function MarketTableBody({
           .slice(0, 6)
           .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = staredIds.includes(item.uniqueKey);
-        const chainImg = getNetworkImg(item.morphoBlue.chain.id);
 
         return (
           <React.Fragment key={index}>
@@ -77,19 +76,21 @@ export function MarketTableBody({
                 </button>
               </td>
               <td data-label="ID" className="z-50">
-                <div className="flex items-center justify-center gap-1 font-monospace text-xs">
-                  {chainImg && <Image src={chainImg} alt="icon" width="15" height="15" />}
-                  <button
-                    type="button"
-                    className="cursor-pointer no-underline hover:underline"
-                    onClick={(e) => {
-                      onMarketClick(item);
-                      e.stopPropagation();
-                    }}
-                  >
-                    <p>{item.uniqueKey.slice(2, 8)} </p>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="cursor-pointer no-underline hover:underline"
+                  onClick={(e) => {
+                    onMarketClick(item);
+                    e.stopPropagation();
+                  }}
+                >
+                  <MarketIdBadge
+                    marketId={item.uniqueKey}
+                    chainId={item.morphoBlue.chain.id}
+                    showNetworkIcon
+                    market={item}
+                  />
+                </button>
               </td>
               <TDAsset
                 dataLabel="Loan"
@@ -167,7 +168,7 @@ export function MarketTableBody({
                       content={
                         <TooltipContent
                           icon={<Image src={logo} alt="Monarch" width={16} height={16} />}
-                          detail="This market is whitelisted by Monarch"
+                          detail="This market is recognized by Monarch"
                         />
                       }
                     >

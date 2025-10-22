@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
 import { Address } from 'viem';
+import { MorphoChainlinkOracleData } from '@/utils/types';
+
+export type VaultAllocation = {
+  marketId: string;
+  chainId: number;
+  collateralAddress: Address;
+  collateralSymbol: string;
+  assetSymbol: string;
+  allocationFormatted: string;
+  apy: number | null;
+  lltv: number | null;
+  oracleData: MorphoChainlinkOracleData | null;
+  allocationPercent: number | null;
+};
 
 export type AutovaultStatus = 'active' | 'paused' | 'inactive';
 
@@ -19,6 +33,7 @@ export type AutovaultData = {
   id: string;
   address: Address;
   name: string;
+  symbol?: string;
   description: string;
   totalValue: bigint;
   currentApy: number;
@@ -34,6 +49,29 @@ export type AutovaultData = {
     amount: bigint;
     reason: string;
   }[];
+  allocations?: VaultAllocation[];
+};
+
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as Address;
+
+const createEmptyVault = (address?: Address): AutovaultData => {
+  const safeAddress = address ?? ZERO_ADDRESS;
+  return {
+    id: 'empty',
+    address: safeAddress,
+    name: '',
+    symbol: '',
+    description: '',
+    totalValue: 0n,
+    currentApy: 0,
+    agents: [],
+    status: 'inactive',
+    owner: ZERO_ADDRESS,
+    createdAt: new Date(0),
+    lastActivity: new Date(0),
+    rebalanceHistory: [],
+    allocations: [],
+  };
 };
 
 type UseAutovaultDataResult = {
@@ -119,20 +157,20 @@ export function useHasActiveAutovaults(account?: Address): {
 
 // Hook to get specific vault details by vault address
 export function useVaultDetails(vaultAddress?: Address): {
-  vault: AutovaultData | null;
+  vault: AutovaultData;
   isLoading: boolean;
   isError: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
 } {
-  const [vault, setVault] = useState<AutovaultData | null>(null);
+  const [vault, setVault] = useState<AutovaultData>(() => createEmptyVault(vaultAddress));
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchVaultDetails = async () => {
     if (!vaultAddress) {
-      setVault(null);
+      setVault(createEmptyVault());
       setIsLoading(false);
       return;
     }
@@ -153,10 +191,11 @@ export function useVaultDetails(vaultAddress?: Address): {
       // Mock data - replace with actual implementation
       const mockVault: AutovaultData | null = null;
 
-      setVault(mockVault);
+      setVault(mockVault ?? createEmptyVault(vaultAddress));
     } catch (err) {
       setIsError(true);
       setError(err instanceof Error ? err : new Error('Failed to fetch vault details'));
+      setVault(createEmptyVault(vaultAddress));
     } finally {
       setIsLoading(false);
     }
@@ -167,6 +206,7 @@ export function useVaultDetails(vaultAddress?: Address): {
   };
 
   useEffect(() => {
+    setVault(createEmptyVault(vaultAddress));
     void fetchVaultDetails();
   }, [vaultAddress]);
 

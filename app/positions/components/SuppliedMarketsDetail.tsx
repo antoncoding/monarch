@@ -1,14 +1,10 @@
 import React from 'react';
-import { Tooltip } from '@heroui/react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { TokenIcon } from '@/components/TokenIcon';
-import { useMarketWarnings } from '@/hooks/useMarketWarnings';
+import { MarketIdBadge } from '@/components/MarketIdBadge';
+import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
+import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -18,27 +14,6 @@ type SuppliedMarketsDetailProps = {
   showEmptyPositions: boolean;
   showCollateralExposure: boolean;
 };
-
-function WarningTooltip({ warnings }: { warnings: WarningWithDetail[] }) {
-  return (
-    <div className="p-2 font-zen">
-      {Object.values(WarningCategory).map((category) => {
-        const categoryWarnings = warnings.filter((w) => w.category === category);
-        if (categoryWarnings.length === 0) return null;
-        return (
-          <div key={category} className="mb-2 flex flex-col gap-2">
-            <h4 className="font-bold capitalize">{category}</h4>
-            <ul className="list-none pl-0">
-              {categoryWarnings.map((warning, index) => (
-                <li key={index}>- {warning.description}</li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function MarketRow({
   position,
@@ -53,74 +28,33 @@ function MarketRow({
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
 }) {
-  const warningsWithDetail = useMarketWarnings(position.market, true);
-
-  const getWarningColor = (warnings: WarningWithDetail[]) => {
-    if (warnings.some((w) => w.level === 'alert')) return 'text-red-500';
-    if (warnings.some((w) => w.level === 'warning')) return 'text-yellow-500';
-    return '';
-  };
 
   const suppliedAmount = Number(
     formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
   );
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
-  const warningColor = getWarningColor(warningsWithDetail);
 
   return (
     <tr key={position.market.uniqueKey} className="gap-1">
       <td data-label="Market" className="text-center">
         <div className="flex items-center justify-center">
-          <div className="mr-1 w-4">
-            {warningsWithDetail.length > 0 ? (
-              <Tooltip
-                className="rounded-sm"
-                content={<WarningTooltip warnings={warningsWithDetail} />}
-                placement="top"
-              >
-                <div>
-                  <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
-                </div>
-              </Tooltip>
-            ) : (
-              <div className="h-4 w-4" />
-            )}
-          </div>
-          <Link
-            className="group flex items-center justify-center no-underline hover:underline"
-            href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
-          >
-            {position.market.uniqueKey.slice(2, 8)}
-          </Link>
-        </div>
-      </td>
-      <td data-label="Collateral" className="text-center">
-        {position.market.collateralAsset ? (
-          <div className="flex items-center justify-center gap-1">
-            <TokenIcon
-              address={position.market.collateralAsset.address}
+          <MarketIdBadge
+              marketId={position.market.uniqueKey}
               chainId={position.market.morphoBlue.chain.id}
-              symbol={position.market.collateralAsset.symbol}
-              width={18}
-              height={18}
+              showNetworkIcon={false}
+              market={position.market}
+              showWarnings
             />
-            {position.market.collateralAsset.symbol}
-          </div>
-        ) : (
-          'N/A'
-        )}
-      </td>
-      <td data-label="Oracle" className="text-center">
-        <div className="flex justify-center">
-          <OracleVendorBadge
-            oracleData={position.market.oracle ? position.market.oracle.data : null}
-            chainId={position.market.morphoBlue.chain.id}
-            useTooltip
-          />
         </div>
       </td>
-      <td data-label="LLTV" className="text-center">
-        {formatBalance(position.market.lltv, 16)}%
+      <td data-label="Market Detail" className="align-middle p-4">
+        <MarketIdentity
+          market={position.market}
+          mode={MarketIdentityMode.Minimum}
+          focus={MarketIdentityFocus.Collateral}
+          chainId={position.market.morphoBlue.chain.id}
+          wide
+        />
       </td>
       <td data-label="APY" className="text-center">
         {formatReadable(position.market.state.supplyApy * 100)}%
@@ -249,9 +183,7 @@ export function SuppliedMarketsDetail({
           <thead className="table-header">
             <tr>
               <th>Market</th>
-              <th>Collateral</th>
-              <th>Oracle</th>
-              <th>LLTV</th>
+              <th> Collateral & Parameters </th>
               <th>APY</th>
               <th>Supplied</th>
               <th>% of Portfolio</th>

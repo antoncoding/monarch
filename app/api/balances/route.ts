@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!balancesResponse.ok) {
+      console.error(`Failed to fetch balances: ${balancesResponse.status} ${balancesResponse.statusText}`);
       throw new Error(`HTTP error! status: ${balancesResponse.status}`);
     }
 

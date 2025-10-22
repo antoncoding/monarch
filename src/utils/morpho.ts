@@ -1,6 +1,6 @@
-import { zeroAddress } from 'viem';
+import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
-import { UserTxTypes } from './types';
+import { MarketParams, UserTxTypes } from './types';
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -93,5 +93,151 @@ export function getMorphoGenesisDate(chainId: number): Date {
       return new Date('2025-04-03T04:52:00.000Z');
     default:
       return MAINNET_GENESIS_DATE; // default to mainnet
+  }
+}
+
+// ============================================================================
+// Cap ID Utilities for Morpho Market Adapters
+// ============================================================================
+
+
+export function getAdapterCapId(adapterAddress: Address): {params: string, id: string} {
+  // Solidity 
+  // adapterId = keccak256(abi.encode("this", address(this)));
+  const params = encodeAbiParameters(
+    [{ type: 'string' }, { type: 'address' }],
+    ["this", adapterAddress]
+  )
+
+  return { params, id: keccak256(params)}
+}
+
+export function getCollateralCapId(collateralToken: Address): {params: string, id: string} {
+  // Solidity
+  // id = keccak256(abi.encode("collateralToken", marketParams.collateralToken));
+  const params = encodeAbiParameters(
+    [{ type: 'string' }, { type: 'address' }],
+    ["collateralToken", collateralToken]
+  )
+
+  return { params, id: keccak256(params)}
+}
+
+export function getMarketCapId(adopterAddress: Address, marketParams: MarketParams): {params: string, id: string} {
+  // Solidity
+  // id = keccak256(abi.encode("this/marketParams", address(this), marketParams));
+  const encoded = encodeAbiParameters(
+    [
+      { type: 'string' },
+      { type: 'address' },
+      {
+        type: 'tuple',
+        components: [
+          { type: 'address', name: 'loanToken' },
+          { type: 'address', name: 'collateralToken' },
+          { type: 'address', name: 'oracle' },
+          { type: 'address', name: 'irm' },
+          { type: 'uint256', name: 'lltv' }
+        ]
+      }
+    ],
+    [
+      'this/marketParams',
+      adopterAddress,
+      {
+        loanToken: marketParams.loanToken,
+        collateralToken: marketParams.collateralToken,
+        oracle: marketParams.oracle,
+        irm: marketParams.irm,
+        lltv: marketParams.lltv
+      }
+    ]
+  )
+  const id = keccak256(encoded)
+
+  return { params: encoded, id }
+}
+
+/**
+ * Parses the encoded idParams to determine the cap type and extract relevant data.
+ *
+ * @param idParams - The encoded ABI parameters (hex string starting with 0x)
+ * @returns Object containing the cap type and extracted addresses/marketId
+ */
+export function parseCapIdParams(idParams: string): {
+  type: 'adapter' | 'collateral' | 'market' | 'unknown';
+  adapterAddress?: Address;
+  collateralToken?: Address;
+  marketParams?: MarketParams;
+  marketId?: string;
+} {
+  try {
+    // First, try to decode as adapter cap: (string, address)
+    // Pattern: ("this", adapterAddress)
+    try {
+      const decoded = decodeAbiParameters(
+        [{ type: 'string' }, { type: 'address' }],
+        idParams as `0x${string}`
+      );
+
+      if (decoded[0] === 'this') {
+        return {
+          type: 'adapter',
+          adapterAddress: decoded[1] as Address,
+        };
+      }
+
+      if (decoded[0] === 'collateralToken') {
+        return {
+          type: 'collateral',
+          collateralToken: decoded[1] as Address,
+        };
+      }
+    } catch {
+      // Not a simple (string, address) pattern, try market pattern
+    }
+
+    // Try to decode as market cap: (string, address, marketParams)
+    // Pattern: ("this/marketParams", adapterAddress, marketParams)
+    try {
+      const marketParamsType = parseAbiParameters('(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)');
+      const marketParamsComponents = parseAbiParameters(
+        '(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)',
+      );
+
+      const decoded = decodeAbiParameters(
+        [
+          { type: 'string' },
+          { type: 'address' },
+          { type: 'tuple', components: marketParamsComponents },
+        ],
+        idParams as `0x${string}`,
+      );
+
+      if (decoded[0] === 'this/marketParams') {
+         
+        const marketParamsBlock = decoded[2] as [any];
+         
+        const marketParams = marketParamsBlock[0] as any as MarketParams;
+
+        // Create a market ID hash from the market params
+        const marketId = keccak256(encodeAbiParameters(marketParamsType, [marketParams]));
+
+        return {
+          type: 'market',
+          adapterAddress: decoded[1] as Address,
+          marketParams,
+          marketId,
+        };
+      }
+    } catch {
+      // Not a market pattern
+    }
+
+    // Fallback: could not decode
+    return { type: 'unknown' };
+  } catch (error) {
+    console.error('Error parsing idParams:', error);
+    return { type: 'unknown' };
   }
 }

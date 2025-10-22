@@ -2,6 +2,8 @@ import { zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { AgentMetadata } from './types';
 
+const agentApyImage: string = require('@/imgs/agent/agent-apy.png') as string;
+
 // todo: remove this after v2 agent config refactor
 export const getAgentContract = (chain: SupportedNetworks) => {
   switch (chain) {
@@ -15,17 +17,9 @@ export const getAgentContract = (chain: SupportedNetworks) => {
 };
 
 export enum KnownAgents {
-  MAX_APY = '0xe0e04468A54937244BEc3bc6C1CA8Bc36ECE6704',
+  MAX_APY = '0x038cC0fFf3aBc20dcd644B1136F42A33df135c52',
 }
 
-// v1 rebalancer EOA
-export const agents: AgentMetadata[] = [
-  {
-    name: 'Max APY Agent',
-    address: KnownAgents.MAX_APY,
-    strategyDescription: 'Rebalance every 8 hours, always move to the highest APY',
-  },
-];
 
 // v2 rebalancer EOA // identical now
 export const v2AgentsBase: AgentMetadata[] = [
@@ -33,10 +27,11 @@ export const v2AgentsBase: AgentMetadata[] = [
     name: 'Max APY Agent',
     address: KnownAgents.MAX_APY,
     strategyDescription: 'Rebalance every 8 hours, always move to the highest APY',
+    image: agentApyImage,
   },
 ];
 
 
 export const findAgent = (address: string): AgentMetadata | undefined => {
-  return agents.find((agent) => agent.address.toLowerCase() === address.toLowerCase());
+  return v2AgentsBase.find((agent) => agent.address.toLowerCase() === address.toLowerCase());
 };

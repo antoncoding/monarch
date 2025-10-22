@@ -1,8 +1,11 @@
 import React, { useMemo } from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
+import { FiExternalLink } from 'react-icons/fi';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { TooltipContent } from './TooltipContent';
+import { TooltipContent } from '@/components/TooltipContent';
+import { getExplorerUrl } from '@/utils/networks';
+
 type TokenIconProps = {
   address: string;
   chainId: number;
@@ -10,9 +13,23 @@ type TokenIconProps = {
   height: number;
   opacity?: number;
   symbol?: string;
+  customTooltipTitle?: string;
+  customTooltipDetail?: string;
+  showExplorerLink?: boolean;
+  showTokenSource?: boolean;
 };
 
-export function TokenIcon({ address, chainId, width, height, opacity }: TokenIconProps) {
+export function TokenIcon({
+  address,
+  chainId,
+  width,
+  height,
+  opacity,
+  customTooltipTitle,
+  customTooltipDetail,
+  showExplorerLink = false,
+  showTokenSource = true,
+}: TokenIconProps) {
   const { findToken } = useTokens();
 
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
@@ -29,17 +46,35 @@ export function TokenIcon({ address, chainId, width, height, opacity }: TokenIco
       />
     );
 
-    const detail = token.isFactoryToken
-      ? `This token is auto-detected from ${token.protocol?.name} `
-      : `This token is whitelisted by Monarch`;
+    const title = customTooltipTitle ?? token.symbol;
+
+    const tokenSource = token.isFactoryToken
+      ? `This token is auto-detected from ${token.protocol?.name}`
+      : `This token is recognized by Monarch`;
+
+    const explorerUrl = showExplorerLink ? `${getExplorerUrl(chainId)}/address/${address}` : null;
+
+    // Build detail/secondaryDetail based on what's provided
+    const detail = customTooltipDetail || (showTokenSource ? tokenSource : undefined);
+    const secondaryDetail = customTooltipDetail && showTokenSource ? tokenSource : undefined;
 
     return (
-      <Tooltip 
+      <Tooltip
         classNames={{
           base: 'p-0 m-0 bg-transparent shadow-sm border-none',
           content: 'p-0 m-0 bg-transparent shadow-sm border-none',
         }}
-        content={<TooltipContent title={token.symbol} detail={detail} icon={img} />}
+        content={
+          <TooltipContent
+            icon={img}
+            title={title}
+            detail={detail}
+            secondaryDetail={secondaryDetail}
+            actionIcon={explorerUrl ? <FiExternalLink className="h-4 w-4" /> : undefined}
+            actionHref={explorerUrl ?? undefined}
+            onActionClick={(e) => e.stopPropagation()}
+          />
+        }
       >
         <Image
           className="rounded-full"

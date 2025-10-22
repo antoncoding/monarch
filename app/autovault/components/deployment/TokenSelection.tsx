@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
+import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
+import { LuVault } from 'react-icons/lu';
 import { Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
+import { TooltipContent } from '@/components/TooltipContent';
+import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { useDeployment, SelectedToken } from './DeploymentContext';
 
@@ -19,6 +23,7 @@ type TokenNetwork = {
   balance: bigint;
   networkId: number;
   marketCount: number;
+  hasExistingVault: boolean;
 };
 
 function NetworkIcon({ networkId }: { networkId: number }) {
@@ -39,12 +44,13 @@ type TokenSelectionProps = {
   balancesLoading: boolean;
   whitelistedMarkets: Market[] | null;
   marketsLoading: boolean;
+  existingVaults: UserVaultV2[];
 };
 
-export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading }: TokenSelectionProps) {
+export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading, existingVaults }: TokenSelectionProps) {
   const { selectedTokenAndNetwork, setSelectedTokenAndNetwork } = useDeployment();
 
-  const { allTokens, findToken } = useTokens()
+  const { findToken } = useTokens();
 
   const availableTokenNetworks = useMemo(() => {
     if (!balances || !whitelistedMarkets) return [];
@@ -55,14 +61,20 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
     const tokenNetworks: TokenNetwork[] = [];
 
     balances.forEach((balance) => {
-      const token = findToken(balance.address, balance.chainId)
+      const token = findToken(balance.address, balance.chainId);
 
       if (!token) return;
 
-      const network = balance.chainId as SupportedNetworks
+      const network = balance.chainId as SupportedNetworks;
       const balanceValue = balance.balance ? BigInt(balance.balance) : 0n;
 
       if (network && balanceValue > 0n) {
+        const hasExistingVault = existingVaults.some(
+          (vault) =>
+            vault.networkId === balance.chainId &&
+            vault.asset.toLowerCase() === balance.address.toLowerCase(),
+        );
+
         // Count markets for this token on this network
         const marketCount = marketsToUse.filter(
           (market) =>
@@ -81,6 +93,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
           balance: balanceValue,
           networkId: balance.chainId,
           marketCount,
+          hasExistingVault,
         });
       }
     });
@@ -92,7 +105,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       if (bBalance !== aBalance) return bBalance - aBalance;
       return a.symbol.localeCompare(b.symbol);
     });
-  }, [balances, allTokens, whitelistedMarkets]);
+  }, [balances, existingVaults, findToken, whitelistedMarkets]);
 
   const handleTokenNetworkSelect = (tokenNetwork: TokenNetwork) => {
     const selectedToken: SelectedToken = {
@@ -182,6 +195,26 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {tokenNetwork.hasExistingVault && (
+                        <Tooltip
+                          classNames={{
+                            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                          }}
+                          content={
+                            <TooltipContent
+                              icon={<LuVault className="h-4 w-4 text-primary" />}
+                              title="Vault deployed"
+                              detail={`You already deployed this token on ${getNetworkName(tokenNetwork.networkId)}.`}
+                            />
+                          }
+                        >
+                          <span className="text-secondary">
+                            <LuVault className="h-4 w-4" />
+                          </span>
+                        </Tooltip>
+                      )}
+
                       <NetworkIcon networkId={tokenNetwork.networkId} />
                       <span className="text-sm text-secondary">
                         {tokenNetwork.marketCount} market{tokenNetwork.marketCount !== 1 ? 's' : ''}

@@ -1,6 +1,14 @@
 import { Address } from 'viem';
 import { SupportedNetworks } from './networks';
 
+export type MarketParams = {
+  loanToken: Address,
+  collateralToken: Address
+  oracle: Address,
+  irm: Address
+  lltv: bigint
+}
+
 export type MarketPosition = {
   state: {
     supplyShares: string;
@@ -361,6 +369,7 @@ export type AgentMetadata = {
   address: Address;
   name: string;
   strategyDescription: string;
+  image: string;
 };
 
 // Define the comprehensive Market Activity Transaction type
