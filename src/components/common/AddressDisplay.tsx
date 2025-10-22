@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink } from 'react-icons/lu';
@@ -42,8 +42,8 @@ export function AddressDisplay({
   }, [address, connectedAddress]);
 
   const explorerHref = useMemo(() => {
-    if (!showExplorerLink || chainId === undefined) return null;
-    const numericChainId = Number(chainId);
+    if (!showExplorerLink) return null;
+    const numericChainId = Number(chainId ?? 1);
     if (!Number.isFinite(numericChainId)) return null;
     return getExplorerURL(address as `0x${string}`, numericChainId as SupportedNetworks);
   }, [address, chainId, showExplorerLink]);
@@ -59,6 +59,27 @@ export function AddressDisplay({
     }
   }, [address, copyable, toastSuccess]);
 
+  const handleKeyDown = useCallback<NonNullable<HTMLAttributes<HTMLDivElement>['onKeyDown']>>(
+    (event) => {
+      if (!copyable) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        void handleCopy();
+      }
+    },
+    [copyable, handleCopy],
+  );
+
+  // Only add interactive props when copyable=true to satisfy a11y lint rules
+  const interactiveProps: HTMLAttributes<HTMLDivElement> = copyable
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        onClick: () => void handleCopy(),
+        onKeyDown: handleKeyDown,
+      }
+    : {};
+
   if (size === 'sm') {
     return (
       <div
@@ -67,16 +88,7 @@ export function AddressDisplay({
           copyable && 'cursor-pointer transition-colors hover:brightness-110',
           className,
         )}
-        onClick={copyable ? handleCopy : undefined}
-        role={copyable ? 'button' : undefined}
-        tabIndex={copyable ? 0 : undefined}
-        onKeyDown={(event) => {
-          if (!copyable) return;
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            void handleCopy();
-          }
-        }}
+        {...interactiveProps}
       >
         <Name
           address={address as `0x${string}`}
@@ -110,16 +122,7 @@ export function AddressDisplay({
         copyable && 'cursor-pointer transition-colors hover:brightness-110',
         className,
       )}
-      onClick={copyable ? handleCopy : undefined}
-      role={copyable ? 'button' : undefined}
-      tabIndex={copyable ? 0 : undefined}
-      onKeyDown={(event) => {
-        if (!copyable) return;
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          void handleCopy();
-        }
-      }}
+      {...interactiveProps}
     >
       <div className="relative overflow-hidden rounded">
         <Avatar address={address} size={36} rounded={false} />

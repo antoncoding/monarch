@@ -200,6 +200,7 @@ export function parseCapIdParams(idParams: string): {
     // Try to decode as market cap: (string, address, marketParams)
     // Pattern: ("this/marketParams", adapterAddress, marketParams)
     try {
+      const marketParamsType = parseAbiParameters('(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)');
       const marketParamsComponents = parseAbiParameters(
         '(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)',
       );
@@ -214,28 +215,13 @@ export function parseCapIdParams(idParams: string): {
       );
 
       if (decoded[0] === 'this/marketParams') {
-        const paramsTuple = decoded[2] as unknown as readonly [
-          Address,
-          Address,
-          Address,
-          Address,
-          bigint,
-        ];
+         
+        const marketParamsBlock = decoded[2] as [any];
+         
+        const marketParams = marketParamsBlock[0] as any as MarketParams;
 
-        const marketParams: MarketParams = {
-          loanToken: paramsTuple[0],
-          collateralToken: paramsTuple[1],
-          oracle: paramsTuple[2],
-          irm: paramsTuple[3],
-          lltv: paramsTuple[4],
-        };
-
-        const marketId = keccak256(
-          encodeAbiParameters(
-            [{ type: 'tuple', components: marketParamsComponents }],
-            [paramsTuple],
-          ),
-        );
+        // Create a market ID hash from the market params
+        const marketId = keccak256(encodeAbiParameters(marketParamsType, [marketParams]));
 
         return {
           type: 'market',

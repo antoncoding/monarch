@@ -127,7 +127,7 @@ export function DepositToVaultModal({
 
                       {!permit2Authorized || (!usePermit2Setting && !isApproved) ? (
                         <Button
-                          disabled={!isConnected || isLoadingPermit2 || depositPending}
+                          isDisabled={!isConnected || isLoadingPermit2 || depositPending}
                           onPress={() => void approveAndDeposit()}
                           className="ml-2 min-w-32"
                           variant="cta"
@@ -136,7 +136,7 @@ export function DepositToVaultModal({
                         </Button>
                       ) : (
                         <Button
-                          disabled={
+                          isDisabled={
                             !isConnected || depositPending || inputError !== null || !depositAmount
                           }
                           onPress={() => void signAndDeposit()}

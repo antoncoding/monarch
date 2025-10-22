@@ -35,8 +35,9 @@ export function AgentsTab({
       }
 
       setAllocatorToAdd(allocator);
-      const success = await onSetAllocator(allocator, true);
-      if (success) {
+      try {
+        await onSetAllocator(allocator, true);
+      } finally {
         setAllocatorToAdd(null);
       }
     },
