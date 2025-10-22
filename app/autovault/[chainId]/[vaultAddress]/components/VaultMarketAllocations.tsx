@@ -1,18 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Address } from 'viem';
 import { Switch } from '@heroui/react';
-import { MdOutlineAccountBalance } from 'react-icons/md';
 import { HiOutlineCube } from 'react-icons/hi';
+import { MdOutlineAccountBalance } from 'react-icons/md';
 import { Spinner } from '@/components/common/Spinner';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { AllocationData } from '@/hooks/useAllocations';
 import { useMarkets } from '@/hooks/useMarkets';
 import { parseCapIdParams } from '@/utils/morpho';
-import { findToken } from '@/utils/tokens';
 import { SupportedNetworks } from '@/utils/networks';
+import { findToken } from '@/utils/tokens';
 import { CollateralView } from './allocations/CollateralView';
 import { MarketView } from './allocations/MarketView';
-import { formatBalance } from '@/utils/balance';
 
 type VaultMarketAllocationsProps = {
   totalAssets?: bigint

@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { PlusIcon } from '@radix-ui/react-icons';
 import { Address, parseUnits, maxUint128 } from 'viem';
+import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
+import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { CapData } from '@/hooks/useVaultV2Data';
 import { getMarketCapId, getCollateralCapId, getAdapterCapId, parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
-import { CapData } from '@/hooks/useVaultV2Data';
-import { CollateralCapTooltip, MarketCapTooltip } from './Tooltips';
-import { MarketCapsTable } from './MarketCapsTable';
-import { AddMarketCapModal } from './AddMarketCapModal';
 import { Market } from '@/utils/types';
-import { PlusIcon } from '@radix-ui/react-icons';
-import { Badge } from '@/components/common/Badge';
+import { AddMarketCapModal } from './AddMarketCapModal';
+import { MarketCapsTable } from './MarketCapsTable';
+import { CollateralCapTooltip, MarketCapTooltip } from './Tooltips';
 
 type EditCapsProps = {
   existingCaps?: CapData;
@@ -164,37 +164,6 @@ export function EditCaps({
     });
   }, []);
 
-  const handleRemoveMarket = useCallback((marketId: string) => {
-    setMarketCaps((prev) => {
-      const next = new Map(prev);
-      const marketInfo = next.get(marketId.toLowerCase());
-      next.delete(marketId.toLowerCase());
-
-      // Check if collateral is still used by other markets
-      if (marketInfo) {
-        const collateralAddr = marketInfo.market.collateralAsset.address.toLowerCase();
-        const stillUsed = Array.from(next.values()).some(
-          (m) => m.market.collateralAsset.address.toLowerCase() === collateralAddr
-        );
-
-        // Remove collateral cap if no longer used and it's a new cap
-        if (!stillUsed) {
-          setCollateralCaps((prevCaps) => {
-            const capInfo = prevCaps.get(collateralAddr);
-            if (capInfo && !capInfo.existingCapId) {
-              const newCaps = new Map(prevCaps);
-              newCaps.delete(collateralAddr);
-              return newCaps;
-            }
-            return prevCaps;
-          });
-        }
-      }
-
-      return next;
-    });
-  }, []);
-
   const handleUpdateMarketCap = useCallback((marketId: string, field: 'relativeCap' | 'absoluteCap', value: string) => {
     setMarketCaps((prev) => {
       const next = new Map(prev);
@@ -338,19 +307,6 @@ export function EditCaps({
   }
 
   const existingMarketIds = new Set(Array.from(marketCaps.keys()));
-
-  // Group markets by collateral
-  const marketsByCollateral = useMemo(() => {
-    const grouped = new Map<string, MarketCapInfo[]>();
-    marketCaps.forEach((info) => {
-      const collateralAddr = info.market.collateralAsset.address.toLowerCase();
-      if (!grouped.has(collateralAddr)) {
-        grouped.set(collateralAddr, []);
-      }
-      grouped.get(collateralAddr)!.push(info);
-    });
-    return grouped;
-  }, [marketCaps]);
 
   return (
     <>
@@ -546,7 +502,7 @@ export function EditCaps({
 
         {/* Actions */}
         <div className="flex items-center justify-between border-t border-divider/30 pt-4">
-          <div></div>
+          <div />
           <div className="flex items-center gap-2">
             <Button variant="subtle" size="sm" onPress={onCancel}>
               Cancel

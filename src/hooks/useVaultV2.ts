@@ -67,8 +67,8 @@ export function useVaultV2({
   const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
 
   const refetchAll = useCallback(() => {
-    refetchBalance()
-  }, [refetchBalance])
+    void refetchBalance();
+  }, [refetchBalance]);
 
   const handleInitializationSuccess = useCallback(() => {
     void refetchAll();

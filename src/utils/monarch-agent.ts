@@ -2,6 +2,8 @@ import { zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { AgentMetadata } from './types';
 
+const agentApyImage: string = require('@/imgs/agent/agent-apy.png') as string;
+
 // todo: remove this after v2 agent config refactor
 export const getAgentContract = (chain: SupportedNetworks) => {
   switch (chain) {
@@ -25,7 +27,7 @@ export const v2AgentsBase: AgentMetadata[] = [
     name: 'Max APY Agent',
     address: KnownAgents.MAX_APY,
     strategyDescription: 'Rebalance every 8 hours, always move to the highest APY',
-    image: '/placeholder-agent.png',
+    image: agentApyImage,
   },
 ];
 

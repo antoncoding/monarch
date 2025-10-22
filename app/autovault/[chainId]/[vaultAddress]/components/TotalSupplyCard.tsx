@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { Address } from 'viem';
-import { useReadContract } from 'wagmi';
 import { TokenIcon } from '@/components/TokenIcon';
-import { vaultv2Abi } from '@/abis/vaultv2';
 import { formatBalance } from '@/utils/balance';
 import { DepositToVaultModal } from './DepositToVaultModal';
 

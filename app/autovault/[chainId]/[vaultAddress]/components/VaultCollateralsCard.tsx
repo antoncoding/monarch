@@ -3,9 +3,9 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { Address } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 
 type VaultCollateralsCardProps = {
   collateralCaps: VaultV2Cap[];

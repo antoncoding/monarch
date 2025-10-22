@@ -1,7 +1,7 @@
 import { Address } from 'viem';
+import { AgentIcon } from '@/components/AgentIcon';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { findAgent } from '@/utils/monarch-agent';
-import { AgentIcon } from '@/components/AgentIcon';
 
 type AgentListItemProps = {
   address: Address;

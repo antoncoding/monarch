@@ -121,7 +121,7 @@ export function useVaultV2Data({
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [vaultAddress, chainId]);
 
   useEffect(() => {

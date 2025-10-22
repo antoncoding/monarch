@@ -40,7 +40,7 @@ export function CollateralView({
             <th className="pb-3 text-left font-normal">Collateral</th>
             <th className="pb-3 text-right font-normal">Amount</th>
             <th className="pb-3 text-right font-normal">Allocation</th>
-            <th className="pb-3 text-center font-normal w-10"></th>
+            <th className="pb-3 text-center font-normal w-10" />
           </tr>
         </thead>
         <tbody className="space-y-2">

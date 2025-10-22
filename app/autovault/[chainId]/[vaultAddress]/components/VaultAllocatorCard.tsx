@@ -2,15 +2,13 @@ import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
 import { Address } from 'viem';
+import { AgentIcon } from '@/components/AgentIcon';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
-import { SupportedNetworks } from '@/utils/networks';
 import { findAgent } from '@/utils/monarch-agent';
-import { AgentIcon } from '@/components/AgentIcon';
 
 type VaultAllocatorCardProps = {
   allocators: string[];
-  chainId: SupportedNetworks;
   onManageAgents: () => void;
   needsSetup?: boolean;
   isOwner?: boolean;
@@ -19,7 +17,6 @@ type VaultAllocatorCardProps = {
 
 export function VaultAllocatorCard({
   allocators,
-  chainId,
   onManageAgents,
   needsSetup = false,
   isOwner = false,

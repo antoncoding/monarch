@@ -4,8 +4,8 @@ import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import Input from '@/components/Input/Input';
-import { TokenIcon } from '@/components/TokenIcon';
 import AccountConnect from '@/components/layout/header/AccountConnect';
+import { TokenIcon } from '@/components/TokenIcon';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useVaultV2Deposit } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
@@ -32,7 +32,7 @@ export function DepositToVaultModal({
   onClose,
   onSuccess,
 }: DepositToVaultModalProps): JSX.Element {
-  const { address: account, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const {

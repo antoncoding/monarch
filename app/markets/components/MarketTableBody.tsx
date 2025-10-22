@@ -87,7 +87,7 @@ export function MarketTableBody({
                   <MarketIdBadge
                     marketId={item.uniqueKey}
                     chainId={item.morphoBlue.chain.id}
-                    showNetworkIcon={true}
+                    showNetworkIcon
                     market={item}
                   />
                 </button>

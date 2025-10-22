@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { Address, zeroAddress } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
-import { useVaultV2Data } from './useVaultV2Data';
-import { useVaultV2 } from './useVaultV2';
-import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
 import { useAllocations } from './useAllocations';
+import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import { useVaultV2 } from './useVaultV2';
+import { useVaultV2Data } from './useVaultV2Data';
 
 type UseVaultPageArgs = {
   vaultAddress: Address;
@@ -44,7 +44,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   } = useVaultV2({
     vaultAddress,
     chainId,
-    onTransactionSuccess: refetchVaultData,
+    onTransactionSuccess: () => {
+      void refetchVaultData();
+    },
   });
 
   // Fetch market adapter

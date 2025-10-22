@@ -1,8 +1,8 @@
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
-import { Market } from '@/utils/types';
-import { SupportedNetworks } from '@/utils/networks';
-import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { SupportedNetworks } from '@/utils/networks';
+import { Market } from '@/utils/types';
+import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
 
 type MarketItem = {
@@ -43,7 +43,7 @@ export function MarketView({
             <th className="pb-3 text-right font-normal">Liquidity</th>
             <th className="pb-3 text-right font-normal">Amount</th>
             <th className="pb-3 text-right font-normal">Allocation</th>
-            <th className="pb-3 text-center font-normal w-10"></th>
+            <th className="pb-3 text-center font-normal w-10" />
           </tr>
         </thead>
         <tbody className="space-y-2">
@@ -68,10 +68,10 @@ export function MarketView({
                     market={market}
                     chainId={chainId}
                     focus={MarketIdentityFocus.Collateral}
-                    showLltv={true}
-                    showOracle={true}
+                    showLltv
+                    showOracle
                     iconSize={20}
-                    showExplorerLink={true}
+                    showExplorerLink
                   />
                 </td>
 

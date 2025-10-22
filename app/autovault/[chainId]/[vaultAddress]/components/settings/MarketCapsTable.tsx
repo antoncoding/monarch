@@ -1,9 +1,9 @@
-import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
-import { Market } from '@/utils/types';
 import { maxUint128 } from 'viem';
-import { findToken } from '@/utils/tokens';
 import { Address } from 'viem';
 import { Badge } from '@/components/common/Badge';
+import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
+import { findToken } from '@/utils/tokens';
+import { Market } from '@/utils/types';
 
 type MarketCapRow = {
   market: Market;
@@ -75,10 +75,10 @@ export function MarketCapsTable({
                 market={row.market}
                 chainId={chainId ?? row.market.morphoBlue.chain.id}
                 focus={MarketIdentityFocus.Collateral}
-                showLltv={true}
-                showOracle={true}
+                showLltv
+                showOracle
                 iconSize={20}
-                showExplorerLink={true}
+                showExplorerLink
               />
               {row.isNew && (
                 <Badge variant="primary">New</Badge>

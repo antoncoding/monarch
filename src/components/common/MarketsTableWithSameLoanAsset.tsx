@@ -4,17 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
-import { formatUnits } from 'viem';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getViemChain } from '@/utils/networks';
-import { getTruncatedAssetName } from '@/utils/oracle';
-import { getOracleType, parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { ERC20Token, UnknownERC20Token, infoToKey, findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from '../../../app/markets/components/RiskIndicator';
-import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 import { MarketIdBadge } from '../MarketIdBadge';
+import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 
 export type MarketWithSelection = {
   market: Market;
@@ -32,7 +30,7 @@ type MarketsTableWithSameLoanAssetProps = {
 };
 
 enum SortColumn {
-  Market = 0,
+  MarketName = 0,
   Supply = 1,
   APY = 2,
   Liquidity = 3,
@@ -393,11 +391,11 @@ function MarketRow({
           chainId={market.morphoBlue.chain.id}
           mode={MarketIdentityMode.Minimum}
           focus={MarketIdentityFocus.Collateral}
-          showLltv={true}
-          showOracle={true}
+          showLltv
+          showOracle
           iconSize={20}
           showExplorerLink={false}
-          wide={true}
+          wide
         />
       </td>
       <td data-label="Total Supply" className="z-50 text-center">
@@ -506,10 +504,10 @@ export function MarketsTableWithSameLoanAsset({
     }
 
     // Sort
-    filtered.sort((a, b) => {
+      filtered.sort((a, b) => {
       let comparison = 0;
       switch (sortColumn) {
-        case SortColumn.Market:
+        case SortColumn.MarketName:
           comparison = a.market.collateralAsset.symbol.localeCompare(
             b.market.collateralAsset.symbol,
           );
@@ -524,6 +522,9 @@ export function MarketsTableWithSameLoanAsset({
         case SortColumn.Liquidity:
           comparison =
             Number(a.market.state.liquidityAssets) - Number(b.market.state.liquidityAssets);
+          break;
+        case SortColumn.Risk:
+          comparison = 0;
           break;
       }
       return comparison * sortDirection;
@@ -562,8 +563,8 @@ export function MarketsTableWithSameLoanAsset({
                   chainId={market.morphoBlue.chain.id}
                   mode={MarketIdentityMode.Focused}
                   focus={MarketIdentityFocus.Collateral}
-                  showLltv={true}
-                  showOracle={true}
+                  showLltv
+                  showOracle
                   iconSize={20}
                   showExplorerLink={false}
                 />
@@ -607,7 +608,7 @@ export function MarketsTableWithSameLoanAsset({
               <th className="text-center font-normal">Id</th>
               <HTSortable
                 label="Market"
-                column={SortColumn.Market}
+                column={SortColumn.MarketName}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSort={handleSort}

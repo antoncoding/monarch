@@ -1,7 +1,6 @@
 import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { MarketParams, UserTxTypes } from './types';
-import abi from '@/abis/permit2';
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -201,23 +200,42 @@ export function parseCapIdParams(idParams: string): {
     // Try to decode as market cap: (string, address, marketParams)
     // Pattern: ("this/marketParams", adapterAddress, marketParams)
     try {
-      const marketParamsType = parseAbiParameters('(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)');
+      const marketParamsComponents = parseAbiParameters(
+        '(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)',
+      );
 
       const decoded = decodeAbiParameters(
         [
           { type: 'string' },
           { type: 'address' },
-          { type: 'tuple', components: marketParamsType }
+          { type: 'tuple', components: marketParamsComponents },
         ],
-        idParams as `0x${string}`
+        idParams as `0x${string}`,
       );
 
       if (decoded[0] === 'this/marketParams') {
-        const marketParamsBlock = decoded[2] as any;
-        const marketParams = marketParamsBlock[0] as any as MarketParams;
+        const paramsTuple = decoded[2] as unknown as readonly [
+          Address,
+          Address,
+          Address,
+          Address,
+          bigint,
+        ];
 
-        // Create a market ID hash from the market params
-        const marketId = keccak256(encodeAbiParameters(marketParamsType, [marketParams]));
+        const marketParams: MarketParams = {
+          loanToken: paramsTuple[0],
+          collateralToken: paramsTuple[1],
+          oracle: paramsTuple[2],
+          irm: paramsTuple[3],
+          lltv: paramsTuple[4],
+        };
+
+        const marketId = keccak256(
+          encodeAbiParameters(
+            [{ type: 'tuple', components: marketParamsComponents }],
+            [paramsTuple],
+          ),
+        );
 
         return {
           type: 'market',

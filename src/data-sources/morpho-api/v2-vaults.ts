@@ -56,11 +56,11 @@ type ApiVaultV2 = {
   owner: {
     address: string;
   } | null;
-  allocators: Array<{
+  allocators: {
     allocator: {
       address: string;
     };
-  }>;
+  }[];
   caps: {
     items: ApiVaultV2Cap[];
   };
@@ -72,7 +72,7 @@ type VaultV2ApiResponse = {
       items: ApiVaultV2[];
     };
   };
-  errors?: Array<{ message: string }>;
+  errors?: { message: string }[];
 };
 
 /**

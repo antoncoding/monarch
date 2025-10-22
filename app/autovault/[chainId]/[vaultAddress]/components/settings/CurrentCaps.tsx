@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react';
+import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
+import { Address, maxUint128 } from 'viem';
 import { Button } from '@/components/common/Button';
+import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/hooks/useMarkets';
-import { parseCapIdParams } from '@/utils/morpho';
 import { CapData } from '@/hooks/useVaultV2Data';
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
-import { Address, maxUint128 } from 'viem';
+import { parseCapIdParams } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { MarketCapsTable } from './MarketCapsTable';
-import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { CollateralCapTooltip } from './Tooltips';
 
 type CurrentCapsProps = {
@@ -60,11 +60,11 @@ export function CurrentCaps({
 
   // Group market caps by collateral
   const marketCapsByCollateral = useMemo(() => {
-    const grouped = new Map<string, Array<{
+    const grouped = new Map<string, {
       cap: NonNullable<typeof existingCaps>['marketCaps'][0];
       market: typeof markets[0] | null;
       capPercent: string;
-    }>>();
+    }[]>();
 
     if (!existingCaps) return grouped;
 
@@ -190,9 +190,12 @@ export function CurrentCaps({
                       className="rounded bg-surface overflow-hidden"
                     >
                       {/* Collateral Cap Row */}
-                      <div
-                        className={`flex items-center gap-2 p-2 text-xs ${hasMarkets ? 'cursor-pointer hover:bg-hovered/30' : ''}`}
+                      <button
+                        type="button"
+                        className={`flex w-full items-center gap-2 p-2 text-left text-xs ${hasMarkets ? 'cursor-pointer hover:bg-hovered/30' : 'cursor-default'}`}
                         onClick={() => hasMarkets && toggleCollateral(collateralAddr)}
+                        disabled={!hasMarkets}
+                        aria-expanded={hasMarkets ? isExpanded : undefined}
                       >
                         <TokenIcon
                           address={item.collateralToken as Address}
@@ -223,7 +226,7 @@ export function CurrentCaps({
                             )}
                           </div>
                         )}
-                      </div>
+                      </button>
 
                       {/* Market Caps - Expandable */}
                       {isExpanded && hasMarkets && (

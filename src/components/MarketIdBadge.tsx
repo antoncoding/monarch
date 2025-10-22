@@ -1,10 +1,10 @@
 import React from 'react';
-import Image from 'next/image';
 import { Link, Tooltip } from '@heroui/react';
+import Image from 'next/image';
 import { TooltipContent } from '@/components/TooltipContent';
+import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { getNetworkImg } from '@/utils/networks';
 import { Market } from '@/utils/types';
-import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 
 type MarketIdBadgeProps = {
   marketId: string;

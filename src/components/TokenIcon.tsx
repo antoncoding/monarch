@@ -3,8 +3,8 @@ import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { getExplorerUrl } from '@/utils/networks';
 import { TooltipContent } from '@/components/TooltipContent';
+import { getExplorerUrl } from '@/utils/networks';
 
 type TokenIconProps = {
   address: string;

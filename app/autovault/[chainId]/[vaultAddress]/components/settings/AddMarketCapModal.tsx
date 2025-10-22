@@ -1,7 +1,7 @@
 import { Address } from 'viem';
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
-import { Market } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
+import { Market } from '@/utils/types';
 
 type AddMarketCapModalProps = {
   vaultAsset: Address;
@@ -29,7 +29,7 @@ export function AddMarketCapModal({
       vaultAsset={vaultAsset}
       chainId={chainId}
       excludeMarketIds={existingMarketIds}
-      multiSelect={true}
+      multiSelect
       onClose={onClose}
       onSelect={onAdd}
       confirmButtonText={undefined} // Use default dynamic text

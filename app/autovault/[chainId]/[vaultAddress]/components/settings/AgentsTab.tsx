@@ -5,8 +5,8 @@ import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { v2AgentsBase } from '@/utils/monarch-agent';
-import { AgentsTabProps } from './types';
 import { AgentListItem } from './AgentListItem';
+import { AgentsTabProps } from './types';
 
 export function AgentsTab({
   isOwner,

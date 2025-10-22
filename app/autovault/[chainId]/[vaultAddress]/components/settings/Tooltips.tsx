@@ -1,6 +1,6 @@
-import { TooltipContent } from "@/components/TooltipContent";
 import { Tooltip } from "@heroui/react";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { TooltipContent } from "@/components/TooltipContent";
 
 export function CollateralCapTooltip() {
     return (<Tooltip

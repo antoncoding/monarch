@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -16,9 +16,9 @@ import { TotalSupplyCard } from './components/TotalSupplyCard';
 import { VaultAllocatorCard } from './components/VaultAllocatorCard';
 import { VaultCollateralsCard } from './components/VaultCollateralsCard';
 import { VaultInitializationModal } from './components/VaultInitializationModal';
+import { VaultMarketAllocations } from './components/VaultMarketAllocations';
 import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics } from './components/VaultSummaryMetrics';
-import { VaultMarketAllocations } from './components/VaultMarketAllocations';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{ chainId: string; vaultAddress: string }>();
@@ -54,6 +54,35 @@ export default function VaultContent() {
     chainId,
     connectedAddress,
   });
+
+  const {
+    refetchAll,
+    updateNameAndSymbol,
+    setAllocator,
+    refetchAdapter,
+  } = vault;
+
+  const handleRefreshVault = useCallback(() => {
+    void refetchAll();
+  }, [refetchAll]);
+
+  const handleUpdateMetadata = useCallback(
+    async (values: { name?: string; symbol?: string }) => updateNameAndSymbol(values),
+    [updateNameAndSymbol],
+  );
+
+  const handleSetAllocator = useCallback(
+    async (allocator: Address, isAllocator: boolean) => setAllocator(allocator, isAllocator),
+    [setAllocator],
+  );
+
+  const handleRefetchAdapter = useCallback(() => {
+    void refetchAdapter();
+  }, [refetchAdapter]);
+
+  const handleAdapterConfigured = useCallback(() => {
+    void refetchAll();
+  }, [refetchAll]);
 
   // UI state
   const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'caps'>('general');
@@ -198,7 +227,7 @@ export default function VaultContent() {
               chainId={chainId}
               vaultAddress={vaultAddressValue}
               vaultName={title}
-              onRefresh={vault.refetchAll}
+              onRefresh={handleRefreshVault}
             />
             <div className="rounded bg-surface p-4 shadow-sm">
               <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
@@ -206,7 +235,6 @@ export default function VaultContent() {
             </div>
             <VaultAllocatorCard
               allocators={allocators}
-              chainId={chainId}
               onManageAgents={() => {
                 if (vault.needsAdapterDeployment && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
                   setShowInitializationModal(true);
@@ -250,7 +278,7 @@ export default function VaultContent() {
             onClose={() => setShowSettings(false)}
             initialTab={settingsTab}
             isOwner={vault.isOwner}
-            onUpdateMetadata={vault.updateNameAndSymbol}
+            onUpdateMetadata={handleUpdateMetadata}
             updatingMetadata={vault.isUpdatingMetadata}
             defaultName={vault.vaultData?.displayName ?? ''}
             defaultSymbol={vault.vaultData?.displaySymbol ?? ''}
@@ -264,11 +292,11 @@ export default function VaultContent() {
             vaultAsset={assetAddress as Address | undefined}
             marketAdapter={vault.adapter}
             capData={capData}
-            onSetAllocator={vault.setAllocator}
+            onSetAllocator={handleSetAllocator}
             updateCaps={vault.updateCaps}
             isUpdatingAllocator={vault.isUpdatingAllocator}
             isUpdatingCaps={vault.isUpdatingCaps}
-            onRefresh={vault.refetchAll}
+            onRefresh={handleRefreshVault}
             isRefreshing={vault.vaultDataLoading}
           />
         </div>
@@ -283,8 +311,8 @@ export default function VaultContent() {
           chainId={chainId}
           marketAdapter={vault.adapter}
           marketAdapterLoading={vault.adapterLoading}
-          refetchMarketAdapter={vault.refetchAdapter}
-          onAdapterConfigured={vault.refetchAll}
+          refetchMarketAdapter={handleRefetchAdapter}
+          onAdapterConfigured={handleAdapterConfigured}
         />
       )}
     </div>

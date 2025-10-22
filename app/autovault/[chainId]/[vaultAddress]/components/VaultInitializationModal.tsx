@@ -6,7 +6,6 @@ import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
 import { Spinner } from '@/components/common/Spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
-import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
@@ -95,7 +94,7 @@ function AdapterCapStep({
           <AddressDisplay address={adapterAddress} />
         </div>
         <div className="space-y-2">
-          <label className="text-xs uppercase text-secondary">Adapter cap (%)</label>
+          <span className="text-xs uppercase text-secondary">Adapter cap (%)</span>
           <input
             type="number"
             min="0"
@@ -244,7 +243,7 @@ export function VaultInitializationModal({
   const handleDeploy = useCallback(async () => {
     setStatusVisible(true);
     await deploy();
-    await refetchMarketAdapter();
+    void refetchMarketAdapter();
   }, [deploy, refetchMarketAdapter]);
 
 

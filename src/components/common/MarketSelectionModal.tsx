@@ -4,8 +4,8 @@ import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
-import { Market } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
+import { Market } from '@/utils/types';
 
 type MarketSelectionModalProps = {
   title?: string;
@@ -92,11 +92,22 @@ export function MarketSelectionModal({
     }
   };
 
+  const handleBackdropKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onClose();
+    }
+  };
+
   if (marketsLoading) {
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
         onClick={handleBackdropClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={handleBackdropKeyDown}
+        aria-label="Close market selection"
       >
         <div className="w-full max-w-2xl rounded-lg bg-surface p-6 shadow-xl">
           <div className="flex items-center justify-center py-12">
@@ -118,6 +129,10 @@ export function MarketSelectionModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleBackdropKeyDown}
+      aria-label="Close market selection"
     >
       <div className="w-full max-w-4xl h-[56vh] max-h-[85vh] rounded-lg bg-surface shadow-xl flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4">
