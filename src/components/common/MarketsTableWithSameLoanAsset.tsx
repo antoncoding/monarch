@@ -491,7 +491,9 @@ export function MarketsTableWithSameLoanAsset({
     if (collateralFilter.length > 0) {
       filtered = filtered.filter((m) => {
         const key = infoToKey(m.market.collateralAsset.address, m.market.morphoBlue.chain.id);
-        return collateralFilter.some((filterKey) => filterKey.includes(key));
+        return collateralFilter.some((filterKey) =>
+          filterKey.split('|').includes(key)
+        );
       });
     }
 

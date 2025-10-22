@@ -66,7 +66,7 @@ export function TotalSupplyCard({
           )}
         </div>
         <div className="mt-3 flex items-center gap-2 text-base text-primary">
-          <span className='text-xl'>{totalAssetsLabel}</span>
+          <span className='text-base'>{totalAssetsLabel}</span>
           {assetAddress && (
             <TokenIcon address={assetAddress} chainId={chainId} width={20} height={20} />
           )}

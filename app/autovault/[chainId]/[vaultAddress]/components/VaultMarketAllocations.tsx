@@ -96,7 +96,7 @@ export function VaultMarketAllocations({
 
    const totalAllocation = useMemo(() => {
     return totalAssets ?? allocations.reduce((sum, allocation) => sum + allocation.allocation, 0n)
-   }, [totalAssets])
+   }, [totalAssets, allocations])
 
    const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation])
 

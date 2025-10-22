@@ -187,12 +187,43 @@ export function EditCaps({
   }, []);
 
   const hasChanges = useMemo(() => {
-    // Check if there are any new caps or modifications
+    // Check for new caps
     const hasNewMarkets = Array.from(marketCaps.values()).some(m => !m.existingCapId);
     const hasNewCollaterals = Array.from(collateralCaps.values()).some(c => !c.existingCapId);
 
-    return hasNewMarkets || hasNewCollaterals || marketCaps.size > 0 || collateralCaps.size > 0;
-  }, [marketCaps, collateralCaps]);
+    // Check for modified caps
+    const hasModifiedMarkets = Array.from(marketCaps.values()).some(info => {
+      if (!info.existingCapId) return false;
+      const existing = existingCaps?.marketCaps.find(cap => {
+        const parsed = parseCapIdParams(cap.idParams);
+        return parsed.marketId?.toLowerCase() === info.market.uniqueKey.toLowerCase();
+      });
+      if (!existing) return false;
+      const existingRelative = (Number(BigInt(existing.relativeCap)) / 1e16).toString();
+      const existingAbsoluteBigInt = BigInt(existing.absoluteCap);
+      const existingAbsolute = existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
+        ? ''
+        : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
+      return info.relativeCap !== existingRelative || info.absoluteCap !== existingAbsolute;
+    });
+
+    const hasModifiedCollaterals = Array.from(collateralCaps.values()).some(info => {
+      if (!info.existingCapId) return false;
+      const existing = existingCaps?.collateralCaps.find(cap => {
+        const parsed = parseCapIdParams(cap.idParams);
+        return parsed.collateralToken?.toLowerCase() === info.collateralAddress.toLowerCase();
+      });
+      if (!existing) return false;
+      const existingRelative = (Number(BigInt(existing.relativeCap)) / 1e16).toString();
+      const existingAbsoluteBigInt = BigInt(existing.absoluteCap);
+      const existingAbsolute = existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
+        ? ''
+        : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
+      return info.relativeCap !== existingRelative || info.absoluteCap !== existingAbsolute;
+    });
+
+    return hasNewMarkets || hasNewCollaterals || hasModifiedMarkets || hasModifiedCollaterals;
+  }, [marketCaps, collateralCaps, existingCaps, vaultAssetDecimals]);
 
   const handleSave = useCallback(async () => {
     if (needSwitchChain) {
@@ -220,7 +251,7 @@ export function EditCaps({
       });
     }
 
-    // Add collateral caps with delta calculation
+    // Add collateral caps with delta calculation (only when changed)
     for (const [, info] of collateralCaps.entries()) {
       const newRelativeCapBigInt = info.relativeCap && info.relativeCap !== '' && parseFloat(info.relativeCap) > 0
         ? parseUnits(info.relativeCap, 16)
@@ -239,19 +270,22 @@ export function EditCaps({
       const oldRelativeCap = existingCap ? BigInt(existingCap.relativeCap) : 0n;
       const oldAbsoluteCap = existingCap ? BigInt(existingCap.absoluteCap) : 0n;
 
-      const { params, id } = getCollateralCapId(info.collateralAddress);
+      // Only include if changed
+      if (oldRelativeCap !== newRelativeCapBigInt || oldAbsoluteCap !== newAbsoluteCapBigInt) {
+        const { params, id } = getCollateralCapId(info.collateralAddress);
 
-      capsToUpdate.push({
-        capId: id,
-        idParams: params,
-        relativeCap: newRelativeCapBigInt.toString(),
-        absoluteCap: newAbsoluteCapBigInt.toString(),
-        oldRelativeCap: oldRelativeCap.toString(),
-        oldAbsoluteCap: oldAbsoluteCap.toString(),
-      });
+        capsToUpdate.push({
+          capId: id,
+          idParams: params,
+          relativeCap: newRelativeCapBigInt.toString(),
+          absoluteCap: newAbsoluteCapBigInt.toString(),
+          oldRelativeCap: oldRelativeCap.toString(),
+          oldAbsoluteCap: oldAbsoluteCap.toString(),
+        });
+      }
     }
 
-    // Add market caps with delta calculation
+    // Add market caps with delta calculation (only when changed)
     for (const [, info] of marketCaps.entries()) {
       const newRelativeCapBigInt = info.relativeCap && info.relativeCap !== '' && parseFloat(info.relativeCap) > 0
         ? parseUnits(info.relativeCap, 16)
@@ -270,24 +304,27 @@ export function EditCaps({
       const oldRelativeCap = existingCap ? BigInt(existingCap.relativeCap) : 0n;
       const oldAbsoluteCap = existingCap ? BigInt(existingCap.absoluteCap) : 0n;
 
-      const marketParams = {
-        loanToken: info.market.loanAsset.address as Address,
-        collateralToken: info.market.collateralAsset.address as Address,
-        oracle: info.market.oracleAddress as Address,
-        irm: info.market.irmAddress as Address,
-        lltv: BigInt(info.market.lltv),
-      };
+      // Only include if changed
+      if (oldRelativeCap !== newRelativeCapBigInt || oldAbsoluteCap !== newAbsoluteCapBigInt) {
+        const marketParams = {
+          loanToken: info.market.loanAsset.address as Address,
+          collateralToken: info.market.collateralAsset.address as Address,
+          oracle: info.market.oracleAddress as Address,
+          irm: info.market.irmAddress as Address,
+          lltv: BigInt(info.market.lltv),
+        };
 
-      const { params, id } = getMarketCapId(adapterAddress, marketParams);
+        const { params, id } = getMarketCapId(adapterAddress, marketParams);
 
-      capsToUpdate.push({
-        capId: id,
-        idParams: params,
-        relativeCap: newRelativeCapBigInt.toString(),
-        absoluteCap: newAbsoluteCapBigInt.toString(),
-        oldRelativeCap: oldRelativeCap.toString(),
-        oldAbsoluteCap: oldAbsoluteCap.toString(),
-      });
+        capsToUpdate.push({
+          capId: id,
+          idParams: params,
+          relativeCap: newRelativeCapBigInt.toString(),
+          absoluteCap: newAbsoluteCapBigInt.toString(),
+          oldRelativeCap: oldRelativeCap.toString(),
+          oldAbsoluteCap: oldAbsoluteCap.toString(),
+        });
+      }
     }
 
     if (capsToUpdate.length === 0) return;
