@@ -1,8 +1,8 @@
-import { TokenIcon } from '@/components/TokenIcon';
+import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { Market } from '@/utils/types';
 import { SupportedNetworks } from '@/utils/networks';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
-import { getTruncatedAssetName } from '@/utils/oracle';
+import { formatBalance, formatReadable } from '@/utils/balance';
 import { AllocationPieChart } from './AllocationPieChart';
 
 type MarketItem = {
@@ -33,82 +33,90 @@ export function MarketView({
   });
 
   return (
-    <div className="space-y-2">
-      {sortedItems.map((item) => {
-        const { market, allocation } = item;
-        const percentage =
-          totalAllocation > 0n ? parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
-        const supplyApy = (market.state.supplyApy * 100).toFixed(2);
-        const lltv = (Number(market.lltv) / 1e16).toFixed(0);
+    <div className="overflow-x-auto">
+      <table className="w-full font-zen">
+        <thead>
+          <tr className="text-xs text-secondary">
+            <th className="pb-3 text-left font-normal">Market</th>
+            <th className="pb-3 text-right font-normal">APY</th>
+            <th className="pb-3 text-right font-normal">Total Supply</th>
+            <th className="pb-3 text-right font-normal">Liquidity</th>
+            <th className="pb-3 text-right font-normal">Amount</th>
+            <th className="pb-3 text-right font-normal">Allocation</th>
+            <th className="pb-3 text-center font-normal w-10"></th>
+          </tr>
+        </thead>
+        <tbody className="space-y-2">
+          {sortedItems.map((item) => {
+            const { market, allocation } = item;
+            const percentage =
+              totalAllocation > 0n ? parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
+            const supplyApy = (market.state.supplyApy * 100).toFixed(2);
+            const hasAllocation = allocation > 0n;
+            const totalSupply = formatReadable(
+              formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString()
+            );
+            const liquidity = formatReadable(
+              formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString()
+            );
 
-        return (
-          <div
-            key={market.uniqueKey}
-            className="rounded bg-hovered/20 p-4 flex items-center justify-between gap-4"
-          >
-            {/* Market Identity */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="flex items-center flex-shrink-0">
-                <div className="z-10">
-                  <TokenIcon
-                    address={market.loanAsset.address}
+            return (
+              <tr key={market.uniqueKey} className="rounded bg-hovered/20">
+                {/* Market Info Column */}
+                <td className="p-3 rounded-l">
+                  <MarketIdentity
+                    market={market}
                     chainId={chainId}
-                    symbol={market.loanAsset.symbol}
-                    width={20}
-                    height={20}
+                    focus={MarketIdentityFocus.Collateral}
+                    showLltv={true}
+                    showOracle={true}
+                    iconSize={20}
+                    showExplorerLink={true}
                   />
-                </div>
-                <div className="bg-surface -ml-2.5">
-                  <TokenIcon
-                    address={market.collateralAsset.address}
-                    chainId={chainId}
-                    symbol={market.collateralAsset.symbol}
-                    width={20}
-                    height={20}
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm font-medium truncate">
-                  {getTruncatedAssetName(market.loanAsset.symbol)}
-                </span>
-                <span className="text-xs opacity-50 flex-shrink-0">
-                  / {getTruncatedAssetName(market.collateralAsset.symbol)}
-                </span>
-              </div>
-            </div>
+                </td>
 
-            {/* Market Stats */}
-            <div className="flex items-center gap-4 text-xs text-secondary flex-shrink-0">
-              <div className="text-right">
-                <span className="font-semibold">{supplyApy}%</span>
-                <span className="ml-1">APY</span>
-              </div>
-              <div className="text-right">
-                <span className="font-semibold">{lltv}%</span>
-                <span className="ml-1">LLTV</span>
-              </div>
-            </div>
+                {/* APY */}
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
+                  {supplyApy}%
+                </td>
 
-            {/* Allocation */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="text-right">
-                {allocation > 0n ? (
-                  <>
-                    <p className="text-sm font-semibold">
-                      {formatAllocationAmount(allocation, vaultAssetDecimals)} {vaultAssetSymbol}
-                    </p>
-                    <p className="text-xs text-secondary">{percentage.toFixed(2)}% of total</p>
-                  </>
-                ) : (
-                  <p className="text-xs text-secondary">No allocation</p>
-                )}
-              </div>
-              <AllocationPieChart percentage={percentage} size={20} />
-            </div>
-          </div>
-        );
-      })}
+                {/* Total Supply */}
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
+                  {totalSupply}
+                </td>
+
+                {/* Liquidity */}
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
+                  {liquidity}
+                </td>
+
+                {/* Allocation Amount */}
+                <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
+                  <span className="whitespace-nowrap">
+                    {hasAllocation
+                      ? `${formatAllocationAmount(allocation, vaultAssetDecimals)} ${vaultAssetSymbol}`
+                      : '-'}
+                  </span>
+                </td>
+
+                {/* Allocation Percentage */}
+                <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
+                  <span className="whitespace-nowrap">
+                    {hasAllocation ? `${percentage.toFixed(2)}%` : '—'}
+                  </span>
+                </td>
+
+                {/* Pie Chart */}
+                <td className="p-3 rounded-r w-10">
+                  <div className="flex justify-center">
+                    <AllocationPieChart percentage={percentage} size={20} />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

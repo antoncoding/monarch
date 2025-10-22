@@ -13,8 +13,8 @@ import { ERC20Token, UnknownERC20Token, infoToKey, findToken } from '@/utils/tok
 import { Market } from '@/utils/types';
 import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from '../../../app/markets/components/RiskIndicator';
-import OracleVendorBadge from '../OracleVendorBadge';
-import { TokenIcon } from '../TokenIcon';
+import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
+import { MarketIdBadge } from '../MarketIdBadge';
 
 export type MarketWithSelection = {
   market: Market;
@@ -32,12 +32,11 @@ type MarketsTableWithSameLoanAssetProps = {
 };
 
 enum SortColumn {
-  Collateral = 0,
-  Oracle = 1,
-  LLTV = 2,
-  Supply = 3,
-  APY = 4,
-  Liquidity = 5,
+  Market = 0,
+  Supply = 1,
+  APY = 2,
+  Liquidity = 3,
+  Risk = 4,
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -383,39 +382,23 @@ function MarketRow({
             className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary"
             onClick={(e) => e.stopPropagation()}
           />
-          <span className="rounded bg-gray-100 px-1 py-0.5 text-xs font-monospace opacity-70 dark:bg-gray-800">
-            {market.uniqueKey.slice(2, 8)}
-          </span>
-        </div>
-      </td>
-      <td data-label={market.collateralAsset.symbol} className="z-50">
-        <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-          <TokenIcon
-            address={market.collateralAsset.address}
-            chainId={market.morphoBlue.chain.id}
-            width={16}
-            height={16}
-            symbol={market.collateralAsset.symbol}
-          />
-          <p className="whitespace-nowrap text-sm">
-            {market.collateralAsset.symbol.length > 8
-              ? `${market.collateralAsset.symbol.slice(0, 8)}...`
-              : market.collateralAsset.symbol}
-          </p>
         </div>
       </td>
       <td className="z-50 text-center">
-        <div className="flex justify-center">
-          <OracleVendorBadge
-            oracleData={market.oracle?.data}
-            showText={false}
-            useTooltip={false}
-            chainId={market.morphoBlue.chain.id}
-          />
-        </div>
+        <MarketIdBadge marketId={market.uniqueKey} />
       </td>
-      <td data-label="LLTV" className="z-50 text-center">
-        <p className="whitespace-nowrap">{formatUnits(BigInt(market.lltv), 16)}%</p>
+      <td className="z-50" style={{ width: '280px' }}>
+        <MarketIdentity
+          market={market}
+          chainId={market.morphoBlue.chain.id}
+          mode={MarketIdentityMode.Minimum}
+          focus={MarketIdentityFocus.Collateral}
+          showLltv={true}
+          showOracle={true}
+          iconSize={20}
+          showExplorerLink={false}
+          wide={true}
+        />
       </td>
       <td data-label="Total Supply" className="z-50 text-center">
         <p className="text-xs">
@@ -526,18 +509,10 @@ export function MarketsTableWithSameLoanAsset({
     filtered.sort((a, b) => {
       let comparison = 0;
       switch (sortColumn) {
-        case SortColumn.Collateral:
+        case SortColumn.Market:
           comparison = a.market.collateralAsset.symbol.localeCompare(
             b.market.collateralAsset.symbol,
           );
-          break;
-        case SortColumn.Oracle:
-          const oracleA = getOracleType(a.market.oracle?.data) ?? '';
-          const oracleB = getOracleType(b.market.oracle?.data) ?? '';
-          comparison = oracleA.localeCompare(oracleB);
-          break;
-        case SortColumn.LLTV:
-          comparison = Number(a.market.lltv) - Number(b.market.lltv);
           break;
         case SortColumn.Supply:
           comparison =
@@ -582,46 +557,16 @@ export function MarketsTableWithSameLoanAsset({
               className="bg-hovered rounded transition-colors"
             >
               <div className="flex items-center justify-between p-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center">
-                    <div className="z-10">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={20}
-                        height={20}
-                      />
-                    </div>
-                    <div className="bg-surface -ml-2.5">
-                      <TokenIcon
-                        address={market.collateralAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.collateralAsset.symbol}
-                        width={20}
-                        height={20}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {getTruncatedAssetName(market.loanAsset.symbol)}
-                    </span>
-                    <span className="text-xs opacity-50">
-                      / {getTruncatedAssetName(market.collateralAsset.symbol)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs opacity-70">
-                    <span>·</span>
-                    <OracleVendorBadge
-                      oracleData={market.oracle?.data}
-                      showText={false}
-                      chainId={market.morphoBlue.chain.id}
-                    />
-                    <span>·</span>
-                    <span>{(Number(market.lltv) / 1e16).toFixed(0)}% LLTV</span>
-                  </div>
-                </div>
+                <MarketIdentity
+                  market={market}
+                  chainId={market.morphoBlue.chain.id}
+                  mode={MarketIdentityMode.Focused}
+                  focus={MarketIdentityFocus.Collateral}
+                  showLltv={true}
+                  showOracle={true}
+                  iconSize={20}
+                  showExplorerLink={false}
+                />
 
                 <div className="flex items-center gap-2">
                   {renderCartItemExtra && renderCartItemExtra(market)}
@@ -658,24 +603,11 @@ export function MarketsTableWithSameLoanAsset({
         <table className="responsive w-full rounded-md font-zen text-sm">
           <thead className="table-header">
             <tr>
-              <th className="text-center font-normal">Market</th>
+              <th className="text-center font-normal">Select</th>
+              <th className="text-center font-normal">Id</th>
               <HTSortable
-                label="Collateral"
-                column={SortColumn.Collateral}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              <HTSortable
-                label="Oracle"
-                column={SortColumn.Oracle}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              <HTSortable
-                label="LLTV"
-                column={SortColumn.LLTV}
+                label="Market"
+                column={SortColumn.Market}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSort={handleSort}
@@ -707,7 +639,7 @@ export function MarketsTableWithSameLoanAsset({
           <tbody>
             {paginatedMarkets.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-secondary">
+                <td colSpan={7} className="py-8 text-center text-secondary">
                   No markets found
                 </td>
               </tr>

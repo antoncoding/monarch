@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Address } from 'viem';
+import { Switch } from '@heroui/react';
+import { MdOutlineAccountBalance } from 'react-icons/md';
+import { HiOutlineCube } from 'react-icons/hi';
 import { Spinner } from '@/components/common/Spinner';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { AllocationData } from '@/hooks/useAllocations';
@@ -23,6 +26,14 @@ type VaultMarketAllocationsProps = {
 };
 
 type ViewMode = 'collateral' | 'market';
+
+function ViewIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
+  return isSelected ? (
+    <HiOutlineCube className={className} />
+  ) : (
+    <MdOutlineAccountBalance className={className} />
+  );
+}
 
 export function VaultMarketAllocations({
   totalAssets,
@@ -87,9 +98,20 @@ export function VaultMarketAllocations({
 
    const totalAllocation = useMemo(() => {
     return totalAssets ?? allocations.reduce((sum, allocation) => sum + allocation.allocation, 0n)
-   }, [totalAssets]) 
+   }, [totalAssets])
 
    const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation])
+
+  const viewDescription = useMemo(() => {
+    if (viewMode === 'collateral') {
+      return hasAnyAllocations
+        ? `Your ${vaultAssetSymbol} deposits are distributed across lending markets, each accepting different collateral types. This view shows how your supply is backed by each collateral asset.`
+        : `This view will show how your ${vaultAssetSymbol} deposits are backed by different collateral types once assets are allocated.`;
+    }
+    return hasAnyAllocations
+      ? `Your ${vaultAssetSymbol} deposits are actively earning yield across multiple lending markets. Each market has unique terms including APY, collateral requirements, and risk parameters.`
+      : `This view will show how your ${vaultAssetSymbol} deposits are distributed across different lending markets once assets are allocated.`;
+  }, [viewMode, hasAnyAllocations, vaultAssetSymbol]);
 
   if (isLoading) {
     return (
@@ -111,54 +133,33 @@ export function VaultMarketAllocations({
     <div className="bg-surface rounded p-6 shadow-sm font-zen">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-lg font-medium">
-            {hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
-          </p>
-          <p className="text-xs text-secondary mt-1">
-            {hasAnyAllocations
-              ? 'Current asset distribution across markets'
-              : 'Markets are configured but no assets have been allocated yet'}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="rounded bg-hovered px-3 py-1 text-xs uppercase text-secondary">
-            Asset: {vaultAssetSymbol}
-          </div>
-          {hasAnyAllocations && (
-            <div className="rounded bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              Total: {formatBalance(totalAssets ?? 0n, vaultAssetDecimals)} {vaultAssetSymbol}
+        <div className="flex-1">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-lg font-medium">
+              {hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
+            </p>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-secondary">
+                {viewMode === 'collateral' ? 'By Collateral' : 'By Market'}
+              </span>
+              <Switch
+                defaultSelected={viewMode === 'market'}
+                size="sm"
+                color="primary"
+                classNames={{
+                  wrapper: 'mx-0',
+                  thumbIcon: 'p-0 mr-0',
+                }}
+                onChange={() => setViewMode(viewMode === 'collateral' ? 'market' : 'collateral')}
+                thumbIcon={ViewIcon}
+              />
             </div>
-          )}
+          </div>
+          <p className="text-xs text-secondary leading-relaxed">
+            {viewDescription}
+          </p>
         </div>
       </div>
-
-      {/* View Mode Toggle */}
-      <div className="mb-4 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setViewMode('collateral')}
-          className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-            viewMode === 'collateral'
-              ? 'bg-primary/15 text-primary'
-              : 'bg-hovered text-secondary hover:bg-hovered/70'
-          }`}
-        >
-          By Collateral
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewMode('market')}
-          className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-            viewMode === 'market'
-              ? 'bg-primary/15 text-primary'
-              : 'bg-hovered text-secondary hover:bg-hovered/70'
-          }`}
-        >
-          By Market
-        </button>
-      </div>
-
       {/* Content */}
       {viewMode === 'collateral' ? (
         <CollateralView

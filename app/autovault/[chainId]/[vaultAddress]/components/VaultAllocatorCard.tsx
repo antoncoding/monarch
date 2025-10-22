@@ -1,13 +1,12 @@
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import { GrStatusGood } from 'react-icons/gr';
-import { HiQuestionMarkCircle } from 'react-icons/hi';
 import { Address } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
 import { SupportedNetworks } from '@/utils/networks';
 import { findAgent } from '@/utils/monarch-agent';
-import Image from 'next/image';
+import { AgentIcon } from '@/components/AgentIcon';
 
 type VaultAllocatorCardProps = {
   allocators: string[];
@@ -48,29 +47,17 @@ export function VaultAllocatorCard({
           </div>
         ) : hasAllocators ? (
           <div className="flex flex-wrap gap-1.5">
-            {allocators.map((allocatorAddress) => {
-              const agent = findAgent(allocatorAddress);
-              return (
-                <Tooltip
-                  key={allocatorAddress}
-                  content={agent?.name ?? allocatorAddress}
-                >
-                  <div className="flex items-center justify-center rounded-full bg-hovered/50">
-                    {agent ? (
-                      <Image
-                        src={agent.image}
-                        alt={agent.name}
-                        width={24}
-                        height={24}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <HiQuestionMarkCircle className="h-6 w-6 text-secondary" />
-                    )}
-                  </div>
-                </Tooltip>
-              );
-            })}
+            {allocators
+              .map((allocatorAddress) => findAgent(allocatorAddress))
+              .filter((agent): agent is NonNullable<typeof agent> => agent !== undefined)
+              .map((agent) => (
+                <AgentIcon
+                  key={agent.address}
+                  address={agent.address as Address}
+                  width={24}
+                  height={24}
+                />
+              ))}
           </div>
         ) : (
           <div className="space-y-2">

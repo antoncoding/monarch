@@ -33,41 +33,52 @@ export function CollateralView({
   });
 
   return (
-    <div className="space-y-2">
-      {sortedItems.map((item) => {
-        const percentage =
-          totalAllocation > 0n ? parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
+    <div className="overflow-x-auto">
+      <table className="w-full font-zen">
+        <thead>
+          <tr className="text-xs text-secondary">
+            <th className="pb-3 text-left font-normal">Collateral</th>
+            <th className="pb-3 text-right font-normal">Amount</th>
+            <th className="pb-3 text-right font-normal">Allocation</th>
+            <th className="pb-3 text-center font-normal w-10"></th>
+          </tr>
+        </thead>
+        <tbody className="space-y-2">
+          {sortedItems.map((item) => {
+            const percentage =
+              totalAllocation > 0n ? parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
+            const hasAllocation = item.allocation > 0n;
 
-        return (
-          <div
-            key={item.collateralAddress.toLowerCase()}
-            className="rounded bg-hovered/20 p-4 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <TokenIcon address={item.collateralAddress} chainId={chainId} width={24} height={24} />
-              <div>
-                <p className="font-medium text-sm">{item.collateralSymbol}</p>
-                <p className="text-xs text-secondary">Collateral</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                {item.allocation > 0n ? (
-                  <>
-                    <p className="text-sm font-semibold">
-                      {formatAllocationAmount(item.allocation, vaultAssetDecimals)} {vaultAssetSymbol}
-                    </p>
-                    <p className="text-xs text-secondary">{percentage.toFixed(2)}% of total</p>
-                  </>
-                ) : (
-                  <p className="text-xs text-secondary">No allocation</p>
-                )}
-              </div>
-              <AllocationPieChart percentage={percentage} size={20} />
-            </div>
-          </div>
-        );
-      })}
+            return (
+              <tr key={item.collateralAddress.toLowerCase()} className="rounded bg-hovered/20">
+                <td className="p-3 rounded-l">
+                  <div className="flex items-center gap-3">
+                    <TokenIcon address={item.collateralAddress} chainId={chainId} width={24} height={24} />
+                    <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
+                  </div>
+                </td>
+                <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
+                  <span className="whitespace-nowrap">
+                    {hasAllocation
+                      ? `${formatAllocationAmount(item.allocation, vaultAssetDecimals)} ${vaultAssetSymbol}`
+                      : '-'}
+                  </span>
+                </td>
+                <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
+                  <span className="whitespace-nowrap">
+                    {hasAllocation ? `${percentage.toFixed(2)}%` : '—'}
+                  </span>
+                </td>
+                <td className="p-3 rounded-r w-10">
+                  <div className="flex justify-center">
+                    <AllocationPieChart percentage={percentage} size={20} />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

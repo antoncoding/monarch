@@ -85,7 +85,7 @@ import { Button } from '@/components/common/Button';
 </Button>
 
 // Utility Action
-<Button variant="ghost" size="sm">
+<Button variant="subtle" size="sm">
   <RefreshIcon className="mr-2" />
   Refresh
 </Button>
@@ -98,7 +98,10 @@ import { Button } from '@/components/common/Button';
 
 ## Tooltip
 
-Use the nextui tooltip with <TooltipContent> component for consistent styling. Always use the classNames configuration to remove HeroUI's default wrapper styling:
+Use the `TooltipContent` component for consistent tooltip styling. The component supports two modes:
+
+### Simple Tooltip (no detail)
+Shows icon, title, and optional action link on the right:
 
 ```tsx
 <Tooltip
@@ -106,18 +109,148 @@ Use the nextui tooltip with <TooltipContent> component for consistent styling. A
     base: 'p-0 m-0 bg-transparent shadow-sm border-none',
     content: 'p-0 m-0 bg-transparent shadow-sm border-none',
   }}
-  content={<TooltipContent icon={<GrStatusGood />} title="Tooltip Title" detail="Tooltip Detail" />}
+  content={<TooltipContent icon={<GrStatusGood />} title="Tooltip Title" />}
 >
   {/* Your trigger element */}
 </Tooltip>
 ```
 
-**Important:** The `classNames` configuration removes HeroUI's default padding, background, and borders to prevent double-wrapper styling issues. This ensures only your `TooltipContent` component handles the visual styling.
+### Complex Tooltip (with detail)
+Shows icon, title, detail text, and optional secondary detail text:
+
+```tsx
+<Tooltip
+  classNames={{
+    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+  }}
+  content={
+    <TooltipContent
+      icon={<GrStatusGood />}
+      title="Tooltip Title"
+      detail="Main description (text-primary, text-sm)"
+      secondaryDetail="Additional info (text-secondary, text-xs)"
+    />
+  }
+>
+  {/* Your trigger element */}
+</Tooltip>
+```
+
+### Tooltip with Action Link
+Add an action link (like explorer) in the top-right corner:
+
+```tsx
+<TooltipContent
+  icon={icon}
+  title="Token Name"
+  detail="Main description"
+  secondaryDetail="Source or additional info"
+  actionIcon={<FiExternalLink className="h-4 w-4" />}
+  actionHref="https://explorer.com/address/0x123"
+  onActionClick={(e) => e.stopPropagation()}
+/>
+```
+
+**Important:**
+- Always use the `classNames` configuration shown above to remove HeroUI's default styling
+- `detail`: Main description text (text-primary, text-sm)
+- `secondaryDetail`: Additional info below detail (text-secondary, text-xs)
 
 ## Shared UI Elements
 
 - Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
 - Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
+
+### Market Display Components
+
+Use the right component for displaying market information:
+
+**MarketIdentity** (`@/components/MarketIdentity`)
+- Use for displaying market info in compact rows (tables, lists, cards)
+- Shows token icons, symbols, LLTV badge, and oracle badge
+- Three modes: `Normal`, `Focused`, `Minimum`
+- Focus parameter: `Loan` or `Collateral` (affects which symbol is emphasized)
+
+```tsx
+import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
+
+// Focused mode (default) - emphasizes one asset
+<MarketIdentity
+  market={market}
+  chainId={chainId}
+  mode={MarketIdentityMode.Focused}
+  focus={MarketIdentityFocus.Collateral}
+  showLltv={true}
+  showOracle={true}
+  iconSize={20}
+  showExplorerLink={true}
+/>
+
+// Normal mode - both assets shown equally
+<MarketIdentity
+  market={market}
+  chainId={chainId}
+  mode={MarketIdentityMode.Normal}
+/>
+
+// Minimum mode - only shows the focused asset (with LLTV and oracle if enabled)
+<MarketIdentity
+  market={market}
+  chainId={chainId}
+  mode={MarketIdentityMode.Minimum}
+  focus={MarketIdentityFocus.Collateral}
+  showLltv={true}
+  showOracle={true}
+/>
+
+// Wide layout - spreads content across full width (useful for tables)
+// Icon + name on left, LLTV in middle, oracle on right
+<MarketIdentity
+  market={market}
+  chainId={chainId}
+  mode={MarketIdentityMode.Minimum}
+  focus={MarketIdentityFocus.Collateral}
+  showLltv={true}
+  showOracle={true}
+  wide={true}
+/>
+```
+
+**MarketDetailsBlock** (`@/components/common/MarketDetailsBlock`)
+- Use as an expandable row in modals (e.g., supply/borrow flows)
+- Shows market state details when expanded (APY, liquidity, utilization, etc.)
+- Includes collapse/expand functionality
+
+```tsx
+import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
+
+<MarketDetailsBlock
+  market={market}
+  mode="supply"
+  showDetailsLink={true}
+  defaultCollapsed={false}
+  showRewards={true}
+/>
+```
+
+**When to use which:**
+- Tables/Lists/Cards → Use `MarketIdentity`
+- Modal flows with expandable details → Use `MarketDetailsBlock`
+
+**MarketIdBadge** (`@/components/MarketIdBadge`)
+- Use to display a short market ID badge
+- Consistent styling across all tables
+
+```tsx
+import { MarketIdBadge } from '@/components/MarketIdBadge';
+
+// Default: shows characters 2-8 of market ID
+<MarketIdBadge marketId={market.uniqueKey} />
+
+// Custom slice
+<MarketIdBadge marketId={market.uniqueKey} slice={{ start: 0, end: 6 }} />
+```
 
 ## Input Components
 

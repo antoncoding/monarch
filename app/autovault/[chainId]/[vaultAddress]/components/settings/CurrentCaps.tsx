@@ -165,14 +165,14 @@ export function CurrentCaps({
         <div className="space-y-4">
           {/* Collateral Caps */}
           {collateralCapsWithMarkets.length > 0 && (
-            <div className="space-y-3 rounded bg-hovered/20 p-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-1">
                 <h4 className="text-sm text-secondary">Collateral Caps ({collateralCapsWithMarkets.length})</h4>
                 <CollateralCapTooltip />
               </div>
 
               {/* Column Headers */}
-              <div className="flex items-center gap-2 px-2 pb-2 text-xs font-medium text-secondary">
+              <div className="flex items-center gap-2 pb-2 text-xs font-medium text-secondary">
                 <div className="flex-1">Collateral</div>
                 <div className="w-20 text-right">Relative %</div>
                 <div className="w-24 text-right">Absolute {vaultAssetToken?.symbol ? `(${vaultAssetToken.symbol})` : ''}</div>
@@ -227,7 +227,7 @@ export function CurrentCaps({
 
                       {/* Market Caps - Expandable */}
                       {isExpanded && hasMarkets && (
-                        <div className="border-t border-divider/30 bg-hovered/10 p-3">
+                        <div className="bg-hovered/10 p-3">
                           <h5 className="text-xs font-medium text-secondary mb-3 px-1">Market Caps</h5>
                           <MarketCapsTable
                             markets={item.markets

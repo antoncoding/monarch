@@ -167,7 +167,7 @@ export function MarketTableBody({
                       content={
                         <TooltipContent
                           icon={<Image src={logo} alt="Monarch" width={16} height={16} />}
-                          detail="This market is whitelisted by Monarch"
+                          detail="This market is recognized by Monarch"
                         />
                       }
                     >

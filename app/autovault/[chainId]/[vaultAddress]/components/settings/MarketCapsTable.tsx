@@ -1,4 +1,4 @@
-import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
+import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { Market } from '@/utils/types';
 import { maxUint128 } from 'viem';
 import { findToken } from '@/utils/tokens';
@@ -71,7 +71,15 @@ export function MarketCapsTable({
         {markets.map((row) => (
           <div key={row.market.uniqueKey} className="flex items-center gap-2 rounded bg-surface py-1 px-2">
             <div className="flex-1 flex items-center gap-2">
-              <MarketDetailsBlock market={row.market} disableExpansion />
+              <MarketIdentity
+                market={row.market}
+                chainId={chainId ?? row.market.morphoBlue.chain.id}
+                focus={MarketIdentityFocus.Collateral}
+                showLltv={true}
+                showOracle={true}
+                iconSize={20}
+                showExplorerLink={true}
+              />
               {row.isNew && (
                 <Badge variant="primary">New</Badge>
               )}

@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { Address, zeroAddress } from 'viem';
-import { useAccount } from 'wagmi';
 import { SupportedNetworks } from '@/utils/networks';
 import { useVaultV2Data } from './useVaultV2Data';
 import { useVaultV2 } from './useVaultV2';
