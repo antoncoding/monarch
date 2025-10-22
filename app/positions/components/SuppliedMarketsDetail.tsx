@@ -10,6 +10,7 @@ import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition, WarningWithDetail, WarningCategory } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
+import { MarketIdBadge } from '@/components/MarketIdBadge';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
   setShowWithdrawModal: (show: boolean) => void;
@@ -71,27 +72,13 @@ function MarketRow({
     <tr key={position.market.uniqueKey} className="gap-1">
       <td data-label="Market" className="text-center">
         <div className="flex items-center justify-center">
-          <div className="mr-1 w-4">
-            {warningsWithDetail.length > 0 ? (
-              <Tooltip
-                className="rounded-sm"
-                content={<WarningTooltip warnings={warningsWithDetail} />}
-                placement="top"
-              >
-                <div>
-                  <IoWarningOutline className={`h-4 w-4 ${warningColor}`} />
-                </div>
-              </Tooltip>
-            ) : (
-              <div className="h-4 w-4" />
-            )}
-          </div>
-          <Link
-            className="group flex items-center justify-center no-underline hover:underline"
-            href={`/market/${position.market.morphoBlue.chain.id}/${position.market.uniqueKey}`}
-          >
-            {position.market.uniqueKey.slice(2, 8)}
-          </Link>
+          <MarketIdBadge
+              marketId={position.market.uniqueKey}
+              chainId={position.market.morphoBlue.chain.id}
+              showNetworkIcon={false}
+              market={position.market}
+              showWarnings={true}
+            />
         </div>
       </td>
       <td data-label="Collateral" className="text-center">

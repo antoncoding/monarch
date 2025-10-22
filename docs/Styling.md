@@ -217,6 +217,30 @@ import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/compo
 />
 ```
 
+**Wide Layout:**
+
+The `wide` prop changes the layout to use `justify-between` with full width, perfect for table cells:
+
+- **Left side**: Token icon(s) + symbol(s)
+- **Middle**: LLTV badge (if enabled)
+- **Right side**: Oracle badge (if enabled)
+
+Works with all three modes (Normal, Focused, Minimum). Use in table cells with a fixed width for consistent alignment:
+
+```tsx
+<td style={{ width: '280px' }}>
+  <MarketIdentity
+    market={market}
+    chainId={chainId}
+    mode={MarketIdentityMode.Minimum}
+    focus={MarketIdentityFocus.Collateral}
+    showLltv={true}
+    showOracle={true}
+    wide={true}
+  />
+</td>
+```
+
 **MarketDetailsBlock** (`@/components/common/MarketDetailsBlock`)
 - Use as an expandable row in modals (e.g., supply/borrow flows)
 - Shows market state details when expanded (APY, liquidity, utilization, etc.)
@@ -239,17 +263,25 @@ import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 - Modal flows with expandable details → Use `MarketDetailsBlock`
 
 **MarketIdBadge** (`@/components/MarketIdBadge`)
-- Use to display a short market ID badge
+- Use to display a short market ID badge with optional network icon and warning indicator
 - Consistent styling across all tables
+- `chainId` is required
+- Warning indicator reserves space for alignment even when no warnings present
 
 ```tsx
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 
-// Default: shows characters 2-8 of market ID
-<MarketIdBadge marketId={market.uniqueKey} />
+// Basic usage (required chainId)
+<MarketIdBadge marketId={market.uniqueKey} chainId={chainId} />
 
-// Custom slice
-<MarketIdBadge marketId={market.uniqueKey} slice={{ start: 0, end: 6 }} />
+// With network icon and warnings
+<MarketIdBadge
+  chainId={market.morphoBlue.chain.id}
+  showNetworkIcon={true}
+  showWarnings={true}
+  market={market}
+/>
+
 ```
 
 ## Input Components

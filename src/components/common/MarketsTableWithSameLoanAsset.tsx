@@ -385,7 +385,7 @@ function MarketRow({
         </div>
       </td>
       <td className="z-50 text-center">
-        <MarketIdBadge marketId={market.uniqueKey} />
+        <MarketIdBadge marketId={market.uniqueKey} chainId={market.morphoBlue.chain.id} />
       </td>
       <td className="z-50" style={{ width: '280px' }}>
         <MarketIdentity
