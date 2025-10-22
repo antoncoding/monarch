@@ -58,7 +58,7 @@ export function useVaultV2({
     address: vaultAddress,
     abi: vaultv2Abi,
     functionName: 'totalAssets',
-    chainId,
+    chainId: chainIdToUse,
     query: {
       enabled: Boolean(vaultAddress)
     },
