@@ -66,7 +66,7 @@ export function CollateralView({
                 </td>
                 <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
-                    {hasAllocation ? `${percentage.toFixed(2)}%` : '—'}
+                    {hasAllocation ? `${percentage.toFixed(2)}%` : '-'}
                   </span>
                 </td>
                 <td className="p-3 rounded-r w-10">

@@ -47,7 +47,7 @@ function MarketRow({
             />
         </div>
       </td>
-      <td data-label="Market Detail" className="flex w-[100%] items-center">
+      <td data-label="Market Detail" className="align-middle p-4">
         <MarketIdentity
           market={position.market}
           mode={MarketIdentityMode.Minimum}

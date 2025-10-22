@@ -102,7 +102,7 @@ export function MarketView({
                 {/* Allocation Percentage */}
                 <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
-                    {hasAllocation ? `${percentage.toFixed(2)}%` : '—'}
+                    {hasAllocation ? `${percentage.toFixed(2)}%` : '-'}
                   </span>
                 </td>
 

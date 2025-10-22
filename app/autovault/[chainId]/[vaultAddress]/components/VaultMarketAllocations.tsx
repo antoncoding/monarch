@@ -102,14 +102,10 @@ export function VaultMarketAllocations({
 
   const viewDescription = useMemo(() => {
     if (viewMode === 'collateral') {
-      return hasAnyAllocations
-        ? `Your ${vaultAssetSymbol} deposits are distributed across lending markets, each accepting different collateral types. This view shows how your supply is backed by each collateral asset.`
-        : `This view will show how your ${vaultAssetSymbol} deposits are backed by different collateral types once assets are allocated.`;
+      return `See how your ${vaultAssetSymbol} supply is collateralized across assets shared by multiple markets.`;
     }
-    return hasAnyAllocations
-      ? `Your ${vaultAssetSymbol} deposits are actively earning yield across multiple lending markets. Each market has unique terms including APY, collateral requirements, and risk parameters.`
-      : `This view will show how your ${vaultAssetSymbol} deposits are distributed across different lending markets once assets are allocated.`;
-  }, [viewMode, hasAnyAllocations, vaultAssetSymbol]);
+    return `See where your ${vaultAssetSymbol} supply is deployed across markets.`;
+  }, [viewMode, vaultAssetSymbol]);
 
   if (isLoading) {
     return (
