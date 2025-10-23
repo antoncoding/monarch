@@ -28,6 +28,29 @@ export async function readAllocation(
 }
 
 /**
+ * Read the current allocation amount for a specific cap ID from the vault contract
+ */
+export async function readTotalAsset(
+  vaultAddress: Address,
+  chainId: SupportedNetworks,
+): Promise<bigint> {
+  try {
+    const client = getClient(chainId);
+    const amount = await client.readContract({
+      address: vaultAddress,
+      abi: vaultv2Abi,
+      functionName: 'totalAssets',
+      args: [],
+    });
+
+    return amount as bigint;
+  } catch (error) {
+    console.error(`Failed to read total asset for vault ${vaultAddress}:`, error);
+    return 0n;
+  }
+}
+
+/**
  * Format allocation amount with proper decimals and locale formatting
  */
 export function formatAllocationAmount(amount: bigint, decimals: number): string {
