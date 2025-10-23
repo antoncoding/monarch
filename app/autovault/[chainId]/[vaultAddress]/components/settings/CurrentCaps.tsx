@@ -10,7 +10,7 @@ import { CapData } from '@/hooks/useVaultV2Data';
 import { parseCapIdParams } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { MarketCapsTable } from './MarketCapsTable';
-import { CollateralCapTooltip } from './Tooltips';
+import { CollateralCapTooltip, MarketCapTooltip } from './Tooltips';
 
 type CurrentCapsProps = {
   existingCaps?: CapData;
@@ -173,7 +173,7 @@ export function CurrentCaps({
 
               {/* Column Headers */}
               <div className="flex items-center gap-2 pb-2 text-xs font-medium text-secondary">
-                <div className="flex-1">Collateral</div>
+                <div className="flex-1">Assets</div>
                 <div className="w-20 text-right">Relative %</div>
                 <div className="w-24 text-right">Absolute {vaultAssetToken?.symbol ? `(${vaultAssetToken.symbol})` : ''}</div>
               </div>
@@ -211,10 +211,10 @@ export function CurrentCaps({
                             </span>
                           )}
                         </div>
-                        <div className="w-20 text-right font-semibold text-primary">
+                        <div className="w-20 text-right text-sm">
                           {item.capPercent}%
                         </div>
-                        <div className="w-24 text-right text-secondary">
+                        <div className="w-24 text-right text-sm text-secondary">
                           {formatAbsoluteCap(item.cap.absoluteCap)}
                         </div>
                         {hasMarkets && (
@@ -231,7 +231,10 @@ export function CurrentCaps({
                       {/* Market Caps - Expandable */}
                       {isExpanded && hasMarkets && (
                         <div className="bg-hovered/10 p-3">
+                          <div className='flex gap-2'>
                           <h5 className="text-xs font-medium text-secondary mb-3 px-1">Market Caps</h5>
+                          <MarketCapTooltip />
+                          </div>
                           <MarketCapsTable
                             markets={item.markets
                               .filter(m => m.market)

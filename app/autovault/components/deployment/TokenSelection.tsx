@@ -205,7 +205,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                             <TooltipContent
                               icon={<LuVault className="h-4 w-4 text-primary" />}
                               title="Vault deployed"
-                              detail={`You already deployed this token on ${getNetworkName(tokenNetwork.networkId)}.`}
+                              detail={`You already deployed a vault for this token on ${getNetworkName(tokenNetwork.networkId)}.`}
                             />
                           }
                         >

@@ -88,44 +88,6 @@ export function AgentsTab({
     );
   };
 
-  const renderRoleList = (
-    label: string,
-    description: string,
-    addresses: string[],
-    emptyLabel: string,
-  ) => {
-    if (!addresses.length) {
-      return (
-        <div className="space-y-2">
-          <div className="space-y-1">
-            <p className="text-xs uppercase text-secondary">{label}</p>
-            <p className="text-xs text-secondary">{description}</p>
-          </div>
-          <span className="text-xs text-secondary">{emptyLabel}</span>
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-2">
-        <div className="space-y-1">
-          <p className="text-xs uppercase text-secondary">{label}</p>
-          <p className="text-xs text-secondary">{description}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {addresses.map((entry) => (
-            <AddressDisplay
-              key={entry}
-              address={entry as Address}
-              size="sm"
-              showExplorerLink
-              copyable
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
 
   const currentAllocatorAddresses = allocators.map((a) => a.toLowerCase());
   const availableAllocators = v2AgentsBase.filter(
@@ -258,12 +220,32 @@ export function AgentsTab({
         )}
       </div>
 
-      {renderRoleList(
-        'Sentinels',
-        'Sentinels able to pause automation when safeguards trigger.',
-        sentinels,
-        'No sentinels configured',
-      )}
+      {/* dont show sentinels for now */}
+      {/* <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-xs uppercase text-secondary">Sentinels</p>
+            <p className="text-xs text-secondary">
+              Sentinels able to pause automation when safeguards trigger.
+            </p>
+          </div>
+        </div>
+        {sentinels.length === 0 ? (
+          <p className="text-sm text-secondary">No sentinels configured</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {sentinels.map((address) => (
+              <AddressDisplay
+                key={address}
+                address={address as Address}
+                size="sm"
+                showExplorerLink
+                copyable
+              />
+            ))}
+          </div>
+        )}
+      </div> */}
     </div>
   );
 }

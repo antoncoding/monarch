@@ -43,7 +43,7 @@ export function VaultMarketAllocations({
   chainId,
   isLoading,
 }: VaultMarketAllocationsProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('collateral');
+  const [viewMode, setViewMode] = useState<ViewMode>('market');
   const { markets } = useMarkets();
 
   // Create a map of capId -> allocation amount

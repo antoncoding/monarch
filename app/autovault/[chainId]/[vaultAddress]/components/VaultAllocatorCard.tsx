@@ -6,6 +6,7 @@ import { AgentIcon } from '@/components/AgentIcon';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
 import { findAgent } from '@/utils/monarch-agent';
+import { BsQuestionCircle } from 'react-icons/bs';
 
 type VaultAllocatorCardProps = {
   allocators: string[];
@@ -74,7 +75,7 @@ export function VaultAllocatorCard({
                   />
                 }
               >
-                <span className="text-xs text-secondary underline">What's this?</span>
+                <BsQuestionCircle />
               </Tooltip>
             </div>
           </div>
