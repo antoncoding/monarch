@@ -17,6 +17,29 @@ export function RiskSelection() {
 
   const { getUniqueTokens } = useTokens();
 
+  // Get unique collateral tokens for filter performance
+  const collateralTokens = useMemo(() => {
+    if (!selectedToken?.markets) return [];
+    const tokens = selectedToken.markets
+      .filter((market) => market?.collateralAsset?.address && market?.morphoBlue?.chain?.id)
+      .map((market) => ({
+        address: market.collateralAsset.address,
+        chainId: market.morphoBlue.chain.id,
+      }));
+    return getUniqueTokens(tokens);
+  }, [selectedToken?.markets, getUniqueTokens]);
+
+  // Convert markets to the format expected by the table
+  const marketsWithSelection: MarketWithSelection[] = useMemo(() => {
+    if (!selectedToken?.markets) return [];
+    return selectedToken.markets
+      .filter((market) => market && market.uniqueKey)
+      .map((market) => ({
+        market,
+        isSelected: selectedMarkets.some((m) => m?.uniqueKey === market.uniqueKey),
+      }));
+  }, [selectedToken?.markets, selectedMarkets]);
+
   // Handle case when no token is selected yet
   if (!selectedToken) {
     return (
@@ -28,29 +51,6 @@ export function RiskSelection() {
       </div>
     );
   }
-
-  // Get unique collateral tokens for filter performance
-  const collateralTokens = useMemo(() => {
-    if (!selectedToken.markets) return [];
-    const tokens = selectedToken.markets
-      .filter((market) => market?.collateralAsset?.address && market?.morphoBlue?.chain?.id)
-      .map((market) => ({
-        address: market.collateralAsset.address,
-        chainId: market.morphoBlue.chain.id,
-      }));
-    return getUniqueTokens(tokens);
-  }, [selectedToken.markets, getUniqueTokens]);
-
-  // Convert markets to the format expected by the table
-  const marketsWithSelection: MarketWithSelection[] = useMemo(() => {
-    if (!selectedToken.markets) return [];
-    return selectedToken.markets
-      .filter((market) => market && market.uniqueKey)
-      .map((market) => ({
-        market,
-        isSelected: selectedMarkets.some((m) => m?.uniqueKey === market.uniqueKey),
-      }));
-  }, [selectedToken.markets, selectedMarkets]);
 
   const handleToggleMarket = (marketId: string) => {
     if (!selectedToken.markets) return;
@@ -80,7 +80,7 @@ export function RiskSelection() {
           onToggleMarket={handleToggleMarket}
           disabled={false}
           uniqueCollateralTokens={collateralTokens}
-          showSelectColumn={true}
+          showSelectColumn
           showCart={false}
         />
       </div>

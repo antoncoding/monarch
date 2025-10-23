@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { Checkbox } from '@heroui/react';
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -13,7 +14,6 @@ import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 import { MarketIndicators } from '../MarketIndicators';
-import { Checkbox } from '@heroui/react';
 
 export type MarketWithSelection = {
   market: Market;

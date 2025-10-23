@@ -312,7 +312,7 @@ export function SetupPositions() {
                       showLltv
                       showOracle
                       iconSize={18}
-                      showExplorerLink={true}
+                      showExplorerLink
                     />
                   </td>
 

@@ -30,7 +30,7 @@ type OnboardingContextType = {
   resetOnboarding: () => void;
 
   // Shared balances across all steps
-  balances: Array<{ address: string; balance: string }>;
+  balances: { address: string; balance: string }[];
   balancesLoading: boolean;
 };
 
