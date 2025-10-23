@@ -5,7 +5,7 @@ import type { MarketWithSelection } from '@/components/common/MarketsTableWithSa
 import { useTokens } from '@/components/providers/TokenProvider';
 import { useOnboarding } from './OnboardingContext';
 
-export function RiskSelection() {
+export function MarketSelectionOnboarding() {
   const {
     selectedToken,
     selectedMarkets,

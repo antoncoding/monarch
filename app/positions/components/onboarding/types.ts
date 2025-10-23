@@ -9,7 +9,7 @@ export type TokenWithMarkets = NetworkToken & {
   balance: string;
 };
 
-export type OnboardingStep = 'asset-selection' | 'risk-selection' | 'setup';
+export type OnboardingStep = 'asset-selection' | 'market-selection' | 'setup';
 
 export type OnboardingContextType = {
   step: OnboardingStep;

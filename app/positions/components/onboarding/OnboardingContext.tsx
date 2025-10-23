@@ -9,7 +9,7 @@ export const ONBOARDING_STEPS = [
     title: 'Select Asset',
     description: 'Choose the asset you want to supply',
   },
-  { id: 'risk-selection', title: 'Select Markets', description: '' },
+  { id: 'market-selection', title: 'Select Markets', description: '' },
   { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
@@ -51,7 +51,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     switch (currentStep) {
       case 'asset-selection':
         return !!selectedToken;
-      case 'risk-selection':
+      case 'market-selection':
         return selectedMarkets.length > 0;
       case 'setup':
         return true;
