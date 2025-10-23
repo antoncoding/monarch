@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
 
@@ -8,7 +9,7 @@ export const ONBOARDING_STEPS = [
     title: 'Select Asset',
     description: 'Choose the asset you want to supply',
   },
-  { id: 'risk-selection', title: 'Select Markets', description: '' },
+  { id: 'market-selection', title: 'Select Markets', description: '' },
   { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
   { id: 'success', title: 'Complete', description: 'Position created successfully' },
 ] as const;
@@ -27,6 +28,10 @@ type OnboardingContextType = {
   goToNextStep: () => void;
   goToPrevStep: () => void;
   resetOnboarding: () => void;
+
+  // Shared balances across all steps
+  balances: { address: string; balance: string }[];
+  balancesLoading: boolean;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -37,13 +42,16 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
+  // Fetch user balances once for the entire onboarding flow
+  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
+
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
   const canGoNext = useMemo(() => {
     switch (currentStep) {
       case 'asset-selection':
         return !!selectedToken;
-      case 'risk-selection':
+      case 'market-selection':
         return selectedMarkets.length > 0;
       case 'setup':
         return true;
@@ -87,6 +95,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
+      balances,
+      balancesLoading,
     }),
     [
       selectedToken,
@@ -99,6 +109,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setSelectedToken,
       setSelectedMarkets,
       setStep,
+      balances,
+      balancesLoading,
     ],
   );
 

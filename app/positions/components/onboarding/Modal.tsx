@@ -2,15 +2,15 @@ import { Modal, ModalContent, ModalHeader, Button } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RxCross2 } from 'react-icons/rx';
 import { AssetSelection } from './AssetSelection';
+import { MarketSelectionOnboarding } from './MarketSelectionOnboarding';
 import { useOnboarding } from './OnboardingContext';
 import { ONBOARDING_STEPS } from './OnboardingContext';
-import { RiskSelection } from './RiskSelection';
 import { SetupPositions } from './SetupPositions';
 import { SuccessPage } from './SuccessPage';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
-  'risk-selection': RiskSelection,
+  'market-selection': MarketSelectionOnboarding,
   setup: SetupPositions,
   success: SuccessPage,
 } as const;

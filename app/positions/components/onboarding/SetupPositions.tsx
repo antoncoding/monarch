@@ -5,14 +5,12 @@ import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/common';
 import Input from '@/components/Input/Input';
-import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
-import { TokenIcon } from '@/components/TokenIcon';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { APYCell } from 'app/markets/components/APYBreakdownTooltip';
@@ -20,8 +18,7 @@ import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const toast = useStyledToast();
-  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep } = useOnboarding();
-  const { balances } = useUserBalancesAllNetworks();
+  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep, balances } = useOnboarding();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -293,9 +290,7 @@ export function SetupPositions() {
         <table className="responsive w-full rounded-md font-zen">
           <thead className="table-header">
             <tr>
-              <th className="font-normal">Collateral</th>
-              <th className="font-normal">Oracle</th>
-              <th className="font-normal">LLTV</th>
+              <th className="font-normal">Market</th>
               <th className="font-normal">APY</th>
               <th className="font-normal">Distribution</th>
             </tr>
@@ -304,43 +299,21 @@ export function SetupPositions() {
             {selectedMarkets.map((market) => {
               const currentPercentage = percentages[market.uniqueKey] ?? 0;
               const isLocked = lockedAmounts.has(market.uniqueKey);
-              const collatToShow = market.collateralAsset.symbol
-                .slice(0, 6)
-                .concat(market.collateralAsset.symbol.length > 6 ? '...' : '');
 
               return (
                 <tr key={market.uniqueKey} className="hover:bg-hovered">
-                  {/* Collateral Asset */}
-                  <td data-label="Collateral" className="z-50">
-                    <div className="flex items-center justify-center gap-1">
-                      <TokenIcon
-                        address={market.collateralAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        width={18}
-                        height={18}
-                        symbol={market.collateralAsset.symbol}
-                      />
-                      <span className="whitespace-nowrap">
-                        {collatToShow}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* Oracle */}
-                  <td data-label="Oracle" className="z-50">
-                    <div className="flex justify-center">
-                      <OracleVendorBadge
-                        oracleData={market.oracle?.data}
-                        chainId={market.morphoBlue.chain.id}
-                      />
-                    </div>
-                  </td>
-
-                  {/* LLTV */}
-                  <td data-label="LLTV" className="z-50">
-                    <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium">
-                      {Number(market.lltv) / 1e16}%
-                    </span>
+                  {/* Market Identity */}
+                  <td data-label="Market" className="z-50" style={{ width: '280px' }}>
+                    <MarketIdentity
+                      market={market}
+                      chainId={market.morphoBlue.chain.id}
+                      mode={MarketIdentityMode.Focused}
+                      focus={MarketIdentityFocus.Collateral}
+                      showLltv
+                      showOracle
+                      iconSize={18}
+                      showExplorerLink
+                    />
                   </td>
 
                   {/* APY */}

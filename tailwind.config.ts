@@ -71,6 +71,9 @@ const config: Config = {
               large: '0.375rem', // rounded
             },
           },
+          colors: {
+            content1: '#222529', // Modal background
+          },
         },
       },
     }),

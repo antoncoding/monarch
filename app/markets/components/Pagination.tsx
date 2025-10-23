@@ -7,6 +7,7 @@ type PaginationProps = {
   onPageChange: (page: number) => void;
   entriesPerPage: number;
   isDataLoaded: boolean;
+  size?: "lg"| "md" |"sm"
 };
 
 export function Pagination({
@@ -15,6 +16,7 @@ export function Pagination({
   onPageChange,
   entriesPerPage,
   isDataLoaded,
+  size = "md"
 }: PaginationProps) {
   if (!isDataLoaded || totalPages === 0) {
     return null;
@@ -35,7 +37,7 @@ export function Pagination({
             item: 'w-8 h-8 text-small rounded-sm bg-transparent',
             cursor: 'bg-orange-500 text-white font-bold',
           }}
-          size="md"
+          size={size}
         />
       </div>
     </div>

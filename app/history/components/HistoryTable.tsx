@@ -305,7 +305,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
             <TableColumn className="text-center">Transaction</TableColumn>
           </TableHeader>
           <TableBody emptyContent="No transactions found">
-            {history.map((tx, index) => {
+            {history.filter(tx => tx.data.market !== undefined).map((tx, index) => {
               // safely cast here because we only fetch txs for unique id in "markets"
               const market = allMarkets.find(
                 (m) => m.uniqueKey === tx.data.market.uniqueKey,
