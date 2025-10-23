@@ -307,13 +307,12 @@ export function SetupPositions() {
                     <MarketIdentity
                       market={market}
                       chainId={market.morphoBlue.chain.id}
-                      mode={MarketIdentityMode.Minimum}
+                      mode={MarketIdentityMode.Focused}
                       focus={MarketIdentityFocus.Collateral}
                       showLltv
                       showOracle
                       iconSize={18}
-                      showExplorerLink={false}
-                      wide
+                      showExplorerLink={true}
                     />
                   </td>
 
