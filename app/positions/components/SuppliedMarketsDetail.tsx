@@ -73,7 +73,7 @@ function MarketRow({
         </div>
       </td>
       <td data-label="Indicators" className="text-center">
-        <MarketIndicators market={position.market} showRisk={true} />
+        <MarketIndicators market={position.market} showRisk />
       </td>
       <td data-label="Actions" className="justify-center px-4 py-3">
         <div className="flex items-center justify-center gap-2">

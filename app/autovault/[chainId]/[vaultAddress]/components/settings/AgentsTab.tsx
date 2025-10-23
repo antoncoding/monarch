@@ -13,7 +13,7 @@ export function AgentsTab({
   owner,
   curator,
   allocators,
-  sentinels = [],
+  // sentinels = [],
   onSetAllocator,
   isUpdatingAllocator,
   chainId,

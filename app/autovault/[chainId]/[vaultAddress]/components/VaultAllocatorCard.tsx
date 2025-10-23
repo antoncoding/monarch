@@ -1,12 +1,12 @@
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
+import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
 import { Address } from 'viem';
 import { AgentIcon } from '@/components/AgentIcon';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
 import { findAgent } from '@/utils/monarch-agent';
-import { BsQuestionCircle } from 'react-icons/bs';
 
 type VaultAllocatorCardProps = {
   allocators: string[];

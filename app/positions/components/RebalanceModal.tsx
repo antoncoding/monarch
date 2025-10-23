@@ -3,16 +3,16 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@herou
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/common';
+import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
 import { Spinner } from '@/components/common/Spinner';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
-import { usePagination } from '@/hooks/usePagination';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { Market } from '@/utils/types';
 import { GroupedPosition, RebalanceAction } from '@/utils/types';
-import { FromAndToMarkets } from './FromAndToMarkets';
+import { FromMarketsTable } from './FromMarketsTable';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
@@ -33,12 +33,11 @@ export function RebalanceModal({
   refetch,
   isRefetching,
 }: RebalanceModalProps) {
-  const [fromMarketFilter, setFromMarketFilter] = useState('');
-  const [toMarketFilter, setToMarketFilter] = useState('');
   const [selectedFromMarketUniqueKey, setSelectedFromMarketUniqueKey] = useState('');
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState<string>('0');
   const [showProcessModal, setShowProcessModal] = useState(false);
+  const [showToModal, setShowToModal] = useState(false);
   const toast = useStyledToast();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
@@ -52,9 +51,6 @@ export function RebalanceModal({
     isProcessing,
     currentStep,
   } = useRebalance(groupedPosition);
-
-  const fromPagination = usePagination();
-  const toPagination = usePagination();
 
   const eligibleMarkets = useMemo(() => {
     return markets.filter(
@@ -287,10 +283,9 @@ export function RebalanceModal({
         isOpen={isOpen}
         onClose={onClose}
         isDismissable={false}
-        size="5xl"
+        size="3xl"
         classNames={{
-          base: 'min-w-[1250px] z-[1000] p-4 rounded',
-          backdrop: showProcessModal && 'z-[999]',
+          base: 'p-4 rounded-sm',
         }}
       >
         <ModalContent>
@@ -309,13 +304,24 @@ export function RebalanceModal({
               Refresh
             </Button>
           </ModalHeader>
-          <ModalBody className="mx-2 font-zen">
-            <div className="py-4">
+          <ModalBody className="mx-2 font-zen gap-4">
+            <div className="py-2">
               <p className="text-sm text-secondary">
-                Optimize your {groupedPosition.loanAsset} lending strategy by redistributing funds
-                across markets, add "Rebalance" actions to fine-tune your portfolio.
+                Click on your existing position to rebalance {groupedPosition.loanAsset} to a new market. You can batch actions.
               </p>
             </div>
+
+            <FromMarketsTable
+              positions={groupedPosition.markets
+                .filter((p) => BigInt(p.state.supplyShares) > 0)
+                .map((market) => ({
+                  ...market,
+                  pendingDelta: getPendingDelta(market.market.uniqueKey),
+                }))}
+              selectedMarketUniqueKey={selectedFromMarketUniqueKey}
+              onSelectMarket={setSelectedFromMarketUniqueKey}
+              onSelectMax={handleMaxSelect}
+            />
 
             <RebalanceActionInput
               amount={amount}
@@ -329,39 +335,8 @@ export function RebalanceModal({
                 chainId: groupedPosition.chainId,
               }}
               onAddAction={handleAddAction}
-            />
-
-            <FromAndToMarkets
-              eligibleMarkets={eligibleMarkets}
-              fromMarkets={groupedPosition.markets
-                .filter((p) => BigInt(p.state.supplyShares) > 0)
-                .map((market) => ({
-                  ...market,
-                  pendingDelta: getPendingDelta(market.market.uniqueKey),
-                }))}
-              toMarkets={eligibleMarkets}
-              fromFilter={fromMarketFilter}
-              toFilter={toMarketFilter}
-              onFromFilterChange={setFromMarketFilter}
-              onToFilterChange={setToMarketFilter}
-              onFromMarketSelect={setSelectedFromMarketUniqueKey}
-              onToMarketSelect={setSelectedToMarketUniqueKey}
-              onSelectMax={handleMaxSelect}
-              fromPagination={{
-                currentPage: fromPagination.currentPage,
-                totalPages: Math.ceil(
-                  groupedPosition.markets.filter((p) => BigInt(p.state.supplyShares) > 0).length /
-                    PER_PAGE,
-                ),
-                onPageChange: fromPagination.setCurrentPage,
-              }}
-              toPagination={{
-                currentPage: toPagination.currentPage,
-                totalPages: Math.ceil(eligibleMarkets.length / PER_PAGE),
-                onPageChange: toPagination.setCurrentPage,
-              }}
-              selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
-              selectedToMarketUniqueKey={selectedToMarketUniqueKey}
+              onToMarketClick={() => setShowToModal(true)}
+              onClearToMarket={() => setSelectedToMarketUniqueKey('')}
             />
 
             <RebalanceCart
@@ -398,6 +373,23 @@ export function RebalanceModal({
           onClose={() => setShowProcessModal(false)}
           tokenSymbol={groupedPosition.loanAsset}
           actionsCount={rebalanceActions.length}
+        />
+      )}
+
+      {showToModal && (
+        <MarketSelectionModal
+          title="Select Destination Market"
+          description="Choose a market to rebalance funds to"
+          vaultAsset={groupedPosition.loanAssetAddress as `0x${string}`}
+          chainId={groupedPosition.chainId}
+          multiSelect={false}
+          onClose={() => setShowToModal(false)}
+          onSelect={(selectedMarkets) => {
+            if (selectedMarkets.length > 0) {
+              setSelectedToMarketUniqueKey(selectedMarkets[0].uniqueKey);
+            }
+          }}
+          confirmButtonText="Select Market"
         />
       )}
     </>

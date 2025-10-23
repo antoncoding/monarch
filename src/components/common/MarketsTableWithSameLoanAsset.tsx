@@ -414,7 +414,7 @@ function MarketRow({
         </p>
       </td>
       <td data-label="Indicators" className="z-50 text-center">
-        <MarketIndicators market={market} showRisk={true} />
+        <MarketIndicators market={market} showRisk />
       </td>
     </tr>
   );
