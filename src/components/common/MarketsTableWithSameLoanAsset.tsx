@@ -384,7 +384,7 @@ function MarketRow({
           <div className="flex items-center justify-center gap-2">
             <Checkbox
               isSelected={isSelected}
-              onChange={onToggle}
+              onValueChange={onToggle}
               isDisabled={disabled}
               className="h-6 w-4 cursor-pointer rounded border-gray-300 text-primary"
               onSelect={(e) => e.stopPropagation()}
@@ -577,14 +577,23 @@ export function MarketsTableWithSameLoanAsset({
     return markets.filter((m) => m.isSelected);
   }, [markets]);
 
-  // Pagination
-  const totalPages = Math.ceil(processedMarkets.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + itemsPerPage);
+  // Pagination with guards to prevent invalid states
+  const safePerPage = Math.max(1, Math.floor(itemsPerPage ?? 8));
+  const totalPages = Math.max(1, Math.ceil(processedMarkets.length / safePerPage));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safePage - 1) * safePerPage;
+  const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
 
   React.useEffect(() => {
     setCurrentPage(1);
   }, [collateralFilter, oracleFilter]);
+
+  // Clamp currentPage when totalPages changes
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
 
   return (
     <div className="space-y-3">
@@ -702,9 +711,9 @@ export function MarketsTableWithSameLoanAsset({
       {/* Pagination */}
       <Pagination
         totalPages={totalPages}
-        currentPage={currentPage}
+        currentPage={safePage}
         onPageChange={setCurrentPage}
-        entriesPerPage={itemsPerPage}
+        entriesPerPage={safePerPage}
         isDataLoaded
         size="sm"
       />

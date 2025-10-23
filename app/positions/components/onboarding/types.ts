@@ -8,14 +8,3 @@ export type TokenWithMarkets = NetworkToken & {
   logoURI?: string;
   balance: string;
 };
-
-export type OnboardingStep = 'asset-selection' | 'market-selection' | 'setup';
-
-export type OnboardingContextType = {
-  step: OnboardingStep;
-  selectedToken?: TokenWithMarkets;
-  selectedMarkets: Market[];
-  setStep: (step: OnboardingStep) => void;
-  setSelectedToken: (token: TokenWithMarkets) => void;
-  setSelectedMarkets: (markets: Market[]) => void;
-};
