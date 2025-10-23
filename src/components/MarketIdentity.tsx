@@ -106,7 +106,7 @@ export function MarketIdentity({
           </div>
           {showLltv && (
             <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-              {lltv}% LLTV
+              {lltv}% 
             </span>
           )}
           {showOracle && (

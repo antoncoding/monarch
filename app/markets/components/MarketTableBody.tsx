@@ -1,19 +1,14 @@
 import React from 'react';
-import { Tooltip } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { FaShieldAlt } from 'react-icons/fa';
 import { GoStarFill, GoStar } from 'react-icons/go';
 import { Button } from '@/components/common/Button';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
+import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { TooltipContent } from '@/components/TooltipContent';
 import { Market } from '@/utils/types';
-import logo from '../../../imgs/logo.png';
 import { APYCell } from './APYBreakdownTooltip';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
-import { RewardsIndicator } from './RewardsIndicator';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 
 type MarketTableBodyProps = {
@@ -88,7 +83,6 @@ export function MarketTableBody({
                     marketId={item.uniqueKey}
                     chainId={item.morphoBlue.chain.id}
                     showNetworkIcon
-                    market={item}
                   />
                 </button>
               </td>
@@ -140,50 +134,7 @@ export function MarketTableBody({
                 </div>
               </td>
               <td data-label="Indicators" className="z-50">
-                <div className="flex items-center justify-center gap-2">
-                  {item.isProtectedByLiquidationBots && (
-                    <Tooltip
-                      classNames={{
-                        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                      }}
-                      content={
-                        <TooltipContent
-                          icon={<FaShieldAlt size={16} className="text-primary text-opacity-50" />}
-                          detail="This market has on-chain liquidation events performed by liquidation bots"
-                        />
-                      }
-                    >
-                      <div>
-                        <FaShieldAlt size={16} className="text-primary text-opacity-50" />
-                      </div>
-                    </Tooltip>
-                  )}
-                  {item.isMonarchWhitelisted && (
-                    <Tooltip
-                      classNames={{
-                        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                      }}
-                      content={
-                        <TooltipContent
-                          icon={<Image src={logo} alt="Monarch" width={16} height={16} />}
-                          detail="This market is recognized by Monarch"
-                        />
-                      }
-                    >
-                      <div>
-                        <Image src={logo} alt="Monarch" width={16} height={16} />
-                      </div>
-                    </Tooltip>
-                  )}
-                  <RewardsIndicator
-                    chainId={item.morphoBlue.chain.id}
-                    marketId={item.uniqueKey}
-                    loanTokenAddress={item.loanAsset.address}
-                    whitelisted={item.whitelisted && !item.isMonarchWhitelisted}
-                  />
-                </div>
+                <MarketIndicators market={item} showRisk={false} />
               </td>
               <td data-label="Actions" className="justify-center px-4 py-3">
                 <div className="flex items-center justify-center">

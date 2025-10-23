@@ -1,14 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Input, Tooltip } from '@heroui/react';
+import { Input } from '@heroui/react';
 import { Pagination } from '@heroui/react';
 import { Button } from '@heroui/react';
-import { FaArrowUp, FaArrowDown, FaStar, FaUser } from 'react-icons/fa';
-import { formatUnits } from 'viem';
-import { TokenIcon } from '@/components/TokenIcon';
-import { TooltipContent } from '@/components/TooltipContent';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { MarketIdBadge } from '@/components/MarketIdBadge';
+import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
+import { MarketIndicators } from '@/components/MarketIndicators';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { formatReadable } from '@/utils/balance';
-import { getAssetURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 import { MarketPosition } from '@/utils/types';
 import {
@@ -235,38 +234,24 @@ export function FromAndToMarkets({
                           : ''
                       }`}
                     >
-                      <td className="px-4 py-2 font-monospace text-xs">
-                        {marketPosition.market.uniqueKey.slice(2, 8)}
+                      <td className="px-4 py-2">
+                        <MarketIdBadge
+                          marketId={marketPosition.market.uniqueKey}
+                          chainId={marketPosition.market.morphoBlue.chain.id}
+                        />
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex items-center gap-x-2">
-                          <div className="flex items-center gap-1">
-                            <TokenIcon
-                              address={marketPosition.market.collateralAsset.address}
-                              chainId={marketPosition.market.morphoBlue.chain.id}
-                              symbol={marketPosition.market.collateralAsset.symbol}
-                              width={18}
-                              height={18}
-                            />
-                            <a
-                              href={getAssetURL(
-                                marketPosition.market.collateralAsset.address,
-                                marketPosition.market.morphoBlue.chain.id,
-                              )}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 no-underline hover:underline"
-                            >
-                              {marketPosition.market.collateralAsset.symbol.length > 6
-                                ? `${marketPosition.market.collateralAsset.symbol.slice(0, 6)}...`
-                                : marketPosition.market.collateralAsset.symbol}
-                            </a>
-                          </div>
-                          <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                            {formatUnits(BigInt(marketPosition.market.lltv), 16)}%
-                          </span>
-                        </div>
+                        <MarketIdentity
+                          market={marketPosition.market}
+                          chainId={marketPosition.market.morphoBlue.chain.id}
+                          mode={MarketIdentityMode.Minimum}
+                          focus={MarketIdentityFocus.Collateral}
+                          wide={true}
+                          showLltv={true}
+                          showOracle={false}
+                          iconSize={18}
+                          showExplorerLink={true}
+                        />
                       </td>
                       <td className="px-4 py-2">
                         {formatReadable(marketPosition.market.state.supplyApy * 100)}%
@@ -367,8 +352,7 @@ export function FromAndToMarkets({
                     currentSortDirection={toSortDirection}
                     onClick={handleToSortChange}
                   />
-                  <th className="px-4 py-2 text-left">Util Rate</th>
-                  <th className="px-4 py-2 text-left">Risks</th>
+                  <th className="px-4 py-2 text-left">Indicators</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -386,58 +370,23 @@ export function FromAndToMarkets({
                           : ''
                       }`}
                     >
-                      <td className="px-4 py-2 font-monospace text-xs">
-                        <div className="flex items-center gap-1">
-                          <span>{market.uniqueKey.slice(2, 8)}</span>
-                          {staredIds.includes(market.uniqueKey) && (
-                            <span className="flex-shrink-0">
-                              <FaStar className="text-yellow-500" />
-                            </span>
-                          )}
-                          {fromMarkets.some((fm) => fm.market.uniqueKey === market.uniqueKey) && (
-                            <Tooltip
-                              content={
-                                <TooltipContent detail="You have supplied to this market." />
-                              }
-                              className="rounded-sm"
-                              placement="top"
-                            >
-                              <span className="flex-shrink-0 cursor-default">
-                                <FaUser size={12} />
-                              </span>
-                            </Tooltip>
-                          )}
-                        </div>
+                      <td className="px-4 py-2">
+                        <MarketIdBadge
+                          marketId={market.uniqueKey}
+                          chainId={market.morphoBlue.chain.id}
+                        />
                       </td>
-                      <td className="px-4">
-                        <div className="flex items-center gap-x-2">
-                          <div className="flex items-center gap-1">
-                            <TokenIcon
-                              address={market.collateralAsset.address}
-                              chainId={market.morphoBlue.chain.id}
-                              symbol={market.collateralAsset.symbol}
-                              width={18}
-                              height={18}
-                            />
-                            <a
-                              href={getAssetURL(
-                                market.collateralAsset.address,
-                                market.morphoBlue.chain.id,
-                              )}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-1 no-underline hover:underline"
-                            >
-                              {market.collateralAsset.symbol.length > 6
-                                ? `${market.collateralAsset.symbol.slice(0, 6)}...`
-                                : market.collateralAsset.symbol}
-                            </a>
-                          </div>
-                          <span className="rounded-sm bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                            {formatUnits(BigInt(market.lltv), 16)}%
-                          </span>
-                        </div>
+                      <td className="px-4 py-2">
+                        <MarketIdentity
+                          market={market}
+                          chainId={market.morphoBlue.chain.id}
+                          mode={MarketIdentityMode.Minimum}
+                          focus={MarketIdentityFocus.Collateral}
+                          showLltv={true}
+                          showOracle={true}
+                          iconSize={18}
+                          showExplorerLink={true}
+                        />
                       </td>
                       <td className="px-4 py-2">{formatReadable(market.state.supplyApy * 100)}%</td>
                       <td className="px-4 py-2">
@@ -447,16 +396,12 @@ export function FromAndToMarkets({
                         {market.loanAsset.symbol}
                       </td>
                       <td className="px-4 py-2">
-                        {formatReadable(market.state.utilization * 100)}%
-                      </td>
-                      <td className="px-4 py-2">
-                        {completeMarket && (
-                          <div className="flex items-center justify-center gap-1">
-                            <MarketAssetIndicator market={completeMarket} mode="complex" />
-                            <MarketOracleIndicator market={completeMarket} mode="complex" />
-                            <MarketDebtIndicator market={completeMarket} mode="complex" />
-                          </div>
-                        )}
+                        <MarketIndicators
+                          market={market}
+                          showRisk={true}
+                          isStared={staredIds.includes(market.uniqueKey)}
+                          hasUserPosition={fromMarkets.some((fm) => fm.market.uniqueKey === market.uniqueKey)}
+                        />
                       </td>
                     </tr>
                   );

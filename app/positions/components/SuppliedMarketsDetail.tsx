@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/common';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
+import { MarketIndicators } from '@/components/MarketIndicators';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
@@ -39,12 +40,10 @@ function MarketRow({
       <td data-label="Market" className="text-center">
         <div className="flex items-center justify-center">
           <MarketIdBadge
-              marketId={position.market.uniqueKey}
-              chainId={position.market.morphoBlue.chain.id}
-              showNetworkIcon={false}
-              market={position.market}
-              showWarnings
-            />
+            marketId={position.market.uniqueKey}
+            chainId={position.market.morphoBlue.chain.id}
+            showNetworkIcon={false}
+          />
         </div>
       </td>
       <td data-label="Market Detail" className="align-middle p-4">
@@ -72,6 +71,9 @@ function MarketRow({
           </div>
           <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
+      </td>
+      <td data-label="Indicators" className="text-center">
+        <MarketIndicators market={position.market} showRisk={true} />
       </td>
       <td data-label="Actions" className="justify-center px-4 py-3">
         <div className="flex items-center justify-center gap-2">
@@ -187,6 +189,7 @@ export function SuppliedMarketsDetail({
               <th>APY</th>
               <th>Supplied</th>
               <th>% of Portfolio</th>
+              <th>Indicators</th>
               <th>Actions</th>
             </tr>
           </thead>
