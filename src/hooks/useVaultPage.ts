@@ -28,6 +28,11 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     chainId,
   });
 
+  // Memoize transaction success handler to prevent infinite refetch loops
+  const handleTransactionSuccess = useCallback(() => {
+    void refetchVaultData();
+  }, [refetchVaultData]);
+
   // Fetch vault contract state and actions
   const {
     isLoading: contractLoading,
@@ -44,9 +49,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   } = useVaultV2({
     vaultAddress,
     chainId,
-    onTransactionSuccess: () => {
-      void refetchVaultData();
-    },
+    onTransactionSuccess: handleTransactionSuccess,
   });
 
   // Fetch market adapter

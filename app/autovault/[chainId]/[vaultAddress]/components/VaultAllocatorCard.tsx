@@ -1,5 +1,6 @@
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
+import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
 import { Address } from 'viem';
 import { AgentIcon } from '@/components/AgentIcon';
@@ -74,7 +75,7 @@ export function VaultAllocatorCard({
                   />
                 }
               >
-                <span className="text-xs text-secondary underline">What's this?</span>
+                <BsQuestionCircle />
               </Tooltip>
             </div>
           </div>

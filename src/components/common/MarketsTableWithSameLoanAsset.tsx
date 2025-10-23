@@ -10,9 +10,9 @@ import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/ut
 import { ERC20Token, UnknownERC20Token, infoToKey, findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import { Pagination } from '../../../app/markets/components/Pagination';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from '../../../app/markets/components/RiskIndicator';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
+import { MarketIndicators } from '../MarketIndicators';
 
 export type MarketWithSelection = {
   market: Market;
@@ -385,7 +385,7 @@ function MarketRow({
       <td className="z-50 text-center">
         <MarketIdBadge marketId={market.uniqueKey} chainId={market.morphoBlue.chain.id} />
       </td>
-      <td className="z-50" style={{ width: '280px' }}>
+      <td className="z-50" style={{ width: '240px' }}>
         <MarketIdentity
           market={market}
           chainId={market.morphoBlue.chain.id}
@@ -413,12 +413,8 @@ function MarketRow({
           {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
         </p>
       </td>
-      <td data-label="Risk" className="z-50 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <MarketAssetIndicator market={market} />
-          <MarketOracleIndicator market={market} />
-          <MarketDebtIndicator market={market} />
-        </div>
+      <td data-label="Indicators" className="z-50 text-center">
+        <MarketIndicators market={market} showRisk />
       </td>
     </tr>
   );
@@ -636,7 +632,7 @@ export function MarketsTableWithSameLoanAsset({
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
-              <th className="text-center font-normal">Risk</th>
+              <th className="text-center font-normal">Indicators</th>
             </tr>
           </thead>
           <tbody>

@@ -7,13 +7,14 @@ import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import merklLogo from '@/imgs/merkl.jpg';
 
 type RewardsIndicatorProps = {
+  size: number;
   chainId: number;
   marketId: string;
   loanTokenAddress?: string;
   whitelisted: boolean // whitelisted by morpho
 };
 
-export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted }: RewardsIndicatorProps) {
+export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted, size }: RewardsIndicatorProps) {
   const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({ 
     marketId, 
     loanTokenAddress, 
@@ -53,7 +54,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
       }
     >
       <div>
-        <FiGift size={16} />
+        <FiGift size={size} />
       </div>
     </Tooltip>
   );

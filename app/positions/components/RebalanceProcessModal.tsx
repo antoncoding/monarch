@@ -86,10 +86,10 @@ export function RebalanceProcessModal({
   };
 
   return (
-    <div className="fixed left-0 top-0 z-[1001] flex h-full w-full items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed left-0 top-0 z-[1100] flex h-full w-full items-center justify-center bg-black bg-opacity-50">
       <div
         style={{ width: '500px' }}
-        className="bg-surface relative z-50 rounded p-12 transition-all duration-500 ease-in-out"
+        className="bg-surface relative rounded p-12 transition-all duration-500 ease-in-out"
       >
         <button
           type="button"

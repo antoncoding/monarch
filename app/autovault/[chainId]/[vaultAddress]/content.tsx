@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { IoRefreshOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
@@ -137,6 +138,16 @@ export default function VaultContent() {
             </div>
             <div className="flex items-center gap-3">
               <AddressDisplay address={vaultAddressValue} chainId={chainId} size="sm" showExplorerLink />
+              <Button
+                variant="light"
+                size="sm"
+                onPress={handleRefreshVault}
+                isDisabled={vault.vaultDataLoading}
+                className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              >
+                <IoRefreshOutline className="mr-2 h-4 w-4" />
+                Refresh
+              </Button>
               {vault.isOwner && (
                 <Button
                   variant="subtle"

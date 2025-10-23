@@ -209,7 +209,10 @@ export function useVaultV2Deposit({
       if (usePermit2Setting) {
         // Permit2 flow
         try {
-          await authorizePermit2();
+          if (!permit2Authorized) {
+            await authorizePermit2();
+          }
+          
           setCurrentStep('signing');
 
           // Small delay to prevent UI glitches

@@ -61,18 +61,26 @@ export function MarketSelectionModal({
   }, [markets, vaultAsset, chainId, excludeMarketIds]);
 
   const handleToggleMarket = (marketId: string) => {
+    if (!multiSelect) {
+      // Single select mode - immediately select and close
+      const market = availableMarkets.find((m) => m.uniqueKey === marketId);
+      if (market) {
+        // Use setTimeout to ensure state updates happen in correct order
+        onSelect([market]);
+        setTimeout(() => {
+          onClose();
+        }, 0);
+      }
+      return;
+    }
+
+    // Multi-select mode
     setSelectedMarkets((prev) => {
       const next = new Set(prev);
       if (next.has(marketId)) {
         next.delete(marketId);
       } else {
-        if (multiSelect) {
-          next.add(marketId);
-        } else {
-          // Single select mode - clear previous selection
-          next.clear();
-          next.add(marketId);
-        }
+        next.add(marketId);
       }
       return next;
     });
@@ -87,6 +95,7 @@ export function MarketSelectionModal({
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (e.target === e.currentTarget) {
       onClose();
     }
@@ -95,6 +104,7 @@ export function MarketSelectionModal({
   const handleBackdropKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation();
       onClose();
     }
   };
@@ -102,14 +112,14 @@ export function MarketSelectionModal({
   if (marketsLoading) {
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+        className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50"
         onClick={handleBackdropClick}
         role="button"
         tabIndex={0}
         onKeyDown={handleBackdropKeyDown}
         aria-label="Close market selection"
       >
-        <div className="w-full max-w-2xl rounded-lg bg-surface p-6 shadow-xl">
+        <div className="w-full max-w-2xl rounded-sm bg-surface p-6 shadow-xl">
           <div className="flex items-center justify-center py-12">
             <Spinner size={24} />
           </div>
@@ -127,14 +137,14 @@ export function MarketSelectionModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
       role="button"
       tabIndex={0}
       onKeyDown={handleBackdropKeyDown}
       aria-label="Close market selection"
     >
-      <div className="w-full max-w-4xl h-[56vh] max-h-[85vh] rounded-lg bg-surface shadow-xl flex flex-col">
+      <div className="w-full max-w-4xl h-[56vh] max-h-[85vh] rounded-sm bg-surface shadow-xl flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4">
           <div>
             <h3 className="text-lg font-medium">{title}</h3>
@@ -158,31 +168,40 @@ export function MarketSelectionModal({
                 isSelected: selectedMarkets.has(m.uniqueKey),
               }))}
               onToggleMarket={handleToggleMarket}
+              disabled={false}
+              uniqueCollateralTokens={undefined}
             />
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2 p-6 pt-4">
-          {multiSelect && (
+        {multiSelect && (
+          <div className="flex items-center justify-between gap-2 p-6 pt-4">
             <p className="text-xs text-secondary">
               {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
             </p>
-          )}
-          {!multiSelect && <div />}
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <Button variant="subtle" size="sm" onPress={onClose}>
+                Cancel
+              </Button>
+              <Button
+                variant="cta"
+                size="sm"
+                isDisabled={selectedCount === 0}
+                onPress={handleConfirm}
+              >
+                {buttonText}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!multiSelect && (
+          <div className="flex items-center justify-end gap-2 p-6 pt-4">
             <Button variant="subtle" size="sm" onPress={onClose}>
               Cancel
             </Button>
-            <Button
-              variant="cta"
-              size="sm"
-              isDisabled={selectedCount === 0}
-              onPress={handleConfirm}
-            >
-              {buttonText}
-            </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
