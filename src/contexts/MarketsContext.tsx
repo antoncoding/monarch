@@ -129,7 +129,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         // Process combined markets (filters, warnings, liquidation status)
         // Existing filters seem appropriate
         const filtered = combinedMarkets
-          .filter((market) => market.collateralAsset != undefined)
+          .filter((market) => market.uniqueKey !== undefined && market.loanAsset !== undefined && market.collateralAsset !== undefined)
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id)) // Keep this filter
           .filter((market) => !blacklistedMarkets.includes(market.uniqueKey));
 

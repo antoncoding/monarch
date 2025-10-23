@@ -23,7 +23,8 @@
       "Bash(pnpm exec tsc:*)",
       "Bash(npx eslint:*)",
       "Bash(git rm:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(timeout 30 pnpm exec tsc --noEmit --pretty)"
     ],
     "deny": []
   }

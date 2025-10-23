@@ -105,7 +105,8 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
       });
 
       if (result) {
-        setHistory(result.items);
+        const filtered = result.items.filter(tx => tx.data.market !== undefined)
+        setHistory(filtered);
         setTotalPages(Math.ceil(result.pageInfo.countTotal / pageSize));
       }
       setIsInitialized(true);

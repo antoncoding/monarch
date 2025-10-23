@@ -13,6 +13,7 @@ import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 import { MarketIndicators } from '../MarketIndicators';
+import { Checkbox } from '@heroui/react';
 
 export type MarketWithSelection = {
   market: Market;
@@ -27,6 +28,12 @@ type MarketsTableWithSameLoanAssetProps = {
   renderCartItemExtra?: (market: Market) => React.ReactNode;
   // Optional: Pass unique tokens for better filter performance
   uniqueCollateralTokens?: ERC20Token[];
+  // Optional: Hide the select column (useful for single-select mode)
+  showSelectColumn?: boolean;
+  // Optional: Hide the cart/staging area showing selected markets
+  showCart?: boolean;
+  // Optional: entry per page
+  itemsPerPage?: number
 };
 
 enum SortColumn {
@@ -36,8 +43,6 @@ enum SortColumn {
   Liquidity = 3,
   Risk = 4,
 }
-
-const ITEMS_PER_PAGE = 8;
 
 function HTSortable({
   label,
@@ -235,9 +240,11 @@ function CollateralFilter({
 function OracleFilterComponent({
   selectedOracles,
   setSelectedOracles,
+  availableOracles,
 }: {
   selectedOracles: PriceFeedVendors[];
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
+  availableOracles: PriceFeedVendors[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -266,7 +273,7 @@ function OracleFilterComponent({
   };
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div className="relative z-30 w-full" ref={dropdownRef}>
       <div
         className={`bg-surface min-w-32 cursor-pointer rounded-sm p-2 text-sm shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
@@ -304,12 +311,12 @@ function OracleFilterComponent({
         </div>
       </div>
       <div
-        className={`bg-surface absolute z-10 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
+        className={`bg-surface absolute z-50 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >
         <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
-          {Object.values(PriceFeedVendors).map((oracle) => (
+          {availableOracles.map((oracle) => (
             <li
               key={oracle}
               className={`m-2 flex cursor-pointer items-center justify-between rounded p-1.5 text-xs transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
@@ -351,10 +358,12 @@ function MarketRow({
   marketWithSelection,
   onToggle,
   disabled,
+  showSelectColumn,
 }: {
   marketWithSelection: MarketWithSelection;
   onToggle: () => void;
   disabled: boolean;
+  showSelectColumn: boolean;
 }) {
   const { market, isSelected } = marketWithSelection;
 
@@ -370,22 +379,24 @@ function MarketRow({
         }
       }}
     >
-      <td className="z-50">
-        <div className="flex items-center justify-center gap-2">
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={onToggle}
-            disabled={disabled}
-            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      </td>
-      <td className="z-50 text-center">
+      {showSelectColumn && (
+        <td className="z-50 py-1">
+          <div className="flex items-center justify-center gap-2">
+            <Checkbox
+              isSelected={isSelected}
+              onChange={onToggle}
+              isDisabled={disabled}
+              className="h-6 w-4 cursor-pointer rounded border-gray-300 text-primary"
+              onSelect={(e) => e.stopPropagation()}
+              size='sm'
+            />
+          </div>
+        </td>
+      )}
+      <td className="z-50 py-1 text-center">
         <MarketIdBadge marketId={market.uniqueKey} chainId={market.morphoBlue.chain.id} />
       </td>
-      <td className="z-50" style={{ width: '240px' }}>
+      <td className="z-50 py-1 pl-4" style={{ width: '240px' }}>
         <MarketIdentity
           market={market}
           chainId={market.morphoBlue.chain.id}
@@ -395,25 +406,25 @@ function MarketRow({
           showOracle
           iconSize={20}
           showExplorerLink={false}
-          wide
         />
       </td>
-      <td data-label="Total Supply" className="z-50 text-center">
+      <td data-label="Total Supply" className="z-50 py-1 text-center">
         <p className="text-xs">
           {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
         </p>
       </td>
-      <td data-label="APY" className="z-50 text-center">
+      <td data-label="APY" className="z-50 py-1 text-center text-sm flex items-center">
         <p>
-          {market.state.supplyApy ? `${(market.state.supplyApy * 100).toFixed(2)}%` : '—'}
+          {market.state.supplyApy ? `${(market.state.supplyApy * 100).toFixed(2)}` : '—'}
         </p>
+        { market.state.supplyApy && <span className='text-xs'> % </span>}
       </td>
-      <td data-label="Liquidity" className="z-50 text-center">
+      <td data-label="Liquidity" className="z-50 py-1 text-center">
         <p className="text-xs">
           {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
         </p>
       </td>
-      <td data-label="Indicators" className="z-50 text-center">
+      <td data-label="Indicators" className="z-50 py-1 text-center">
         <MarketIndicators market={market} showRisk />
       </td>
     </tr>
@@ -426,6 +437,9 @@ export function MarketsTableWithSameLoanAsset({
   disabled = false,
   renderCartItemExtra,
   uniqueCollateralTokens,
+  showSelectColumn = true,
+  showCart = true,
+  itemsPerPage = 8
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<SortColumn>(SortColumn.Supply);
@@ -444,7 +458,6 @@ export function MarketsTableWithSameLoanAsset({
 
   // Get unique collaterals with full token data
   const availableCollaterals = useMemo(() => {
-    // If uniqueCollateralTokens is provided, use it (preferred approach from RiskSelection)
     if (uniqueCollateralTokens) {
       return uniqueCollateralTokens;
     }
@@ -453,6 +466,11 @@ export function MarketsTableWithSameLoanAsset({
     const tokenMap = new Map<string, ERC20Token | UnknownERC20Token>();
 
     markets.forEach((m) => {
+      // Add null checks for nested properties
+      if (!m?.market?.collateralAsset?.address || !m?.market?.morphoBlue?.chain?.id) {
+        return;
+      }
+
       const key = infoToKey(m.market.collateralAsset.address, m.market.morphoBlue.chain.id);
 
       if (!tokenMap.has(key)) {
@@ -463,7 +481,7 @@ export function MarketsTableWithSameLoanAsset({
           tokenMap.set(key, existingToken);
         } else {
           const token: UnknownERC20Token = {
-            symbol: m.market.collateralAsset.symbol,
+            symbol: m.market.collateralAsset.symbol ?? 'Unknown',
             img: undefined,
             decimals: m.market.collateralAsset.decimals ?? 18,
             networks: [{
@@ -479,6 +497,21 @@ export function MarketsTableWithSameLoanAsset({
     return Array.from(tokenMap.values()).sort((a, b) => a.symbol.localeCompare(b.symbol));
   }, [markets, uniqueCollateralTokens]);
 
+  // Get unique oracles from current markets
+  const availableOracles = useMemo(() => {
+    const oracleSet = new Set<PriceFeedVendors>();
+
+    markets.forEach((m) => {
+      if (!m?.market?.morphoBlue?.chain?.id) return;
+      const vendorInfo = parsePriceFeedVendors(m.market.oracle?.data, m.market.morphoBlue.chain.id);
+      if (vendorInfo?.coreVendors) {
+        vendorInfo.coreVendors.forEach((vendor) => oracleSet.add(vendor));
+      }
+    });
+
+    return Array.from(oracleSet);
+  }, [markets]);
+
   // Filter and sort markets
   const processedMarkets = useMemo(() => {
     let filtered = [...markets];
@@ -486,6 +519,10 @@ export function MarketsTableWithSameLoanAsset({
     // Apply collateral filter
     if (collateralFilter.length > 0) {
       filtered = filtered.filter((m) => {
+        // Add null checks
+        if (!m?.market?.collateralAsset?.address || !m?.market?.morphoBlue?.chain?.id) {
+          return false;
+        }
         const key = infoToKey(m.market.collateralAsset.address, m.market.morphoBlue.chain.id);
         return collateralFilter.some((filterKey) =>
           filterKey.split('|').includes(key)
@@ -496,8 +533,12 @@ export function MarketsTableWithSameLoanAsset({
     // Apply oracle filter
     if (oracleFilter.length > 0) {
       filtered = filtered.filter((m) => {
+        // Add null checks
+        if (!m?.market?.morphoBlue?.chain?.id) {
+          return false;
+        }
         const vendorInfo = parsePriceFeedVendors(m.market.oracle?.data, m.market.morphoBlue.chain.id);
-        return vendorInfo.coreVendors.some((v) => oracleFilter.includes(v));
+        return vendorInfo?.coreVendors?.some((v) => oracleFilter.includes(v)) ?? false;
       });
     }
 
@@ -506,20 +547,20 @@ export function MarketsTableWithSameLoanAsset({
       let comparison = 0;
       switch (sortColumn) {
         case SortColumn.MarketName:
-          comparison = a.market.collateralAsset.symbol.localeCompare(
-            b.market.collateralAsset.symbol,
+          comparison = (a.market?.collateralAsset?.symbol ?? '').localeCompare(
+            b.market?.collateralAsset?.symbol ?? '',
           );
           break;
         case SortColumn.Supply:
           comparison =
-            Number(a.market.state.supplyAssetsUsd) - Number(b.market.state.supplyAssetsUsd);
+            Number(a.market?.state?.supplyAssetsUsd ?? 0) - Number(b.market?.state?.supplyAssetsUsd ?? 0);
           break;
         case SortColumn.APY:
-          comparison = (a.market.state.supplyApy ?? 0) - (b.market.state.supplyApy ?? 0);
+          comparison = (a.market?.state?.supplyApy ?? 0) - (b.market?.state?.supplyApy ?? 0);
           break;
         case SortColumn.Liquidity:
           comparison =
-            Number(a.market.state.liquidityAssets) - Number(b.market.state.liquidityAssets);
+            Number(a.market?.state?.liquidityAssets ?? 0) - Number(b.market?.state?.liquidityAssets ?? 0);
           break;
         case SortColumn.Risk:
           comparison = 0;
@@ -537,9 +578,9 @@ export function MarketsTableWithSameLoanAsset({
   }, [markets]);
 
   // Pagination
-  const totalPages = Math.ceil(processedMarkets.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(processedMarkets.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + itemsPerPage);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -548,7 +589,7 @@ export function MarketsTableWithSameLoanAsset({
   return (
     <div className="space-y-3">
       {/* Cart/Staging Area - MarketDetailsBlock Style */}
-      {selectedMarkets.length > 0 && (
+      {showCart && selectedMarkets.length > 0 && (
         <div className="space-y-2">
           {selectedMarkets.map(({ market }) => (
             <div
@@ -594,6 +635,7 @@ export function MarketsTableWithSameLoanAsset({
         <OracleFilterComponent
           selectedOracles={oracleFilter}
           setSelectedOracles={setOracleFilter}
+          availableOracles={availableOracles}
         />
       </div>
 
@@ -602,7 +644,7 @@ export function MarketsTableWithSameLoanAsset({
         <table className="responsive w-full rounded-md font-zen text-sm">
           <thead className="table-header">
             <tr>
-              <th className="text-center font-normal">Select</th>
+              {showSelectColumn && <th className="text-center font-normal">Select</th>}
               <th className="text-center font-normal">Id</th>
               <HTSortable
                 label="Market"
@@ -638,7 +680,7 @@ export function MarketsTableWithSameLoanAsset({
           <tbody>
             {paginatedMarkets.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-secondary">
+                <td colSpan={showSelectColumn ? 7 : 6} className="py-8 text-center text-secondary">
                   No markets found
                 </td>
               </tr>
@@ -649,6 +691,7 @@ export function MarketsTableWithSameLoanAsset({
                   marketWithSelection={marketWithSelection}
                   onToggle={() => onToggleMarket(marketWithSelection.market.uniqueKey)}
                   disabled={disabled}
+                  showSelectColumn={showSelectColumn}
                 />
               ))
             )}
@@ -661,8 +704,9 @@ export function MarketsTableWithSameLoanAsset({
         totalPages={totalPages}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
-        entriesPerPage={ITEMS_PER_PAGE}
+        entriesPerPage={itemsPerPage}
         isDataLoaded
+        size="sm"
       />
     </div>
   );

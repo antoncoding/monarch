@@ -144,7 +144,7 @@ export function MarketSelectionModal({
       onKeyDown={handleBackdropKeyDown}
       aria-label="Close market selection"
     >
-      <div className="w-full max-w-4xl h-[56vh] max-h-[85vh] rounded-sm bg-surface shadow-xl flex flex-col">
+      <div className="w-full max-w-4xl max-h-[95vh] rounded-sm bg-surface shadow-xl flex flex-col">
         <div className="flex items-center justify-between p-6 pb-4">
           <div>
             <h3 className="text-lg font-medium">{title}</h3>
@@ -161,15 +161,18 @@ export function MarketSelectionModal({
             </p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto px-6">
+          <div className="flex-1 px-6">
             <MarketsTableWithSameLoanAsset
               markets={availableMarkets.map((m) => ({
                 market: m,
                 isSelected: selectedMarkets.has(m.uniqueKey),
               }))}
+
               onToggleMarket={handleToggleMarket}
               disabled={false}
               uniqueCollateralTokens={undefined}
+              showSelectColumn={multiSelect}
+              itemsPerPage={7}
             />
           </div>
         )}

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { Market } from '@/utils/types';
 import { TokenWithMarkets } from './types';
 
@@ -27,6 +28,10 @@ type OnboardingContextType = {
   goToNextStep: () => void;
   goToPrevStep: () => void;
   resetOnboarding: () => void;
+
+  // Shared balances across all steps
+  balances: Array<{ address: string; balance: string }>;
+  balancesLoading: boolean;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -36,6 +41,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
+
+  // Fetch user balances once for the entire onboarding flow
+  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 
@@ -87,6 +95,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
+      balances,
+      balancesLoading,
     }),
     [
       selectedToken,
@@ -99,6 +109,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       setSelectedToken,
       setSelectedMarkets,
       setStep,
+      balances,
+      balancesLoading,
     ],
   );
 

@@ -157,14 +157,6 @@ export const getMarketWarningsWithDetail = (
     ? monarchWhitelistedMarkets.find((m) => m.id === market.uniqueKey.toLowerCase())
     : undefined;
 
-  if (market.uniqueKey.startsWith('0x34f676')) {
-    console.log('market', market);
-  }
-
-  if (whitelistedMarketData) {
-    console.log('market', market);
-  }
-
   // process official warnings
   for (const warning of market.warnings) {
     const foundWarning = allDetails.find((w) => w.code === warning.type);
