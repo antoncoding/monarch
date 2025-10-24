@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
@@ -11,13 +12,20 @@ import { MarketPositionWithEarnings } from '@/utils/types';
 import useUserPositions, { positionKeys } from './useUserPositions';
 import useUserTransactions from './useUserTransactions';
 
+export type Period = 'day' | 'week' | 'month';
+
 type BlockNumbers = {
-  day: number;
-  week: number;
-  month: number;
+  day?: number;
+  week?: number;
+  month?: number;
 };
 
 type ChainBlockNumbers = Record<SupportedNetworks, BlockNumbers>;
+
+type UseUserPositionsSummaryDataOptions = {
+  periods?: Period[];
+  chainIds?: SupportedNetworks[];
+};
 
 // Query keys for block numbers and earnings
 export const blockKeys = {
@@ -32,36 +40,44 @@ export const earningsKeys = {
     [...earningsKeys.user(address), marketKey] as const,
 };
 
-const fetchBlockNumbers = async () => {
-  console.log('🔄 [BLOCK NUMBERS] Initial fetch started');
+const fetchBlockNumbers = async (
+  periods: Period[] = ['day', 'week', 'month'],
+  chainIds?: SupportedNetworks[]
+) => {
+  console.log('🔄 [BLOCK NUMBERS] Fetch started for periods:', periods, 'chains:', chainIds ?? 'all');
 
   const now = Date.now() / 1000;
   const DAY = 86400;
-  const timestamps = {
-    day: now - DAY,
-    week: now - 7 * DAY,
-    month: now - 30 * DAY,
-  };
+
+  const timestamps: Partial<Record<Period, number>> = {};
+  if (periods.includes('day')) timestamps.day = now - DAY;
+  if (periods.includes('week')) timestamps.week = now - 7 * DAY;
+  if (periods.includes('month')) timestamps.month = now - 30 * DAY;
 
   const newBlockNums = {} as ChainBlockNumbers;
 
-  // Get block numbers for each network and timestamp
-  await Promise.all(
-    Object.values(SupportedNetworks)
-      .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number')
-      .map(async (chainId) => {
-        const [day, week, month] = await Promise.all([
-          estimatedBlockNumber(chainId, timestamps.day),
-          estimatedBlockNumber(chainId, timestamps.week),
-          estimatedBlockNumber(chainId, timestamps.month),
-        ]);
+  const allNetworks = Object.values(SupportedNetworks)
+    .filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number');
 
-        if (day && week && month) {
-          newBlockNums[chainId] = {
-            day: day.blockNumber,
-            week: week.blockNumber,
-            month: month.blockNumber,
-          };
+  // Filter to specific chains if provided
+  const networksToFetch = chainIds ?? allNetworks;
+
+  // Get block numbers for requested networks and timestamps
+  await Promise.all(
+    networksToFetch.map(async (chainId) => {
+        const blockNumbers: BlockNumbers = {};
+
+        const promises = Object.entries(timestamps).map(async ([period, timestamp]) => {
+          const result = await estimatedBlockNumber(chainId, timestamp as number);
+          if (result) {
+            blockNumbers[period as Period] = result.blockNumber;
+          }
+        });
+
+        await Promise.all(promises);
+
+        if (Object.keys(blockNumbers).length > 0) {
+          newBlockNums[chainId] = blockNumbers;
         }
       }),
   );
@@ -70,29 +86,47 @@ const fetchBlockNumbers = async () => {
   return newBlockNums;
 };
 
-const useUserPositionsSummaryData = (user: string | undefined) => {
-  // const [hasInitialData, setHasInitialData] = useState(false);
+const useUserPositionsSummaryData = (
+  user: string | undefined,
+  options: UseUserPositionsSummaryDataOptions = {}
+) => {
+  const { periods = ['day', 'week', 'month'], chainIds } = options;
 
   const {
     data: positions,
     loading: positionsLoading,
     isRefetching,
     positionsError,
-  } = useUserPositions(user, true);
-
+  } = useUserPositions(user, true, chainIds);
   const { fetchTransactions } = useUserTransactions();
 
   const queryClient = useQueryClient();
 
   const { customRpcUrls } = useCustomRpcContext();
 
-  // Query for block numbers - this runs once and is cached
+  // Query for block numbers - cached per period and chain combination
   const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
-    queryKey: blockKeys.all,
-    queryFn: fetchBlockNumbers,
+    queryKey: [...blockKeys.all, periods.join(','), chainIds?.join(',') ?? 'all'],
+    queryFn: async () => fetchBlockNumbers(periods, chainIds),
     staleTime: 5 * 60 * 1000, // Consider block numbers fresh for 5 minutes
     gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
   });
+
+  // Create stable query key identifiers
+  const positionsKey = useMemo(
+    () => positions?.map(p => `${p.market.uniqueKey}-${p.market.morphoBlue.chain.id}`).sort().join(',') ?? '',
+    [positions]
+  );
+
+  const blockNumsKey = useMemo(
+    () => {
+      if (!blockNums) return '';
+      return Object.entries(blockNums)
+        .map(([chain, blocks]) => `${chain}:${JSON.stringify(blocks)}`)
+        .join(',');
+    },
+    [blockNums]
+  );
 
   // Query for earnings calculations with progressive updates
   const {
@@ -101,7 +135,7 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
     isFetching: isFetchingEarnings,
     error,
   } = useQuery({
-    queryKey: ['positions-earnings', user, positions, blockNums],
+    queryKey: ['positions-earnings', user, positionsKey, blockNumsKey, periods.join(','), chainIds?.join(',') ?? 'all'],
     queryFn: async () => {
       if (!positions || !user || !blockNums) {
         console.log('⚠️ [EARNINGS] Missing required data, returning empty earnings');
@@ -117,12 +151,14 @@ const useUserPositionsSummaryData = (user: string | undefined) => {
       const positionPromises = positions.map(async (position) => {
         console.log('📈 [EARNINGS] Calculating for market:', position.market.uniqueKey);
 
+        const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
+
         const history = await fetchTransactions({
           userAddress: [user],
           marketUniqueKeys: [position.market.uniqueKey],
+          chainIds: [chainId], // Only fetch transactions for this position's chain!
         });
 
-        const chainId = position.market.morphoBlue.chain.id as SupportedNetworks;
         const blockNumbers = blockNums[chainId];
 
         const customRpcUrl = customRpcUrls[chainId] ?? undefined;

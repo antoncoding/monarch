@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { Address, zeroAddress } from 'viem';
+import { Address, formatUnits, zeroAddress } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
-import { useAllocations } from './useAllocations';
 import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import useUserPositionsSummaryData from './useUserPositionsSummaryData';
+import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
 
@@ -65,6 +66,57 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [adapterLoading, morphoMarketV1Adapter],
   );
 
+  // Fetch adapter positions for APY calculation (only last 24h, only current chain)
+  const {
+    positions: adapterPositions,
+    isEarningsLoading: isAPYLoading,
+  } = useUserPositionsSummaryData(
+    !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress
+      ? morphoMarketV1Adapter
+      : undefined,
+    { periods: ['day'], chainIds: [chainId] }
+  );
+
+  // Calculate vault APY from adapter positions (weighted average)
+  // Uses normalized decimals to avoid precision loss from BigInt->Number conversion
+  const vaultAPY = useMemo(() => {
+    if (!adapterPositions || adapterPositions.length === 0) return null;
+
+    let totalSuppliedNorm = 0;
+    let weightedAPY = 0;
+
+    for (const position of adapterPositions) {
+      // Normalize to human-readable decimals to avoid overflow/precision loss
+      const suppliedNorm = Number(
+        formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals)
+      );
+      if (suppliedNorm <= 0) continue;
+
+      const apy = position.market.state.supplyApy ?? 0;
+      totalSuppliedNorm += suppliedNorm;
+      weightedAPY += suppliedNorm * apy;
+    }
+
+    if (totalSuppliedNorm === 0) return null;
+    return weightedAPY / totalSuppliedNorm;
+  }, [adapterPositions]);
+
+  // Calculate total 24h earnings from adapter positions
+  const vault24hEarnings = useMemo(() => {
+    if (!adapterPositions || adapterPositions.length === 0) return null;
+
+    let total = 0n;
+
+    adapterPositions.forEach((position) => {
+      if (position.earned?.last24hEarned) {
+        // Sum up all earnings (assumes they're in raw bigint string format)
+        total += BigInt(position.earned.last24hEarned);
+      }
+    });
+
+    return total;
+  }, [adapterPositions]);
+
   const isOwner = useMemo(
     () =>
       Boolean(
@@ -83,18 +135,18 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [vaultData?.capsData?.needSetupCaps],
   );
 
-  // Memoize caps array to prevent unnecessary refetches
-  const allCaps = useMemo(() => {
-    const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
-    const marketCaps = vaultData?.capsData?.marketCaps ?? [];
-    return [...collateralCaps, ...marketCaps];
-  }, [vaultData?.capsData?.collateralCaps, vaultData?.capsData?.marketCaps]);
-
-  // Fetch current allocations
-  const { allocations, loading: allocationsLoading } = useAllocations({
+  // Fetch and parse allocations with typed structures
+  const {
+    collateralAllocations,
+    marketAllocations,
+    loading: allocationsLoading,
+    error: allocationsError,
+    refetch: refetchAllocations,
+  } = useVaultAllocations({
+    collateralCaps: vaultData?.capsData?.collateralCaps ?? [],
+    marketCaps: vaultData?.capsData?.marketCaps ?? [],
     vaultAddress,
     chainId,
-    caps: allCaps,
     enabled: !needsAdapterDeployment && !!vaultData?.capsData,
   });
 
@@ -103,20 +155,27 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     void refetchVaultData();
     void refetchContract();
     void refetchAdapter();
-  }, [refetchVaultData, refetchContract, refetchAdapter]);
+    void refetchAllocations();
+  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
 
   // Loading states
   const isLoading = vaultDataLoading || contractLoading || adapterLoading;
-  const hasError = !!vaultDataError;
+  const hasError = !!vaultDataError || !!allocationsError;
 
   return {
     // Data
     vaultData,
     totalAssets,
-    allocations,
+    collateralAllocations,
+    marketAllocations,
     adapter: morphoMarketV1Adapter,
     onChainName,
     onChainSymbol,
+
+    // APY & Earnings
+    vaultAPY,
+    vault24hEarnings,
+    isAPYLoading,
 
     // Computed state
     isOwner,

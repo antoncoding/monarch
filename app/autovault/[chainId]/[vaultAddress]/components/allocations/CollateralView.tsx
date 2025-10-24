@@ -1,17 +1,11 @@
-import { Address } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
+import { CollateralAllocation } from '@/types/vaultAllocations';
 import { SupportedNetworks } from '@/utils/networks';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
 
-type CollateralItem = {
-  collateralAddress: Address;
-  collateralSymbol: string;
-  allocation: bigint;
-};
-
 type CollateralViewProps = {
-  items: CollateralItem[];
+  allocations: CollateralAllocation[];
   totalAllocation: bigint;
   vaultAssetSymbol: string;
   vaultAssetDecimals: number;
@@ -19,14 +13,14 @@ type CollateralViewProps = {
 };
 
 export function CollateralView({
-  items,
+  allocations,
   totalAllocation,
   vaultAssetSymbol,
   vaultAssetDecimals,
   chainId,
 }: CollateralViewProps) {
   // Sort by allocation amount (most to least)
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = [...allocations].sort((a, b) => {
     if (a.allocation > b.allocation) return -1;
     if (a.allocation < b.allocation) return 1;
     return 0;
