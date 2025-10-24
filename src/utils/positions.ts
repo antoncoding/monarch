@@ -258,13 +258,13 @@ export async function calculateEarningsFromPeriod(
   const client = getClient(chainId, customRpcUrl);
 
   // Only fetch snapshots for requested periods
-  const snapshotPromises: (Promise<any> | null)[] = [
+  const snapshotPromises: (Promise<PositionSnapshot | null> | null)[] = [
     blockNumbers.day ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client) : null,
     blockNumbers.week ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week, client) : null,
     blockNumbers.month ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month, client) : null,
   ];
 
-  const snapshots = await Promise.all(snapshotPromises.map(p => p ?? Promise.resolve(null)));
+  const snapshots = await Promise.all(snapshotPromises.map(async p => p ?? Promise.resolve(null)));
 
   const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 

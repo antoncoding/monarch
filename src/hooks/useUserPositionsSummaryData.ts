@@ -107,7 +107,7 @@ const useUserPositionsSummaryData = (
   // Query for block numbers - cached per period and chain combination
   const { data: blockNums, isLoading: isLoadingBlockNums } = useQuery({
     queryKey: [...blockKeys.all, periods.join(','), chainIds?.join(',') ?? 'all'],
-    queryFn: () => fetchBlockNumbers(periods, chainIds),
+    queryFn: async () => fetchBlockNumbers(periods, chainIds),
     staleTime: 5 * 60 * 1000, // Consider block numbers fresh for 5 minutes
     gcTime: 3 * 60 * 1000, // Keep in cache for 3 minutes
   });
