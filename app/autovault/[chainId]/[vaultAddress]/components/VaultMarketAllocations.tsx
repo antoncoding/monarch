@@ -39,14 +39,15 @@ export function VaultMarketAllocations({
 }: VaultMarketAllocationsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('market');
 
-  // Calculate total allocation from all allocations
+  // Calculate total allocation from market allocations (canonical source)
+  // Note: collateralAllocations and marketAllocations are different VIEWS of the same data
+  // Using marketAllocations as the source of truth to avoid double-counting
   const totalAllocation = useMemo(() => {
     if (totalAssets !== undefined) return totalAssets;
 
-    const collateralTotal = collateralAllocations.reduce((sum, a) => sum + a.allocation, 0n);
-    const marketTotal = marketAllocations.reduce((sum, a) => sum + a.allocation, 0n);
-    return collateralTotal + marketTotal;
-  }, [totalAssets, collateralAllocations, marketAllocations]);
+    // Sum only marketAllocations - collateral view is just a different grouping of the same data
+    return marketAllocations.reduce((sum, a) => sum + a.allocation, 0n);
+  }, [totalAssets, marketAllocations]);
 
   const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation]);
 

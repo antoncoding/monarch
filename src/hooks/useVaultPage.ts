@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Address, zeroAddress } from 'viem';
+import { Address, formatUnits, zeroAddress } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
 import useUserPositionsSummaryData from './useUserPositionsSummaryData';
@@ -78,24 +78,27 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   );
 
   // Calculate vault APY from adapter positions (weighted average)
+  // Uses normalized decimals to avoid precision loss from BigInt->Number conversion
   const vaultAPY = useMemo(() => {
     if (!adapterPositions || adapterPositions.length === 0) return null;
 
-    let totalSupplied = 0n;
+    let totalSuppliedNorm = 0;
     let weightedAPY = 0;
 
-    adapterPositions.forEach((position) => {
-      const supplied = BigInt(position.state.supplyAssets);
-      const apy = position.market.state.supplyApy;
+    for (const position of adapterPositions) {
+      // Normalize to human-readable decimals to avoid overflow/precision loss
+      const suppliedNorm = Number(
+        formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals)
+      );
+      if (suppliedNorm <= 0) continue;
 
-      totalSupplied += supplied;
-      weightedAPY += Number(supplied) * apy;
-    });
+      const apy = position.market.state.supplyApy ?? 0;
+      totalSuppliedNorm += suppliedNorm;
+      weightedAPY += suppliedNorm * apy;
+    }
 
-    if (totalSupplied === 0n) return null;
-
-    // Return weighted average APY
-    return weightedAPY / Number(totalSupplied);
+    if (totalSuppliedNorm === 0) return null;
+    return weightedAPY / totalSuppliedNorm;
   }, [adapterPositions]);
 
   // Calculate total 24h earnings from adapter positions
