@@ -61,6 +61,8 @@ export default function VaultContent() {
     updateNameAndSymbol,
     setAllocator,
     refetchAdapter,
+    collateralAllocations,
+    marketAllocations,
   } = vault;
 
   const handleRefreshVault = useCallback(() => {
@@ -273,9 +275,8 @@ export default function VaultContent() {
 
           {/* Market Allocations */}
           <VaultMarketAllocations
-            marketCaps={marketCaps}
-            collateralCaps={collateralCaps}
-            allocations={vault.allocations}
+            collateralAllocations={collateralAllocations}
+            marketAllocations={marketAllocations}
             totalAssets={vault.totalAssets}
             vaultAssetSymbol={vault.vaultData?.tokenSymbol ?? '--'}
             vaultAssetDecimals={vault.vaultData?.tokenDecimals ?? 18}

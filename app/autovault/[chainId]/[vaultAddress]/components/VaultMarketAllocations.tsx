@@ -3,20 +3,15 @@ import { Switch } from '@heroui/react';
 import { HiOutlineCube } from 'react-icons/hi';
 import { MdOutlineAccountBalance } from 'react-icons/md';
 import { Spinner } from '@/components/common/Spinner';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import { AllocationData } from '@/hooks/useAllocations';
-import { useMarkets } from '@/hooks/useMarkets';
-import { parseCapIdParams } from '@/utils/morpho';
+import { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import { SupportedNetworks } from '@/utils/networks';
-import { findToken } from '@/utils/tokens';
 import { CollateralView } from './allocations/CollateralView';
 import { MarketView } from './allocations/MarketView';
 
 type VaultMarketAllocationsProps = {
-  totalAssets?: bigint
-  marketCaps: VaultV2Cap[];
-  collateralCaps: VaultV2Cap[];
-  allocations: AllocationData[];
+  totalAssets?: bigint;
+  collateralAllocations: CollateralAllocation[];
+  marketAllocations: MarketAllocation[];
   vaultAssetSymbol: string;
   vaultAssetDecimals: number;
   chainId: SupportedNetworks;
@@ -35,70 +30,25 @@ function ViewIcon({ isSelected, className }: { isSelected: boolean; className?: 
 
 export function VaultMarketAllocations({
   totalAssets,
-  marketCaps,
-  collateralCaps,
-  allocations,
+  collateralAllocations,
+  marketAllocations,
   vaultAssetSymbol,
   vaultAssetDecimals,
   chainId,
   isLoading,
 }: VaultMarketAllocationsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('market');
-  const { markets } = useMarkets();
 
-  // Create a map of capId -> allocation amount
-  const allocationMap = useMemo(() => {
-    const map = new Map<string, bigint>();
-    allocations.forEach((alloc) => {
-      map.set(alloc.capId, alloc.allocation);
-    });
-    return map;
-  }, [allocations]);
+  // Calculate total allocation from all allocations
+  const totalAllocation = useMemo(() => {
+    if (totalAssets !== undefined) return totalAssets;
 
-  // Prepare collateral data
-  const collateralData = useMemo(() => {
-    return collateralCaps
-      .map((cap) => {
-        const parsed = parseCapIdParams(cap.idParams);
-        if (!parsed.collateralToken) return null;
+    const collateralTotal = collateralAllocations.reduce((sum, a) => sum + a.allocation, 0n);
+    const marketTotal = marketAllocations.reduce((sum, a) => sum + a.allocation, 0n);
+    return collateralTotal + marketTotal;
+  }, [totalAssets, collateralAllocations, marketAllocations]);
 
-        const collateralToken = findToken(parsed.collateralToken, chainId);
-        const allocation = allocationMap.get(cap.capId) ?? 0n;
-
-        return {
-          collateralAddress: parsed.collateralToken,
-          collateralSymbol: collateralToken?.symbol ?? 'Unknown',
-          allocation,
-        };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [collateralCaps, allocationMap, chainId]);
-
-  // Prepare market data
-  const marketData = useMemo(() => {
-    return marketCaps
-      .map((cap) => {
-        const parsed = parseCapIdParams(cap.idParams);
-        if (parsed.type !== 'market' || !parsed.marketId) return null;
-
-        const market = markets.find((m) => m.uniqueKey.toLowerCase() === parsed.marketId?.toLowerCase());
-        if (!market) return null;
-
-        const allocation = allocationMap.get(cap.capId) ?? 0n;
-
-        return {
-          market,
-          allocation,
-        };
-      })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [marketCaps, markets, allocationMap]);
-
-   const totalAllocation = useMemo(() => {
-    return totalAssets ?? allocations.reduce((sum, allocation) => sum + allocation.allocation, 0n)
-   }, [totalAssets, allocations])
-
-   const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation])
+  const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation]);
 
   const viewDescription = useMemo(() => {
     if (viewMode === 'collateral') {
@@ -115,7 +65,7 @@ export function VaultMarketAllocations({
     );
   }
 
-  if (collateralData.length === 0 && marketData.length === 0) {
+  if (collateralAllocations.length === 0 && marketAllocations.length === 0) {
     return (
       <div className="bg-surface rounded p-6 text-center font-zen text-secondary">
         No markets configured yet. Configure caps in settings to start allocating assets.
@@ -157,7 +107,7 @@ export function VaultMarketAllocations({
       {/* Content */}
       {viewMode === 'collateral' ? (
         <CollateralView
-          items={collateralData}
+          allocations={collateralAllocations}
           totalAllocation={totalAllocation}
           vaultAssetSymbol={vaultAssetSymbol}
           vaultAssetDecimals={vaultAssetDecimals}
@@ -165,7 +115,7 @@ export function VaultMarketAllocations({
         />
       ) : (
         <MarketView
-          items={marketData}
+          allocations={marketAllocations}
           totalAllocation={totalAllocation}
           vaultAssetSymbol={vaultAssetSymbol}
           vaultAssetDecimals={vaultAssetDecimals}

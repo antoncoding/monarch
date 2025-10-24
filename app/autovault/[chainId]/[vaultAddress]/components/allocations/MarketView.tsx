@@ -1,17 +1,12 @@
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
+import { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
 
-type MarketItem = {
-  market: Market;
-  allocation: bigint;
-};
-
 type MarketViewProps = {
-  items: MarketItem[];
+  allocations: MarketAllocation[];
   totalAllocation: bigint;
   vaultAssetSymbol: string;
   vaultAssetDecimals: number;
@@ -19,14 +14,14 @@ type MarketViewProps = {
 };
 
 export function MarketView({
-  items,
+  allocations,
   totalAllocation,
   vaultAssetSymbol,
   vaultAssetDecimals,
   chainId,
 }: MarketViewProps) {
   // Sort by allocation amount (most to least)
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = [...allocations].sort((a, b) => {
     if (a.allocation > b.allocation) return -1;
     if (a.allocation < b.allocation) return 1;
     return 0;

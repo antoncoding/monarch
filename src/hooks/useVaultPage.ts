@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { Address, zeroAddress } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
-import { useAllocations } from './useAllocations';
 import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
 
@@ -83,18 +83,18 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [vaultData?.capsData?.needSetupCaps],
   );
 
-  // Memoize caps array to prevent unnecessary refetches
-  const allCaps = useMemo(() => {
-    const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
-    const marketCaps = vaultData?.capsData?.marketCaps ?? [];
-    return [...collateralCaps, ...marketCaps];
-  }, [vaultData?.capsData?.collateralCaps, vaultData?.capsData?.marketCaps]);
-
-  // Fetch current allocations
-  const { allocations, loading: allocationsLoading } = useAllocations({
+  // Fetch and parse allocations with typed structures
+  const {
+    collateralAllocations,
+    marketAllocations,
+    loading: allocationsLoading,
+    error: allocationsError,
+    refetch: refetchAllocations,
+  } = useVaultAllocations({
+    collateralCaps: vaultData?.capsData?.collateralCaps ?? [],
+    marketCaps: vaultData?.capsData?.marketCaps ?? [],
     vaultAddress,
     chainId,
-    caps: allCaps,
     enabled: !needsAdapterDeployment && !!vaultData?.capsData,
   });
 
@@ -103,17 +103,19 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     void refetchVaultData();
     void refetchContract();
     void refetchAdapter();
-  }, [refetchVaultData, refetchContract, refetchAdapter]);
+    void refetchAllocations();
+  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
 
   // Loading states
   const isLoading = vaultDataLoading || contractLoading || adapterLoading;
-  const hasError = !!vaultDataError;
+  const hasError = !!vaultDataError || !!allocationsError;
 
   return {
     // Data
     vaultData,
     totalAssets,
-    allocations,
+    collateralAllocations,
+    marketAllocations,
     adapter: morphoMarketV1Adapter,
     onChainName,
     onChainSymbol,
