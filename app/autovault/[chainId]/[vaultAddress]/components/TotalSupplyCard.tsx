@@ -1,12 +1,15 @@
 import React, { useMemo, useState } from 'react';
+import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { PlusIcon } from '@radix-ui/react-icons';
+import { TbTrendingUp } from 'react-icons/tb';
 import { Address } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance } from '@/utils/balance';
 import { DepositToVaultModal } from './DepositToVaultModal';
 
 type VaultTotalAssetsCardProps = {
-  totalAssets?: bigint
+  totalAssets?: bigint;
+  vault24hEarnings?: bigint | null;
   tokenDecimals?: number;
   tokenSymbol?: string;
   assetAddress?: Address;
@@ -24,10 +27,10 @@ export function TotalSupplyCard({
   vaultAddress,
   vaultName,
   totalAssets,
+  vault24hEarnings,
   onRefresh,
 }: VaultTotalAssetsCardProps): JSX.Element {
   const [showDepositModal, setShowDepositModal] = useState(false);
-
 
   const totalAssetsLabel = useMemo(() => {
     if (totalAssets === undefined || tokenDecimals === undefined) return '--';
@@ -44,15 +47,37 @@ export function TotalSupplyCard({
     }
   }, [tokenDecimals, tokenSymbol, totalAssets]);
 
+  const earnings24hLabel = useMemo(() => {
+    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined)
+      return null;
+
+    try {
+      const earningsValue = formatBalance(vault24hEarnings, tokenDecimals);
+
+      if (earningsValue === 0) return null;
+
+      const formatted = new Intl.NumberFormat('en-US', {
+        maximumFractionDigits: 4,
+        minimumFractionDigits: 2,
+      }).format(earningsValue);
+
+      return `+${formatted}`;
+    } catch (_error) {
+      return null;
+    }
+  }, [vault24hEarnings, tokenDecimals]);
+
   const handleDepositSuccess = () => {
     setShowDepositModal(false);
     onRefresh?.();
   };
 
+  const cardStyle = 'bg-surface rounded shadow-sm';
+
   return (
     <>
-      <div className="rounded bg-surface p-4 shadow-sm">
-        <div className="flex items-center justify-between">
+      <Card className={cardStyle}>
+        <CardHeader className="flex items-center justify-between pb-2">
           <span className="text-xs uppercase tracking-wide text-secondary">Total Assets</span>
           {assetAddress && tokenSymbol && tokenDecimals !== undefined && (
             <button
@@ -64,14 +89,22 @@ export function TotalSupplyCard({
               <PlusIcon className="h-4 w-4" />
             </button>
           )}
-        </div>
-        <div className="mt-3 flex items-center gap-2 text-base text-primary">
-          <span className='text-base'>{totalAssetsLabel}</span>
-          {assetAddress && (
-            <TokenIcon address={assetAddress} chainId={chainId} width={20} height={20} />
-          )}
-        </div>
-      </div>
+        </CardHeader>
+        <CardBody className="flex items-center justify-center py-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg text-primary">{totalAssetsLabel}</span>
+            {assetAddress && <TokenIcon address={assetAddress} chainId={chainId} width={20} height={20} />}
+            {earnings24hLabel && (
+              <Tooltip content="Total yield earned in the last 24 hours">
+                <div className="flex items-center gap-1 text-xs text-green-500">
+                  <TbTrendingUp className="h-3 w-3" />
+                  <span>{earnings24hLabel}</span>
+                </div>
+              </Tooltip>
+            )}
+          </div>
+        </CardBody>
+      </Card>
 
       {showDepositModal && assetAddress && tokenSymbol && tokenDecimals !== undefined && (
         <DepositToVaultModal

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Address, zeroAddress } from 'viem';
 import { SupportedNetworks } from '@/utils/networks';
 import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
+import useUserPositionsSummaryData from './useUserPositionsSummaryData';
 import { useVaultAllocations } from './useVaultAllocations';
 import { useVaultV2 } from './useVaultV2';
 import { useVaultV2Data } from './useVaultV2Data';
@@ -65,6 +66,54 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [adapterLoading, morphoMarketV1Adapter],
   );
 
+  // Fetch adapter positions for APY calculation (only last 24h, only current chain)
+  const {
+    positions: adapterPositions,
+    isEarningsLoading: isAPYLoading,
+  } = useUserPositionsSummaryData(
+    !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress
+      ? morphoMarketV1Adapter
+      : undefined,
+    { periods: ['day'], chainIds: [chainId] }
+  );
+
+  // Calculate vault APY from adapter positions (weighted average)
+  const vaultAPY = useMemo(() => {
+    if (!adapterPositions || adapterPositions.length === 0) return null;
+
+    let totalSupplied = 0n;
+    let weightedAPY = 0;
+
+    adapterPositions.forEach((position) => {
+      const supplied = BigInt(position.state.supplyAssets);
+      const apy = position.market.state.supplyApy;
+
+      totalSupplied += supplied;
+      weightedAPY += Number(supplied) * apy;
+    });
+
+    if (totalSupplied === 0n) return null;
+
+    // Return weighted average APY
+    return weightedAPY / Number(totalSupplied);
+  }, [adapterPositions]);
+
+  // Calculate total 24h earnings from adapter positions
+  const vault24hEarnings = useMemo(() => {
+    if (!adapterPositions || adapterPositions.length === 0) return null;
+
+    let total = 0n;
+
+    adapterPositions.forEach((position) => {
+      if (position.earned?.last24hEarned) {
+        // Sum up all earnings (assumes they're in raw bigint string format)
+        total += BigInt(position.earned.last24hEarned);
+      }
+    });
+
+    return total;
+  }, [adapterPositions]);
+
   const isOwner = useMemo(
     () =>
       Boolean(
@@ -119,6 +168,11 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     adapter: morphoMarketV1Adapter,
     onChainName,
     onChainSymbol,
+
+    // APY & Earnings
+    vaultAPY,
+    vault24hEarnings,
+    isAPYLoading,
 
     // Computed state
     isOwner,

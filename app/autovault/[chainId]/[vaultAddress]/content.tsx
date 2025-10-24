@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Card, CardBody, CardHeader } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -63,6 +64,9 @@ export default function VaultContent() {
     refetchAdapter,
     collateralAllocations,
     marketAllocations,
+    vaultAPY,
+    vault24hEarnings,
+    isAPYLoading,
   } = vault;
 
   const handleRefreshVault = useCallback(() => {
@@ -100,11 +104,14 @@ export default function VaultContent() {
   const sentinels = vault.vaultData?.sentinels ?? [];
   const capData = vault.vaultData?.capsData;
   const collateralCaps = capData?.collateralCaps ?? [];
-  const marketCaps = capData?.marketCaps ?? [];
   const assetAddress = vault.vaultData?.assetAddress;
 
-  // TODO: Get real APY from subgraph or calculate from market allocations
-  const apyLabel = '0%';
+  // Format APY
+  const apyLabel = useMemo(() => {
+    if (isAPYLoading) return '...';
+    if (vaultAPY === null || vaultAPY === undefined) return '0%';
+    return `${(vaultAPY * 100).toFixed(2)}%`;
+  }, [vaultAPY, isAPYLoading]);
 
   if (vault.hasError) {
     return (
@@ -236,16 +243,21 @@ export default function VaultContent() {
               tokenDecimals={vault.vaultData?.tokenDecimals}
               tokenSymbol={vault.vaultData?.tokenSymbol}
               totalAssets={vault.totalAssets}
+              vault24hEarnings={vault24hEarnings}
               assetAddress={assetAddress as Address | undefined}
               chainId={chainId}
               vaultAddress={vaultAddressValue}
               vaultName={title}
               onRefresh={handleRefreshVault}
             />
-            <div className="rounded bg-surface p-4 shadow-sm">
-              <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
-              <div className="mt-3 text-2xl text-primary">{apyLabel}</div>
-            </div>
+            <Card className="bg-surface rounded shadow-sm">
+              <CardHeader className="flex items-center justify-between pb-2">
+                <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
+              </CardHeader>
+              <CardBody className="flex items-center justify-center py-3">
+                <div className="text-lg text-primary">{apyLabel}</div>
+              </CardBody>
+            </Card>
             <VaultAllocatorCard
               allocators={allocators}
               onManageAgents={() => {

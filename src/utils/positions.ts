@@ -238,15 +238,15 @@ export async function calculateEarningsFromPeriod(
   transactions: UserTransaction[],
   userAddress: Address,
   chainId: SupportedNetworks,
-  blockNumbers: { day: number; week: number; month: number },
+  blockNumbers: { day?: number; week?: number; month?: number },
   customRpcUrl?: string,
 ): Promise<PositionEarnings> {
   if (!blockNumbers) {
     return {
       lifetimeEarned: '0',
-      last24hEarned: '0',
-      last7dEarned: '0',
-      last30dEarned: '0',
+      last24hEarned: null,
+      last7dEarned: null,
+      last30dEarned: null,
     };
   }
 
@@ -257,16 +257,19 @@ export async function calculateEarningsFromPeriod(
 
   const client = getClient(chainId, customRpcUrl);
 
-  const snapshots = await Promise.all([
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client),
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week, client),
-    fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month, client),
-  ]);
+  // Only fetch snapshots for requested periods
+  const snapshotPromises: (Promise<any> | null)[] = [
+    blockNumbers.day ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client) : null,
+    blockNumbers.week ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week, client) : null,
+    blockNumbers.month ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month, client) : null,
+  ];
+
+  const snapshots = await Promise.all(snapshotPromises.map(p => p ?? Promise.resolve(null)));
 
   const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
 
   const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0, now);
-  const last24hEarnings = snapshot24h
+  const last24hEarnings = snapshot24h && blockNumbers.day
     ? calculateEarningsFromSnapshot(
         currentBalance,
         BigInt(snapshot24h.supplyAssets),
@@ -275,7 +278,7 @@ export async function calculateEarningsFromPeriod(
         now,
       )
     : null;
-  const last7dEarnings = snapshot7d
+  const last7dEarnings = snapshot7d && blockNumbers.week
     ? calculateEarningsFromSnapshot(
         currentBalance,
         BigInt(snapshot7d.supplyAssets),
@@ -284,7 +287,7 @@ export async function calculateEarningsFromPeriod(
         now,
       )
     : null;
-  const last30dEarnings = snapshot30d
+  const last30dEarnings = snapshot30d && blockNumbers.month
     ? calculateEarningsFromSnapshot(
         currentBalance,
         BigInt(snapshot30d.supplyAssets),

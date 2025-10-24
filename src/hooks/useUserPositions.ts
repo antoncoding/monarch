@@ -54,13 +54,19 @@ export const positionKeys = {
 // --- Helper Fetch Function --- //
 
 // Fetches market keys ONLY from API/Subgraph sources
-const fetchSourceMarketKeys = async (user: string): Promise<PositionMarket[]> => {
+const fetchSourceMarketKeys = async (
+  user: string,
+  chainIds?: SupportedNetworks[]
+): Promise<PositionMarket[]> => {
   const allSupportedNetworks = Object.values(SupportedNetworks).filter(
     (value) => typeof value === 'number',
   ) as SupportedNetworks[];
 
+  // Filter to specific chains if provided
+  const networksToFetch = chainIds ?? allSupportedNetworks;
+
   const results = await Promise.allSettled(
-    allSupportedNetworks.map(async (network) => {
+    networksToFetch.map(async (network) => {
       let markets: PositionMarket[] = [];
 
       // Try Morpho API first if supported
@@ -136,7 +142,11 @@ const fetchMarketData = async (marketKey: string, chainId: number): Promise<Mark
 
 // --- Main Hook --- //
 
-const useUserPositions = (user: string | undefined, showEmpty = false) => {
+const useUserPositions = (
+  user: string | undefined,
+  showEmpty = false,
+  chainIds?: SupportedNetworks[]
+) => {
   const queryClient = useQueryClient();
   const { allMarkets } = useMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
@@ -151,17 +161,20 @@ const useUserPositions = (user: string | undefined, showEmpty = false) => {
     error: initialError,
   } = useQuery<InitialDataResponse>({
     // Note: Removed MarketsContextType type assertion
-    queryKey: positionKeys.initialData(user ?? ''),
+    queryKey: [...positionKeys.initialData(user ?? ''), chainIds?.join(',') ?? 'all'],
     queryFn: async () => {
       // User is guaranteed non-null here due to the 'enabled' flag
       if (!user) throw new Error('Assertion failed: User should be defined here.');
 
       // Fetch keys from API/Subgraph
-      const sourceMarketKeys = await fetchSourceMarketKeys(user);
-      // Get keys from cache
-      const usedMarkets = getUserMarkets();
+      const sourceMarketKeys = await fetchSourceMarketKeys(user, chainIds);
+      // Get keys from cache and filter by chainIds if provided
+      const cachedMarkets = getUserMarkets();
+      const filteredCachedMarkets = chainIds
+        ? cachedMarkets.filter((m) => chainIds.includes(m.chainId as SupportedNetworks))
+        : cachedMarkets;
       // Combine and deduplicate
-      const combinedMarkets = [...sourceMarketKeys, ...usedMarkets];
+      const combinedMarkets = [...sourceMarketKeys, ...filteredCachedMarkets];
       const uniqueMarketsMap = new Map<string, PositionMarket>();
       combinedMarkets.forEach((market) => {
         const key = `${market.marketUniqueKey.toLowerCase()}-${market.chainId}`;

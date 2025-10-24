@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Address } from 'viem';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
@@ -47,7 +47,7 @@ export function useVaultAllocations({
   // Parse and filter collateral caps
   const { validCollateralCaps, parsedCollateralCaps } = useMemo(() => {
     const valid: VaultV2Cap[] = [];
-    const parsed: Array<Omit<CollateralAllocation, 'allocation'>> = [];
+    const parsed: Omit<CollateralAllocation, 'allocation'>[] = [];
 
     collateralCaps.forEach((cap) => {
       const params = parseCapIdParams(cap.idParams);
@@ -78,7 +78,7 @@ export function useVaultAllocations({
   // Parse and filter market caps
   const { validMarketCaps, parsedMarketCaps } = useMemo(() => {
     const valid: VaultV2Cap[] = [];
-    const parsed: Array<Omit<MarketAllocation, 'allocation'>> = [];
+    const parsed: Omit<MarketAllocation, 'allocation'>[] = [];
 
     marketCaps.forEach((cap) => {
       const params = parseCapIdParams(cap.idParams);
