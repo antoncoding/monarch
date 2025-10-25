@@ -82,10 +82,10 @@ export default function Markets({
     usePagination();
 
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
-    'includeUnknownTokens',
+    keys.MarketsShowUnknownTokens,
     false,
   );
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
 
   const { allTokens, findToken } = useTokens();
 

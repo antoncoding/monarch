@@ -19,8 +19,6 @@ type MarketSelectionModalProps = {
   onClose: () => void;
   onSelect: (markets: Market[]) => void;
   confirmButtonText?: string;
-  // Optional: Storage key for settings (allows different modals to have different settings)
-  settingsStorageKey?: string;
 };
 
 /**
@@ -38,7 +36,6 @@ export function MarketSelectionModal({
   onClose,
   onSelect,
   confirmButtonText,
-  settingsStorageKey = 'marketSelection',
 }: MarketSelectionModalProps) {
   const [selectedMarkets, setSelectedMarkets] = useState<Set<string>>(new Set());
   const { markets, loading: marketsLoading } = useMarkets();
@@ -146,7 +143,6 @@ export function MarketSelectionModal({
                 disabled={false}
                 uniqueCollateralTokens={undefined}
                 showSelectColumn={multiSelect}
-                settingsStorageKey={settingsStorageKey}
               />
             )}
           </ModalBody>

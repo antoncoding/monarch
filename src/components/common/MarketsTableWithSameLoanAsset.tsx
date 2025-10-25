@@ -14,6 +14,7 @@ import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
@@ -39,8 +40,6 @@ type MarketsTableWithSameLoanAssetProps = {
   showSelectColumn?: boolean;
   // Optional: Hide the cart/staging area showing selected markets
   showCart?: boolean;
-  // Optional: Storage key prefix for settings (allows different instances to have different settings)
-  settingsStorageKey?: string;
   // Optional: Show the settings button (default: true)
   showSettings?: boolean;
 };
@@ -461,7 +460,6 @@ export function MarketsTableWithSameLoanAsset({
   uniqueCollateralTokens,
   showSelectColumn = true,
   showCart = true,
-  settingsStorageKey = 'marketsTable',
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
@@ -480,11 +478,11 @@ export function MarketsTableWithSameLoanAsset({
   const [searchQuery, setSearchQuery] = useState('');
 
   // Settings state (persisted with storage key namespace)
-  const [hideSmallMarkets, setHideSmallMarkets] = useLocalStorage(`${settingsStorageKey}_hideSmallMarkets`, true);
-  const [entriesPerPage, setEntriesPerPage] = useLocalStorage(`${settingsStorageKey}_entriesPerPage`, 8);
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(`${settingsStorageKey}_includeUnknownTokens`, false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(`${settingsStorageKey}_showUnknownOracle`, false);
-  const [usdFilters, setUsdFilters] = useLocalStorage(`${settingsStorageKey}_usdFilters`, {
+  const [hideSmallMarkets, setHideSmallMarkets] = useLocalStorage(keys.MarketsShowSmallMarkets, true);
+  const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [usdFilters, setUsdFilters] = useLocalStorage(keys.MarketsUsdMinSupplyKey, {
     minSupply: DEFAULT_MIN_SUPPLY_USD.toString(),
     minBorrow: '',
   });
