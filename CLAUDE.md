@@ -1,1 +1,0 @@
-- Dot not run pnpm commands, I'll run it in my terminal myself, you can access info on localhost:3000 for details

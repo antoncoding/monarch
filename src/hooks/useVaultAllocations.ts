@@ -89,8 +89,6 @@ export function useVaultAllocations({
           (m) => m.uniqueKey.toLowerCase() === params.marketId?.toLowerCase()
         );
 
-        if (!market) return console.log("Cant find market??")
-
         // Only include if we can find the market
         if (market) {
           valid.push(cap);

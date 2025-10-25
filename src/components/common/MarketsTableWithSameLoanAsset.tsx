@@ -549,8 +549,6 @@ export function MarketsTableWithSameLoanAsset({
     );
   }, [markets, uniqueCollateralTokens, findToken]);
 
-  console.log(availableCollaterals)
-
   // Get unique oracles from current markets
   const availableOracles = useMemo(() => {
     const oracleSet = new Set<PriceFeedVendors>();
