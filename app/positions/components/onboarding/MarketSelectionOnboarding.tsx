@@ -82,6 +82,7 @@ export function MarketSelectionOnboarding() {
           uniqueCollateralTokens={collateralTokens}
           showSelectColumn
           showCart={false}
+          useIndependentSettings
         />
       </div>
 

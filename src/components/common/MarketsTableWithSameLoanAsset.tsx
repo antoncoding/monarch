@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { Checkbox, Input } from '@heroui/react';
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,6 +42,8 @@ type MarketsTableWithSameLoanAssetProps = {
   showCart?: boolean;
   // Optional: Show the settings button (default: true)
   showSettings?: boolean;
+  // Optional: Use separate storage keys for settings (to avoid conflicts with main markets page)
+  useIndependentSettings?: boolean;
 };
 
 enum SortColumn {
@@ -461,6 +463,7 @@ export function MarketsTableWithSameLoanAsset({
   showSelectColumn = true,
   showCart = true,
   showSettings = true,
+  useIndependentSettings = false,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets } = useMarkets();
@@ -482,10 +485,34 @@ export function MarketsTableWithSameLoanAsset({
   const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
-  const [usdFilters, setUsdFilters] = useLocalStorage(keys.MarketsUsdMinSupplyKey, {
-    minSupply: DEFAULT_MIN_SUPPLY_USD.toString(),
-    minBorrow: '',
-  });
+
+  // Store USD filters as separate localStorage items to match markets.tsx pattern
+  // Use independent keys when component is used in modals (rebalance, onboarding) to avoid conflicts
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
+    useIndependentSettings ? keys.MarketSelectionUsdMinSupplyKey : keys.MarketsUsdMinSupplyKey,
+    DEFAULT_MIN_SUPPLY_USD.toString(),
+  );
+  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(
+    useIndependentSettings ? keys.MarketSelectionUsdMinBorrowKey : keys.MarketsUsdMinBorrowKey,
+    '',
+  );
+
+  // Create memoized usdFilters object from individual localStorage values
+  const usdFilters = useMemo(
+    () => ({
+      minSupply: usdMinSupply,
+      minBorrow: usdMinBorrow,
+    }),
+    [usdMinSupply, usdMinBorrow],
+  );
+
+  const setUsdFilters = useCallback(
+    (filters: { minSupply: string; minBorrow: string }) => {
+      setUsdMinSupply(filters.minSupply);
+      setUsdMinBorrow(filters.minBorrow);
+    },
+    [setUsdMinSupply, setUsdMinBorrow],
+  );
 
   const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
 

@@ -143,6 +143,7 @@ export function MarketSelectionModal({
                 disabled={false}
                 uniqueCollateralTokens={undefined}
                 showSelectColumn={multiSelect}
+                useIndependentSettings
               />
             )}
           </ModalBody>
