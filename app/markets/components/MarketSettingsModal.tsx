@@ -101,7 +101,7 @@ export default function MarketSettingsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl">
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl" classNames={{ wrapper: 'z-[2100]' }}>
       <ModalContent>
         {(onClose) => (
           <>

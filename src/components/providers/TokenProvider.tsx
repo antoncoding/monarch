@@ -23,6 +23,11 @@ type TokenContextType = {
 
 const TokenContext = createContext<TokenContextType | null>(null);
 
+const localTokensWithSource: ERC20Token[] = supportedTokens.map((token) => ({
+  ...token,
+  source: 'local',
+}));
+
 async function fetchPendleAssets(chainId: number): Promise<PendleAsset[]> {
   try {
     const response = await fetch(`https://api-v2.pendle.finance/core/v1/${chainId}/assets/all`);
@@ -50,11 +55,12 @@ function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetwork
     protocol: {
       name: 'Pendle',
     },
+    source: 'external',
   };
 }
 
 export function TokenProvider({ children }: { children: React.ReactNode }) {
-  const [allTokens, setAllTokens] = useState<ERC20Token[]>(supportedTokens);
+  const [allTokens, setAllTokens] = useState<ERC20Token[]>(localTokensWithSource);
 
   useEffect(() => {
     async function fetchAllAssets() {
@@ -85,7 +91,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
           );
         });
 
-        setAllTokens([...supportedTokens, ...filteredPendleTokens]);
+        setAllTokens([...localTokensWithSource, ...filteredPendleTokens]);
       } catch (err) {
         console.error('Error fetching Pendle assets:', err);
       }
