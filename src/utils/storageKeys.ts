@@ -4,7 +4,7 @@ export const MarketSortDirectionKey = 'monarch_marketsSortDirection';
 export const MarketFavoritesKey = 'monarch_marketsFavorites';
 export const MarketEntriesPerPageKey = 'monarch_marketsEntriesPerPage';
 
-export const MarketsUsdMinSupplyKey = 'monarch_marketsUsdMinSupply';
+export const MarketsUsdMinSupplyKey = 'monarch_marketsUsdMinSupply_2';
 export const MarketsUsdMinBorrowKey = 'monarch_marketsUsdMinBorrow';
 
 // Separate keys for market selection modal (used in rebalance, onboarding, etc.)
