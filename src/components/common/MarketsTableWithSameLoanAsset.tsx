@@ -7,12 +7,14 @@ import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
+import { useTokens } from '@/components/providers/TokenProvider';
+import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
-import { ERC20Token, UnknownERC20Token, infoToKey, findToken } from '@/utils/tokens';
+import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { Pagination } from '../../../app/markets/components/Pagination';
@@ -50,6 +52,19 @@ enum SortColumn {
   Liquidity = 3,
   Risk = 4,
 }
+
+const getMinSupplyThreshold = (rawValue: string): number => {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  const parsed = Number(rawValue);
+  if (Number.isNaN(parsed)) {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  return Math.max(parsed, 0);
+};
 
 function HTSortable({
   label,
@@ -451,6 +466,7 @@ export function MarketsTableWithSameLoanAsset({
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets } = useMarkets();
+  const { findToken } = useTokens();
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -469,9 +485,11 @@ export function MarketsTableWithSameLoanAsset({
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(`${settingsStorageKey}_includeUnknownTokens`, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(`${settingsStorageKey}_showUnknownOracle`, false);
   const [usdFilters, setUsdFilters] = useLocalStorage(`${settingsStorageKey}_usdFilters`, {
-    minSupply: '',
+    minSupply: DEFAULT_MIN_SUPPLY_USD.toString(),
     minBorrow: '',
   });
+
+  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -485,7 +503,11 @@ export function MarketsTableWithSameLoanAsset({
   // Get unique collaterals with full token data
   const availableCollaterals = useMemo(() => {
     if (uniqueCollateralTokens) {
-      return uniqueCollateralTokens;
+      return [...uniqueCollateralTokens].sort(
+        (a, b) =>
+          (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
+          a.symbol.localeCompare(b.symbol),
+      );
     }
 
     // Fallback: build tokens manually from markets
@@ -514,14 +536,22 @@ export function MarketsTableWithSameLoanAsset({
               address: m.market.collateralAsset.address,
               chain: getViemChain(m.market.morphoBlue.chain.id),
             }],
+            isUnknown: true,
+            source: 'unknown',
           };
           tokenMap.set(key, token);
         }
       }
     });
 
-    return Array.from(tokenMap.values()).sort((a, b) => a.symbol.localeCompare(b.symbol));
-  }, [markets, uniqueCollateralTokens]);
+    return Array.from(tokenMap.values()).sort(
+      (a, b) =>
+        (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
+        a.symbol.localeCompare(b.symbol),
+    );
+  }, [markets, uniqueCollateralTokens, findToken]);
+
+  console.log(availableCollaterals)
 
   // Get unique oracles from current markets
   const availableOracles = useMemo(() => {
@@ -559,10 +589,9 @@ export function MarketsTableWithSameLoanAsset({
 
     // Apply small markets filter
     if (hideSmallMarkets) {
-      const minSupplyUsd = usdFilters.minSupply ? parseFloat(usdFilters.minSupply) : 1000; // Default to 1000 USD if not set
       filtered = filtered.filter((m) => {
         const supplyUsd = Number(m.market?.state?.supplyAssetsUsd ?? 0);
-        return minSupplyUsd === 0 || supplyUsd >= minSupplyUsd;
+        return effectiveMinSupply === 0 || supplyUsd >= effectiveMinSupply;
       });
     }
 
@@ -620,7 +649,17 @@ export function MarketsTableWithSameLoanAsset({
     });
 
     return filtered;
-  }, [markets, collateralFilter, oracleFilter, sortColumn, sortDirection, searchQuery, showUnwhitelistedMarkets, hideSmallMarkets, usdFilters.minSupply]);
+  }, [
+    markets,
+    collateralFilter,
+    oracleFilter,
+    sortColumn,
+    sortDirection,
+    searchQuery,
+    showUnwhitelistedMarkets,
+    hideSmallMarkets,
+    effectiveMinSupply,
+  ]);
 
   // Get selected markets
   const selectedMarkets = useMemo(() => {
@@ -706,7 +745,9 @@ export function MarketsTableWithSameLoanAsset({
               isSelected={hideSmallMarkets}
               onValueChange={setHideSmallMarkets}
             />
-            <span className="text-xs text-secondary">Hide small markets</span>
+            <span className="text-xs text-secondary">
+              Hide markets below ${effectiveMinSupply.toLocaleString()}
+            </span>
           </div>
           {showSettings && (
             <Button

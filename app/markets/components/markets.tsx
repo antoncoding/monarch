@@ -19,6 +19,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
+import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
@@ -88,7 +89,10 @@ export default function Markets({
 
   const { allTokens, findToken } = useTokens();
 
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, '');
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
+    keys.MarketsUsdMinSupplyKey,
+    DEFAULT_MIN_SUPPLY_USD.toString(),
+  );
   const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
@@ -136,6 +140,7 @@ export default function Markets({
                 decimals: token.decimals,
                 networks: [],
                 isUnknown: true,
+                source: 'unknown',
               };
             }
             acc[token.symbol].networks.push({
