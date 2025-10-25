@@ -80,6 +80,8 @@ export function useVaultAllocations({
     const valid: VaultV2Cap[] = [];
     const parsed: Omit<MarketAllocation, 'allocation'>[] = [];
 
+    console.log('valiMarketCaps concerning:', marketCaps)
+
     marketCaps.forEach((cap) => {
       const params = parseCapIdParams(cap.idParams);
 
@@ -106,6 +108,8 @@ export function useVaultAllocations({
 
     return { validMarketCaps: valid, parsedMarketCaps: parsed };
   }, [marketCaps, markets]);
+
+  console.log('parsed', parsedMarketCaps)
 
   // Combine all valid caps for fetching allocations
   const allValidCaps = useMemo(

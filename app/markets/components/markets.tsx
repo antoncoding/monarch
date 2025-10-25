@@ -11,6 +11,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
+import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -19,7 +20,6 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
-import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
 
