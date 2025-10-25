@@ -49,3 +49,5 @@ next-env.d.ts
 !.yarn/versions
 
 .cursor
+
+CLAUDE.md

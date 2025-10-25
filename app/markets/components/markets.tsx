@@ -11,6 +11,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
+import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -81,14 +82,17 @@ export default function Markets({
     usePagination();
 
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
-    'includeUnknownTokens',
+    keys.MarketsShowUnknownTokens,
     false,
   );
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
 
   const { allTokens, findToken } = useTokens();
 
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, '');
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
+    keys.MarketsUsdMinSupplyKey,
+    DEFAULT_MIN_SUPPLY_USD.toString(),
+  );
   const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
@@ -136,6 +140,7 @@ export default function Markets({
                 decimals: token.decimals,
                 networks: [],
                 isUnknown: true,
+                source: 'unknown',
               };
             }
             acc[token.symbol].networks.push({

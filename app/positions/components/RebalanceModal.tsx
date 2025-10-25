@@ -16,6 +16,7 @@ import { FromMarketsTable } from './FromMarketsTable';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
 import { RebalanceProcessModal } from './RebalanceProcessModal';
+
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
@@ -23,8 +24,6 @@ type RebalanceModalProps = {
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
 };
-
-export const PER_PAGE = 5;
 
 export function RebalanceModal({
   groupedPosition,

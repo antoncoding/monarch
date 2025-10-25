@@ -42,7 +42,7 @@ export function useVaultAllocations({
   chainId,
   enabled = true,
 }: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
-  const { markets } = useMarkets();
+  const { allMarkets } = useMarkets();
 
   // Parse and filter collateral caps
   const { validCollateralCaps, parsedCollateralCaps } = useMemo(() => {
@@ -85,7 +85,7 @@ export function useVaultAllocations({
 
       // Only include if this is a market cap with a valid market ID
       if (params.type === 'market' && params.marketId) {
-        const market = markets.find(
+        const market = allMarkets.find(
           (m) => m.uniqueKey.toLowerCase() === params.marketId?.toLowerCase()
         );
 
@@ -105,7 +105,7 @@ export function useVaultAllocations({
     });
 
     return { validMarketCaps: valid, parsedMarketCaps: parsed };
-  }, [marketCaps, markets]);
+  }, [marketCaps, allMarkets]);
 
   // Combine all valid caps for fetching allocations
   const allValidCaps = useMemo(

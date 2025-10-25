@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
@@ -14,6 +15,7 @@ type MarketSelectionModalProps = {
   chainId: SupportedNetworks;
   excludeMarketIds?: Set<string>;
   multiSelect?: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   onSelect: (markets: Market[]) => void;
   confirmButtonText?: string;
@@ -30,6 +32,7 @@ export function MarketSelectionModal({
   chainId,
   excludeMarketIds,
   multiSelect = true,
+  isOpen = true,
   onClose,
   onSelect,
   confirmButtonText,
@@ -62,14 +65,10 @@ export function MarketSelectionModal({
 
   const handleToggleMarket = (marketId: string) => {
     if (!multiSelect) {
-      // Single select mode - immediately select and close
       const market = availableMarkets.find((m) => m.uniqueKey === marketId);
       if (market) {
-        // Use setTimeout to ensure state updates happen in correct order
         onSelect([market]);
-        setTimeout(() => {
-          onClose();
-        }, 0);
+        onClose();
       }
       return;
     }
@@ -94,40 +93,6 @@ export function MarketSelectionModal({
     onClose();
   };
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleBackdropKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      event.stopPropagation();
-      onClose();
-    }
-  };
-
-  if (marketsLoading) {
-    return (
-      <div
-        className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50"
-        onClick={handleBackdropClick}
-        role="button"
-        tabIndex={0}
-        onKeyDown={handleBackdropKeyDown}
-        aria-label="Close market selection"
-      >
-        <div className="w-full max-w-2xl rounded-sm bg-surface p-6 shadow-xl">
-          <div className="flex items-center justify-center py-12">
-            <Spinner size={24} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const selectedCount = selectedMarkets.size;
   const buttonText = confirmButtonText ?? (
     multiSelect
@@ -136,76 +101,82 @@ export function MarketSelectionModal({
   );
 
   return (
-    <div
-      className="fixed inset-0 z-[1050] flex items-center justify-center bg-black/50 p-4"
-      onClick={handleBackdropClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={handleBackdropKeyDown}
-      aria-label="Close market selection"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="4xl"
+      scrollBehavior="inside"
+      classNames={{
+        wrapper: 'z-[2200]',
+        backdrop: 'z-[2190] bg-black/60',
+        base: 'rounded-sm bg-surface',
+        header: 'px-6 pt-6 pb-2',
+        body: 'px-6 pb-2',
+        footer: 'px-6 pt-2 pb-6',
+      }}
     >
-      <div className="w-full max-w-4xl max-h-[95vh] rounded-sm bg-surface shadow-xl flex flex-col">
-        <div className="flex items-center justify-between p-6 pb-4">
-          <div>
+      <ModalContent>
+        <>
+          <ModalHeader className="flex flex-col gap-1">
             <h3 className="text-lg font-medium">{title}</h3>
-            <p className="text-xs text-secondary mt-1">{description}</p>
-          </div>
-        </div>
+            <p className="text-xs text-secondary">{description}</p>
+          </ModalHeader>
 
-        {availableMarkets.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-sm text-secondary">
-              {excludeMarketIds && excludeMarketIds.size > 0
-                ? 'No more markets available to select.'
-                : 'No markets found matching the criteria.'}
-            </p>
-          </div>
-        ) : (
-          <div className="flex-1 px-6">
-            <MarketsTableWithSameLoanAsset
-              markets={availableMarkets.map((m) => ({
-                market: m,
-                isSelected: selectedMarkets.has(m.uniqueKey),
-              }))}
+          <ModalBody className="font-zen">
+            {marketsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Spinner size={24} />
+              </div>
+            ) : availableMarkets.length === 0 ? (
+              <div className="py-12 text-center text-sm text-secondary">
+                {excludeMarketIds && excludeMarketIds.size > 0
+                  ? 'No more markets available to select.'
+                  : 'No markets found matching the criteria.'}
+              </div>
+            ) : (
+              <MarketsTableWithSameLoanAsset
+                markets={availableMarkets.map((m) => ({
+                  market: m,
+                  isSelected: selectedMarkets.has(m.uniqueKey),
+                }))}
+                onToggleMarket={handleToggleMarket}
+                disabled={false}
+                uniqueCollateralTokens={undefined}
+                showSelectColumn={multiSelect}
+              />
+            )}
+          </ModalBody>
 
-              onToggleMarket={handleToggleMarket}
-              disabled={false}
-              uniqueCollateralTokens={undefined}
-              showSelectColumn={multiSelect}
-              itemsPerPage={7}
-            />
-          </div>
-        )}
-
-        {multiSelect && (
-          <div className="flex items-center justify-between gap-2 p-6 pt-4">
-            <p className="text-xs text-secondary">
-              {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
-            </p>
-            <div className="flex items-center gap-2">
-              <Button variant="subtle" size="sm" onPress={onClose}>
-                Cancel
-              </Button>
-              <Button
-                variant="cta"
-                size="sm"
-                isDisabled={selectedCount === 0}
-                onPress={handleConfirm}
-              >
-                {buttonText}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {!multiSelect && (
-          <div className="flex items-center justify-end gap-2 p-6 pt-4">
-            <Button variant="subtle" size="sm" onPress={onClose}>
-              Cancel
-            </Button>
-          </div>
-        )}
-      </div>
-    </div>
+          <ModalFooter className="flex items-center justify-between">
+            {multiSelect ? (
+              <>
+                <p className="text-xs text-secondary">
+                  {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="subtle" size="sm" onPress={onClose}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="cta"
+                    size="sm"
+                    isDisabled={selectedCount === 0}
+                    onPress={handleConfirm}
+                  >
+                    {buttonText}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex w-full justify-end">
+                <Button variant="subtle" size="sm" onPress={onClose}>
+                  Cancel
+                </Button>
+              </div>
+            )}
+          </ModalFooter>
+        </>
+      </ModalContent>
+    </Modal>
   );
 }

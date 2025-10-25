@@ -1,0 +1,1 @@
+export const DEFAULT_MIN_SUPPLY_USD = 1000;

@@ -1,15 +1,23 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { Checkbox } from '@heroui/react';
-import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
+import { Checkbox, Input } from '@heroui/react';
+import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
+import { Button } from '@/components/common';
+import { useTokens } from '@/components/providers/TokenProvider';
+import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
-import { ERC20Token, UnknownERC20Token, infoToKey, findToken } from '@/utils/tokens';
+import * as keys from "@/utils/storageKeys"
+import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
@@ -32,8 +40,8 @@ type MarketsTableWithSameLoanAssetProps = {
   showSelectColumn?: boolean;
   // Optional: Hide the cart/staging area showing selected markets
   showCart?: boolean;
-  // Optional: entry per page
-  itemsPerPage?: number
+  // Optional: Show the settings button (default: true)
+  showSettings?: boolean;
 };
 
 enum SortColumn {
@@ -43,6 +51,19 @@ enum SortColumn {
   Liquidity = 3,
   Risk = 4,
 }
+
+const getMinSupplyThreshold = (rawValue: string): number => {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  const parsed = Number(rawValue);
+  if (Number.isNaN(parsed)) {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  return Math.max(parsed, 0);
+};
 
 function HTSortable({
   label,
@@ -439,13 +460,34 @@ export function MarketsTableWithSameLoanAsset({
   uniqueCollateralTokens,
   showSelectColumn = true,
   showCart = true,
-  itemsPerPage = 8
+  showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
+  // Get global market settings
+  const { showUnwhitelistedMarkets } = useMarkets();
+  const { findToken } = useTokens();
+
+  // Settings modal state
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+
+  // Table state
   const [currentPage, setCurrentPage] = useState(1);
   const [sortColumn, setSortColumn] = useState<SortColumn>(SortColumn.Supply);
   const [sortDirection, setSortDirection] = useState<1 | -1>(-1); // -1 = desc, 1 = asc
   const [collateralFilter, setCollateralFilter] = useState<string[]>([]);
   const [oracleFilter, setOracleFilter] = useState<PriceFeedVendors[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Settings state (persisted with storage key namespace)
+  const [hideSmallMarkets, setHideSmallMarkets] = useLocalStorage(keys.MarketsShowSmallMarkets, true);
+  const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [usdFilters, setUsdFilters] = useLocalStorage(keys.MarketsUsdMinSupplyKey, {
+    minSupply: DEFAULT_MIN_SUPPLY_USD.toString(),
+    minBorrow: '',
+  });
+
+  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -459,7 +501,11 @@ export function MarketsTableWithSameLoanAsset({
   // Get unique collaterals with full token data
   const availableCollaterals = useMemo(() => {
     if (uniqueCollateralTokens) {
-      return uniqueCollateralTokens;
+      return [...uniqueCollateralTokens].sort(
+        (a, b) =>
+          (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
+          a.symbol.localeCompare(b.symbol),
+      );
     }
 
     // Fallback: build tokens manually from markets
@@ -488,14 +534,20 @@ export function MarketsTableWithSameLoanAsset({
               address: m.market.collateralAsset.address,
               chain: getViemChain(m.market.morphoBlue.chain.id),
             }],
+            isUnknown: true,
+            source: 'unknown',
           };
           tokenMap.set(key, token);
         }
       }
     });
 
-    return Array.from(tokenMap.values()).sort((a, b) => a.symbol.localeCompare(b.symbol));
-  }, [markets, uniqueCollateralTokens]);
+    return Array.from(tokenMap.values()).sort(
+      (a, b) =>
+        (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
+        a.symbol.localeCompare(b.symbol),
+    );
+  }, [markets, uniqueCollateralTokens, findToken]);
 
   // Get unique oracles from current markets
   const availableOracles = useMemo(() => {
@@ -515,6 +567,29 @@ export function MarketsTableWithSameLoanAsset({
   // Filter and sort markets
   const processedMarkets = useMemo(() => {
     let filtered = [...markets];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((m) => {
+        const collateralSymbol = m.market?.collateralAsset?.symbol?.toLowerCase() ?? '';
+        const marketId = m.market?.uniqueKey?.toLowerCase() ?? '';
+        return collateralSymbol.includes(query) || marketId.includes(query);
+      });
+    }
+
+    // Apply whitelist filter
+    if (!showUnwhitelistedMarkets) {
+      filtered = filtered.filter((m) => m.market?.whitelisted ?? false);
+    }
+
+    // Apply small markets filter
+    if (hideSmallMarkets) {
+      filtered = filtered.filter((m) => {
+        const supplyUsd = Number(m.market?.state?.supplyAssetsUsd ?? 0);
+        return effectiveMinSupply === 0 || supplyUsd >= effectiveMinSupply;
+      });
+    }
 
     // Apply collateral filter
     if (collateralFilter.length > 0) {
@@ -570,7 +645,17 @@ export function MarketsTableWithSameLoanAsset({
     });
 
     return filtered;
-  }, [markets, collateralFilter, oracleFilter, sortColumn, sortDirection]);
+  }, [
+    markets,
+    collateralFilter,
+    oracleFilter,
+    sortColumn,
+    sortDirection,
+    searchQuery,
+    showUnwhitelistedMarkets,
+    hideSmallMarkets,
+    effectiveMinSupply,
+  ]);
 
   // Get selected markets
   const selectedMarkets = useMemo(() => {
@@ -578,7 +663,7 @@ export function MarketsTableWithSameLoanAsset({
   }, [markets]);
 
   // Pagination with guards to prevent invalid states
-  const safePerPage = Math.max(1, Math.floor(itemsPerPage ?? 8));
+  const safePerPage = Math.max(1, Math.floor(entriesPerPage));
   const totalPages = Math.max(1, Math.ceil(processedMarkets.length / safePerPage));
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
@@ -633,6 +718,45 @@ export function MarketsTableWithSameLoanAsset({
           ))}
         </div>
       )}
+
+      {/* Search and Controls */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex-grow">
+          <Input
+            placeholder="Search by collateral symbol or market ID..."
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            endContent={<FaSearch className="text-secondary" />}
+            classNames={{
+              inputWrapper: 'bg-surface rounded-sm focus-within:outline-none',
+              input: 'bg-surface rounded-sm text-xs focus:outline-none',
+            }}
+            size="sm"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center">
+            <Checkbox
+              size="sm"
+              isSelected={hideSmallMarkets}
+              onValueChange={setHideSmallMarkets}
+            />
+            <span className="text-xs text-secondary">
+              Hide markets below ${effectiveMinSupply.toLocaleString()}
+            </span>
+          </div>
+          {showSettings && (
+            <Button
+              variant="light"
+              size="sm"
+              onPress={() => setShowSettingsModal(true)}
+              className="min-w-0 px-2"
+            >
+              <GearIcon className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="flex items-center gap-2">
@@ -717,6 +841,22 @@ export function MarketsTableWithSameLoanAsset({
         isDataLoaded
         size="sm"
       />
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <MarketSettingsModal
+          isOpen={showSettingsModal}
+          onOpenChange={() => setShowSettingsModal(false)}
+          includeUnknownTokens={includeUnknownTokens}
+          setIncludeUnknownTokens={setIncludeUnknownTokens}
+          showUnknownOracle={showUnknownOracle}
+          setShowUnknownOracle={setShowUnknownOracle}
+          usdFilters={usdFilters}
+          setUsdFilters={setUsdFilters}
+          entriesPerPage={entriesPerPage}
+          onEntriesPerPageChange={setEntriesPerPage}
+        />
+      )}
     </div>
   );
 }

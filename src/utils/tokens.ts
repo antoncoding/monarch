@@ -1,6 +1,8 @@
 import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
 import { getWrappedNativeToken, hyperevm } from './networks';
 
+export type TokenSource = 'local' | 'external' | 'unknown';
+
 export type SingleChainERC20Basic = {
   symbol: string;
   decimals: number;
@@ -23,6 +25,7 @@ export type ERC20Token = {
     name: string;
   };
   isFactoryToken?: boolean;
+  source?: TokenSource;
 
   // this is not a "hard peg", instead only used for market supply / borrow USD value estimation
   peg?: TokenPeg;
@@ -34,6 +37,7 @@ export type UnknownERC20Token = {
   decimals: number;
   networks: { chain: Chain; address: string }[];
   isUnknown?: boolean;
+  source?: TokenSource;
 };
 
 const MORPHO_TOKEN_BASE = '0xBAa5CC21fd487B8Fcc2F632f3F4E8D37262a0842';
