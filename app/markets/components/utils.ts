@@ -65,6 +65,7 @@ export function applyFilterAndSort(
   staredIds: string[],
   findToken: (address: string, chainId: number) => ERC20Token | undefined,
   usdFilters: UsdFilters,
+  hideSmallMarkets?: boolean,
 ): Market[] {
   const parseUsdValue = (value: string | null | undefined): number | null => {
     if (value === null || value === undefined || value === '') return null;
@@ -118,15 +119,17 @@ export function applyFilterAndSort(
         }
       }
 
-      // Add USD Filters
-      const supplyUsd = parseUsdValue(market.state?.supplyAssetsUsd?.toString()); // Use optional chaining
-      const borrowUsd = parseUsdValue(market.state?.borrowAssetsUsd?.toString()); // Use optional chaining
+      // Add USD Filters - only apply if hideSmallMarkets is true (or undefined for backwards compatibility)
+      if (hideSmallMarkets !== false) {
+        const supplyUsd = parseUsdValue(market.state?.supplyAssetsUsd?.toString()); // Use optional chaining
+        const borrowUsd = parseUsdValue(market.state?.borrowAssetsUsd?.toString()); // Use optional chaining
 
-      if (minSupplyUsd !== null && (supplyUsd === null || supplyUsd < minSupplyUsd)) {
-        return false;
-      }
-      if (minBorrowUsd !== null && (borrowUsd === null || borrowUsd < minBorrowUsd)) {
-        return false;
+        if (minSupplyUsd !== null && (supplyUsd === null || supplyUsd < minSupplyUsd)) {
+          return false;
+        }
+        if (minBorrowUsd !== null && (borrowUsd === null || borrowUsd < minBorrowUsd)) {
+          return false;
+        }
       }
       // End USD Filters
 

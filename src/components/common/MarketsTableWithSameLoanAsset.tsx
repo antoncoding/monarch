@@ -42,8 +42,6 @@ type MarketsTableWithSameLoanAssetProps = {
   showCart?: boolean;
   // Optional: Show the settings button (default: true)
   showSettings?: boolean;
-  // Optional: Use separate storage keys for settings (to avoid conflicts with main markets page)
-  useIndependentSettings?: boolean;
 };
 
 enum SortColumn {
@@ -463,7 +461,6 @@ export function MarketsTableWithSameLoanAsset({
   showSelectColumn = true,
   showCart = true,
   showSettings = true,
-  useIndependentSettings = false,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets } = useMarkets();
@@ -487,15 +484,11 @@ export function MarketsTableWithSameLoanAsset({
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
-  // Use independent keys when component is used in modals (rebalance, onboarding) to avoid conflicts
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
-    useIndependentSettings ? keys.MarketSelectionUsdMinSupplyKey : keys.MarketsUsdMinSupplyKey,
+    keys.MarketsUsdMinSupplyKey,
     DEFAULT_MIN_SUPPLY_USD.toString(),
   );
-  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(
-    useIndependentSettings ? keys.MarketSelectionUsdMinBorrowKey : keys.MarketsUsdMinBorrowKey,
-    '',
-  );
+  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
 
   // Create memoized usdFilters object from individual localStorage values
   const usdFilters = useMemo(

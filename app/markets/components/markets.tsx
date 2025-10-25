@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useDisclosure } from '@heroui/react';
+import { useDisclosure, Checkbox } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { formatReadable } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
@@ -36,6 +37,19 @@ type MarketContentProps = {
   initialNetwork: SupportedNetworks | null;
   initialCollaterals: string[];
   initialLoanAssets: string[];
+};
+
+const getMinSupplyThreshold = (rawValue: string): number => {
+  if (rawValue === undefined || rawValue === null || rawValue === '') {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  const parsed = Number(rawValue);
+  if (Number.isNaN(parsed)) {
+    return DEFAULT_MIN_SUPPLY_USD;
+  }
+
+  return Math.max(parsed, 0);
 };
 
 export default function Markets({
@@ -86,6 +100,7 @@ export default function Markets({
     false,
   );
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [hideSmallMarkets, setHideSmallMarkets] = useLocalStorage(keys.MarketsShowSmallMarkets, true);
 
   const { allTokens, findToken } = useTokens();
 
@@ -111,6 +126,8 @@ export default function Markets({
     },
     [setUsdMinSupply, setUsdMinBorrow],
   );
+
+  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
 
   useEffect(() => {
     // return if no markets
@@ -210,6 +227,7 @@ export default function Markets({
       staredIds,
       findToken,
       usdFilters,
+      hideSmallMarkets,
     ).filter((market) => {
       if (!searchQuery) return true; // If no search query, show all markets
       const lowercaseQuery = searchQuery.toLowerCase();
@@ -237,6 +255,7 @@ export default function Markets({
     staredIds,
     findToken,
     usdFilters,
+    hideSmallMarkets,
     searchQuery,
     resetPage,
   ]);
@@ -399,16 +418,28 @@ export default function Markets({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-end gap-2 lg:mt-0">
+          {/* Settings */}
+          <div className="mt-4 flex items-center gap-2 lg:mt-0">
+            <div className="flex items-center">
+              <Checkbox
+                size="sm"
+                isSelected={hideSmallMarkets}
+                onValueChange={setHideSmallMarkets}
+              />
+              <span className="text-xs text-secondary">
+                Hide markets below ${formatReadable(effectiveMinSupply)}
+              </span>
+            </div>
+
             <Button
               disabled={loading || isRefetching}
               variant="light"
               size="sm"
-              className="text-secondary"
+              className="text-secondary min-w-0 px-2"
               onPress={handleRefresh}
+              isIconOnly
             >
-              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} mr-1 h-3 w-3`} />
-              Refresh
+              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
             </Button>
 
             <Button
@@ -416,10 +447,10 @@ export default function Markets({
               aria-label="Market View Settings"
               variant="light"
               size="sm"
-              className="text-secondary"
+              className="text-secondary min-w-0 px-2"
               onPress={onSettingsModalOpen}
             >
-              <FiSettings size={14} />
+              <FiSettings size={12} />
             </Button>
           </div>
         </div>

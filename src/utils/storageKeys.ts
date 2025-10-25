@@ -7,10 +7,6 @@ export const MarketEntriesPerPageKey = 'monarch_marketsEntriesPerPage';
 export const MarketsUsdMinSupplyKey = 'monarch_marketsUsdMinSupply_2';
 export const MarketsUsdMinBorrowKey = 'monarch_marketsUsdMinBorrow';
 
-// Separate keys for market selection modal (used in rebalance, onboarding, etc.)
-export const MarketSelectionUsdMinSupplyKey = 'monarch_marketSelectionUsdMinSupply';
-export const MarketSelectionUsdMinBorrowKey = 'monarch_marketSelectionUsdMinBorrow';
-
 export const PositionsShowEmptyKey = 'positions:show-empty';
 export const PositionsShowCollateralExposureKey = 'positions:show-collateral-exposure';
 
