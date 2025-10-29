@@ -496,10 +496,10 @@ export const marketBorrowsQuery = `
 
 // Query for VaultV2 details from Morpho API
 export const vaultV2Query = `
-  query VaultV2Query($address: String!, $chainId: Int!) {
+  query VaultV2Query($addresses: [String!], $chainId: Int!) {
     vaultV2s(where: {
       chainId_in: [$chainId],
-      address_in: [$address]
+      address_in: $addresses
     }) {
       items {
         id

@@ -15,6 +15,7 @@ export type VaultV2Cap = {
 
 export type VaultV2Details = {
   id: string;
+  address: string;
   asset: string;
   symbol: string;
   name: string;
@@ -93,6 +94,7 @@ function transformCap(apiCap: ApiVaultV2Cap): VaultV2Cap {
 function transformVault(apiVault: ApiVaultV2): VaultV2Details {
   return {
     id: apiVault.id,
+    address: apiVault.address,
     asset: apiVault.asset.address,
     symbol: apiVault.symbol,
     name: apiVault.name,
@@ -120,7 +122,7 @@ export const fetchVaultV2Details = async (
 ): Promise<VaultV2Details | null> => {
   try {
     const variables = {
-      address: vaultAddress.toLowerCase(),
+      addresses: [vaultAddress.toLowerCase()],
       chainId: network,
     };
 
@@ -147,4 +149,87 @@ export const fetchVaultV2Details = async (
     );
     return null;
   }
+};
+
+/**
+ * Fetches multiple VaultV2 details from Morpho API for a single network
+ *
+ * @param vaultAddresses - Array of vault addresses
+ * @param network - The network/chain ID
+ * @returns Array of VaultV2Details
+ */
+export const fetchMultipleVaultV2Details = async (
+  vaultAddresses: string[],
+  network: SupportedNetworks,
+): Promise<VaultV2Details[]> => {
+  if (vaultAddresses.length === 0) {
+    return [];
+  }
+
+  try {
+    const variables = {
+      addresses: vaultAddresses,
+      chainId: network,
+    };
+
+    const response = await morphoGraphqlFetcher<VaultV2ApiResponse>(vaultV2Query, variables);
+
+    if (response.errors && response.errors.length > 0) {
+      console.error('GraphQL errors:', response.errors);
+      return [];
+    }
+
+    const vaults = response.data?.vaultV2s?.items;
+    if (!vaults || vaults.length === 0) {
+      console.log(`No V2 vaults found for addresses on network ${network}`);
+      return [];
+    }
+
+    return vaults.map(transformVault);
+  } catch (error) {
+    console.error(
+      `Error fetching V2 vault details for multiple addresses on network ${network}:`,
+      error,
+    );
+    return [];
+  }
+};
+
+/**
+ * Fetches multiple VaultV2 details from Morpho API across multiple networks
+ * Groups addresses by network and fetches them efficiently
+ *
+ * @param vaultAddressesWithNetwork - Array of vault addresses with their network IDs
+ * @returns Array of VaultV2Details with networkId
+ */
+export const fetchMultipleVaultV2DetailsAcrossNetworks = async (
+  vaultAddressesWithNetwork: Array<{ address: string; networkId: SupportedNetworks }>,
+): Promise<Array<VaultV2Details & { networkId: SupportedNetworks }>> => {
+
+  if (vaultAddressesWithNetwork.length === 0) {
+    return [];
+  }
+
+  // Group addresses by network
+  const addressesByNetwork = vaultAddressesWithNetwork.reduce((acc, item) => {
+    if (!acc[item.networkId]) {
+      acc[item.networkId] = [];
+    }
+    acc[item.networkId].push(item.address);
+    return acc;
+  }, {} as Record<SupportedNetworks, string[]>);
+
+  // Fetch details for each network in parallel
+  const promises = Object.entries(addressesByNetwork).map(async ([networkIdStr, addresses]) => {
+    const networkId = Number(networkIdStr) as SupportedNetworks;
+    const details = await fetchMultipleVaultV2Details(addresses, networkId);
+    // Add network ID to each vault detail
+    return details.map(detail => ({
+      ...detail,
+      networkId,
+    }));
+  });
+
+  const results = await Promise.all(promises);
+  return results.flat();
 };

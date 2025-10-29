@@ -1,14 +1,12 @@
 // GraphQL queries for V2 Vault Factory subgraph
 
-export const userVaultsV2Query = `
-  query UserVaultsV2($owner: String!) {
-    createVaultV2S(where: {
+// Query to fetch only vault addresses by owner
+export const userVaultsV2AddressesQuery = `
+  query UserVaultsV2Addresses($owner: String!) {
+    vaultV2S(where: {
       owner: $owner
     }) {
       id
-      owner
-      asset
-      newVaultV2
     }
   }
 `;
