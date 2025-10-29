@@ -45,7 +45,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <h2 className="text-lg font-semibold">Your Vaults</h2>
+      <h2 className="text-lg">Your Vaults</h2>
 
       <div className="w-full overflow-x-auto">
         <table className="responsive w-full rounded font-zen">

@@ -110,55 +110,14 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
 }
 
 /**
- * Fetches VaultV2 details from Morpho API
- *
- * @param vaultAddress - The vault address
- * @param network - The network/chain ID
- * @returns VaultV2Details or null if not found
- */
-export const fetchVaultV2Details = async (
-  vaultAddress: string,
-  network: SupportedNetworks,
-): Promise<VaultV2Details | null> => {
-  try {
-    const variables = {
-      addresses: [vaultAddress.toLowerCase()],
-      chainId: network,
-    };
-
-    const response = await morphoGraphqlFetcher<VaultV2ApiResponse>(vaultV2Query, variables);
-
-    if (response.errors && response.errors.length > 0) {
-      console.error('GraphQL errors:', response.errors);
-      return null;
-    }
-
-    const vaults = response.data?.vaultV2s?.items;
-    if (!vaults || vaults.length === 0) {
-      console.log(`No V2 vault found for address ${vaultAddress} on network ${network}`);
-      return null;
-    }
-
-    // Since we're querying by specific address, we should only get one result
-    const vault = vaults[0];
-    return transformVault(vault);
-  } catch (error) {
-    console.error(
-      `Error fetching V2 vault details for ${vaultAddress} on network ${network}:`,
-      error,
-    );
-    return null;
-  }
-};
-
-/**
- * Fetches multiple VaultV2 details from Morpho API for a single network
+ * Core function to fetch VaultV2 details from Morpho API
+ * Handles both single and multiple vault addresses
  *
  * @param vaultAddresses - Array of vault addresses
  * @param network - The network/chain ID
  * @returns Array of VaultV2Details
  */
-export const fetchMultipleVaultV2Details = async (
+const fetchVaultV2DetailsCore = async (
   vaultAddresses: string[],
   network: SupportedNetworks,
 ): Promise<VaultV2Details[]> => {
@@ -168,7 +127,7 @@ export const fetchMultipleVaultV2Details = async (
 
   try {
     const variables = {
-      addresses: vaultAddresses,
+      addresses: vaultAddresses.map(addr => addr.toLowerCase()),
       chainId: network,
     };
 
@@ -188,11 +147,40 @@ export const fetchMultipleVaultV2Details = async (
     return vaults.map(transformVault);
   } catch (error) {
     console.error(
-      `Error fetching V2 vault details for multiple addresses on network ${network}:`,
+      `Error fetching V2 vault details on network ${network}:`,
       error,
     );
     return [];
   }
+};
+
+/**
+ * Fetches a single VaultV2 details from Morpho API
+ *
+ * @param vaultAddress - The vault address
+ * @param network - The network/chain ID
+ * @returns VaultV2Details or null if not found
+ */
+export const fetchVaultV2Details = async (
+  vaultAddress: string,
+  network: SupportedNetworks,
+): Promise<VaultV2Details | null> => {
+  const results = await fetchVaultV2DetailsCore([vaultAddress], network);
+  return results.length > 0 ? results[0] : null;
+};
+
+/**
+ * Fetches multiple VaultV2 details from Morpho API for a single network
+ *
+ * @param vaultAddresses - Array of vault addresses
+ * @param network - The network/chain ID
+ * @returns Array of VaultV2Details
+ */
+export const fetchMultipleVaultV2Details = async (
+  vaultAddresses: string[],
+  network: SupportedNetworks,
+): Promise<VaultV2Details[]> => {
+  return fetchVaultV2DetailsCore(vaultAddresses, network);
 };
 
 /**

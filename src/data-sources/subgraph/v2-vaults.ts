@@ -1,6 +1,7 @@
 import { userVaultsV2AddressesQuery } from '@/graphql/morpho-v2-subgraph-queries';
 import { SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
 import { subgraphGraphqlFetcher } from './fetchers';
+import type { VaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
 
 // Simplified subgraph response for vault addresses
 type SubgraphVaultV2Address = {
@@ -19,29 +20,6 @@ type SubgraphUserVaultsV2Response = {
 export type UserVaultV2Address = {
   address: string;
   networkId: SupportedNetworks;
-};
-
-// Vault V2 details from subgraph
-export type VaultV2Cap = {
-  relativeCap: string;
-  absoluteCap: string;
-  capId: string;
-  idParams: string;
-};
-
-export type VaultV2Details = {
-  address: string;
-  asset: string;
-  symbol: string;
-  name: string;
-  curator: string;
-  owner: string;
-  allocators: string[];
-  sentinels: string[];
-  caps: VaultV2Cap[];
-  totalSupply: string;
-  adapters: string[];
-  avgApy?: number;
 };
 
 // User vault with full details and network info
