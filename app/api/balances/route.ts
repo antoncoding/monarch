@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
+import { getHyperEVMBalances } from './evm-client';
 
 type TokenBalance = {
   contractAddress: string;
@@ -17,7 +18,8 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const alchemyUrl = getDefaultRPC(Number(chainId) as SupportedNetworks);
+    const chainIdNum = Number(chainId) as SupportedNetworks;
+    const alchemyUrl = getDefaultRPC(chainIdNum);
     if (!alchemyUrl) {
       throw new Error(`Chain ${chainId} not supported`);
     }
@@ -25,13 +27,19 @@ export async function GET(req: NextRequest) {
     // Get supported token addresses for this chain
     const tokenAddresses = supportedTokens
       .filter(token =>
-        token.networks.some(network => network.chain.id === Number(chainId))
+        token.networks.some(network => network.chain.id === chainIdNum)
       )
       .flatMap(token =>
         token.networks
-          .filter(network => network.chain.id === Number(chainId))
+          .filter(network => network.chain.id === chainIdNum)
           .map(network => network.address)
       );
+
+    // Special handling for HyperEVM - use direct balanceOf calls via multicall
+    if (chainIdNum === SupportedNetworks.HyperEVM) {
+      const tokens = await getHyperEVMBalances(address, tokenAddresses);
+      return NextResponse.json({ tokens });
+    }
 
     // Get token balances for specific tokens only
     const balancesResponse = await fetch(alchemyUrl, {
