@@ -1,15 +1,5 @@
-import { createPublicClient, http, Address } from 'viem';
+import { createPublicClient, http, Address, erc20Abi } from 'viem';
 import { getViemChain, getDefaultRPC, SupportedNetworks } from '@/utils/networks';
-
-const ERC20_ABI = [
-  {
-    inputs: [{ name: 'account', type: 'address' }],
-    name: 'balanceOf',
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
 
 type TokenBalance = {
   address: string;
@@ -31,7 +21,7 @@ export async function getHyperEVMBalances(
   // Create multicall contracts for all token addresses
   const contracts = tokenAddresses.map((tokenAddress) => ({
     address: tokenAddress as Address,
-    abi: ERC20_ABI,
+    abi: erc20Abi,
     functionName: 'balanceOf',
     args: [userAddress as Address],
   }));
