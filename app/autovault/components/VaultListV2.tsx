@@ -7,6 +7,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { formatReadable } from '@/utils/balance';
+import { parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks, getNetworkImg } from '@/utils/networks';
 
 type VaultListV2Props = {
@@ -44,7 +45,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <h2 className="text-lg font-semibold">Your Vaults</h2>
+      <h2 className="text-lg">Your Vaults</h2>
 
       <div className="w-full overflow-x-auto">
         <table className="responsive w-full rounded font-zen">
@@ -53,7 +54,6 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
               <th className="font-normal">ID</th>
               <th className="font-normal">Asset</th>
               <th className="font-normal">APY</th>
-              <th className="font-normal">Agents</th>
               <th className="font-normal">Collaterals</th>
               <th className="font-normal">Action</th>
             </tr>
@@ -63,13 +63,17 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
               const token = findToken(vault.asset, vault.networkId);
               const networkImg = getNetworkImg(vault.networkId);
 
+              const collaterals = vault.caps
+                .map(cap => parseCapIdParams(cap.idParams).collateralToken)
+                .filter(collat => collat !== undefined)
+
               return (
-                <tr key={vault.id}>
+                <tr key={vault.address}>
                   {/* ID */}
                   <td data-label="ID">
                     <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                       {networkImg && <Image src={networkImg} alt="icon" width={15} height={15} />}
-                      <span>{vault.newVaultV2.slice(2, 8)}</span>
+                      <span>{vault.address.slice(2, 8)}</span>
                     </div>
                   </td>
 
@@ -93,23 +97,31 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
 
                   {/* APY */}
                   <td data-label="APY">
-                    <span className="font-zen text-sm">--</span>
-                  </td>
-
-                  {/* Agents */}
-                  <td data-label="Agents">
-                    <span className="font-zen text-sm">--</span>
+                    <span className="font-zen text-sm">
+                      {vault.avgApy && (vault.avgApy * 100).toFixed(2) + '%'} 
+                    </span>
                   </td>
 
                   {/* Collaterals */}
                   <td data-label="Collaterals">
-                    <span className="font-zen text-sm">--</span>
+                    <span className="flex flex-wrap gap-1.5 justify-center">{
+                    collaterals.map((tokenAddress) => (
+                      <div key={tokenAddress} className="flex items-center">
+                        <TokenIcon
+                          address={tokenAddress}
+                          chainId={vault.networkId}
+                          width={20}
+                          height={20}
+                        />
+                      </div>
+                    ))
+                    }</span>
                   </td>
 
                   {/* Action */}
                   <td data-label="Action">
                     <div className="flex justify-center">
-                      <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.newVaultV2}`}>
+                      <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.address}`}>
                         <Button variant="interactive" size="sm">
                           Manage
                         </Button>

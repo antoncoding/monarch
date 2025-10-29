@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
-import { fetchUserVaultsV2AllNetworks, UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
+import {
+  fetchUserVaultV2AddressesAllNetworks,
+  UserVaultV2
+} from '@/data-sources/subgraph/v2-vaults';
 import { readTotalAsset } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Return = {
@@ -15,7 +19,7 @@ function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
   return vaults.filter(vault =>
     vault.owner &&
     vault.asset &&
-    vault.newVaultV2
+    vault.address
   );
 }
 
@@ -23,7 +27,7 @@ async function fetchVaultBalances(vaults: UserVaultV2[]): Promise<UserVaultV2[]>
   return Promise.all(
     vaults.map(async (vault) => {
       const balance = await readTotalAsset(
-        vault.newVaultV2 as Address,
+        vault.address as Address,
         vault.networkId
       );
 
@@ -36,9 +40,24 @@ async function fetchVaultBalances(vaults: UserVaultV2[]): Promise<UserVaultV2[]>
 }
 
 async function fetchAndProcessVaults(address: Address): Promise<UserVaultV2[]> {
-  const userVaults = await fetchUserVaultsV2AllNetworks(address);
-  const validVaults = filterValidVaults(userVaults);
+  // Step 1: Fetch vault addresses from subgraph across all networks
+  const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(address);
+
+  console.log('vaultAddresses', vaultAddresses)
+
+  if (vaultAddresses.length === 0) {
+    return [];
+  }
+
+  // Step 2: Fetch full vault details from Morpho API
+  const vaultDetails = await fetchMultipleVaultV2DetailsAcrossNetworks(vaultAddresses);
+
+  // Step 3: Filter valid vaults
+  const validVaults = filterValidVaults(vaultDetails as UserVaultV2[]);
+
+  // Step 4: Fetch balances for each vault
   const vaultsWithBalances = await fetchVaultBalances(validVaults);
+
   return vaultsWithBalances;
 }
 
