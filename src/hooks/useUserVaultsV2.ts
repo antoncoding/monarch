@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
+import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
 import {
   fetchUserVaultV2AddressesAllNetworks,
   UserVaultV2
 } from '@/data-sources/subgraph/v2-vaults';
-import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
 import { readTotalAsset } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Return = {

@@ -191,8 +191,8 @@ export const fetchMultipleVaultV2Details = async (
  * @returns Array of VaultV2Details with networkId
  */
 export const fetchMultipleVaultV2DetailsAcrossNetworks = async (
-  vaultAddressesWithNetwork: Array<{ address: string; networkId: SupportedNetworks }>,
-): Promise<Array<VaultV2Details & { networkId: SupportedNetworks }>> => {
+  vaultAddressesWithNetwork: { address: string; networkId: SupportedNetworks }[],
+): Promise<(VaultV2Details & { networkId: SupportedNetworks })[]> => {
 
   if (vaultAddressesWithNetwork.length === 0) {
     return [];

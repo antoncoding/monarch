@@ -7,8 +7,8 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { formatReadable } from '@/utils/balance';
-import { SupportedNetworks, getNetworkImg } from '@/utils/networks';
 import { parseCapIdParams } from '@/utils/morpho';
+import { SupportedNetworks, getNetworkImg } from '@/utils/networks';
 
 type VaultListV2Props = {
   vaults: UserVaultV2[];

@@ -1,7 +1,7 @@
+import type { VaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
 import { userVaultsV2AddressesQuery } from '@/graphql/morpho-v2-subgraph-queries';
 import { SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
 import { subgraphGraphqlFetcher } from './fetchers';
-import type { VaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
 
 // Simplified subgraph response for vault addresses
 type SubgraphVaultV2Address = {
