@@ -31,7 +31,7 @@ export function useAllocations({
   enabled = true,
 }: UseAllocationsArgs): UseAllocationsReturn {
   const [allocations, setAllocations] = useState<AllocationData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Create a stable key from capIds to detect actual changes
@@ -42,6 +42,7 @@ export function useAllocations({
   const load = useCallback(async () => {
     if (!vaultAddress || !enabled || caps.length === 0) {
       setAllocations([]);
+      setLoading(false);
       return;
     }
 
