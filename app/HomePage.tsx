@@ -186,11 +186,11 @@ function HomePage() {
         {/* Hero Section - Full Screen */}
         <section className="relative flex min-h-screen flex-col">
           <div className="container mx-auto flex flex-1 flex-col items-center justify-center">
-            <div className="flex w-full flex-col items-center justify-center">
+            <div className="flex w-full flex-col items-center" style={{ marginTop: '-8vh' }}>
               <div className="flex w-full flex-col items-center px-4">
                 {/* Logo and Product Title - Horizontal Layout */}
-                <div className="mb-6 flex items-center gap-3 sm:mb-8 sm:gap-4">
-                  <h1 className="font-zen text-2xl leading-none text-primary sm:text-3xl md:text-4xl">
+                <div className="mb-6 inline-flex items-center gap-3 sm:mb-8 sm:gap-4">
+                  <h1 className="m-0 font-zen text-2xl leading-none text-primary sm:text-3xl md:text-4xl" style={{ padding: 0 }}>
                     Welcome to Monarch
                   </h1>
                   <Image
@@ -198,13 +198,13 @@ function HomePage() {
                     alt="Monarch Logo"
                     width={60}
                     height={60}
-                    className="h-10 w-10 flex-shrink-0 sm:h-12 sm:w-12 md:h-14 md:w-14"
+                    className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14"
                   />
                 </div>
 
                 {/* Tagline with typing animation */}
-                <div className="w-full sm:w-4/5 md:w-3/5">
-                  <div className="mb-8 flex h-[6rem] flex-col items-start justify-start sm:mb-10 sm:h-[5rem] md:h-[6rem]">
+                <div className="w-full max-w-xl px-4 sm:max-w-2xl">
+                  <div className="mb-8 flex h-[6rem] flex-col items-start justify-start sm:mb-10 sm:h-[5rem] md:h-[6rem]" style={{ marginLeft: '5rem' }}>
                     <CustomTypingAnimation />
                   </div>
                 </div>
