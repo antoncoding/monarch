@@ -1,6 +1,5 @@
 import { generateMetadata } from '@/utils/generateMetadata';
-
-import RiskContent from '../components/risk';
+import RiskContent from './RiskContent';
 
 export const metadata = generateMetadata({
   title: 'Risks | Monarch',

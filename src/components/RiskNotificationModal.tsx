@@ -20,7 +20,7 @@ export default function RiskNotificationModal() {
 
   useEffect(() => {
     const hasReadRisks = localStorage.getItem('hasReadRisks');
-    if (hasReadRisks !== 'true' && pathname !== '/info/risks') {
+    if (hasReadRisks !== 'true' && pathname !== '/risks') {
       setIsOpen(true);
     }
   }, [pathname]);
@@ -32,7 +32,7 @@ export default function RiskNotificationModal() {
     }
   };
 
-  if (pathname === '/info/risks' || pathname === '/' || pathname === '/info') {
+  if (pathname === '/risks' || pathname === '/') {
     return null;
   }
 
@@ -47,8 +47,8 @@ export default function RiskNotificationModal() {
             Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's
             important to understand the key aspects of this approach. For a comprehensive overview,
             please visit our{' '}
-            <Link href="/info" target="_blank" className="text-primary underline">
-              introduction page
+            <Link href="/" target="_blank" className="text-primary underline">
+              home page
             </Link>
             .
           </p>
@@ -65,7 +65,7 @@ export default function RiskNotificationModal() {
             While this approach offers more control, it also requires a deeper understanding of
             market dynamics. For a detailed explanation of the risks and considerations, please read
             our{' '}
-            <Link href="/info/risks" target="_blank" className="text-primary underline">
+            <Link href="/risks" target="_blank" className="text-primary underline">
               risk assessment page
             </Link>
             .
