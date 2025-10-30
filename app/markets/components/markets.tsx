@@ -18,6 +18,7 @@ import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
+import { parseNumericThreshold } from '@/utils/markets';
 import { SupportedNetworks } from '@/utils/networks';
 import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
@@ -37,19 +38,6 @@ type MarketContentProps = {
   initialNetwork: SupportedNetworks | null;
   initialCollaterals: string[];
   initialLoanAssets: string[];
-};
-
-const getMinSupplyThreshold = (rawValue: string): number => {
-  if (rawValue === undefined || rawValue === null || rawValue === '') {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed)) {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  return Math.max(parsed, 0);
 };
 
 export default function Markets({
@@ -127,7 +115,7 @@ export default function Markets({
     [setUsdMinSupply, setUsdMinBorrow],
   );
 
-  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
+  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
 
   useEffect(() => {
     // return if no markets

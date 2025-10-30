@@ -12,6 +12,7 @@ import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import * as keys from "@/utils/storageKeys"
@@ -51,19 +52,6 @@ enum SortColumn {
   Liquidity = 3,
   Risk = 4,
 }
-
-const getMinSupplyThreshold = (rawValue: string): number => {
-  if (rawValue === undefined || rawValue === null || rawValue === '') {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed)) {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  return Math.max(parsed, 0);
-};
 
 function HTSortable({
   label,
@@ -507,7 +495,7 @@ export function MarketsTableWithSameLoanAsset({
     [setUsdMinSupply, setUsdMinBorrow],
   );
 
-  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
+  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -762,7 +750,7 @@ export function MarketsTableWithSameLoanAsset({
               onValueChange={setHideSmallMarkets}
             />
             <span className="text-xs text-secondary">
-              Hide markets below ${effectiveMinSupply.toLocaleString()}
+              Hide markets below ${formatReadable(effectiveMinSupply)}
             </span>
           </div>
           {showSettings && (
