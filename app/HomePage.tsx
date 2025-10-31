@@ -381,12 +381,12 @@ function HomePage() {
                 </p>
                 <div className="mx-auto max-w-3xl space-y-6 text-left">
                   <p className="text-lg leading-relaxed">
-                    Monarch provides powerful features designed for sophisticated users who want maximum control over their DeFi strategy:
+                    Monarch provides direct access to Morpho Blue markets with no intermediaries and zero fees. Our powerful tools are designed for sophisticated users who want maximum control and capital efficiency:
                   </p>
                   <ul className="space-y-4 text-lg leading-relaxed">
                     <li className="flex gap-3">
                       <span className="text-monarch-orange">•</span>
-                      <span><strong>Smart Rebalancing:</strong> Automatically reallocate your positions across multiple markets to optimize yields based on your risk parameters.</span>
+                      <span><strong>Market Discovery:</strong> Find the best lending opportunities with the highest APY while understanding the risk trade-offs.</span>
                     </li>
                     <li className="flex gap-3">
                       <span className="text-monarch-orange">•</span>
@@ -394,11 +394,7 @@ function HomePage() {
                     </li>
                     <li className="flex gap-3">
                       <span className="text-monarch-orange">•</span>
-                      <span><strong>Market Discovery:</strong> Find the best lending opportunities with the highest APY while understanding the risk trade-offs.</span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="text-monarch-orange">•</span>
-                      <span><strong>Direct Access:</strong> No intermediaries, no fees—direct interaction with Morpho Blue for maximum capital efficiency.</span>
+                      <span><strong>Smart Rebalancing:</strong> Tools designed to help you identify optimal yield opportunities and easily rebalance your positions across multiple markets.</span>
                     </li>
                   </ul>
                 </div>
