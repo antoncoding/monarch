@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
-import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
+import { useTheme } from 'next-themes';
+import { RiBookLine, RiDiscordFill, RiGithubFill, RiArrowDownLine, RiExternalLinkLine } from 'react-icons/ri';
 import { Button } from '@/components/common/Button';
-import { Badge } from '@/components/common/Badge';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
-import monarchImage from '../src/imgs/intro/direct-supply.png';
-import morphoImage from '../src/imgs/intro/morpho.png';
-import vaultsImage from '../src/imgs/intro/vaults.png';
+// import FlowDiagram from '@/components/animations/FlowDiagram';
+import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
+import morphoLogoDark from '../src/imgs/intro/morpho-logo-darkmode.svg';
+import morphoLogoLight from '../src/imgs/intro/morpho-logo-lightmode.svg';
+import vaultImage from '../src/imgs/intro/vault.webp';
 import logo from '../src/components/imgs/logo.png';
 
 type Phrase = {
@@ -173,6 +175,7 @@ function CustomTypingAnimation() {
 
 function HomePage() {
   const { address } = useAccount();
+  const { theme } = useTheme();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -184,13 +187,13 @@ function HomePage() {
       <Header ghost />
       <main className="mx-auto w-full">
         {/* Hero Section - Full Screen */}
-        <section className="relative flex min-h-screen flex-col">
+        <section className="relative flex min-h-screen flex-col justify-between">
           <div className="container mx-auto flex flex-1 flex-col items-center justify-center">
-            <div className="flex w-full flex-col items-center" style={{ marginTop: '-8vh' }}>
+            <div className="flex w-full flex-col items-center" style={{ marginTop: '-5vh' }}>
               <div className="flex w-full flex-col items-center px-4">
                 {/* Logo and Product Title - Horizontal Layout */}
                 <div className="mb-6 inline-flex items-center gap-3 sm:mb-8 sm:gap-4">
-                  <h1 className="m-0 font-zen text-2xl leading-none text-primary sm:text-3xl md:text-4xl" style={{ padding: 0 }}>
+                  <h1 className="m-0 font-zen text-4xl leading-none text-primary" style={{ padding: 0 }}>
                     Welcome to Monarch
                   </h1>
                   <Image
@@ -214,13 +217,14 @@ function HomePage() {
               <div className="flex w-full justify-center gap-4 px-4 sm:w-auto sm:flex-row">
                 <Button
                   variant="default"
-                  className="w-full px-10 py-4 font-zen sm:w-auto"
+                  className="w-full px-10 py-4 font-zen sm:w-auto flex items-center gap-2"
                   size="lg"
                   onPress={() => scrollToSection('section-1')}
                 >
                   Learn More
+                  <RiArrowDownLine className="h-5 w-5" />
                 </Button>
-                <Link href="/markets" className="block w-full sm:w-auto">
+                <Link href="/markets" className="block w-full sm:w-auto no-underline">
                   <Button variant="cta" className="w-full px-10 py-4 font-zen" size="lg">
                     Explore Markets
                   </Button>
@@ -251,13 +255,13 @@ function HomePage() {
           className="flex min-h-screen w-full items-center bg-surface py-16 md:py-24"
         >
           <div className="container mx-auto px-6">
-            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
+            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-[2fr_1fr]">
               {/* Text Content */}
               <div>
-                <h2 className="mb-6 font-zen text-3xl text-primary sm:text-4xl md:text-5xl">
+                <h2 className="mb-6 font-zen text-4xl text-primary">
                   Introducing Monarch
                 </h2>
-                <p className="mb-6 text-xl text-secondary md:text-2xl">
+                <p className="mb-6 text-2xl text-secondary">
                   Advanced Interface for Morpho Blue
                 </p>
                 <div className="space-y-6">
@@ -268,41 +272,53 @@ function HomePage() {
                     Monarch is an advanced interface for Morpho Blue, providing powerful tools to interact directly with the protocol—from simple lending to creating your own automated vaults.
                   </p>
                 </div>
-                <div className="mt-8">
-                  <Link href="/markets">
-                    <Button variant="secondary" size="lg" className="font-zen">
-                      View Markets
+                <div className="mt-8 flex gap-4">
+                  <a
+                    href="https://docs.morpho.org/learn/concepts/market/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="no-underline"
+                  >
+                    <Button variant="secondary" size="lg" className="font-zen flex items-center gap-2">
+                      Learn More about Morpho Blue
+                      <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
-                  </Link>
+                  </a>
+                  <Button
+                    variant="cta"
+                    size="lg"
+                    className="font-zen flex items-center gap-2"
+                    onPress={() => scrollToSection('section-2')}
+                  >
+                    Continue
+                    <RiArrowDownLine className="h-5 w-5" />
+                  </Button>
                 </div>
               </div>
 
-              {/* Image */}
-              <div>
-                <div className="flex items-center justify-center overflow-hidden rounded-lg">
-                  <Image
-                    src={morphoImage}
-                    alt="Introducing Monarch"
-                    width={600}
-                    height={400}
-                    className="rounded-lg"
-                  />
-                </div>
+              {/* Morpho Logo */}
+              <div className="flex items-center justify-center">
+                <Image
+                  src={theme === 'dark' ? morphoLogoDark : morphoLogoLight}
+                  alt="Morpho Logo"
+                  width={180}
+                  height={180}
+                />
               </div>
             </div>
           </div>
         </section>
 
         {/* Section 2: Morpho Vaults - Full Screen, Right Layout with Image */}
-        <section className="flex min-h-screen w-full items-center bg-main py-16 md:py-24">
+        <section id="section-2" className="flex min-h-screen w-full items-center bg-main py-16 md:py-24">
           <div className="container mx-auto px-6">
-            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2 md:grid-flow-dense">
+            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-[2fr_1fr] md:grid-flow-dense">
               {/* Text Content */}
               <div className="md:col-start-1">
-                <h2 className="mb-6 font-zen text-3xl text-primary sm:text-4xl md:text-5xl">
+                <h2 className="mb-6 font-zen text-4xl text-primary">
                   Morpho Vaults
                 </h2>
-                <p className="mb-6 text-xl text-secondary md:text-2xl">
+                <p className="mb-6 text-2xl text-secondary">
                   Curated Risk Management
                 </p>
                 <div className="space-y-6">
@@ -313,98 +329,124 @@ function HomePage() {
                     However, they come with trade-offs: less control over parameters, limited customization, and potential performance fees charged by curators.
                   </p>
                 </div>
-                <div className="mt-8">
+                <div className="mt-8 flex gap-4">
                   <a
                     href="https://docs.morpho.org/curate/"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="no-underline"
                   >
-                    <Button variant="secondary" size="lg" className="font-zen">
-                      Learn About Risk Curation
+                    <Button variant="secondary" size="lg" className="font-zen flex items-center gap-2">
+                      Learn about Risk Curation
+                      <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
                   </a>
+                  <Button
+                    variant="cta"
+                    size="lg"
+                    className="font-zen flex items-center gap-2"
+                    onPress={() => scrollToSection('section-3')}
+                  >
+                    Why Monarch
+                    <RiArrowDownLine className="h-5 w-5" />
+                  </Button>
                 </div>
               </div>
 
-              {/* Image */}
-              <div className="md:col-start-2">
-                <div className="flex items-center justify-center overflow-hidden rounded-lg">
-                  <Image
-                    src={vaultsImage}
-                    alt="Morpho Vaults"
-                    width={600}
-                    height={400}
-                    className="rounded-lg"
-                  />
-                </div>
+              {/* Vault Image */}
+              <div className="md:col-start-2 flex items-center justify-center">
+                <Image
+                  src={vaultImage}
+                  alt="Morpho Vaults"
+                  width={200}
+                  height={200}
+                  className="rounded-lg"
+                />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section 3: Direct Market Access - Full Screen, Left Layout with Image */}
-        <section className="flex min-h-screen w-full items-center bg-surface py-16 md:py-24">
+        {/* Section 3: Direct Market Access - Full Screen, Left Layout with Animation */}
+        <section id="section-3" className="flex min-h-screen w-full items-center bg-surface py-16 md:py-24">
           <div className="container mx-auto px-6">
-            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
-              {/* Text Content */}
-              <div>
-                <h2 className="mb-6 font-zen text-3xl text-primary sm:text-4xl md:text-5xl">
-                  Direct Market Access
+            <div className="mx-auto max-w-7xl">
+              {/* Text Content - Centered */}
+              <div className="mb-12 text-center">
+                <h2 className="mb-6 font-zen text-4xl text-primary">
+                  Why Monarch?
                 </h2>
-                <p className="mb-6 text-xl text-secondary md:text-2xl">
-                  Maximum Control, Maximum Efficiency
+                <p className="mb-6 text-2xl text-secondary">
+                  Advanced Tools for DeFi Power Users
                 </p>
-                <div className="space-y-6">
+                <div className="mx-auto max-w-3xl space-y-6 text-left">
                   <p className="text-lg leading-relaxed">
-                    Monarch empowers you with direct lending to Morpho Blue markets—full control over your positions without intermediaries, no fees, and maximum capital efficiency.
+                    Monarch provides powerful features designed for sophisticated users who want maximum control over their DeFi strategy:
                   </p>
-                  <p className="text-lg leading-relaxed">
-                    Perfect for users who understand market risks and want complete control over their lending strategy. Manage your positions directly through our intuitive interface.
-                  </p>
-                </div>
-                <div className="mt-8">
-                  <Link href={`/positions/${address ?? ''}`}>
-                    <Button variant="secondary" size="lg" className="font-zen">
-                      View My Positions
-                    </Button>
-                  </Link>
+                  <ul className="space-y-4 text-lg leading-relaxed">
+                    <li className="flex gap-3">
+                      <span className="text-monarch-orange">•</span>
+                      <span><strong>Smart Rebalancing:</strong> Automatically reallocate your positions across multiple markets to optimize yields based on your risk parameters.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-monarch-orange">•</span>
+                      <span><strong>Risk Analysis:</strong> Comprehensive risk metrics and analytics on every market, helping you make informed decisions.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-monarch-orange">•</span>
+                      <span><strong>Market Discovery:</strong> Find the best lending opportunities with the highest APY while understanding the risk trade-offs.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-monarch-orange">•</span>
+                      <span><strong>Direct Access:</strong> No intermediaries, no fees—direct interaction with Morpho Blue for maximum capital efficiency.</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
 
-              {/* Image */}
-              <div>
-                <div className="flex items-center justify-center overflow-hidden rounded-lg">
-                  <Image
-                    src={monarchImage}
-                    alt="Direct Market Access"
-                    width={600}
-                    height={400}
-                    className="rounded-lg"
-                  />
-                </div>
+              {/* Rebalance Animation */}
+              <div className="mb-12 flex items-center justify-center">
+                <RebalanceAnimation />
+              </div>
+
+              {/* CTA Buttons - Centered */}
+              <div className="flex justify-center gap-4">
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="font-zen opacity-50 cursor-not-allowed"
+                  isDisabled
+                >
+                  Auto Vault (Coming Soon)
+                </Button>
+                <Link href="/markets" className="no-underline">
+                  <Button variant="cta" size="lg" className="font-zen">
+                    Explore Markets
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
         {/* Section 4: Auto Vaults - Full Screen, Center Layout, No Image */}
-        <section className="flex min-h-screen w-full items-center bg-main py-16 md:py-24">
+        {/* <section className="flex min-h-screen w-full items-center bg-main py-16 md:py-24">
           <div className="container mx-auto px-6">
             <div className="mx-auto max-w-3xl text-center">
               <div className="mb-6 flex items-center justify-center gap-3">
-                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl">
+                <h2 className="font-zen text-4xl text-primary">
                   Auto Vaults
                 </h2>
                 <Badge variant="success" size="lg">
                   New
                 </Badge>
               </div>
-              <p className="mb-8 text-xl text-secondary md:text-2xl">
+              <p className="mb-8 text-2xl text-secondary">
                 Be Your Own Risk Curator
               </p>
 
               <div className="space-y-8">
-                <p className="text-xl leading-relaxed text-secondary md:text-2xl">
+                <p className="text-xl leading-relaxed text-secondary">
                   Deploy your own vault. Define your risk parameters. Keep full control.
                 </p>
 
@@ -450,29 +492,17 @@ function HomePage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Footer CTA - Full Screen */}
-        <section className="flex min-h-screen w-full flex-col items-center justify-center bg-surface py-16 text-center md:py-24">
+        <section className="flex min-h-screen w-full flex-col items-center justify-center bg-main py-16 text-center md:py-24">
           <div className="container mx-auto px-6">
-            <h2 className="mb-6 font-zen text-3xl text-primary sm:text-4xl md:text-5xl">
-              Ready to Get Started?
+            <h2 className="mb-6 font-zen text-4xl text-primary">
+              Join the Monarch Community
             </h2>
-            <p className="mx-auto mb-12 max-w-2xl text-xl text-secondary md:text-2xl">
-              Join our community and help shape the future of decentralized lending.
+            <p className="mx-auto mb-12 max-w-2xl text-2xl text-secondary">
+              Connect with us and stay updated on the latest features and developments in decentralized lending.
             </p>
-            <div className="mb-12 flex flex-col items-center justify-center gap-6 sm:flex-row">
-              <Link href="/markets" className="block w-full sm:w-auto">
-                <Button variant="secondary" size="lg" className="w-full px-12 py-4 font-zen sm:w-auto">
-                  Explore Markets
-                </Button>
-              </Link>
-              <Link href="/autovault" className="block w-full sm:w-auto">
-                <Button variant="secondary" size="lg" className="w-full px-12 py-4 font-zen sm:w-auto">
-                  Create Auto Vault
-                </Button>
-              </Link>
-            </div>
 
             {/* Social Links - Fixed underscores */}
             <div className="flex items-center justify-center gap-6">
