@@ -176,6 +176,11 @@ function CustomTypingAnimation() {
 function HomePage() {
   const { address } = useAccount();
   const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -280,7 +285,7 @@ function HomePage() {
                     className="no-underline"
                   >
                     <Button variant="secondary" size="lg" className="font-zen flex items-center gap-2">
-                      Learn More about Morpho Blue
+                      More about Morpho Blue
                       <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
                   </a>
@@ -299,7 +304,7 @@ function HomePage() {
               {/* Morpho Logo */}
               <div className="flex items-center justify-center">
                 <Image
-                  src={theme === 'dark' ? morphoLogoDark : morphoLogoLight}
+                  src={mounted && theme === 'dark' ? morphoLogoDark : morphoLogoLight}
                   alt="Morpho Logo"
                   width={180}
                   height={180}

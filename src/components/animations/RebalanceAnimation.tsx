@@ -36,6 +36,7 @@ function RebalanceAnimation() {
     { currentIndex: 0, isSpinning: false, nextIndex: 0 },
     { currentIndex: 1, isSpinning: false, nextIndex: 1 },
     { currentIndex: 2, isSpinning: false, nextIndex: 2 },
+    { currentIndex: 3, isSpinning: false, nextIndex: 3 },
   ]);
 
   useEffect(() => {
