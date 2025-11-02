@@ -21,7 +21,7 @@ import { formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
 import { SupportedNetworks } from '@/utils/networks';
-import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
+import { PriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';

@@ -40,7 +40,7 @@ function RebalanceAnimation() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const SLOT_COUNT = 4
+      const SLOT_COUNT = 3
 
       // Randomly decide how many slots to change (1-3)
       const numSlotsToChange = Math.floor(Math.random() * SLOT_COUNT) + 1;

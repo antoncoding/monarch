@@ -5,11 +5,11 @@
  * different market views (main markets page, same-loan-asset tables, etc.)
  */
 
+import { parseNumericThreshold } from '@/utils/markets';
 import { SupportedNetworks } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
 import { ERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { parseNumericThreshold } from '@/utils/markets';
 
 // ============================================================================
 // Types
@@ -330,9 +330,11 @@ export const sortMarkets = (
 /**
  * Get nested property from market object (helper for sorting)
  */
-export const getNestedProperty = (obj: Market, path: string): any => {
+export const getNestedProperty = (obj: Market, path: string): unknown => {
   if (!path) return undefined;
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj as any);
+  return path.split('.').reduce((acc: unknown, part: string) => {
+    return acc && typeof acc === 'object' && part in acc ? (acc as Record<string, unknown>)[part] : undefined;
+  }, obj as unknown);
 };
 
 /**
@@ -340,10 +342,24 @@ export const getNestedProperty = (obj: Market, path: string): any => {
  */
 export const createPropertySort = (propertyPath: string): MarketSortFn => {
   return (a, b) => {
-    const aValue = getNestedProperty(a, propertyPath);
-    const bValue = getNestedProperty(b, propertyPath);
+    const aValue: unknown = getNestedProperty(a, propertyPath);
+    const bValue: unknown = getNestedProperty(b, propertyPath);
+
+    // Handle undefined/null cases
     if (aValue === bValue) return 0;
-    return aValue > bValue ? 1 : -1;
+    if (aValue === undefined || aValue === null) return 1;
+    if (bValue === undefined || bValue === null) return -1;
+
+    // Type guard for comparable values
+    if (typeof aValue === 'number' && typeof bValue === 'number') {
+      return aValue > bValue ? 1 : -1;
+    }
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return aValue > bValue ? 1 : -1;
+    }
+
+    // Fallback: convert to string for comparison
+    return String(aValue) > String(bValue) ? 1 : -1;
   };
 };
 
