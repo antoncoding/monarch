@@ -20,12 +20,20 @@ type MarketSettingsModalProps = {
   setIncludeUnknownTokens: (value: boolean) => void;
   showUnknownOracle: boolean;
   setShowUnknownOracle: (value: boolean) => void;
-  // USD Filters (Simplified)
+  // USD Filters (with enabled/disabled states)
   usdFilters: {
     minSupply: string;
     minBorrow: string;
+    minLiquidity: string;
   };
   setUsdFilters: (filters: MarketSettingsModalProps['usdFilters']) => void;
+  // USD Filter enabled states
+  minSupplyEnabled: boolean;
+  setMinSupplyEnabled: (value: boolean) => void;
+  minBorrowEnabled: boolean;
+  setMinBorrowEnabled: (value: boolean) => void;
+  minLiquidityEnabled: boolean;
+  setMinLiquidityEnabled: (value: boolean) => void;
   // Pagination
   entriesPerPage: number;
   onEntriesPerPageChange: (value: number) => void;
@@ -65,6 +73,12 @@ export default function MarketSettingsModal({
   setShowUnknownOracle,
   usdFilters,
   setUsdFilters,
+  minSupplyEnabled,
+  setMinSupplyEnabled,
+  minBorrowEnabled,
+  setMinBorrowEnabled,
+  minLiquidityEnabled,
+  setMinLiquidityEnabled,
   entriesPerPage,
   onEntriesPerPageChange,
 }: MarketSettingsModalProps) {
@@ -172,70 +186,152 @@ export default function MarketSettingsModal({
                   Filter by Min USD Value
                 </h3>
                 <p className="-mt-3 mb-1 text-xs text-warning">
-                  {' '}
-                  {/* Fine-tune note position */}
                   Note: USD values are estimates and may not be available or accurate for all
-                  markets.
+                  markets. Toggle the switch to enable/disable each filter.
                 </p>
-                <SettingItem
-                  title="Min Supply (USD)"
-                  description="Show markets with total supply >= this value."
-                >
-                  <Input
-                    aria-label="Minimum Supply in USD"
-                    name="minSupply"
-                    placeholder="0"
-                    value={usdFilters.minSupply}
-                    onChange={handleUsdFilterChange}
-                    size="sm"
-                    type="text"
-                    pattern="[0-9]*"
-                    inputMode="numeric"
-                    className="max-w-[120px]"
-                    classNames={{ input: 'text-right' }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span
-                          className={`text-small ${
-                            usdFilters.minSupply ? 'text-primary' : 'text-default-400'
-                          }`}
-                        >
-                          $
-                        </span>
-                      </div>
-                    }
-                  />
-                </SettingItem>
+
+                {/* Min Supply Filter */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-grow flex-col gap-1 pr-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        isSelected={minSupplyEnabled}
+                        onValueChange={setMinSupplyEnabled}
+                        size="sm"
+                        color="primary"
+                      />
+                      <h4 className={`text-base font-medium ${minSupplyEnabled ? 'text-primary' : 'text-secondary'}`}>
+                        Min Supply (USD)
+                      </h4>
+                    </div>
+                    <p className="text-xs text-secondary">
+                      Show markets with total supply &gt;= this value. This filter can also be toggled from the main page.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-1">
+                    <Input
+                      aria-label="Minimum Supply in USD"
+                      name="minSupply"
+                      placeholder="0"
+                      value={usdFilters.minSupply}
+                      onChange={handleUsdFilterChange}
+                      isDisabled={!minSupplyEnabled}
+                      size="sm"
+                      type="text"
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      className="max-w-[120px]"
+                      classNames={{ input: 'text-right' }}
+                      startContent={
+                        <div className="pointer-events-none flex items-center">
+                          <span
+                            className={`text-small ${
+                              minSupplyEnabled && usdFilters.minSupply ? 'text-primary' : 'text-default-400'
+                            }`}
+                          >
+                            $
+                          </span>
+                        </div>
+                      }
+                    />
+                  </div>
+                </div>
                 <Divider />
-                <SettingItem
-                  title="Min Borrow (USD)"
-                  description="Show markets with total borrow >= this value."
-                >
-                  <Input
-                    aria-label="Minimum Borrow in USD"
-                    name="minBorrow"
-                    placeholder="0"
-                    value={usdFilters.minBorrow}
-                    onChange={handleUsdFilterChange}
-                    size="sm"
-                    type="text"
-                    pattern="[0-9]*"
-                    inputMode="numeric"
-                    className="max-w-[120px]"
-                    classNames={{ input: 'text-right' }}
-                    startContent={
-                      <div className="pointer-events-none flex items-center">
-                        <span
-                          className={`text-small ${
-                            usdFilters.minBorrow ? 'text-primary' : 'text-default-400'
-                          }`}
-                        >
-                          $
-                        </span>
-                      </div>
-                    }
-                  />
-                </SettingItem>
+
+                {/* Min Borrow Filter */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-grow flex-col gap-1 pr-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        isSelected={minBorrowEnabled}
+                        onValueChange={setMinBorrowEnabled}
+                        size="sm"
+                        color="primary"
+                      />
+                      <h4 className={`text-base font-medium ${minBorrowEnabled ? 'text-primary' : 'text-secondary'}`}>
+                        Min Borrow (USD)
+                      </h4>
+                    </div>
+                    <p className="text-xs text-secondary">
+                      Show markets with total borrow &gt;= this value.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-1">
+                    <Input
+                      aria-label="Minimum Borrow in USD"
+                      name="minBorrow"
+                      placeholder="0"
+                      value={usdFilters.minBorrow}
+                      onChange={handleUsdFilterChange}
+                      isDisabled={!minBorrowEnabled}
+                      size="sm"
+                      type="text"
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      className="max-w-[120px]"
+                      classNames={{ input: 'text-right' }}
+                      startContent={
+                        <div className="pointer-events-none flex items-center">
+                          <span
+                            className={`text-small ${
+                              minBorrowEnabled && usdFilters.minBorrow ? 'text-primary' : 'text-default-400'
+                            }`}
+                          >
+                            $
+                          </span>
+                        </div>
+                      }
+                    />
+                  </div>
+                </div>
+                <Divider />
+
+                {/* Min Liquidity Filter */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-grow flex-col gap-1 pr-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        isSelected={minLiquidityEnabled}
+                        onValueChange={setMinLiquidityEnabled}
+                        size="sm"
+                        color="primary"
+                      />
+                      <h4 className={`text-base font-medium ${minLiquidityEnabled ? 'text-primary' : 'text-secondary'}`}>
+                        Min Liquidity (USD)
+                      </h4>
+                    </div>
+                    <p className="text-xs text-secondary">
+                      Show markets with available liquidity &gt;= this value.
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 pt-1">
+                    <Input
+                      aria-label="Minimum Liquidity in USD"
+                      name="minLiquidity"
+                      placeholder="0"
+                      value={usdFilters.minLiquidity}
+                      onChange={handleUsdFilterChange}
+                      isDisabled={!minLiquidityEnabled}
+                      size="sm"
+                      type="text"
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      className="max-w-[120px]"
+                      classNames={{ input: 'text-right' }}
+                      startContent={
+                        <div className="pointer-events-none flex items-center">
+                          <span
+                            className={`text-small ${
+                              minLiquidityEnabled && usdFilters.minLiquidity ? 'text-primary' : 'text-default-400'
+                            }`}
+                          >
+                            $
+                          </span>
+                        </div>
+                      }
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* --- View Options Section --- */}

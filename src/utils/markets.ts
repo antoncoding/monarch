@@ -1,3 +1,22 @@
+/**
+ * Parse and normalize a numeric threshold value from user input.
+ * - Empty string or "0" → 0 (no threshold)
+ * - Invalid values → 0
+ * - Valid positive numbers → parsed value
+ */
+export const parseNumericThreshold = (rawValue: string | undefined | null): number => {
+  if (rawValue === undefined || rawValue === null || rawValue === '' || rawValue === '0') {
+    return 0;
+  }
+
+  const parsed = Number(rawValue);
+  if (Number.isNaN(parsed)) {
+    return 0;
+  }
+
+  return Math.max(parsed, 0);
+};
+
 // Blacklisted markets by uniqueKey
 export const blacklistedMarkets = [
   '0x8eaf7b29f02ba8d8c1d7aeb587403dcb16e2e943e4e2f5f94b0963c2386406c9', // PAXG / USDC market with wrong oracle

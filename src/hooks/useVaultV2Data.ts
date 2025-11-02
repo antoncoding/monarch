@@ -52,12 +52,13 @@ export function useVaultV2Data({
   const { findToken } = useTokens();
 
   const [data, setData] = useState<VaultV2Data | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const load = useCallback(async () => {
     if (!vaultAddress) {
       setData(null);
+      setLoading(false);
       return;
     }
 

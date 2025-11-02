@@ -11,15 +11,17 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
-import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
+import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
+import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
+import { parseNumericThreshold } from '@/utils/markets';
 import { SupportedNetworks } from '@/utils/networks';
-import { PriceFeedVendors, parsePriceFeedVendors } from '@/utils/oracle';
+import { PriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
 import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -31,25 +33,11 @@ import MarketSettingsModal from './MarketSettingsModal';
 import MarketsTable from './marketsTable';
 import NetworkFilter from './NetworkFilter';
 import OracleFilter from './OracleFilter';
-import { applyFilterAndSort } from './utils';
 
 type MarketContentProps = {
   initialNetwork: SupportedNetworks | null;
   initialCollaterals: string[];
   initialLoanAssets: string[];
-};
-
-const getMinSupplyThreshold = (rawValue: string): number => {
-  if (rawValue === undefined || rawValue === null || rawValue === '') {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  const parsed = Number(rawValue);
-  if (Number.isNaN(parsed)) {
-    return DEFAULT_MIN_SUPPLY_USD;
-  }
-
-  return Math.max(parsed, 0);
 };
 
 export default function Markets({
@@ -100,34 +88,54 @@ export default function Markets({
     false,
   );
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
-  const [hideSmallMarkets, setHideSmallMarkets] = useLocalStorage(keys.MarketsShowSmallMarkets, true);
 
   const { allTokens, findToken } = useTokens();
 
+  // USD Filter values
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
     keys.MarketsUsdMinSupplyKey,
     DEFAULT_MIN_SUPPLY_USD.toString(),
   );
   const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
+  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
+    keys.MarketsUsdMinLiquidityKey,
+    DEFAULT_MIN_LIQUIDITY_USD.toString(),
+  );
+
+  // USD Filter enabled states
+  const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
+    keys.MarketsMinSupplyEnabledKey,
+    true, // Default to enabled for backward compatibility
+  );
+  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(
+    keys.MarketsMinBorrowEnabledKey,
+    false,
+  );
+  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(
+    keys.MarketsMinLiquidityEnabledKey,
+    false,
+  );
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
   const usdFilters = useMemo(
     () => ({
       minSupply: usdMinSupply,
       minBorrow: usdMinBorrow,
+      minLiquidity: usdMinLiquidity,
     }),
-    [usdMinSupply, usdMinBorrow],
+    [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
 
   const setUsdFilters = useCallback(
-    (filters: { minSupply: string; minBorrow: string }) => {
+    (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
       setUsdMinSupply(filters.minSupply);
       setUsdMinBorrow(filters.minBorrow);
+      setUsdMinLiquidity(filters.minLiquidity);
     },
-    [setUsdMinSupply, setUsdMinBorrow],
+    [setUsdMinSupply, setUsdMinBorrow, setUsdMinLiquidity],
   );
 
-  const effectiveMinSupply = getMinSupplyThreshold(usdFilters.minSupply);
+  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
 
   useEffect(() => {
     // return if no markets
@@ -214,33 +222,46 @@ export default function Markets({
   const applyFiltersAndSort = useCallback(() => {
     if (!rawMarkets) return;
 
-    const filtered = applyFilterAndSort(
-      rawMarkets,
-      sortColumn,
-      sortDirection,
+    // Apply filters using the new composable filtering system
+    const filtered = filterMarkets(rawMarkets, {
       selectedNetwork,
-      includeUnknownTokens,
+      showUnknownTokens: includeUnknownTokens,
       showUnknownOracle,
       selectedCollaterals,
       selectedLoanAssets,
       selectedOracles,
-      staredIds,
+      usdFilters: {
+        minSupply: { enabled: minSupplyEnabled, threshold: usdFilters.minSupply },
+        minBorrow: { enabled: minBorrowEnabled, threshold: usdFilters.minBorrow },
+        minLiquidity: { enabled: minLiquidityEnabled, threshold: usdFilters.minLiquidity },
+      },
       findToken,
-      usdFilters,
-      hideSmallMarkets,
-    ).filter((market) => {
-      if (!searchQuery) return true; // If no search query, show all markets
-      const lowercaseQuery = searchQuery.toLowerCase();
-      const { vendors } = parsePriceFeedVendors(market.oracle?.data, market.morphoBlue.chain.id);
-      const vendorsName = vendors.join(',');
-      return (
-        market.uniqueKey.toLowerCase().includes(lowercaseQuery) ||
-        market.collateralAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
-        market.loanAsset.symbol.toLowerCase().includes(lowercaseQuery) ||
-        vendorsName.toLowerCase().includes(lowercaseQuery)
-      );
+      searchQuery,
     });
-    setFilteredMarkets(filtered);
+
+    // Apply sorting
+    let sorted: Market[];
+    if (sortColumn === SortColumn.Starred) {
+      sorted = sortMarkets(filtered, createStarredSort(staredIds), 1);
+    } else {
+      const sortPropertyMap: Record<SortColumn, string> = {
+        [SortColumn.Starred]: 'uniqueKey',
+        [SortColumn.LoanAsset]: 'loanAsset.name',
+        [SortColumn.CollateralAsset]: 'collateralAsset.name',
+        [SortColumn.LLTV]: 'lltv',
+        [SortColumn.Supply]: 'state.supplyAssetsUsd',
+        [SortColumn.Borrow]: 'state.borrowAssetsUsd',
+        [SortColumn.SupplyAPY]: 'state.supplyApy',
+      };
+      const propertyPath = sortPropertyMap[sortColumn];
+      if (propertyPath) {
+        sorted = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection as 1 | -1);
+      } else {
+        sorted = filtered;
+      }
+    }
+
+    setFilteredMarkets(sorted);
     resetPage();
   }, [
     rawMarkets,
@@ -255,7 +276,9 @@ export default function Markets({
     staredIds,
     findToken,
     usdFilters,
-    hideSmallMarkets,
+    minSupplyEnabled,
+    minBorrowEnabled,
+    minLiquidityEnabled,
     searchQuery,
     resetPage,
   ]);
@@ -358,6 +381,12 @@ export default function Markets({
           setShowUnknownOracle={setShowUnknownOracle}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
+          minSupplyEnabled={minSupplyEnabled}
+          setMinSupplyEnabled={setMinSupplyEnabled}
+          minBorrowEnabled={minBorrowEnabled}
+          setMinBorrowEnabled={setMinBorrowEnabled}
+          minLiquidityEnabled={minLiquidityEnabled}
+          setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={handleEntriesPerPageChange}
         />
@@ -423,8 +452,8 @@ export default function Markets({
             <div className="flex items-center">
               <Checkbox
                 size="sm"
-                isSelected={hideSmallMarkets}
-                onValueChange={setHideSmallMarkets}
+                isSelected={minSupplyEnabled}
+                onValueChange={setMinSupplyEnabled}
               />
               <span className="text-xs text-secondary">
                 Hide markets below ${formatReadable(effectiveMinSupply)}
@@ -486,6 +515,8 @@ export default function Markets({
                     ? "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters."
                     : selectedOracles.length > 0 && !showUnknownOracle
                     ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
+                    : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
+                    ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
                     : 'Try adjusting your filters or search query to see more results.'
                 }
               />

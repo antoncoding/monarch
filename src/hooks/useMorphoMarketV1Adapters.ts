@@ -12,7 +12,7 @@ export function useMorphoMarketV1Adapters({
   chainId: SupportedNetworks;
 }) {
   const [adapters, setAdapters] = useState<MorphoMarketV1AdapterRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const vaultConfig = useMemo(() => {
@@ -30,6 +30,7 @@ export function useMorphoMarketV1Adapters({
     if (!vaultAddress || !subgraphUrl) {
       setAdapters([]);
       setError(null);
+      setLoading(false);
       return;
     }
 

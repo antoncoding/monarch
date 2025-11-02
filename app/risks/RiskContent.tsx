@@ -50,7 +50,7 @@ const riskSections = [
   },
 ];
 
-function RiskPage() {
+function RiskContent() {
   return (
     <div className="flex min-h-screen flex-col font-zen">
       <Header />
@@ -60,8 +60,8 @@ function RiskPage() {
         <p className="mb-2 text-secondary">
           This page covers advanced topics. For a comprehensive overview of Monarch, please visit
           our{' '}
-          <Link href="/info" className="text-primary underline">
-            introduction page
+          <Link href="/" className="text-primary underline">
+            home page
           </Link>
           .
         </p>
@@ -91,4 +91,4 @@ function RiskPage() {
   );
 }
 
-export default RiskPage;
+export default RiskContent;

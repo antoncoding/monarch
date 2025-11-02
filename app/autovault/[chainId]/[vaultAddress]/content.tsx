@@ -174,8 +174,8 @@ export default function VaultContent() {
             </div>
           </div>
 
-          {/* Setup Banners */}
-          {vault.needsAdapterDeployment && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+          {/* Setup Banners - Only show when data is loaded */}
+          {!vault.vaultDataLoading && vault.needsAdapterDeployment && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Complete vault initialization</p>
@@ -195,7 +195,7 @@ export default function VaultContent() {
             </div>
           )}
 
-          {vault.hasNoAllocators && vault.isOwner && (
+          {!vault.vaultDataLoading && vault.hasNoAllocators && vault.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Choose an agent</p>
@@ -215,7 +215,7 @@ export default function VaultContent() {
             </div>
           )}
 
-          {vault.capsUninitialized && vault.isOwner && (
+          {!vault.vaultDataLoading && vault.capsUninitialized && vault.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Configure allocation caps</p>
