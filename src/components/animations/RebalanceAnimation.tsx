@@ -36,18 +36,19 @@ function RebalanceAnimation() {
     { currentIndex: 0, isSpinning: false, nextIndex: 0 },
     { currentIndex: 1, isSpinning: false, nextIndex: 1 },
     { currentIndex: 2, isSpinning: false, nextIndex: 2 },
-    { currentIndex: 3, isSpinning: false, nextIndex: 3 },
   ]);
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const SLOT_COUNT = 4
+
       // Randomly decide how many slots to change (1-3)
-      const numSlotsToChange = Math.floor(Math.random() * 3) + 1;
+      const numSlotsToChange = Math.floor(Math.random() * SLOT_COUNT) + 1;
 
       // Randomly select which slots to change
       const slotsToChange = new Set<number>();
       while (slotsToChange.size < numSlotsToChange) {
-        slotsToChange.add(Math.floor(Math.random() * 3));
+        slotsToChange.add(Math.floor(Math.random() * SLOT_COUNT));
       }
 
       setSlots((prevSlots) =>
