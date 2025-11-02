@@ -3,18 +3,17 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAccount } from 'wagmi';
 import { useTheme } from 'next-themes';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiArrowDownLine, RiExternalLinkLine } from 'react-icons/ri';
+import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
+import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
-// import FlowDiagram from '@/components/animations/FlowDiagram';
-import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
+import logo from '../src/components/imgs/logo.png';
 import morphoLogoDark from '../src/imgs/intro/morpho-logo-darkmode.svg';
 import morphoLogoLight from '../src/imgs/intro/morpho-logo-lightmode.svg';
 import vaultImage from '../src/imgs/intro/vault.webp';
-import logo from '../src/components/imgs/logo.png';
 
 type Phrase = {
   text: string;
@@ -174,7 +173,6 @@ function CustomTypingAnimation() {
 }
 
 function HomePage() {
-  const { address } = useAccount();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -413,12 +411,12 @@ function HomePage() {
               {/* CTA Buttons - Centered */}
               <div className="flex justify-center gap-4">
                 <Button
-                  variant="default"
+                  variant="secondary"
                   size="lg"
                   className="font-zen opacity-50 cursor-not-allowed"
                   isDisabled
                 >
-                  Auto Vault (Coming Soon)
+                  Auto Vault <Badge variant='success'>  Coming Soon </Badge>
                 </Button>
                 <Link href="/markets" className="no-underline">
                   <Button variant="cta" size="lg" className="font-zen">

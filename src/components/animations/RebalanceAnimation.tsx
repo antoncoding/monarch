@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 // Import token images
-import usdcImg from '../../imgs/tokens/usdc.webp';
+import monarchLogo from '../../components/imgs/logo.png';
 import cbBTCImg from '../../imgs/tokens/cbbtc.webp';
 import cbETHImg from '../../imgs/tokens/cbeth.png';
-import wstETHImg from '../../imgs/tokens/wsteth.webp';
+import usdcImg from '../../imgs/tokens/usdc.webp';
 import wethImg from '../../imgs/tokens/weth.webp';
-import monarchLogo from '../../components/imgs/logo.png';
+import wstETHImg from '../../imgs/tokens/wsteth.webp';
 
 type Token = {
   name: string;
@@ -99,7 +99,7 @@ function RebalanceAnimation() {
             }`}
           >
             <Image
-              src={tokens[slot.currentIndex].image}
+              src={tokens[slot.currentIndex].image as string}
               alt={tokens[slot.currentIndex].name}
               width={40}
               height={40}
@@ -113,7 +113,7 @@ function RebalanceAnimation() {
             }`}
           >
             <Image
-              src={tokens[slot.nextIndex].image}
+              src={tokens[slot.nextIndex].image as string}
               alt={tokens[slot.nextIndex].name}
               width={40}
               height={40}
