@@ -6,7 +6,7 @@ import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { FiSettings } from 'react-icons/fi';
@@ -66,6 +66,7 @@ export function NavbarTitle() {
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { address } = useAccount();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
@@ -174,10 +175,12 @@ export function Navbar() {
               >
                 {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
               </DropdownItem>
-              <DropdownItem key="settings" endContent={<FiSettings className="h-4 w-4" />}>
-                <Link href="/settings" className="text-sm text-primary no-underline">
-                  Settings
-                </Link>
+              <DropdownItem
+                key="settings"
+                endContent={<FiSettings className="h-4 w-4" />}
+                onClick={() => router.push('/settings')}
+              >
+                Settings
               </DropdownItem>
             </DropdownMenu>
           </Dropdown>
