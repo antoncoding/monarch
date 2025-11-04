@@ -7,6 +7,7 @@ import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
+import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -19,6 +20,7 @@ import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/ut
 import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from 'app/markets/components/columnVisibility';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { Pagination } from '../../../app/markets/components/Pagination';
 import { MarketIdBadge } from '../MarketIdBadge';
@@ -47,11 +49,14 @@ type MarketsTableWithSameLoanAssetProps = {
 };
 
 enum SortColumn {
-  MarketName = 0,
+  COLLATSYMBOL = 0,
   Supply = 1,
   APY = 2,
   Liquidity = 3,
-  Risk = 4,
+  Borrow = 4,
+  BorrowAPY = 5,
+  RateAtTarget = 6,
+  Risk = 7,
 }
 
 function HTSortable({
@@ -70,8 +75,9 @@ function HTSortable({
   const isSorting = sortColumn === column;
   return (
     <th
-      className={`cursor-pointer select-none text-center font-normal ${isSorting ? 'text-primary' : ''}`}
+      className={`cursor-pointer select-none text-center font-normal px-2 py-2 ${isSorting ? 'text-primary' : ''}`}
       onClick={() => onSort(column)}
+      style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}
     >
       <div className="flex items-center justify-center gap-1">
         <div>{label}</div>
@@ -369,11 +375,13 @@ function MarketRow({
   onToggle,
   disabled,
   showSelectColumn,
+  columnVisibility,
 }: {
   marketWithSelection: MarketWithSelection;
   onToggle: () => void;
   disabled: boolean;
   showSelectColumn: boolean;
+  columnVisibility: ColumnVisibility;
 }) {
   const { market, isSelected } = marketWithSelection;
 
@@ -403,10 +411,10 @@ function MarketRow({
           </div>
         </td>
       )}
-      <td className="z-50 py-1 text-center">
+      <td className="z-50 py-1 text-center" style={{ minWidth: '80px' }}>
         <MarketIdBadge marketId={market.uniqueKey} chainId={market.morphoBlue.chain.id} />
       </td>
-      <td className="z-50 py-1 pl-4" style={{ width: '240px' }}>
+      <td className="z-50 py-1 pl-4" style={{ minWidth: '240px' }}>
         <MarketIdentity
           market={market}
           chainId={market.morphoBlue.chain.id}
@@ -418,23 +426,52 @@ function MarketRow({
           showExplorerLink={false}
         />
       </td>
-      <td data-label="Total Supply" className="z-50 py-1 text-center">
-        <p className="text-xs">
-          {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
-        </p>
-      </td>
-      <td data-label="APY" className="z-50 py-1 text-center text-sm flex items-center">
-        <p>
-          {market.state.supplyApy ? `${(market.state.supplyApy * 100).toFixed(2)}` : '—'}
-        </p>
-        { market.state.supplyApy && <span className='text-xs'> % </span>}
-      </td>
-      <td data-label="Liquidity" className="z-50 py-1 text-center">
-        <p className="text-xs">
-          {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
-        </p>
-      </td>
-      <td data-label="Indicators" className="z-50 py-1 text-center">
+      {columnVisibility.totalSupply && (
+        <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+          <p className="text-xs">
+            {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
+          </p>
+        </td>
+      )}
+      {columnVisibility.totalBorrow && (
+        <td data-label="Total Borrow" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+          <p className="text-xs">
+            {formatReadable(formatBalance(market.state.borrowAssets, market.loanAsset.decimals))}
+          </p>
+        </td>
+      )}
+      {columnVisibility.liquidity && (
+        <td data-label="Liquidity" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+          <p className="text-xs">
+            {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+          </p>
+        </td>
+      )}
+      {columnVisibility.supplyAPY && (
+        <td data-label="Supply APY" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+          <div className="flex items-center justify-center">
+            <p className="text-sm">
+              {market.state.supplyApy ? `${(market.state.supplyApy * 100).toFixed(2)}` : '—'}
+            </p>
+            {market.state.supplyApy && <span className='text-xs ml-0.5'> % </span>}
+          </div>
+        </td>
+      )}
+      {columnVisibility.borrowAPY && (
+        <td data-label="Borrow APY" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+          <p className="text-sm">
+            {market.state.borrowApy ? `${(market.state.borrowApy * 100).toFixed(2)}%` : '—'}
+          </p>
+        </td>
+      )}
+      {columnVisibility.rateAtTarget && (
+        <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+          <p className="text-sm">
+            {market.state.rateAtUTarget ? `${(market.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
+          </p>
+        </td>
+      )}
+      <td data-label="Indicators" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
         <MarketIndicators market={market} showRisk />
       </td>
     </tr>
@@ -494,6 +531,12 @@ export function MarketsTableWithSameLoanAsset({
   const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(
     keys.MarketsMinLiquidityEnabledKey,
     false,
+  );
+
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
+    keys.MarketsColumnVisibilityKey,
+    DEFAULT_COLUMN_VISIBILITY,
   );
 
   // Create memoized usdFilters object from individual localStorage values
@@ -619,10 +662,13 @@ export function MarketsTableWithSameLoanAsset({
 
     // Sort using the shared utility
     const sortPropertyMap: Record<SortColumn, string> = {
-      [SortColumn.MarketName]: 'collateralAsset.symbol',
+      [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
       [SortColumn.Supply]: 'state.supplyAssetsUsd',
       [SortColumn.APY]: 'state.supplyApy',
       [SortColumn.Liquidity]: 'state.liquidityAssets',
+      [SortColumn.Borrow]: 'state.borrowAssetsUsd',
+      [SortColumn.BorrowAPY]: 'state.borrowApy',
+      [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
       [SortColumn.Risk]: '', // No sorting for risk
     };
 
@@ -731,16 +777,11 @@ export function MarketsTableWithSameLoanAsset({
           />
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center">
-            <Checkbox
-              size="sm"
-              isSelected={minSupplyEnabled}
-              onValueChange={setMinSupplyEnabled}
-            />
-            <span className="text-xs text-secondary">
-              Hide markets below ${formatReadable(effectiveMinSupply)}
-            </span>
-          </div>
+          <SuppliedAssetFilterCompactSwitch
+            isEnabled={minSupplyEnabled}
+            onToggle={setMinSupplyEnabled}
+            effectiveMinSupply={effectiveMinSupply}
+          />
           {showSettings && (
             <Button
               variant="light"
@@ -770,40 +811,73 @@ export function MarketsTableWithSameLoanAsset({
 
       {/* Table */}
       <div className="w-full overflow-x-auto">
-        <table className="responsive w-full rounded-md font-zen text-sm">
+        <table className="responsive rounded-md font-zen text-sm">
           <thead className="table-header">
             <tr>
-              {showSelectColumn && <th className="text-center font-normal">Select</th>}
-              <th className="text-center font-normal">Id</th>
+              {showSelectColumn && <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Select</th>}
+              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Id</th>
               <HTSortable
                 label="Market"
-                column={SortColumn.MarketName}
+                column={SortColumn.COLLATSYMBOL}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
-              <HTSortable
-                label="Total Supply"
-                column={SortColumn.Supply}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              <HTSortable
-                label="APY"
-                column={SortColumn.APY}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              <HTSortable
-                label="Liquidity"
-                column={SortColumn.Liquidity}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              <th className="text-center font-normal">Indicators</th>
+              {columnVisibility.totalSupply && (
+                <HTSortable
+                  label="Total Supply"
+                  column={SortColumn.Supply}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.totalBorrow && (
+                <HTSortable
+                  label="Total Borrow"
+                  column={SortColumn.Borrow}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.liquidity && (
+                <HTSortable
+                  label="Liquidity"
+                  column={SortColumn.Liquidity}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.supplyAPY && (
+                <HTSortable
+                  label="Supply APY"
+                  column={SortColumn.APY}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.borrowAPY && (
+                <HTSortable
+                  label="Borrow APY"
+                  column={SortColumn.BorrowAPY}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.rateAtTarget && (
+                <HTSortable
+                  label="Rate at Target"
+                  column={SortColumn.RateAtTarget}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Indicators</th>
             </tr>
           </thead>
           <tbody>
@@ -821,6 +895,7 @@ export function MarketsTableWithSameLoanAsset({
                   onToggle={() => onToggleMarket(marketWithSelection.market.uniqueKey)}
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
+                  columnVisibility={columnVisibility}
                 />
               ))
             )}
@@ -857,6 +932,8 @@ export function MarketsTableWithSameLoanAsset({
           setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={setEntriesPerPage}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={setColumnVisibility}
         />
       )}
     </div>

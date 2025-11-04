@@ -1,39 +1,25 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Next.js routes live in `app/`. Shared logic sits in `src/` with UI in `src/components/`, hooks in `src/hooks/`. Keep constants inside `src/constants/`, configuration in `src/config/`, and reusable utilities in `src/utils/`. Static assets stay in `public/`; design primitives reside in `src/fonts/` and `src/imgs/`. Scripts that generate on-chain artifacts live under `scripts/`, and longer form references or RFCs belong in `docs/`.
+Next.js routes live under `app/`. Shared logic and reusable UI sit in `src/`, with components in `src/components/`, hooks in `src/hooks/`, constants in `src/constants/`, and utilities in `src/utils/`. Smart-contract scripts and artifacts belong in `scripts/`; long-form docs live in `docs/`. Static assets stay in `public/`, while design primitives (fonts, illustrations) are grouped in `src/fonts/` and `src/imgs/`. Tests live alongside their subjects (`*.test.ts[x]`).
 
 ## Build, Test, and Development Commands
-- `pnpm install` — install dependencies; stick with pnpm for lockfile parity.
+- `pnpm install` — install dependencies; pnpm is required for lockfile parity.
 - `pnpm dev` — start the hot-reloading Next.js dev server.
-- `pnpm build` — create a clean production bundle after wiping `.next`.
-- `pnpm start` — run the production build locally when validating releases.
-- `pnpm check` — run formatting, ESLint, and Stylelint fixers as a bundle.
-- `pnpm lint` / `pnpm stylelint` — target React or CSS changes without the full suite.
+- `pnpm build` — produce a clean production bundle after clearing `.next`.
+- `pnpm start` — serve the production build locally for release validation.
+- `pnpm check` — run formatting, ESLint, and Stylelint together.
+- `pnpm lint` / `pnpm stylelint` — target React or CSS changes individually.
+- `pnpm test` — execute Jest suites with the configured setup.
 
 ## Coding Style & Naming Conventions
-Run `pnpm format` to apply the Prettier profile (100-char width, 2-space indent, single quotes, trailing commas, Tailwind-aware ordering). ESLint (Airbnb + Next.js) enforces hook safety and import hygiene; Stylelint keeps CSS utilities consistent. Use PascalCase for React components (`VaultBanner.tsx`), camelCase for helpers (`formatApr`), and SCREAMING_SNAKE_CASE for shared constants. Keep Tailwind classlists purposeful and lean; consolidate patterns with `tailwind-merge` helpers when they repeat.
+Run `pnpm format` (Prettier) before pushing: 2-space indentation, 100-character width, single quotes, and Tailwind-aware class ordering. ESLint (Airbnb + Next.js) enforces hook safety and import hygiene; Stylelint keeps utility ordering consistent. Use PascalCase for React components (`VaultBanner.tsx`), camelCase for helpers (`formatApr`), and SCREAMING_SNAKE_CASE for shared constants. Tailwind class lists should stay lean—dedupe variants with `tailwind-merge`. All toggles must use the shared `IconSwitch` (`@/components/common/IconSwitch`) for consistent sizing and animation.
 
-## Styling Discipline
-Consult `docs/Styling.md` before touching UI. Always follow the documented design tokens, Tailwind composition patterns, and variant rules—no exceptions. Mirror the examples in that guide for component structure, prop naming, and class ordering so the design system stays coherent. When using the shared `Spinner` component, pass numeric pixel values (e.g. `size={12}`)—it does not accept semantic strings.
-
-## Implementation Mindset
-Default to the simplest viable implementation first. Reach for straightforward data flows, avoid premature abstractions, and only layer on complexity when the trivial approach no longer meets requirements.
-
-## Function Organization & Separation of Concerns
-Never define utility functions or business logic inside hooks, components, or classes. Extract them into dedicated utility files in `src/utils/`. This principle—often called **Single Responsibility Principle** or **Separation of Concerns**—keeps code testable, reusable, and maintainable. For example:
-- ✅ Good: Creating `src/utils/vaultAllocation.ts` with `readAllocation()`, `formatAllocationAmount()`, etc., then importing into the hook
-
-Hooks should orchestrate effects and state; components should render UI; utilities should handle pure logic. Keep each layer focused on its single responsibility.
-
-## Git Ownership
-Never run git commits, pushes, or other history-altering commands—leave all git operations to the maintainers.
-
-## Contract Interaction TL;DR
-When writing new on-chain hooks, mirror the structure in `src/hooks/useERC20Approval.ts` and `src/hooks/useTransactionWithToast.tsx`: compute chain/address context up front, reuse `useTransactionWithToast` for consistent toast + confirmation handling, and expose a minimal hook surface (`{ action, isLoading }`) with refetch callbacks for follow-up reads.
+## Testing Guidelines
+Tests reside beside features (`*.test.ts`/`*.test.tsx`) and run via Jest. Prefer focused unit tests for utilities and integration-style specs for hooks/components that orchestrate protocol calls. Seed mocks through existing utilities; avoid duplicating fixtures. Run `pnpm test` locally and ensure suites pass before submitting. For protocol-critical flows (transactions, risk filters), add regression coverage mirroring real network scenarios.
 
 ## Commit & Pull Request Guidelines
-Mirror the Conventional Commits style in history (`feat:`, `fix:`, `chore:`), keeping messages imperative and scoped. Sync with `main`, run `pnpm check`, and capture UI evidence (screenshots or short clips) for anything user-facing. Reference the relevant Linear/Jira ticket with closing keywords, call out risk areas, and flag required follow-ups. Tag reviewers who understand the touched protocol surfaces to speed feedback.
+Follow Conventional Commits (`feat:`, `fix:`, `chore:`) in the imperative mood. Before opening a PR: rebase onto `main`, run `pnpm check`, and gather screenshots or clips for UI updates. Reference the relevant Linear/Jira issue with closing keywords, call out risk areas, and list follow-ups. Tag reviewers familiar with the touched protocol surface, and document manual validation steps (e.g., on-chain simulations).
 
-## Incident Log
-- Autovault settings refactor: we unintentionally spammed the Morpho API because we passed fresh array literals (`defaultAllocatorAddresses`) into `useVaultV2Data`. That array was part of the hook’s memoised fetch dependencies, so every render produced a new reference, rebuilt the `useCallback`, and re-triggered the fetch effect. **Guardrail:** before handing arrays or objects to hooks that fire network requests, memoize the props (or pass a stable key) so React’s dependency checks only change when the underlying data truly changes.
+## Security & Configuration Tips
+When building on-chain hooks, mirror `useERC20Approval` and `useTransactionWithToast`—memoize arrays/objects before using them in effect dependencies to prevent redundant RPC calls. Never commit secrets; load configuration via `.env.local` and document required keys in `README.md`. Review `docs/Styling.md` before touching UI to stay aligned with Monarch design tokens and component patterns.

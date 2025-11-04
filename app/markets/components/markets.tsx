@@ -1,23 +1,27 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useDisclosure, Checkbox } from '@heroui/react';
+import { useDisclosure, Tooltip } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
 import { useRouter } from 'next/navigation';
+import { CgCompress } from "react-icons/cg";
 import { FiSettings } from 'react-icons/fi';
+import { RiExpandHorizontalLine } from 'react-icons/ri';
+
 import { Button } from '@/components/common';
+import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
+import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
 import { SupportedNetworks } from '@/utils/networks';
@@ -28,6 +32,7 @@ import { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
+import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import MarketSettingsModal from './MarketSettingsModal';
 import MarketsTable from './marketsTable';
@@ -114,6 +119,18 @@ export default function Markets({
   const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(
     keys.MarketsMinLiquidityEnabledKey,
     false,
+  );
+
+  // Column visibility state
+  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
+    keys.MarketsColumnVisibilityKey,
+    DEFAULT_COLUMN_VISIBILITY,
+  );
+
+  // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
+  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(
+    keys.MarketsTableViewModeKey,
+    'compact',
   );
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
@@ -252,6 +269,9 @@ export default function Markets({
         [SortColumn.Supply]: 'state.supplyAssetsUsd',
         [SortColumn.Borrow]: 'state.borrowAssetsUsd',
         [SortColumn.SupplyAPY]: 'state.supplyApy',
+        [SortColumn.Liquidity]: 'state.liquidityAssets',
+        [SortColumn.BorrowAPY]: 'state.borrowApy',
+        [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
       };
       const propertyPath = sortPropertyMap[sortColumn];
       if (propertyPath) {
@@ -365,7 +385,7 @@ export default function Markets({
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8 px-[5%]">
+      <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && selectedMarket && (
@@ -389,6 +409,8 @@ export default function Markets({
           setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={handleEntriesPerPageChange}
+          columnVisibility={columnVisibility}
+          setColumnVisibility={setColumnVisibility}
         />
 
         <div className="flex items-center justify-between pb-4">
@@ -449,16 +471,11 @@ export default function Markets({
 
           {/* Settings */}
           <div className="mt-4 flex items-center gap-2 lg:mt-0">
-            <div className="flex items-center">
-              <Checkbox
-                size="sm"
-                isSelected={minSupplyEnabled}
-                onValueChange={setMinSupplyEnabled}
-              />
-              <span className="text-xs text-secondary">
-                Hide markets below ${formatReadable(effectiveMinSupply)}
-              </span>
-            </div>
+            <SuppliedAssetFilterCompactSwitch
+              isEnabled={minSupplyEnabled}
+              onToggle={setMinSupplyEnabled}
+              effectiveMinSupply={effectiveMinSupply}
+            />
 
             <Button
               disabled={loading || isRefetching}
@@ -470,6 +487,41 @@ export default function Markets({
             >
               <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
             </Button>
+
+            <Tooltip
+              classNames={{
+                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+              }}
+              content={
+                <TooltipContent
+                  icon={
+                    tableViewMode === 'compact' ? (
+                      <RiExpandHorizontalLine size={14} />
+                    ) : (
+                      <CgCompress size={14} />
+                    )
+                  }
+                  title={tableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
+                  detail={tableViewMode === 'compact' ? 'Expand table to full width, useful when more columns are enabled.' : 'Restore compact table view'}
+                />
+              }
+            >
+              <Button
+                isIconOnly
+                aria-label="Toggle table width"
+                variant="light"
+                size="sm"
+                className="text-secondary min-w-0 px-2"
+                onPress={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+              >
+                {tableViewMode === 'compact' ? (
+                  <RiExpandHorizontalLine size={16} />
+                ) : (
+                  <CgCompress size={16} />
+                )}
+              </Button>
+            </Tooltip>
 
             <Button
               isIconOnly
@@ -483,13 +535,22 @@ export default function Markets({
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Table Section - can expand beyond container in expanded mode */}
+      <div className={tableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
 
         {loading ? (
-          <LoadingScreen message="Loading Morpho Blue Markets..." />
+          <div className={tableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
+            <LoadingScreen
+              message="Loading Morpho Blue Markets..."
+              className="min-h-[300px] w-full"
+            />
+          </div>
         ) : rawMarkets == null ? (
-          <div> No data </div>
+          <div className="flex justify-center"> No data </div>
         ) : (
-          <div className="max-w-screen mt-4">
+          <div className={tableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
             {filteredMarkets.length > 0 ? (
               <MarketsTable
                 markets={filteredMarkets}
@@ -505,6 +566,10 @@ export default function Markets({
                 setCurrentPage={setCurrentPage}
                 setShowSupplyModal={setShowSupplyModal}
                 setSelectedMarket={setSelectedMarket}
+                columnVisibility={columnVisibility}
+                className={tableViewMode === 'compact' ? 'w-full' : undefined}
+                wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
+                tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
               />
             ) : (
               <EmptyScreen

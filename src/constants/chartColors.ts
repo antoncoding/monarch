@@ -1,3 +1,6 @@
+
+export const MONARCH_PRIMARY = '#f45f2d'
+
 export const CHART_COLORS = {
   supply: {
     stroke: '#3B82F6',

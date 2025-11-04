@@ -5,6 +5,8 @@ import type { Config } from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
 const { heroui } = require('@heroui/theme');
 
+const MONARCH_PRIMARY = '#f45f2d'
+
 const config: Config = {
   content: [
     './app/**/*.{js,ts,jsx,tsx,mdx}',
@@ -36,8 +38,8 @@ const config: Config = {
         '2mint': '420px 1fr',
       },
       colors: {
-        primary: '#f45f2d',
-        'monarch-primary': '#f45f2d',
+        primary: MONARCH_PRIMARY,
+        'monarch-primary': MONARCH_PRIMARY,
       },
       fontFamily: {
         inter: ['var(--font-inter)'],

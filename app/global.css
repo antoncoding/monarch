@@ -112,7 +112,8 @@ h1 {
 }
 
 .table-header th {
-  padding: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
   text-align: center;
 }
 
@@ -123,6 +124,8 @@ h1 {
 
 .table-body td {
   padding: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   text-align: center;
 }
 

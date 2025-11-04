@@ -7,6 +7,7 @@ import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
+import { ColumnVisibility } from './columnVisibility';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
@@ -21,6 +22,7 @@ type MarketTableBodyProps = {
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
   onMarketClick: (market: Market) => void;
+  columnVisibility: ColumnVisibility;
 };
 
 export function MarketTableBody({
@@ -33,7 +35,18 @@ export function MarketTableBody({
   starMarket,
   unstarMarket,
   onMarketClick,
+  columnVisibility,
 }: MarketTableBodyProps) {
+  // Calculate colspan for expanded row based on visible columns
+  const visibleColumnsCount =
+    9 + // Base columns: Star, ID, Loan, Collateral, Oracle, LLTV, Risk, Indicators, Actions
+    (columnVisibility.totalSupply ? 1 : 0) +
+    (columnVisibility.totalBorrow ? 1 : 0) +
+    (columnVisibility.liquidity ? 1 : 0) +
+    (columnVisibility.supplyAPY ? 1 : 0) +
+    (columnVisibility.borrowAPY ? 1 : 0) +
+    (columnVisibility.rateAtTarget ? 1 : 0);
+
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
@@ -53,7 +66,7 @@ export function MarketTableBody({
                 item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
               }'`}
             >
-              <td data-label="" className="z-50">
+              <td data-label="" className="z-50" style={{ minWidth: '40px' }}>
                 <button
                   type="button"
                   onClick={(e) => {
@@ -70,7 +83,7 @@ export function MarketTableBody({
                   </p>
                 </button>
               </td>
-              <td data-label="ID" className="z-50">
+              <td data-label="ID" className="z-50" style={{ minWidth: '80px' }}>
                 <button
                   type="button"
                   className="cursor-pointer no-underline hover:underline"
@@ -98,7 +111,7 @@ export function MarketTableBody({
                 chainId={item.morphoBlue.chain.id}
                 symbol={collatToShow}
               />
-              <td data-label="Oracle" className="z-50">
+              <td data-label="Oracle" className="z-50" style={{ minWidth: '90px' }}>
                 <div className="flex justify-center">
                   <OracleVendorBadge
                     oracleData={item.oracle?.data}
@@ -106,34 +119,63 @@ export function MarketTableBody({
                   />
                 </div>
               </td>
-              <td data-label="LLTV" className="z-50">
+              <td data-label="LLTV" className="z-50" style={{ minWidth: '60px', padding: 5}}>
                 {Number(item.lltv) / 1e16}%
               </td>
-              <TDTotalSupplyOrBorrow
-                dataLabel="Total Supply"
-                assetsUSD={item.state.supplyAssetsUsd}
-                assets={item.state.supplyAssets}
-                decimals={item.loanAsset.decimals}
-                symbol={item.loanAsset.symbol}
-              />
-              <TDTotalSupplyOrBorrow
-                dataLabel="Total Borrow"
-                assetsUSD={item.state.borrowAssetsUsd}
-                assets={item.state.borrowAssets}
-                decimals={item.loanAsset.decimals}
-                symbol={item.loanAsset.symbol}
-              />
-              <td data-label="APY">
-                <APYCell market={item} />
-              </td>
-              <td>
+              {columnVisibility.totalSupply && (
+                <TDTotalSupplyOrBorrow
+                  dataLabel="Total Supply"
+                  assetsUSD={item.state.supplyAssetsUsd}
+                  assets={item.state.supplyAssets}
+                  decimals={item.loanAsset.decimals}
+                  symbol={item.loanAsset.symbol}
+                />
+              )}
+              {columnVisibility.totalBorrow && (
+                <TDTotalSupplyOrBorrow
+                  dataLabel="Total Borrow"
+                  assetsUSD={item.state.borrowAssetsUsd}
+                  assets={item.state.borrowAssets}
+                  decimals={item.loanAsset.decimals}
+                  symbol={item.loanAsset.symbol}
+                />
+              )}
+              {columnVisibility.liquidity && (
+                <TDTotalSupplyOrBorrow
+                  dataLabel="Liquidity"
+                  assetsUSD={item.state.liquidityAssetsUsd}
+                  assets={item.state.liquidityAssets}
+                  decimals={item.loanAsset.decimals}
+                  symbol={item.loanAsset.symbol}
+                />
+              )}
+              {columnVisibility.supplyAPY && (
+                <td data-label="Supply APY" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                  <APYCell market={item} />
+                </td>
+              )}
+              {columnVisibility.borrowAPY && (
+                <td data-label="Borrow APY" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                  <p className="text-sm">
+                    {item.state.borrowApy ? `${(item.state.borrowApy * 100).toFixed(2)}%` : '—'}
+                  </p>
+                </td>
+              )}
+              {columnVisibility.rateAtTarget && (
+                <td data-label="Target Rate" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                  <p className="text-sm">
+                    {item.state.rateAtUTarget ? `${(item.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
+                  </p>
+                </td>
+              )}
+              <td style={{ minWidth: '90px' }}>
                 <div className="flex items-center justify-center gap-1">
                   <MarketAssetIndicator market={item} />
                   <MarketOracleIndicator market={item} />
                   <MarketDebtIndicator market={item} />
                 </div>
               </td>
-              <td data-label="Indicators" className="z-50">
+              <td data-label="Indicators" className="z-50" style={{ maxWidth: '40px', padding: 0 }}>
                 <MarketIndicators market={item} showRisk={false} />
               </td>
               <td data-label="Actions" className="justify-center px-4 py-3">
@@ -155,7 +197,7 @@ export function MarketTableBody({
             <AnimatePresence>
               {expandedRowId === item.uniqueKey && (
                 <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                  <td className="collaps-viewer bg-hovered p-0" colSpan={13}>
+                  <td className="collaps-viewer bg-hovered p-0" colSpan={visibleColumnsCount}>
                     <motion.div
                       key="content"
                       initial={{ height: 0 }}

@@ -5,12 +5,13 @@ import {
   ModalHeader,
   ModalBody,
   ModalFooter,
-  Button,
-  Switch,
   Input,
   Divider,
 } from '@heroui/react';
+import { Button } from '@/components/common';
+import { IconSwitch } from '@/components/common/IconSwitch';
 import { useMarkets } from '@/hooks/useMarkets';
+import { ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS } from './columnVisibility';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
@@ -37,6 +38,9 @@ type MarketSettingsModalProps = {
   // Pagination
   entriesPerPage: number;
   onEntriesPerPageChange: (value: number) => void;
+  // Column Visibility
+  columnVisibility: ColumnVisibility;
+  setColumnVisibility: (visibility: ColumnVisibility) => void;
 };
 
 // Reusable component for consistent setting layout
@@ -81,6 +85,8 @@ export default function MarketSettingsModal({
   setMinLiquidityEnabled,
   entriesPerPage,
   onEntriesPerPageChange,
+  columnVisibility,
+  setColumnVisibility,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
   const {
@@ -114,6 +120,7 @@ export default function MarketSettingsModal({
     }
   };
 
+
   return (
     <Modal
       isOpen={isOpen}
@@ -129,7 +136,7 @@ export default function MarketSettingsModal({
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-col gap-1 font-zen">Market View Settings</ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
+            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6 max-h-[70vh] overflow-y-auto">
               {/* --- Filter Settings Section --- */}
               <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
                 {/* Section Header: Adjusted style & position */}
@@ -138,11 +145,12 @@ export default function MarketSettingsModal({
                   title="Show Unknown Tokens"
                   description="Display tokens not in the recognized list (marked with '?'). Use with caution."
                 >
-                  <Switch
-                    isSelected={includeUnknownTokens}
-                    onValueChange={setIncludeUnknownTokens}
-                    size="sm"
+                  <IconSwitch
+                    selected={includeUnknownTokens}
+                    onChange={setIncludeUnknownTokens}
+                    size="xs"
                     color="primary"
+                    aria-label="Toggle unknown tokens"
                   />
                 </SettingItem>
                 <Divider />
@@ -150,11 +158,12 @@ export default function MarketSettingsModal({
                   title="Show Unknown Oracles"
                   description="Display markets using unverified oracles. Use with caution."
                 >
-                  <Switch
-                    isSelected={showUnknownOracle}
-                    onValueChange={setShowUnknownOracle}
-                    size="sm"
+                  <IconSwitch
+                    selected={showUnknownOracle}
+                    onChange={setShowUnknownOracle}
+                    size="xs"
                     color="primary"
+                    aria-label="Toggle unknown oracles"
                   />
                 </SettingItem>
                 <Divider />
@@ -169,11 +178,12 @@ export default function MarketSettingsModal({
                     </p>
                   </div>
                   <div className="flex-shrink-0 pt-1">
-                    <Switch
-                      isSelected={showUnwhitelistedMarkets}
-                      onValueChange={setShowUnwhitelistedMarkets}
-                      size="sm"
-                      color="danger"
+                    <IconSwitch
+                      selected={showUnwhitelistedMarkets}
+                      onChange={setShowUnwhitelistedMarkets}
+                      size="xs"
+                      color="destructive"
+                      aria-label="Toggle unwhitelisted markets"
                     />
                   </div>
                 </div>
@@ -189,148 +199,199 @@ export default function MarketSettingsModal({
                   Note: USD values are estimates and may not be available or accurate for all
                   markets. Toggle the switch to enable/disable each filter.
                 </p>
-
                 {/* Min Supply Filter */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-grow flex-col gap-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        isSelected={minSupplyEnabled}
-                        onValueChange={setMinSupplyEnabled}
-                        size="sm"
-                        color="primary"
-                      />
-                      <h4 className={`text-base font-medium ${minSupplyEnabled ? 'text-primary' : 'text-secondary'}`}>
-                        Min Supply (USD)
-                      </h4>
-                    </div>
-                    <p className="text-xs text-secondary">
-                      Show markets with total supply &gt;= this value. This filter can also be toggled from the main page.
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 pt-1">
-                    <Input
-                      aria-label="Minimum Supply in USD"
-                      name="minSupply"
-                      placeholder="0"
-                      value={usdFilters.minSupply}
-                      onChange={handleUsdFilterChange}
-                      isDisabled={!minSupplyEnabled}
-                      size="sm"
-                      type="text"
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      className="max-w-[120px]"
-                      classNames={{ input: 'text-right' }}
-                      startContent={
-                        <div className="pointer-events-none flex items-center">
-                          <span
-                            className={`text-small ${
-                              minSupplyEnabled && usdFilters.minSupply ? 'text-primary' : 'text-default-400'
-                            }`}
-                          >
-                            $
-                          </span>
-                        </div>
-                      }
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <h4
+                      className={`text-base font-medium ${
+                        minSupplyEnabled ? 'text-primary' : 'text-secondary'
+                      }`}
+                    >
+                      Min Supply (USD)
+                    </h4>
+                    <IconSwitch
+                      selected={minSupplyEnabled}
+                      onChange={setMinSupplyEnabled}
+                      size="xs"
+                      color="primary"
+                      aria-label="Toggle minimum supply filter"
                     />
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <p className="flex-1 text-xs text-secondary">
+                      Only show markets where total supplied assets meet or exceed this threshold.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        aria-label="Minimum supply value"
+                        name="minSupply"
+                        placeholder="0"
+                        value={usdFilters.minSupply}
+                        onChange={handleUsdFilterChange}
+                        isDisabled={!minSupplyEnabled}
+                        size="sm"
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
+                        className="w-24 sm:w-28"
+                        classNames={{ input: 'text-right' }}
+                        startContent={
+                          <div className="pointer-events-none flex items-center">
+                            <span
+                              className={`text-small ${
+                                minSupplyEnabled && usdFilters.minSupply ? 'text-primary' : 'text-default-400'
+                              }`}
+                            >
+                              $
+                            </span>
+                          </div>
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
                 <Divider />
 
                 {/* Min Borrow Filter */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-grow flex-col gap-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        isSelected={minBorrowEnabled}
-                        onValueChange={setMinBorrowEnabled}
-                        size="sm"
-                        color="primary"
-                      />
-                      <h4 className={`text-base font-medium ${minBorrowEnabled ? 'text-primary' : 'text-secondary'}`}>
-                        Min Borrow (USD)
-                      </h4>
-                    </div>
-                    <p className="text-xs text-secondary">
-                      Show markets with total borrow &gt;= this value.
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 pt-1">
-                    <Input
-                      aria-label="Minimum Borrow in USD"
-                      name="minBorrow"
-                      placeholder="0"
-                      value={usdFilters.minBorrow}
-                      onChange={handleUsdFilterChange}
-                      isDisabled={!minBorrowEnabled}
-                      size="sm"
-                      type="text"
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      className="max-w-[120px]"
-                      classNames={{ input: 'text-right' }}
-                      startContent={
-                        <div className="pointer-events-none flex items-center">
-                          <span
-                            className={`text-small ${
-                              minBorrowEnabled && usdFilters.minBorrow ? 'text-primary' : 'text-default-400'
-                            }`}
-                          >
-                            $
-                          </span>
-                        </div>
-                      }
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <h4
+                      className={`text-base font-medium ${
+                        minBorrowEnabled ? 'text-primary' : 'text-secondary'
+                      }`}
+                    >
+                      Min Borrow (USD)
+                    </h4>
+                    <IconSwitch
+                      selected={minBorrowEnabled}
+                      onChange={setMinBorrowEnabled}
+                      size="xs"
+                      color="primary"
+                      aria-label="Toggle minimum borrow filter"
                     />
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <p className="flex-1 text-xs text-secondary">
+                      Only show markets where borrowed assets meet or exceed this threshold.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        aria-label="Minimum borrow value"
+                        name="minBorrow"
+                        placeholder="0"
+                        value={usdFilters.minBorrow}
+                        onChange={handleUsdFilterChange}
+                        isDisabled={!minBorrowEnabled}
+                        size="sm"
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
+                        className="w-24 sm:w-28"
+                        classNames={{ input: 'text-right' }}
+                        startContent={
+                          <div className="pointer-events-none flex items-center">
+                            <span
+                              className={`text-small ${
+                                minBorrowEnabled && usdFilters.minBorrow ? 'text-primary' : 'text-default-400'
+                              }`}
+                            >
+                              $
+                            </span>
+                          </div>
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
                 <Divider />
 
                 {/* Min Liquidity Filter */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex flex-grow flex-col gap-1 pr-2">
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        isSelected={minLiquidityEnabled}
-                        onValueChange={setMinLiquidityEnabled}
-                        size="sm"
-                        color="primary"
-                      />
-                      <h4 className={`text-base font-medium ${minLiquidityEnabled ? 'text-primary' : 'text-secondary'}`}>
-                        Min Liquidity (USD)
-                      </h4>
-                    </div>
-                    <p className="text-xs text-secondary">
-                      Show markets with available liquidity &gt;= this value.
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0 pt-1">
-                    <Input
-                      aria-label="Minimum Liquidity in USD"
-                      name="minLiquidity"
-                      placeholder="0"
-                      value={usdFilters.minLiquidity}
-                      onChange={handleUsdFilterChange}
-                      isDisabled={!minLiquidityEnabled}
-                      size="sm"
-                      type="text"
-                      pattern="[0-9]*"
-                      inputMode="numeric"
-                      className="max-w-[120px]"
-                      classNames={{ input: 'text-right' }}
-                      startContent={
-                        <div className="pointer-events-none flex items-center">
-                          <span
-                            className={`text-small ${
-                              minLiquidityEnabled && usdFilters.minLiquidity ? 'text-primary' : 'text-default-400'
-                            }`}
-                          >
-                            $
-                          </span>
-                        </div>
-                      }
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <h4
+                      className={`text-base font-medium ${
+                        minLiquidityEnabled ? 'text-primary' : 'text-secondary'
+                      }`}
+                    >
+                      Min Liquidity (USD)
+                    </h4>
+                    <IconSwitch
+                      selected={minLiquidityEnabled}
+                      onChange={setMinLiquidityEnabled}
+                      size="xs"
+                      color="primary"
+                      aria-label="Toggle minimum liquidity filter"
                     />
                   </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <p className="flex-1 text-xs text-secondary">
+                      Only show markets where available liquidity meets or exceeds this threshold.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        aria-label="Minimum liquidity value"
+                        name="minLiquidity"
+                        placeholder="0"
+                        value={usdFilters.minLiquidity}
+                        onChange={handleUsdFilterChange}
+                        isDisabled={!minLiquidityEnabled}
+                        size="sm"
+                        type="text"
+                        pattern="[0-9]*"
+                        inputMode="numeric"
+                        className="w-24 sm:w-28"
+                        classNames={{ input: 'text-right' }}
+                        startContent={
+                          <div className="pointer-events-none flex items-center">
+                            <span
+                              className={`text-small ${
+                                minLiquidityEnabled && usdFilters.minLiquidity ? 'text-primary' : 'text-default-400'
+                              }`}
+                            >
+                              $
+                            </span>
+                          </div>
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* --- Column Visibility Section --- */}
+              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+                <h3 className="mb-1 font-zen text-xs uppercase text-secondary">
+                  Visible Columns
+                </h3>
+                <p className="text-xs text-secondary mb-2">
+                  Choose which columns to display in the markets table.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(Object.keys(COLUMN_LABELS) as (keyof ColumnVisibility)[]).map((key) => {
+                    const isVisible = columnVisibility[key] ?? true;
+
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors"
+                      >
+                        <label htmlFor={`col-${key}`} className="flex-grow cursor-pointer">
+                          <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
+                          <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
+                        </label>
+                        <IconSwitch
+                          id={`col-${key}`}
+                          selected={isVisible}
+                          onChange={(value) =>
+                            setColumnVisibility({ ...columnVisibility, [key]: value })
+                          }
+                          size="xs"
+                          color="primary"
+                          aria-label={`Toggle ${COLUMN_LABELS[key]} column`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -344,47 +405,54 @@ export default function MarketSettingsModal({
                   title="Show Full Reward APY"
                   description="Display total APY including base rate plus external reward campaigns (instead of base APY only)."
                 >
-                  <Switch
-                    isSelected={showFullRewardAPY}
-                    onValueChange={setShowFullRewardAPY}
-                    size="sm"
+                  <IconSwitch
+                    selected={showFullRewardAPY}
+                    onChange={setShowFullRewardAPY}
+                    size="xs"
                     color="primary"
+                    aria-label="Toggle full reward APY"
                   />
                 </SettingItem>
                 <Divider />
 
                 {/* Pagination Settings */}
-                <p className="w-full text-left text-sm">Entries per page:</p>
-                <div className="flex flex-row flex-wrap items-center justify-start gap-2">
-                  {[8, 10, 15].map((value) => (
-                    <Button
-                      key={value}
-                      size="sm"
-                      onPress={() => handleEntriesChange(value)}
-                      variant={entriesPerPage === value ? 'solid' : 'bordered'}
-                      color={entriesPerPage === value ? 'primary' : 'default'}
-                      className={`min-w-[40px] ${
-                        entriesPerPage === value ? '' : 'border-foreground-300 text-foreground-600'
-                      }`}
-                    >
-                      {value}
-                    </Button>
-                  ))}
-                  <div className="flex flex-grow items-center gap-2 sm:flex-grow-0">
-                    <Input
-                      aria-label="Custom entries per page"
-                      type="number"
-                      placeholder="Custom"
-                      value={customEntries}
-                      onChange={(e) => setCustomEntries(e.target.value)}
-                      min="1"
-                      size="sm"
-                      className="w-20"
-                      onKeyDown={(e) => e.key === 'Enter' && handleCustomEntriesSubmit()}
-                    />
-                    <Button size="sm" onPress={handleCustomEntriesSubmit} variant="flat">
-                      Set
-                    </Button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                    <div className="flex flex-col gap-1">
+                      <h4 className="text-base font-medium text-primary">Entries Per Page</h4>
+                      <p className="text-xs text-secondary">
+                        Choose how many markets appear per page in the table.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      {[8, 10, 15].map((value) => (
+                        <Button
+                          key={value}
+                          size="sm"
+                          onPress={() => handleEntriesChange(value)}
+                          variant={entriesPerPage === value ? 'cta' : 'secondary'}
+                          className="min-w-[40px] shadow-sm"
+                        >
+                          {value}
+                        </Button>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          aria-label="Custom entries per page"
+                          type="number"
+                          placeholder="Custom"
+                          value={customEntries}
+                          onChange={(e) => setCustomEntries(e.target.value)}
+                          min="1"
+                          size="sm"
+                          className="w-20"
+                          onKeyDown={(e) => e.key === 'Enter' && handleCustomEntriesSubmit()}
+                        />
+                        <Button size="sm" onPress={handleCustomEntriesSubmit} variant="flat">
+                          Set
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

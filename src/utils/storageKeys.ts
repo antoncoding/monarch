@@ -24,3 +24,9 @@ export const CacheMarketPositionKeys = 'monarch_cache_market_unique_keys';
 export const MarketsShowSmallMarkets = 'monarch_show_small_markets'
 export const MarketsShowUnknownTokens = 'includeUnknownTokens';
 export const MarketsShowUnknownOracle = 'showUnknownOracle';
+
+// Column visibility settings
+export const MarketsColumnVisibilityKey = 'monarch_marketsColumnVisibility';
+
+// Table view mode
+export const MarketsTableViewModeKey = 'monarch_marketsTableViewMode';

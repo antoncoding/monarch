@@ -1,6 +1,6 @@
 'use client';
 
-import { Switch } from '@heroui/react';
+import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -19,7 +19,7 @@ export default function SettingsPage() {
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8 px-[5%]">
+      <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen">Settings</h1>
 
         <div className="flex flex-col gap-6">
@@ -40,12 +40,12 @@ export default function SettingsPage() {
                     may want to disable this and use standard approvals instead.
                   </p>
                 </div>
-                <Switch
-                  defaultSelected={usePermit2}
-                  onValueChange={setUsePermit2}
-                  size="sm"
+                <IconSwitch
+                  selected={usePermit2}
+                  onChange={setUsePermit2}
+                  size="xs"
                   color="primary"
-                  className="min-w-[64px]"
+                  aria-label="Toggle gasless approvals"
                 />
               </div>
             </div>
@@ -69,12 +69,12 @@ export default function SettingsPage() {
                     verified.
                   </p>
                 </div>
-                <Switch
-                  defaultSelected={includeUnknownTokens}
-                  onValueChange={setIncludeUnknownTokens}
-                  size="sm"
+                <IconSwitch
+                  selected={includeUnknownTokens}
+                  onChange={setIncludeUnknownTokens}
+                  size="xs"
                   color="primary"
-                  className="min-w-[64px]"
+                  aria-label="Toggle unknown tokens"
                 />
               </div>
 
@@ -90,12 +90,12 @@ export default function SettingsPage() {
                     Warning: Markets with unknown oracles may have additional risks.
                   </p>
                 </div>
-                <Switch
-                  defaultSelected={showUnknownOracle}
-                  onValueChange={setShowUnknownOracle}
-                  size="sm"
+                <IconSwitch
+                  selected={showUnknownOracle}
+                  onChange={setShowUnknownOracle}
+                  size="xs"
                   color="primary"
-                  className="min-w-[64px]"
+                  aria-label="Toggle unknown oracles"
                 />
               </div>
             </div>
@@ -122,12 +122,12 @@ export default function SettingsPage() {
                     other security concerns.
                   </p>
                 </div>
-                <Switch
-                  defaultSelected={showUnwhitelistedMarkets}
-                  onValueChange={setShowUnwhitelistedMarkets}
-                  size="sm"
-                  color="danger"
-                  className="min-w-[64px]"
+                <IconSwitch
+                  selected={showUnwhitelistedMarkets}
+                  onChange={setShowUnwhitelistedMarkets}
+                  size="xs"
+                  color="destructive"
+                  aria-label="Toggle unwhitelisted markets"
                 />
               </div>
             </div>

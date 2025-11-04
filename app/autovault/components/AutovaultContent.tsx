@@ -25,7 +25,7 @@ export default function AutovaultContent() {
     return (
       <div className="flex w-full flex-col justify-between font-zen">
         <Header />
-        <div className="container h-full gap-8 px-[5%]">
+        <div className="container h-full gap-8 px-[4%]">
           <div className="pb-4">
             <h1 className="font-zen">Autovault</h1>
           </div>
@@ -53,7 +53,7 @@ export default function AutovaultContent() {
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8 px-[5%]">
+      <div className="container h-full gap-8 px-[4%]">
         <div className="pb-4">
           <h1 className="font-zen">Autovault</h1>
         </div>
