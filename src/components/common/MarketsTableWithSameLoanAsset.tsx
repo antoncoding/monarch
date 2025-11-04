@@ -49,11 +49,14 @@ type MarketsTableWithSameLoanAssetProps = {
 };
 
 enum SortColumn {
-  MarketName = 0,
+  COLLATSYMBOL = 0,
   Supply = 1,
   APY = 2,
   Liquidity = 3,
-  Risk = 4,
+  Borrow = 4,
+  BorrowAPY = 5,
+  RateAtTarget = 6,
+  Risk = 7,
 }
 
 function HTSortable({
@@ -659,10 +662,13 @@ export function MarketsTableWithSameLoanAsset({
 
     // Sort using the shared utility
     const sortPropertyMap: Record<SortColumn, string> = {
-      [SortColumn.MarketName]: 'collateralAsset.symbol',
+      [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
       [SortColumn.Supply]: 'state.supplyAssetsUsd',
       [SortColumn.APY]: 'state.supplyApy',
       [SortColumn.Liquidity]: 'state.liquidityAssets',
+      [SortColumn.Borrow]: 'state.borrowAssetsUsd',
+      [SortColumn.BorrowAPY]: 'state.borrowApy',
+      [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
       [SortColumn.Risk]: '', // No sorting for risk
     };
 
@@ -775,7 +781,6 @@ export function MarketsTableWithSameLoanAsset({
             isEnabled={minSupplyEnabled}
             onToggle={setMinSupplyEnabled}
             effectiveMinSupply={effectiveMinSupply}
-            showLabel
           />
           {showSettings && (
             <Button
@@ -813,7 +818,7 @@ export function MarketsTableWithSameLoanAsset({
               <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Id</th>
               <HTSortable
                 label="Market"
-                column={SortColumn.MarketName}
+                column={SortColumn.COLLATSYMBOL}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
                 onSort={handleSort}
@@ -830,7 +835,7 @@ export function MarketsTableWithSameLoanAsset({
               {columnVisibility.totalBorrow && (
                 <HTSortable
                   label="Total Borrow"
-                  column={SortColumn.MarketName}
+                  column={SortColumn.Borrow}
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onSort={handleSort}
@@ -855,10 +860,22 @@ export function MarketsTableWithSameLoanAsset({
                 />
               )}
               {columnVisibility.borrowAPY && (
-                <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Borrow APY</th>
+                <HTSortable
+                  label="Borrow APY"
+                  column={SortColumn.BorrowAPY}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               )}
               {columnVisibility.rateAtTarget && (
-                <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Rate at Target</th>
+                <HTSortable
+                  label="Rate at Target"
+                  column={SortColumn.RateAtTarget}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               )}
               <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Indicators</th>
             </tr>

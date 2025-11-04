@@ -367,24 +367,31 @@ export default function MarketSettingsModal({
                   Choose which columns to display in the markets table.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  {(Object.keys(columnVisibility) as (keyof ColumnVisibility)[]).map((key) => (
-                    <div key={key} className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors">
-                      <label htmlFor={`col-${key}`} className="flex-grow cursor-pointer">
-                        <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
-                        <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
-                      </label>
-                      <IconSwitch
-                        id={`col-${key}`}
-                        selected={columnVisibility[key]}
-                        onChange={(value) =>
-                          setColumnVisibility({ ...columnVisibility, [key]: value })
-                        }
-                        size="xs"
-                        color="primary"
-                        aria-label={`Toggle ${COLUMN_LABELS[key]} column`}
-                      />
-                    </div>
-                  ))}
+                  {(Object.keys(COLUMN_LABELS) as (keyof ColumnVisibility)[]).map((key) => {
+                    const isVisible = columnVisibility[key] ?? true;
+
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors"
+                      >
+                        <label htmlFor={`col-${key}`} className="flex-grow cursor-pointer">
+                          <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
+                          <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
+                        </label>
+                        <IconSwitch
+                          id={`col-${key}`}
+                          selected={isVisible}
+                          onChange={(value) =>
+                            setColumnVisibility((prev) => ({ ...prev, [key]: value }))
+                          }
+                          size="xs"
+                          color="primary"
+                          aria-label={`Toggle ${COLUMN_LABELS[key]} column`}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

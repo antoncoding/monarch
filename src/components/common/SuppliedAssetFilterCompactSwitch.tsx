@@ -4,14 +4,13 @@ import { VisuallyHidden, Tooltip, useSwitch } from '@heroui/react';
 import { TbDropletQuestion } from 'react-icons/tb';
 
 import { TooltipContent } from '@/components/TooltipContent';
+import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
-import { MONARCH_PRIMARY } from 'tailwind.config'
 
 type SuppliedAssetFilterCompactSwitchProps = {
   isEnabled: boolean;
   onToggle: (selected: boolean) => void;
   effectiveMinSupply: number;
-  showLabel?: boolean;
   className?: string;
   ariaLabel?: string;
 };
@@ -20,7 +19,6 @@ export function SuppliedAssetFilterCompactSwitch({
   isEnabled,
   onToggle,
   effectiveMinSupply,
-  showLabel = false,
   className,
   ariaLabel = 'Toggle liquidity filter',
 }: SuppliedAssetFilterCompactSwitchProps) {
@@ -79,11 +77,6 @@ export function SuppliedAssetFilterCompactSwitch({
           </Component>
         </div>
       </Tooltip>
-      {showLabel && (
-        <span className={`text-xs transition-colors ${isEnabled ? 'text-primary' : 'text-secondary'}`}>
-          {`Hide markets below $${formattedThreshold}`}
-        </span>
-      )}
     </div>
   );
 }
