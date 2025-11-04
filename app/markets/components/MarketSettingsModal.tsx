@@ -383,7 +383,7 @@ export default function MarketSettingsModal({
                           id={`col-${key}`}
                           selected={isVisible}
                           onChange={(value) =>
-                            setColumnVisibility((prev) => ({ ...prev, [key]: value }))
+                            setColumnVisibility({ ...columnVisibility, [key]: value })
                           }
                           size="xs"
                           color="primary"
