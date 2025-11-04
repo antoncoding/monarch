@@ -5,7 +5,6 @@ import { Button } from '@/components/common/Button';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { formatBalance } from '@/utils/balance';
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
 import { ColumnVisibility } from './columnVisibility';
@@ -163,7 +162,7 @@ export function MarketTableBody({
                 </td>
               )}
               {columnVisibility.rateAtTarget && (
-                <td data-label="Rate at Target" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                <td data-label="Target Rate" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
                     {item.state.rateAtUTarget ? `${(item.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
                   </p>

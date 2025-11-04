@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { Market } from '@/utils/types';
+import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
 import { HTSortable } from './MarketTableUtils';
 import { Pagination } from './Pagination';
-import { ColumnVisibility } from './columnVisibility';
 
 type MarketsTableProps = {
   sortColumn: number;
@@ -148,7 +148,7 @@ function MarketsTable({
               )}
               {columnVisibility.rateAtTarget && (
                 <HTSortable
-                  label="Rate at Target"
+                  label="Target Rate"
                   sortColumn={sortColumn}
                   titleOnclick={titleOnclick}
                   sortDirection={sortDirection}

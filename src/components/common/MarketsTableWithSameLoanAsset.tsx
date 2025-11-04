@@ -462,7 +462,7 @@ function MarketRow({
         </td>
       )}
       {columnVisibility.rateAtTarget && (
-        <td data-label="Rate at Target" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+        <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
           <p className="text-sm">
             {market.state.rateAtUTarget ? `${(market.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
           </p>

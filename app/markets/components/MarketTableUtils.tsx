@@ -85,7 +85,7 @@ export function TDTotalSupplyOrBorrow({
   symbol: string;
 }) {
   return (
-    <td data-label={dataLabel} className="z-50" style={{ minWidth: '115px' }}>
+    <td data-label={dataLabel} className="z-50" style={{ minWidth: '120px' }}>
       <p className="z-50">${formatReadable(Number(assetsUSD)) + '   '} </p>
       <p className="z-50 opacity-70">
         {formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}

@@ -4,11 +4,12 @@ import { useDisclosure, Tooltip } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { Chain } from '@rainbow-me/rainbowkit';
 import { useRouter } from 'next/navigation';
+import { CgCompress } from "react-icons/cg";
 import { FiSettings } from 'react-icons/fi';
 import { RiExpandHorizontalLine } from "react-icons/ri";
-import { CgCompress } from "react-icons/cg";
 
 import { Button } from '@/components/common';
+import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -31,7 +32,6 @@ import { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
-import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import MarketSettingsModal from './MarketSettingsModal';
@@ -535,7 +535,7 @@ export default function Markets({
       <div className={tableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
 
         {loading ? (
-          <div className="w-full">
+          <div className={tableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
             <LoadingScreen
               message="Loading Morpho Blue Markets..."
               className="min-h-[300px] w-full"
