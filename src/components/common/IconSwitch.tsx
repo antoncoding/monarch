@@ -6,8 +6,7 @@ import { PiButterflyDuotone } from 'react-icons/pi';
 
 import { cn } from '@/utils/components';
 
-export interface IconSwitchProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'color'> {
+export type IconSwitchProps = {
   defaultSelected?: boolean;
   selected?: boolean;
   size?: 'xs' | 'sm' | 'md' | 'lg';
@@ -22,7 +21,7 @@ export interface IconSwitchProps
   };
   disabled?: boolean;
   className?: string;
-}
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'color'>
 
 type SizeConfig = {
   width: number;

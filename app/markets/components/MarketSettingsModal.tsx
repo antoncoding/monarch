@@ -8,10 +8,10 @@ import {
   Input,
   Divider,
 } from '@heroui/react';
+import { Button } from '@/components/common';
+import { IconSwitch } from '@/components/common/IconSwitch';
 import { useMarkets } from '@/hooks/useMarkets';
 import { ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS } from './columnVisibility';
-import { IconSwitch } from '@/components/common/IconSwitch';
-import { Button } from '@/components/common';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
