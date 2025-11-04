@@ -11,6 +11,7 @@ import {
   Divider,
 } from '@heroui/react';
 import { useMarkets } from '@/hooks/useMarkets';
+import { ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS } from './columnVisibility';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
@@ -37,6 +38,9 @@ type MarketSettingsModalProps = {
   // Pagination
   entriesPerPage: number;
   onEntriesPerPageChange: (value: number) => void;
+  // Column Visibility
+  columnVisibility: ColumnVisibility;
+  setColumnVisibility: (visibility: ColumnVisibility) => void;
 };
 
 // Reusable component for consistent setting layout
@@ -81,6 +85,8 @@ export default function MarketSettingsModal({
   setMinLiquidityEnabled,
   entriesPerPage,
   onEntriesPerPageChange,
+  columnVisibility,
+  setColumnVisibility,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
   const {
@@ -129,7 +135,7 @@ export default function MarketSettingsModal({
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-col gap-1 font-zen">Market View Settings</ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
+            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6 max-h-[70vh] overflow-y-auto">
               {/* --- Filter Settings Section --- */}
               <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
                 {/* Section Header: Adjusted style & position */}
@@ -331,6 +337,35 @@ export default function MarketSettingsModal({
                       }
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* --- Column Visibility Section --- */}
+              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+                <h3 className="mb-1 font-zen text-xs uppercase text-secondary">
+                  Visible Columns
+                </h3>
+                <p className="text-xs text-secondary mb-2">
+                  Choose which columns to display in the markets table.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {(Object.keys(columnVisibility) as Array<keyof ColumnVisibility>).map((key) => (
+                    <div key={key} className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors">
+                      <label htmlFor={`col-${key}`} className="flex-grow cursor-pointer">
+                        <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
+                        <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
+                      </label>
+                      <Switch
+                        id={`col-${key}`}
+                        isSelected={columnVisibility[key]}
+                        onValueChange={(value) =>
+                          setColumnVisibility({ ...columnVisibility, [key]: value })
+                        }
+                        size="sm"
+                        color="primary"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 

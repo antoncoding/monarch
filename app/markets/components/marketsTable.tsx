@@ -5,6 +5,7 @@ import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
 import { HTSortable } from './MarketTableUtils';
 import { Pagination } from './Pagination';
+import { ColumnVisibility } from './columnVisibility';
 
 type MarketsTableProps = {
   sortColumn: number;
@@ -20,6 +21,7 @@ type MarketsTableProps = {
   entriesPerPage: number;
   setCurrentPage: (value: number) => void;
   onMarketClick: (market: Market) => void;
+  columnVisibility: ColumnVisibility;
 };
 
 function MarketsTable({
@@ -36,6 +38,7 @@ function MarketsTable({
   entriesPerPage,
   setCurrentPage,
   onMarketClick,
+  columnVisibility,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
@@ -48,7 +51,7 @@ function MarketsTable({
   return (
     <div className="flex flex-col gap-4 pb-4">
       <div className="w-full overflow-x-auto">
-        <table className="responsive w-full rounded-md font-zen">
+        <table className="responsive rounded-md font-zen">
           <thead className="table-header">
             <tr>
               <HTSortable
@@ -59,7 +62,7 @@ function MarketsTable({
                 targetColumn={SortColumn.Starred}
                 showDirection={false}
               />
-              <th className="font-normal"> Id </th>
+              <th className="font-normal px-2 py-2" style={{ padding: '0.5rem' }}> Id </th>
               <HTSortable
                 label="Loan"
                 sortColumn={sortColumn}
@@ -74,7 +77,7 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.CollateralAsset}
               />
-              <th className="font-normal">Oracle</th>
+              <th className="font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Oracle</th>
               <HTSortable
                 label="LLTV"
                 sortColumn={sortColumn}
@@ -82,30 +85,63 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.LLTV}
               />
-              <HTSortable
-                label="Total Supply"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.Supply}
-              />
-              <HTSortable
-                label="Total Borrow"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.Borrow}
-              />
-              <HTSortable
-                label="APY"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.SupplyAPY}
-              />
-              <th className="font-normal"> Risk </th>
-              <th className="font-normal"> Indicators </th>
-              <th className="font-normal"> Actions </th>
+              {columnVisibility.totalSupply && (
+                <HTSortable
+                  label="Total Supply"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.Supply}
+                />
+              )}
+              {columnVisibility.totalBorrow && (
+                <HTSortable
+                  label="Total Borrow"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.Borrow}
+                />
+              )}
+              {columnVisibility.liquidity && (
+                <HTSortable
+                  label="Liquidity"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.Liquidity}
+                />
+              )}
+              {columnVisibility.supplyAPY && (
+                <HTSortable
+                  label="Supply APY"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.SupplyAPY}
+                />
+              )}
+              {columnVisibility.borrowAPY && (
+                <HTSortable
+                  label="Borrow APY"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.BorrowAPY}
+                />
+              )}
+              {columnVisibility.rateAtTarget && (
+                <HTSortable
+                  label="Rate at Target"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.RateAtTarget}
+                />
+              )}
+              <th className="font-normal px-2 py-2" style={{ padding: '5px' }}> Risk </th>
+              <th className="font-normal px-2 py-2" style={{ padding: '5px' }}> Indicators </th>
+              <th className="font-normal px-2 py-2" style={{ padding: '5px' }}> Actions </th>
             </tr>
           </thead>
           <MarketTableBody
@@ -118,6 +154,7 @@ function MarketsTable({
             starMarket={starMarket}
             unstarMarket={unstarMarket}
             onMarketClick={onMarketClick}
+            columnVisibility={columnVisibility}
           />
         </table>
       </div>
