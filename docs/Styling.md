@@ -91,6 +91,30 @@ import { Button } from '@/components/common/Button';
 </Button>
 ```
 
+### Toggle Controls
+
+- Always use the shared `IconSwitch` component (`@/components/common/IconSwitch`) for boolean toggles so dimensions, motion, and iconography stay consistent across pages.
+- Prefer the `xs` size inside dense settings groups (e.g., Market Settings, global Settings). Pair the switch with a left-aligned label and secondary description beneath it to mirror existing sections.
+- Example:
+
+```tsx
+import { IconSwitch } from '@/components/common/IconSwitch';
+
+<div className="flex items-start justify-between gap-4">
+  <div className="flex flex-col gap-1">
+    <h4 className="text-base font-medium text-primary">Show Unknown Tokens</h4>
+    <p className="text-xs text-secondary">Display assets flagged as unverified.</p>
+  </div>
+  <IconSwitch
+    size="xs"
+    color="primary"
+    selected={value}
+    onChange={setValue}
+    aria-label="Toggle unknown tokens"
+  />
+</div>
+```
+
 ## Background, Border
 
 - Use `bg-surface` first layer components

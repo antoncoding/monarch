@@ -6,7 +6,7 @@ import { Chain } from '@rainbow-me/rainbowkit';
 import { useRouter } from 'next/navigation';
 import { CgCompress } from "react-icons/cg";
 import { FiSettings } from 'react-icons/fi';
-import { RiExpandHorizontalLine } from "react-icons/ri";
+import { RiExpandHorizontalLine } from 'react-icons/ri';
 
 import { Button } from '@/components/common';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
@@ -495,7 +495,13 @@ export default function Markets({
               }}
               content={
                 <TooltipContent
-                  icon={tableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
+                  icon={
+                    tableViewMode === 'compact' ? (
+                      <RiExpandHorizontalLine size={14} />
+                    ) : (
+                      <CgCompress size={14} />
+                    )
+                  }
                   title={tableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
                   detail={tableViewMode === 'compact' ? 'Expand table to full width, useful when more columns are enabled.' : 'Restore compact table view'}
                 />
