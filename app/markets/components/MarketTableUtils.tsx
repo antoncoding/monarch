@@ -25,11 +25,11 @@ export function HTSortable({
 
   return (
     <th
-      className={`px-2 py-2 ${sortingCurrent ? 'text-primary' : ''}`}
+      className={`px-2 py-1 ${sortingCurrent ? 'text-primary' : ''}`}
       onClick={() => titleOnclick(targetColumn)}
       style={{ padding: '0.5rem' }}
     >
-      <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer">
+      <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer whitespace-nowrap">
         <div>{label}</div>
         {showDirection &&
           (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}

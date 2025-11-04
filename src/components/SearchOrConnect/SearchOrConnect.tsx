@@ -17,7 +17,7 @@ export default function SearchOrConnect({ path }: { path: string }) {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <div className="container items-center justify-center gap-8 px-[5%]">
+      <div className="container items-center justify-center gap-8 px-[4%]">
         <div className="flex justify-center py-14">
           <div className="w-full items-center rounded-md p-12 text-center text-lg text-secondary">
             Connect wallet or search an account to continue.

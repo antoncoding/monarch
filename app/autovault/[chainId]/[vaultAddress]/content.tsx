@@ -117,7 +117,7 @@ export default function VaultContent() {
     return (
       <div className="flex w-full flex-col font-zen">
         <Header />
-        <div className="container h-full px-[5%] py-12">
+        <div className="container h-full px-[4%] py-12">
           <div className="mx-auto max-w-md rounded bg-surface p-8 text-center shadow-sm">
             <h2 className="mb-4 text-xl">Vault data unavailable</h2>
             <p className="mb-6 text-secondary">

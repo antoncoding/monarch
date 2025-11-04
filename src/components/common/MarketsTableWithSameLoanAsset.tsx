@@ -7,6 +7,7 @@ import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
+import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -73,7 +74,7 @@ function HTSortable({
     <th
       className={`cursor-pointer select-none text-center font-normal px-2 py-2 ${isSorting ? 'text-primary' : ''}`}
       onClick={() => onSort(column)}
-      style={{ padding: '0.5rem' }}
+      style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}
     >
       <div className="flex items-center justify-center gap-1">
         <div>{label}</div>
@@ -770,16 +771,12 @@ export function MarketsTableWithSameLoanAsset({
           />
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center">
-            <Checkbox
-              size="sm"
-              isSelected={minSupplyEnabled}
-              onValueChange={setMinSupplyEnabled}
-            />
-            <span className="text-xs text-secondary">
-              Hide markets below ${formatReadable(effectiveMinSupply)}
-            </span>
-          </div>
+          <SuppliedAssetFilterCompactSwitch
+            isEnabled={minSupplyEnabled}
+            onToggle={setMinSupplyEnabled}
+            effectiveMinSupply={effectiveMinSupply}
+            showLabel
+          />
           {showSettings && (
             <Button
               variant="light"
@@ -812,8 +809,8 @@ export function MarketsTableWithSameLoanAsset({
         <table className="responsive rounded-md font-zen text-sm">
           <thead className="table-header">
             <tr>
-              {showSelectColumn && <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Select</th>}
-              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Id</th>
+              {showSelectColumn && <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Select</th>}
+              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Id</th>
               <HTSortable
                 label="Market"
                 column={SortColumn.MarketName}

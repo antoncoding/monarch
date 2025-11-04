@@ -120,7 +120,7 @@ export function MarketTableBody({
                   />
                 </div>
               </td>
-              <td data-label="LLTV" className="z-50" style={{ minWidth: '80px' }}>
+              <td data-label="LLTV" className="z-50" style={{ minWidth: '60px', padding: 5}}>
                 {Number(item.lltv) / 1e16}%
               </td>
               {columnVisibility.totalSupply && (
@@ -151,19 +151,19 @@ export function MarketTableBody({
                 />
               )}
               {columnVisibility.supplyAPY && (
-                <td data-label="Supply APY" style={{ minWidth: '80px' }}>
+                <td data-label="Supply APY" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <APYCell market={item} />
                 </td>
               )}
               {columnVisibility.borrowAPY && (
-                <td data-label="Borrow APY" className="z-50 text-center" style={{ minWidth: '80px' }}>
+                <td data-label="Borrow APY" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
                     {item.state.borrowApy ? `${(item.state.borrowApy * 100).toFixed(2)}%` : '—'}
                   </p>
                 </td>
               )}
               {columnVisibility.rateAtTarget && (
-                <td data-label="Rate at Target" className="z-50 text-center" style={{ minWidth: '80px' }}>
+                <td data-label="Rate at Target" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
                     {item.state.rateAtUTarget ? `${(item.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
                   </p>
