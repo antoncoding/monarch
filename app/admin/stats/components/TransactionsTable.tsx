@@ -28,7 +28,7 @@ export function TransactionsTable({
   const [sortKey, setSortKey] = useState<SortKey>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const entriesPerPage = 50;
+  const entriesPerPage = 10;
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
