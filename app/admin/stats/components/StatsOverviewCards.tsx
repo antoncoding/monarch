@@ -17,9 +17,9 @@ function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
   return (
     <Card className="bg-surface rounded-md shadow-sm">
       <CardBody className="p-4">
-        <h3 className="font-inter text-sm font-medium text-gray-500">{title}</h3>
+        <h3 className="font-inter text-sm text-gray-500">{title}</h3>
         <div className="mt-2 flex items-baseline">
-          <p className="font-zen text-2xl font-semibold">
+          <p className="font-zen text-2xl">
             {prefix}
             {value}
           </p>

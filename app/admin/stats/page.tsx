@@ -9,16 +9,20 @@ import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { fetchAllStatistics } from '@/services/statsService';
 import { SupportedNetworks, getNetworkImg, getNetworkName } from '@/utils/networks';
-import { PlatformStats, TimeFrame, AssetVolumeData } from '@/utils/statsUtils';
+import { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
 import { AssetMetricsTable } from './components/AssetMetricsTable';
 import { StatsOverviewCards } from './components/StatsOverviewCards';
+import { TransactionsTable } from './components/TransactionsTable';
+import AssetFilter from '../../markets/components/AssetFilter';
+import { ERC20Token, UnknownERC20Token, TokenSource } from '@/utils/tokens';
+import { findToken as findTokenStatic } from '@/utils/tokens';
 
 const getAPIEndpoint = (network: SupportedNetworks) => {
   switch (network) {
     case SupportedNetworks.Base:
       return 'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest';
     case SupportedNetworks.Mainnet:
-      return 'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest';
+      return 'https://api.studio.thegraph.com/query/110397/monarch-metrics-mainnet/version/latest';
     default:
       return undefined;
   }
@@ -28,9 +32,12 @@ export default function StatsPage() {
   const [timeframe, setTimeframe] = useState<TimeFrame>('30D');
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks>(SupportedNetworks.Base);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
+  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [stats, setStats] = useState<{
     platformStats: PlatformStats;
     assetMetrics: AssetVolumeData[];
+    transactions: Transaction[];
   }>({
     platformStats: {
       uniqueUsers: 0,
@@ -44,6 +51,7 @@ export default function StatsPage() {
       activeMarkets: 0,
     },
     assetMetrics: [],
+    transactions: [],
   });
 
   useEffect(() => {
@@ -75,6 +83,7 @@ export default function StatsPage() {
         setStats({
           platformStats: allStats.platformStats,
           assetMetrics: allStats.assetMetrics,
+          transactions: allStats.transactions,
         });
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -85,6 +94,71 @@ export default function StatsPage() {
 
     void loadStats();
   }, [timeframe, selectedNetwork]);
+
+  // Extract unique loan assets from transactions
+  useEffect(() => {
+    if (stats.transactions.length === 0) {
+      setUniqueLoanAssets([]);
+      return;
+    }
+
+    const loanAssetsMap = new Map<string, { address: string; symbol: string; decimals: number }>();
+
+    stats.transactions.forEach((tx) => {
+      // Extract from supplies
+      tx.supplies?.forEach((supply) => {
+        if (supply.market?.loan) {
+          const address = supply.market.loan.toLowerCase();
+          if (!loanAssetsMap.has(address)) {
+            const token = findTokenStatic(address, selectedNetwork);
+            if (token) {
+              loanAssetsMap.set(address, {
+                address,
+                symbol: token.symbol,
+                decimals: token.decimals,
+              });
+            }
+          }
+        }
+      });
+
+      // Extract from withdrawals
+      tx.withdrawals?.forEach((withdrawal) => {
+        if (withdrawal.market?.loan) {
+          const address = withdrawal.market.loan.toLowerCase();
+          if (!loanAssetsMap.has(address)) {
+            const token = findTokenStatic(address, selectedNetwork);
+            if (token) {
+              loanAssetsMap.set(address, {
+                address,
+                symbol: token.symbol,
+                decimals: token.decimals,
+              });
+            }
+          }
+        }
+      });
+    });
+
+    // Convert to ERC20Token format
+    const tokens: ERC20Token[] = Array.from(loanAssetsMap.values()).map((asset) => {
+      const fullToken = findTokenStatic(asset.address, selectedNetwork);
+      return {
+        symbol: asset.symbol,
+        img: fullToken?.img,
+        decimals: asset.decimals,
+        networks: [
+          {
+            chain: { id: selectedNetwork } as any,
+            address: asset.address,
+          },
+        ],
+        source: 'local' as TokenSource,
+      };
+    });
+
+    setUniqueLoanAssets(tokens);
+  }, [stats.transactions, selectedNetwork]);
 
   const timeframeOptions = [
     { key: '1D', label: '1D', value: '1D' },
@@ -188,6 +262,24 @@ export default function StatsPage() {
         <div className="space-y-6">
           <StatsOverviewCards stats={stats.platformStats} selectedNetwork={selectedNetwork} />
           <AssetMetricsTable data={stats.assetMetrics} selectedNetwork={selectedNetwork} />
+
+          {/* Transaction Filters */}
+          <div className="flex items-center gap-4">
+            <AssetFilter
+              label="Loan Asset"
+              placeholder="All loan assets"
+              selectedAssets={selectedLoanAssets}
+              setSelectedAssets={setSelectedLoanAssets}
+              items={uniqueLoanAssets}
+              loading={isLoading}
+            />
+          </div>
+
+          <TransactionsTable
+            data={stats.transactions}
+            selectedNetwork={selectedNetwork}
+            selectedLoanAssets={selectedLoanAssets}
+          />
         </div>
       )}
     </div>
