@@ -60,6 +60,7 @@ state {
   fee
   timestamp
   apyAtTarget
+  rateAtTarget
 }
 warnings {
   type
@@ -205,6 +206,7 @@ export const marketsQuery = `
       fee
       timestamp
       apyAtTarget
+      rateAtTarget
     }
     warnings {
       type

@@ -298,7 +298,12 @@ export type Market = {
     borrowApy: number;
     fee: number;
     timestamp: number;
+
+    // AdaptiveCurveIRM APY if utilization was at target
     apyAtTarget: number;
+
+    // AdaptiveCurveIRM rate per second if utilization was at target
+    rateAtTarget: string;
   };
   realizedBadDebt: {
     underlying: string

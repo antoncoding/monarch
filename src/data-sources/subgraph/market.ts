@@ -248,7 +248,12 @@ const transformSubgraphMarketToMarket = (
       borrowApy: borrowApy,
       fee: safeParseFloat(fee) / 10000, // Subgraph fee is likely basis points (needs verification)
       timestamp: timestamp,
+
+      // AdaptiveCurveIRM APY if utilization was at target
       apyAtTarget: 0, // Not available from subgraph
+      
+      // AdaptiveCurveIRM rate per second if utilization was at target
+      rateAtTarget: '0', // Not available from subgraph
     },
     oracleAddress: oracleAddress,
     morphoBlue: {
