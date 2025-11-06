@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
-import { SupportedNetworks } from '@/utils/networks';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
 import { AssetVolumeData } from '@/utils/statsUtils';
 
@@ -11,13 +10,46 @@ const BASE_CHAIN_ID = 8453; // Base network ID
 
 type AssetMetricsTableProps = {
   data: AssetVolumeData[];
-  selectedNetwork: SupportedNetworks;
 };
 
 type SortKey = 'supplyCount' | 'withdrawCount' | 'uniqueUsers' | 'totalCount' | 'totalVolume';
 type SortDirection = 'asc' | 'desc';
 
-export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTableProps) {
+type SortableHeaderProps = {
+  label: string;
+  sortKeyValue: SortKey;
+  currentSortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+};
+
+function SortableHeader({
+  label,
+  sortKeyValue,
+  currentSortKey,
+  sortDirection,
+  onSort,
+}: SortableHeaderProps) {
+  return (
+    <th
+      className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
+      onClick={() => onSort(sortKeyValue)}
+      style={{ padding: '0.5rem' }}
+    >
+      <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+        <div>{label}</div>
+        {currentSortKey === sortKeyValue &&
+          (sortDirection === 'asc' ? (
+            <FiChevronUp className="h-4 w-4" />
+          ) : (
+            <FiChevronDown className="h-4 w-4" />
+          ))}
+      </div>
+    </th>
+  );
+}
+
+export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('totalCount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -62,30 +94,6 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
     });
   }, [processedData, sortKey, sortDirection]);
 
-  const SortableHeader = ({
-    label,
-    sortKeyValue,
-  }: {
-    label: string;
-    sortKeyValue: SortKey;
-  }) => (
-    <th
-      className={`px-2 py-2 font-normal whitespace-nowrap ${sortKey === sortKeyValue ? 'text-primary' : ''}`}
-      onClick={() => handleSort(sortKeyValue)}
-      style={{ padding: '0.5rem' }}
-    >
-      <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
-        <div>{label}</div>
-        {sortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? (
-            <FiChevronUp className="h-4 w-4" />
-          ) : (
-            <FiChevronDown className="h-4 w-4" />
-          ))}
-      </div>
-    </th>
-  );
-
   return (
     <div className="bg-surface rounded-md font-zen shadow-sm">
       <div className="border-b border-gray-200 px-6 py-4">
@@ -99,11 +107,41 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
             <thead className="table-header">
               <tr>
                 <th className="font-normal px-2 py-2 whitespace-nowrap">Asset</th>
-                <SortableHeader label="Total Volume" sortKeyValue="totalVolume" />
-                <SortableHeader label="Total Transactions" sortKeyValue="totalCount" />
-                <SortableHeader label="Supply Count" sortKeyValue="supplyCount" />
-                <SortableHeader label="Withdraw Count" sortKeyValue="withdrawCount" />
-                <SortableHeader label="Unique Users" sortKeyValue="uniqueUsers" />
+                <SortableHeader
+                  label="Total Volume"
+                  sortKeyValue="totalVolume"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Total Transactions"
+                  sortKeyValue="totalCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Supply Count"
+                  sortKeyValue="supplyCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Withdraw Count"
+                  sortKeyValue="withdrawCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Unique Users"
+                  sortKeyValue="uniqueUsers"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               </tr>
             </thead>
             <tbody className="table-body text-sm">

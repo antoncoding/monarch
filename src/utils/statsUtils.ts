@@ -17,14 +17,18 @@ export type Transaction = {
   chainId?: number;
   market?: string;
   supplies?: {
+    id: string;
     market?: {
+      id: string;
       loan: string;
       collateral?: string;
     };
     amount: string;
   }[];
   withdrawals?: {
+    id: string;
     market?: {
+      id: string;
       loan: string;
       collateral?: string;
     };
