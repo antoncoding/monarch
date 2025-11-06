@@ -248,9 +248,9 @@ export function parseCapIdParams(idParams: string): {
 // ============================================================================
 
 type MarketStatePreview = {
-  supplyApy: number | null;
-  borrowApy: number | null;
-  utilization: number;
+  supplyApy: number;
+  borrowApy: number;
+  utilization: number; // scaled down WAD
   totalSupplyAssets: bigint;
   totalBorrowAssets: bigint;
   liquidityAssets: bigint;
@@ -273,32 +273,31 @@ export function previewMarketState(market: Market, supplyAmount: bigint): Market
       lltv: BigInt(market.lltv),
     });
 
+    console.log('market.state.rateAtTarget', market.state.rateAtTarget)
+
+
     const blueMarket = new BlueMarket({
       params,
       totalSupplyAssets: BigInt(market.state.supplyAssets),
       totalBorrowAssets: BigInt(market.state.borrowAssets),
       totalSupplyShares: BigInt(market.state.supplyShares),
       totalBorrowShares: BigInt(market.state.borrowShares),
-      lastUpdate: 1762316829n,
-      rateAtTarget: 520863767n,
+      lastUpdate: BigInt(market.state.timestamp), // not really the last timestamp but doesn't matter.
+      rateAtTarget: BigInt(market.state.rateAtTarget),
       fee: BigInt(Math.floor(market.state.fee * 1e18)),
-      price: 1_100000000000000000000000000000000000n,
     });
+
+    console.log('pre apy at target', market.state.supplyApy)
 
     const { market: updated } = blueMarket.supply(supplyAmount, 0n);
 
-    const totalSupply = updated.totalSupplyAssets;
-    const totalBorrow = updated.totalBorrowAssets;
-    const liquidity = totalSupply - totalBorrow;
-    const utilization = totalSupply > 0n ? Number(totalBorrow) / Number(totalSupply) : 0;
-
     return {
-      supplyApy: updated.supplyApy ? Number(updated.supplyApy) / 1e18 : null,
-      borrowApy: updated.borrowApy ? Number(updated.borrowApy) / 1e18 : null,
-      utilization,
-      totalSupplyAssets: totalSupply,
-      totalBorrowAssets: totalBorrow,
-      liquidityAssets: liquidity,
+      supplyApy: updated.supplyApy,
+      borrowApy: updated.borrowApy,
+      utilization: Number(updated.utilization) / 1e18,
+      totalSupplyAssets: updated.totalSupplyAssets,
+      totalBorrowAssets: updated.totalBorrowAssets,
+      liquidityAssets: updated.liquidity,
     };
   } catch (error) {
     console.error('Error previewing market state:', error);
