@@ -298,7 +298,7 @@ export type Market = {
     borrowApy: number;
     fee: number;
     timestamp: number;
-    rateAtUTarget: number;
+    apyAtTarget: number;
   };
   realizedBadDebt: {
     underlying: string
@@ -329,7 +329,7 @@ export type TimeseriesOptions = {
 export type MarketRates = {
   supplyApy: TimeseriesDataPoint[];
   borrowApy: TimeseriesDataPoint[];
-  rateAtUTarget: TimeseriesDataPoint[];
+  apyAtTarget: TimeseriesDataPoint[];
   utilization: TimeseriesDataPoint[];
 };
 

@@ -164,7 +164,7 @@ export function MarketTableBody({
               {columnVisibility.rateAtTarget && (
                 <td data-label="Target Rate" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
-                    {item.state.rateAtUTarget ? `${(item.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
+                    {item.state.apyAtTarget ? `${(item.state.apyAtTarget * 100).toFixed(2)}%` : '—'}
                   </p>
                 </td>
               )}

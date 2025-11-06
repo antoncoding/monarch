@@ -16,7 +16,7 @@ export const sortProperties = {
   [SortColumn.SupplyAPY]: 'state.supplyApy',
   [SortColumn.Liquidity]: 'state.liquidityAssets',
   [SortColumn.BorrowAPY]: 'state.borrowApy',
-  [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
+  [SortColumn.RateAtTarget]: 'state.apyAtTarget',
 };
 
 export const getNestedProperty = (obj: Market, path: string | ((item: Market) => number)) => {

@@ -224,13 +224,13 @@ function VolumeChart({
                     <linearGradient id="volumeChart-liquidityGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
-                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.startOpacity}
+                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.startOpacity}
                       />
                       <stop
                         offset="25%"
-                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.endOpacity}
+                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.endOpacity}
                       />
                     </linearGradient>
                   </defs>
@@ -288,7 +288,7 @@ function VolumeChart({
                     type="monotone"
                     dataKey="liquidity"
                     name="Liquidity"
-                    stroke={CHART_COLORS.rateAtUTarget.stroke}
+                    stroke={CHART_COLORS.apyAtTarget.stroke}
                     strokeWidth={2}
                     fill="url(#volumeChart-liquidityGradient)"
                     fillOpacity={1}
