@@ -18,7 +18,7 @@ export const CHART_COLORS = {
       endOpacity: 0,
     },
   },
-  rateAtUTarget: {
+  apyAtTarget: {
     stroke: '#F59E0B',
     gradient: {
       start: '#F59E0B',

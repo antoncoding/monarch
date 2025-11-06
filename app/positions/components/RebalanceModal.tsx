@@ -282,7 +282,7 @@ export function RebalanceModal({
         isOpen={isOpen}
         onClose={onClose}
         isDismissable={false}
-        size="3xl"
+        size="4xl"
         classNames={{
           base: 'p-4 rounded-sm',
         }}

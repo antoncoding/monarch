@@ -107,7 +107,7 @@ export function MarketSelectionModal({
       size="4xl"
       scrollBehavior="inside"
       classNames={{
-        wrapper: 'z-[2200]',
+        wrapper: 'z-[2200] max-h-[80%] overflow-y-auto',
         backdrop: 'z-[2190] bg-black/60',
         base: 'rounded-sm bg-surface',
         header: 'px-6 pt-6 pb-2',

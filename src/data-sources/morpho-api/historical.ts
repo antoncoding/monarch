@@ -71,7 +71,7 @@ export const fetchMorphoMarketHistoricalData = async (
     const rates: MarketRates = {
       supplyApy: historicalState.supplyApy ?? [],
       borrowApy: historicalState.borrowApy ?? [],
-      rateAtUTarget: historicalState.rateAtUTarget ?? [],
+      apyAtTarget: historicalState.apyAtTarget ?? [],
       utilization: historicalState.utilization ?? [],
     };
     const volumes: MarketVolumes = {

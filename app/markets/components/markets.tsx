@@ -271,7 +271,7 @@ export default function Markets({
         [SortColumn.SupplyAPY]: 'state.supplyApy',
         [SortColumn.Liquidity]: 'state.liquidityAssets',
         [SortColumn.BorrowAPY]: 'state.borrowApy',
-        [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
+        [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       };
       const propertyPath = sortPropertyMap[sortColumn];
       if (propertyPath) {

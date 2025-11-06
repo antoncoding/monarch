@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { getIRMTitle } from '@/utils/morpho';
+import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
@@ -17,6 +17,7 @@ type MarketDetailsBlockProps = {
   mode?: 'supply' | 'borrow';
   showRewards?: boolean;
   disableExpansion?: boolean;
+  loanAssetDelta?: bigint;
 };
 
 export function MarketDetailsBlock({
@@ -26,6 +27,7 @@ export function MarketDetailsBlock({
   mode = 'supply',
   showRewards = false,
   disableExpansion = false,
+  loanAssetDelta,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
@@ -36,10 +38,24 @@ export function MarketDetailsBlock({
     whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
+  // Calculate preview state when loanAssetDelta is provided
+  const previewState = useMemo(() => {
+    if (!loanAssetDelta || loanAssetDelta <= 0n || mode !== 'supply') {
+      return null;
+    }
+    return previewMarketState(market, loanAssetDelta);
+  }, [market, loanAssetDelta, mode]);
+
   // Helper to format APY based on mode
   const getAPY = () => {
     const apy = mode === 'supply' ? market.state.supplyApy : market.state.borrowApy;
     return (apy * 100).toFixed(2);
+  };
+
+  const getPreviewAPY = () => {
+    if (!previewState) return null;
+    const apy = mode === 'supply' ? previewState.supplyApy : previewState.borrowApy;
+    return apy ? (apy * 100).toFixed(2) : null;
   };
 
   return (
@@ -108,7 +124,18 @@ export function MarketDetailsBlock({
                   chainId={market.morphoBlue.chain.id}
                 />
                 <span>·</span>
-                <span>{getAPY()}% APY</span>
+                {previewState !== null ? (
+                  <span>
+                    <span className="line-through opacity-50">{getAPY()}%</span>
+                    {' → '}
+                    <span className="font-semibold">
+                      {getPreviewAPY()}%
+                    </span>
+                    {' APY'}
+                  </span>
+                ) : (
+                  <span>{getAPY()}% APY</span>
+                )}
                 <span>·</span>
                 <span>{(Number(market.lltv) / 1e16).toFixed(0)}% LLTV</span>
               </div>
@@ -156,7 +183,17 @@ export function MarketDetailsBlock({
                       <p className="font-zen text-sm opacity-50">
                         {mode === 'supply' ? 'Supply' : 'Borrow'} APY:
                       </p>
-                      <p className="text-right text-sm font-bold">{getAPY()}%</p>
+                      {previewState !== null ? (
+                        <p className="text-right text-sm font-bold">
+                          <span className="line-through opacity-50">{getAPY()}%</span>
+                          {' → '}
+                          <span>
+                            {getPreviewAPY()}%
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-right text-sm font-bold">{getAPY()}%</p>
+                      )}
                     </div>
                     {showRewards && hasActiveRewards && (
                       <div className="flex items-start justify-between">
@@ -182,25 +219,69 @@ export function MarketDetailsBlock({
                     )}
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Total Supply:</p>
-                      <p className="text-right text-sm">
-                        {formatReadable(
-                          formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                        )}
-                      </p>
+                      {previewState !== null ? (
+                        <p className="text-right text-sm">
+                          <span className="line-through opacity-50">
+                            {formatReadable(
+                              formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
+                            )}
+                          </span>
+                          {' → '}
+                          <span>
+                            {formatReadable(
+                              formatBalance(previewState.totalSupplyAssets.toString(), market.loanAsset.decimals),
+                            )}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-right text-sm">
+                          {formatReadable(
+                            formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Liquidity:</p>
-                      <p className="text-right font-zen text-sm">
-                        {formatReadable(
-                          formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                        )}
-                      </p>
+                      {previewState !== null ? (
+                        <p className="text-right font-zen text-sm">
+                          <span className="line-through opacity-50">
+                            {formatReadable(
+                              formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
+                            )}
+                          </span>
+                          {' → '}
+                          <span>
+                            {formatReadable(
+                              formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals),
+                            )}
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-right font-zen text-sm">
+                          {formatReadable(
+                            formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
+                          )}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">Utilization:</p>
-                      <p className="text-right text-sm">
-                        {formatReadable(market.state.utilization * 100)}%
-                      </p>
+                      {previewState !== null ? (
+                        <p className="text-right text-sm">
+                          <span className="line-through opacity-50">
+                            {formatReadable(market.state.utilization * 100)}%
+                          </span>
+                          {' → '}
+                          <span>
+                            {formatReadable(previewState.utilization * 100)}%
+                          </span>
+                        </p>
+                      ) : (
+                        <p className="text-right text-sm">
+                          {formatReadable(market.state.utilization * 100)}%
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

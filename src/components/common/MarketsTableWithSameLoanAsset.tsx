@@ -467,7 +467,7 @@ function MarketRow({
       {columnVisibility.rateAtTarget && (
         <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
           <p className="text-sm">
-            {market.state.rateAtUTarget ? `${(market.state.rateAtUTarget * 100).toFixed(2)}%` : '—'}
+            {market.state.apyAtTarget ? `${(market.state.apyAtTarget * 100).toFixed(2)}%` : '—'}
           </p>
         </td>
       )}
@@ -668,7 +668,7 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.Liquidity]: 'state.liquidityAssets',
       [SortColumn.Borrow]: 'state.borrowAssetsUsd',
       [SortColumn.BorrowAPY]: 'state.borrowApy',
-      [SortColumn.RateAtTarget]: 'state.rateAtUTarget',
+      [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.Risk]: '', // No sorting for risk
     };
 
@@ -724,7 +724,7 @@ export function MarketsTableWithSameLoanAsset({
 
   return (
     <div className="space-y-3">
-      {/* Cart/Staging Area - MarketDetailsBlock Style */}
+      {/* Cart/Staging Area Style */}
       {showCart && selectedMarkets.length > 0 && (
         <div className="space-y-2">
           {selectedMarkets.map(({ market }) => (

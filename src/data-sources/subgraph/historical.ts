@@ -44,7 +44,7 @@ const transformSubgraphSnapshotsToHistoricalResult = (
   const rates: MarketRates = {
     supplyApy: [] as TimeseriesDataPoint[],
     borrowApy: [] as TimeseriesDataPoint[],
-    rateAtUTarget: [] as TimeseriesDataPoint[],
+    apyAtTarget: [] as TimeseriesDataPoint[],
     utilization: [] as TimeseriesDataPoint[],
   };
   const volumes: MarketVolumes = {
@@ -73,7 +73,7 @@ const transformSubgraphSnapshotsToHistoricalResult = (
 
     rates.supplyApy.push({ x: timestamp, y: !isNaN(supplyApyValue) ? supplyApyValue : 0 });
     rates.borrowApy.push({ x: timestamp, y: !isNaN(borrowApyValue) ? borrowApyValue : 0 });
-    rates.rateAtUTarget.push({ x: timestamp, y: 0 });
+    rates.apyAtTarget.push({ x: timestamp, y: 0 });
     rates.utilization.push({ x: timestamp, y: 0 });
 
     const supplyNative = BigInt(snapshot.inputTokenBalance ?? '0');

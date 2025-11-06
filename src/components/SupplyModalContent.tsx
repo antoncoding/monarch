@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Switch } from '@heroui/react';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
@@ -17,12 +17,14 @@ type SupplyModalContentProps = {
   market: Market;
   onClose: () => void;
   refetch: () => void;
+  onAmountChange?: (amount: bigint | undefined) => void;
 };
 
 export function SupplyModalContent({
   onClose,
   market,
   refetch,
+  onAmountChange,
 }: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const { isConnected } = useAccount();
@@ -52,6 +54,11 @@ export function SupplyModalContent({
     approveAndSupply,
     signAndSupply,
   } = useSupplyMarket(market, onSuccess);
+
+  // Notify parent component when supply amount changes
+  useEffect(() => {
+    onAmountChange?.(supplyAmount);
+  }, [supplyAmount, onAmountChange]);
 
   // Use the market network hook to handle network switching
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({

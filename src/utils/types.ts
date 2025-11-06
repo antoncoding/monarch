@@ -298,7 +298,12 @@ export type Market = {
     borrowApy: number;
     fee: number;
     timestamp: number;
-    rateAtUTarget: number;
+
+    // AdaptiveCurveIRM APY if utilization was at target
+    apyAtTarget: number;
+
+    // AdaptiveCurveIRM rate per second if utilization was at target
+    rateAtTarget: string;
   };
   realizedBadDebt: {
     underlying: string
@@ -329,7 +334,7 @@ export type TimeseriesOptions = {
 export type MarketRates = {
   supplyApy: TimeseriesDataPoint[];
   borrowApy: TimeseriesDataPoint[];
-  rateAtUTarget: TimeseriesDataPoint[];
+  apyAtTarget: TimeseriesDataPoint[];
   utilization: TimeseriesDataPoint[];
 };
 

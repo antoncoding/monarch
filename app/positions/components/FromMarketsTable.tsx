@@ -3,7 +3,9 @@ import { Pagination } from '@heroui/react';
 import { Button } from '@/components/common/Button';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { formatReadable } from '@/utils/balance';
+import { previewMarketState } from '@/utils/morpho';
 import { MarketPosition } from '@/utils/types';
+import { ApyPreview } from './ApyPreview';
 
 type PositionWithPendingDelta = MarketPosition & { pendingDelta: number };
 
@@ -25,10 +27,18 @@ export function FromMarketsTable({
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalPages = Math.ceil(positions.length / PER_PAGE);
-  const paginatedPositions = positions.slice(
-    (currentPage - 1) * PER_PAGE,
-    currentPage * PER_PAGE,
-  );
+  const paginatedPositions = positions.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+
+  const getApyPreview = (position: PositionWithPendingDelta) => {
+    if (position.pendingDelta === 0) return null;
+
+    try {
+      const deltaBigInt = BigInt(Math.floor(position.pendingDelta));
+      return previewMarketState(position.market, deltaBigInt);
+    } catch {
+      return null;
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -39,12 +49,17 @@ export function FromMarketsTable({
       ) : (
         <>
           <div className="w-full overflow-x-auto">
-            <table className="responsive w-full rounded-sm font-zen text-sm">
+            <table className="w-full table-fixed rounded-sm font-zen text-sm">
+              <colgroup>
+                <col className="w-auto" />
+                <col className="w-[165px]" />
+                <col className="w-[220px]" />
+              </colgroup>
               <thead className="table-header bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 text-left">Market</th>
-                  <th className="px-4 text-center">APY</th>
-                  <th className="px-4 text-center">Supplied Amount</th>
+                  <th className="px-4 py-2 text-left">Market</th>
+                  <th className="px-4 py-2 text-left">APY</th>
+                  <th className="px-4 py-2 text-left">Supplied Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -62,13 +77,13 @@ export function FromMarketsTable({
                       : adjustedMarketLiquidity;
 
                   const isSelected = position.market.uniqueKey === selectedMarketUniqueKey;
-
+                  const apyPreview = getApyPreview(position);
                   return (
                     <tr
                       key={position.market.uniqueKey}
                       onClick={() => onSelectMarket(position.market.uniqueKey)}
-                      className={`cursor-pointer border-b border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 ${
-                        isSelected ? 'bg-primary/5 border-l-2 border-l-primary' : ''
+                      className={`cursor-pointer border-b border-l-2 border-l-transparent border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 ${
+                        isSelected ? 'bg-primary/5 border-l-primary' : ''
                       }`}
                     >
                       <td className="px-4 py-2">
@@ -86,11 +101,14 @@ export function FromMarketsTable({
                           />
                         </div>
                       </td>
-                      <td className="px-4 py-2 text-center">
-                        {formatReadable(position.market.state.supplyApy * 100)}%
+                      <td className="px-4 py-2">
+                        <ApyPreview
+                          currentApy={position.market.state.supplyApy}
+                          previewApy={apyPreview?.supplyApy ?? null}
+                        />
                       </td>
                       <td className="px-4 py-2">
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center gap-2 justify-end">
                           <div>
                             {formatReadable(
                               (Number(position.state.supplyAssets) + Number(position.pendingDelta)) /

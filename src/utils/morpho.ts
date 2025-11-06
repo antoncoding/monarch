@@ -1,6 +1,7 @@
+import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
 import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
-import { MarketParams, UserTxTypes } from './types';
+import { Market, MarketParams, UserTxTypes } from './types';
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -215,9 +216,9 @@ export function parseCapIdParams(idParams: string): {
       );
 
       if (decoded[0] === 'this/marketParams') {
-         
+
         const marketParamsBlock = decoded[2] as [any];
-         
+
         const marketParams = marketParamsBlock[0] as any as MarketParams;
 
         // Create a market ID hash from the market params
@@ -239,5 +240,62 @@ export function parseCapIdParams(idParams: string): {
   } catch (error) {
     console.error('Error parsing idParams:', error);
     return { type: 'unknown' };
+  }
+}
+
+// ============================================================================
+// Supply Preview Utilities
+// ============================================================================
+
+type MarketStatePreview = {
+  supplyApy: number;
+  borrowApy: number;
+  utilization: number; // scaled down WAD
+  totalSupplyAssets: bigint;
+  totalBorrowAssets: bigint;
+  liquidityAssets: bigint;
+};
+
+/**
+ * Simulates a supply operation and returns the full market state preview.
+ *
+ * @param market - The market configuration and state
+ * @param supplyAmount - The amount to simulate supplying (in asset units, positive for supply)
+ * @returns The estimated market state after the action, or null if simulation fails
+ */
+export function previewMarketState(market: Market, supplyAmount: bigint): MarketStatePreview | null {
+  try {
+    const params = new BlueMarketParams({
+      loanToken: market.loanAsset.address as Address,
+      collateralToken: market.collateralAsset.address as Address,
+      oracle: market.oracleAddress as Address,
+      irm: market.irmAddress as Address,
+      lltv: BigInt(market.lltv),
+    });
+
+    const blueMarket = new BlueMarket({
+      params,
+      totalSupplyAssets: BigInt(market.state.supplyAssets),
+      totalBorrowAssets: BigInt(market.state.borrowAssets),
+      totalSupplyShares: BigInt(market.state.supplyShares),
+      totalBorrowShares: BigInt(market.state.borrowShares),
+      lastUpdate: BigInt(market.state.timestamp), // not really the last timestamp but doesn't matter.
+      rateAtTarget: BigInt(market.state.rateAtTarget),
+      fee: BigInt(Math.floor(market.state.fee * 1e18)),
+    });
+
+    const { market: updated } = blueMarket.supply(supplyAmount, 0n);
+
+    return {
+      supplyApy: updated.supplyApy,
+      borrowApy: updated.borrowApy,
+      utilization: Number(updated.utilization) / 1e18,
+      totalSupplyAssets: updated.totalSupplyAssets,
+      totalBorrowAssets: updated.totalBorrowAssets,
+      liquidityAssets: updated.liquidity,
+    };
+  } catch (error) {
+    console.error('Error previewing market state:', error);
+    return null;
   }
 }

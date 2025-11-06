@@ -59,7 +59,8 @@ state {
   borrowApy
   fee
   timestamp
-  rateAtUTarget
+  apyAtTarget
+  rateAtTarget
 }
 warnings {
   type
@@ -204,7 +205,8 @@ export const marketsQuery = `
       borrowApy
       fee
       timestamp
-      rateAtUTarget
+      apyAtTarget
+      rateAtTarget
     }
     warnings {
       type
@@ -345,7 +347,7 @@ export const marketHistoricalDataQuery = `
           x
           y
         }
-        rateAtUTarget(options: $options) {
+        apyAtTarget(options: $options) {
           x
           y
         }

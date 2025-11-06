@@ -39,18 +39,18 @@ function RateChart({
   const [visibleLines, setVisibleLines] = useState({
     supplyApy: true,
     borrowApy: true,
-    rateAtUTarget: true,
+    apyAtTarget: true,
   });
 
   const getChartData = () => {
     if (!historicalData) return [];
-    const { supplyApy, borrowApy, rateAtUTarget } = historicalData;
+    const { supplyApy, borrowApy, apyAtTarget } = historicalData;
 
     return supplyApy.map((point: TimeseriesDataPoint, index: number) => ({
       x: point.x,
       supplyApy: point.y,
       borrowApy: borrowApy[index]?.y || 0,
-      rateAtUTarget: rateAtUTarget[index]?.y || 0,
+      apyAtTarget: apyAtTarget[index]?.y || 0,
     }));
   };
 
@@ -70,17 +70,17 @@ function RateChart({
       : 0;
   };
 
-  const getCurrentRateAtUTargetValue = () => {
-    return market.state.rateAtUTarget;
+  const getCurrentapyAtTargetValue = () => {
+    return market.state.apyAtTarget;
   };
 
-  const getAverageRateAtUTargetValue = () => {
-    if (!historicalData?.rateAtUTarget || historicalData.rateAtUTarget.length === 0) return 0;
+  const getAverageapyAtTargetValue = () => {
+    if (!historicalData?.apyAtTarget || historicalData.apyAtTarget.length === 0) return 0;
     return (
-      historicalData.rateAtUTarget.reduce(
+      historicalData.apyAtTarget.reduce(
         (sum: number, point: TimeseriesDataPoint) => sum + point.y,
         0,
-      ) / historicalData.rateAtUTarget.length
+      ) / historicalData.apyAtTarget.length
     );
   };
 
@@ -162,13 +162,13 @@ function RateChart({
                     <linearGradient id="rateChart-targetGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
                         offset="0%"
-                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.startOpacity}
+                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.startOpacity}
                       />
                       <stop
                         offset="25%"
-                        stopColor={CHART_COLORS.rateAtUTarget.gradient.start}
-                        stopOpacity={CHART_COLORS.rateAtUTarget.gradient.endOpacity}
+                        stopColor={CHART_COLORS.apyAtTarget.gradient.start}
+                        stopOpacity={CHART_COLORS.apyAtTarget.gradient.endOpacity}
                       />
                     </linearGradient>
                   </defs>
@@ -224,13 +224,13 @@ function RateChart({
                   />
                   <Area
                     type="monotone"
-                    dataKey="rateAtUTarget"
+                    dataKey="apyAtTarget"
                     name="Rate at Util Target"
-                    stroke={CHART_COLORS.rateAtUTarget.stroke}
+                    stroke={CHART_COLORS.apyAtTarget.stroke}
                     strokeWidth={2}
                     fill="url(#rateChart-targetGradient)"
                     fillOpacity={1}
-                    hide={!visibleLines.rateAtUTarget}
+                    hide={!visibleLines.apyAtTarget}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -270,7 +270,7 @@ function RateChart({
                 <div className="flex items-center justify-between">
                   <span>Rate at U Target:</span>
                   <span className="font-monospace text-sm">
-                    {formatPercentage(getCurrentRateAtUTargetValue())}
+                    {formatPercentage(getCurrentapyAtTargetValue())}
                   </span>
                 </div>
               </div>
@@ -307,7 +307,7 @@ function RateChart({
                     <div className="flex items-center justify-between">
                       <span>Rate at U Target:</span>
                       <span className="font-monospace text-sm">
-                        {formatPercentage(getAverageRateAtUTargetValue())}
+                        {formatPercentage(getAverageapyAtTargetValue())}
                       </span>
                     </div>
                   </>
