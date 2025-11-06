@@ -1,5 +1,5 @@
-import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
+import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
 import { Market, MarketParams, UserTxTypes } from './types';
 // appended to the end of datahash to identify a monarch tx
@@ -273,9 +273,6 @@ export function previewMarketState(market: Market, supplyAmount: bigint): Market
       lltv: BigInt(market.lltv),
     });
 
-    console.log('market.state.rateAtTarget', market.state.rateAtTarget)
-
-
     const blueMarket = new BlueMarket({
       params,
       totalSupplyAssets: BigInt(market.state.supplyAssets),
@@ -286,8 +283,6 @@ export function previewMarketState(market: Market, supplyAmount: bigint): Market
       rateAtTarget: BigInt(market.state.rateAtTarget),
       fee: BigInt(Math.floor(market.state.fee * 1e18)),
     });
-
-    console.log('pre apy at target', market.state.supplyApy)
 
     const { market: updated } = blueMarket.supply(supplyAmount, 0n);
 

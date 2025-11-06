@@ -128,7 +128,7 @@ export function MarketDetailsBlock({
                   <span>
                     <span className="line-through opacity-50">{getAPY()}%</span>
                     {' → '}
-                    <span className="font-semibold text-green-600 dark:text-green-400">
+                    <span className="font-semibold">
                       {getPreviewAPY()}%
                     </span>
                     {' APY'}
@@ -187,7 +187,7 @@ export function MarketDetailsBlock({
                         <p className="text-right text-sm font-bold">
                           <span className="line-through opacity-50">{getAPY()}%</span>
                           {' → '}
-                          <span className="text-green-600 dark:text-green-400">
+                          <span>
                             {getPreviewAPY()}%
                           </span>
                         </p>
@@ -227,7 +227,7 @@ export function MarketDetailsBlock({
                             )}
                           </span>
                           {' → '}
-                          <span className="text-green-600 dark:text-green-400">
+                          <span>
                             {formatReadable(
                               formatBalance(previewState.totalSupplyAssets.toString(), market.loanAsset.decimals),
                             )}
@@ -251,7 +251,7 @@ export function MarketDetailsBlock({
                             )}
                           </span>
                           {' → '}
-                          <span className="text-green-600 dark:text-green-400">
+                          <span>
                             {formatReadable(
                               formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals),
                             )}
@@ -273,7 +273,7 @@ export function MarketDetailsBlock({
                             {formatReadable(market.state.utilization * 100)}%
                           </span>
                           {' → '}
-                          <span className="text-green-600 dark:text-green-400">
+                          <span>
                             {formatReadable(previewState.utilization * 100)}%
                           </span>
                         </p>
