@@ -245,14 +245,18 @@ export const fetchAllStatistics = async (
 ): Promise<{
   platformStats: PlatformStats;
   assetMetrics: AssetVolumeData[];
+  transactions: Transaction[];
 }> => {
   try {
     console.log(`Fetching all statistics for timeframe: ${timeframe}, network: ${networkId}`);
     const startTime = performance.now();
 
-    const [platformStats, assetMetrics] = await Promise.all([
+    const { startTime: rangeStartTime, endTime: rangeEndTime } = getTimeRange(timeframe);
+
+    const [platformStats, assetMetrics, transactions] = await Promise.all([
       fetchPlatformStats(timeframe, networkId, endpoint),
       fetchAssetMetrics(timeframe, networkId, endpoint),
+      fetchTransactionsByTimeRange(rangeStartTime, rangeEndTime, networkId, endpoint),
     ]);
 
     const endTime = performance.now();
@@ -261,6 +265,7 @@ export const fetchAllStatistics = async (
     return {
       platformStats,
       assetMetrics,
+      transactions,
     };
   } catch (error) {
     console.error('Error fetching all statistics:', error);
@@ -277,6 +282,7 @@ export const fetchAllStatistics = async (
         activeMarkets: 0,
       },
       assetMetrics: [],
+      transactions: [],
     };
   }
 };

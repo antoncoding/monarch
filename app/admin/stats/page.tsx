@@ -7,18 +7,23 @@ import Image from 'next/image';
 import { FiChevronDown } from 'react-icons/fi';
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
+import { TokenIcon } from '@/components/TokenIcon';
+import { useMarkets } from '@/contexts/MarketsContext';
 import { fetchAllStatistics } from '@/services/statsService';
-import { SupportedNetworks, getNetworkImg, getNetworkName } from '@/utils/networks';
-import { PlatformStats, TimeFrame, AssetVolumeData } from '@/utils/statsUtils';
+import { SupportedNetworks, getNetworkImg, getNetworkName, getViemChain } from '@/utils/networks';
+import { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
+import { ERC20Token, UnknownERC20Token, TokenSource } from '@/utils/tokens';
+import { findToken as findTokenStatic } from '@/utils/tokens';
 import { AssetMetricsTable } from './components/AssetMetricsTable';
 import { StatsOverviewCards } from './components/StatsOverviewCards';
+import { TransactionsTable } from './components/TransactionsTable';
 
 const getAPIEndpoint = (network: SupportedNetworks) => {
   switch (network) {
     case SupportedNetworks.Base:
       return 'https://api.studio.thegraph.com/query/94369/monarch-metrics/version/latest';
     case SupportedNetworks.Mainnet:
-      return 'https://api.studio.thegraph.com/query/94369/monarch-metrics-mainnet/version/latest';
+      return 'https://api.studio.thegraph.com/query/110397/monarch-metrics-mainnet/version/latest';
     default:
       return undefined;
   }
@@ -28,9 +33,13 @@ export default function StatsPage() {
   const [timeframe, setTimeframe] = useState<TimeFrame>('30D');
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks>(SupportedNetworks.Base);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>([]);
+  const [selectedSides, setSelectedSides] = useState<('Supply' | 'Withdraw')[]>([]);
+  const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [stats, setStats] = useState<{
     platformStats: PlatformStats;
     assetMetrics: AssetVolumeData[];
+    transactions: Transaction[];
   }>({
     platformStats: {
       uniqueUsers: 0,
@@ -44,7 +53,10 @@ export default function StatsPage() {
       activeMarkets: 0,
     },
     assetMetrics: [],
+    transactions: [],
   });
+
+  const { allMarkets } = useMarkets();
 
   useEffect(() => {
     const loadStats = async () => {
@@ -75,6 +87,7 @@ export default function StatsPage() {
         setStats({
           platformStats: allStats.platformStats,
           assetMetrics: allStats.assetMetrics,
+          transactions: allStats.transactions,
         });
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -85,6 +98,71 @@ export default function StatsPage() {
 
     void loadStats();
   }, [timeframe, selectedNetwork]);
+
+  // Extract unique loan assets from transactions
+  useEffect(() => {
+    if (stats.transactions.length === 0) {
+      setUniqueLoanAssets([]);
+      return;
+    }
+
+    const loanAssetsMap = new Map<string, { address: string; symbol: string; decimals: number }>();
+
+    stats.transactions.forEach((tx) => {
+      // Extract from supplies
+      tx.supplies?.forEach((supply) => {
+        if (supply.market?.loan) {
+          const address = supply.market.loan.toLowerCase();
+          if (!loanAssetsMap.has(address)) {
+            const token = findTokenStatic(address, selectedNetwork);
+            if (token) {
+              loanAssetsMap.set(address, {
+                address,
+                symbol: token.symbol,
+                decimals: token.decimals,
+              });
+            }
+          }
+        }
+      });
+
+      // Extract from withdrawals
+      tx.withdrawals?.forEach((withdrawal) => {
+        if (withdrawal.market?.loan) {
+          const address = withdrawal.market.loan.toLowerCase();
+          if (!loanAssetsMap.has(address)) {
+            const token = findTokenStatic(address, selectedNetwork);
+            if (token) {
+              loanAssetsMap.set(address, {
+                address,
+                symbol: token.symbol,
+                decimals: token.decimals,
+              });
+            }
+          }
+        }
+      });
+    });
+
+    // Convert to ERC20Token format
+    const tokens: ERC20Token[] = Array.from(loanAssetsMap.values()).map((asset) => {
+      const fullToken = findTokenStatic(asset.address, selectedNetwork);
+      return {
+        symbol: asset.symbol,
+        img: fullToken?.img,
+        decimals: asset.decimals,
+        networks: [
+          {
+            chain: getViemChain(selectedNetwork),
+            address: asset.address,
+          },
+        ],
+        source: 'local' as TokenSource,
+      };
+    });
+
+    setUniqueLoanAssets(tokens);
+  }, [stats.transactions, selectedNetwork]);
 
   const timeframeOptions = [
     { key: '1D', label: '1D', value: '1D' },
@@ -187,7 +265,109 @@ export default function StatsPage() {
       ) : (
         <div className="space-y-6">
           <StatsOverviewCards stats={stats.platformStats} selectedNetwork={selectedNetwork} />
-          <AssetMetricsTable data={stats.assetMetrics} selectedNetwork={selectedNetwork} />
+          <AssetMetricsTable data={stats.assetMetrics} />
+
+          {/* Transaction Filters */}
+          <div className="flex items-center gap-4">
+            {/* Loan Asset Filter */}
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="flat"
+                  endContent={<FiChevronDown className="text-small" />}
+                  className="bg-surface min-w-[160px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
+                >
+                  {selectedLoanAssets.length === 0
+                    ? 'All loan assets'
+                    : selectedLoanAssets.length === 1
+                      ? uniqueLoanAssets.find((asset) => {
+                          const assetKey = asset.networks
+                            .map((n) => `${n.address}-${n.chain.id}`)
+                            .join('|');
+                          return selectedLoanAssets.includes(assetKey);
+                        })?.symbol ?? 'Selected'
+                      : `${selectedLoanAssets.length} selected`}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Loan Asset Selection"
+                selectionMode="multiple"
+                selectedKeys={new Set(selectedLoanAssets)}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys) as string[];
+                  setSelectedLoanAssets(selected);
+                }}
+                className="font-zen"
+              >
+                {uniqueLoanAssets.map((asset) => {
+                  const assetKey = asset.networks
+                    .map((n) => `${n.address}-${n.chain.id}`)
+                    .join('|');
+                  const firstNetwork = asset.networks[0];
+
+                  return (
+                    <DropdownItem
+                      key={assetKey}
+                      className="py-2"
+                      startContent={
+                        <TokenIcon
+                          address={firstNetwork.address}
+                          chainId={firstNetwork.chain.id}
+                          symbol={asset.symbol}
+                          width={20}
+                          height={20}
+                        />
+                      }
+                    >
+                      {asset.symbol}
+                    </DropdownItem>
+                  );
+                })}
+              </DropdownMenu>
+            </Dropdown>
+
+            {/* Side Filter */}
+            <Dropdown>
+              <DropdownTrigger>
+                <Button
+                  variant="flat"
+                  endContent={<FiChevronDown className="text-small" />}
+                  className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
+                >
+                  {selectedSides.length === 0
+                    ? 'All sides'
+                    : selectedSides.length === 1
+                      ? selectedSides[0]
+                      : `${selectedSides.length} selected`}
+                </Button>
+              </DropdownTrigger>
+              <DropdownMenu
+                aria-label="Side Selection"
+                selectionMode="multiple"
+                selectedKeys={new Set(selectedSides)}
+                onSelectionChange={(keys) => {
+                  const selected = Array.from(keys) as ('Supply' | 'Withdraw')[];
+                  setSelectedSides(selected);
+                }}
+                className="font-zen"
+              >
+                <DropdownItem key="Supply" className="py-2">
+                  Supply
+                </DropdownItem>
+                <DropdownItem key="Withdraw" className="py-2">
+                  Withdraw
+                </DropdownItem>
+              </DropdownMenu>
+            </Dropdown>
+          </div>
+
+          <TransactionsTable
+            data={stats.transactions}
+            selectedNetwork={selectedNetwork}
+            selectedLoanAssets={selectedLoanAssets}
+            selectedSides={selectedSides}
+            allMarkets={allMarkets}
+          />
         </div>
       )}
     </div>

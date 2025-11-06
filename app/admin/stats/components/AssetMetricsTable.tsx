@@ -1,11 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@heroui/react';
-import Link from 'next/link';
-import { FiChevronUp, FiChevronDown, FiExternalLink } from 'react-icons/fi';
+import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
-import { getAssetURL } from '@/utils/external';
-import { SupportedNetworks } from '@/utils/networks';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
 import { AssetVolumeData } from '@/utils/statsUtils';
 
@@ -14,13 +10,46 @@ const BASE_CHAIN_ID = 8453; // Base network ID
 
 type AssetMetricsTableProps = {
   data: AssetVolumeData[];
-  selectedNetwork: SupportedNetworks;
 };
 
 type SortKey = 'supplyCount' | 'withdrawCount' | 'uniqueUsers' | 'totalCount' | 'totalVolume';
 type SortDirection = 'asc' | 'desc';
 
-export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTableProps) {
+type SortableHeaderProps = {
+  label: string;
+  sortKeyValue: SortKey;
+  currentSortKey: SortKey;
+  sortDirection: SortDirection;
+  onSort: (key: SortKey) => void;
+};
+
+function SortableHeader({
+  label,
+  sortKeyValue,
+  currentSortKey,
+  sortDirection,
+  onSort,
+}: SortableHeaderProps) {
+  return (
+    <th
+      className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
+      onClick={() => onSort(sortKeyValue)}
+      style={{ padding: '0.5rem' }}
+    >
+      <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
+        <div>{label}</div>
+        {currentSortKey === sortKeyValue &&
+          (sortDirection === 'asc' ? (
+            <FiChevronUp className="h-4 w-4" />
+          ) : (
+            <FiChevronDown className="h-4 w-4" />
+          ))}
+      </div>
+    </th>
+  );
+}
+
+export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('totalCount');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -41,12 +70,6 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
       totalCount: asset.supplyCount + asset.withdrawCount,
     }));
   }, [data]);
-
-  // Format address for display
-  const formatAddress = (address: string) => {
-    if (address.length < 10) return address;
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
 
   const sortedData = useMemo(() => {
     return [...processedData].sort((a, b) => {
@@ -72,130 +95,63 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
   }, [processedData, sortKey, sortDirection]);
 
   return (
-    <div className="bg-surface rounded-md font-inter shadow-sm">
+    <div className="bg-surface rounded-md font-zen shadow-sm">
       <div className="border-b border-gray-200 px-6 py-4">
         <h3 className="font-zen text-lg font-semibold">Asset Activity</h3>
       </div>
-      <div className="p-4">
+      <div className="overflow-x-auto">
         {processedData.length === 0 ? (
           <div className="py-8 text-center text-gray-400">No asset data available</div>
         ) : (
-          <Table
-            aria-label="Asset metrics table"
-            classNames={{
-              base: 'min-w-full',
-              wrapper: 'rounded-md',
-            }}
-            removeWrapper
-          >
-            <TableHeader>
-              <TableColumn>
-                <span className="font-zen">Asset</span>
-              </TableColumn>
-              <TableColumn>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
-                  onClick={() => handleSort('totalVolume')}
-                  aria-label="Sort by Total Volume"
-                >
-                  Total Volume
-                  {sortKey === 'totalVolume' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? (
-                        <FiChevronUp className="h-4 w-4" />
-                      ) : (
-                        <FiChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </button>
-              </TableColumn>
-              <TableColumn>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
-                  onClick={() => handleSort('totalCount')}
-                  aria-label="Sort by Total Transactions"
-                >
-                  Total Transactions
-                  {sortKey === 'totalCount' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? (
-                        <FiChevronUp className="h-4 w-4" />
-                      ) : (
-                        <FiChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </button>
-              </TableColumn>
-              <TableColumn>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
-                  onClick={() => handleSort('supplyCount')}
-                  aria-label="Sort by Supply Count"
-                >
-                  Supply Count
-                  {sortKey === 'supplyCount' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? (
-                        <FiChevronUp className="h-4 w-4" />
-                      ) : (
-                        <FiChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </button>
-              </TableColumn>
-              <TableColumn>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
-                  onClick={() => handleSort('withdrawCount')}
-                  aria-label="Sort by Withdraw Count"
-                >
-                  Withdraw Count
-                  {sortKey === 'withdrawCount' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? (
-                        <FiChevronUp className="h-4 w-4" />
-                      ) : (
-                        <FiChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </button>
-              </TableColumn>
-              <TableColumn>
-                <button
-                  type="button"
-                  className="flex w-full cursor-pointer items-center border-none bg-transparent p-0 text-left font-zen"
-                  onClick={() => handleSort('uniqueUsers')}
-                  aria-label="Sort by Unique Users"
-                >
-                  Unique Users
-                  {sortKey === 'uniqueUsers' && (
-                    <span className="ml-1">
-                      {sortDirection === 'asc' ? (
-                        <FiChevronUp className="h-4 w-4" />
-                      ) : (
-                        <FiChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  )}
-                </button>
-              </TableColumn>
-            </TableHeader>
-            <TableBody>
+          <table className="responsive rounded-md font-zen w-full min-w-full">
+            <thead className="table-header">
+              <tr>
+                <th className="font-normal px-2 py-2 whitespace-nowrap">Asset</th>
+                <SortableHeader
+                  label="Total Volume"
+                  sortKeyValue="totalVolume"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Total Transactions"
+                  sortKeyValue="totalCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Supply Count"
+                  sortKeyValue="supplyCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Withdraw Count"
+                  sortKeyValue="withdrawCount"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+                <SortableHeader
+                  label="Unique Users"
+                  sortKeyValue="uniqueUsers"
+                  currentSortKey={sortKey}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              </tr>
+            </thead>
+            <tbody className="table-body text-sm">
               {sortedData.map((asset) => {
                 // Use a determined chainId for display purposes
                 const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
 
                 return (
-                  <TableRow key={`${asset.assetAddress}-${asset.chainId}`}>
-                    <TableCell>
+                  <tr key={`${asset.assetAddress}-${asset.chainId}`} className="hover:bg-hovered">
+                    <td data-label="Asset" className="z-50" style={{ minWidth: '120px' }}>
                       <div className="flex items-center gap-2">
                         <TokenIcon
                           address={asset.assetAddress}
@@ -204,42 +160,39 @@ export function AssetMetricsTable({ data, selectedNetwork }: AssetMetricsTablePr
                           width={20}
                           height={20}
                         />
-                        <div className="flex flex-col">
-                          <span className="font-zen font-medium">
-                            {asset.assetSymbol ?? 'Unknown'}
-                          </span>
-                          <Link
-                            href={getAssetURL(asset.assetAddress, selectedNetwork)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center text-xs text-gray-500 transition-colors hover:text-primary"
-                          >
-                            {formatAddress(asset.assetAddress)}
-                            <FiExternalLink className="ml-1 h-3 w-3" />
-                          </Link>
-                        </div>
+                        <span className="font-zen text-sm">
+                          {asset.assetSymbol ?? 'Unknown'}
+                        </span>
                       </div>
-                    </TableCell>
-                    <TableCell className="font-zen">
-                      {asset.totalVolumeFormatted
-                        ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${
-                            asset.assetSymbol
-                          }`
-                        : '-'}
-                    </TableCell>
-                    <TableCell className="font-zen">
-                      {(asset.supplyCount + asset.withdrawCount).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="font-zen">{asset.supplyCount.toLocaleString()}</TableCell>
-                    <TableCell className="font-zen">
-                      {asset.withdrawCount.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="font-zen">{asset.uniqueUsers.toLocaleString()}</TableCell>
-                  </TableRow>
+                    </td>
+                    <td data-label="Total Volume" className="z-50 text-center" style={{ minWidth: '120px' }}>
+                      <span className="text-sm">
+                        {asset.totalVolumeFormatted
+                          ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${
+                              asset.assetSymbol
+                            }`
+                          : '—'}
+                      </span>
+                    </td>
+                    <td data-label="Total Transactions" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                      <span className="text-sm">
+                        {(asset.supplyCount + asset.withdrawCount).toLocaleString()}
+                      </span>
+                    </td>
+                    <td data-label="Supply Count" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                      <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
+                    </td>
+                    <td data-label="Withdraw Count" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                      <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
+                    </td>
+                    <td data-label="Unique Users" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                      <span className="text-sm">{asset.uniqueUsers.toLocaleString()}</span>
+                    </td>
+                  </tr>
                 );
               })}
-            </TableBody>
-          </Table>
+            </tbody>
+          </table>
         )}
       </div>
     </div>
