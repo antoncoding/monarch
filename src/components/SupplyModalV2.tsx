@@ -25,6 +25,7 @@ export function SupplyModalV2({
   defaultMode = 'supply',
 }: SupplyModalV2Props): JSX.Element {
   const [mode, setMode] = useState<'supply' | 'withdraw'>(defaultMode);
+  const [supplyPreviewAmount, setSupplyPreviewAmount] = useState<bigint | undefined>();
 
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
 
@@ -82,11 +83,17 @@ export function SupplyModalV2({
               defaultCollapsed
               mode="supply"
               showRewards
+              loanAssetDelta={mode === 'supply' ? supplyPreviewAmount : undefined}
             />
           </div>
 
           {mode === 'supply' ? (
-            <SupplyModalContent market={market} onClose={onClose} refetch={refetch ?? (() => {})} />
+            <SupplyModalContent
+              market={market}
+              onClose={onClose}
+              refetch={refetch ?? (() => {})}
+              onAmountChange={setSupplyPreviewAmount}
+            />
           ) : (
             <WithdrawModalContent
               position={position}

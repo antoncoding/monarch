@@ -724,7 +724,7 @@ export function MarketsTableWithSameLoanAsset({
 
   return (
     <div className="space-y-3">
-      {/* Cart/Staging Area - MarketDetailsBlock Style */}
+      {/* Cart/Staging Area Style */}
       {showCart && selectedMarkets.length > 0 && (
         <div className="space-y-2">
           {selectedMarkets.map(({ market }) => (

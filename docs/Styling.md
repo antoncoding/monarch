@@ -266,6 +266,7 @@ Works with all three modes (Normal, Focused, Minimum). Use in table cells with a
 ```
 
 **MarketDetailsBlock** (`@/components/common/MarketDetailsBlock`)
+- Used for previewing transactions onto a existing market.
 - Use as an expandable row in modals (e.g., supply/borrow flows)
 - Shows market state details when expanded (APY, liquidity, utilization, etc.)
 - Includes collapse/expand functionality
@@ -283,8 +284,8 @@ import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 ```
 
 **When to use which:**
-- Tables/Lists/Cards → Use `MarketIdentity`
-- Modal flows with expandable details → Use `MarketDetailsBlock`
+- Tables/Lists/Cards, Data display → Use `MarketIdentity`
+- Modal flows during a transaction, with expandable details → Use `MarketDetailsBlock`
 
 **MarketIdBadge** (`@/components/MarketIdBadge`)
 - Use to display a short market ID badge with optional network icon and warning indicator
