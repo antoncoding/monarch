@@ -1,8 +1,14 @@
 import { getNetworkName, SupportedNetworks, getExplorerUrl } from './networks';
 
 export const getMarketURL = (id: string, chainId: number): string => {
-  const network =
-    chainId === SupportedNetworks.Mainnet ? 'ethereum' : getNetworkName(chainId)?.toLowerCase();
+
+  let network = getNetworkName(chainId)?.toLowerCase();
+  // morpho urls
+  if (chainId === SupportedNetworks.HyperEVM) {
+    network = 'hyperliquid';
+  } else if (chainId === SupportedNetworks.Mainnet) {
+    network = 'ethereum';
+  }
   return `https://app.morpho.org/${network}/market/${id}`;
 };
 
