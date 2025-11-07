@@ -113,7 +113,13 @@ function MarketsTable({
                 targetColumn={SortColumn.LLTV}
               />
               {columnVisibility.trustedBy && (
-                <th className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</th>
+                <HTSortable
+                  label="Trusted By"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.TrustedBy}
+                />
               )}
               {columnVisibility.totalSupply && (
                 <HTSortable

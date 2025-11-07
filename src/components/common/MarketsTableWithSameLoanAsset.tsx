@@ -59,6 +59,7 @@ enum SortColumn {
   BorrowAPY = 5,
   RateAtTarget = 6,
   Risk = 7,
+  TrustedBy = 8,
 }
 
 function getTrustedVaultsForMarket(
@@ -576,6 +577,18 @@ export function MarketsTableWithSameLoanAsset({
     return map;
   }, [userTrustedVaults]);
 
+  const hasTrustedVault = useCallback(
+    (market: Market) => {
+      if (!market.supplyingVaults?.length) return false;
+      const chainId = market.morphoBlue.chain.id;
+      return market.supplyingVaults.some((vault) => {
+        if (!vault.address) return false;
+        return trustedVaultMap.has(getVaultKey(vault.address as string, chainId));
+      });
+    },
+    [trustedVaultMap],
+  );
+
   // USD Filter enabled states
   const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
     keys.MarketsMinSupplyEnabledKey,
@@ -727,10 +740,17 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.BorrowAPY]: 'state.borrowApy',
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.Risk]: '', // No sorting for risk
+      [SortColumn.TrustedBy]: '',
     };
 
     const propertyPath = sortPropertyMap[sortColumn];
-    if (propertyPath && sortColumn !== SortColumn.Risk) {
+    if (sortColumn === SortColumn.TrustedBy) {
+      filtered = sortMarkets(
+        filtered,
+        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
+        sortDirection,
+      );
+    } else if (propertyPath && sortColumn !== SortColumn.Risk) {
       filtered = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection);
     }
 
@@ -754,6 +774,7 @@ export function MarketsTableWithSameLoanAsset({
     minLiquidityEnabled,
     usdFilters,
     findToken,
+    hasTrustedVault,
   ]);
 
   // Get selected markets
@@ -881,9 +902,13 @@ export function MarketsTableWithSameLoanAsset({
                 onSort={handleSort}
               />
               {columnVisibility.trustedBy && (
-                <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
-                  Trusted By
-                </th>
+                <HTSortable
+                  label="Trusted By"
+                  column={SortColumn.TrustedBy}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
               )}
               {columnVisibility.totalSupply && (
                 <HTSortable

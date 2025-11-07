@@ -17,7 +17,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
-import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -151,6 +151,24 @@ export default function Markets({
     defaultTrustedVaults,
   );
 
+  const trustedVaultKeys = useMemo(() => {
+    return new Set(
+      userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)),
+    );
+  }, [userTrustedVaults]);
+
+  const hasTrustedVault = useCallback(
+    (market: Market) => {
+      if (!market.supplyingVaults?.length) return false;
+      const chainId = market.morphoBlue.chain.id;
+      return market.supplyingVaults.some((vault) => {
+        if (!vault.address) return false;
+        return trustedVaultKeys.has(getVaultKey(vault.address as string, chainId));
+      });
+    },
+    [trustedVaultKeys],
+  );
+
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
   const usdFilters = useMemo(
     () => ({
@@ -278,6 +296,12 @@ export default function Markets({
     let sorted: Market[];
     if (sortColumn === SortColumn.Starred) {
       sorted = sortMarkets(filtered, createStarredSort(staredIds), 1);
+    } else if (sortColumn === SortColumn.TrustedBy) {
+      sorted = sortMarkets(
+        filtered,
+        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
+        sortDirection as 1 | -1,
+      );
     } else {
       const sortPropertyMap: Record<SortColumn, string> = {
         [SortColumn.Starred]: 'uniqueKey',
@@ -290,6 +314,7 @@ export default function Markets({
         [SortColumn.Liquidity]: 'state.liquidityAssets',
         [SortColumn.BorrowAPY]: 'state.borrowApy',
         [SortColumn.RateAtTarget]: 'state.apyAtTarget',
+        [SortColumn.TrustedBy]: '',
       };
       const propertyPath = sortPropertyMap[sortColumn];
       if (propertyPath) {
@@ -319,6 +344,7 @@ export default function Markets({
     minLiquidityEnabled,
     searchQuery,
     resetPage,
+    hasTrustedVault,
   ]);
 
   useEffect(() => {

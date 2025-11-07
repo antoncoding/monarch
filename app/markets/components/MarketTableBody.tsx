@@ -86,8 +86,8 @@ export function MarketTableBody({
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
         const collatToShow = item.collateralAsset.symbol
-          .slice(0, 6)
-          .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
+              .slice(0, 6)
+              .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = staredIds.includes(item.uniqueKey);
 
         return (
@@ -160,7 +160,7 @@ export function MarketTableBody({
               {columnVisibility.trustedBy && (
                 <td
                   data-label="Trusted By"
-                  className="z-50"
+                  className="z-50 text-center"
                   style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
                 >
                   <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />

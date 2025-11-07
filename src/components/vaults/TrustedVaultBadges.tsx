@@ -61,13 +61,13 @@ type TrustedByCellProps = {
 
 export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
   if (!vaults.length) {
-    return <span className="text-xs text-secondary">—</span>;
+    return <span className="text-xs text-secondary">-</span>;
   }
 
   const preview = vaults.slice(0, 3);
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center justify-center">
       {preview.map((vault, index) => (
         <div
           key={`${vault.address}-${vault.chainId}`}
