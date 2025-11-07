@@ -159,6 +159,7 @@ export default function SettingsPage() {
                         chainId={vault.chainId}
                         curator={vault.curator}
                         vaultName={vault.name}
+                        asset={vault.asset}
                         variant="icon"
                         iconSize={24}
                         showTooltip

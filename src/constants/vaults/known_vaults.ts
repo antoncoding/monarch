@@ -160,6 +160,14 @@ export const known_vaults: KnownVault[] = [
     defaultTrusted: true,
   },
   {
+    address: '0x2371e134e3455e0593363cBF89d3b6cf53740618',
+    curator: VaultCurator.Gauntlet,
+    chainId: 1,
+    name: 'Gauntlet WETH Prime',
+    asset: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+    defaultTrusted: true,
+  },
+  {
     address: '0x4Ff4186188f8406917293A9e01A1ca16d3cf9E59',
     curator: VaultCurator.Gauntlet,
     chainId: 1,

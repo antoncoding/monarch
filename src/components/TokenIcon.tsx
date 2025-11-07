@@ -17,6 +17,7 @@ type TokenIconProps = {
   customTooltipDetail?: string;
   showExplorerLink?: boolean;
   showTokenSource?: boolean;
+  disableTooltip?: boolean;
 };
 
 export function TokenIcon({
@@ -29,6 +30,7 @@ export function TokenIcon({
   customTooltipDetail,
   showExplorerLink = false,
   showTokenSource = true,
+  disableTooltip = false,
 }: TokenIconProps) {
   const { findToken } = useTokens();
 
@@ -43,6 +45,7 @@ export function TokenIcon({
         alt={token.symbol}
         width={width}
         height={height}
+        style={{ opacity }}
       />
     );
 
@@ -57,6 +60,10 @@ export function TokenIcon({
     // Build detail/secondaryDetail based on what's provided
     const detail = customTooltipDetail || (showTokenSource ? tokenSource : undefined);
     const secondaryDetail = customTooltipDetail && showTokenSource ? tokenSource : undefined;
+
+    if (disableTooltip) {
+      return img;
+    }
 
     return (
       <Tooltip
@@ -76,14 +83,7 @@ export function TokenIcon({
           />
         }
       >
-        <Image
-          className="rounded-full"
-          src={token.img}
-          alt={token.symbol}
-          width={width}
-          height={height}
-          style={{ opacity }}
-        />
+        {img}
       </Tooltip>
     );
   }

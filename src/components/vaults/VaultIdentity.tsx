@@ -4,15 +4,19 @@ import { useMemo, type ReactNode } from 'react';
 import { Tooltip } from '@heroui/react';
 import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
-import { VaultCurator } from '@/constants/vaults/known_vaults';
+import { NetworkIcon } from '@/components/common/NetworkIcon';
+import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
+import { VaultCurator } from '@/constants/vaults/known_vaults';
 import { getVaultURL } from '@/utils/external';
+import { getNetworkName } from '@/utils/networks';
 import { VaultIcon } from './VaultIcon';
 
 type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
 
 type VaultIdentityProps = {
   address: `0x${string}`;
+  asset?: `0x${string}`;
   chainId: number;
   curator: VaultCurator | string;
   vaultName?: string;
@@ -29,6 +33,7 @@ type VaultIdentityProps = {
 
 export function VaultIdentity({
   address,
+  asset,
   chainId,
   curator,
   vaultName,
@@ -46,6 +51,7 @@ export function VaultIdentity({
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const displayName = vaultName ?? formattedAddress;
   const curatorLabel = curator === 'unknown' ? 'Curator unknown' : `Curated by ${curator}`;
+  const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
 
   const baseContent = (() => {
     if (variant === 'icon') {
@@ -102,14 +108,34 @@ export function VaultIdentity({
   const resolvedDetail = tooltipDetail ?? (
     <div className="flex flex-col gap-1 text-sm">
       {showAddressInTooltip && (
-        <span className="font-monospace text-primary">{address}</span>
+        <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">
+          {address}
+        </span>
       )}
       <span className="text-secondary">{curatorLabel}</span>
     </div>
   );
 
   const resolvedSecondaryDetail = tooltipSecondaryDetail ??
-    (showChainInTooltip ? <span className="text-xs text-secondary">Chain ID: {chainId}</span> : undefined);
+    (showChainInTooltip ? (
+      <div className="flex items-center gap-2 text-xs text-secondary">
+        <NetworkIcon networkId={chainId} />
+        <span>{networkName}</span>
+      </div>
+    ) : undefined);
+
+  const tooltipTitle = (
+    <div className="flex items-center gap-2">
+      <span>{displayName}</span>
+      {asset && (<TokenIcon
+        address={asset}
+        chainId={chainId}
+        width={18}
+        height={18}
+        disableTooltip
+      />)}
+    </div>
+  );
 
   return (
     <Tooltip
@@ -120,7 +146,7 @@ export function VaultIdentity({
       content={
         <TooltipContent
           icon={<VaultIcon curator={curator} width={32} height={32} />}
-          title={displayName}
+          title={tooltipTitle}
           detail={resolvedDetail}
           secondaryDetail={resolvedSecondaryDetail}
           actionIcon={<FiExternalLink className="h-4 w-4" />}

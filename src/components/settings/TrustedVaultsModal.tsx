@@ -236,6 +236,7 @@ export default function TrustedVaultsModal({
                             <NetworkIcon networkId={vault.chainId} />
                             <VaultIdentity
                               address={vault.address as `0x${string}`}
+                              asset={vault.asset}
                               chainId={vault.chainId}
                               curator={vault.curator}
                               vaultName={vault.name}
@@ -291,6 +292,7 @@ export default function TrustedVaultsModal({
                                 <NetworkIcon networkId={vault.chainId} />
                                 <VaultIdentity
                                   address={vault.address as `0x${string}`}
+                                  asset={vault.asset}
                                   chainId={vault.chainId}
                                   curator={vault.curator}
                                   vaultName={vault.name}

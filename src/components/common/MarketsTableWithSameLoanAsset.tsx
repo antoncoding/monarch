@@ -9,7 +9,9 @@ import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { useTokens } from '@/components/providers/TokenProvider';
+import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
+import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -57,6 +59,39 @@ enum SortColumn {
   BorrowAPY = 5,
   RateAtTarget = 6,
   Risk = 7,
+}
+
+function getTrustedVaultsForMarket(
+  market: Market,
+  trustedVaultMap: Map<string, TrustedVault>,
+): TrustedVault[] {
+  if (!market.supplyingVaults?.length) {
+    return [];
+  }
+
+  const chainId = market.morphoBlue.chain.id;
+  const seen = new Set<string>();
+  const matches: TrustedVault[] = [];
+
+  market.supplyingVaults.forEach((vault) => {
+    if (!vault.address) return;
+    const key = getVaultKey(vault.address as string, chainId);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const trusted = trustedVaultMap.get(key);
+    if (trusted) {
+      matches.push(trusted);
+    }
+  });
+
+  return matches.sort((a, b) => {
+    const aUnknown = a.curator === 'unknown';
+    const bUnknown = b.curator === 'unknown';
+    if (aUnknown !== bUnknown) {
+      return aUnknown ? 1 : -1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 function HTSortable({
@@ -376,14 +411,22 @@ function MarketRow({
   disabled,
   showSelectColumn,
   columnVisibility,
+  trustedVaultMap,
 }: {
   marketWithSelection: MarketWithSelection;
   onToggle: () => void;
   disabled: boolean;
   showSelectColumn: boolean;
   columnVisibility: ColumnVisibility;
+  trustedVaultMap: Map<string, TrustedVault>;
 }) {
   const { market, isSelected } = marketWithSelection;
+  const trustedVaults = useMemo(() => {
+    if (!columnVisibility.trustedBy) {
+      return [];
+    }
+    return getTrustedVaultsForMarket(market, trustedVaultMap);
+  }, [columnVisibility.trustedBy, market, trustedVaultMap]);
 
   return (
     <tr
@@ -426,6 +469,11 @@ function MarketRow({
           showExplorerLink={false}
         />
       </td>
+      {columnVisibility.trustedBy && (
+        <td data-label="Trusted By" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+          <TrustedByCell vaults={trustedVaults} />
+        </td>
+      )}
       {columnVisibility.totalSupply && (
         <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
           <p className="text-xs">
@@ -507,6 +555,7 @@ export function MarketsTableWithSameLoanAsset({
   const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [userTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
@@ -518,6 +567,14 @@ export function MarketsTableWithSameLoanAsset({
     keys.MarketsUsdMinLiquidityKey,
     DEFAULT_MIN_LIQUIDITY_USD.toString(),
   );
+
+  const trustedVaultMap = useMemo(() => {
+    const map = new Map<string, TrustedVault>();
+    userTrustedVaults.forEach((vault) => {
+      map.set(getVaultKey(vault.address, vault.chainId), vault);
+    });
+    return map;
+  }, [userTrustedVaults]);
 
   // USD Filter enabled states
   const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
@@ -823,6 +880,11 @@ export function MarketsTableWithSameLoanAsset({
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
+              {columnVisibility.trustedBy && (
+                <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
+                  Trusted By
+                </th>
+              )}
               {columnVisibility.totalSupply && (
                 <HTSortable
                   label="Total Supply"
@@ -896,6 +958,7 @@ export function MarketsTableWithSameLoanAsset({
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
                   columnVisibility={columnVisibility}
+                  trustedVaultMap={trustedVaultMap}
                 />
               ))
             )}

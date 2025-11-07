@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
-import { Market } from '@/utils/types';
 import { type TrustedVault, getVaultKey } from '@/constants/vaults/known_vaults';
+import { Market } from '@/utils/types';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';

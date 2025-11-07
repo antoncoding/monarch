@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
-import { VaultIdentity } from '@/components/vaults/VaultIdentity';
+import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
@@ -262,50 +262,5 @@ export function MarketTableBody({
         );
       })}
     </tbody>
-  );
-}
-
-type TrustedByCellProps = {
-  vaults: TrustedVault[];
-};
-
-function TrustedByCell({ vaults }: TrustedByCellProps) {
-  if (!vaults.length) {
-    return <span className="text-xs text-secondary">—</span>;
-  }
-
-  const preview = vaults.slice(0, 3);
-  const remainder = vaults.length - preview.length;
-
-  return (
-    <div className="flex items-center">
-      {preview.map((vault, index) => (
-        <div
-          key={`${vault.address}-${vault.chainId}`}
-          className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
-          style={{ zIndex: preview.length - index }}
-        >
-          <VaultIdentity
-            address={vault.address}
-            chainId={vault.chainId}
-            curator={vault.curator}
-            vaultName={vault.name}
-            variant="icon"
-            iconSize={22}
-            className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
-            showAddressInTooltip={false}
-            showChainInTooltip={false}
-          />
-        </div>
-      ))}
-      {remainder > 0 && (
-        <span
-          className="-ml-2 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-hovered text-[11px] text-secondary"
-          style={{ zIndex: 0 }}
-        >
-          +{remainder}
-        </span>
-      )}
-    </div>
   );
 }
