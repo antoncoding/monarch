@@ -57,7 +57,7 @@ export const fetchMorphoMarket = async (
 export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
   const allMarkets: Market[] = [];
   let skip = 0;
-  const pageSize = 1000;
+  const pageSize = 500;
   let totalCount = 0;
   let queryCount = 0;
 

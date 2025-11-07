@@ -271,10 +271,14 @@ const transformSubgraphMarketToMarket = (
     isProtectedByLiquidationBots: false, // Not available from subgraph
     isMonarchWhitelisted: false,
 
+    
     // todo: not able to parse bad debt now
     realizedBadDebt: {
       underlying: '0'
-    }
+    },
+
+    // todo: no way to parse supplying vaults now
+    supplyingVaults: [],
   };
 
   return marketDetail;

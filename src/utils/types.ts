@@ -308,6 +308,9 @@ export type Market = {
   realizedBadDebt: {
     underlying: string
   }
+  supplyingVaults?: {
+    address: string;
+  }[];
   // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
   hasUSDPrice: boolean;
   warnings: MarketWarning[];

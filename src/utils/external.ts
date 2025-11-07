@@ -12,6 +12,17 @@ export const getMarketURL = (id: string, chainId: number): string => {
   return `https://app.morpho.org/${network}/market/${id}`;
 };
 
+export const getVaultURL = (address: string, chainId: number): string => {
+  let network = getNetworkName(chainId)?.toLowerCase();
+  // morpho urls
+  if (chainId === SupportedNetworks.HyperEVM) {
+    network = 'hyperliquid';
+  } else if (chainId === SupportedNetworks.Mainnet) {
+    network = 'ethereum';
+  }
+  return `https://app.morpho.org/${network}/vault/${address}`;
+};
+
 export const getAssetURL = (address: string, chain: SupportedNetworks): string => {
   return `${getExplorerUrl(chain)}/token/${address}`;
 };

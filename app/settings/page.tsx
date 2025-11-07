@@ -1,10 +1,15 @@
 'use client';
 
+import React from 'react';
 import { IconSwitch } from '@/components/common/IconSwitch';
+import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
+import { VaultIcon } from '@/components/vaults/VaultIcon';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
+import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
@@ -13,8 +18,14 @@ export default function SettingsPage() {
     false,
   );
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    'userTrustedVaults',
+    trusted_vaults
+  );
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
+
+  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -101,6 +112,56 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Trusted Vaults Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
+
+            <div className="bg-surface flex flex-col gap-4 rounded p-6">
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
+                <p className="text-sm text-secondary">
+                  Choose which vaults you trust. You can filter markets based on whether your trusted
+                  vaults have deposited into them.
+                </p>
+              </div>
+
+              {/* Display trusted vault icons */}
+              <div className="flex flex-wrap gap-2">
+                {userTrustedVaults.slice(0, 12).map((vault) => (
+                  <VaultIcon
+                    key={`${vault.address}-${vault.chainId}`}
+                    vendor={vault.vendor}
+                    address={vault.address as `0x${string}`}
+                    chainId={vault.chainId}
+                    vaultName={vault.name}
+                    width={32}
+                    height={32}
+                    showTooltip={true}
+                    showLink={true}
+                  />
+                ))}
+                {userTrustedVaults.length > 12 && (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
+                    +{userTrustedVaults.length - 12}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsTrustedVaultsModalOpen(true)}
+                >
+                  Edit Trusted Vaults
+                </Button>
+                <span className="text-xs text-secondary">
+                  {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Advanced Section */}
           <div className="flex flex-col gap-4 pt-4">
             <AdvancedRpcSettings />
@@ -134,6 +195,14 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Trusted Vaults Modal */}
+      <TrustedVaultsModal
+        isOpen={isTrustedVaultsModalOpen}
+        onOpenChange={() => setIsTrustedVaultsModalOpen(!isTrustedVaultsModalOpen)}
+        userTrustedVaults={userTrustedVaults}
+        setUserTrustedVaults={setUserTrustedVaults}
+      />
     </div>
   );
 }
