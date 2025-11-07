@@ -1,15 +1,15 @@
 'use client';
 
 import React from 'react';
-import { IconSwitch } from '@/components/common/IconSwitch';
 import { Button } from '@/components/common';
+import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
 import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import { VaultIcon } from '@/components/vaults/VaultIcon';
+import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
-import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
@@ -26,6 +26,11 @@ export default function SettingsPage() {
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
 
   const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -126,25 +131,39 @@ export default function SettingsPage() {
               </div>
 
               {/* Display trusted vault icons */}
-              <div className="flex flex-wrap gap-2">
-                {userTrustedVaults.slice(0, 12).map((vault) => (
-                  <VaultIcon
-                    key={`${vault.address}-${vault.chainId}`}
-                    vendor={vault.vendor}
-                    address={vault.address as `0x${string}`}
-                    chainId={vault.chainId}
-                    vaultName={vault.name}
-                    width={32}
-                    height={32}
-                    showTooltip={true}
-                    showLink={true}
-                  />
-                ))}
-                {userTrustedVaults.length > 12 && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
-                    +{userTrustedVaults.length - 12}
+              <div className="flex flex-col gap-2">
+                <div className="text-xs text-secondary">
+                  Mounted: {mounted ? 'Yes' : 'No'} | Vaults: {userTrustedVaults.length} |
+                  First curator: {userTrustedVaults[0]?.curator || 'none'}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                {mounted ? (
+                  <>
+                    {userTrustedVaults.slice(0, 12).map((vault) => (
+                      <VaultIcon
+                        key={`${vault.address}-${vault.chainId}`}
+                        curator={vault.curator}
+                        address={vault.address as `0x${string}`}
+                        chainId={vault.chainId}
+                        vaultName={vault.name}
+                        width={24}
+                        height={24}
+                        showTooltip
+                        showLink
+                      />
+                    ))}
+                    {userTrustedVaults.length > 12 && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
+                        +{userTrustedVaults.length - 12}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex h-8 items-center text-sm text-secondary">
+                    Loading vaults...
                   </div>
                 )}
+                </div>
               </div>
 
               <div className="flex items-center gap-4">

@@ -4,14 +4,14 @@ import { useMemo } from 'react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { Address } from 'viem';
-import { VaultIcon } from './VaultIcon';
-import { VaultVendor } from '@/constants/vaults/trusted_vaults';
+import { VaultCurator } from '@/constants/vaults/trusted_vaults';
 import { getVaultURL } from '@/utils/external';
+import { VaultIcon } from './VaultIcon';
 
 type VaultIdentityProps = {
   address: Address;
   chainId: number;
-  vendor: VaultVendor | string;
+  curator: VaultCurator | string;
   vaultName?: string;
   showLink?: boolean;
   showIcon?: boolean;
@@ -21,7 +21,7 @@ type VaultIdentityProps = {
 export function VaultIdentity({
   address,
   chainId,
-  vendor,
+  curator,
   vaultName,
   showLink = true,
   showIcon = true,
@@ -39,7 +39,7 @@ export function VaultIdentity({
       <div className={`inline-flex items-center gap-2 ${className}`}>
         {showIcon && (
           <VaultIcon
-            vendor={vendor}
+            curator={curator}
             address={address}
             chainId={chainId}
             width={20}
@@ -64,7 +64,7 @@ export function VaultIdentity({
     >
       {showIcon && (
         <VaultIcon
-          vendor={vendor}
+          curator={curator}
           address={address}
           chainId={chainId}
           width={20}

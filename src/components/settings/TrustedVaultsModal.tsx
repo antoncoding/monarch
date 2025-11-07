@@ -9,6 +9,7 @@ import {
   ModalFooter,
   Divider,
   Input,
+  Spinner,
 } from '@heroui/react';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { Button } from '@/components/common';
@@ -16,6 +17,7 @@ import { IconSwitch } from '@/components/common/IconSwitch';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
 import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
+import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
@@ -32,34 +34,74 @@ export default function TrustedVaultsModal({
 }: TrustedVaultsModalProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
 
-  // For now, we only have trusted_vaults. Later we'll add morpho_whitelisted_vaults
+  // Fetch all Morpho vaults from API
+  const { vaults: morphoVaults, loading: morphoLoading } = useAllMorphoVaults();
+
+  // Transform Morpho API vaults to TrustedVault format
+  const morphoWhitelistedVaults = useMemo<TrustedVault[]>(() => {
+    return morphoVaults.map((vault) => ({
+      address: vault.address,
+      chainId: vault.chainId,
+      name: vault.name,
+      curator: 'unknown',
+      asset: vault.assetAddress,
+    }));
+  }, [morphoVaults]);
+
+  // Combine both trusted_vaults (Monarch) and Morpho API vaults
   const allAvailableVaults = useMemo(() => {
-    return trusted_vaults;
-  }, []);
+    // Create a Set of Monarch vault keys to avoid duplicates
+    const monarchVaultKeys = new Set(
+      trusted_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
+    );
+
+    // Filter out Morpho vaults that are already in Monarch's list
+    const uniqueMorphoVaults = morphoWhitelistedVaults.filter(
+      (v) => !monarchVaultKeys.has(`${v.address.toLowerCase()}-${v.chainId}`)
+    );
+
+    return [...trusted_vaults, ...uniqueMorphoVaults];
+  }, [morphoWhitelistedVaults]);
 
   // Filter and sort vaults based on search query
-  const sortedVaults = useMemo(() => {
-    let vaults = allAvailableVaults;
+  const filterAndSortVaults = (vaults: TrustedVault[]) => {
+    let filtered = vaults;
 
     // Filter by search query if present
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      vaults = vaults.filter((vault) => {
+      filtered = filtered.filter((vault) => {
         return (
           vault.name.toLowerCase().includes(query) ||
-          vault.vendor.toLowerCase().includes(query) ||
+          vault.curator.toLowerCase().includes(query) ||
           vault.address.toLowerCase().includes(query)
         );
       });
     }
 
     // Sort by vendor name, then by vault name
-    return [...vaults].sort((a, b) => {
-      const vendorCompare = a.vendor.localeCompare(b.vendor);
-      if (vendorCompare !== 0) return vendorCompare;
+    return [...filtered].sort((a, b) => {
+      const curatorCompare = a.curator.localeCompare(b.curator);
+      if (curatorCompare !== 0) return curatorCompare;
       return a.name.localeCompare(b.name);
     });
-  }, [allAvailableVaults, searchQuery]);
+  };
+
+  // Separate lists for Monarch and Morpho vaults
+  const sortedMonarchVaults = useMemo(() => {
+    return filterAndSortVaults(trusted_vaults);
+  }, [searchQuery]);
+
+  const sortedMorphoVaults = useMemo(() => {
+    // Filter out duplicates that are already in Monarch list
+    const monarchVaultKeys = new Set(
+      trusted_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
+    );
+    const uniqueMorphoVaults = morphoWhitelistedVaults.filter(
+      (v) => !monarchVaultKeys.has(`${v.address.toLowerCase()}-${v.chainId}`)
+    );
+    return filterAndSortVaults(uniqueMorphoVaults);
+  }, [morphoWhitelistedVaults, searchQuery]);
 
   const isVaultTrusted = (vault: TrustedVault) => {
     return userTrustedVaults.some(
@@ -125,7 +167,7 @@ export default function TrustedVaultsModal({
               {/* Search and Actions */}
               <div className="flex flex-col gap-3">
                 <Input
-                  placeholder="Search by name, vendor, or address..."
+                  placeholder="Search by name, curator, or address..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size="sm"
@@ -153,21 +195,21 @@ export default function TrustedVaultsModal({
               {/* Monarch Whitelisted Vaults List */}
               <div className="flex flex-col gap-3">
                 <h3 className="font-zen text-sm uppercase text-secondary">
-                  Monarch Whitelisted ({sortedVaults.length})
+                  Monarch Whitelisted ({sortedMonarchVaults.length})
                 </h3>
 
-                {sortedVaults.length === 0 ? (
-                  <div className="text-center text-sm text-secondary py-8">
-                    No vaults found matching your search.
+                {sortedMonarchVaults.length === 0 ? (
+                  <div className="text-center text-sm text-secondary py-4">
+                    No Monarch vaults found matching your search.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {sortedVaults.map((vault) => {
+                    {sortedMonarchVaults.map((vault) => {
                       const trusted = isVaultTrusted(vault);
 
                       return (
                         <div
-                          key={`${vault.address}-${vault.chainId}`}
+                          key={`monarch-${vault.address}-${vault.chainId}`}
                           className="flex items-center justify-between gap-4 rounded bg-surface p-3 transition-colors hover:bg-surface-dark"
                         >
                           <div className="flex flex-grow items-center gap-3">
@@ -175,10 +217,10 @@ export default function TrustedVaultsModal({
                             <VaultIdentity
                               address={vault.address as `0x${string}`}
                               chainId={vault.chainId}
-                              vendor={vault.vendor}
+                              curator={vault.curator}
                               vaultName={vault.name}
-                              showLink={true}
-                              showIcon={true}
+                              showLink
+                              showIcon
                             />
                           </div>
                           <IconSwitch
@@ -195,6 +237,63 @@ export default function TrustedVaultsModal({
                   </div>
                 )}
               </div>
+
+              {/* All Morpho Vaults Section */}
+              {morphoLoading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner size="sm" label="Loading Morpho vaults..." />
+                </div>
+              ) : (
+                <>
+                  <Divider />
+                  <div className="flex flex-col gap-3">
+                    <h3 className="font-zen text-sm uppercase text-secondary">
+                      All Morpho Vaults ({sortedMorphoVaults.length})
+                    </h3>
+
+                    {sortedMorphoVaults.length === 0 ? (
+                      <div className="text-center text-sm text-secondary py-4">
+                        {searchQuery.trim()
+                          ? 'No Morpho vaults found matching your search.'
+                          : 'All Morpho vaults are already in the Monarch list.'}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2">
+                        {sortedMorphoVaults.map((vault) => {
+                          const trusted = isVaultTrusted(vault);
+
+                          return (
+                            <div
+                              key={`morpho-${vault.address}-${vault.chainId}`}
+                              className="flex items-center justify-between gap-4 rounded bg-surface p-3 transition-colors hover:bg-surface-dark"
+                            >
+                              <div className="flex flex-grow items-center gap-3">
+                                <NetworkIcon networkId={vault.chainId} />
+                                <VaultIdentity
+                                  address={vault.address as `0x${string}`}
+                                  chainId={vault.chainId}
+                                  curator={vault.curator}
+                                  vaultName={vault.name}
+                                  showLink
+                                  showIcon
+                                />
+                              </div>
+                              <IconSwitch
+                                selected={trusted}
+                                onChange={() => toggleVault(vault)}
+                                size="xs"
+                                color="primary"
+                                thumbIcon={trusted ? GoShieldCheck : GoShield}
+                                aria-label={`Toggle trust for ${vault.name}`}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </ModalBody>
             <ModalFooter>
               <Button color="danger" variant="light" onPress={onClose}>
