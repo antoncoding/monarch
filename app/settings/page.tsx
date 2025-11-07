@@ -6,8 +6,8 @@ import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
 import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
-import { VaultIcon } from '@/components/vaults/VaultIcon';
-import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
+import { VaultIdentity } from '@/components/vaults/VaultIdentity';
+import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 
@@ -20,13 +20,30 @@ export default function SettingsPage() {
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
   const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
     'userTrustedVaults',
-    trusted_vaults
+    defaultTrustedVaults,
   );
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
 
   const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+
+  const defaultVaultKeys = React.useMemo(() => {
+    return new Set(
+      defaultTrustedVaults.map(
+        (vault) => `${vault.chainId}-${vault.address.toLowerCase()}`,
+      ),
+    );
+  }, []);
+
+  const sortedTrustedVaults = React.useMemo(() => {
+    return [...userTrustedVaults].sort((a, b) => {
+      const aDefault = defaultVaultKeys.has(`${a.chainId}-${a.address.toLowerCase()}`);
+      const bDefault = defaultVaultKeys.has(`${b.chainId}-${b.address.toLowerCase()}`);
+      if (aDefault === bDefault) return 0;
+      return aDefault ? -1 : 1;
+    });
+  }, [userTrustedVaults, defaultVaultKeys]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -125,29 +142,25 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-2">
                 <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
                 <p className="text-sm text-secondary">
-                  Choose which vaults you trust. You can filter markets based on whether your trusted
-                  vaults have deposited into them.
+                  Choose which vaults you trust. Only vaults marked as default trusted are selected
+                  automatically, and you can adjust the list any time.
                 </p>
               </div>
 
               {/* Display trusted vault icons */}
               <div className="flex flex-col gap-2">
-                <div className="text-xs text-secondary">
-                  Mounted: {mounted ? 'Yes' : 'No'} | Vaults: {userTrustedVaults.length} |
-                  First curator: {userTrustedVaults[0]?.curator || 'none'}
-                </div>
                 <div className="flex flex-wrap gap-2">
                 {mounted ? (
                   <>
-                    {userTrustedVaults.slice(0, 12).map((vault) => (
-                      <VaultIcon
+                    {sortedTrustedVaults.slice(0, 12).map((vault) => (
+                      <VaultIdentity
                         key={`${vault.address}-${vault.chainId}`}
-                        curator={vault.curator}
                         address={vault.address as `0x${string}`}
                         chainId={vault.chainId}
+                        curator={vault.curator}
                         vaultName={vault.name}
-                        width={24}
-                        height={24}
+                        variant="icon"
+                        iconSize={24}
                         showTooltip
                         showLink
                       />

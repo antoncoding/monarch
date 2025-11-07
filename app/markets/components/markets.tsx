@@ -17,6 +17,7 @@ import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
+import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -122,15 +123,32 @@ export default function Markets({
   );
 
   // Column visibility state
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
+  const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
     keys.MarketsColumnVisibilityKey,
     DEFAULT_COLUMN_VISIBILITY,
+  );
+
+  const columnVisibility = useMemo(
+    () => ({ ...DEFAULT_COLUMN_VISIBILITY, ...columnVisibilityState }),
+    [columnVisibilityState],
+  );
+
+  const setColumnVisibility = useCallback(
+    (visibility: ColumnVisibility) => {
+      setColumnVisibilityState({ ...DEFAULT_COLUMN_VISIBILITY, ...visibility });
+    },
+    [setColumnVisibilityState],
   );
 
   // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
   const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(
     keys.MarketsTableViewModeKey,
     'compact',
+  );
+
+  const [userTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    'userTrustedVaults',
+    defaultTrustedVaults,
   );
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
@@ -567,6 +585,7 @@ export default function Markets({
                 setShowSupplyModal={setShowSupplyModal}
                 setSelectedMarket={setSelectedMarket}
                 columnVisibility={columnVisibility}
+                trustedVaults={userTrustedVaults}
                 className={tableViewMode === 'compact' ? 'w-full' : undefined}
                 wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
                 tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}

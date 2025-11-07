@@ -11,7 +11,12 @@ import {
 import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { useMarkets } from '@/hooks/useMarkets';
-import { ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS } from './columnVisibility';
+import {
+  ColumnVisibility,
+  COLUMN_LABELS,
+  COLUMN_DESCRIPTIONS,
+  DEFAULT_COLUMN_VISIBILITY,
+} from './columnVisibility';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
@@ -368,7 +373,8 @@ export default function MarketSettingsModal({
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {(Object.keys(COLUMN_LABELS) as (keyof ColumnVisibility)[]).map((key) => {
-                    const isVisible = columnVisibility[key] ?? true;
+                    const isVisible =
+                      columnVisibility[key] ?? DEFAULT_COLUMN_VISIBILITY[key] ?? false;
 
                     return (
                       <div

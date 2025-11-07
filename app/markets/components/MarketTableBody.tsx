@@ -5,6 +5,8 @@ import { Button } from '@/components/common/Button';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
+import { VaultIdentity } from '@/components/vaults/VaultIdentity';
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
 import { ColumnVisibility } from './columnVisibility';
@@ -23,6 +25,7 @@ type MarketTableBodyProps = {
   unstarMarket: (id: string) => void;
   onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
+  trustedVaultMap: Map<string, TrustedVault>;
 };
 
 export function MarketTableBody({
@@ -36,6 +39,7 @@ export function MarketTableBody({
   unstarMarket,
   onMarketClick,
   columnVisibility,
+  trustedVaultMap,
 }: MarketTableBodyProps) {
   // Calculate colspan for expanded row based on visible columns
   const visibleColumnsCount =
@@ -45,7 +49,38 @@ export function MarketTableBody({
     (columnVisibility.liquidity ? 1 : 0) +
     (columnVisibility.supplyAPY ? 1 : 0) +
     (columnVisibility.borrowAPY ? 1 : 0) +
-    (columnVisibility.rateAtTarget ? 1 : 0);
+    (columnVisibility.rateAtTarget ? 1 : 0) +
+    (columnVisibility.trustedBy ? 1 : 0);
+
+  const getTrustedVaultsForMarket = (market: Market): TrustedVault[] => {
+    if (!columnVisibility.trustedBy || !market.supplyingVaults?.length) {
+      return [];
+    }
+
+    const chainId = market.morphoBlue.chain.id;
+    const uniqueMatches: TrustedVault[] = [];
+    const seen = new Set<string>();
+
+    market.supplyingVaults.forEach((vault) => {
+      if (!vault.address) return;
+      const key = getVaultKey(vault.address as string, chainId);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const trusted = trustedVaultMap.get(key);
+      if (trusted) {
+        uniqueMatches.push(trusted);
+      }
+    });
+
+    return uniqueMatches.sort((a, b) => {
+      const aUnknown = a.curator === 'unknown';
+      const bUnknown = b.curator === 'unknown';
+      if (aUnknown !== bUnknown) {
+        return aUnknown ? 1 : -1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  };
 
   return (
     <tbody className="table-body text-sm">
@@ -122,6 +157,15 @@ export function MarketTableBody({
               <td data-label="LLTV" className="z-50" style={{ minWidth: '60px', padding: 5}}>
                 {Number(item.lltv) / 1e16}%
               </td>
+              {columnVisibility.trustedBy && (
+                <td
+                  data-label="Trusted By"
+                  className="z-50"
+                  style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
+                >
+                  <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />
+                </td>
+              )}
               {columnVisibility.totalSupply && (
                 <TDTotalSupplyOrBorrow
                   dataLabel="Total Supply"
@@ -218,5 +262,50 @@ export function MarketTableBody({
         );
       })}
     </tbody>
+  );
+}
+
+type TrustedByCellProps = {
+  vaults: TrustedVault[];
+};
+
+function TrustedByCell({ vaults }: TrustedByCellProps) {
+  if (!vaults.length) {
+    return <span className="text-xs text-secondary">—</span>;
+  }
+
+  const preview = vaults.slice(0, 3);
+  const remainder = vaults.length - preview.length;
+
+  return (
+    <div className="flex items-center">
+      {preview.map((vault, index) => (
+        <div
+          key={`${vault.address}-${vault.chainId}`}
+          className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
+          style={{ zIndex: preview.length - index }}
+        >
+          <VaultIdentity
+            address={vault.address}
+            chainId={vault.chainId}
+            curator={vault.curator}
+            vaultName={vault.name}
+            variant="icon"
+            iconSize={22}
+            className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
+            showAddressInTooltip={false}
+            showChainInTooltip={false}
+          />
+        </div>
+      ))}
+      {remainder > 0 && (
+        <span
+          className="-ml-2 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-hovered text-[11px] text-secondary"
+          style={{ zIndex: 0 }}
+        >
+          +{remainder}
+        </span>
+      )}
+    </div>
   );
 }

@@ -16,7 +16,12 @@ import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
-import { trusted_vaults, type TrustedVault } from '@/constants/vaults/trusted_vaults';
+import {
+  defaultTrustedVaults,
+  known_vaults,
+  type KnownVault,
+  type TrustedVault,
+} from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 
 type TrustedVaultsModalProps = {
@@ -38,21 +43,21 @@ export default function TrustedVaultsModal({
   const { vaults: morphoVaults, loading: morphoLoading } = useAllMorphoVaults();
 
   // Transform Morpho API vaults to TrustedVault format
-  const morphoWhitelistedVaults = useMemo<TrustedVault[]>(() => {
+  const morphoWhitelistedVaults = useMemo<KnownVault[]>(() => {
     return morphoVaults.map((vault) => ({
-      address: vault.address,
+      address: vault.address as `0x${string}`,
       chainId: vault.chainId,
       name: vault.name,
       curator: 'unknown',
-      asset: vault.assetAddress,
+      asset: vault.assetAddress as `0x${string}`,
     }));
   }, [morphoVaults]);
 
-  // Combine both trusted_vaults (Monarch) and Morpho API vaults
-  const allAvailableVaults = useMemo(() => {
+  // Combine both known vaults (Monarch) and Morpho API vaults
+  const allAvailableVaults = useMemo<KnownVault[]>(() => {
     // Create a Set of Monarch vault keys to avoid duplicates
     const monarchVaultKeys = new Set(
-      trusted_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
+      known_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
     );
 
     // Filter out Morpho vaults that are already in Monarch's list
@@ -60,11 +65,11 @@ export default function TrustedVaultsModal({
       (v) => !monarchVaultKeys.has(`${v.address.toLowerCase()}-${v.chainId}`)
     );
 
-    return [...trusted_vaults, ...uniqueMorphoVaults];
+    return [...known_vaults, ...uniqueMorphoVaults];
   }, [morphoWhitelistedVaults]);
 
   // Filter and sort vaults based on search query
-  const filterAndSortVaults = (vaults: TrustedVault[]) => {
+  const filterAndSortVaults = (vaults: KnownVault[]) => {
     let filtered = vaults;
 
     // Filter by search query if present
@@ -81,6 +86,9 @@ export default function TrustedVaultsModal({
 
     // Sort by vendor name, then by vault name
     return [...filtered].sort((a, b) => {
+      const defaultScore = Number(Boolean(b.defaultTrusted)) - Number(Boolean(a.defaultTrusted));
+      if (defaultScore !== 0) return defaultScore;
+
       const curatorCompare = a.curator.localeCompare(b.curator);
       if (curatorCompare !== 0) return curatorCompare;
       return a.name.localeCompare(b.name);
@@ -89,13 +97,13 @@ export default function TrustedVaultsModal({
 
   // Separate lists for Monarch and Morpho vaults
   const sortedMonarchVaults = useMemo(() => {
-    return filterAndSortVaults(trusted_vaults);
+    return filterAndSortVaults(known_vaults);
   }, [searchQuery]);
 
   const sortedMorphoVaults = useMemo(() => {
     // Filter out duplicates that are already in Monarch list
     const monarchVaultKeys = new Set(
-      trusted_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
+      known_vaults.map((v) => `${v.address.toLowerCase()}-${v.chainId}`)
     );
     const uniqueMorphoVaults = morphoWhitelistedVaults.filter(
       (v) => !monarchVaultKeys.has(`${v.address.toLowerCase()}-${v.chainId}`)
@@ -103,30 +111,42 @@ export default function TrustedVaultsModal({
     return filterAndSortVaults(uniqueMorphoVaults);
   }, [morphoWhitelistedVaults, searchQuery]);
 
-  const isVaultTrusted = (vault: TrustedVault) => {
+  const isVaultTrusted = (vault: TrustedVault | KnownVault) => {
     return userTrustedVaults.some(
       (v) => v.address.toLowerCase() === vault.address.toLowerCase() && v.chainId === vault.chainId
     );
   };
 
-  const toggleVault = (vault: TrustedVault) => {
+  const formatVaultForStorage = (vault: KnownVault): TrustedVault => ({
+    address: vault.address,
+    chainId: vault.chainId,
+    curator: vault.curator,
+    name: vault.name,
+    asset: vault.asset,
+  });
+
+  const toggleVault = (vault: KnownVault) => {
     const isTrusted = isVaultTrusted(vault);
 
     if (isTrusted) {
       // Remove vault
       setUserTrustedVaults(
         userTrustedVaults.filter(
-          (v) => !(v.address.toLowerCase() === vault.address.toLowerCase() && v.chainId === vault.chainId)
+          (v) =>
+            !(
+              v.address.toLowerCase() === vault.address.toLowerCase() &&
+              v.chainId === vault.chainId
+            )
         )
       );
     } else {
       // Add vault
-      setUserTrustedVaults([...userTrustedVaults, vault]);
+      setUserTrustedVaults([...userTrustedVaults, formatVaultForStorage(vault)]);
     }
   };
 
   const handleSelectAll = () => {
-    setUserTrustedVaults([...allAvailableVaults]);
+    setUserTrustedVaults(allAvailableVaults.map((vault) => formatVaultForStorage(vault)));
   };
 
   const handleDeselectAll = () => {
@@ -134,7 +154,7 @@ export default function TrustedVaultsModal({
   };
 
   const handleResetToDefaults = () => {
-    setUserTrustedVaults([...trusted_vaults]);
+    setUserTrustedVaults([...defaultTrustedVaults]);
   };
 
   return (
@@ -160,7 +180,7 @@ export default function TrustedVaultsModal({
               <div className="bg-surface-soft rounded p-4">
                 <p className="text-sm text-secondary">
                   Select which vaults you trust. Trusted vaults can be used to filter markets based on
-                  vault participation. By default, all curated vaults are trusted.
+                  vault participation. Only vaults flagged as default trusted are pre-selected.
                 </p>
               </div>
 
@@ -195,12 +215,12 @@ export default function TrustedVaultsModal({
               {/* Monarch Whitelisted Vaults List */}
               <div className="flex flex-col gap-3">
                 <h3 className="font-zen text-sm uppercase text-secondary">
-                  Monarch Whitelisted ({sortedMonarchVaults.length})
+                  Known Vaults ({sortedMonarchVaults.length})
                 </h3>
 
                 {sortedMonarchVaults.length === 0 ? (
                   <div className="text-center text-sm text-secondary py-4">
-                    No Monarch vaults found matching your search.
+                    No known vaults found matching your search.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -220,7 +240,7 @@ export default function TrustedVaultsModal({
                               curator={vault.curator}
                               vaultName={vault.name}
                               showLink
-                              showIcon
+                              variant="inline"
                             />
                           </div>
                           <IconSwitch
@@ -255,7 +275,7 @@ export default function TrustedVaultsModal({
                       <div className="text-center text-sm text-secondary py-4">
                         {searchQuery.trim()
                           ? 'No Morpho vaults found matching your search.'
-                          : 'All Morpho vaults are already in the Monarch list.'}
+                          : 'All Morpho vaults are already in the known list.'}
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2">
@@ -275,7 +295,7 @@ export default function TrustedVaultsModal({
                                   curator={vault.curator}
                                   vaultName={vault.name}
                                   showLink
-                                  showIcon
+                                  variant="inline"
                                 />
                               </div>
                               <IconSwitch

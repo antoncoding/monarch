@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { Market } from '@/utils/types';
+import { type TrustedVault, getVaultKey } from '@/constants/vaults/known_vaults';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
@@ -22,6 +23,7 @@ type MarketsTableProps = {
   setCurrentPage: (value: number) => void;
   onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
+  trustedVaults: TrustedVault[];
   className?: string;
   wrapperClassName?: string;
   tableClassName?: string;
@@ -42,11 +44,20 @@ function MarketsTable({
   setCurrentPage,
   onMarketClick,
   columnVisibility,
+  trustedVaults,
   className,
   wrapperClassName,
   tableClassName,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
+  const trustedVaultMap = useMemo(() => {
+    const map = new Map<string, TrustedVault>();
+    trustedVaults.forEach((vault) => {
+      map.set(getVaultKey(vault.address, vault.chainId), vault);
+    });
+    return map;
+  }, [trustedVaults]);
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -101,6 +112,9 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.LLTV}
               />
+              {columnVisibility.trustedBy && (
+                <th className="font-normal px-2 py-2 whitespace-nowrap">Trusted By</th>
+              )}
               {columnVisibility.totalSupply && (
                 <HTSortable
                   label="Total Supply"
@@ -171,6 +185,7 @@ function MarketsTable({
             unstarMarket={unstarMarket}
             onMarketClick={onMarketClick}
             columnVisibility={columnVisibility}
+            trustedVaultMap={trustedVaultMap}
           />
         </table>
       </div>
