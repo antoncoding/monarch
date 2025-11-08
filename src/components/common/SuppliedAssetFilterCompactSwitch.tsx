@@ -7,6 +7,7 @@ import { FiFilter } from 'react-icons/fi';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable } from '@/utils/balance';
+import { MONARCH_PRIMARY } from '@/constants/chartColors';
 
 type SuppliedAssetFilterCompactSwitchProps = {
   includeUnknownTokens: boolean;
@@ -82,7 +83,6 @@ export function SuppliedAssetFilterCompactSwitch({
           <TooltipContent
             title="Filters"
             detail="Toggle market filters and risk guards"
-            secondaryDetail="Use the gear icon to fine-tune settings"
             icon={<FiFilter size={14} />}
           />
         }
@@ -91,11 +91,11 @@ export function SuppliedAssetFilterCompactSwitch({
           isIconOnly
           variant="light"
           size="sm"
-          className={`min-w-0 px-2 ${hasActiveFilters ? 'text-monarch-orange' : 'text-secondary'}`}
+          className={"min-w-0 px-2"}
           aria-label="Market filters"
           onPress={onOpen}
         >
-          <FiFilter size={14} />
+          <FiFilter size={14} style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined}} />
         </Button>
       </Tooltip>
 
@@ -103,14 +103,17 @@ export function SuppliedAssetFilterCompactSwitch({
         <ModalContent>
           {(close) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 font-zen">
+              <ModalHeader className="flex flex-col gap-1 font-zen text-normal">
                 Filters
-                <p className="text-xs font-normal text-secondary">
+                <p className="font-zen text-sm font-normal text-secondary">
                   Quickly toggle the visibility filters that power the markets table.
                 </p>
               </ModalHeader>
               <ModalBody className="flex flex-col gap-5">
-                <FilterSection title="Basic Filters">
+                <FilterSection 
+                  title="Basic Filters" 
+                  helper="Options to display markets with unknown parameters. Use with caution."
+                >
                   <FilterRow
                     title="Show Unknown Tokens"
                     description="Display tokens outside of the curated list."
@@ -140,7 +143,7 @@ export function SuppliedAssetFilterCompactSwitch({
 
                 <FilterSection
                   title="Advanced Filters"
-                  helper="Click the gear icon to adjust thresholds or manage trusted vaults."
+                  helper="Use advanced filters to fine-tune your market view. Use Customize Filters to adjust thresholds and manage trusted vaults."
                 >
                   <FilterRow
                     title="Trusted Vaults Only"

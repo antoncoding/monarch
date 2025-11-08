@@ -66,7 +66,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Spark USDC Vault',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0xe41a0583334f0dc4E023Acd0bFef3667F6FE0597',
@@ -74,7 +73,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Spark USDS Vault',
     asset: '0xdC035D45d973E3EC169d2276DDab16f1e407384F',
-    defaultTrusted: true,
   },
   {
     address: '0xd63070114470f685b75B74D60EEc7c1113d33a3D',
@@ -110,7 +108,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Gauntlet USDC Prime',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    defaultTrusted: true,
   },
   {
     address: '0x8eB67A509616cd6A7c1B3c8C21D48FF57df3d458',
@@ -118,7 +115,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Gauntlet USDC Core',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    defaultTrusted: true,
   },
   {
     address: '0x7e97fa6893871A2751B5fE961978DCCb2c201E65',
@@ -126,7 +122,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 42161,
     name: 'Gauntlet USDC Core',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
-    defaultTrusted: true,
   },
   {
     address: '0x616a4E1db48e22028f6bbf20444Cd3b8e3273738',
@@ -134,7 +129,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Seamless USDC Vault',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0xC0c5689e6f4D256E861F65465b691aeEcC0dEb12',
@@ -142,7 +136,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Gauntlet USDC Core',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0x236919F11ff9eA9550A4287696C2FC9e18E6e890',
@@ -157,7 +150,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Gauntlet USDT Prime',
     asset: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-    defaultTrusted: true,
   },
   {
     address: '0x2371e134e3455e0593363cBF89d3b6cf53740618',
@@ -187,7 +179,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 137,
     name: 'Compound USDC',
     asset: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
-    defaultTrusted: true,
   },
   {
     address: '0xfD06859A671C21497a2EB8C5E3fEA48De924D6c8',
@@ -195,7 +186,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 137,
     name: 'Compound USDT',
     asset: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
-    defaultTrusted: true,
   },
   {
     address: '0xF5C81d25ee174d83f1FD202cA94AE6070d073cCF',
@@ -203,7 +193,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 137,
     name: 'Compound WETH',
     asset: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
-    defaultTrusted: true,
   },
   {
     address: '0xbeeF010f9cb27031ad51e3333f9aF9C6B1228183',
@@ -211,7 +200,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Steakhouse USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB',
@@ -219,7 +207,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Steakhouse USDC',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    defaultTrusted: true,
   },
   {
     address: '0xBEefb9f61CC44895d8AEc381373555a64191A9c4',
@@ -234,7 +221,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Smokehouse USDC',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    defaultTrusted: true,
   },
   {
     address: '0x5c0C306Aaa9F877de636f4d5822cA9F2E81563BA',
@@ -348,7 +334,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Moonwell Flagship USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0xa0E430870c4604CcfC7B38Ca7845B1FF653D0ff1',
@@ -356,7 +341,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Moonwell Flagship WETH',
     asset: '0x4200000000000000000000000000000000000006',
-    defaultTrusted: true,
   },
   {
     address: '0x0F359FD18BDa75e9c49bC027E7da59a4b01BF32a',
@@ -371,7 +355,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 999,
     name: 'Felix USDC',
     asset: '0xb88339CB7199b77E23DB6E890353E22632Ba630f',
-    defaultTrusted: true,
   },
   {
     address: '0xFc5126377F0efc0041C0969Ef9BA903Ce67d151e',
@@ -379,7 +362,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 999,
     name: 'Felix USDT0',
     asset: '0xB8CE59FC3717ada4C02eaDF9682A9e934F625ebb',
-    defaultTrusted: true,
   },
   {
     address: '0x2900ABd73631b2f60747e687095537B673c06A76',
@@ -387,7 +369,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 999,
     name: 'Felix WHYPE',
     asset: '0x5555555555555555555555555555555555555555',
-    defaultTrusted: true,
   },
 ];
 

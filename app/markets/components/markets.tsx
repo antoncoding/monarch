@@ -553,16 +553,24 @@ export default function Markets({
               onOpenSettings={onSettingsModalOpen}
             />
 
-            <Button
-              disabled={loading || isRefetching}
-              variant="light"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onPress={handleRefresh}
-              isIconOnly
+            <Tooltip
+              classNames={{
+                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+              }}
+              content={<TooltipContent title="Refresh" detail="Fetch the latest market data" />}
             >
-              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-            </Button>
+              <Button
+                disabled={loading || isRefetching}
+                variant="light"
+                size="sm"
+                className="text-secondary min-w-0 px-2"
+                onPress={handleRefresh}
+                isIconOnly
+              >
+                <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+              </Button>
+            </Tooltip>
 
             <Tooltip
               classNames={{
@@ -599,16 +607,24 @@ export default function Markets({
               </Button>
             </Tooltip>
 
-            <Button
-              isIconOnly
-              aria-label="Market View Settings"
-              variant="light"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onPress={onSettingsModalOpen}
+            <Tooltip
+              classNames={{
+                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+              }}
+              content={<TooltipContent title="Preferences" detail="Adjust thresholds and columns" />}
             >
-              <FiSettings size={12} />
-            </Button>
+              <Button
+                isIconOnly
+                aria-label="Market Preferences"
+                variant="light"
+                size="sm"
+                className="text-secondary min-w-0 px-2"
+                onPress={onSettingsModalOpen}
+              >
+                <FiSettings size={12} />
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </div>

@@ -139,7 +139,7 @@ export default function SettingsPage() {
             <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
 
             <div className="bg-surface flex flex-col gap-4 rounded p-6">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 px-12 pb-6">
                 <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
                 <p className="text-sm text-secondary">
                   Choose which vaults you trust. Only vaults marked as default trusted are selected

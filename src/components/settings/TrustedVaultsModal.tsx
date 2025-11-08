@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   Modal,
   ModalContent,
@@ -24,6 +24,7 @@ import {
   type TrustedVault,
 } from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
+import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function TrustedVaultsModal({
   setUserTrustedVaults,
 }: TrustedVaultsModalProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [morphoSectionOpen, setMorphoSectionOpen] = useState(false);
 
   // Fetch all Morpho vaults from API
   const { vaults: morphoVaults, loading: morphoLoading } = useAllMorphoVaults();
@@ -173,7 +175,7 @@ export default function TrustedVaultsModal({
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="flex flex-col gap-1 font-zen">
+            <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
               Manage Trusted Vaults
             </ModalHeader>
             <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
@@ -183,24 +185,24 @@ export default function TrustedVaultsModal({
                   Select which vaults you trust. Trusted vaults can be used to filter markets based on
                   vault participation.
                 </p>
-                <div className="mt-3 flex items-start gap-3 rounded border border-warning/40 bg-warning/5 p-3 text-warning">
+                <div className="mt-3 flex items-start gap-3 rounded bg-yellow-500/10 p-3 text-yellow-700">
                   <IoWarningOutline className="mt-0.5 h-4 w-4" />
-                  <p className="font-zen text-xs leading-relaxed">
+                  <p className="font-zen text-sm">
                     Vaults are managed by third-party curators. Markets trusted by those vaults are not
-                    guaranteed to be risk-free. Always perform your own diligence before trusting any
+                    guaranteed to be risk-free. Always do your own research before trusting any
                     vault.
                   </p>
                 </div>
               </div>
 
               {/* Search and Actions */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 px-4">
                 <Input
                   placeholder="Search by name, curator, or address..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size="sm"
-                  className="w-full"
+                  className="w-full font-zen"
                 />
 
                 <div className="flex flex-wrap gap-2">
@@ -221,12 +223,10 @@ export default function TrustedVaultsModal({
 
               <Divider />
 
-              {/* Monarch Whitelisted Vaults List */}
-              <div className="flex flex-col gap-3">
-                <h3 className="font-zen text-sm uppercase text-secondary">
+              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+                <h3 className="font-zen text-base font-semibold text-primary">
                   Known Vaults ({sortedMonarchVaults.length})
                 </h3>
-
                 {sortedMonarchVaults.length === 0 ? (
                   <div className="text-center text-sm text-secondary py-4">
                     No known vaults found matching your search.
@@ -268,66 +268,66 @@ export default function TrustedVaultsModal({
                 )}
               </div>
 
-              {/* All Morpho Vaults Section */}
-              {morphoLoading ? (
-                <div className="flex justify-center py-8">
-                  <Spinner size="sm" label="Loading Morpho vaults..." />
-                </div>
-              ) : (
-                <>
-                  <Divider />
-                  <div className="flex flex-col gap-3">
-                    <h3 className="font-zen text-sm uppercase text-secondary">
-                      All Morpho Vaults ({sortedMorphoVaults.length})
-                    </h3>
+              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+                <button
+                  type="button"
+                  className="flex items-center justify-between text-left text-sm font-semibold text-primary"
+                  onClick={() => setMorphoSectionOpen((prev) => !prev)}
+                >
+                  <span>All Morpho Vaults ({sortedMorphoVaults.length})</span>
+                  {morphoSectionOpen ? <FiChevronUp /> : <FiChevronDown />}
+                </button>
+                {morphoSectionOpen && (
+                  morphoLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Spinner size="sm" label="Loading Morpho vaults..." />
+                    </div>
+                  ) : sortedMorphoVaults.length === 0 ? (
+                    <div className="text-center text-sm text-secondary py-4">
+                      {searchQuery.trim()
+                        ? 'No Morpho vaults found matching your search.'
+                        : 'All Morpho vaults are already in the known list.'}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {sortedMorphoVaults.map((vault) => {
+                        const trusted = isVaultTrusted(vault);
 
-                    {sortedMorphoVaults.length === 0 ? (
-                      <div className="text-center text-sm text-secondary py-4">
-                        {searchQuery.trim()
-                          ? 'No Morpho vaults found matching your search.'
-                          : 'All Morpho vaults are already in the known list.'}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {sortedMorphoVaults.map((vault) => {
-                          const trusted = isVaultTrusted(vault);
-
-                          return (
-                            <div
-                              key={`morpho-${vault.address}-${vault.chainId}`}
-                              className="flex items-center justify-between gap-4 rounded bg-surface p-3 transition-colors hover:bg-surface-dark"
-                            >
-                              <div className="flex flex-grow items-center gap-3">
-                                <NetworkIcon networkId={vault.chainId} />
-                                <VaultIdentity
-                                  address={vault.address as `0x${string}`}
-                                  asset={vault.asset}
-                                  chainId={vault.chainId}
-                                  curator={vault.curator}
-                                  vaultName={vault.name}
-                                  showLink
-                                  variant="inline"
-                                />
-                              </div>
-                              <IconSwitch
-                                selected={trusted}
-                                onChange={() => toggleVault(vault)}
-                                size="xs"
-                                color="primary"
-                                thumbIcon={trusted ? GoShieldCheck : GoShield}
-                                aria-label={`Toggle trust for ${vault.name}`}
+                        return (
+                          <div
+                            key={`morpho-${vault.address}-${vault.chainId}`}
+                            className="flex items-center justify-between gap-4 rounded bg-surface p-3 transition-colors hover:bg-surface-dark"
+                          >
+                            <div className="flex flex-grow items-center gap-3">
+                              <NetworkIcon networkId={vault.chainId} />
+                              <VaultIdentity
+                                address={vault.address as `0x${string}`}
+                                asset={vault.asset}
+                                chainId={vault.chainId}
+                                curator={vault.curator}
+                                vaultName={vault.name}
+                                showLink
+                                variant="inline"
                               />
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+                            <IconSwitch
+                              selected={trusted}
+                              onChange={() => toggleVault(vault)}
+                              size="xs"
+                              color="primary"
+                              thumbIcon={trusted ? GoShieldCheck : GoShield}
+                              aria-label={`Toggle trust for ${vault.name}`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )
+                )}
+              </div>
             </ModalBody>
             <ModalFooter>
-              <Button color="danger" variant="light" onPress={onClose}>
+              <Button variant="secondary" onPress={onClose} size="sm">
                 Close
               </Button>
             </ModalFooter>
