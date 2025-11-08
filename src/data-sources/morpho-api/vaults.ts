@@ -1,6 +1,10 @@
 import { allVaultsQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
+// Constants for Morpho vault fetching
+const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42161, 130];
+const MAX_VAULTS_LIMIT = 500;
+
 // Type for vault from Morpho API
 export type MorphoVault = {
   address: string;
@@ -58,10 +62,10 @@ function transformVault(apiVault: ApiVault): MorphoVault {
 export const fetchAllMorphoVaults = async (): Promise<MorphoVault[]> => {
   try {
     const variables = {
-      first: 500,
+      first: MAX_VAULTS_LIMIT,
       where: {
         whitelisted: true,
-        chainId_in: [1, 8453, 999, 137, 42161, 130],
+        chainId_in: MORPHO_SUPPORTED_CHAIN_IDS,
       },
     };
 

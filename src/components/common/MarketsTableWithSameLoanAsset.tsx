@@ -23,6 +23,7 @@ import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/ut
 import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import { buildTrustedVaultMap } from '@/utils/vaults';
 import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from 'app/markets/components/columnVisibility';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { Pagination } from '../../../app/markets/components/Pagination';
@@ -77,7 +78,7 @@ function getTrustedVaultsForMarket(
 
   market.supplyingVaults.forEach((vault) => {
     if (!vault.address) return;
-    const key = getVaultKey(vault.address as string, chainId);
+    const key = getVaultKey(vault.address, chainId);
     if (seen.has(key)) return;
     seen.add(key);
     const trusted = trustedVaultMap.get(key);
@@ -577,11 +578,7 @@ export function MarketsTableWithSameLoanAsset({
   );
 
   const trustedVaultMap = useMemo(() => {
-    const map = new Map<string, TrustedVault>();
-    userTrustedVaults.forEach((vault) => {
-      map.set(getVaultKey(vault.address, vault.chainId), vault);
-    });
-    return map;
+    return buildTrustedVaultMap(userTrustedVaults);
   }, [userTrustedVaults]);
 
   const hasTrustedVault = useCallback(

@@ -1,25 +1,22 @@
 import { getNetworkName, SupportedNetworks, getExplorerUrl } from './networks';
 
-export const getMarketURL = (id: string, chainId: number): string => {
-
+const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   let network = getNetworkName(chainId)?.toLowerCase();
-  // morpho urls
   if (chainId === SupportedNetworks.HyperEVM) {
-    network = 'hyperliquid';
+    return 'hyperliquid';
   } else if (chainId === SupportedNetworks.Mainnet) {
-    network = 'ethereum';
+    return 'ethereum';
   }
+  return network;
+};
+
+export const getMarketURL = (id: string, chainId: number): string => {
+  const network = getMorphoNetworkSlug(chainId);
   return `https://app.morpho.org/${network}/market/${id}`;
 };
 
 export const getVaultURL = (address: string, chainId: number): string => {
-  let network = getNetworkName(chainId)?.toLowerCase();
-  // morpho urls
-  if (chainId === SupportedNetworks.HyperEVM) {
-    network = 'hyperliquid';
-  } else if (chainId === SupportedNetworks.Mainnet) {
-    network = 'ethereum';
-  }
+  const network = getMorphoNetworkSlug(chainId);
   return `https://app.morpho.org/${network}/vault/${address}`;
 };
 

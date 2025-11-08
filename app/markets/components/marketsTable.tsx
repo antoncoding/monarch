@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
-import { type TrustedVault, getVaultKey } from '@/constants/vaults/known_vaults';
+import { type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
+import { buildTrustedVaultMap } from '@/utils/vaults';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
@@ -51,13 +52,7 @@ function MarketsTable({
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
-  const trustedVaultMap = useMemo(() => {
-    const map = new Map<string, TrustedVault>();
-    trustedVaults.forEach((vault) => {
-      map.set(getVaultKey(vault.address, vault.chainId), vault);
-    });
-    return map;
-  }, [trustedVaults]);
+  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;

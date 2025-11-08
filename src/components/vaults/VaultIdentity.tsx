@@ -114,13 +114,15 @@ export function VaultIdentity({
   const tooltipTitle = (
     <div className="flex items-center gap-2">
       <span>{displayName}</span>
-      {asset && (<TokenIcon
-        address={asset}
-        chainId={chainId}
-        width={18}
-        height={18}
-        disableTooltip
-      />)}
+      {asset && (
+        <TokenIcon
+          address={asset}
+          chainId={chainId}
+          width={18}
+          height={18}
+          disableTooltip
+        />
+      )}
     </div>
   );
 
