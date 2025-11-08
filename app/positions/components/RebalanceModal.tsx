@@ -285,6 +285,8 @@ export function RebalanceModal({
         size="4xl"
         classNames={{
           base: 'p-4 rounded-sm',
+          wrapper: 'z-[2000]',
+          backdrop: 'z-[1990]',
         }}
       >
         <ModalContent>

@@ -11,6 +11,7 @@ import {
   Input,
   Spinner,
 } from '@heroui/react';
+import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
@@ -18,19 +19,17 @@ import { IconSwitch } from '@/components/common/IconSwitch';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
 import {
-  defaultTrustedVaults,
   known_vaults,
   type KnownVault,
   type TrustedVault,
 } from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
   onOpenChange: () => void;
   userTrustedVaults: TrustedVault[];
-  setUserTrustedVaults: (vaults: TrustedVault[]) => void;
+  setUserTrustedVaults: React.Dispatch<React.SetStateAction<TrustedVault[]>>;
 };
 
 export default function TrustedVaultsModal({
@@ -129,23 +128,20 @@ export default function TrustedVaultsModal({
   });
 
   const toggleVault = (vault: KnownVault) => {
-    const isTrusted = isVaultTrusted(vault);
-
-    if (isTrusted) {
-      // Remove vault
-      setUserTrustedVaults(
-        userTrustedVaults.filter(
-          (v) =>
-            !(
-              v.address.toLowerCase() === vault.address.toLowerCase() &&
-              v.chainId === vault.chainId
-            )
-        )
+    setUserTrustedVaults((prev) => {
+      const targetAddress = vault.address.toLowerCase();
+      const exists = prev.some(
+        (v) => v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress
       );
-    } else {
-      // Add vault
-      setUserTrustedVaults([...userTrustedVaults, formatVaultForStorage(vault)]);
-    }
+
+      if (exists) {
+        return prev.filter(
+          (v) => !(v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress)
+        );
+      }
+
+      return [...prev, formatVaultForStorage(vault)];
+    });
   };
 
   const handleSelectAll = () => {

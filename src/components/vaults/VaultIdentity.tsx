@@ -4,12 +4,10 @@ import { useMemo, type ReactNode } from 'react';
 import { Tooltip } from '@heroui/react';
 import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
-import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { VaultCurator } from '@/constants/vaults/known_vaults';
 import { getVaultURL } from '@/utils/external';
-import { getNetworkName } from '@/utils/networks';
 import { VaultIcon } from './VaultIcon';
 
 type VaultIdentityVariant = 'chip' | 'inline' | 'icon';
@@ -49,7 +47,6 @@ export function VaultIdentity({
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const displayName = vaultName ?? formattedAddress;
   const curatorLabel = curator === 'unknown' ? 'Curator unknown' : `Curated by ${curator}`;
-  const networkName = getNetworkName(chainId) ?? `Chain ${chainId}`;
 
   const baseContent = (() => {
     if (variant === 'icon') {

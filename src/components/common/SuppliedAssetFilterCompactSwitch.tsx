@@ -1,13 +1,14 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
+import { useMemo } from 'react';
 import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Divider, Tooltip, useDisclosure } from '@heroui/react';
-import { Button } from '@/components/common/Button';
 import { FiFilter } from 'react-icons/fi';
+import { Button } from '@/components/common/Button';
+import { FilterRow, FilterSection } from '@/components/common/FilterComponents';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { TooltipContent } from '@/components/TooltipContent';
-import { formatReadable } from '@/utils/balance';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
+import { formatReadable } from '@/utils/balance';
 
 type SuppliedAssetFilterCompactSwitchProps = {
   includeUnknownTokens: boolean;
@@ -68,7 +69,7 @@ export function SuppliedAssetFilterCompactSwitch({
     onOpenSettings();
   };
 
-  const basicFilterActive = !includeUnknownTokens || !showUnknownOracle || !showUnwhitelistedMarkets;
+  const basicFilterActive = includeUnknownTokens || showUnknownOracle || showUnwhitelistedMarkets;
   const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled;
   const hasActiveFilters = basicFilterActive || advancedFilterActive;
 
@@ -91,7 +92,7 @@ export function SuppliedAssetFilterCompactSwitch({
           isIconOnly
           variant="light"
           size="sm"
-          className={"min-w-0 px-2"}
+          className="min-w-0 px-2 text-secondary"
           aria-label="Market filters"
           onPress={onOpen}
         >
@@ -99,7 +100,16 @@ export function SuppliedAssetFilterCompactSwitch({
         </Button>
       </Tooltip>
 
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="md">
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="md"
+        backdrop="opaque"
+        classNames={{
+          wrapper: 'z-[2400]',
+          backdrop: 'z-[2390]',
+        }}
+      >
         <ModalContent>
           {(close) => (
             <>
@@ -189,46 +199,6 @@ export function SuppliedAssetFilterCompactSwitch({
           )}
         </ModalContent>
       </Modal>
-    </div>
-  );
-}
-
-function FilterSection({
-  title,
-  helper,
-  children,
-}: {
-  title: string;
-  helper?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col">
-        <span className="font-zen text-sm font-semibold text-primary">{title}</span>
-        {helper && <span className="font-zen text-xs text-secondary">{helper}</span>}
-      </div>
-      <div className="flex flex-col gap-3">{children}</div>
-    </div>
-  );
-}
-
-function FilterRow({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex flex-col gap-1 pr-4">
-        <span className="font-zen text-sm font-medium text-primary">{title}</span>
-        <span className="font-zen text-xs text-secondary">{description}</span>
-      </div>
-      <div className="pt-1">{children}</div>
     </div>
   );
 }

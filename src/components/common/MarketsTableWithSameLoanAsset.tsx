@@ -9,6 +9,7 @@ import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { useTokens } from '@/components/providers/TokenProvider';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
@@ -543,6 +544,7 @@ export function MarketsTableWithSameLoanAsset({
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showTrustedVaultsModal, setShowTrustedVaultsModal] = useState(false);
 
   // Table state
   const [currentPage, setCurrentPage] = useState(1);
@@ -556,7 +558,7 @@ export function MarketsTableWithSameLoanAsset({
   const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
-  const [userTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
@@ -1043,6 +1045,17 @@ export function MarketsTableWithSameLoanAsset({
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
           trustedVaults={userTrustedVaults}
+          onOpenTrustedVaultsModal={() => setShowTrustedVaultsModal(true)}
+        />
+      )}
+
+      {/* Trusted Vaults Modal */}
+      {showTrustedVaultsModal && (
+        <TrustedVaultsModal
+          isOpen={showTrustedVaultsModal}
+          onOpenChange={() => setShowTrustedVaultsModal(false)}
+          userTrustedVaults={userTrustedVaults}
+          setUserTrustedVaults={setUserTrustedVaults}
         />
       )}
     </div>

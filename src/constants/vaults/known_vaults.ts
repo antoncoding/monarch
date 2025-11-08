@@ -157,7 +157,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Gauntlet WETH Prime',
     asset: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
-    defaultTrusted: true,
   },
   {
     address: '0x4Ff4186188f8406917293A9e01A1ca16d3cf9E59',
@@ -200,6 +199,7 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Steakhouse USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    defaultTrusted: true,
   },
   {
     address: '0xBEEF01735c132Ada46AA9aA4c54623cAA92A64CB',
@@ -207,6 +207,7 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Steakhouse USDC',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    defaultTrusted: true,
   },
   {
     address: '0xBEefb9f61CC44895d8AEc381373555a64191A9c4',
