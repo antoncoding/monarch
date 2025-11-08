@@ -263,7 +263,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 8453,
     name: 'Steakhouse Prime USDC',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    defaultTrusted: true,
   },
   {
     address: '0x60d715515d4411f7F43e4206dc5d4a3677f0eC78',

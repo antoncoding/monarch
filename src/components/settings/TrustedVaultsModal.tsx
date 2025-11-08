@@ -156,10 +156,6 @@ export default function TrustedVaultsModal({
     setUserTrustedVaults([]);
   };
 
-  const handleResetToDefaults = () => {
-    setUserTrustedVaults([...defaultTrustedVaults]);
-  };
-
   return (
     <Modal
       isOpen={isOpen}
@@ -211,9 +207,6 @@ export default function TrustedVaultsModal({
                   </Button>
                   <Button size="sm" variant="flat" onPress={handleDeselectAll}>
                     Deselect All
-                  </Button>
-                  <Button size="sm" variant="flat" onPress={handleResetToDefaults}>
-                    Reset to Defaults
                   </Button>
                   <div className="ml-auto text-xs text-secondary self-center">
                     {userTrustedVaults.length} / {allAvailableVaults.length} selected
