@@ -30,3 +30,5 @@ export const MarketsColumnVisibilityKey = 'monarch_marketsColumnVisibility';
 
 // Table view mode
 export const MarketsTableViewModeKey = 'monarch_marketsTableViewMode';
+
+export const MarketsTrustedVaultsOnlyKey = 'monarch_marketsTrustedVaultsOnly';

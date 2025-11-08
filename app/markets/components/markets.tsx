@@ -12,11 +12,13 @@ import { Button } from '@/components/common';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
+import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -54,7 +56,14 @@ export default function Markets({
 
   const toast = useStyledToast();
 
-  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+  const {
+    loading,
+    markets: rawMarkets,
+    refetch,
+    isRefetching,
+    showUnwhitelistedMarkets,
+    setShowUnwhitelistedMarkets,
+  } = useMarkets();
   const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
 
   const {
@@ -121,16 +130,57 @@ export default function Markets({
     false,
   );
 
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
+    keys.MarketsTrustedVaultsOnlyKey,
+    false,
+  );
+
   // Column visibility state
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
+  const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
     keys.MarketsColumnVisibilityKey,
     DEFAULT_COLUMN_VISIBILITY,
+  );
+
+  const columnVisibility = useMemo(
+    () => ({ ...DEFAULT_COLUMN_VISIBILITY, ...columnVisibilityState }),
+    [columnVisibilityState],
+  );
+
+  const setColumnVisibility = useCallback(
+    (visibility: ColumnVisibility) => {
+      setColumnVisibilityState({ ...DEFAULT_COLUMN_VISIBILITY, ...visibility });
+    },
+    [setColumnVisibilityState],
   );
 
   // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
   const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(
     keys.MarketsTableViewModeKey,
     'compact',
+  );
+
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    'userTrustedVaults',
+    defaultTrustedVaults,
+  );
+  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = useState(false);
+
+  const trustedVaultKeys = useMemo(() => {
+    return new Set(
+      userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)),
+    );
+  }, [userTrustedVaults]);
+
+  const hasTrustedVault = useCallback(
+    (market: Market) => {
+      if (!market.supplyingVaults?.length) return false;
+      const chainId = market.morphoBlue.chain.id;
+      return market.supplyingVaults.some((vault) => {
+        if (!vault.address) return false;
+        return trustedVaultKeys.has(getVaultKey(vault.address as string, chainId));
+      });
+    },
+    [trustedVaultKeys],
   );
 
   // Create memoized usdFilters object from individual localStorage values to prevent re-renders
@@ -153,6 +203,8 @@ export default function Markets({
   );
 
   const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
+  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
+  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   useEffect(() => {
     // return if no markets
@@ -240,7 +292,7 @@ export default function Markets({
     if (!rawMarkets) return;
 
     // Apply filters using the new composable filtering system
-    const filtered = filterMarkets(rawMarkets, {
+    let filtered = filterMarkets(rawMarkets, {
       selectedNetwork,
       showUnknownTokens: includeUnknownTokens,
       showUnknownOracle,
@@ -256,10 +308,20 @@ export default function Markets({
       searchQuery,
     });
 
+    if (trustedVaultsOnly) {
+      filtered = filtered.filter(hasTrustedVault);
+    }
+
     // Apply sorting
     let sorted: Market[];
     if (sortColumn === SortColumn.Starred) {
       sorted = sortMarkets(filtered, createStarredSort(staredIds), 1);
+    } else if (sortColumn === SortColumn.TrustedBy) {
+      sorted = sortMarkets(
+        filtered,
+        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
+        sortDirection as 1 | -1,
+      );
     } else {
       const sortPropertyMap: Record<SortColumn, string> = {
         [SortColumn.Starred]: 'uniqueKey',
@@ -272,6 +334,7 @@ export default function Markets({
         [SortColumn.Liquidity]: 'state.liquidityAssets',
         [SortColumn.BorrowAPY]: 'state.borrowApy',
         [SortColumn.RateAtTarget]: 'state.apyAtTarget',
+        [SortColumn.TrustedBy]: '',
       };
       const propertyPath = sortPropertyMap[sortColumn];
       if (propertyPath) {
@@ -299,8 +362,10 @@ export default function Markets({
     minSupplyEnabled,
     minBorrowEnabled,
     minLiquidityEnabled,
+    trustedVaultsOnly,
     searchQuery,
     resetPage,
+    hasTrustedVault,
   ]);
 
   useEffect(() => {
@@ -383,8 +448,10 @@ export default function Markets({
   };
 
   return (
-    <div className="flex w-full flex-col justify-between font-zen">
-      <Header />
+    <>
+      <div className="flex w-full flex-col justify-between font-zen">
+        <Header />
+      </div>
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
@@ -395,22 +462,14 @@ export default function Markets({
         <MarketSettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={onSettingsModalOpenChange}
-          includeUnknownTokens={includeUnknownTokens}
-          setIncludeUnknownTokens={setIncludeUnknownTokens}
-          showUnknownOracle={showUnknownOracle}
-          setShowUnknownOracle={setShowUnknownOracle}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
-          minSupplyEnabled={minSupplyEnabled}
-          setMinSupplyEnabled={setMinSupplyEnabled}
-          minBorrowEnabled={minBorrowEnabled}
-          setMinBorrowEnabled={setMinBorrowEnabled}
-          minLiquidityEnabled={minLiquidityEnabled}
-          setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={handleEntriesPerPageChange}
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
+          onOpenTrustedVaultsModal={() => setIsTrustedVaultsModalOpen(true)}
+          trustedVaults={userTrustedVaults}
         />
 
         <div className="flex items-center justify-between pb-4">
@@ -472,21 +531,46 @@ export default function Markets({
           {/* Settings */}
           <div className="mt-4 flex items-center gap-2 lg:mt-0">
             <SuppliedAssetFilterCompactSwitch
-              isEnabled={minSupplyEnabled}
-              onToggle={setMinSupplyEnabled}
-              effectiveMinSupply={effectiveMinSupply}
+              includeUnknownTokens={includeUnknownTokens}
+              setIncludeUnknownTokens={setIncludeUnknownTokens}
+              showUnknownOracle={showUnknownOracle}
+              setShowUnknownOracle={setShowUnknownOracle}
+              showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+              setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+              trustedVaultsOnly={trustedVaultsOnly}
+              setTrustedVaultsOnly={setTrustedVaultsOnly}
+              minSupplyEnabled={minSupplyEnabled}
+              setMinSupplyEnabled={setMinSupplyEnabled}
+              minBorrowEnabled={minBorrowEnabled}
+              setMinBorrowEnabled={setMinBorrowEnabled}
+              minLiquidityEnabled={minLiquidityEnabled}
+              setMinLiquidityEnabled={setMinLiquidityEnabled}
+              thresholds={{
+                minSupply: effectiveMinSupply,
+                minBorrow: effectiveMinBorrow,
+                minLiquidity: effectiveMinLiquidity,
+              }}
+              onOpenSettings={onSettingsModalOpen}
             />
 
-            <Button
-              disabled={loading || isRefetching}
-              variant="light"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onPress={handleRefresh}
-              isIconOnly
+            <Tooltip
+              classNames={{
+                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+              }}
+              content={<TooltipContent title="Refresh" detail="Fetch the latest market data" />}
             >
-              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-            </Button>
+              <Button
+                disabled={loading || isRefetching}
+                variant="light"
+                size="sm"
+                className="text-secondary min-w-0 px-2"
+                onPress={handleRefresh}
+                isIconOnly
+              >
+                <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+              </Button>
+            </Tooltip>
 
             <Tooltip
               classNames={{
@@ -523,16 +607,24 @@ export default function Markets({
               </Button>
             </Tooltip>
 
-            <Button
-              isIconOnly
-              aria-label="Market View Settings"
-              variant="light"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onPress={onSettingsModalOpen}
+            <Tooltip
+              classNames={{
+                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+              }}
+              content={<TooltipContent title="Preferences" detail="Adjust thresholds and columns" />}
             >
-              <FiSettings size={12} />
-            </Button>
+              <Button
+                isIconOnly
+                aria-label="Market Preferences"
+                variant="light"
+                size="sm"
+                className="text-secondary min-w-0 px-2"
+                onPress={onSettingsModalOpen}
+              >
+                <FiSettings size={12} />
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </div>
@@ -567,6 +659,7 @@ export default function Markets({
                 setShowSupplyModal={setShowSupplyModal}
                 setSelectedMarket={setSelectedMarket}
                 columnVisibility={columnVisibility}
+                trustedVaults={userTrustedVaults}
                 className={tableViewMode === 'compact' ? 'w-full' : undefined}
                 wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
                 tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
@@ -580,6 +673,8 @@ export default function Markets({
                     ? "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters."
                     : selectedOracles.length > 0 && !showUnknownOracle
                     ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
+                    : trustedVaultsOnly
+                    ? 'Disable the Trusted Vaults filter or update your trusted list in Settings.'
                     : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
                     ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
                     : 'Try adjusting your filters or search query to see more results.'
@@ -589,6 +684,12 @@ export default function Markets({
           </div>
         )}
       </div>
-    </div>
-  );
+      <TrustedVaultsModal
+        isOpen={isTrustedVaultsModalOpen}
+        onOpenChange={() => setIsTrustedVaultsModalOpen((prev) => !prev)}
+        userTrustedVaults={userTrustedVaults}
+        setUserTrustedVaults={setUserTrustedVaults}
+      />
+    </>
+    );
 }

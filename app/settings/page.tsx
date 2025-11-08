@@ -1,8 +1,13 @@
 'use client';
 
+import React from 'react';
+import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
+import { VaultIdentity } from '@/components/vaults/VaultIdentity';
+import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 
@@ -13,8 +18,36 @@ export default function SettingsPage() {
     false,
   );
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    'userTrustedVaults',
+    defaultTrustedVaults,
+  );
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
+
+  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
+
+  const defaultVaultKeys = React.useMemo(() => {
+    return new Set(
+      defaultTrustedVaults.map(
+        (vault) => `${vault.chainId}-${vault.address.toLowerCase()}`,
+      ),
+    );
+  }, []);
+
+  const sortedTrustedVaults = React.useMemo(() => {
+    return [...userTrustedVaults].sort((a, b) => {
+      const aDefault = defaultVaultKeys.has(`${a.chainId}-${a.address.toLowerCase()}`);
+      const bDefault = defaultVaultKeys.has(`${b.chainId}-${b.address.toLowerCase()}`);
+      if (aDefault === bDefault) return 0;
+      return aDefault ? -1 : 1;
+    });
+  }, [userTrustedVaults, defaultVaultKeys]);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -101,6 +134,67 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Trusted Vaults Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
+
+            <div className="bg-surface flex flex-col gap-4 rounded p-6">
+              <div className="flex flex-col gap-2 px-12 pb-6">
+                <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
+                <p className="text-sm text-secondary">
+                  Choose which vaults you trust. Only vaults marked as default trusted are selected
+                  automatically, and you can adjust the list any time.
+                </p>
+              </div>
+
+              {/* Display trusted vault icons */}
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                {mounted ? (
+                  <>
+                    {sortedTrustedVaults.slice(0, 12).map((vault) => (
+                      <VaultIdentity
+                        key={`${vault.address}-${vault.chainId}`}
+                        address={vault.address as `0x${string}`}
+                        chainId={vault.chainId}
+                        curator={vault.curator}
+                        vaultName={vault.name}
+                        asset={vault.asset}
+                        variant="icon"
+                        iconSize={24}
+                        showTooltip
+                        showLink
+                      />
+                    ))}
+                    {userTrustedVaults.length > 12 && (
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
+                        +{userTrustedVaults.length - 12}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex h-8 items-center text-sm text-secondary">
+                    Loading vaults...
+                  </div>
+                )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsTrustedVaultsModalOpen(true)}
+                >
+                  Edit Trusted Vaults
+                </Button>
+                <span className="text-xs text-secondary">
+                  {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Advanced Section */}
           <div className="flex flex-col gap-4 pt-4">
             <AdvancedRpcSettings />
@@ -134,6 +228,14 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Trusted Vaults Modal */}
+      <TrustedVaultsModal
+        isOpen={isTrustedVaultsModalOpen}
+        onOpenChange={() => setIsTrustedVaultsModalOpen(!isTrustedVaultsModalOpen)}
+        userTrustedVaults={userTrustedVaults}
+        setUserTrustedVaults={setUserTrustedVaults}
+      />
     </div>
   );
 }

@@ -9,7 +9,10 @@ import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/common';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { useTokens } from '@/components/providers/TokenProvider';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
+import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
+import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -20,6 +23,7 @@ import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/ut
 import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
+import { buildTrustedVaultMap } from '@/utils/vaults';
 import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from 'app/markets/components/columnVisibility';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { Pagination } from '../../../app/markets/components/Pagination';
@@ -57,6 +61,40 @@ enum SortColumn {
   BorrowAPY = 5,
   RateAtTarget = 6,
   Risk = 7,
+  TrustedBy = 8,
+}
+
+function getTrustedVaultsForMarket(
+  market: Market,
+  trustedVaultMap: Map<string, TrustedVault>,
+): TrustedVault[] {
+  if (!market.supplyingVaults?.length) {
+    return [];
+  }
+
+  const chainId = market.morphoBlue.chain.id;
+  const seen = new Set<string>();
+  const matches: TrustedVault[] = [];
+
+  market.supplyingVaults.forEach((vault) => {
+    if (!vault.address) return;
+    const key = getVaultKey(vault.address, chainId);
+    if (seen.has(key)) return;
+    seen.add(key);
+    const trusted = trustedVaultMap.get(key);
+    if (trusted) {
+      matches.push(trusted);
+    }
+  });
+
+  return matches.sort((a, b) => {
+    const aUnknown = a.curator === 'unknown';
+    const bUnknown = b.curator === 'unknown';
+    if (aUnknown !== bUnknown) {
+      return aUnknown ? 1 : -1;
+    }
+    return a.name.localeCompare(b.name);
+  });
 }
 
 function HTSortable({
@@ -376,14 +414,22 @@ function MarketRow({
   disabled,
   showSelectColumn,
   columnVisibility,
+  trustedVaultMap,
 }: {
   marketWithSelection: MarketWithSelection;
   onToggle: () => void;
   disabled: boolean;
   showSelectColumn: boolean;
   columnVisibility: ColumnVisibility;
+  trustedVaultMap: Map<string, TrustedVault>;
 }) {
   const { market, isSelected } = marketWithSelection;
+  const trustedVaults = useMemo(() => {
+    if (!columnVisibility.trustedBy) {
+      return [];
+    }
+    return getTrustedVaultsForMarket(market, trustedVaultMap);
+  }, [columnVisibility.trustedBy, market, trustedVaultMap]);
 
   return (
     <tr
@@ -426,6 +472,11 @@ function MarketRow({
           showExplorerLink={false}
         />
       </td>
+      {columnVisibility.trustedBy && (
+        <td data-label="Trusted By" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+          <TrustedByCell vaults={trustedVaults} />
+        </td>
+      )}
       {columnVisibility.totalSupply && (
         <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
           <p className="text-xs">
@@ -489,11 +540,12 @@ export function MarketsTableWithSameLoanAsset({
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets } = useMarkets();
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
   const { findToken } = useTokens();
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showTrustedVaultsModal, setShowTrustedVaultsModal] = useState(false);
 
   // Table state
   const [currentPage, setCurrentPage] = useState(1);
@@ -507,6 +559,7 @@ export function MarketsTableWithSameLoanAsset({
   const [entriesPerPage, setEntriesPerPage] = useLocalStorage(keys.MarketEntriesPerPageKey, 8);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
@@ -517,6 +570,27 @@ export function MarketsTableWithSameLoanAsset({
   const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
     keys.MarketsUsdMinLiquidityKey,
     DEFAULT_MIN_LIQUIDITY_USD.toString(),
+  );
+
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
+    keys.MarketsTrustedVaultsOnlyKey,
+    false,
+  );
+
+  const trustedVaultMap = useMemo(() => {
+    return buildTrustedVaultMap(userTrustedVaults);
+  }, [userTrustedVaults]);
+
+  const hasTrustedVault = useCallback(
+    (market: Market) => {
+      if (!market.supplyingVaults?.length) return false;
+      const chainId = market.morphoBlue.chain.id;
+      return market.supplyingVaults.some((vault) => {
+        if (!vault.address) return false;
+        return trustedVaultMap.has(getVaultKey(vault.address as string, chainId));
+      });
+    },
+    [trustedVaultMap],
   );
 
   // USD Filter enabled states
@@ -559,6 +633,8 @@ export function MarketsTableWithSameLoanAsset({
   );
 
   const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
+  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
+  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -660,6 +736,10 @@ export function MarketsTableWithSameLoanAsset({
       filtered = filtered.filter((market) => market.whitelisted ?? false);
     }
 
+    if (trustedVaultsOnly) {
+      filtered = filtered.filter(hasTrustedVault);
+    }
+
     // Sort using the shared utility
     const sortPropertyMap: Record<SortColumn, string> = {
       [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
@@ -670,10 +750,17 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.BorrowAPY]: 'state.borrowApy',
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.Risk]: '', // No sorting for risk
+      [SortColumn.TrustedBy]: '',
     };
 
     const propertyPath = sortPropertyMap[sortColumn];
-    if (propertyPath && sortColumn !== SortColumn.Risk) {
+    if (sortColumn === SortColumn.TrustedBy) {
+      filtered = sortMarkets(
+        filtered,
+        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
+        sortDirection,
+      );
+    } else if (propertyPath && sortColumn !== SortColumn.Risk) {
       filtered = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection);
     }
 
@@ -697,6 +784,8 @@ export function MarketsTableWithSameLoanAsset({
     minLiquidityEnabled,
     usdFilters,
     findToken,
+    hasTrustedVault,
+    trustedVaultsOnly,
   ]);
 
   // Get selected markets
@@ -710,6 +799,7 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
+  const emptyStateColumns = (showSelectColumn ? 7 : 6) + (columnVisibility.trustedBy ? 1 : 0);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -778,9 +868,26 @@ export function MarketsTableWithSameLoanAsset({
         </div>
         <div className="flex items-center gap-3">
           <SuppliedAssetFilterCompactSwitch
-            isEnabled={minSupplyEnabled}
-            onToggle={setMinSupplyEnabled}
-            effectiveMinSupply={effectiveMinSupply}
+            includeUnknownTokens={includeUnknownTokens}
+            setIncludeUnknownTokens={setIncludeUnknownTokens}
+            showUnknownOracle={showUnknownOracle}
+            setShowUnknownOracle={setShowUnknownOracle}
+            showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+            setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+            trustedVaultsOnly={trustedVaultsOnly}
+            setTrustedVaultsOnly={setTrustedVaultsOnly}
+            minSupplyEnabled={minSupplyEnabled}
+            setMinSupplyEnabled={setMinSupplyEnabled}
+            minBorrowEnabled={minBorrowEnabled}
+            setMinBorrowEnabled={setMinBorrowEnabled}
+            minLiquidityEnabled={minLiquidityEnabled}
+            setMinLiquidityEnabled={setMinLiquidityEnabled}
+            thresholds={{
+              minSupply: effectiveMinSupply,
+              minBorrow: effectiveMinBorrow,
+              minLiquidity: effectiveMinLiquidity,
+            }}
+            onOpenSettings={() => setShowSettingsModal(true)}
           />
           {showSettings && (
             <Button
@@ -823,6 +930,15 @@ export function MarketsTableWithSameLoanAsset({
                 sortDirection={sortDirection}
                 onSort={handleSort}
               />
+              {columnVisibility.trustedBy && (
+                <HTSortable
+                  label="Trusted By"
+                  column={SortColumn.TrustedBy}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
               {columnVisibility.totalSupply && (
                 <HTSortable
                   label="Total Supply"
@@ -883,7 +999,7 @@ export function MarketsTableWithSameLoanAsset({
           <tbody>
             {paginatedMarkets.length === 0 ? (
               <tr>
-                <td colSpan={showSelectColumn ? 7 : 6} className="py-8 text-center text-secondary">
+                <td colSpan={emptyStateColumns} className="py-8 text-center text-secondary">
                   No markets found
                 </td>
               </tr>
@@ -896,6 +1012,7 @@ export function MarketsTableWithSameLoanAsset({
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
                   columnVisibility={columnVisibility}
+                  trustedVaultMap={trustedVaultMap}
                 />
               ))
             )}
@@ -918,22 +1035,24 @@ export function MarketsTableWithSameLoanAsset({
         <MarketSettingsModal
           isOpen={showSettingsModal}
           onOpenChange={() => setShowSettingsModal(false)}
-          includeUnknownTokens={includeUnknownTokens}
-          setIncludeUnknownTokens={setIncludeUnknownTokens}
-          showUnknownOracle={showUnknownOracle}
-          setShowUnknownOracle={setShowUnknownOracle}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
-          minSupplyEnabled={minSupplyEnabled}
-          setMinSupplyEnabled={setMinSupplyEnabled}
-          minBorrowEnabled={minBorrowEnabled}
-          setMinBorrowEnabled={setMinBorrowEnabled}
-          minLiquidityEnabled={minLiquidityEnabled}
-          setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={setEntriesPerPage}
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
+          trustedVaults={userTrustedVaults}
+          onOpenTrustedVaultsModal={() => setShowTrustedVaultsModal(true)}
+        />
+      )}
+
+      {/* Trusted Vaults Modal */}
+      {showTrustedVaultsModal && (
+        <TrustedVaultsModal
+          isOpen={showTrustedVaultsModal}
+          onOpenChange={() => setShowTrustedVaultsModal(false)}
+          userTrustedVaults={userTrustedVaults}
+          setUserTrustedVaults={setUserTrustedVaults}
         />
       )}
     </div>

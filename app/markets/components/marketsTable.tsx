@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
+import { type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
+import { buildTrustedVaultMap } from '@/utils/vaults';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
@@ -22,6 +24,7 @@ type MarketsTableProps = {
   setCurrentPage: (value: number) => void;
   onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
+  trustedVaults: TrustedVault[];
   className?: string;
   wrapperClassName?: string;
   tableClassName?: string;
@@ -42,11 +45,14 @@ function MarketsTable({
   setCurrentPage,
   onMarketClick,
   columnVisibility,
+  trustedVaults,
   className,
   wrapperClassName,
   tableClassName,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
+  const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
   const indexOfLastEntry = currentPage * entriesPerPage;
   const indexOfFirstEntry = indexOfLastEntry - entriesPerPage;
@@ -101,6 +107,15 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.LLTV}
               />
+              {columnVisibility.trustedBy && (
+                <HTSortable
+                  label="Trusted By"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.TrustedBy}
+                />
+              )}
               {columnVisibility.totalSupply && (
                 <HTSortable
                   label="Total Supply"
@@ -171,6 +186,7 @@ function MarketsTable({
             unstarMarket={unstarMarket}
             onMarketClick={onMarketClick}
             columnVisibility={columnVisibility}
+            trustedVaultMap={trustedVaultMap}
           />
         </table>
       </div>

@@ -6,24 +6,10 @@ export function useLocalStorage<T>(
   initialValue: T,
 ): readonly [T, (value: T | ((val: T) => T)) => void] {
   // State to store our value
-  // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    // Return initial value during SSR
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
+  // Always use initialValue during SSR and before hydration
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-    try {
-      const item = storage.getItem(key);
-      // Parse stored json or if none return initialValue
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  });
-
-  // Hydrate from localStorage after mount
+  // Hydrate from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     try {
       const item = storage.getItem(key);
@@ -45,8 +31,10 @@ export function useLocalStorage<T>(
         // Save state
         setStoredValue(valueToStore);
 
-        // Save to localStorage
-        storage.setItem(key, JSON.stringify(valueToStore));
+        // Save to localStorage only on client
+        if (typeof window !== 'undefined') {
+          storage.setItem(key, JSON.stringify(valueToStore));
+        }
       } catch (error) {
         console.warn(`Error setting localStorage key "${key}":`, error);
       }

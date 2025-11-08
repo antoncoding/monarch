@@ -77,6 +77,10 @@ badDebt {
   usd
 }
 
+supplyingVaults {
+  address
+}
+
 oracle {
   data {
     ... on MorphoChainlinkOracleData {
@@ -188,6 +192,9 @@ export const marketsQuery = `
     realizedBadDebt {
       underlying
       usd
+    }
+    supplyingVaults {
+      address
     }
     state {
       borrowAssets

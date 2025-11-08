@@ -4,9 +4,9 @@ import { ReactNode } from 'react';
 
 type TooltipContentProps = {
   icon?: ReactNode;
-  title?: string;
-  detail?: string;
-  secondaryDetail?: string;
+  title?: ReactNode;
+  detail?: ReactNode;
+  secondaryDetail?: ReactNode;
   className?: string;
   actionIcon?: ReactNode;
   actionHref?: string;

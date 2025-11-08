@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus } from 'react-icons/fa';
@@ -30,10 +30,16 @@ export default function Positions() {
   const { account } = useParams<{ account: string }>();
   const { address } = useAccount();
 
+  const [mounted, setMounted] = useState(false);
+
   const isOwner = useMemo(() => {
-    if (!account) return false;
+    if (!account || !address || !mounted) return false;
     return account === address;
-  }, [account, address]);
+  }, [account, address, mounted]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { loading: isMarketsLoading } = useMarkets();
 
