@@ -57,38 +57,6 @@ function SettingItem({
   );
 }
 
-function TrustedVaultsSummary({
-  vaults,
-  total,
-  onManage,
-}: {
-  vaults: TrustedVault[];
-  total: number;
-  onManage?: () => void;
-}) {
-  return (
-    <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1 pr-4">
-          <h3 className="font-zen text-base font-medium text-primary">Trusted Vaults</h3>
-          <p className="font-zen text-xs text-secondary">
-            Vaults that power the “Trusted By” column and filters. Click "Manage" to add or remove trusted vaults.
-          </p>
-        </div>
-        {onManage && (
-          <Button size="sm" variant="flat" onPress={onManage}>
-            Manage
-          </Button>
-        )}
-      </div>
-      <div className="flex items-center justify-between gap-3">
-        <TrustedByCell vaults={vaults} badgeSize={26} />
-        <span className="text-xs text-secondary">{total} total</span>
-      </div>
-    </div>
-  );
-}
-
 export default function MarketSettingsModal({
   isOpen,
   onOpenChange,
@@ -102,7 +70,6 @@ export default function MarketSettingsModal({
   trustedVaults,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const previewVaults = (trustedVaults ?? defaultTrustedVaults).slice(0, 6);
   const totalVaults = trustedVaults?.length ?? defaultTrustedVaults.length;
   const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
 
@@ -139,14 +106,6 @@ export default function MarketSettingsModal({
               </span>
             </ModalHeader>
             <ModalBody className="font-zen flex flex-col gap-5 px-4 pb-6 pt-3 md:px-6 max-h-[70vh] overflow-y-auto">
-              {onOpenTrustedVaultsModal && (
-                <TrustedVaultsSummary
-                  vaults={previewVaults}
-                  total={totalVaults}
-                  onManage={onOpenTrustedVaultsModal}
-                />
-              )}
-
               <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
                 <h3 className="text-xs uppercase text-secondary">Filter Thresholds</h3>
                 <p className="-mt-3 mb-1 text-xs text-secondary">
@@ -259,6 +218,28 @@ export default function MarketSettingsModal({
                     aria-label="Toggle full reward APY"
                   />
                 </SettingItem>
+                {onOpenTrustedVaultsModal && (
+                  <>
+                    <Divider />
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-1 pr-4">
+                          <h4 className="font-zen text-base font-medium text-primary">Trusted Vaults</h4>
+                          <p className="font-zen text-xs text-secondary">
+                            Vaults that power the "Trusted By" column and filters.
+                          </p>
+                        </div>
+                        <Button size="sm" variant="flat" onPress={onOpenTrustedVaultsModal} className="flex-shrink-0">
+                          Manage
+                        </Button>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <TrustedByCell vaults={trustedVaults ?? []} badgeSize={26} />
+                        <span className="text-xs text-secondary">{totalVaults} total</span>
+                      </div>
+                    </div>
+                  </>
+                )}
                 <Divider />
                 <SettingItem
                   title="Entries Per Page"
