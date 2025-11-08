@@ -83,7 +83,6 @@ export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
             iconSize={badgeSize}
             className="rounded-full border border-background/40 bg-surface transition-transform duration-150 hover:-translate-y-1"
             showAddressInTooltip={false}
-            showChainInTooltip={false}
           />
         </div>
       ))}

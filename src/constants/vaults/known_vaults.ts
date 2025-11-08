@@ -364,7 +364,6 @@ export const known_vaults: KnownVault[] = [
     chainId: 1,
     name: 'Relend USDC',
     asset: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-    defaultTrusted: true,
   },
   {
     address: '0x8A862fD6c12f9ad34C9c2ff45AB2b6712e8CEa27',

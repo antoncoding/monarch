@@ -18,6 +18,7 @@ import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -55,7 +56,14 @@ export default function Markets({
 
   const toast = useStyledToast();
 
-  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+  const {
+    loading,
+    markets: rawMarkets,
+    refetch,
+    isRefetching,
+    showUnwhitelistedMarkets,
+    setShowUnwhitelistedMarkets,
+  } = useMarkets();
   const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
 
   const {
@@ -122,6 +130,11 @@ export default function Markets({
     false,
   );
 
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
+    keys.MarketsTrustedVaultsOnlyKey,
+    false,
+  );
+
   // Column visibility state
   const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
     keys.MarketsColumnVisibilityKey,
@@ -146,10 +159,11 @@ export default function Markets({
     'compact',
   );
 
-  const [userTrustedVaults] = useLocalStorage<TrustedVault[]>(
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
     'userTrustedVaults',
     defaultTrustedVaults,
   );
+  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = useState(false);
 
   const trustedVaultKeys = useMemo(() => {
     return new Set(
@@ -189,6 +203,8 @@ export default function Markets({
   );
 
   const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
+  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
+  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   useEffect(() => {
     // return if no markets
@@ -276,7 +292,7 @@ export default function Markets({
     if (!rawMarkets) return;
 
     // Apply filters using the new composable filtering system
-    const filtered = filterMarkets(rawMarkets, {
+    let filtered = filterMarkets(rawMarkets, {
       selectedNetwork,
       showUnknownTokens: includeUnknownTokens,
       showUnknownOracle,
@@ -291,6 +307,10 @@ export default function Markets({
       findToken,
       searchQuery,
     });
+
+    if (trustedVaultsOnly) {
+      filtered = filtered.filter(hasTrustedVault);
+    }
 
     // Apply sorting
     let sorted: Market[];
@@ -342,6 +362,7 @@ export default function Markets({
     minSupplyEnabled,
     minBorrowEnabled,
     minLiquidityEnabled,
+    trustedVaultsOnly,
     searchQuery,
     resetPage,
     hasTrustedVault,
@@ -427,8 +448,10 @@ export default function Markets({
   };
 
   return (
-    <div className="flex w-full flex-col justify-between font-zen">
-      <Header />
+    <>
+      <div className="flex w-full flex-col justify-between font-zen">
+        <Header />
+      </div>
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
@@ -439,22 +462,14 @@ export default function Markets({
         <MarketSettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={onSettingsModalOpenChange}
-          includeUnknownTokens={includeUnknownTokens}
-          setIncludeUnknownTokens={setIncludeUnknownTokens}
-          showUnknownOracle={showUnknownOracle}
-          setShowUnknownOracle={setShowUnknownOracle}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
-          minSupplyEnabled={minSupplyEnabled}
-          setMinSupplyEnabled={setMinSupplyEnabled}
-          minBorrowEnabled={minBorrowEnabled}
-          setMinBorrowEnabled={setMinBorrowEnabled}
-          minLiquidityEnabled={minLiquidityEnabled}
-          setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={handleEntriesPerPageChange}
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
+          onOpenTrustedVaultsModal={() => setIsTrustedVaultsModalOpen(true)}
+          trustedVaults={userTrustedVaults}
         />
 
         <div className="flex items-center justify-between pb-4">
@@ -516,9 +531,26 @@ export default function Markets({
           {/* Settings */}
           <div className="mt-4 flex items-center gap-2 lg:mt-0">
             <SuppliedAssetFilterCompactSwitch
-              isEnabled={minSupplyEnabled}
-              onToggle={setMinSupplyEnabled}
-              effectiveMinSupply={effectiveMinSupply}
+              includeUnknownTokens={includeUnknownTokens}
+              setIncludeUnknownTokens={setIncludeUnknownTokens}
+              showUnknownOracle={showUnknownOracle}
+              setShowUnknownOracle={setShowUnknownOracle}
+              showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+              setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+              trustedVaultsOnly={trustedVaultsOnly}
+              setTrustedVaultsOnly={setTrustedVaultsOnly}
+              minSupplyEnabled={minSupplyEnabled}
+              setMinSupplyEnabled={setMinSupplyEnabled}
+              minBorrowEnabled={minBorrowEnabled}
+              setMinBorrowEnabled={setMinBorrowEnabled}
+              minLiquidityEnabled={minLiquidityEnabled}
+              setMinLiquidityEnabled={setMinLiquidityEnabled}
+              thresholds={{
+                minSupply: effectiveMinSupply,
+                minBorrow: effectiveMinBorrow,
+                minLiquidity: effectiveMinLiquidity,
+              }}
+              onOpenSettings={onSettingsModalOpen}
             />
 
             <Button
@@ -625,6 +657,8 @@ export default function Markets({
                     ? "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters."
                     : selectedOracles.length > 0 && !showUnknownOracle
                     ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
+                    : trustedVaultsOnly
+                    ? 'Disable the Trusted Vaults filter or update your trusted list in Settings.'
                     : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
                     ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
                     : 'Try adjusting your filters or search query to see more results.'
@@ -634,6 +668,12 @@ export default function Markets({
           </div>
         )}
       </div>
-    </div>
-  );
+      <TrustedVaultsModal
+        isOpen={isTrustedVaultsModalOpen}
+        onOpenChange={() => setIsTrustedVaultsModalOpen((prev) => !prev)}
+        userTrustedVaults={userTrustedVaults}
+        setUserTrustedVaults={setUserTrustedVaults}
+      />
+    </>
+    );
 }

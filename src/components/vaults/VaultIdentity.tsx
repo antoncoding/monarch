@@ -28,7 +28,6 @@ type VaultIdentityProps = {
   tooltipDetail?: ReactNode;
   tooltipSecondaryDetail?: ReactNode;
   showAddressInTooltip?: boolean;
-  showChainInTooltip?: boolean;
 };
 
 export function VaultIdentity({
@@ -45,7 +44,6 @@ export function VaultIdentity({
   tooltipDetail,
   tooltipSecondaryDetail,
   showAddressInTooltip = true,
-  showChainInTooltip = true,
 }: VaultIdentityProps) {
   const vaultHref = useMemo(() => getVaultURL(address, chainId), [address, chainId]);
   const formattedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -66,7 +64,7 @@ export function VaultIdentity({
       return (
         <div className={`inline-flex items-center gap-2 ${className}`}>
           <VaultIcon curator={curator} width={iconSize} height={iconSize} />
-          <div className="flex flex-col leading-tight">
+          <div className="flex flex-col leading-tight font-zen">
             <span className="text-sm text-primary">{displayName}</span>
             <span className="text-[11px] text-secondary">{curatorLabel}</span>
           </div>
@@ -116,14 +114,6 @@ export function VaultIdentity({
     </div>
   );
 
-  const resolvedSecondaryDetail = tooltipSecondaryDetail ??
-    (showChainInTooltip ? (
-      <div className="flex items-center gap-2 text-xs text-secondary">
-        <NetworkIcon networkId={chainId} />
-        <span>{networkName}</span>
-      </div>
-    ) : undefined);
-
   const tooltipTitle = (
     <div className="flex items-center gap-2">
       <span>{displayName}</span>
@@ -148,7 +138,7 @@ export function VaultIdentity({
           icon={<VaultIcon curator={curator} width={32} height={32} />}
           title={tooltipTitle}
           detail={resolvedDetail}
-          secondaryDetail={resolvedSecondaryDetail}
+          secondaryDetail={tooltipSecondaryDetail}
           actionIcon={<FiExternalLink className="h-4 w-4" />}
           actionHref={vaultHref}
           onActionClick={(e) => e.stopPropagation()}

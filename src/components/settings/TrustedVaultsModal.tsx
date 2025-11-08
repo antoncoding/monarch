@@ -12,6 +12,7 @@ import {
   Spinner,
 } from '@heroui/react';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
+import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
@@ -178,10 +179,18 @@ export default function TrustedVaultsModal({
             <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
               {/* Info Section */}
               <div className="bg-surface-soft rounded p-4">
-                <p className="text-sm text-secondary">
+                <p className="font-zen text-sm text-secondary">
                   Select which vaults you trust. Trusted vaults can be used to filter markets based on
-                  vault participation. Only vaults flagged as default trusted are pre-selected.
+                  vault participation.
                 </p>
+                <div className="mt-3 flex items-start gap-3 rounded border border-warning/40 bg-warning/5 p-3 text-warning">
+                  <IoWarningOutline className="mt-0.5 h-4 w-4" />
+                  <p className="font-zen text-xs leading-relaxed">
+                    Vaults are managed by third-party curators. Markets trusted by those vaults are not
+                    guaranteed to be risk-free. Always perform your own diligence before trusting any
+                    vault.
+                  </p>
+                </div>
               </div>
 
               {/* Search and Actions */}

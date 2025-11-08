@@ -538,7 +538,7 @@ export function MarketsTableWithSameLoanAsset({
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets } = useMarkets();
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
   const { findToken } = useTokens();
 
   // Settings modal state
@@ -567,6 +567,11 @@ export function MarketsTableWithSameLoanAsset({
   const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
     keys.MarketsUsdMinLiquidityKey,
     DEFAULT_MIN_LIQUIDITY_USD.toString(),
+  );
+
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
+    keys.MarketsTrustedVaultsOnlyKey,
+    false,
   );
 
   const trustedVaultMap = useMemo(() => {
@@ -629,6 +634,8 @@ export function MarketsTableWithSameLoanAsset({
   );
 
   const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
+  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
+  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -730,6 +737,10 @@ export function MarketsTableWithSameLoanAsset({
       filtered = filtered.filter((market) => market.whitelisted ?? false);
     }
 
+    if (trustedVaultsOnly) {
+      filtered = filtered.filter(hasTrustedVault);
+    }
+
     // Sort using the shared utility
     const sortPropertyMap: Record<SortColumn, string> = {
       [SortColumn.COLLATSYMBOL]: 'collateralAsset.symbol',
@@ -775,6 +786,7 @@ export function MarketsTableWithSameLoanAsset({
     usdFilters,
     findToken,
     hasTrustedVault,
+    trustedVaultsOnly,
   ]);
 
   // Get selected markets
@@ -788,6 +800,7 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
+  const emptyStateColumns = (showSelectColumn ? 7 : 6) + (columnVisibility.trustedBy ? 1 : 0);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -856,9 +869,26 @@ export function MarketsTableWithSameLoanAsset({
         </div>
         <div className="flex items-center gap-3">
           <SuppliedAssetFilterCompactSwitch
-            isEnabled={minSupplyEnabled}
-            onToggle={setMinSupplyEnabled}
-            effectiveMinSupply={effectiveMinSupply}
+            includeUnknownTokens={includeUnknownTokens}
+            setIncludeUnknownTokens={setIncludeUnknownTokens}
+            showUnknownOracle={showUnknownOracle}
+            setShowUnknownOracle={setShowUnknownOracle}
+            showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+            setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+            trustedVaultsOnly={trustedVaultsOnly}
+            setTrustedVaultsOnly={setTrustedVaultsOnly}
+            minSupplyEnabled={minSupplyEnabled}
+            setMinSupplyEnabled={setMinSupplyEnabled}
+            minBorrowEnabled={minBorrowEnabled}
+            setMinBorrowEnabled={setMinBorrowEnabled}
+            minLiquidityEnabled={minLiquidityEnabled}
+            setMinLiquidityEnabled={setMinLiquidityEnabled}
+            thresholds={{
+              minSupply: effectiveMinSupply,
+              minBorrow: effectiveMinBorrow,
+              minLiquidity: effectiveMinLiquidity,
+            }}
+            onOpenSettings={() => setShowSettingsModal(true)}
           />
           {showSettings && (
             <Button
@@ -970,7 +1000,7 @@ export function MarketsTableWithSameLoanAsset({
           <tbody>
             {paginatedMarkets.length === 0 ? (
               <tr>
-                <td colSpan={showSelectColumn ? 7 : 6} className="py-8 text-center text-secondary">
+                <td colSpan={emptyStateColumns} className="py-8 text-center text-secondary">
                   No markets found
                 </td>
               </tr>
@@ -1006,22 +1036,13 @@ export function MarketsTableWithSameLoanAsset({
         <MarketSettingsModal
           isOpen={showSettingsModal}
           onOpenChange={() => setShowSettingsModal(false)}
-          includeUnknownTokens={includeUnknownTokens}
-          setIncludeUnknownTokens={setIncludeUnknownTokens}
-          showUnknownOracle={showUnknownOracle}
-          setShowUnknownOracle={setShowUnknownOracle}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
-          minSupplyEnabled={minSupplyEnabled}
-          setMinSupplyEnabled={setMinSupplyEnabled}
-          minBorrowEnabled={minBorrowEnabled}
-          setMinBorrowEnabled={setMinBorrowEnabled}
-          minLiquidityEnabled={minLiquidityEnabled}
-          setMinLiquidityEnabled={setMinLiquidityEnabled}
           entriesPerPage={entriesPerPage}
           onEntriesPerPageChange={setEntriesPerPage}
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
+          trustedVaults={userTrustedVaults}
         />
       )}
     </div>
