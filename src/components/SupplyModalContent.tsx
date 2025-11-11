@@ -55,10 +55,14 @@ export function SupplyModalContent({
     signAndSupply,
   } = useSupplyMarket(market, onSuccess);
 
-  // Notify parent component when supply amount changes
-  useEffect(() => {
-    onAmountChange?.(supplyAmount);
-  }, [supplyAmount, onAmountChange]);
+  // Handle supply amount change
+  const handleSupplyAmountChange = useCallback(
+    (amount: bigint) => {
+      setSupplyAmount(amount);
+      onAmountChange?.(amount);
+    },
+    [setSupplyAmount, onAmountChange],
+  );
 
   // Use the market network hook to handle network switching
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -119,10 +123,8 @@ export function SupplyModalContent({
                       <Input
                         decimals={market.loanAsset.decimals}
                         max={useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0)}
-                        setValue={setSupplyAmount}
-                        setError={(
-                          error: string | null | ((prev: string | null) => string | null),
-                        ) => {
+                        setValue={handleSupplyAmountChange}
+                        setError={(error: string | null) => {
                           if (
                             typeof error === 'string' &&
                             !error.includes("You don't have any supplied assets")

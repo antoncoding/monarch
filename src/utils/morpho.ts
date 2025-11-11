@@ -257,13 +257,15 @@ type MarketStatePreview = {
 };
 
 /**
- * Simulates a supply operation and returns the full market state preview.
+ * Simulates a supply, borrow, or repay operation and returns the full market state preview.
  *
  * @param market - The market configuration and state
- * @param supplyAmount - The amount to simulate supplying (in asset units, positive for supply)
+ * @param supplyAmount - The amount to simulate supplying (in asset units, positive for supply, negative for withdraw)
+ * @param repayAmount - The amount to simulate repaying (in asset units, positive for repay)
+ * @param borrowAmount - The amount to simulate borrowing (in asset units, positive for borrow)
  * @returns The estimated market state after the action, or null if simulation fails
  */
-export function previewMarketState(market: Market, supplyAmount: bigint): MarketStatePreview | null {
+export function previewMarketState(market: Market, supplyAmount: bigint, repayAmount?: bigint, borrowAmount?: bigint): MarketStatePreview | null {
   try {
     const params = new BlueMarketParams({
       loanToken: market.loanAsset.address as Address,
@@ -284,7 +286,26 @@ export function previewMarketState(market: Market, supplyAmount: bigint): Market
       fee: BigInt(Math.floor(market.state.fee * 1e18)),
     });
 
-    const { market: updated } = blueMarket.supply(supplyAmount, 0n);
+    let updated = blueMarket;
+
+    // Apply supply/withdraw if specified
+    if (supplyAmount !== 0n) {
+      console.log('supplyAmount', supplyAmount)
+      const result = blueMarket.supply(supplyAmount, 0n);
+      updated = result.market;
+    }
+
+    // Apply repay if specified
+    if (repayAmount && repayAmount > 0n) {
+      const result = updated.repay(repayAmount, 0n);
+      updated = result.market;
+    }
+
+    // Apply borrow if specified
+    if (borrowAmount && borrowAmount > 0n) {
+      const result = updated.borrow(borrowAmount, 0n);
+      updated = result.market;
+    }
 
     return {
       supplyApy: updated.supplyApy,

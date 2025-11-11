@@ -5,9 +5,9 @@ import { formatBalance } from '@/utils/balance';
 
 type InputProps = {
   decimals: number;
-  setValue: React.Dispatch<React.SetStateAction<bigint>>;
+  setValue: (value: bigint) => void;
   max?: bigint;
-  setError?: React.Dispatch<React.SetStateAction<string | null>>;
+  setError?: ((error: string | null) => void) | React.Dispatch<React.SetStateAction<string | null>>;
   exceedMaxErrMessage?: string;
   allowExceedMax?: boolean; // whether to still "setValue" when the input exceeds max
   onMaxClick?: () => void;

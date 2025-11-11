@@ -18,6 +18,8 @@ type MarketDetailsBlockProps = {
   showRewards?: boolean;
   disableExpansion?: boolean;
   loanAssetDelta?: bigint;
+  repayAmount?: bigint;
+  borrowAmount?: bigint;
 };
 
 export function MarketDetailsBlock({
@@ -28,6 +30,8 @@ export function MarketDetailsBlock({
   showRewards = false,
   disableExpansion = false,
   loanAssetDelta,
+  repayAmount,
+  borrowAmount,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
@@ -38,13 +42,25 @@ export function MarketDetailsBlock({
     whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
-  // Calculate preview state when loanAssetDelta is provided
+  // Calculate preview state when loanAssetDelta, repayAmount, or borrowAmount is provided
   const previewState = useMemo(() => {
-    if (!loanAssetDelta || loanAssetDelta <= 0n || mode !== 'supply') {
-      return null;
+    // For supply mode: show preview if supplying (positive) or withdrawing (negative)
+    if (mode === 'supply' && loanAssetDelta && loanAssetDelta !== 0n) {
+      return previewMarketState(market, loanAssetDelta);
     }
-    return previewMarketState(market, loanAssetDelta);
-  }, [market, loanAssetDelta, mode]);
+
+    // For borrow mode: show preview if repaying or borrowing
+    if (mode === 'borrow') {
+      const hasRepay = repayAmount && repayAmount > 0n;
+      const hasBorrow = borrowAmount && borrowAmount > 0n;
+
+      if (hasRepay || hasBorrow) {
+        return previewMarketState(market, 0n, repayAmount, borrowAmount);
+      }
+    }
+
+    return null;
+  }, [market, loanAssetDelta, repayAmount, borrowAmount, mode]);
 
   // Helper to format APY based on mode
   const getAPY = () => {
