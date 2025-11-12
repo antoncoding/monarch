@@ -42,7 +42,7 @@ export function RebalanceCart({
         let apyPreview: ReturnType<typeof previewMarketState> | null = null;
         if (toMarket) {
           try {
-            apyPreview = previewMarketState(toMarket, action.amount);
+            apyPreview = previewMarketState(toMarket, action.amount, undefined);
           } catch {
             apyPreview = null;
           }

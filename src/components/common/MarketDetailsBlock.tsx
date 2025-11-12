@@ -17,9 +17,8 @@ type MarketDetailsBlockProps = {
   mode?: 'supply' | 'borrow';
   showRewards?: boolean;
   disableExpansion?: boolean;
-  loanAssetDelta?: bigint;
-  repayAmount?: bigint;
-  borrowAmount?: bigint;
+  supplyDelta?: bigint;
+  borrowDelta?: bigint;
 };
 
 export function MarketDetailsBlock({
@@ -29,9 +28,8 @@ export function MarketDetailsBlock({
   mode = 'supply',
   showRewards = false,
   disableExpansion = false,
-  loanAssetDelta,
-  repayAmount,
-  borrowAmount,
+  supplyDelta,
+  borrowDelta,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
@@ -42,25 +40,20 @@ export function MarketDetailsBlock({
     whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
-  // Calculate preview state when loanAssetDelta, repayAmount, or borrowAmount is provided
+  // Calculate preview state when supplyDelta or borrowDelta is provided
   const previewState = useMemo(() => {
-    // For supply mode: show preview if supplying (positive) or withdrawing (negative)
-    if (mode === 'supply' && loanAssetDelta && loanAssetDelta !== 0n) {
-      return previewMarketState(market, loanAssetDelta);
+    // For supply mode: show preview if supplyDelta is non-zero
+    if (mode === 'supply' && supplyDelta && supplyDelta !== 0n) {
+      return previewMarketState(market, supplyDelta, undefined);
     }
 
-    // For borrow mode: show preview if repaying or borrowing
-    if (mode === 'borrow') {
-      const hasRepay = repayAmount && repayAmount > 0n;
-      const hasBorrow = borrowAmount && borrowAmount > 0n;
-
-      if (hasRepay || hasBorrow) {
-        return previewMarketState(market, 0n, repayAmount, borrowAmount);
-      }
+    // For borrow mode: show preview if borrowDelta is non-zero
+    if (mode === 'borrow' && borrowDelta && borrowDelta !== 0n) {
+      return previewMarketState(market, undefined, borrowDelta);
     }
 
     return null;
-  }, [market, loanAssetDelta, repayAmount, borrowAmount, mode]);
+  }, [market, supplyDelta, borrowDelta, mode]);
 
   // Helper to format APY based on mode
   const getAPY = () => {

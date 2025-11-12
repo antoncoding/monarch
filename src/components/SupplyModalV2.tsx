@@ -84,7 +84,7 @@ export function SupplyModalV2({
               defaultCollapsed
               mode="supply"
               showRewards
-              loanAssetDelta={
+              supplyDelta={
                 mode === 'supply'
                   ? supplyPreviewAmount
                   : withdrawPreviewAmount

@@ -50,7 +50,7 @@ export function RebalanceActionInput({
     }
     try {
       const amountBigInt = parseUnits(amount, groupedPosition.loanAssetDecimals);
-      return previewMarketState(selectedToMarket, amountBigInt);
+      return previewMarketState(selectedToMarket, amountBigInt, undefined);
     } catch {
       return null;
     }

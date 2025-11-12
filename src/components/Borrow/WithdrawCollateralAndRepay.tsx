@@ -253,7 +253,7 @@ export function WithdrawCollateralAndRepay({
 
         {/* Market Details Block - includes position overview and collapsible details */}
         <div className="mb-5">
-          <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed repayAmount={repayAssets} />
+          <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed borrowDelta={repayAssets ? -repayAssets : undefined} />
         </div>
 
         {isConnected && (

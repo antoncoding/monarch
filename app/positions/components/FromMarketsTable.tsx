@@ -34,7 +34,7 @@ export function FromMarketsTable({
 
     try {
       const deltaBigInt = BigInt(Math.floor(position.pendingDelta));
-      return previewMarketState(position.market, deltaBigInt);
+      return previewMarketState(position.market, deltaBigInt, undefined);
     } catch {
       return null;
     }
