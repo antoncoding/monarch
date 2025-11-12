@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
