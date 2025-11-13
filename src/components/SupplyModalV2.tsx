@@ -6,7 +6,6 @@ import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { SupplyModalContent } from './SupplyModalContent';
 import { TokenIcon } from './TokenIcon';
 import { WithdrawModalContent } from './WithdrawModalContent';
-
 type SupplyModalV2Props = {
   market: Market;
   position?: MarketPosition | null;

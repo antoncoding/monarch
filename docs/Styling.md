@@ -10,6 +10,8 @@ Use these shared components instead of raw HTML elements:
 
 ## Modal Guidelines
 
+**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal` instead of directly using HeroUI modals. This ensures consistent styling, proper z-index management, and automatic font-zen application.
+
 All modals MUST follow consistent styling standards for typography, spacing, and structure. There are two modal patterns based on use case.
 
 ### Modal Types
@@ -23,89 +25,181 @@ All modals MUST follow consistent styling standards for typography, spacing, and
 - Filter modals (Supply Asset Filter)
 - Confirmation dialogs (Blacklist Confirmation)
 
+### Using Our Modal Components
+
+Import from our custom components:
+
+```tsx
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
+import { Button } from '@/components/common/Button';
+```
+
 ### Standard Modal Pattern
 
 Use this pattern for primary workflows, settings, and management interfaces:
 
 ```tsx
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+<Modal
+  isOpen={isOpen}
+  onClose={onClose}
+  variant="standard"
+  zIndex="settings"  // auto manages z-index layers
+  size="xl"
+>
+  <ModalHeader
+    title="Modal Title"
+    description="Brief description of what this modal does"
+  />
 
-<Modal isOpen={isOpen} onOpenChange={onOpenChange} size="xl">
-  <ModalContent>
-    <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-      <span className="text-lg font-normal text-primary">Modal Title</span>
-      <span className="text-sm font-normal text-secondary">
-        Brief description of what this modal does
-      </span>
-    </ModalHeader>
+  <ModalBody>
+    {/* Modal content - spacing and font-zen applied automatically */}
+  </ModalBody>
 
-    <ModalBody className="flex flex-col gap-5 px-6 pb-6 pt-2 font-zen">
-      {/* Modal content */}
-    </ModalBody>
-
-    <ModalFooter>
-      {/* Footer buttons */}
-    </ModalFooter>
-  </ModalContent>
+  <ModalFooter>
+    <Button variant="secondary" onPress={onClose}>Cancel</Button>
+    <Button variant="cta" onPress={handleConfirm}>Confirm</Button>
+  </ModalFooter>
 </Modal>
 ```
 
-**Key Standards:**
-- **Header**: `px-10 pt-6` for spacing
-- **Title**: `text-lg font-normal text-primary` - never use bold/semibold
-- **Description**: `text-sm font-normal text-secondary`
-- **Body**: `px-6 pb-6 pt-2` for consistent padding
-- **Font**: Always include `font-zen` class
-- **Gap**: `gap-5` between sections in body
+**With Icon Support:**
+
+```tsx
+import { TokenIcon } from '@/components/TokenIcon';
+
+<Modal isOpen={isOpen} onClose={onClose} variant="standard" zIndex="base">
+  <ModalHeader
+    title={`Supply ${symbol}`}
+    description="Supply to earn interest"
+    icon={
+      <TokenIcon
+        address={tokenAddress}
+        chainId={chainId}
+        symbol={symbol}
+        width={20}
+        height={20}
+      />
+    }
+  />
+  <ModalBody>{/* content */}</ModalBody>
+</Modal>
+```
+
+**With Actions in Header:**
+
+```tsx
+<ModalHeader
+  title="Rebalance Position"
+  description="Manage your positions"
+  actions={
+    <Button variant="light" size="sm" onPress={handleRefresh}>
+      <RefreshIcon /> Refresh
+    </Button>
+  }
+/>
+```
+
+**Auto-Applied Standards:**
+- **Spacing**: Automatically applied based on variant
+- **Typography**: `font-zen` and text sizes handled automatically
+- **Z-Index**: Managed through named layers (base, selection, settings, process)
+- **No hardcoded styles**: Everything configured through props
 
 ### Compact Modal Pattern
 
 Use this pattern for filters, confirmations, and quick actions:
 
 ```tsx
-<Modal isOpen={isOpen} onOpenChange={onOpenChange} size="md">
-  <ModalContent>
-    <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
-      <span className="text-base font-normal text-primary">Modal Title</span>
-      <span className="text-sm font-normal text-secondary">
-        Brief description
-      </span>
-    </ModalHeader>
+<Modal
+  isOpen={isOpen}
+  onClose={onClose}
+  variant="compact"
+  zIndex="base"
+  size="md"
+>
+  <ModalHeader
+    variant="compact"
+    title="Filter Options"
+    description="Quick toggle filters"
+  />
 
-    <ModalBody className="flex flex-col gap-4 px-6 pb-4 pt-2 font-zen">
-      {/* Modal content */}
-    </ModalBody>
+  <ModalBody variant="compact">
+    {/* Modal content - tighter spacing applied automatically */}
+  </ModalBody>
 
-    <ModalFooter>
-      {/* Footer buttons */}
-    </ModalFooter>
-  </ModalContent>
+  <ModalFooter>
+    <Button variant="secondary" size="sm" onPress={onClose}>Cancel</Button>
+    <Button variant="cta" size="sm" onPress={handleApply}>Apply</Button>
+  </ModalFooter>
 </Modal>
 ```
 
-**Key Differences from Standard:**
-- **Header**: `px-6 pt-4` (smaller padding)
-- **Title**: `text-base` (smaller size)
-- **Body**: `px-6 pb-4 pt-2` and `gap-4` (tighter spacing)
+**Auto-Applied Differences from Standard:**
+- **Smaller padding**: `px-6 pt-4` vs `px-10 pt-6`
+- **Smaller title**: `text-base` vs `text-lg`
+- **Tighter spacing**: `gap-4` vs `gap-5`
+
+### Z-Index Management
+
+Our Modal component manages z-index automatically through named layers. This prevents conflicts when multiple modals are open:
+
+```tsx
+// Z-Index Layers (from lowest to highest):
+zIndex="base"      // z-50   - Standard modals (Supply, Borrow, Campaign)
+zIndex="process"   // z-1100 - Process/transaction modals
+zIndex="selection" // z-2200 - Market/item selection modals
+zIndex="settings"  // z-2300 - Settings modals (HIGHEST - always on top)
+```
+
+**Usage Example:**
+
+```tsx
+// Settings modal (should be on top of everything)
+<Modal zIndex="settings">
+  <ModalHeader title="Market Settings" />
+  {/* ... */}
+</Modal>
+
+// Market selection modal (opened from settings)
+<Modal zIndex="selection">
+  <ModalHeader title="Select Market" />
+  {/* ... */}
+</Modal>
+
+// Base modal (standard use case)
+<Modal zIndex="base">
+  <ModalHeader title="Supply USDC" />
+  {/* ... */}
+</Modal>
+```
+
+**Custom Z-Index (if needed):**
+
+```tsx
+<Modal customZIndex={3000}>
+  {/* Very rare - only use if you have a specific need */}
+</Modal>
+```
 
 ### Typography Rules
 
-**IMPORTANT**: Never use bold or semibold font weights in modal headers.
+Typography is automatically handled by our Modal components. You don't need to specify font weights or sizes manually - just use the title/description props.
+
+**IMPORTANT**: Never manually add bold or semibold font weights in modal content.
 
 ```tsx
-// ✅ Correct
-<span className="text-lg font-normal text-primary">Settings</span>
+// ✅ Correct - let the component handle typography
+<ModalHeader title="Settings" description="Configure your preferences" />
 
-// ❌ Incorrect
-<span className="text-lg font-bold text-primary">Settings</span>
-<span className="text-lg font-semibold text-primary">Settings</span>
+// ❌ Incorrect - don't override with manual styles
+<ModalHeader title={<span className="font-bold">Settings</span>} />
 ```
 
 Use color and size to create hierarchy, not font weight:
 - **Primary text**: `text-primary`
 - **Secondary text**: `text-secondary`
-- **Title size**: `text-lg` (standard) or `text-base` (compact)
-- **Description size**: `text-sm`
+- **Title size**: Automatically set based on variant
+- **Description size**: Automatically set to `text-sm`
 
 ### Section Headers in Modal Body
 
