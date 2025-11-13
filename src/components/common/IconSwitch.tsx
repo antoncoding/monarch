@@ -13,6 +13,8 @@ export type IconSwitchProps = {
   color?: 'primary' | 'secondary' | 'accent' | 'destructive';
   onChange?: (selected: boolean) => void;
   thumbIcon?: React.ComponentType<{ className?: string }>;
+  thumbIconOn?: React.ComponentType<{ className?: string }>;
+  thumbIconOff?: React.ComponentType<{ className?: string }>;
   classNames?: {
     wrapper?: string;
     base?: string;
@@ -91,6 +93,8 @@ export function IconSwitch({
   color = 'primary',
   onChange,
   thumbIcon: ThumbIcon = PiButterflyDuotone,
+  thumbIconOn,
+  thumbIconOff,
   classNames,
   disabled = false,
   className,
@@ -103,6 +107,11 @@ export function IconSwitch({
 
   const config = SIZE_CONFIG[size];
   const translate = config.width - config.thumbWidth - config.padding * 2;
+
+  // Determine which icon to use
+  const IconComponent = (thumbIconOn && thumbIconOff)
+    ? (isSelected ? thumbIconOn : thumbIconOff)
+    : ThumbIcon;
 
   const handleToggle = React.useCallback(() => {
     if (disabled) return;
@@ -184,7 +193,7 @@ export function IconSwitch({
             classNames?.thumbIcon,
           )}
         >
-          <ThumbIcon className="h-[100%]" />
+          <IconComponent className="h-[100%]" />
         </motion.div>
       </motion.div>
     </button>

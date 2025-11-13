@@ -317,14 +317,22 @@ export type SortDirection = 1 | -1; // 1 = asc, -1 = desc
 export type MarketSortFn = (a: Market, b: Market) => number;
 
 /**
- * Sort markets by a comparison function and direction
+ * Sort markets by a comparison function and direction.
+ * Handles null-safe sorting where null/undefined values always go to the end.
  */
 export const sortMarkets = (
   markets: Market[],
   sortFn: MarketSortFn,
   direction: SortDirection = -1,
 ): Market[] => {
-  return [...markets].sort((a, b) => sortFn(a, b) * direction);
+  return [...markets].sort((a, b) => {
+    const result = sortFn(a, b);
+    // If result is infinity, it means one value is null - keep it at the end regardless of direction
+    if (!isFinite(result)) {
+      return result;
+    }
+    return result * direction;
+  });
 };
 
 /**
@@ -338,21 +346,28 @@ export const getNestedProperty = (obj: Market, path: string): unknown => {
 };
 
 /**
- * Create a sort function from a property path
+ * Create a sort function from a property path.
+ * Returns Infinity/-Infinity for null values to ensure they always sort to the end.
  */
 export const createPropertySort = (propertyPath: string): MarketSortFn => {
   return (a, b) => {
     const aValue: unknown = getNestedProperty(a, propertyPath);
     const bValue: unknown = getNestedProperty(b, propertyPath);
 
-    // Handle undefined/null cases
-    if (aValue === bValue) return 0;
-    if (aValue === undefined || aValue === null) return 1;
-    if (bValue === undefined || bValue === null) return -1;
+    const aIsNullish = aValue === undefined || aValue === null;
+    const bIsNullish = bValue === undefined || bValue === null;
+
+    // Both null/undefined - equal
+    if (aIsNullish && bIsNullish) return 0;
+
+    // Only one is null/undefined - return Infinity to ensure it goes to the end
+    // The sortMarkets function will not apply direction to infinite values
+    if (aIsNullish) return Infinity;
+    if (bIsNullish) return -Infinity;
 
     // Type guard for comparable values
     if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return aValue > bValue ? 1 : -1;
+      return aValue - bValue;
     }
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return aValue > bValue ? 1 : -1;
