@@ -33,7 +33,7 @@ export function WrapProcessModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 font-zen">
       <motion.div
         role="dialog"
         aria-modal="true"

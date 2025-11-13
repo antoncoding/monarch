@@ -8,6 +8,145 @@ Use these shared components instead of raw HTML elements:
 - `Modal`: For all modal dialogs
 - `Card`: For contained content sections
 
+## Modal Guidelines
+
+All modals MUST follow consistent styling standards for typography, spacing, and structure. There are two modal patterns based on use case.
+
+### Modal Types
+
+**1. Standard Modal** - For settings, management, and primary workflows
+- Large settings modals (Trusted Vaults, Blacklisted Markets, Market Settings)
+- Transaction modals (Rebalance, Market Selection)
+- Onboarding and setup flows
+
+**2. Compact Modal** - For filters, confirmations, and secondary dialogs
+- Filter modals (Supply Asset Filter)
+- Confirmation dialogs (Blacklist Confirmation)
+
+### Standard Modal Pattern
+
+Use this pattern for primary workflows, settings, and management interfaces:
+
+```tsx
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
+
+<Modal isOpen={isOpen} onOpenChange={onOpenChange} size="xl">
+  <ModalContent>
+    <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
+      <span className="text-lg font-normal text-primary">Modal Title</span>
+      <span className="text-sm font-normal text-secondary">
+        Brief description of what this modal does
+      </span>
+    </ModalHeader>
+
+    <ModalBody className="flex flex-col gap-5 px-6 pb-6 pt-2 font-zen">
+      {/* Modal content */}
+    </ModalBody>
+
+    <ModalFooter>
+      {/* Footer buttons */}
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+```
+
+**Key Standards:**
+- **Header**: `px-10 pt-6` for spacing
+- **Title**: `text-lg font-normal text-primary` - never use bold/semibold
+- **Description**: `text-sm font-normal text-secondary`
+- **Body**: `px-6 pb-6 pt-2` for consistent padding
+- **Font**: Always include `font-zen` class
+- **Gap**: `gap-5` between sections in body
+
+### Compact Modal Pattern
+
+Use this pattern for filters, confirmations, and quick actions:
+
+```tsx
+<Modal isOpen={isOpen} onOpenChange={onOpenChange} size="md">
+  <ModalContent>
+    <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
+      <span className="text-base font-normal text-primary">Modal Title</span>
+      <span className="text-sm font-normal text-secondary">
+        Brief description
+      </span>
+    </ModalHeader>
+
+    <ModalBody className="flex flex-col gap-4 px-6 pb-4 pt-2 font-zen">
+      {/* Modal content */}
+    </ModalBody>
+
+    <ModalFooter>
+      {/* Footer buttons */}
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+```
+
+**Key Differences from Standard:**
+- **Header**: `px-6 pt-4` (smaller padding)
+- **Title**: `text-base` (smaller size)
+- **Body**: `px-6 pb-4 pt-2` and `gap-4` (tighter spacing)
+
+### Typography Rules
+
+**IMPORTANT**: Never use bold or semibold font weights in modal headers.
+
+```tsx
+// ✅ Correct
+<span className="text-lg font-normal text-primary">Settings</span>
+
+// ❌ Incorrect
+<span className="text-lg font-bold text-primary">Settings</span>
+<span className="text-lg font-semibold text-primary">Settings</span>
+```
+
+Use color and size to create hierarchy, not font weight:
+- **Primary text**: `text-primary`
+- **Secondary text**: `text-secondary`
+- **Title size**: `text-lg` (standard) or `text-base` (compact)
+- **Description size**: `text-sm`
+
+### Section Headers in Modal Body
+
+For section headers within modal content, use consistent styling:
+
+```tsx
+// ✅ Correct
+<h3 className="text-base font-normal text-primary">Section Title</h3>
+
+// ❌ Incorrect
+<h3 className="text-sm font-medium text-primary">Section Title</h3>
+<h3 className="text-base font-semibold text-primary">Section Title</h3>
+```
+
+### Custom Modals (Non-HeroUI)
+
+For custom modals using `framer-motion`, apply `font-zen` to the outer container:
+
+```tsx
+// ✅ Correct - font-zen on the modal overlay
+<div className="fixed inset-0 flex items-center justify-center bg-black/50 font-zen" style={{ zIndex: 50 }}>
+  <div className="bg-surface relative w-full max-w-lg rounded p-6">
+    {/* Modal content */}
+  </div>
+</div>
+
+// With framer-motion
+<AnimatePresence>
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 font-zen"
+  >
+    <motion.div className="relative w-full max-w-lg rounded bg-white p-4">
+      {/* Modal content */}
+    </motion.div>
+  </motion.div>
+</AnimatePresence>
+```
+
 ## Component Guidelines
 
 ### Rounding

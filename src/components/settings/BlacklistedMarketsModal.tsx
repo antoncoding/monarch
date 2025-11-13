@@ -97,16 +97,15 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-              Manage Blacklisted Markets
+              <span className="text-lg font-normal text-primary">Manage Blacklisted Markets</span>
+              <span className="text-sm font-normal text-secondary">
+                Block specific markets from appearing in your view
+              </span>
             </ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6 font-zen">
+            <ModalBody className="flex flex-col gap-5 px-6 pb-6 pt-2 font-zen">
               {/* Info Section */}
               <div className="bg-surface-soft rounded p-4">
-                <p className="font-zen text-sm text-secondary">
-                  Block specific markets from appearing in your view. Blacklisted markets will be
-                  completely hidden from all market lists and filters.
-                </p>
-                <div className="mt-3 flex items-start gap-3 rounded bg-red-500/10 p-3 text-red-700 dark:text-red-400">
+                <div className="flex items-start gap-3 rounded bg-red-500/10 p-3 text-red-700 dark:text-red-400">
                   <IoWarningOutline className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="font-zen text-sm">
                     Some markets are blacklisted by default due to security concerns or issues.
@@ -119,7 +118,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               {blacklistedMarkets.length > 0 && (
                 <>
                   <div className="flex flex-col gap-3 px-4">
-                    <h3 className="text-sm font-medium text-primary">
+                    <h3 className="text-base font-normal text-primary">
                       Blacklisted Markets ({blacklistedMarkets.length})
                     </h3>
                   </div>
@@ -173,7 +172,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               {/* Available Markets Section */}
               <div className="flex flex-col gap-3 px-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-primary">Add Markets to Blacklist</h3>
+                  <h3 className="text-base font-normal text-primary">Add Markets to Blacklist</h3>
                   {filteredAvailableMarkets.length > 0 && (
                     <span className="text-xs text-secondary">
                       {filteredAvailableMarkets.length} result

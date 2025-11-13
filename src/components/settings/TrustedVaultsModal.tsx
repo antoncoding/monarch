@@ -168,15 +168,14 @@ export default function TrustedVaultsModal({
         {(onClose) => (
           <>
             <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-              Manage Trusted Vaults
+              <span className="text-lg font-normal text-primary">Manage Trusted Vaults</span>
+              <span className="text-sm font-normal text-secondary">
+                Select which vaults you trust to filter markets based on vault participation
+              </span>
             </ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
+            <ModalBody className="flex flex-col gap-5 px-6 pb-6 pt-2 font-zen">
               {/* Info Section */}
               <div className="bg-surface-soft rounded p-4">
-                <p className="font-zen text-sm text-secondary">
-                  Select which vaults you trust. Trusted vaults can be used to filter markets based on
-                  vault participation.
-                </p>
                 <div className="mt-3 flex items-start gap-3 rounded bg-yellow-500/10 p-3 text-yellow-700">
                   <IoWarningOutline className="mt-0.5 h-4 w-4" />
                   <p className="font-zen text-sm">
@@ -213,7 +212,7 @@ export default function TrustedVaultsModal({
               <Divider />
 
               <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
-                <h3 className="font-zen text-base font-semibold text-primary">
+                <h3 className="text-base font-normal text-primary">
                   Known Vaults ({sortedMonarchVaults.length})
                 </h3>
                 {sortedMonarchVaults.length === 0 ? (

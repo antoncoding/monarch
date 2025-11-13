@@ -165,12 +165,12 @@ export function SetupAgentModal({
       closeButton={false}
     >
       <ModalContent className="p-4">
-        <ModalHeader className="flex justify-between">
-          <div>
-            <h2 className="font-zen text-2xl font-normal">{SETUP_STEPS[currentStepIndex].title}</h2>
-            <p className="mt-1 font-zen text-sm font-normal text-secondary">
+        <ModalHeader className="flex justify-between px-10 pt-6 font-zen">
+          <div className="flex flex-col gap-1">
+            <span className="text-lg font-normal text-primary">{SETUP_STEPS[currentStepIndex].title}</span>
+            <span className="text-sm font-normal text-secondary">
               {SETUP_STEPS[currentStepIndex].description}
-            </p>
+            </span>
           </div>
         </ModalHeader>
 

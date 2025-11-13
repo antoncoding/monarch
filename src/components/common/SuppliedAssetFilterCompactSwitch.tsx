@@ -113,13 +113,13 @@ export function SuppliedAssetFilterCompactSwitch({
         <ModalContent>
           {(close) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 font-zen text-normal">
-                Filters
-                <p className="font-zen text-sm font-normal text-secondary">
-                  Quickly toggle the visibility filters that power the markets table.
-                </p>
+              <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
+                <span className="text-base font-normal text-primary">Filters</span>
+                <span className="text-sm font-normal text-secondary">
+                  Quickly toggle the visibility filters that power the markets table
+                </span>
               </ModalHeader>
-              <ModalBody className="flex flex-col gap-5">
+              <ModalBody className="flex flex-col gap-4 px-6 pb-4 pt-2 font-zen">
                 <FilterSection 
                   title="Basic Filters" 
                   helper="Options to display markets with unknown parameters. Use with caution."

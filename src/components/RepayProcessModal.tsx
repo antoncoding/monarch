@@ -79,7 +79,7 @@ export function RepayProcessModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 font-zen"
       >
         <motion.div
           initial={{ scale: 0.95 }}

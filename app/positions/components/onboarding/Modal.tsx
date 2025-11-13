@@ -64,14 +64,14 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
     >
       <ModalContent className="p-4">
         {/* Header */}
-        <ModalHeader className="flex justify-between">
-          <div>
-            <h2 className="font-zen text-2xl font-normal">
+        <ModalHeader className="flex justify-between px-10 pt-6 font-zen">
+          <div className="flex flex-col gap-1">
+            <span className="text-lg font-normal text-primary">
               {ONBOARDING_STEPS[currentStepIndex].title}
-            </h2>
-            <p className="mt-1 font-zen text-sm font-normal text-secondary">
+            </span>
+            <span className="text-sm font-normal text-secondary">
               {ONBOARDING_STEPS[currentStepIndex].description}
-            </p>
+            </span>
           </div>
           <Button isIconOnly onPress={onClose} className="bg-surface">
             <RxCross2 size={16} />

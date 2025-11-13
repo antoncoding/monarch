@@ -51,7 +51,7 @@ export function BorrowModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 flex items-center justify-center bg-black/50 font-zen"
       style={{ zIndex: 50 }}
     >
       <div className="bg-surface relative w-full max-w-lg rounded-lg p-6">

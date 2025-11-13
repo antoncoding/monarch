@@ -38,11 +38,14 @@ export default function RiskNotificationModal() {
 
   return (
     <Modal isOpen={isOpen} onClose={() => {}} hideCloseButton size="3xl" scrollBehavior="inside">
-      <ModalContent className="max-h-[90vh] p-4 font-zen sm:p-8">
-        <ModalHeader className="flex flex-col gap-1 font-zen text-xl sm:text-2xl">
-          Welcome to Monarch
+      <ModalContent className="max-h-[90vh] font-zen">
+        <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
+          <span className="text-lg font-normal text-primary">Welcome to Monarch</span>
+          <span className="text-sm font-normal text-secondary">
+            Important information before you begin
+          </span>
         </ModalHeader>
-        <ModalBody className="overflow-auto">
+        <ModalBody className="px-6 pb-6 pt-2 overflow-auto">
           <p className="mb-4">
             Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's
             important to understand the key aspects of this approach. For a comprehensive overview,

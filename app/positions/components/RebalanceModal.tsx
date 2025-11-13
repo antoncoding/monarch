@@ -290,10 +290,17 @@ export function RebalanceModal({
         }}
       >
         <ModalContent>
-          <ModalHeader className="flex items-center justify-between px-8 font-zen text-2xl">
-            <div className="flex items-center gap-2 text-2xl">
-              Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
-              {isRefetching && <Spinner size={20} />}
+          <ModalHeader className="flex items-center justify-between px-10 pt-6 font-zen">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">
+                  Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
+                </span>
+                {isRefetching && <Spinner size={20} />}
+              </div>
+              <span className="text-sm text-secondary">
+                Click on your existing position to rebalance {groupedPosition.loanAsset} to a new market. You can batch actions.
+              </span>
             </div>
             <Button
               variant="light"
@@ -305,12 +312,7 @@ export function RebalanceModal({
               Refresh
             </Button>
           </ModalHeader>
-          <ModalBody className="mx-2 font-zen gap-4">
-            <div className="py-2">
-              <p className="text-sm text-secondary">
-                Click on your existing position to rebalance {groupedPosition.loanAsset} to a new market. You can batch actions.
-              </p>
-            </div>
+          <ModalBody className="px-6 pb-6 pt-2 font-zen gap-4">
 
             <FromMarketsTable
               positions={groupedPosition.markets

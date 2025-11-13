@@ -255,8 +255,8 @@ export function AddCollateralAndBorrow({
               {/* Collateral Input Section */}
               <div className="mb-1">
                 <div className="flex items-center justify-between">
-                  <p className="font-inter text-sm">Add Collateral</p>
-                  <p className="font-inter text-xs opacity-50">
+                  <p className="font text-sm">Add Collateral</p>
+                  <p className="font text-xs opacity-50">
                     Balance:{' '}
                     {useEth
                       ? formatBalance(ethBalance ? ethBalance : '0', 18)
@@ -270,7 +270,7 @@ export function AddCollateralAndBorrow({
 
                 {isWrappedNativeToken(market.collateralAsset.address, market.morphoBlue.chain.id) && (
                   <div className="mb-2 mt-1 flex items-center justify-end">
-                    <div className="mr-2 font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
+                    <div className="mr-2 font text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
                     <Switch
                       size="sm"
                       isSelected={useEth}
@@ -303,8 +303,8 @@ export function AddCollateralAndBorrow({
               {/* Borrow Input Section */}
               <div className="mb-1">
                 <div className="flex items-center justify-between">
-                  <p className="font-inter text-sm">Borrow </p>
-                  <p className="font-inter text-xs opacity-50">
+                  <p className="font text-sm">Borrow </p>
+                  <p className="font text-xs opacity-50">
                     Available:{' '}
                     {formatReadable(
                       formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),

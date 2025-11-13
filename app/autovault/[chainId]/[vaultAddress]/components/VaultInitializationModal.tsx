@@ -403,15 +403,13 @@ export function VaultInitializationModal({
       }}
     >
       <ModalContent className="p-4 font-zen">
-        <ModalHeader className="flex-col items-start gap-2">
-          <div>
-            <h2 className="text-2xl font-normal">{stepTitle}</h2>
-            <p className="mt-1 text-sm text-secondary">
-              {stepIndex < 3
-                ? 'Complete these steps to activate your vault.'
-                : 'Optionally choose an agent now, or configure later in settings.'}
-            </p>
-          </div>
+        <ModalHeader className="flex-col items-start gap-1 px-10 pt-6 font-zen">
+          <span className="text-lg font-normal text-primary">{stepTitle}</span>
+          <span className="text-sm font-normal text-secondary">
+            {stepIndex < 3
+              ? 'Complete these steps to activate your vault'
+              : 'Optionally choose an agent now, or configure later in settings'}
+          </span>
         </ModalHeader>
 
         <ModalBody className="space-y-6 px-2">

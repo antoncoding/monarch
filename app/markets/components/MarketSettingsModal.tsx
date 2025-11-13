@@ -99,13 +99,13 @@ export default function MarketSettingsModal({
       <ModalContent>
         {(onClose) => (
           <>
-            <ModalHeader className="font-zen flex flex-col gap-1 px-10 py-6 pb-2">
-              <span className="text-lg font-semibold text-primary">Market Preferences</span>
-              <span className="text-xs font-normal text-secondary">
-                Fine-tune filter thresholds, pagination, and column visibility.
+            <ModalHeader className="font-zen flex flex-col gap-1 px-10 pt-6">
+              <span className="text-lg font-normal text-primary">Market Preferences</span>
+              <span className="text-sm font-normal text-secondary">
+                Fine-tune filter thresholds, pagination, and column visibility
               </span>
             </ModalHeader>
-            <ModalBody className="font-zen flex flex-col gap-5 px-4 pb-6 pt-3 md:px-6 max-h-[70vh] overflow-y-auto">
+            <ModalBody className="font-zen flex flex-col gap-5 px-6 pb-6 pt-2 max-h-[70vh] overflow-y-auto">
               <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
                 <h3 className="text-xs uppercase text-secondary">Filter Thresholds</h3>
                 <p className="-mt-3 mb-1 text-xs text-secondary">

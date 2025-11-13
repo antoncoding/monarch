@@ -117,12 +117,12 @@ export function MarketSelectionModal({
     >
       <ModalContent>
         <>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-medium">{title}</h3>
-            <p className="text-xs text-secondary">{description}</p>
+          <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
+            <span className="text-lg font-normal text-primary">{title}</span>
+            <span className="text-sm font-normal text-secondary">{description}</span>
           </ModalHeader>
 
-          <ModalBody className="font-zen">
+          <ModalBody className="px-6 pb-6 pt-2 font-zen">
             {marketsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Spinner size={24} />

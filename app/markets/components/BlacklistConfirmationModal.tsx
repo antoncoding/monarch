@@ -40,16 +40,17 @@ export function BlacklistConfirmationModal({
       }}
     >
       <ModalContent>
-        <ModalHeader className="flex items-center gap-2 font-zen text-primary">
-          <IoWarningOutline className="h-5 w-5 text-orange-500" />
-          <span>Blacklist Market</span>
+        <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
+          <div className="flex items-center gap-2">
+            <IoWarningOutline className="h-5 w-5 text-orange-500" />
+            <span className="text-base font-normal text-primary">Blacklist Market</span>
+          </div>
+          <span className="text-sm font-normal text-secondary">
+            Confirm removal of this market from your view
+          </span>
         </ModalHeader>
-        <ModalBody className="font-zen">
+        <ModalBody className="px-6 pb-4 pt-2 font-zen">
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-primary">
-              Are you sure you want to blacklist this market?
-            </p>
-
             <div className="bg-hovered rounded p-1">
               <div className="flex flex-col gap-1">
                 <MarketIdentity market={market} chainId={market.morphoBlue.chain.id} showId/>
