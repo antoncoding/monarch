@@ -1,7 +1,10 @@
+"use client";
+
 import { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Modal, ModalContent, ModalHeader } from '@heroui/react';
-import { RxCross2 } from 'react-icons/rx';
+import { Checkbox } from '@heroui/react';
+import { FaCube } from 'react-icons/fa';
 import { Button } from '@/components/common';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
@@ -16,11 +19,12 @@ const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.fil
 
 type DeploymentModalContentProps = {
   isOpen: boolean;
-  onClose: () => void;
+
+  onOpenChange: (open: boolean) => void
   existingVaults: UserVaultV2[];
 };
 
-function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentModalContentProps) {
+function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: DeploymentModalContentProps) {
   const { selectedTokenAndNetwork, needSwitchChain, switchToNetwork, createVault, isDeploying } = useDeployment();
 
   // Load balances and tokens at modal level
@@ -54,29 +58,21 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="2xl"
       scrollBehavior="inside"
-      classNames={{
-        base: 'bg-background dark:border border-gray-700',
-        body: 'py-6',
-        closeButton: 'hidden',
-        wrapper: 'z-50',
-        backdrop: 'z-[45] bg-black/50',
-      }}
+      backdrop="blur"
+      className="bg-background dark:border border-gray-700"
     >
-      <ModalContent className="p-4">
-        <ModalHeader className="flex justify-between">
-          <div>
-            <h2 className="font-zen text-2xl font-normal">Deploy Autovault</h2>
-            <p className="mt-1 font-zen text-sm font-normal text-secondary">Choose the token and network for your autovault</p>
-          </div>
-          <Button isIconOnly onPress={onClose} className="bg-surface">
-            <RxCross2 size={16} />
-          </Button>
-        </ModalHeader>
+      <ModalHeader
+        title="Deploy Autovault"
+        description="Choose the token and network for your autovault"
+        mainIcon={<FaCube className="h-5 w-5" />}
+        onClose={() => onOpenChange(false)}
+      />
 
-        <div className="flex-1 overflow-hidden px-8">
+      <ModalBody className="px-8">
+        <div className="flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto font-zen">
             <div className="space-y-8">
               <div className="pt-2">
@@ -90,7 +86,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
               </div>
 
               {selectedTokenAndNetwork && (
-                <div className="text-sm text-secondary font-zen px-1">
+                <div className="px-1 text-sm text-secondary">
                   You can configure the vault to have caps, automation agents and more after you deploy the vault.
                 </div>
               )}
@@ -100,7 +96,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
                   <Checkbox
                     isSelected={ackExistingVault}
                     onValueChange={setAckExistingVault}
-                    className="gap-2 items-center"
+                    className="items-center gap-2"
                     size="sm"
                   >
                     <span className="text-sm leading-5 text-secondary">
@@ -143,21 +139,21 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
             </div>
           </div>
         </div>
-      </ModalContent>
+      </ModalBody>
     </Modal>
   );
 }
 
 type DeploymentModalProps = {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   existingVaults: UserVaultV2[];
 };
 
-export function DeploymentModal({ isOpen, onClose, existingVaults }: DeploymentModalProps) {
+export function DeploymentModal({ isOpen, onOpenChange, existingVaults }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
-      <DeploymentModalContent isOpen={isOpen} onClose={onClose} existingVaults={existingVaults} />
+      <DeploymentModalContent isOpen={isOpen} onOpenChange={onOpenChange} existingVaults={existingVaults} />
     </DeploymentProvider>
   );
 }

@@ -1,17 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-  Checkbox,
-} from '@heroui/react';
+import { Button, Checkbox } from '@heroui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { IoWarningOutline } from 'react-icons/io5';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 
 export default function RiskNotificationModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,12 +31,20 @@ export default function RiskNotificationModal() {
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {}} hideCloseButton size="3xl" scrollBehavior="inside">
-      <ModalContent className="max-h-[90vh] p-4 font-zen sm:p-8">
-        <ModalHeader className="flex flex-col gap-1 font-zen text-xl sm:text-2xl">
-          Welcome to Monarch
-        </ModalHeader>
-        <ModalBody className="overflow-auto">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      size="3xl"
+      scrollBehavior="inside"
+      className="max-h-[90vh]"
+    >
+      <ModalHeader
+        title="Welcome to Monarch"
+        description="Important information before you begin"
+        mainIcon={<IoWarningOutline className="h-6 w-6 text-primary" />}
+        onClose={() => setIsOpen(false)}
+      />
+      <ModalBody className="overflow-auto">
           <p className="mb-4">
             Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's
             important to understand the key aspects of this approach. For a comprehensive overview,
@@ -83,17 +85,16 @@ export default function RiskNotificationModal() {
               </span>
             </Checkbox>
           </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            className="bg-monarch-orange text-white"
-            onPress={handleConfirm}
-            isDisabled={!isChecked}
-          >
-            Confirm and Proceed
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          className="bg-monarch-orange text-white"
+          onPress={handleConfirm}
+          isDisabled={!isChecked}
+        >
+          Confirm and Proceed
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

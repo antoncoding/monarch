@@ -462,7 +462,7 @@ export default function Markets({
         <h1 className="py-8 font-zen"> Markets </h1>
 
         {showSupplyModal && selectedMarket && (
-          <SupplyModalV2 market={selectedMarket} onClose={() => setShowSupplyModal(false)} />
+          <SupplyModalV2 market={selectedMarket} onOpenChange={setShowSupplyModal} />
         )}
 
         <MarketSettingsModal
@@ -694,7 +694,7 @@ export default function Markets({
       </div>
       <TrustedVaultsModal
         isOpen={isTrustedVaultsModalOpen}
-        onOpenChange={() => setIsTrustedVaultsModalOpen((prev) => !prev)}
+        onOpenChange={setIsTrustedVaultsModalOpen}
         userTrustedVaults={userTrustedVaults}
         setUserTrustedVaults={setUserTrustedVaults}
       />

@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Divider } from '@heroui/react';
+import { Divider } from '@heroui/react';
 import { FiPlus, FiX } from 'react-icons/fi';
-import { IoWarningOutline } from 'react-icons/io5';
+import { MdBlockFlipped } from "react-icons/md";
 import { Button } from '@/components/common';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/contexts/MarketsContext';
 import type { Market } from '@/utils/types';
 
 type BlacklistedMarketsModalProps = {
   isOpen: boolean;
-  onOpenChange: () => void;
+  onOpenChange: (opened: boolean) => void;
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -87,39 +88,24 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
       onOpenChange={onOpenChange}
       backdrop="blur"
       size="3xl"
-      classNames={{
-        wrapper: 'z-[2300]',
-        backdrop: 'z-[2290]',
-      }}
+      zIndex="settings"
       scrollBehavior="inside"
     >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-              Manage Blacklisted Markets
-            </ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6 font-zen">
-              {/* Info Section */}
-              <div className="bg-surface-soft rounded p-4">
-                <p className="font-zen text-sm text-secondary">
-                  Block specific markets from appearing in your view. Blacklisted markets will be
-                  completely hidden from all market lists and filters.
-                </p>
-                <div className="mt-3 flex items-start gap-3 rounded bg-red-500/10 p-3 text-red-700 dark:text-red-400">
-                  <IoWarningOutline className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p className="font-zen text-sm">
-                    Some markets are blacklisted by default due to security concerns or issues.
-                    These cannot be removed from the blacklist.
-                  </p>
-                </div>
-              </div>
-
+      {(onClose) => (
+        <>
+          <ModalHeader
+            title="Manage Blacklisted Markets"
+            description="Block specific markets from appearing in your view"
+            mainIcon={<MdBlockFlipped className="h-6 w-6" />}
+            onClose={onClose}
+          />
+          <ModalBody className="flex flex-col gap-5">
+              
               {/* Blacklisted Markets Section */}
               {blacklistedMarkets.length > 0 && (
                 <>
-                  <div className="flex flex-col gap-3 px-4">
-                    <h3 className="text-sm font-medium text-primary">
+                  <div className="flex flex-col gap-3">
+                    <h3 className="text-base font-normal text-primary">
                       Blacklisted Markets ({blacklistedMarkets.length})
                     </h3>
                   </div>
@@ -171,9 +157,9 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               )}
 
               {/* Available Markets Section */}
-              <div className="flex flex-col gap-3 px-4">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-primary">Add Markets to Blacklist</h3>
+                  <h3 className="text-base font-normal text-primary">Add Markets to Blacklist</h3>
                   {filteredAvailableMarkets.length > 0 && (
                     <span className="text-xs text-secondary">
                       {filteredAvailableMarkets.length} result
@@ -191,7 +177,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               </div>
 
               {/* Available Markets List */}
-              <div className="bg-surface-soft flex flex-col gap-2 rounded p-4 font-zen">
+              <div className="bg-surface-soft flex flex-col gap-2 rounded font-zen">
                 {searchQuery.trim().length === 0 ? (
                   <div className="text-center text-sm text-secondary py-8">
                     Start typing to search for markets to blacklist.
@@ -267,15 +253,14 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                   </>
                 )}
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="secondary" onPress={onClose} size="sm">
-                Close
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onPress={onClose} size="sm">
+              Close
+            </Button>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 }

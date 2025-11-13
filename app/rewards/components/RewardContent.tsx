@@ -294,7 +294,7 @@ export default function Rewards() {
         <WrapProcessModal
           amount={morphoBalanceLegacy?.value ?? 0n}
           currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
         />
       )}
     </div>

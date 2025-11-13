@@ -213,7 +213,7 @@ function MarketContent() {
         {showSupplyModal && (
           <SupplyModalV2
             market={market}
-            onClose={() => setShowSupplyModal(false)}
+            onOpenChange={setShowSupplyModal}
             position={userPosition}
             isMarketPage
             refetch={handleRefreshAllSync}
@@ -223,7 +223,7 @@ function MarketContent() {
         {showBorrowModal && (
           <BorrowModal
             market={market}
-            onClose={() => setShowBorrowModal(false)}
+            onOpenChange={setShowBorrowModal}
             oraclePrice={oraclePrice}
             refetch={handleRefreshAllSync}
             isRefreshing={isRefreshing}

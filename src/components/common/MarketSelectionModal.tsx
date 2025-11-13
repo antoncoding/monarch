@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { FiSearch } from 'react-icons/fi';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { SupportedNetworks } from '@/utils/networks';
@@ -16,7 +17,7 @@ type MarketSelectionModalProps = {
   excludeMarketIds?: Set<string>;
   multiSelect?: boolean;
   isOpen?: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onSelect: (markets: Market[]) => void;
   confirmButtonText?: string;
 };
@@ -33,7 +34,7 @@ export function MarketSelectionModal({
   excludeMarketIds,
   multiSelect = true,
   isOpen = true,
-  onClose,
+  onOpenChange,
   onSelect,
   confirmButtonText,
 }: MarketSelectionModalProps) {
@@ -68,7 +69,7 @@ export function MarketSelectionModal({
       const market = availableMarkets.find((m) => m.uniqueKey === marketId);
       if (market) {
         onSelect([market]);
-        onClose();
+        onOpenChange(false);
       }
       return;
     }
@@ -90,7 +91,7 @@ export function MarketSelectionModal({
       selectedMarkets.has(m.uniqueKey)
     );
     onSelect(marketsToReturn);
-    onClose();
+    onOpenChange(false);
   };
 
   const selectedCount = selectedMarkets.size;
@@ -103,26 +104,20 @@ export function MarketSelectionModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="4xl"
       scrollBehavior="inside"
-      classNames={{
-        wrapper: 'z-[2200] max-h-[80%] overflow-y-auto',
-        backdrop: 'z-[2190] bg-black/60',
-        base: 'rounded-sm bg-surface',
-        header: 'px-6 pt-6 pb-2',
-        body: 'px-6 pb-2',
-        footer: 'px-6 pt-2 pb-6',
-      }}
+      zIndex="selection"
+      backdrop="blur"
+      className="max-h-[80%] overflow-y-auto"
     >
-      <ModalContent>
-        <>
-          <ModalHeader className="flex flex-col gap-1">
-            <h3 className="text-lg font-medium">{title}</h3>
-            <p className="text-xs text-secondary">{description}</p>
-          </ModalHeader>
-
-          <ModalBody className="font-zen">
+      <ModalHeader
+        title={title}
+        description={description}
+        mainIcon={<FiSearch className="h-5 w-5" />}
+        onClose={() => onOpenChange(false)}
+      />
+      <ModalBody>
             {marketsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Spinner size={24} />
@@ -145,16 +140,15 @@ export function MarketSelectionModal({
                 showSelectColumn={multiSelect}
               />
             )}
-          </ModalBody>
-
-          <ModalFooter className="flex items-center justify-between">
+      </ModalBody>
+      <ModalFooter className="flex items-center justify-between">
             {multiSelect ? (
               <>
                 <p className="text-xs text-secondary">
                   {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="subtle" size="sm" onPress={onClose}>
+                  <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
                     Cancel
                   </Button>
                   <Button
@@ -169,14 +163,12 @@ export function MarketSelectionModal({
               </>
             ) : (
               <div className="flex w-full justify-end">
-                <Button variant="subtle" size="sm" onPress={onClose}>
+                <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
                   Cancel
                 </Button>
               </div>
             )}
-          </ModalFooter>
-        </>
-      </ModalContent>
+      </ModalFooter>
     </Modal>
   );
 }

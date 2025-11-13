@@ -71,7 +71,7 @@ export function MarketDetailsBlock({
     <div>
       {/* Collapsible Market Details */}
       <div
-        className={`bg-hovered rounded transition-colors ${disableExpansion ? '' : 'cursor-pointer'}`}
+        className={`bg-hovered font-zen rounded transition-colors ${disableExpansion ? '' : 'cursor-pointer'}`}
         onClick={() => !disableExpansion && setIsExpanded(!isExpanded)}
         onKeyDown={(e) => {
           if (!disableExpansion && (e.key === 'Enter' || e.key === ' ')) {

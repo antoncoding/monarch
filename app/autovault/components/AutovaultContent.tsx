@@ -84,7 +84,7 @@ export default function AutovaultContent() {
         {/* Deployment Modal */}
         <DeploymentModal
           isOpen={showDeploymentModal}
-          onClose={() => setShowDeploymentModal(false)}
+          onOpenChange={setShowDeploymentModal}
           existingVaults={vaults}
         />
       </div>

@@ -144,7 +144,7 @@ export function MarketActionsDropdown({
 
     <BlacklistConfirmationModal
       isOpen={isConfirmModalOpen}
-      onClose={() => setIsConfirmModalOpen(false)}
+      onOpenChange={setIsConfirmModalOpen}
       onConfirm={handleConfirmBlacklist}
       market={market}
     />

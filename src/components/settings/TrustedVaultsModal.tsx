@@ -1,21 +1,13 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Divider,
-  Input,
-  Spinner,
-} from '@heroui/react';
+import { Divider, Input, Spinner } from '@heroui/react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
 import {
@@ -27,7 +19,7 @@ import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
-  onOpenChange: () => void;
+  onOpenChange: (isOpen: boolean) => void;
   userTrustedVaults: TrustedVault[];
   setUserTrustedVaults: React.Dispatch<React.SetStateAction<TrustedVault[]>>;
 };
@@ -158,25 +150,20 @@ export default function TrustedVaultsModal({
       onOpenChange={onOpenChange}
       backdrop="blur"
       size="3xl"
-      classNames={{
-        wrapper: 'z-[2300]',
-        backdrop: 'z-[2290]',
-      }}
+      zIndex="settings"
       scrollBehavior="inside"
     >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-              Manage Trusted Vaults
-            </ModalHeader>
-            <ModalBody className="flex flex-col gap-5 px-4 pb-6 pt-2 md:px-6">
+      {(onClose) => (
+        <>
+          <ModalHeader
+            title="Manage Trusted Vaults"
+            description="Select which vaults you trust to filter markets based on vault participation"
+            mainIcon={<GoShieldCheck className="h-5 w-5 text-primary" />}
+            onClose={onClose}
+          />
+          <ModalBody className="flex flex-col gap-5">
               {/* Info Section */}
-              <div className="bg-surface-soft rounded p-4">
-                <p className="font-zen text-sm text-secondary">
-                  Select which vaults you trust. Trusted vaults can be used to filter markets based on
-                  vault participation.
-                </p>
+              <div className="bg-surface-soft rounded py-4">
                 <div className="mt-3 flex items-start gap-3 rounded bg-yellow-500/10 p-3 text-yellow-700">
                   <IoWarningOutline className="mt-0.5 h-4 w-4" />
                   <p className="font-zen text-sm">
@@ -188,7 +175,7 @@ export default function TrustedVaultsModal({
               </div>
 
               {/* Search and Actions */}
-              <div className="flex flex-col gap-3 px-4">
+              <div className="flex flex-col gap-3">
                 <Input
                   placeholder="Search by name, curator, or address..."
                   value={searchQuery}
@@ -212,8 +199,8 @@ export default function TrustedVaultsModal({
 
               <Divider />
 
-              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
-                <h3 className="font-zen text-base font-semibold text-primary">
+              <div className="bg-surface-soft flex flex-col gap-3 rounded py-4">
+                <h3 className="text-base font-normal text-primary">
                   Known Vaults ({sortedMonarchVaults.length})
                 </h3>
                 {sortedMonarchVaults.length === 0 ? (
@@ -314,15 +301,14 @@ export default function TrustedVaultsModal({
                   )
                 )}
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="secondary" onPress={onClose} size="sm">
-                Close
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="secondary" onPress={onClose} size="sm">
+              Close
+            </Button>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 }

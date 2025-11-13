@@ -1,9 +1,12 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { FiZap } from 'react-icons/fi';
 import { Address, zeroAddress } from 'viem';
 import { Button } from '@/components/common';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2 } from '@/hooks/useVaultV2';
@@ -194,7 +197,7 @@ function AgentSelectionStep({
 
 export function VaultInitializationModal({
   isOpen,
-  onClose,
+  onOpenChange,
   vaultAddress,
   marketAdapter, // address of MorphoMakretV1Aapater
   marketAdapterLoading, // 
@@ -206,7 +209,7 @@ export function VaultInitializationModal({
   marketAdapter: Address;
   marketAdapterLoading: boolean;
   refetchMarketAdapter: () => void;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   vaultAddress: Address;
   chainId: SupportedNetworks;
   onAdapterConfigured: () => void;
@@ -260,14 +263,14 @@ export function VaultInitializationModal({
         return;
       }
       onAdapterConfigured();
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       console.error('Failed to complete initialization', error);
     }
   }, [
     completeInitialization,
     onAdapterConfigured,
-    onClose,
+    onOpenChange,
     registryAddress,
     selectedAgent,
     marketAdapter,
@@ -394,27 +397,22 @@ export function VaultInitializationModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="lg"
       scrollBehavior="inside"
-      classNames={{
-        base: 'bg-background dark:border border-gray-700 font-zen',
-        body: 'py-6',
-      }}
+      className="bg-background dark:border border-gray-700"
     >
-      <ModalContent className="p-4 font-zen">
-        <ModalHeader className="flex-col items-start gap-2">
-          <div>
-            <h2 className="text-2xl font-normal">{stepTitle}</h2>
-            <p className="mt-1 text-sm text-secondary">
-              {stepIndex < 3
-                ? 'Complete these steps to activate your vault.'
-                : 'Optionally choose an agent now, or configure later in settings.'}
-            </p>
-          </div>
-        </ModalHeader>
-
-        <ModalBody className="space-y-6 px-2">
+      <ModalHeader
+        title={stepTitle}
+        description={
+          stepIndex < 3
+            ? 'Complete these steps to activate your vault'
+            : 'Optionally choose an agent now, or configure later in settings'
+        }
+        mainIcon={<FiZap className="h-5 w-5" />}
+        onClose={() => onOpenChange(false)}
+      />
+      <ModalBody className="space-y-6 px-2">
           {currentStep === 'deploy' && (
             <DeployAdapterStep
               loading={showLoading}
@@ -439,20 +437,18 @@ export function VaultInitializationModal({
           {currentStep === 'agents' && (
             <AgentSelectionStep selectedAgent={selectedAgent} onSelectAgent={setSelectedAgent} />
           )}
-        </ModalBody>
-
-        <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
-          {showBackButton && (
-            <Button variant="ghost" size="sm" onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}>
-              Back
-            </Button>
-          )}
-          {renderCta()}
-        </ModalFooter>
-        <div className="px-4 pb-2">
-          <StepIndicator currentStep={currentStep} />
-        </div>
-      </ModalContent>
+      </ModalBody>
+      <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
+        {showBackButton && (
+          <Button variant="ghost" size="sm" onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}>
+            Back
+          </Button>
+        )}
+        {renderCta()}
+      </ModalFooter>
+      <div className="px-4 pb-2">
+        <StepIndicator currentStep={currentStep} />
+      </div>
     </Modal>
   );
 }

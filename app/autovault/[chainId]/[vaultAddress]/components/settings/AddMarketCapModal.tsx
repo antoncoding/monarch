@@ -1,4 +1,7 @@
+"use client";
+
 import { Address } from 'viem';
+
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';
@@ -7,7 +10,7 @@ type AddMarketCapModalProps = {
   vaultAsset: Address;
   chainId: SupportedNetworks;
   existingMarketIds: Set<string>;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onAdd: (markets: Market[]) => void;
 };
 
@@ -19,7 +22,7 @@ export function AddMarketCapModal({
   vaultAsset,
   chainId,
   existingMarketIds,
-  onClose,
+  onOpenChange,
   onAdd,
 }: AddMarketCapModalProps) {
   return (
@@ -30,7 +33,7 @@ export function AddMarketCapModal({
       chainId={chainId}
       excludeMarketIds={existingMarketIds}
       multiSelect
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       onSelect={onAdd}
       confirmButtonText={undefined} // Use default dynamic text
     />

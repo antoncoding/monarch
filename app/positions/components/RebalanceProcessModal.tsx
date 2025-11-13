@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
-import { Cross1Icon } from '@radix-ui/react-icons';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { LuArrowRightLeft } from "react-icons/lu";
+
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { RebalanceStepType } from '@/hooks/useRebalance';
 
 type RebalanceProcessModalProps = {
   currentStep: RebalanceStepType;
   isPermit2Flow: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   tokenSymbol: string;
   actionsCount: number;
 };
@@ -14,7 +16,7 @@ type RebalanceProcessModalProps = {
 export function RebalanceProcessModal({
   currentStep,
   isPermit2Flow,
-  onClose,
+  onOpenChange,
   tokenSymbol,
   actionsCount,
 }: RebalanceProcessModalProps): JSX.Element {
@@ -86,52 +88,46 @@ export function RebalanceProcessModal({
   };
 
   return (
-    <div className="fixed left-0 top-0 z-[1100] flex h-full w-full items-center justify-center bg-black bg-opacity-50">
-      <div
-        style={{ width: '500px' }}
-        className="bg-surface relative rounded p-12 transition-all duration-500 ease-in-out"
-      >
-        <button
-          type="button"
-          className="bg-main absolute right-2 top-2 m-4 rounded-full p-1 text-primary hover:cursor-pointer"
-          onClick={onClose}
-        >
-          <Cross1Icon />{' '}
-        </button>
-
-        <div className="mb-12 flex items-center gap-2 p-2 font-zen text-2xl">
-          Rebalancing {tokenSymbol} Positions
-        </div>
-
-        <div className="steps-container mx-4 gap-4">
-          {steps
-            .filter((step) => step.key !== 'idle')
-            .map((step, index) => (
-              <div key={step.key} className="step gap-4">
-                <div className="step-icon">
-                  {getStepStatus(step.key as RebalanceStepType) === 'done' && (
-                    <FaCheckCircle color="orange" size={24} />
-                  )}
-                  {getStepStatus(step.key as RebalanceStepType) === 'current' && (
-                    <div className="loading-ring" />
-                  )}
-                  {getStepStatus(step.key as RebalanceStepType) === 'undone' && (
+    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
+      <ModalHeader
+        title={`Rebalancing ${tokenSymbol} Positions`}
+        description={`Executing ${actionsCount} action${actionsCount === 1 ? '' : 's'} in this batch`}
+        mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
+        onClose={() => onOpenChange(false)}
+      />
+      <ModalBody className="gap-4">
+        {steps
+          .filter((step) => step.key !== 'idle')
+          .map((step) => {
+            const status = getStepStatus(step.key as RebalanceStepType);
+            return (
+              <div
+                key={step.key}
+                className={`flex items-start gap-4 rounded border p-4 transition-colors ${
+                  status === 'current'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <div className="mt-1">
+                  {status === 'done' ? (
+                    <FaCheckCircle className="text-lg text-primary" />
+                  ) : status === 'current' ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  ) : (
                     <FaCircle className="text-gray-400" />
                   )}
                 </div>
-                <div className="step-label">
-                  <div className="text-lg">{step.label}</div>
-                  {currentStep === step.key && step.detail && (
-                    <div className="flex items-center gap-2 text-sm text-secondary">
-                      {step.detail}
-                    </div>
+                <div className="flex flex-col">
+                  <div className="text-base font-medium">{step.label}</div>
+                  {status === 'current' && step.detail && (
+                    <div className="text-sm text-secondary">{step.detail}</div>
                   )}
                 </div>
-                {index < steps.length - 2 && <div className="step-line" />}
               </div>
-            ))}
-        </div>
-      </div>
-    </div>
+            );
+          })}
+      </ModalBody>
+    </Modal>
   );
 }
