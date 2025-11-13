@@ -17,7 +17,8 @@ type MarketDetailsBlockProps = {
   mode?: 'supply' | 'borrow';
   showRewards?: boolean;
   disableExpansion?: boolean;
-  loanAssetDelta?: bigint;
+  supplyDelta?: bigint;
+  borrowDelta?: bigint;
 };
 
 export function MarketDetailsBlock({
@@ -27,7 +28,8 @@ export function MarketDetailsBlock({
   mode = 'supply',
   showRewards = false,
   disableExpansion = false,
-  loanAssetDelta,
+  supplyDelta,
+  borrowDelta,
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
@@ -38,13 +40,20 @@ export function MarketDetailsBlock({
     whitelisted: market.whitelisted && !market.isMonarchWhitelisted
   });
 
-  // Calculate preview state when loanAssetDelta is provided
+  // Calculate preview state when supplyDelta or borrowDelta is provided
   const previewState = useMemo(() => {
-    if (!loanAssetDelta || loanAssetDelta <= 0n || mode !== 'supply') {
-      return null;
+    // For supply mode: show preview if supplyDelta is non-zero
+    if (mode === 'supply' && supplyDelta && supplyDelta !== 0n) {
+      return previewMarketState(market, supplyDelta, undefined);
     }
-    return previewMarketState(market, loanAssetDelta);
-  }, [market, loanAssetDelta, mode]);
+
+    // For borrow mode: show preview if borrowDelta is non-zero
+    if (mode === 'borrow' && borrowDelta && borrowDelta !== 0n) {
+      return previewMarketState(market, undefined, borrowDelta);
+    }
+
+    return null;
+  }, [market, supplyDelta, borrowDelta, mode]);
 
   // Helper to format APY based on mode
   const getAPY = () => {

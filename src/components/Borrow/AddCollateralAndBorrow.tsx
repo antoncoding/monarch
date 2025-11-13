@@ -247,7 +247,7 @@ export function AddCollateralAndBorrow({
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">
-            <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed showRewards />
+            <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed showRewards borrowDelta={borrowAmount} />
           </div>
 
           {isConnected && (

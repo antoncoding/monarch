@@ -257,13 +257,14 @@ type MarketStatePreview = {
 };
 
 /**
- * Simulates a supply operation and returns the full market state preview.
+ * Simulates market state changes based on supply and borrow deltas.
  *
  * @param market - The market configuration and state
- * @param supplyAmount - The amount to simulate supplying (in asset units, positive for supply)
+ * @param supplyDelta - Supply delta (positive: supply(), negative: withdraw())
+ * @param borrowDelta - Borrow delta (positive: borrow(), negative: repay())
  * @returns The estimated market state after the action, or null if simulation fails
  */
-export function previewMarketState(market: Market, supplyAmount: bigint): MarketStatePreview | null {
+export function previewMarketState(market: Market, supplyDelta?: bigint, borrowDelta?: bigint): MarketStatePreview | null {
   try {
     const params = new BlueMarketParams({
       loanToken: market.loanAsset.address as Address,
@@ -284,7 +285,33 @@ export function previewMarketState(market: Market, supplyAmount: bigint): Market
       fee: BigInt(Math.floor(market.state.fee * 1e18)),
     });
 
-    const { market: updated } = blueMarket.supply(supplyAmount, 0n);
+    let updated = blueMarket;
+
+    // Apply supply delta
+    if (supplyDelta && supplyDelta !== 0n) {
+      if (supplyDelta > 0n) {
+        // Positive delta: supply
+        const result = updated.supply(supplyDelta, 0n);
+        updated = result.market;
+      } else {
+        // Negative delta: withdraw (pass positive amount)
+        const result = updated.withdraw(-supplyDelta, 0n);
+        updated = result.market;
+      }
+    }
+
+    // Apply borrow delta
+    if (borrowDelta && borrowDelta !== 0n) {
+      if (borrowDelta > 0n) {
+        // Positive delta: borrow
+        const result = updated.borrow(borrowDelta, 0n);
+        updated = result.market;
+      } else {
+        // Negative delta: repay (pass positive amount)
+        const result = updated.repay(-borrowDelta, 0n);
+        updated = result.market;
+      }
+    }
 
     return {
       supplyApy: updated.supplyApy,

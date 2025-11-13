@@ -19,6 +19,7 @@ type WithdrawModalContentProps = {
   market?: Market;
   onClose: () => void;
   refetch: () => void;
+  onAmountChange?: (amount: bigint) => void;
 };
 
 export function WithdrawModalContent({
@@ -26,10 +27,20 @@ export function WithdrawModalContent({
   market,
   onClose,
   refetch,
+  onAmountChange,
 }: WithdrawModalContentProps): JSX.Element {
   const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
+
+  // Notify parent component when withdraw amount changes
+  const handleWithdrawAmountChange = useCallback(
+    (amount: bigint) => {
+      setWithdrawAmount(amount);
+      onAmountChange?.(amount);
+    },
+    [onAmountChange],
+  );
   const { address: account, isConnected, chainId } = useAccount();
 
   // Use market from either position or direct prop
@@ -153,7 +164,7 @@ export function WithdrawModalContent({
                           )
                         : BigInt(0)
                     }
-                    setValue={setWithdrawAmount}
+                    setValue={handleWithdrawAmountChange}
                     setError={setInputError}
                     exceedMaxErrMessage="Insufficient Liquidity"
                   />
