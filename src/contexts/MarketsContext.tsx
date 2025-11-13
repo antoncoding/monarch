@@ -12,9 +12,10 @@ import {
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
+import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
 import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { monarchWhitelistedMarkets, blacklistedMarkets } from '@/utils/markets';
+import { monarchWhitelistedMarkets } from '@/utils/markets';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import { Market } from '@/utils/types';
 
@@ -32,6 +33,10 @@ export type MarketsContextType = {
   setShowUnwhitelistedMarkets: (value: boolean) => void;
   showFullRewardAPY: boolean;
   setShowFullRewardAPY: (value: boolean) => void;
+  isBlacklisted: (uniqueKey: string) => boolean;
+  addBlacklistedMarket: (uniqueKey: string, chainId: number, reason?: string) => boolean;
+  removeBlacklistedMarket: (uniqueKey: string) => void;
+  isDefaultBlacklisted: (uniqueKey: string) => boolean;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
@@ -55,6 +60,15 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   // Global setting for showing full reward APY (base + external rewards)
   const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
+
+  // Blacklisted markets management
+  const {
+    allBlacklistedMarketKeys,
+    addBlacklistedMarket,
+    removeBlacklistedMarket,
+    isBlacklisted,
+    isDefaultBlacklisted,
+  } = useBlacklistedMarkets();
 
   const {
     loading: liquidationsLoading,
@@ -132,7 +146,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           .filter((market) => market.uniqueKey !== undefined)
           .filter((market) => market.loanAsset && market.collateralAsset) // non of them is undefined or null
           .filter((market) => isSupportedChain(market.morphoBlue.chain.id)) // Keep this filter
-          .filter((market) => !blacklistedMarkets.includes(market.uniqueKey));
+          .filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
 
         const processedMarkets = filtered.map((market) => {
           const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
@@ -176,7 +190,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         }
       }
     },
-    [liquidatedMarketKeys],
+    [liquidatedMarketKeys, allBlacklistedMarketKeys],
   );
 
   useEffect(() => {
@@ -242,6 +256,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
       setShowFullRewardAPY,
+      isBlacklisted,
+      addBlacklistedMarket,
+      removeBlacklistedMarket,
+      isDefaultBlacklisted,
     }),
     [
       markets,
@@ -256,6 +274,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
       setShowFullRewardAPY,
+      isBlacklisted,
+      addBlacklistedMarket,
+      removeBlacklistedMarket,
+      isDefaultBlacklisted,
     ],
   );
 

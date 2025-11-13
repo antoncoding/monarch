@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
+import { BlacklistedMarketsModal } from '@/components/settings/BlacklistedMarketsModal';
 import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
 import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
@@ -26,6 +28,7 @@ export default function SettingsPage() {
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
 
   const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
+  const [isBlacklistedMarketsModalOpen, setIsBlacklistedMarketsModalOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
 
   const defaultVaultKeys = React.useMemo(() => {
@@ -97,16 +100,14 @@ export default function SettingsPage() {
                     Display tokens that aren't in our recognized token list. These will appear with
                     a question mark icon.
                   </p>
-                  <p className="mt-2 text-xs text-secondary opacity-80">
-                    Warning: Unknown tokens should be approached with caution as they haven't been
-                    verified.
-                  </p>
                 </div>
                 <IconSwitch
                   selected={includeUnknownTokens}
                   onChange={setIncludeUnknownTokens}
                   size="xs"
                   color="primary"
+                  thumbIconOn={GoShield}
+                  thumbIconOff={GoShieldCheck}
                   aria-label="Toggle unknown tokens"
                 />
               </div>
@@ -119,16 +120,36 @@ export default function SettingsPage() {
                   <p className="text-sm text-secondary">
                     Display markets using oracle implementations that haven't been verified yet.
                   </p>
-                  <p className="mt-2 text-xs text-secondary opacity-80">
-                    Warning: Markets with unknown oracles may have additional risks.
-                  </p>
                 </div>
                 <IconSwitch
                   selected={showUnknownOracle}
                   onChange={setShowUnknownOracle}
                   size="xs"
                   color="primary"
+                  thumbIconOn={GoShield}
+                  thumbIconOff={GoShieldCheck}
                   aria-label="Toggle unknown oracles"
+                />
+              </div>
+
+              <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Show Unwhitelisted Markets</h3>
+                  <p className="text-sm text-secondary">
+                    Display markets that haven't been verified or whitelisted by the Morpho team.
+                    When disabled (guardian mode), only verified markets are shown.
+                  </p>
+                </div>
+                <IconSwitch
+                  selected={showUnwhitelistedMarkets}
+                  onChange={setShowUnwhitelistedMarkets}
+                  size="xs"
+                  color="primary"
+                  thumbIconOn={GoShield}
+                  thumbIconOff={GoShieldCheck}
+                  aria-label="Toggle unwhitelisted markets"
                 />
               </div>
             </div>
@@ -139,12 +160,21 @@ export default function SettingsPage() {
             <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
 
             <div className="bg-surface flex flex-col gap-4 rounded p-6">
-              <div className="flex flex-col gap-2 px-12 pb-6">
-                <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
-                <p className="text-sm text-secondary">
-                  Choose which vaults you trust. Only vaults marked as default trusted are selected
-                  automatically, and you can adjust the list any time.
-                </p>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
+                  <p className="text-sm text-secondary">
+                    Choose which vaults you trust. Only vaults marked as default trusted are selected
+                    automatically, and you can adjust the list any time.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsTrustedVaultsModalOpen(true)}
+                >
+                  Edit
+                </Button>
               </div>
 
               {/* Display trusted vault icons */}
@@ -178,16 +208,6 @@ export default function SettingsPage() {
                   </div>
                 )}
                 </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => setIsTrustedVaultsModalOpen(true)}
-                >
-                  Edit Trusted Vaults
-                </Button>
                 <span className="text-xs text-secondary">
                   {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
                 </span>
@@ -195,36 +215,33 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Blacklisted Markets Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="text font-monospace text-secondary">Blacklisted Markets</h2>
+
+            <div className="bg-surface rounded p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Manage Blacklisted Markets</h3>
+                  <p className="text-sm text-secondary">
+                    Block specific markets from appearing in your view. Blacklisted markets are
+                    completely hidden from all lists.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsBlacklistedMarketsModalOpen(true)}
+                >
+                  Edit
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Advanced Section */}
           <div className="flex flex-col gap-4 pt-4">
             <AdvancedRpcSettings />
-          </div>
-
-          {/* Danger Zone Section */}
-          <div className="flex flex-col gap-4 py-8">
-            <h2 className="text font-monospace text-secondary">Danger Zone</h2>
-
-            <div className="flex flex-col gap-6 rounded border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/20">
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-lg font-medium text-red-600 dark:text-red-400">
-                    Show Unwhitelisted Markets
-                  </h3>
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    Display markets that haven't been verified or whitelisted by the Morpho team.
-                    These markets may have additional risks including unverified oracles, tokens, or
-                    other security concerns.
-                  </p>
-                </div>
-                <IconSwitch
-                  selected={showUnwhitelistedMarkets}
-                  onChange={setShowUnwhitelistedMarkets}
-                  size="xs"
-                  color="destructive"
-                  aria-label="Toggle unwhitelisted markets"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -235,6 +252,12 @@ export default function SettingsPage() {
         onOpenChange={() => setIsTrustedVaultsModalOpen(!isTrustedVaultsModalOpen)}
         userTrustedVaults={userTrustedVaults}
         setUserTrustedVaults={setUserTrustedVaults}
+      />
+
+      {/* Blacklisted Markets Modal */}
+      <BlacklistedMarketsModal
+        isOpen={isBlacklistedMarketsModalOpen}
+        onOpenChange={() => setIsBlacklistedMarketsModalOpen(!isBlacklistedMarketsModalOpen)}
       />
     </div>
   );
