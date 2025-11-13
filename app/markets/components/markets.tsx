@@ -19,6 +19,7 @@ import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { TooltipContent } from '@/components/TooltipContent';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { usePagination } from '@/hooks/usePagination';
@@ -63,8 +64,15 @@ export default function Markets({
     isRefetching,
     showUnwhitelistedMarkets,
     setShowUnwhitelistedMarkets,
+    applyBlacklistFilter,
+    addBlacklistedMarket: addBlacklistedMarketBase,
+    isBlacklisted,
   } = useMarkets();
   const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
+
+  // Use addBlacklistedMarket directly from context
+  // The context automatically reapplies the filter when blacklist changes
+  const addBlacklistedMarket = addBlacklistedMarketBase;
 
   const {
     isOpen: isSettingsModalOpen,
@@ -663,6 +671,8 @@ export default function Markets({
                 className={tableViewMode === 'compact' ? 'w-full' : undefined}
                 wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
                 tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
+                addBlacklistedMarket={addBlacklistedMarket}
+                isBlacklisted={isBlacklisted}
               />
             ) : (
               <EmptyScreen

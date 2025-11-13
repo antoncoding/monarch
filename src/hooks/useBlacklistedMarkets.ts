@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { blacklistedMarkets as defaultBlacklistedMarkets } from '@/utils/markets';
 import { useLocalStorage } from './useLocalStorage';
+import { useStyledToast } from '@/hooks/useStyledToast';
 
 type BlacklistedMarket = {
   uniqueKey: string;
@@ -13,6 +14,7 @@ export function useBlacklistedMarkets() {
   const [customBlacklistedMarkets, setCustomBlacklistedMarkets] = useLocalStorage<
     BlacklistedMarket[]
   >('customBlacklistedMarkets', []);
+  const { success: toastSuccess } = useStyledToast();
 
   // Combine default and custom blacklists
   const allBlacklistedMarketKeys = useMemo(() => {
@@ -36,17 +38,19 @@ export function useBlacklistedMarkets() {
       };
 
       setCustomBlacklistedMarkets((prev) => [...prev, newMarket]);
+      toastSuccess('Market blacklisted', 'Market added to blacklist');
       return true;
     },
-    [allBlacklistedMarketKeys, setCustomBlacklistedMarkets],
+    [allBlacklistedMarketKeys, setCustomBlacklistedMarkets, toastSuccess],
   );
 
   // Remove a custom blacklisted market (cannot remove defaults)
   const removeBlacklistedMarket = useCallback(
     (uniqueKey: string) => {
       setCustomBlacklistedMarkets((prev) => prev.filter((m) => m.uniqueKey !== uniqueKey));
+      toastSuccess('Market removed from blacklist', 'Market is now visible');
     },
-    [setCustomBlacklistedMarkets],
+    [setCustomBlacklistedMarkets, toastSuccess],
   );
 
   // Check if a market is blacklisted

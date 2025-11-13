@@ -28,6 +28,8 @@ type MarketsTableProps = {
   className?: string;
   wrapperClassName?: string;
   tableClassName?: string;
+  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
+  isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
 function MarketsTable({
@@ -49,6 +51,8 @@ function MarketsTable({
   className,
   wrapperClassName,
   tableClassName,
+  addBlacklistedMarket,
+  isBlacklisted,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
 
@@ -187,6 +191,8 @@ function MarketsTable({
             onMarketClick={onMarketClick}
             columnVisibility={columnVisibility}
             trustedVaultMap={trustedVaultMap}
+            addBlacklistedMarket={addBlacklistedMarket}
+            isBlacklisted={isBlacklisted}
           />
         </table>
       </div>

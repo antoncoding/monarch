@@ -23,12 +23,14 @@ import { Market } from '@/utils/types';
 export type MarketsContextType = {
   markets: Market[]; // Computed based on showUnwhitelistedMarkets setting
   whitelistedMarkets: Market[]; // Always whitelisted markets only
-  allMarkets: Market[]; // All markets (whitelisted and unwhitelisted)
+  allMarkets: Market[]; // All markets (whitelisted and unwhitelisted, excluding blacklisted)
+  rawMarketsUnfiltered: Market[]; // Raw markets before blacklist filter (for blacklist management)
   loading: boolean;
   isRefetching: boolean;
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
   refresh: () => Promise<void>;
+  applyBlacklistFilter: () => void; // Reapply blacklist filter without refetching
   showUnwhitelistedMarkets: boolean;
   setShowUnwhitelistedMarkets: (value: boolean) => void;
   showFullRewardAPY: boolean;
@@ -51,6 +53,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const [whitelistedMarkets, setWhitelistedMarkets] = useState<Market[]>([]);
   const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [error, setError] = useState<unknown | null>(null);
+  // Store raw unfiltered markets to avoid refetching when blacklist changes
+  const [rawMarkets, setRawMarkets] = useState<Market[]>([]);
 
   // Global setting for showing unwhitelisted markets
   const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage(
@@ -81,6 +85,84 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const markets = useMemo(() => {
     return showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
   }, [showUnwhitelistedMarkets, allMarkets, whitelistedMarkets]);
+
+  // Process markets helper function
+  const processMarkets = useCallback(
+    (marketsToProcess: Market[]) => {
+      // Apply basic filters (but not blacklist yet - that comes later)
+      const baseFiltered = marketsToProcess
+        .filter((market) => market.uniqueKey !== undefined)
+        .filter((market) => market.loanAsset && market.collateralAsset)
+        .filter((market) => isSupportedChain(market.morphoBlue.chain.id));
+
+      // Store raw markets before blacklist filter
+      setRawMarkets(baseFiltered);
+
+      // Apply blacklist filter
+      const blacklistFiltered = baseFiltered.filter(
+        (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
+      );
+
+      // Add liquidation and whitelist status
+      const processed = blacklistFiltered.map((market) => {
+        const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
+        const isMonarchWhitelisted =
+          !market.whitelisted &&
+          monarchWhitelistedMarkets.some(
+            (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
+          );
+
+        return {
+          ...market,
+          whitelisted: market.whitelisted || isMonarchWhitelisted,
+          isProtectedByLiquidationBots,
+          isMonarchWhitelisted,
+        };
+      });
+
+      // Set all markets (including unwhitelisted)
+      setAllMarkets(processed);
+
+      // Filter for whitelisted markets only
+      const whitelisted = processed.filter((market) => market.whitelisted);
+      setWhitelistedMarkets(whitelisted);
+    },
+    [liquidatedMarketKeys, allBlacklistedMarketKeys],
+  );
+
+  // Reapply blacklist filter without refetching
+  const applyBlacklistFilter = useCallback(() => {
+    if (rawMarkets.length === 0) return;
+
+    // Apply blacklist filter to raw markets
+    const blacklistFiltered = rawMarkets.filter(
+      (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
+    );
+
+    // Add liquidation and whitelist status
+    const processed = blacklistFiltered.map((market) => {
+      const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
+      const isMonarchWhitelisted =
+        !market.whitelisted &&
+        monarchWhitelistedMarkets.some(
+          (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
+        );
+
+      return {
+        ...market,
+        whitelisted: market.whitelisted || isMonarchWhitelisted,
+        isProtectedByLiquidationBots,
+        isMonarchWhitelisted,
+      };
+    });
+
+    // Set all markets (including unwhitelisted)
+    setAllMarkets(processed);
+
+    // Filter for whitelisted markets only
+    const whitelisted = processed.filter((market) => market.whitelisted);
+    setWhitelistedMarkets(whitelisted);
+  }, [rawMarkets, liquidatedMarketKeys, allBlacklistedMarketKeys]);
 
   const fetchMarkets = useCallback(
     async (isRefetch = false) => {
@@ -140,38 +222,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           }),
         );
 
-        // Process combined markets (filters, warnings, liquidation status)
-        // Existing filters seem appropriate
-        const filtered = combinedMarkets
-          .filter((market) => market.uniqueKey !== undefined)
-          .filter((market) => market.loanAsset && market.collateralAsset) // non of them is undefined or null
-          .filter((market) => isSupportedChain(market.morphoBlue.chain.id)) // Keep this filter
-          .filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
-
-        const processedMarkets = filtered.map((market) => {
-          const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
-
-          // only show this indicator when it's not already whitelisted
-          const isMonarchWhitelisted =
-            !market.whitelisted &&
-            monarchWhitelistedMarkets.some(
-              (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
-            );
-
-          return {
-            ...market,
-            whitelisted: market.whitelisted || isMonarchWhitelisted,
-            isProtectedByLiquidationBots,
-            isMonarchWhitelisted,
-          };
-        });
-
-        // Set all markets (including unwhitelisted)
-        setAllMarkets(processedMarkets);
-
-        // Filter for whitelisted markets only
-        const whitelisted = processedMarkets.filter((market) => market.whitelisted);
-        setWhitelistedMarkets(whitelisted);
+        // Process combined markets using the helper function
+        processMarkets(combinedMarkets);
 
         // If any network fetch failed, set the overall error state
         if (fetchErrors.length > 0) {
@@ -190,7 +242,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         }
       }
     },
-    [liquidatedMarketKeys, allBlacklistedMarketKeys],
+    [processMarkets],
   );
 
   useEffect(() => {
@@ -208,6 +260,13 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
     return () => clearInterval(refreshInterval);
   }, [liquidationsLoading, fetchMarkets, whitelistedMarkets.length]);
+
+  // Automatically reapply blacklist filter when blacklist changes
+  useEffect(() => {
+    if (rawMarkets.length > 0) {
+      applyBlacklistFilter();
+    }
+  }, [allBlacklistedMarketKeys, applyBlacklistFilter, rawMarkets.length]);
 
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
@@ -247,11 +306,13 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       markets,
       whitelistedMarkets,
       allMarkets,
+      rawMarketsUnfiltered: rawMarkets,
       loading: isLoading,
       isRefetching,
       error: combinedError,
       refetch,
       refresh,
+      applyBlacklistFilter,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
@@ -265,11 +326,13 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       markets,
       whitelistedMarkets,
       allMarkets,
+      rawMarkets,
       isLoading,
       isRefetching,
       combinedError,
       refetch,
       refresh,
+      applyBlacklistFilter,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
