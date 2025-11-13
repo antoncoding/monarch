@@ -99,10 +99,7 @@ export default function Positions() {
           <SupplyModalV2
             market={selectedPosition.market}
             position={selectedPosition}
-            onClose={() => {
-              setShowWithdrawModal(false);
-              setSelectedPosition(null);
-            }}
+            onOpenChange={setShowWithdrawModal}
             refetch={() => void refetch()}
             isMarketPage={false}
             defaultMode="withdraw"
@@ -113,10 +110,7 @@ export default function Positions() {
           <SupplyModalV2
             market={selectedPosition.market}
             position={selectedPosition}
-            onClose={() => {
-              setShowSupplyModal(false);
-              setSelectedPosition(null);
-            }}
+            onOpenChange={setShowSupplyModal}
             refetch={() => void refetch()}
             isMarketPage={false}
           />
@@ -124,7 +118,7 @@ export default function Positions() {
 
         <OnboardingModal
           isOpen={showOnboardingModal}
-          onClose={() => setShowOnboardingModal(false)}
+          onOpenChange={setShowOnboardingModal}
         />
 
         {loading ? (

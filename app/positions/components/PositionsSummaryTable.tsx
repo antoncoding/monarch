@@ -474,7 +474,7 @@ export function PositionsSummaryTable({
       {showRebalanceModal && selectedGroupedPosition && (
         <RebalanceModal
           groupedPosition={selectedGroupedPosition}
-          onClose={() => setShowRebalanceModal(false)}
+          onOpenChange={setShowRebalanceModal}
           isOpen={showRebalanceModal}
           refetch={refetch}
           isRefetching={isRefetching}

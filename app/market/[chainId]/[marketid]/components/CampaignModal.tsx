@@ -82,7 +82,15 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside" backdrop="blur">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="2xl"
+      scrollBehavior="inside"
+      backdrop="blur"
+    >
       <ModalHeader
         title="Active Reward Campaigns"
         description="Earn extra incentives from live Merkl programs"

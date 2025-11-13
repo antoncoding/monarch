@@ -17,7 +17,7 @@ type MarketSelectionModalProps = {
   excludeMarketIds?: Set<string>;
   multiSelect?: boolean;
   isOpen?: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onSelect: (markets: Market[]) => void;
   confirmButtonText?: string;
 };
@@ -34,7 +34,7 @@ export function MarketSelectionModal({
   excludeMarketIds,
   multiSelect = true,
   isOpen = true,
-  onClose,
+  onOpenChange,
   onSelect,
   confirmButtonText,
 }: MarketSelectionModalProps) {
@@ -69,7 +69,7 @@ export function MarketSelectionModal({
       const market = availableMarkets.find((m) => m.uniqueKey === marketId);
       if (market) {
         onSelect([market]);
-        onClose();
+        onOpenChange(false);
       }
       return;
     }
@@ -91,7 +91,7 @@ export function MarketSelectionModal({
       selectedMarkets.has(m.uniqueKey)
     );
     onSelect(marketsToReturn);
-    onClose();
+    onOpenChange(false);
   };
 
   const selectedCount = selectedMarkets.size;
@@ -104,7 +104,7 @@ export function MarketSelectionModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="4xl"
       scrollBehavior="inside"
       zIndex="selection"
@@ -115,7 +115,7 @@ export function MarketSelectionModal({
         title={title}
         description={description}
         mainIcon={<FiSearch className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
       <ModalBody>
             {marketsLoading ? (
@@ -148,7 +148,7 @@ export function MarketSelectionModal({
                   {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button variant="subtle" size="sm" onPress={onClose}>
+                  <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
                     Cancel
                   </Button>
                   <Button
@@ -163,7 +163,7 @@ export function MarketSelectionModal({
               </>
             ) : (
               <div className="flex w-full justify-end">
-                <Button variant="subtle" size="sm" onPress={onClose}>
+                <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
                   Cancel
                 </Button>
               </div>

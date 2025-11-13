@@ -64,7 +64,15 @@ export function DepositToVaultModal({
 
   return (
     <>
-      <Modal isOpen onClose={onClose} size="lg" scrollBehavior="inside" backdrop="blur">
+      <Modal
+        isOpen
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+        size="lg"
+        scrollBehavior="inside"
+        backdrop="blur"
+      >
         <ModalHeader
           title={`Deposit ${assetSymbol}`}
           description={`Deposit to ${vaultName}`}

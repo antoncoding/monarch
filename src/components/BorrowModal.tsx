@@ -10,7 +10,7 @@ import { TokenIcon } from './TokenIcon';
 
 type BorrowModalProps = {
   market: Market;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   oraclePrice: bigint;
   refetch?: () => void;
   isRefreshing?: boolean;
@@ -19,7 +19,7 @@ type BorrowModalProps = {
 
 export function BorrowModal({
   market,
-  onClose,
+  onOpenChange,
   oraclePrice,
   refetch,
   isRefreshing = false,
@@ -72,10 +72,10 @@ export function BorrowModal({
   );
 
   return (
-    <Modal isOpen onClose={onClose} size="lg">
+    <Modal isOpen onOpenChange={onOpenChange} size="lg">
       <ModalHeader
         mainIcon={mainIcon}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
         title={
           <div className="flex items-center gap-2">
             <span>{market.loanAsset.symbol}</span>

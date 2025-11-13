@@ -8,7 +8,7 @@ import { RebalanceStepType } from '@/hooks/useRebalance';
 type RebalanceProcessModalProps = {
   currentStep: RebalanceStepType;
   isPermit2Flow: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   tokenSymbol: string;
   actionsCount: number;
 };
@@ -16,7 +16,7 @@ type RebalanceProcessModalProps = {
 export function RebalanceProcessModal({
   currentStep,
   isPermit2Flow,
-  onClose,
+  onOpenChange,
   tokenSymbol,
   actionsCount,
 }: RebalanceProcessModalProps): JSX.Element {
@@ -88,12 +88,12 @@ export function RebalanceProcessModal({
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
       <ModalHeader
         title={`Rebalancing ${tokenSymbol} Positions`}
         description={`Executing ${actionsCount} action${actionsCount === 1 ? '' : 's'} in this batch`}
         mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
       <ModalBody className="gap-4">
         {steps

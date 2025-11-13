@@ -9,13 +9,13 @@ import { formatBalance } from '@/utils/balance';
 type WrapProcessModalProps = {
   amount: bigint;
   currentStep: WrapStep;
-  onClose: () => void;
+  onOpenChange: (opened: boolean) => void;
 };
 
 export function WrapProcessModal({
   amount,
   currentStep,
-  onClose,
+  onOpenChange,
 }: WrapProcessModalProps): JSX.Element {
   const steps = useMemo(
     () => [
@@ -34,12 +34,11 @@ export function WrapProcessModal({
   );
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
       <ModalHeader
         title={`Wrapping ${formatBalance(amount, 18)} MORPHO`}
         description="Track each step to move legacy MORPHO into the new token"
         mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
-        onClose={onClose}
       />
       <ModalBody className="gap-4">
         <AnimatePresence>

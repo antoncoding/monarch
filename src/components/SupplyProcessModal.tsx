@@ -89,7 +89,15 @@ export function SupplyProcessModal({
   const isMultiMarket = supplies.length > 1;
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Supply ${tokenSymbol}`}
         description={

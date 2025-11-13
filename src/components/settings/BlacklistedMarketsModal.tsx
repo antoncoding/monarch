@@ -12,7 +12,7 @@ import type { Market } from '@/utils/types';
 
 type BlacklistedMarketsModalProps = {
   isOpen: boolean;
-  onOpenChange: () => void;
+  onOpenChange: (opened: boolean) => void;
 };
 
 const ITEMS_PER_PAGE = 20;
@@ -86,7 +86,6 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      onClose={onOpenChange}
       backdrop="blur"
       size="3xl"
       zIndex="settings"

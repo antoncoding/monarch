@@ -147,8 +147,7 @@ export default function TrustedVaultsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={() => onOpenChange(true)}
-      onClose={() => onOpenChange(false)}
+      onOpenChange={onOpenChange}
       backdrop="blur"
       size="3xl"
       zIndex="settings"

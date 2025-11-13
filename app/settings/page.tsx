@@ -257,7 +257,7 @@ export default function SettingsPage() {
       {/* Blacklisted Markets Modal */}
       <BlacklistedMarketsModal
         isOpen={isBlacklistedMarketsModalOpen}
-        onOpenChange={() => setIsBlacklistedMarketsModalOpen(!isBlacklistedMarketsModalOpen)}
+        onOpenChange={setIsBlacklistedMarketsModalOpen}
       />
     </div>
   );

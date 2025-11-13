@@ -80,7 +80,15 @@ export function VaultDepositProcessModal({
   }, [amount, assetDecimals]);
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Deposit ${assetSymbol}`}
         description={`Depositing ${formattedAmount} ${assetSymbol} to ${vaultName}`}

@@ -8,8 +8,7 @@ export type ModalZIndex = 'base' | 'process' | 'selection' | 'settings' | 'custo
 
 type ModalProps = {
   isOpen: boolean;
-  onClose: () => void;
-  onOpenChange?: () => void;
+  onOpenChange: (open: boolean) => void;
   children: React.ReactNode | ((onClose: () => void) => React.ReactNode);
   zIndex?: ModalZIndex;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
@@ -30,7 +29,6 @@ const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = 
 
 export function Modal({
   isOpen,
-  onClose,
   onOpenChange,
   children,
   zIndex = 'base',
@@ -50,12 +48,13 @@ export function Modal({
   const backdropStyle =
     backdrop === 'transparent'
       ? 'bg-transparent'
-      : 'bg-black/70 backdrop-blur-md';
+      : backdrop === 'opaque'
+        ? 'bg-black/70'
+        : 'bg-black/70 backdrop-blur-md';
 
   return (
     <HeroModal
       isOpen={isOpen}
-      onClose={onClose}
       onOpenChange={onOpenChange}
       size={size}
       isDismissable={isDismissable}
@@ -72,7 +71,7 @@ export function Modal({
       <ModalContent
         className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}
       >
-        {(closeModal) =>
+        {async (closeModal) =>
           typeof children === 'function' ? children(closeModal) : children}
       </ModalContent>
     </HeroModal>

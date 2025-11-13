@@ -33,7 +33,7 @@ export default function RiskNotificationModal() {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={() => setIsOpen(false)}
+      onOpenChange={setIsOpen}
       size="3xl"
       scrollBehavior="inside"
       className="max-h-[90vh]"

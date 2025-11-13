@@ -42,7 +42,7 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
   );
 }
 
-export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
   const { step } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
 
@@ -51,7 +51,7 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="3xl"
       scrollBehavior="inside"
       backdrop="blur"
@@ -61,7 +61,7 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         title={ONBOARDING_STEPS[currentStepIndex].title}
         description={ONBOARDING_STEPS[currentStepIndex].description}
         mainIcon={<FaCompass className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
 
       <ModalBody className="px-6 pb-6">
@@ -75,7 +75,7 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
             >
-              <CurrentStepComponent onClose={onClose} />
+              <CurrentStepComponent onClose={() => onOpenChange(false)} />
             </motion.div>
           </AnimatePresence>
         </div>

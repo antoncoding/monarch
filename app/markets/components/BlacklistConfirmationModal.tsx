@@ -9,14 +9,14 @@ import { Market } from '@/utils/types';
 
 type BlacklistConfirmationModalProps = {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   market: Market | null;
 };
 
 export function BlacklistConfirmationModal({
   isOpen,
-  onClose,
+  onOpenChange,
   onConfirm,
   market,
 }: BlacklistConfirmationModalProps) {
@@ -24,13 +24,13 @@ export function BlacklistConfirmationModal({
 
   const handleConfirm = () => {
     onConfirm();
-    onClose();
+    onOpenChange(false);
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="md"
     >
       <ModalHeader
@@ -39,7 +39,7 @@ export function BlacklistConfirmationModal({
         title="Blacklist Market"
         description="Confirm removal of this market from your view"
         className="border-b border-primary/10"
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
       <ModalBody variant="compact" className="py-6">
           <div className="flex flex-col gap-4">
@@ -59,7 +59,7 @@ export function BlacklistConfirmationModal({
         </div>
       </ModalBody>
       <ModalFooter className="border-t border-primary/10">
-        <Button variant="secondary" size="md" onPress={onClose}>
+        <Button variant="secondary" size="md" onPress={() => onOpenChange(false)}>
           Cancel
         </Button>
         <Button variant="cta" size="md" onPress={handleConfirm}>

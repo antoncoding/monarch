@@ -21,7 +21,7 @@ import { RebalanceProcessModal } from './RebalanceProcessModal';
 type RebalanceModalProps = {
   groupedPosition: GroupedPosition;
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
 };
@@ -29,7 +29,7 @@ type RebalanceModalProps = {
 export function RebalanceModal({
   groupedPosition,
   isOpen,
-  onClose,
+  onOpenChange,
   refetch,
   isRefetching,
 }: RebalanceModalProps) {
@@ -281,7 +281,7 @@ export function RebalanceModal({
     <>
       <Modal
         isOpen={isOpen}
-        onClose={onClose}
+        onOpenChange={onOpenChange}
         isDismissable={false}
         size="4xl"
       >
@@ -306,7 +306,7 @@ export function RebalanceModal({
               height={28}
             />
           }
-          onClose={onClose}
+          onClose={()=>onOpenChange(false)}
           auxiliaryAction={{
             icon: (
               <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
@@ -359,7 +359,7 @@ export function RebalanceModal({
         <ModalFooter className="mx-2">
           <Button
             variant="secondary"
-            onPress={onClose}
+            onPress={() => onOpenChange(false)}
             className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
           >
             Cancel
@@ -379,7 +379,7 @@ export function RebalanceModal({
         <RebalanceProcessModal
           currentStep={currentStep}
           isPermit2Flow={usePermit2Setting}
-          onClose={() => setShowProcessModal(false)}
+          onOpenChange={setShowProcessModal}
           tokenSymbol={groupedPosition.loanAsset}
           actionsCount={rebalanceActions.length}
         />
@@ -392,7 +392,7 @@ export function RebalanceModal({
           vaultAsset={groupedPosition.loanAssetAddress as `0x${string}`}
           chainId={groupedPosition.chainId}
           multiSelect={false}
-          onClose={() => setShowToModal(false)}
+          onOpenChange={setShowToModal}
           onSelect={(selectedMarkets) => {
             if (selectedMarkets.length > 0) {
               setSelectedToMarketUniqueKey(selectedMarkets[0].uniqueKey);

@@ -180,7 +180,14 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+      size="2xl"
+      scrollBehavior="inside"
+    >
       <ModalHeader
         title="Configure RPC Endpoints"
         description="Set custom RPC URLs to override the default Alchemy connections"

@@ -9,7 +9,7 @@ import { WithdrawModalContent } from './WithdrawModalContent';
 type SupplyModalV2Props = {
   market: Market;
   position?: MarketPosition | null;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   refetch?: () => void;
   isMarketPage?: boolean;
   defaultMode?: 'supply' | 'withdraw';
@@ -18,7 +18,7 @@ type SupplyModalV2Props = {
 export function SupplyModalV2({
   market,
   position,
-  onClose,
+  onOpenChange,
   refetch,
   isMarketPage,
   defaultMode = 'supply',
@@ -32,7 +32,7 @@ export function SupplyModalV2({
   return (
     <Modal
       isOpen
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="lg"
       scrollBehavior="inside"
       className="w-full max-w-lg"
@@ -51,7 +51,7 @@ export function SupplyModalV2({
             height={24}
           />
         }
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
         actions={
           hasPosition ? (
             <button
@@ -84,7 +84,7 @@ export function SupplyModalV2({
         {mode === 'supply' ? (
           <SupplyModalContent
             market={market}
-            onClose={onClose}
+            onClose={() => onOpenChange(false)}
             refetch={refetch ?? (() => {})}
             onAmountChange={setSupplyPreviewAmount}
           />
@@ -92,7 +92,7 @@ export function SupplyModalV2({
           <WithdrawModalContent
             position={position}
             market={market}
-            onClose={onClose}
+            onClose={() => onOpenChange(false)}
             refetch={refetch ?? (() => {})}
             onAmountChange={setWithdrawPreviewAmount}
           />

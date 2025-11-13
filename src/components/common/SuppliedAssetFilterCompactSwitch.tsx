@@ -104,9 +104,9 @@ export function SuppliedAssetFilterCompactSwitch({
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        onClose={onOpenChange}
         size="md"
         backdrop="opaque"
+        zIndex="settings"
       >
         {(close) => (
           <>

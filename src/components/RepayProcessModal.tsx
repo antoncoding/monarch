@@ -74,7 +74,15 @@ export function RepayProcessModal({
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`${withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay'} ${tokenSymbol}`}
         description={

@@ -103,7 +103,15 @@ export function BorrowProcessModal({
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Borrow ${borrow.market.loanAsset.symbol}`}
         description={`Using ${tokenSymbol} as collateral`}

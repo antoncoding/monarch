@@ -1044,7 +1044,7 @@ export function MarketsTableWithSameLoanAsset({
       {showSettingsModal && (
         <MarketSettingsModal
           isOpen={showSettingsModal}
-          onOpenChange={() => setShowSettingsModal(false)}
+          onOpenChange={setShowSettingsModal}
           usdFilters={usdFilters}
           setUsdFilters={setUsdFilters}
           entriesPerPage={entriesPerPage}

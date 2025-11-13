@@ -16,7 +16,7 @@ import {
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
-  onOpenChange: () => void;
+  onOpenChange: (isOpen: boolean) => void;
   usdFilters: {
     minSupply: string;
     minBorrow: string;
@@ -86,7 +86,6 @@ export default function MarketSettingsModal({
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      onClose={onOpenChange}
       backdrop="blur"
       size="xl"
       zIndex="settings"
