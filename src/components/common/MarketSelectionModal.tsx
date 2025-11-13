@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { FiSearch } from 'react-icons/fi';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { SupportedNetworks } from '@/utils/networks';
@@ -106,23 +107,17 @@ export function MarketSelectionModal({
       onClose={onClose}
       size="4xl"
       scrollBehavior="inside"
-      classNames={{
-        wrapper: 'z-[2200] max-h-[80%] overflow-y-auto',
-        backdrop: 'z-[2190] bg-black/60',
-        base: 'rounded-sm bg-surface',
-        header: 'px-6 pt-6 pb-2',
-        body: 'px-6 pb-2',
-        footer: 'px-6 pt-2 pb-6',
-      }}
+      zIndex="selection"
+      backdrop="blur"
+      className="max-h-[80%] overflow-y-auto"
     >
-      <ModalContent>
-        <>
-          <ModalHeader className="flex flex-col gap-1 font-zen px-10 pt-6">
-            <span className="text-lg font-normal text-primary">{title}</span>
-            <span className="text-sm font-normal text-secondary">{description}</span>
-          </ModalHeader>
-
-          <ModalBody className="px-6 pb-6 pt-2 font-zen">
+      <ModalHeader
+        title={title}
+        description={description}
+        mainIcon={<FiSearch className="h-5 w-5" />}
+        onClose={onClose}
+      />
+      <ModalBody>
             {marketsLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Spinner size={24} />
@@ -145,9 +140,8 @@ export function MarketSelectionModal({
                 showSelectColumn={multiSelect}
               />
             )}
-          </ModalBody>
-
-          <ModalFooter className="flex items-center justify-between">
+      </ModalBody>
+      <ModalFooter className="flex items-center justify-between">
             {multiSelect ? (
               <>
                 <p className="text-xs text-secondary">
@@ -174,9 +168,7 @@ export function MarketSelectionModal({
                 </Button>
               </div>
             )}
-          </ModalFooter>
-        </>
-      </ModalContent>
+      </ModalFooter>
     </Modal>
   );
 }

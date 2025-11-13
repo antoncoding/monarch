@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { createPortal } from 'react-dom';
-import { LuX } from 'react-icons/lu';
+import { FiSettings } from 'react-icons/fi';
 import { Address } from 'viem';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { CapData } from '@/hooks/useVaultV2Data';
 import { SupportedNetworks } from '@/utils/networks';
@@ -68,51 +68,12 @@ export function VaultSettingsModal({
   isRefreshing = false,
 }: VaultSettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
-  const [mounted, setMounted] = useState(false);
-  const wasOpenRef = useRef(false);
 
-  // Reset to initial tab when modal opens
   useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-
-    if (isOpen && !wasOpen) {
+    if (isOpen) {
       setActiveTab(initialTab);
     }
-
-    wasOpenRef.current = isOpen;
   }, [initialTab, isOpen]);
-
-  // Handle mounting
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Prevent body scroll when modal is open
-  useEffect(() => {
-    if (!isOpen) return;
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = originalOverflow;
-    };
-  }, [isOpen]);
-
-  // Handle ESC key
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
 
   const handleTabChange = useCallback((tab: SettingsTab) => {
     setActiveTab(tab);
@@ -163,75 +124,67 @@ export function VaultSettingsModal({
     }
   };
 
-  if (!mounted || !isOpen) {
+  if (!isOpen) {
     return null;
   }
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-4 font-zen"
-      onMouseDown={onClose}
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="5xl"
+      scrollBehavior="inside"
+      className="w-full max-w-6xl"
+      isDismissable={false}
     >
-      <div
-        className="relative flex w-full max-w-6xl min-h-[560px] overflow-hidden rounded-2xl border border-divider/20 bg-background shadow-2xl"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        <div className="flex flex-1 flex-col bg-background/95">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-divider/30 px-8 pt-8 pb-4">
-            <h2 className="text-2xl font-normal">Vault Settings</h2>
-            <div className="flex items-center gap-2">
-              {onRefresh && (
-                <button
-                  type="button"
-                  onClick={onRefresh}
-                  disabled={isRefreshing}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:text-primary disabled:opacity-50"
-                  aria-label="Refresh vault data"
-                >
+      <ModalHeader
+        title="Vault Settings"
+        description="Manage metadata, automation agents, and vault caps"
+        mainIcon={<FiSettings className="h-5 w-5" />}
+        onClose={onClose}
+        auxiliaryAction={
+          onRefresh
+            ? {
+                icon: (
                   <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                ),
+                onClick: () => {
+                  if (!isRefreshing) {
+                    onRefresh();
+                  }
+                },
+                ariaLabel: 'Refresh vault data',
+              }
+            : undefined
+        }
+      />
+      <ModalBody className="px-0 pb-6">
+        <div className="flex flex-col gap-6">
+          <div className="border-b border-divider/30 px-6">
+            <div className="flex flex-wrap gap-4">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`relative py-3 text-sm font-medium transition-colors focus-visible:outline-none ${
+                    activeTab === tab.id ? 'text-primary' : 'text-secondary hover:text-primary'
+                  }`}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />
+                  )}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-hovered text-secondary transition-colors hover:text-primary"
-                aria-label="Close settings"
-              >
-                <LuX className="h-4 w-4" />
-              </button>
+              ))}
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar */}
-            <aside className="flex w-40 flex-col gap-2 border-r border-divider/30 bg-hovered/40 p-6">
-              {TABS.map((tab) => {
-                const isActive = tab.id === activeTab;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`rounded px-3 py-2 text-left text-[13px] font-medium transition-colors ${
-                      isActive ? 'bg-primary/15 text-primary' : 'text-secondary hover:bg-hovered'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </aside>
-
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto px-8 pb-8 pt-6">
-              <div className="min-h-[360px] space-y-6">{renderActiveTab()}</div>
-            </div>
+          <div className="px-6 pb-2">
+            <div className="min-h-[360px] space-y-6">{renderActiveTab()}</div>
           </div>
         </div>
-      </div>
-    </div>,
-    document.body,
+      </ModalBody>
+    </Modal>
   );
 }

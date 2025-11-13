@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity } from '@/components/MarketIdentity';
 import { Market } from '@/utils/types';
 
@@ -30,26 +30,18 @@ export function BlacklistConfirmationModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onClose}
+      onClose={onClose}
       size="md"
-      classNames={{
-        base: 'bg-surface rounded',
-        header: 'border-b border-primary/10',
-        body: 'py-6',
-        footer: 'border-t border-primary/10',
-      }}
     >
-      <ModalContent>
-        <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
-          <div className="flex items-center gap-2">
-            <IoWarningOutline className="h-5 w-5 text-orange-500" />
-            <span className="text-base font-normal text-primary">Blacklist Market</span>
-          </div>
-          <span className="text-sm font-normal text-secondary">
-            Confirm removal of this market from your view
-          </span>
-        </ModalHeader>
-        <ModalBody className="px-6 pb-4 pt-2 font-zen">
+      <ModalHeader
+        variant="compact"
+        mainIcon={<IoWarningOutline className="h-5 w-5 text-orange-500" />}
+        title="Blacklist Market"
+        description="Confirm removal of this market from your view"
+        className="border-b border-primary/10"
+        onClose={onClose}
+      />
+      <ModalBody variant="compact" className="py-6">
           <div className="flex flex-col gap-4">
             <div className="bg-hovered rounded p-1">
               <div className="flex flex-col gap-1">
@@ -64,17 +56,16 @@ export function BlacklistConfirmationModal({
                 blacklisted markets later in Settings.
               </p>
             </div>
-          </div>
-        </ModalBody>
-        <ModalFooter>
-          <Button variant="secondary" size="md" onPress={onClose}>
-            Cancel
-          </Button>
-          <Button variant="cta" size="md" onPress={handleConfirm}>
-            Blacklist Market
-          </Button>
-        </ModalFooter>
-      </ModalContent>
+        </div>
+      </ModalBody>
+      <ModalFooter className="border-t border-primary/10">
+        <Button variant="secondary" size="md" onPress={onClose}>
+          Cancel
+        </Button>
+        <Button variant="cta" size="md" onPress={handleConfirm}>
+          Blacklist Market
+        </Button>
+      </ModalFooter>
     </Modal>
   );
 }

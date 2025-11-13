@@ -1,6 +1,6 @@
-import { Modal, ModalContent, ModalHeader, Button } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RxCross2 } from 'react-icons/rx';
+import { FaCompass } from 'react-icons/fa';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { AssetSelection } from './AssetSelection';
 import { MarketSelectionOnboarding } from './MarketSelectionOnboarding';
 import { useOnboarding } from './OnboardingContext';
@@ -54,32 +54,18 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
       onClose={onClose}
       size="3xl"
       scrollBehavior="inside"
-      classNames={{
-        base: 'bg-surface',
-        body: 'py-6',
-        closeButton: 'hidden',
-        wrapper: 'z-50', // Higher than header
-        backdrop: 'z-[45] bg-black/50', // Between header and modal
-      }}
+      backdrop="blur"
+      className="bg-surface"
     >
-      <ModalContent className="p-4">
-        {/* Header */}
-        <ModalHeader className="flex justify-between px-10 pt-6 font-zen">
-          <div className="flex flex-col gap-1">
-            <span className="text-lg font-normal text-primary">
-              {ONBOARDING_STEPS[currentStepIndex].title}
-            </span>
-            <span className="text-sm font-normal text-secondary">
-              {ONBOARDING_STEPS[currentStepIndex].description}
-            </span>
-          </div>
-          <Button isIconOnly onPress={onClose} className="bg-surface">
-            <RxCross2 size={16} />
-          </Button>
-        </ModalHeader>
+      <ModalHeader
+        title={ONBOARDING_STEPS[currentStepIndex].title}
+        description={ONBOARDING_STEPS[currentStepIndex].description}
+        mainIcon={<FaCompass className="h-5 w-5" />}
+        onClose={onClose}
+      />
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden px-6">
+      <ModalBody className="px-6 pb-0">
+        <div className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -93,12 +79,11 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
             </motion.div>
           </AnimatePresence>
         </div>
+      </ModalBody>
 
-        {/* Footer with Step Indicator */}
-        <div className="mt-6 pt-4">
-          <StepIndicator currentStep={step} />
-        </div>
-      </ModalContent>
+      <ModalFooter className="justify-center border-t border-divider">
+        <StepIndicator currentStep={step} />
+      </ModalFooter>
     </Modal>
   );
 }

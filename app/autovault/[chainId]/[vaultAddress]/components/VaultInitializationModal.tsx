@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader } from '@heroui/react';
+import { FiZap } from 'react-icons/fi';
 import { Address, zeroAddress } from 'viem';
 import { Button } from '@/components/common';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2 } from '@/hooks/useVaultV2';
@@ -397,22 +398,19 @@ export function VaultInitializationModal({
       onClose={onClose}
       size="lg"
       scrollBehavior="inside"
-      classNames={{
-        base: 'bg-background dark:border border-gray-700 font-zen',
-        body: 'py-6',
-      }}
+      className="bg-background dark:border border-gray-700"
     >
-      <ModalContent className="p-4 font-zen">
-        <ModalHeader className="flex-col items-start gap-1 px-10 pt-6 font-zen">
-          <span className="text-lg font-normal text-primary">{stepTitle}</span>
-          <span className="text-sm font-normal text-secondary">
-            {stepIndex < 3
-              ? 'Complete these steps to activate your vault'
-              : 'Optionally choose an agent now, or configure later in settings'}
-          </span>
-        </ModalHeader>
-
-        <ModalBody className="space-y-6 px-2">
+      <ModalHeader
+        title={stepTitle}
+        description={
+          stepIndex < 3
+            ? 'Complete these steps to activate your vault'
+            : 'Optionally choose an agent now, or configure later in settings'
+        }
+        mainIcon={<FiZap className="h-5 w-5" />}
+        onClose={onClose}
+      />
+      <ModalBody className="space-y-6 px-2">
           {currentStep === 'deploy' && (
             <DeployAdapterStep
               loading={showLoading}
@@ -437,20 +435,18 @@ export function VaultInitializationModal({
           {currentStep === 'agents' && (
             <AgentSelectionStep selectedAgent={selectedAgent} onSelectAgent={setSelectedAgent} />
           )}
-        </ModalBody>
-
-        <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
-          {showBackButton && (
-            <Button variant="ghost" size="sm" onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}>
-              Back
-            </Button>
-          )}
-          {renderCta()}
-        </ModalFooter>
-        <div className="px-4 pb-2">
-          <StepIndicator currentStep={currentStep} />
-        </div>
-      </ModalContent>
+      </ModalBody>
+      <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
+        {showBackButton && (
+          <Button variant="ghost" size="sm" onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}>
+            Back
+          </Button>
+        )}
+        {renderCta()}
+      </ModalFooter>
+      <div className="px-4 pb-2">
+        <StepIndicator currentStep={currentStep} />
+      </div>
     </Modal>
   );
 }

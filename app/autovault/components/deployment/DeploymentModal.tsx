@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Checkbox, Modal, ModalContent, ModalHeader } from '@heroui/react';
-import { RxCross2 } from 'react-icons/rx';
+import { Checkbox } from '@heroui/react';
+import { FaCube } from 'react-icons/fa';
 import { Button } from '@/components/common';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
@@ -57,28 +58,18 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
       onClose={onClose}
       size="2xl"
       scrollBehavior="inside"
-      classNames={{
-        base: 'bg-background dark:border border-gray-700',
-        body: 'py-6',
-        closeButton: 'hidden',
-        wrapper: 'z-50',
-        backdrop: 'z-[45] bg-black/50',
-      }}
+      backdrop="blur"
+      className="bg-background dark:border border-gray-700"
     >
-      <ModalContent className="p-4">
-        <ModalHeader className="flex justify-between px-10 pt-6 font-zen">
-          <div className="flex flex-col gap-1">
-            <span className="text-lg font-normal text-primary">Deploy Autovault</span>
-            <span className="text-sm font-normal text-secondary">
-              Choose the token and network for your autovault
-            </span>
-          </div>
-          <Button isIconOnly onPress={onClose} className="bg-surface">
-            <RxCross2 size={16} />
-          </Button>
-        </ModalHeader>
+      <ModalHeader
+        title="Deploy Autovault"
+        description="Choose the token and network for your autovault"
+        mainIcon={<FaCube className="h-5 w-5" />}
+        onClose={onClose}
+      />
 
-        <div className="flex-1 overflow-hidden px-8">
+      <ModalBody className="px-8">
+        <div className="flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto font-zen">
             <div className="space-y-8">
               <div className="pt-2">
@@ -92,7 +83,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
               </div>
 
               {selectedTokenAndNetwork && (
-                <div className="text-sm text-secondary font-zen px-1">
+                <div className="px-1 text-sm text-secondary">
                   You can configure the vault to have caps, automation agents and more after you deploy the vault.
                 </div>
               )}
@@ -102,7 +93,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
                   <Checkbox
                     isSelected={ackExistingVault}
                     onValueChange={setAckExistingVault}
-                    className="gap-2 items-center"
+                    className="items-center gap-2"
                     size="sm"
                   >
                     <span className="text-sm leading-5 text-secondary">
@@ -145,7 +136,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
             </div>
           </div>
         </div>
-      </ModalContent>
+      </ModalBody>
     </Modal>
   );
 }

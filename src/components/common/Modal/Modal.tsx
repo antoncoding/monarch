@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import { Modal as HeroModal, ModalContent } from '@heroui/react';
 
 export type ModalVariant = 'standard' | 'compact' | 'custom';
@@ -8,8 +10,7 @@ type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onOpenChange?: () => void;
-  children: React.ReactNode;
-  variant?: ModalVariant;
+  children: React.ReactNode | ((onClose: () => void) => React.ReactNode);
   zIndex?: ModalZIndex;
   customZIndex?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
@@ -21,10 +22,10 @@ type ModalProps = {
 };
 
 const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = {
-  base: { wrapper: 'z-50', backdrop: 'z-[45]' },
-  process: { wrapper: 'z-[1100]', backdrop: 'z-[1090]' },
-  selection: { wrapper: 'z-[2200]', backdrop: 'z-[2190]' },
-  settings: { wrapper: 'z-[2300]', backdrop: 'z-[2290]' },
+  base: { wrapper: 'z-[2000]', backdrop: 'z-[1990]' },
+  process: { wrapper: 'z-[2600]', backdrop: 'z-[2590]' },
+  selection: { wrapper: 'z-[3000]', backdrop: 'z-[2990]' },
+  settings: { wrapper: 'z-[3200]', backdrop: 'z-[3190]' },
   custom: { wrapper: '', backdrop: '' },
 };
 
@@ -33,19 +34,27 @@ export function Modal({
   onClose,
   onOpenChange,
   children,
-  variant = 'standard',
   zIndex = 'base',
   customZIndex,
   size = 'xl',
   isDismissable = true,
-  hideCloseButton = false,
+  hideCloseButton = true,
   scrollBehavior = 'inside',
   backdrop = 'blur',
   className = '',
 }: ModalProps) {
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setPortalContainer(document.body);
+  }, []);
+
   const zIndexClasses = customZIndex
     ? { wrapper: `z-[${customZIndex}]`, backdrop: `z-[${customZIndex - 10}]` }
     : Z_INDEX_MAP[zIndex];
+  const backdropStyle =
+    backdrop === 'transparent'
+      ? 'bg-transparent'
+      : 'bg-black/70 backdrop-blur-md';
 
   return (
     <HeroModal
@@ -57,12 +66,16 @@ export function Modal({
       hideCloseButton={hideCloseButton}
       scrollBehavior={scrollBehavior}
       backdrop={backdrop}
+      portalContainer={portalContainer ?? undefined}
       classNames={{
-        wrapper: zIndexClasses.wrapper,
-        backdrop: zIndexClasses.backdrop,
+        wrapper: `${zIndexClasses.wrapper} pointer-events-auto`,
+        backdrop: `${zIndexClasses.backdrop} ${backdropStyle}`,
+        base: `${zIndexClasses.wrapper}`,
       }}
     >
-      <ModalContent className={`font-zen ${className}`}>
+      <ModalContent
+        className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}
+      >
         {(closeModal) => (
           <>
             {typeof children === 'function' ? children(closeModal) : children}

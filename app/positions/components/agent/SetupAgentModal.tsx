@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Modal, ModalContent, ModalHeader } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FaRobot } from 'react-icons/fa';
 import { Address } from 'viem';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { MarketCap } from '@/hooks/useAuthorizeAgent';
 import useUserPositions from '@/hooks/useUserPositions';
@@ -136,44 +137,17 @@ export function SetupAgentModal({
       isOpen={isOpen}
       onClose={handleClose}
       size="2xl"
-      classNames={{
-        base: 'bg-background text-foreground dark:border border-gray-700',
-        header: 'border-b border-divider',
-        body: 'p-4',
-        closeButton: 'hover:bg-default-100',
-      }}
-      motionProps={{
-        variants: {
-          enter: {
-            y: 0,
-            opacity: 1,
-            transition: {
-              duration: 0.3,
-              ease: 'easeOut',
-            },
-          },
-          exit: {
-            y: -20,
-            opacity: 0,
-            transition: {
-              duration: 0.2,
-              ease: 'easeIn',
-            },
-          },
-        },
-      }}
-      closeButton={false}
+      className="bg-background text-foreground dark:border border-gray-700"
     >
-      <ModalContent className="p-4">
-        <ModalHeader className="flex justify-between px-10 pt-6 font-zen">
-          <div className="flex flex-col gap-1">
-            <span className="text-lg font-normal text-primary">{SETUP_STEPS[currentStepIndex].title}</span>
-            <span className="text-sm font-normal text-secondary">
-              {SETUP_STEPS[currentStepIndex].description}
-            </span>
-          </div>
-        </ModalHeader>
+      <ModalHeader
+        title={SETUP_STEPS[currentStepIndex].title}
+        description={SETUP_STEPS[currentStepIndex].description}
+        className="border-b border-divider"
+        mainIcon={<FaRobot className="h-5 w-5" />}
+        onClose={handleClose}
+      />
 
+      <ModalBody className="p-0">
         <div className="relative flex flex-col font-zen">
           <AnimatePresence mode="wait">
             <motion.div
@@ -184,16 +158,11 @@ export function SetupAgentModal({
               transition={{ duration: 0.2, ease: 'easeInOut' }}
               className="p-6"
             >
-              {/* Step Content */}
               {currentStep === SetupStep.Main && !hasSetupAgent && (
                 <WelcomeContent onNext={handleNext} />
               )}
               {currentStep === SetupStep.Main && hasSetupAgent && (
-                <MainContent
-                  // account={account}
-                  onNext={handleNext}
-                  userRebalancerInfos={userRebalancerInfos}
-                />
+                <MainContent onNext={handleNext} userRebalancerInfos={userRebalancerInfos} />
               )}
               {currentStep === SetupStep.Setup && (
                 <SetupAgent
@@ -214,12 +183,11 @@ export function SetupAgentModal({
             </motion.div>
           </AnimatePresence>
         </div>
+      </ModalBody>
 
-        {/* Footer with Step Indicator */}
-        <div className="mt-6 px-6 pb-6 pt-4">
-          <StepIndicator currentStep={currentStep} />
-        </div>
-      </ModalContent>
+      <ModalFooter className="flex w-full justify-center border-t border-divider">
+        <StepIndicator currentStep={currentStep} />
+      </ModalFooter>
     </Modal>
   );
 }

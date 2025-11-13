@@ -1,9 +1,10 @@
 'use client';
 
-import { Cross1Icon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/common/Button';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
 import { SimplifiedCampaign } from '@/utils/merklTypes';
 
@@ -81,35 +82,18 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center bg-black/50 font-zen"
-      style={{ zIndex: 50 }}
-    >
-      <div className="bg-surface relative w-full max-w-2xl rounded p-6">
-        <div className="flex flex-col">
-          <button
-            type="button"
-            className="absolute right-2 top-2 text-secondary opacity-60 transition-opacity hover:opacity-100"
-            onClick={onClose}
-          >
-            <Cross1Icon />
-          </button>
-
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">Active Reward Campaigns</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {campaigns.map((campaign) => (
-              <CampaignRow key={campaign.campaignId} campaign={campaign} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside" backdrop="blur">
+      <ModalHeader
+        title="Active Reward Campaigns"
+        description="Earn extra incentives from live Merkl programs"
+        mainIcon={<ExternalLinkIcon className="h-5 w-5" />}
+        onClose={onClose}
+      />
+      <ModalBody className="space-y-4">
+        {campaigns.map((campaign) => (
+          <CampaignRow key={campaign.campaignId} campaign={campaign} />
+        ))}
+      </ModalBody>
+    </Modal>
   );
 }

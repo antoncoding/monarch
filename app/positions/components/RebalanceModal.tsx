@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/common';
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
+import { TokenIcon } from '@/components/TokenIcon';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -283,36 +284,43 @@ export function RebalanceModal({
         onClose={onClose}
         isDismissable={false}
         size="4xl"
-        classNames={{
-          base: 'p-4 rounded-sm',
-          wrapper: 'z-[2000]',
-          backdrop: 'z-[1990]',
-        }}
+        customZIndex={2000}
       >
-        <ModalContent>
-          <ModalHeader className="flex items-center justify-between px-10 pt-6 font-zen">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">
-                  Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
-                </span>
-                {isRefetching && <Spinner size={20} />}
-              </div>
-              <span className="text-sm text-secondary">
-                Click on your existing position to rebalance {groupedPosition.loanAsset} to a new market. You can batch actions.
+        <ModalHeader
+          title={
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">
+                Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
               </span>
+              {isRefetching && <Spinner size={20} />}
             </div>
-            <Button
-              variant="light"
-              size="sm"
-              onPress={handleManualRefresh}
-              isDisabled={isRefetching}
-            >
-              <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          </ModalHeader>
-          <ModalBody className="px-6 pb-6 pt-2 font-zen gap-4">
+          }
+          description={`Click on your existing position to rebalance ${
+            groupedPosition.loanAssetSymbol ?? groupedPosition.loanAsset ?? 'this token'
+          } to a new market. You can batch actions.`}
+          mainIcon={
+            <TokenIcon
+              address={groupedPosition.loanAssetAddress as `0x${string}`}
+              chainId={groupedPosition.chainId}
+              symbol={groupedPosition.loanAssetSymbol}
+              width={28}
+              height={28}
+            />
+          }
+          onClose={onClose}
+          auxiliaryAction={{
+            icon: (
+              <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+            ),
+            onClick: () => {
+              if (!isRefetching) {
+                handleManualRefresh();
+              }
+            },
+            ariaLabel: 'Refresh position data',
+          }}
+        />
+        <ModalBody className="gap-4">
 
             <FromMarketsTable
               positions={groupedPosition.markets
@@ -348,26 +356,25 @@ export function RebalanceModal({
               eligibleMarkets={eligibleMarkets}
               removeRebalanceAction={removeRebalanceAction}
             />
-          </ModalBody>
-          <ModalFooter className="mx-2">
-            <Button
-              variant="secondary"
-              onPress={onClose}
-              className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="cta"
-              onPress={() => void handleExecuteRebalance()}
-              isDisabled={isProcessing || rebalanceActions.length === 0}
-              isLoading={isProcessing}
-              className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
-            >
-              {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+        </ModalBody>
+        <ModalFooter className="mx-2">
+          <Button
+            variant="secondary"
+            onPress={onClose}
+            className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="cta"
+            onPress={() => void handleExecuteRebalance()}
+            isDisabled={isProcessing || rebalanceActions.length === 0}
+            isLoading={isProcessing}
+            className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
+          >
+            {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
+          </Button>
+        </ModalFooter>
       </Modal>
       {showProcessModal && (
         <RebalanceProcessModal

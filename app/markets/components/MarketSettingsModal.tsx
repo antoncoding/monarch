@@ -1,15 +1,9 @@
 import React from 'react';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Input,
-  Divider,
-} from '@heroui/react';
+import { Input, Divider } from '@heroui/react';
+import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/common';
 import { IconSwitch } from '@/components/common/IconSwitch';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -92,20 +86,20 @@ export default function MarketSettingsModal({
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
+      onClose={onOpenChange}
       backdrop="blur"
       size="xl"
-      classNames={{ wrapper: 'z-[2300]', backdrop: 'z-[2290]' }}
+      zIndex="settings"
     >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="font-zen flex flex-col gap-1 px-10 pt-6">
-              <span className="text-lg font-normal text-primary">Market Preferences</span>
-              <span className="text-sm font-normal text-secondary">
-                Fine-tune filter thresholds, pagination, and column visibility
-              </span>
-            </ModalHeader>
-            <ModalBody className="font-zen flex flex-col gap-5 px-6 pb-6 pt-2 max-h-[70vh] overflow-y-auto">
+      {(onClose) => (
+        <>
+          <ModalHeader
+            title="Market Preferences"
+            description="Fine-tune filter thresholds, pagination, and column visibility"
+            mainIcon={<FiSliders className="h-5 w-5" />}
+            onClose={onClose}
+          />
+          <ModalBody className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
               <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
                 <h3 className="text-xs uppercase text-secondary">Filter Thresholds</h3>
                 <p className="-mt-3 mb-1 text-xs text-secondary">
@@ -263,15 +257,14 @@ export default function MarketSettingsModal({
                   </div>
                 </SettingItem>
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="light" onPress={onClose}>
-                Close
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="light" onPress={onClose}>
+              Close
+            </Button>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 }

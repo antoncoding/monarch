@@ -1,11 +1,12 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Divider, Tooltip, useDisclosure } from '@heroui/react';
+import { Divider, Tooltip, useDisclosure } from '@heroui/react';
 import { FiFilter } from 'react-icons/fi';
 import { Button } from '@/components/common/Button';
 import { FilterRow, FilterSection } from '@/components/common/FilterComponents';
 import { IconSwitch } from '@/components/common/IconSwitch';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
@@ -103,23 +104,23 @@ export function SuppliedAssetFilterCompactSwitch({
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
+        onClose={onOpenChange}
         size="md"
         backdrop="opaque"
-        classNames={{
-          wrapper: 'z-[2400]',
-          backdrop: 'z-[2390]',
-        }}
+        variant="compact"
+        customZIndex={3600}
+        className="rounded-lg"
       >
-        <ModalContent>
-          {(close) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1 font-zen px-6 pt-4">
-                <span className="text-base font-normal text-primary">Filters</span>
-                <span className="text-sm font-normal text-secondary">
-                  Quickly toggle the visibility filters that power the markets table
-                </span>
-              </ModalHeader>
-              <ModalBody className="flex flex-col gap-4 px-6 pb-4 pt-2 font-zen">
+        {(close) => (
+          <>
+            <ModalHeader
+              variant="compact"
+              title="Filters"
+              description="Quickly toggle the visibility filters that power the markets table"
+              mainIcon={<FiFilter size={14} />}
+              onClose={close}
+            />
+            <ModalBody variant="compact" className="flex flex-col gap-4">
                 <FilterSection 
                   title="Basic Filters" 
                   helper="Options to display markets with unknown parameters. Use with caution."
@@ -186,18 +187,17 @@ export function SuppliedAssetFilterCompactSwitch({
                     />
                   </FilterRow>
                 </FilterSection>
-              </ModalBody>
-              <ModalFooter className="justify-between">
-                <Button variant="flat" size="sm" onPress={handleCustomize}>
-                  Customize Filters
-                </Button>
-                <Button color="primary" size="sm" onPress={close}>
-                  Done
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
+            </ModalBody>
+            <ModalFooter className="justify-between">
+              <Button variant="flat" size="sm" onPress={handleCustomize}>
+                Customize Filters
+              </Button>
+              <Button color="primary" size="sm" onPress={close}>
+                Done
+              </Button>
+            </ModalFooter>
+          </>
+        )}
       </Modal>
     </div>
   );

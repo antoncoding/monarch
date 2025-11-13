@@ -18,7 +18,7 @@ import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { MarketPosition } from '@/utils/types';
-import { OnboardingModal } from './onboarding/Modal';
+import { OnboardingModal } from './onboarding/OnboardingModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
 export default function Positions() {
