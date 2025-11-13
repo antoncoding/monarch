@@ -105,7 +105,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               {/* Blacklisted Markets Section */}
               {blacklistedMarkets.length > 0 && (
                 <>
-                  <div className="flex flex-col gap-3 px-4">
+                  <div className="flex flex-col gap-3">
                     <h3 className="text-base font-normal text-primary">
                       Blacklisted Markets ({blacklistedMarkets.length})
                     </h3>
@@ -158,7 +158,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               )}
 
               {/* Available Markets Section */}
-              <div className="flex flex-col gap-3 px-4">
+              <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-normal text-primary">Add Markets to Blacklist</h3>
                   {filteredAvailableMarkets.length > 0 && (
@@ -178,7 +178,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
               </div>
 
               {/* Available Markets List */}
-              <div className="bg-surface-soft flex flex-col gap-2 rounded p-4 font-zen">
+              <div className="bg-surface-soft flex flex-col gap-2 rounded font-zen">
                 {searchQuery.trim().length === 0 ? (
                   <div className="text-center text-sm text-secondary py-8">
                     Start typing to search for markets to blacklist.

@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/common/Button';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks, networks } from '@/utils/networks';
-import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useCustomRpcContext } from '../providers/CustomRpcProvider';
 
 // Helper function to get expected chain ID for each network

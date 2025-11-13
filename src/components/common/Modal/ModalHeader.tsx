@@ -46,6 +46,8 @@ export function ModalHeader({
   const topRightControls = Boolean(actions || auxiliaryAction || showCloseIcon);
   const controlPositionClass = isStandard ? 'top-6 right-6' : 'top-4 right-4';
   const contentRightPadding = topRightControls ? (isStandard ? 'pr-14' : 'pr-10') : '';
+  const handleAuxiliaryClick = auxiliaryAction?.onClick;
+  const handleClose = onClose;
   const iconButtonBaseClass =
     'flex h-8 w-8 items-center justify-center rounded-full text-secondary transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70';
 
@@ -77,20 +79,20 @@ export function ModalHeader({
       {topRightControls && (
         <div className={`absolute flex items-center gap-2 ${controlPositionClass}`}>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
-          {auxiliaryAction && (
+          {auxiliaryAction && handleAuxiliaryClick && (
             <button
               type="button"
-              onClick={auxiliaryAction.onClick}
+              onClick={handleAuxiliaryClick}
               aria-label={auxiliaryAction.ariaLabel}
               className={iconButtonBaseClass}
             >
               {auxiliaryAction.icon}
             </button>
           )}
-          {showCloseIcon && (
+          {showCloseIcon && handleClose && (
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label={closeButtonAriaLabel}
               className={iconButtonBaseClass}
             >

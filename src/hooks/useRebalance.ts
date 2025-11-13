@@ -91,17 +91,21 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   }, []);
 
   // Transaction hook for the final multicall
+  const handleTransactionSuccess = useCallback(() => {
+    setRebalanceActions([]);
+    void refetchIsBundlerAuthorized();
+    if (onRebalance) {
+      onRebalance();
+    }
+  }, [refetchIsBundlerAuthorized, onRebalance]);
+
   const { sendTransactionAsync, isConfirming: isExecuting } = useTransactionWithToast({
     toastId: 'rebalance',
     pendingText: 'Rebalancing positions',
     successText: 'Positions rebalanced successfully',
     errorText: 'Failed to rebalance positions',
     chainId: groupedPosition.chainId,
-    onSuccess: () => {
-      setRebalanceActions([]); // Clear actions on success
-      void refetchIsBundlerAuthorized(); // Refetch bundler auth status
-      if (onRebalance) void onRebalance(); // Call external callback
-    },
+    onSuccess: handleTransactionSuccess,
   });
 
   // Helper function to generate common withdraw/supply tx data

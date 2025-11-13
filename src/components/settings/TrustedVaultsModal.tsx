@@ -164,7 +164,7 @@ export default function TrustedVaultsModal({
           />
           <ModalBody className="flex flex-col gap-5">
               {/* Info Section */}
-              <div className="bg-surface-soft rounded p-4">
+              <div className="bg-surface-soft rounded py-4">
                 <div className="mt-3 flex items-start gap-3 rounded bg-yellow-500/10 p-3 text-yellow-700">
                   <IoWarningOutline className="mt-0.5 h-4 w-4" />
                   <p className="font-zen text-sm">
@@ -200,7 +200,7 @@ export default function TrustedVaultsModal({
 
               <Divider />
 
-              <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
+              <div className="bg-surface-soft flex flex-col gap-3 rounded py-4">
                 <h3 className="text-base font-normal text-primary">
                   Known Vaults ({sortedMonarchVaults.length})
                 </h3>

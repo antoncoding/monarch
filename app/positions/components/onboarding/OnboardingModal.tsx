@@ -64,12 +64,12 @@ export function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose:
         onClose={onClose}
       />
 
-      <ModalBody className="px-6 pb-0">
-        <div className="flex-1 overflow-hidden">
+      <ModalBody className="px-6 pb-6">
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              className="h-full overflow-y-auto font-zen"
+              className="h-full font-zen pb-4"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}

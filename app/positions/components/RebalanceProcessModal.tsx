@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { FaArrowRightArrowLeft, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaArrowRightArrowLeft } from 'react-icons/fa6';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { RebalanceStepType } from '@/hooks/useRebalance';
 

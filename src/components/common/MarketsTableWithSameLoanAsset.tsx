@@ -31,6 +31,16 @@ import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 import { MarketIndicators } from '../MarketIndicators';
 
+const ZERO_DISPLAY_THRESHOLD = 1e-6;
+
+function formatAmountDisplay(value: bigint | string, decimals: number) {
+  const numericValue = formatBalance(value, decimals);
+  if (!Number.isFinite(numericValue) || Math.abs(numericValue) < ZERO_DISPLAY_THRESHOLD) {
+    return '-';
+  }
+  return formatReadable(numericValue);
+}
+
 export type MarketWithSelection = {
   market: Market;
   isSelected: boolean;
@@ -480,21 +490,21 @@ function MarketRow({
       {columnVisibility.totalSupply && (
         <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
           <p className="text-xs">
-            {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
+            {formatAmountDisplay(market.state.supplyAssets, market.loanAsset.decimals)}
           </p>
         </td>
       )}
       {columnVisibility.totalBorrow && (
         <td data-label="Total Borrow" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
           <p className="text-xs">
-            {formatReadable(formatBalance(market.state.borrowAssets, market.loanAsset.decimals))}
+            {formatAmountDisplay(market.state.borrowAssets, market.loanAsset.decimals)}
           </p>
         </td>
       )}
       {columnVisibility.liquidity && (
         <td data-label="Liquidity" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
           <p className="text-xs">
-            {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
+            {formatAmountDisplay(market.state.liquidityAssets, market.loanAsset.decimals)}
           </p>
         </td>
       )}
