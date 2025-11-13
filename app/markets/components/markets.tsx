@@ -63,8 +63,14 @@ export default function Markets({
     isRefetching,
     showUnwhitelistedMarkets,
     setShowUnwhitelistedMarkets,
+    addBlacklistedMarket: addBlacklistedMarketBase,
+    isBlacklisted,
   } = useMarkets();
   const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
+
+  // Use addBlacklistedMarket directly from context
+  // The context automatically reapplies the filter when blacklist changes
+  const addBlacklistedMarket = addBlacklistedMarketBase;
 
   const {
     isOpen: isSettingsModalOpen,
@@ -663,6 +669,8 @@ export default function Markets({
                 className={tableViewMode === 'compact' ? 'w-full' : undefined}
                 wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
                 tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
+                addBlacklistedMarket={addBlacklistedMarket}
+                isBlacklisted={isBlacklisted}
               />
             ) : (
               <EmptyScreen

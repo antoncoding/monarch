@@ -5,7 +5,6 @@ import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Divider } fro
 import { FiPlus, FiX } from 'react-icons/fi';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
-import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/contexts/MarketsContext';
 import type { Market } from '@/utils/types';
@@ -21,7 +20,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const {
-    allMarkets,
+    rawMarketsUnfiltered,
     isBlacklisted,
     addBlacklistedMarket,
     removeBlacklistedMarket,
@@ -38,7 +37,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
     const blacklisted: Market[] = [];
     const available: Market[] = [];
 
-    allMarkets.forEach((market) => {
+    rawMarketsUnfiltered.forEach((market) => {
       if (isBlacklisted(market.uniqueKey)) {
         blacklisted.push(market);
       } else {
@@ -54,7 +53,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
         (a.loanAsset?.symbol ?? '').localeCompare(b.loanAsset?.symbol ?? ''),
       ),
     };
-  }, [allMarkets, isBlacklisted]);
+  }, [rawMarketsUnfiltered, isBlacklisted]);
 
   // Filter available markets based on search query
   // Only show results if user has typed at least 2 characters
@@ -136,18 +135,13 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                             className="flex items-center justify-between gap-4 rounded bg-surface p-2 transition-colors hover:bg-surface-dark"
                           >
                             <div className="flex flex-grow items-center gap-3">
-                              <MarketIdBadge
-                                marketId={market.uniqueKey}
-                                chainId={market.morphoBlue.chain.id}
-                                showNetworkIcon
-                                showLink={false}
-                              />
                               <MarketIdentity
                                 market={market}
                                 chainId={market.morphoBlue.chain.id}
                                 mode={MarketIdentityMode.Normal}
                                 focus={MarketIdentityFocus.Loan}
                                 showLltv
+                                showId
                                 showOracle={false}
                                 iconSize={20}
                               />
@@ -220,18 +214,13 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                             className="flex items-center justify-between gap-4 rounded bg-surface p-3 transition-colors hover:bg-surface-dark"
                           >
                             <div className="flex flex-grow items-center gap-3">
-                              <MarketIdBadge
-                                marketId={market.uniqueKey}
-                                chainId={market.morphoBlue.chain.id}
-                                showNetworkIcon
-                                showLink={false}
-                              />
                               <MarketIdentity
                                 market={market}
                                 chainId={market.morphoBlue.chain.id}
                                 mode={MarketIdentityMode.Normal}
                                 focus={MarketIdentityFocus.Loan}
                                 showLltv
+                                showId
                                 showOracle={false}
                                 iconSize={20}
                               />

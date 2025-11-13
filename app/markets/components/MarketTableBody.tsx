@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
-import { Button } from '@/components/common/Button';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
@@ -10,6 +9,7 @@ import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults'
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
 import { ColumnVisibility } from './columnVisibility';
+import { MarketActionsDropdown } from './MarketActionsDropdown';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
@@ -26,6 +26,8 @@ type MarketTableBodyProps = {
   onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
+  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
+  isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
 export function MarketTableBody({
@@ -40,6 +42,8 @@ export function MarketTableBody({
   onMarketClick,
   columnVisibility,
   trustedVaultMap,
+  addBlacklistedMarket,
+  isBlacklisted,
 }: MarketTableBodyProps) {
   // Calculate colspan for expanded row based on visible columns
   const visibleColumnsCount =
@@ -224,17 +228,17 @@ export function MarketTableBody({
               </td>
               <td data-label="Actions" className="justify-center px-4 py-3">
                 <div className="flex items-center justify-center">
-                  <Button
-                    size="sm"
-                    variant="interactive"
-                    className="text-xs"
-                    onPress={() => {
-                      setSelectedMarket(item);
-                      setShowSupplyModal(true);
-                    }}
-                  >
-                    Supply
-                  </Button>
+                  <MarketActionsDropdown
+                    market={item}
+                    isStared={isStared}
+                    starMarket={starMarket}
+                    unstarMarket={unstarMarket}
+                    onMarketClick={onMarketClick}
+                    setSelectedMarket={setSelectedMarket}
+                    setShowSupplyModal={setShowSupplyModal}
+                    addBlacklistedMarket={addBlacklistedMarket}
+                    isBlacklisted={isBlacklisted}
+                  />
                 </div>
               </td>
             </tr>
