@@ -284,7 +284,6 @@ export function RebalanceModal({
         onClose={onClose}
         isDismissable={false}
         size="4xl"
-        customZIndex={2000}
       >
         <ModalHeader
           title={

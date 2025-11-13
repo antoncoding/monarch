@@ -12,7 +12,6 @@ type ModalProps = {
   onOpenChange?: () => void;
   children: React.ReactNode | ((onClose: () => void) => React.ReactNode);
   zIndex?: ModalZIndex;
-  customZIndex?: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
   isDismissable?: boolean;
   hideCloseButton?: boolean;
@@ -35,7 +34,6 @@ export function Modal({
   onOpenChange,
   children,
   zIndex = 'base',
-  customZIndex,
   size = 'xl',
   isDismissable = true,
   hideCloseButton = true,
@@ -48,9 +46,7 @@ export function Modal({
     setPortalContainer(document.body);
   }, []);
 
-  const zIndexClasses = customZIndex
-    ? { wrapper: `z-[${customZIndex}]`, backdrop: `z-[${customZIndex - 10}]` }
-    : Z_INDEX_MAP[zIndex];
+  const zIndexClasses = Z_INDEX_MAP[zIndex];
   const backdropStyle =
     backdrop === 'transparent'
       ? 'bg-transparent'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaArrowRightArrowLeft } from 'react-icons/fa6';
+import { LuArrowRightLeft } from "react-icons/lu";
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
@@ -59,7 +59,7 @@ export function SupplyModalV2({
               onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
               className="flex items-center gap-1 text-sm font-medium text-primary transition hover:text-white"
             >
-              <FaArrowRightArrowLeft className="h-3 w-3 rotate-90" />
+              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
               {mode === 'supply' ? 'Withdraw' : 'Supply'}
             </button>
           ) : undefined

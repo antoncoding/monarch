@@ -5,12 +5,12 @@
 Use these shared components instead of raw HTML elements:
 
 - `Button`: Import from `@/components/common/Button` for all clickable actions
-- `Modal`: For all modal dialogs
+- `Modal`: For **all** modal dialogs (always import from `@/components/common/Modal`)
 - `Card`: For contained content sections
 
 ## Modal Guidelines
 
-**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal` instead of directly using HeroUI modals. This ensures consistent styling, proper z-index management, and automatic font-zen application.
+**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal`. Never import HeroUI modals directly. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
 
 All modals MUST follow consistent styling standards for typography, spacing, and structure. There are two modal patterns based on use case.
 
@@ -27,7 +27,7 @@ All modals MUST follow consistent styling standards for typography, spacing, and
 
 ### Using Our Modal Components
 
-Import from our custom components:
+Import the primitives from our shared entry point (and nowhere else):
 
 ```tsx
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -100,10 +100,12 @@ import { TokenIcon } from '@/components/TokenIcon';
 ```
 
 **Auto-Applied Standards:**
-- **Spacing**: Automatically applied based on variant
-- **Typography**: `font-zen` and text sizes handled automatically
-- **Z-Index**: Managed through named layers (base, selection, settings, process)
-- **No hardcoded styles**: Everything configured through props
+- **Spacing**: Automatically applied based on variant (no extra padding needed)
+- **Typography**: `font-zen` and text scales handled for you
+- **Icon + actions slots**: Header provides `mainIcon`, `actions`, and an always-on close button
+- **Z-Index**: Managed through named layers (base, process, selection, settings)
+- **Backdrops**: Unified blur/opacity, so you get consistent overlays everywhere
+- **Portal**: All modals render to `document.body` to avoid stacking bugs
 
 ### Compact Modal Pattern
 
@@ -173,19 +175,12 @@ zIndex="settings"  // z-2300 - Settings modals (HIGHEST - always on top)
 </Modal>
 ```
 
-**Custom Z-Index (if needed):**
-
-```tsx
-<Modal customZIndex={3000}>
-  {/* Very rare - only use if you have a specific need */}
-</Modal>
-```
 
 ### Typography Rules
 
 Typography is automatically handled by our Modal components. You don't need to specify font weights or sizes manually - just use the title/description props.
 
-**IMPORTANT**: Never manually add bold or semibold font weights in modal content.
+**IMPORTANT**: Never manually add bold or semibold font weights in modal headings/labels; rely on the shared components.
 
 ```tsx
 // ✅ Correct - let the component handle typography

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowRightArrowLeft, FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaCircle } from 'react-icons/fa';
+import { LuArrowRightLeft } from "react-icons/lu";
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { WrapStep } from '@/hooks/useWrapLegacyMorpho';
 import { formatBalance } from '@/utils/balance';
@@ -37,7 +38,7 @@ export function WrapProcessModal({
       <ModalHeader
         title={`Wrapping ${formatBalance(amount, 18)} MORPHO`}
         description="Track each step to move legacy MORPHO into the new token"
-        mainIcon={<FaArrowRightArrowLeft className="h-5 w-5" />}
+        mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
         onClose={onClose}
       />
       <ModalBody className="gap-4">

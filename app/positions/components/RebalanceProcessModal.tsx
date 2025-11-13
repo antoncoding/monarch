@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { FaArrowRightArrowLeft } from 'react-icons/fa6';
+import { LuArrowRightLeft } from "react-icons/lu";
+
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { RebalanceStepType } from '@/hooks/useRebalance';
 
@@ -91,7 +92,7 @@ export function RebalanceProcessModal({
       <ModalHeader
         title={`Rebalancing ${tokenSymbol} Positions`}
         description={`Executing ${actionsCount} action${actionsCount === 1 ? '' : 's'} in this batch`}
-        mainIcon={<FaArrowRightArrowLeft className="h-5 w-5" />}
+        mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
         onClose={onClose}
       />
       <ModalBody className="gap-4">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaArrowRightArrowLeft } from 'react-icons/fa6';
+import { LuArrowRightLeft } from "react-icons/lu";
 import { useAccount, useBalance } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
@@ -91,7 +91,7 @@ export function BorrowModal({
               onPress={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
               className="flex items-center gap-1.5"
             >
-              <FaArrowRightArrowLeft className="h-3 w-3 rotate-90" />
+              <LuArrowRightLeft className="h-3 w-3 rotate-90" />
               {mode === 'borrow' ? 'Repay' : 'Borrow'}
             </Button>
           ) : undefined

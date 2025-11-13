@@ -107,7 +107,6 @@ export function SuppliedAssetFilterCompactSwitch({
         onClose={onOpenChange}
         size="md"
         backdrop="opaque"
-        // customZIndex={6000}
       >
         {(close) => (
           <>
