@@ -85,6 +85,28 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     return showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
   }, [showUnwhitelistedMarkets, allMarkets, whitelistedMarkets]);
 
+  // Helper to add metadata (liquidation status, whitelist info) to markets
+  const addMarketMetadata = useCallback(
+    (marketsToEnrich: Market[]) => {
+      return marketsToEnrich.map((market) => {
+        const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
+        const isMonarchWhitelisted =
+          !market.whitelisted &&
+          monarchWhitelistedMarkets.some(
+            (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
+          );
+
+        return {
+          ...market,
+          whitelisted: market.whitelisted || isMonarchWhitelisted,
+          isProtectedByLiquidationBots,
+          isMonarchWhitelisted,
+        };
+      });
+    },
+    [liquidatedMarketKeys],
+  );
+
   // Process markets helper function
   const processMarkets = useCallback(
     (marketsToProcess: Market[]) => {
@@ -102,22 +124,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
       );
 
-      // Add liquidation and whitelist status
-      const processed = blacklistFiltered.map((market) => {
-        const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
-        const isMonarchWhitelisted =
-          !market.whitelisted &&
-          monarchWhitelistedMarkets.some(
-            (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
-          );
-
-        return {
-          ...market,
-          whitelisted: market.whitelisted || isMonarchWhitelisted,
-          isProtectedByLiquidationBots,
-          isMonarchWhitelisted,
-        };
-      });
+      // Add liquidation and whitelist status using the helper
+      const processed = addMarketMetadata(blacklistFiltered);
 
       // Set all markets (including unwhitelisted)
       setAllMarkets(processed);
@@ -126,7 +134,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       const whitelisted = processed.filter((market) => market.whitelisted);
       setWhitelistedMarkets(whitelisted);
     },
-    [liquidatedMarketKeys, allBlacklistedMarketKeys],
+    [allBlacklistedMarketKeys, addMarketMetadata],
   );
 
   // Reapply blacklist filter without refetching
@@ -138,22 +146,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
     );
 
-    // Add liquidation and whitelist status
-    const processed = blacklistFiltered.map((market) => {
-      const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
-      const isMonarchWhitelisted =
-        !market.whitelisted &&
-        monarchWhitelistedMarkets.some(
-          (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
-        );
-
-      return {
-        ...market,
-        whitelisted: market.whitelisted || isMonarchWhitelisted,
-        isProtectedByLiquidationBots,
-        isMonarchWhitelisted,
-      };
-    });
+    // Add liquidation and whitelist status using the helper
+    const processed = addMarketMetadata(blacklistFiltered);
 
     // Set all markets (including unwhitelisted)
     setAllMarkets(processed);
@@ -161,7 +155,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     // Filter for whitelisted markets only
     const whitelisted = processed.filter((market) => market.whitelisted);
     setWhitelistedMarkets(whitelisted);
-  }, [rawMarkets, liquidatedMarketKeys, allBlacklistedMarketKeys]);
+  }, [rawMarkets, allBlacklistedMarketKeys, addMarketMetadata]);
 
   const fetchMarkets = useCallback(
     async (isRefetch = false) => {

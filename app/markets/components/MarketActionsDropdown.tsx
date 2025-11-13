@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { AiOutlineStop } from 'react-icons/ai';

@@ -15,7 +15,7 @@ export const Button = extendVariants(NextUIButton, {
     },
     // Size variants
     size: {
-      xs: 'px-2 py-1 text-xs min-w-[40px] h-6',
+      xs: 'px-1.5 py-1 text-xs min-w-[40px] h-6',
       sm: 'px-1.5 py-1 text-xs min-w-[64px] h-8',
       md: 'px-4 py-2 text-sm min-w-[80px] h-10',
       lg: 'px-6 py-3 text-md min-w-[96px] h-12',
