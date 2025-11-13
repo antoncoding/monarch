@@ -69,6 +69,7 @@ export function Modal({
       <ModalContent
         className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}
       >
+        {/* eslint-disable-next-line @typescript-eslint/promise-function-async */}
         {(closeModal) =>
           typeof children === 'function' ? children(closeModal) : children}
       </ModalContent>
