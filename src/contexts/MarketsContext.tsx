@@ -30,7 +30,6 @@ export type MarketsContextType = {
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
   refresh: () => Promise<void>;
-  applyBlacklistFilter: () => void; // Reapply blacklist filter without refetching
   showUnwhitelistedMarkets: boolean;
   setShowUnwhitelistedMarkets: (value: boolean) => void;
   showFullRewardAPY: boolean;
@@ -312,7 +311,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       error: combinedError,
       refetch,
       refresh,
-      applyBlacklistFilter,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
@@ -332,7 +330,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       combinedError,
       refetch,
       refresh,
-      applyBlacklistFilter,
       showUnwhitelistedMarkets,
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,

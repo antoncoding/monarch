@@ -4,9 +4,8 @@ import React from 'react';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { IoWarningOutline } from 'react-icons/io5';
 import { Button } from '@/components/common';
-import { Market } from '@/utils/types';
-import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity } from '@/components/MarketIdentity';
+import { Market } from '@/utils/types';
 
 type BlacklistConfirmationModalProps = {
   isOpen: boolean;

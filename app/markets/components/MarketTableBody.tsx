@@ -9,8 +9,8 @@ import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults'
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
 import { ColumnVisibility } from './columnVisibility';
-import { ExpandedMarketDetail } from './MarketRowDetail';
 import { MarketActionsDropdown } from './MarketActionsDropdown';
+import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
 import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from './RiskIndicator';
 

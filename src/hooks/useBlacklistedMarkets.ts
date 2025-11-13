@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { blacklistedMarkets as defaultBlacklistedMarkets } from '@/utils/markets';
 import { useLocalStorage } from './useLocalStorage';
-import { useStyledToast } from '@/hooks/useStyledToast';
 
 type BlacklistedMarket = {
   uniqueKey: string;

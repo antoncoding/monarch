@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
-import { TbArrowUp } from 'react-icons/tb';
 import { AiOutlineStop } from 'react-icons/ai';
+import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
+import { TbArrowUp } from 'react-icons/tb';
 import { Button } from '@/components/common/Button';
 import { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './BlacklistConfirmationModal';
@@ -37,6 +37,11 @@ export function MarketActionsDropdown({
     e.stopPropagation();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Stop propagation on keyboard events too
+    e.stopPropagation();
+  };
+
   const handleBlacklistClick = () => {
     if (!isBlacklisted?.(market.uniqueKey) && addBlacklistedMarket) {
       setIsConfirmModalOpen(true);
@@ -50,7 +55,12 @@ export function MarketActionsDropdown({
   };
 
   return (
-    <div onClick={handleClick}>
+    <div
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={-1}
+    >
       <Dropdown className="rounded-sm">
         <DropdownTrigger>
           <Button
