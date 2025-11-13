@@ -197,7 +197,7 @@ function AgentSelectionStep({
 
 export function VaultInitializationModal({
   isOpen,
-  onClose,
+  onOpenChange,
   vaultAddress,
   marketAdapter, // address of MorphoMakretV1Aapater
   marketAdapterLoading, // 
@@ -209,7 +209,7 @@ export function VaultInitializationModal({
   marketAdapter: Address;
   marketAdapterLoading: boolean;
   refetchMarketAdapter: () => void;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   vaultAddress: Address;
   chainId: SupportedNetworks;
   onAdapterConfigured: () => void;
@@ -263,14 +263,14 @@ export function VaultInitializationModal({
         return;
       }
       onAdapterConfigured();
-      onClose();
+      onOpenChange(false);
     } catch (error) {
       console.error('Failed to complete initialization', error);
     }
   }, [
     completeInitialization,
     onAdapterConfigured,
-    onClose,
+    onOpenChange,
     registryAddress,
     selectedAgent,
     marketAdapter,
@@ -397,7 +397,7 @@ export function VaultInitializationModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="lg"
       scrollBehavior="inside"
       className="bg-background dark:border border-gray-700"
@@ -410,7 +410,7 @@ export function VaultInitializationModal({
             : 'Optionally choose an agent now, or configure later in settings'
         }
         mainIcon={<FiZap className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
       <ModalBody className="space-y-6 px-2">
           {currentStep === 'deploy' && (

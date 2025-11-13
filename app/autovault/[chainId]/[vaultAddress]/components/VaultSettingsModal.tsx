@@ -18,7 +18,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
 
 type VaultSettingsModalProps = {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   initialTab?: SettingsTab;
   isOwner: boolean;
   onUpdateMetadata: (values: { name?: string; symbol?: string }) => Promise<boolean>;
@@ -45,7 +45,7 @@ type VaultSettingsModalProps = {
 
 export function VaultSettingsModal({
   isOpen,
-  onClose,
+  onOpenChange,
   initialTab = 'general',
   isOwner,
   onUpdateMetadata,
@@ -133,7 +133,7 @@ export function VaultSettingsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="5xl"
       scrollBehavior="inside"
       className="w-full max-w-6xl"
@@ -143,7 +143,7 @@ export function VaultSettingsModal({
         title="Vault Settings"
         description="Manage metadata, automation agents, and vault caps"
         mainIcon={<FiSettings className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
         auxiliaryAction={
           onRefresh
             ? {

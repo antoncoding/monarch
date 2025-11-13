@@ -19,11 +19,12 @@ const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.fil
 
 type DeploymentModalContentProps = {
   isOpen: boolean;
-  onClose: () => void;
+
+  onOpenChange: (open: boolean) => void
   existingVaults: UserVaultV2[];
 };
 
-function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentModalContentProps) {
+function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: DeploymentModalContentProps) {
   const { selectedTokenAndNetwork, needSwitchChain, switchToNetwork, createVault, isDeploying } = useDeployment();
 
   // Load balances and tokens at modal level
@@ -57,7 +58,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onOpenChange={onOpenChange}
       size="2xl"
       scrollBehavior="inside"
       backdrop="blur"
@@ -67,7 +68,7 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
         title="Deploy Autovault"
         description="Choose the token and network for your autovault"
         mainIcon={<FaCube className="h-5 w-5" />}
-        onClose={onClose}
+        onClose={() => onOpenChange(false)}
       />
 
       <ModalBody className="px-8">
@@ -145,14 +146,14 @@ function DeploymentModalContent({ isOpen, onClose, existingVaults }: DeploymentM
 
 type DeploymentModalProps = {
   isOpen: boolean;
-  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
   existingVaults: UserVaultV2[];
 };
 
-export function DeploymentModal({ isOpen, onClose, existingVaults }: DeploymentModalProps) {
+export function DeploymentModal({ isOpen, onOpenChange, existingVaults }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
-      <DeploymentModalContent isOpen={isOpen} onClose={onClose} existingVaults={existingVaults} />
+      <DeploymentModalContent isOpen={isOpen} onOpenChange={onOpenChange} existingVaults={existingVaults} />
     </DeploymentProvider>
   );
 }

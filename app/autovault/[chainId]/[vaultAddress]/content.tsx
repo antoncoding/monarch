@@ -299,7 +299,7 @@ export default function VaultContent() {
           {/* Settings Modal */}
           <VaultSettingsModal
             isOpen={showSettings}
-            onClose={() => setShowSettings(false)}
+            onOpenChange={setShowSettings}
             initialTab={settingsTab}
             isOwner={vault.isOwner}
             onUpdateMetadata={handleUpdateMetadata}
@@ -330,7 +330,7 @@ export default function VaultContent() {
       {networkConfig?.vaultConfig?.marketV1AdapterFactory && (
         <VaultInitializationModal
           isOpen={showInitializationModal}
-          onClose={() => setShowInitializationModal(false)}
+          onOpenChange={setShowInitializationModal}
           vaultAddress={vaultAddressValue}
           chainId={chainId}
           marketAdapter={vault.adapter}

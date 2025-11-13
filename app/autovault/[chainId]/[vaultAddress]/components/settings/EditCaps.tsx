@@ -570,7 +570,7 @@ export function EditCaps({
           vaultAsset={vaultAsset}
           chainId={chainId}
           existingMarketIds={existingMarketIds}
-          onClose={() => setShowAddMarketModal(false)}
+          onOpenChange={setShowAddMarketModal}
           onAdd={handleAddMarkets}
         />
       )}

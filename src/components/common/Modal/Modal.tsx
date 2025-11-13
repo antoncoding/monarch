@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import { Modal as HeroModal, ModalContent } from '@heroui/react';
 
@@ -71,7 +69,7 @@ export function Modal({
       <ModalContent
         className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}
       >
-        {async (closeModal) =>
+        {(closeModal) =>
           typeof children === 'function' ? children(closeModal) : children}
       </ModalContent>
     </HeroModal>
