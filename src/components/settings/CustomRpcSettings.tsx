@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Cross1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { SupportedNetworks, networks } from '@/utils/networks';
+import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useCustomRpcContext } from '../providers/CustomRpcProvider';
 
 // Helper function to get expected chain ID for each network
@@ -175,50 +175,32 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
     setError('');
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center bg-black/50"
-      style={{ zIndex: 50 }}
-    >
-      <div className="bg-surface relative w-full max-w-2xl rounded p-6">
-        <div className="flex flex-col">
-          <button
-            type="button"
-            className="absolute right-2 top-2 text-secondary opacity-60 transition-opacity hover:opacity-100"
-            onClick={handleClose}
+    <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
+      <ModalHeader
+        title="Configure RPC Endpoints"
+        description="Set custom RPC URLs to override the default Alchemy connections"
+        onClose={handleClose}
+        actions={
+          <Button
+            variant="secondary"
+            size="sm"
+            onPress={handleResetAll}
+            isDisabled={Object.keys(customRpcUrls).length === 0}
           >
-            <Cross1Icon />
-          </button>
+            Reset All
+          </Button>
+        }
+      />
+      <ModalBody className="gap-6">
+        <div className="flex flex-col gap-2">
+          {networks.map((network) => {
+            const chainId = network.network;
+            const isCustom = isUsingCustomRpc(chainId);
+            const isSelected = selectedNetwork === chainId;
 
-          <div className="mb-6 flex items-center justify-between">
-            <div className="flex flex-col">
-              <h3 className="text-lg font-medium text-primary">Configure RPC Endpoints</h3>
-              <p className="mt-1 text-sm text-secondary opacity-80">
-                Set custom RPC URLs for blockchain networks
-              </p>
-            </div>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              onPress={handleResetAll}
-              isDisabled={Object.keys(customRpcUrls).length === 0}
-            >
-              Reset All
-            </Button>
-          </div>
-
-          {/* Network List */}
-          <div className="mb-4 flex flex-col gap-2">
-            {networks.map((network) => {
-              const chainId = network.network;
-              const isCustom = isUsingCustomRpc(chainId);
-              const isSelected = selectedNetwork === chainId;
-
-              return (
-                <button
+            return (
+              <button
                   key={chainId}
                   type="button"
                   onClick={() => handleNetworkSelect(chainId)}
@@ -257,66 +239,64 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                 </button>
               );
             })}
-          </div>
-
-          {/* Edit Area */}
-          {selectedNetwork && (
-            <div className="rounded-sm border border-gray-200 p-4 dark:border-gray-700">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={networks.find((n) => n.network === selectedNetwork)?.logo || ''}
-                    alt={networks.find((n) => n.network === selectedNetwork)?.name || ''}
-                    width={20}
-                    height={20}
-                    className="rounded-full"
-                  />
-                  <span className="text-sm font-medium text-primary">
-                    Configure {networks.find((n) => n.network === selectedNetwork)?.name} RPC
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <div className="relative flex-grow">
-                    <input
-                      type="text"
-                      placeholder="Enter custom RPC URL (leave empty to use default)"
-                      value={inputValue}
-                      onChange={(e) => handleInputChange(e.target.value)}
-                      className={`bg-hovered h-10 w-full truncate rounded p-2 pr-16 text-sm focus:border-primary focus:outline-none ${
-                        error ? 'border border-red-500 focus:border-red-500' : ''
-                      }`}
-                    />
-                    <Button
-                      variant="cta"
-                      size="sm"
-                      onPress={() => void handleSave()}
-                      isDisabled={isValidating}
-                      className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
-                    >
-                      {isValidating ? (
-                        <Spinner size={14} width={2} color="text-white" />
-                      ) : (
-                        <span className="truncate">Save</span>
-                      )}
-                    </Button>
-                  </div>
-                  {error && <p className="text-sm text-red-500">{error}</p>}
-                </div>
-
-                {isUsingCustomRpc(selectedNetwork) && (
-                  <div className="flex justify-center">
-                    <Button variant="secondary" size="sm" onPress={handleReset}>
-                      Reset to Default
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </div>
-      </div>
-    </div>
+
+        {selectedNetwork && (
+          <div className="rounded-sm border border-gray-200 p-4 dark:border-gray-700">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Image
+                  src={networks.find((n) => n.network === selectedNetwork)?.logo || ''}
+                  alt={networks.find((n) => n.network === selectedNetwork)?.name || ''}
+                  width={20}
+                  height={20}
+                  className="rounded-full"
+                />
+                <span className="text-sm font-medium text-primary">
+                  Configure {networks.find((n) => n.network === selectedNetwork)?.name} RPC
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="relative flex-grow">
+                  <input
+                    type="text"
+                    placeholder="Enter custom RPC URL (leave empty to use default)"
+                    value={inputValue}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    className={`bg-hovered h-10 w-full truncate rounded p-2 pr-16 text-sm focus:border-primary focus:outline-none ${
+                      error ? 'border border-red-500 focus:border-red-500' : ''
+                    }`}
+                  />
+                  <Button
+                    variant="cta"
+                    size="sm"
+                    onPress={() => void handleSave()}
+                    isDisabled={isValidating}
+                    className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
+                  >
+                    {isValidating ? (
+                      <Spinner size={14} width={2} color="text-white" />
+                    ) : (
+                      <span className="truncate">Save</span>
+                    )}
+                  </Button>
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+              </div>
+
+              {isUsingCustomRpc(selectedNetwork) && (
+                <div className="flex justify-center">
+                  <Button variant="secondary" size="sm" onPress={handleReset}>
+                    Reset to Default
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </ModalBody>
+    </Modal>
   );
 }
 

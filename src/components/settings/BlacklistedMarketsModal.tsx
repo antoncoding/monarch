@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import { Divider } from '@heroui/react';
 import { FiPlus, FiX } from 'react-icons/fi';
-import { IoWarningOutline } from 'react-icons/io5';
+import { MdBlockFlipped } from "react-icons/md";
 import { Button } from '@/components/common';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
@@ -97,21 +97,11 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
           <ModalHeader
             title="Manage Blacklisted Markets"
             description="Block specific markets from appearing in your view"
-            mainIcon={<IoWarningOutline className="h-5 w-5 text-red-500" />}
+            mainIcon={<MdBlockFlipped className="h-6 w-6" />}
             onClose={onClose}
           />
           <ModalBody className="flex flex-col gap-5">
-              {/* Info Section */}
-              <div className="bg-surface-soft rounded p-4">
-                <div className="flex items-start gap-3 rounded bg-red-500/10 p-3 text-red-700 dark:text-red-400">
-                  <IoWarningOutline className="mt-0.5 h-4 w-4 shrink-0" />
-                  <p className="font-zen text-sm">
-                    Some markets are blacklisted by default due to security concerns or issues.
-                    These cannot be removed from the blacklist.
-                  </p>
-                </div>
-              </div>
-
+              
               {/* Blacklisted Markets Section */}
               {blacklistedMarkets.length > 0 && (
                 <>

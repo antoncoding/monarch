@@ -1,6 +1,7 @@
 import React from 'react';
 import { ModalHeader as HeroModalHeader } from '@heroui/react';
 import { Cross1Icon } from '@radix-ui/react-icons';
+import { twMerge } from 'tailwind-merge';
 
 export type ModalHeaderVariant = 'standard' | 'compact';
 
@@ -43,13 +44,17 @@ export function ModalHeader({
   const descriptionSizeClass = isStandard ? 'text-sm' : 'text-xs';
   const showCloseIcon = Boolean(onClose) && showCloseButton;
   const topRightControls = Boolean(actions || auxiliaryAction || showCloseIcon);
+  const controlPositionClass = isStandard ? 'top-6 right-6' : 'top-4 right-4';
+  const contentRightPadding = topRightControls ? (isStandard ? 'pr-14' : 'pr-10') : '';
   const iconButtonBaseClass =
     'flex h-8 w-8 items-center justify-center rounded-full text-secondary transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70';
 
   // If children are provided, use them directly (for custom layouts)
   if (children) {
     return (
-      <HeroModalHeader className={`flex flex-col gap-1 font-zen ${paddingClass} ${className}`}>
+      <HeroModalHeader
+        className={twMerge('flex w-full flex-col gap-1 font-zen', paddingClass, className)}
+      >
         {children}
       </HeroModalHeader>
     );
@@ -57,45 +62,43 @@ export function ModalHeader({
 
   // Standard layout with title, description, and optional icon
   return (
-    <HeroModalHeader className={`font-zen ${paddingClass} ${className}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="flex items-center gap-3 text-primary font-normal">
-            {mainIcon && <div className="flex-shrink-0">{mainIcon}</div>}
-            <span className={`${titleSizeClass} leading-tight`}>{title}</span>
-          </div>
-          {description && (
-            <span className={`${descriptionSizeClass} text-secondary`}>
-              {description}
-            </span>
-          )}
+    <HeroModalHeader className={twMerge('relative w-full font-zen font-normal', paddingClass, className)}>
+      <div className={twMerge('flex flex-col gap-2', contentRightPadding)}>
+        <div className="flex items-center gap-3 text-primary font-normal">
+          {mainIcon && <div className="flex-shrink-0">{mainIcon}</div>}
+          <span className={`${titleSizeClass} leading-tight`}>{title}</span>
         </div>
-        {topRightControls && (
-          <div className="flex flex-shrink-0 items-center gap-2 self-start">
-            {actions && <div className="flex items-center gap-2">{actions}</div>}
-            {auxiliaryAction && (
-              <button
-                type="button"
-                onClick={auxiliaryAction.onClick}
-                aria-label={auxiliaryAction.ariaLabel}
-                className={iconButtonBaseClass}
-              >
-                {auxiliaryAction.icon}
-              </button>
-            )}
-            {showCloseIcon && (
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label={closeButtonAriaLabel}
-                className={iconButtonBaseClass}
-              >
-                <Cross1Icon className="h-3.5 w-3.5" />
-              </button>
-            )}
+        {description && (
+          <div className={`${descriptionSizeClass} text-secondary font-zen text-normal`}>
+            {description}
           </div>
         )}
       </div>
+      {topRightControls && (
+        <div className={`absolute flex items-center gap-2 ${controlPositionClass}`}>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+          {auxiliaryAction && (
+            <button
+              type="button"
+              onClick={auxiliaryAction.onClick}
+              aria-label={auxiliaryAction.ariaLabel}
+              className={iconButtonBaseClass}
+            >
+              {auxiliaryAction.icon}
+            </button>
+          )}
+          {showCloseIcon && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={closeButtonAriaLabel}
+              className={iconButtonBaseClass}
+            >
+              <Cross1Icon className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
     </HeroModalHeader>
   );
 }

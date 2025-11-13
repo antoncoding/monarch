@@ -176,7 +176,7 @@ export default function TrustedVaultsModal({
               </div>
 
               {/* Search and Actions */}
-              <div className="flex flex-col gap-3 px-4">
+              <div className="flex flex-col gap-3">
                 <Input
                   placeholder="Search by name, curator, or address..."
                   value={searchQuery}
