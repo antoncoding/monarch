@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiDownload } from 'react-icons/fi';

@@ -249,7 +249,7 @@ export default function SettingsPage() {
       {/* Trusted Vaults Modal */}
       <TrustedVaultsModal
         isOpen={isTrustedVaultsModalOpen}
-        onOpenChange={() => setIsTrustedVaultsModalOpen(!isTrustedVaultsModalOpen)}
+        onOpenChange={setIsTrustedVaultsModalOpen}
         userTrustedVaults={userTrustedVaults}
         setUserTrustedVaults={setUserTrustedVaults}
       />

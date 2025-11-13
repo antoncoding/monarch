@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useState } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';

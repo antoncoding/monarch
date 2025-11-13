@@ -1,4 +1,7 @@
+"use client";
+
 import { Address } from 'viem';
+
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
 import { SupportedNetworks } from '@/utils/networks';
 import { Market } from '@/utils/types';

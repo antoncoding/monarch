@@ -1060,7 +1060,7 @@ export function MarketsTableWithSameLoanAsset({
       {showTrustedVaultsModal && (
         <TrustedVaultsModal
           isOpen={showTrustedVaultsModal}
-          onOpenChange={() => setShowTrustedVaultsModal(false)}
+          onOpenChange={setShowTrustedVaultsModal}
           userTrustedVaults={userTrustedVaults}
           setUserTrustedVaults={setUserTrustedVaults}
         />

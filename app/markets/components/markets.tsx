@@ -694,7 +694,7 @@ export default function Markets({
       </div>
       <TrustedVaultsModal
         isOpen={isTrustedVaultsModalOpen}
-        onOpenChange={() => setIsTrustedVaultsModalOpen((prev) => !prev)}
+        onOpenChange={setIsTrustedVaultsModalOpen}
         userTrustedVaults={userTrustedVaults}
         setUserTrustedVaults={setUserTrustedVaults}
       />

@@ -19,7 +19,7 @@ import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
-  onOpenChange: () => void;
+  onOpenChange: (isOpen: boolean) => void;
   userTrustedVaults: TrustedVault[];
   setUserTrustedVaults: React.Dispatch<React.SetStateAction<TrustedVault[]>>;
 };
@@ -147,8 +147,8 @@ export default function TrustedVaultsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      onClose={onOpenChange}
+      onOpenChange={() => onOpenChange(true)}
+      onClose={() => onOpenChange(false)}
       backdrop="blur"
       size="3xl"
       zIndex="settings"

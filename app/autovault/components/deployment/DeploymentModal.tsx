@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@heroui/react';
 import { FaCube } from 'react-icons/fa';

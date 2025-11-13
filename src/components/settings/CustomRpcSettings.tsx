@@ -175,6 +175,10 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
     setError('');
   };
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="2xl" scrollBehavior="inside">
       <ModalHeader
@@ -228,13 +232,9 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
                   <div className="flex items-center gap-2">
                     {isCustom && <div className="h-2 w-2 rounded-full bg-green-500" />}
-                    <button
-                      type="button"
-                      onClick={() => handleNetworkSelect(chainId)}
-                      className="rounded-sm px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
-                    >
+                    <span className="rounded-sm px-3 py-1.5 text-xs font-medium text-primary">
                       {isCustom ? 'Edit' : 'Configure'}
-                    </button>
+                    </span>
                   </div>
                 </button>
               );
