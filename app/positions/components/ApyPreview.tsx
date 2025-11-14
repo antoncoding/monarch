@@ -1,7 +1,5 @@
 import React from 'react';
-import { Tooltip } from '@heroui/react';
-import { formatReadable } from '@/utils/balance';
-import { TooltipContent } from '@/components/TooltipContent';
+import { MetricPreview } from './MetricPreview';
 
 type ApyPreviewProps = {
   currentApy: number;
@@ -9,42 +7,9 @@ type ApyPreviewProps = {
 };
 
 /**
- * Standardized APY preview component.
- * Shows preview APY if available, otherwise shows current APY.
- * Displays tooltip on hover showing before/after values.
+ * APY preview component.
+ * Thin wrapper around MetricPreview for APY-specific usage.
  */
 export function ApyPreview({ currentApy, previewApy }: ApyPreviewProps) {
-  const formattedCurrent = formatReadable(currentApy * 100);
-  const formattedPreview = previewApy ? formatReadable(previewApy * 100) : null;
-  const hasPreview = Boolean(previewApy && formattedPreview);
-
-  // Show preview value if available, otherwise show current value
-  const displayValue = hasPreview ? formattedPreview : formattedCurrent;
-
-  if (!hasPreview) {
-    return (
-      <span className="inline-block min-w-[60px] whitespace-nowrap text-right text-sm text-foreground">
-        {displayValue}%
-      </span>
-    );
-  }
-
-  return (
-    <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-      content={
-        <TooltipContent
-          title="APY Change"
-          detail={`${formattedCurrent}% → ${formattedPreview}%`}
-        />
-      }
-    >
-      <span className="inline-block min-w-[60px] cursor-help whitespace-nowrap border-b border-dashed border-gray-400 text-right text-sm text-foreground">
-        {displayValue}%
-      </span>
-    </Tooltip>
-  );
+  return <MetricPreview currentValue={currentApy} previewValue={previewApy} label="APY" />;
 }
