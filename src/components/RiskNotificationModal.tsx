@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button, Checkbox } from '@heroui/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { IoWarningOutline } from 'react-icons/io5';
+import { PiButterflyDuotone } from 'react-icons/pi';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 
 export default function RiskNotificationModal() {
@@ -41,7 +41,7 @@ export default function RiskNotificationModal() {
       <ModalHeader
         title="Welcome to Monarch"
         description="Important information before you begin"
-        mainIcon={<IoWarningOutline className="h-6 w-6 text-primary" />}
+        mainIcon={<PiButterflyDuotone className="h-6 w-6 text-primary" />}
         onClose={() => setIsOpen(false)}
       />
       <ModalBody className="overflow-auto">
