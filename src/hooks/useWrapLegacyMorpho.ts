@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react';
-import { toast } from 'react-toastify';
 import { Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 
 import wrapperABI from '@/abis/morpho-wrapper';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_WRAPPER } from '@/utils/tokens';
@@ -17,6 +17,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
 
   const { address: account, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
+  const toast = useStyledToast();
 
   const { isApproved, approve } = useERC20Approval({
     token: MORPHO_LEGACY as Address,
@@ -69,7 +70,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
       toast.error('Failed to wrap MORPHO.');
       setShowProcessModal(false);
     }
-  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync]);
+  }, [account, amount, chainId, isApproved, approve, sendTransactionAsync, switchChainAsync, toast]);
 
   return {
     wrap,

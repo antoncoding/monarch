@@ -21,7 +21,7 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
       if (redirectPath && !isReconnected) {
         router.push(`/${redirectPath}/${address}`);
         toast.success('Address connected', 'Redirecting to portfolio...', {
-          toastId: 'address-connected',
+          id: 'address-connected',
         });
         // Reset the path after redirect
         setRedirectPath(undefined);

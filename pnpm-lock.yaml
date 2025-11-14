@@ -140,9 +140,6 @@ importers:
       react-table:
         specifier: ^7.8.0
         version: 7.8.0(react@18.3.1)
-      react-toastify:
-        specifier: 11.0.2
-        version: 11.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-type-animation:
         specifier: ^3.2.0
         version: 3.2.0(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -170,6 +167,9 @@ importers:
       shikiji-core:
         specifier: ^0.9.17
         version: 0.9.19
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^2.5.5
         version: 2.6.0
@@ -6762,12 +6762,6 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  react-toastify@11.0.2:
-    resolution: {integrity: sha512-GjHuGaiXMvbls3ywqv8XdWONwrcO4DXCJIY1zVLkHU73gEElKvTTXNI5Vom3s/k/M8hnkrfsqgBSX3OwmlonbA==}
-    peerDependencies:
-      react: ^18 || ^19
-      react-dom: ^18 || ^19
-
   react-transition-group@4.4.5:
     resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
     peerDependencies:
@@ -7067,6 +7061,12 @@ packages:
 
   sonic-boom@3.8.1:
     resolution: {integrity: sha512-y4Z8LCDBuum+PBP3lSV7RHrXscqksve/bi0as7mhwVnBW+/wUqKT/2Kb7um8yqcFy0duYbbPxzt89Zy2nOCaxg==}
+
+  sonner@2.0.7:
+    resolution: {integrity: sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -16947,12 +16947,6 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  react-toastify@11.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      clsx: 2.1.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-
   react-transition-group@4.4.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@babel/runtime': 7.28.3
@@ -17368,6 +17362,11 @@ snapshots:
   sonic-boom@3.8.1:
     dependencies:
       atomic-sleep: 1.0.0
+
+  sonner@2.0.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   source-map-js@1.2.1: {}
 

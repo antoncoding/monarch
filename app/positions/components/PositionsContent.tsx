@@ -6,7 +6,6 @@ import { useParams } from 'next/navigation';
 import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
-import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { AddressDisplay } from '@/components/common/AddressDisplay';
@@ -16,6 +15,7 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './onboarding/OnboardingModal';
@@ -31,6 +31,8 @@ export default function Positions() {
   const { address } = useAccount();
 
   const [mounted, setMounted] = useState(false);
+
+  const toast = useStyledToast();
 
   const isOwner = useMemo(() => {
     if (!account || !address || !mounted) return false;

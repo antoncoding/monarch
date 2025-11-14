@@ -1,20 +1,66 @@
-import React, { useCallback } from 'react';
-import { toast, ToastOptions } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { StyledToast } from '../components/common/StyledToast';
+import { useCallback } from 'react';
+import { toast, ExternalToast } from 'sonner';
+
+type ToastMessage = string | undefined;
 
 export function useStyledToast() {
-  const success = useCallback((title: string, message?: string, options?: ToastOptions) => {
-    toast.success(<StyledToast title={title} message={message} />, options);
-  }, []);
+  const success = useCallback(
+    (title: string, messageOrOptions?: ToastMessage | ExternalToast, options?: ExternalToast) => {
+      // If second param is an object, treat it as options
+      const isSecondParamOptions =
+        typeof messageOrOptions === 'object' && messageOrOptions !== null;
+      const message = isSecondParamOptions ? undefined : (messageOrOptions as string | undefined);
+      const finalOptions = isSecondParamOptions
+        ? (messageOrOptions as ExternalToast)
+        : options;
 
-  const error = useCallback((title: string, message?: string, options?: ToastOptions) => {
-    toast.error(<StyledToast title={title} message={message} />, options);
-  }, []);
+      toast.success(title, {
+        description: message,
+        className: 'font-zen',
+        descriptionClassName: 'font-inter text-xs',
+        ...finalOptions,
+      });
+    },
+    [],
+  );
 
-  const info = useCallback((title: string, message?: string, options?: ToastOptions) => {
-    toast.info(<StyledToast title={title} message={message} />, options);
-  }, []);
+  const error = useCallback(
+    (title: string, messageOrOptions?: ToastMessage | ExternalToast, options?: ExternalToast) => {
+      const isSecondParamOptions =
+        typeof messageOrOptions === 'object' && messageOrOptions !== null;
+      const message = isSecondParamOptions ? undefined : (messageOrOptions as string | undefined);
+      const finalOptions = isSecondParamOptions
+        ? (messageOrOptions as ExternalToast)
+        : options;
+
+      toast.error(title, {
+        description: message,
+        className: 'font-zen',
+        descriptionClassName: 'font-inter text-xs',
+        ...finalOptions,
+      });
+    },
+    [],
+  );
+
+  const info = useCallback(
+    (title: string, messageOrOptions?: ToastMessage | ExternalToast, options?: ExternalToast) => {
+      const isSecondParamOptions =
+        typeof messageOrOptions === 'object' && messageOrOptions !== null;
+      const message = isSecondParamOptions ? undefined : (messageOrOptions as string | undefined);
+      const finalOptions = isSecondParamOptions
+        ? (messageOrOptions as ExternalToast)
+        : options;
+
+      toast.info(title, {
+        description: message,
+        className: 'font-zen',
+        descriptionClassName: 'font-inter text-xs',
+        ...finalOptions,
+      });
+    },
+    [],
+  );
 
   return { success, error, info };
 }

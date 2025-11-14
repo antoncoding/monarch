@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'sonner';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
+import { TxHashDisplay } from '@/components/TxHashDisplay';
 import { getExplorerTxURL } from '../utils/external';
 import { SupportedNetworks } from '../utils/networks';
 
@@ -50,51 +49,66 @@ export function useTransactionWithToast({
   }, [hash, chainId]);
 
   useEffect(() => {
-    if (isConfirming) {
-      toast.loading(
-        <TransactionToast title={pendingText} description={pendingDescription} hash={hash} />,
-        {
-          toastId,
-          onClick,
-          closeButton: true,
-        },
-      );
+    if (isConfirming && hash) {
+      toast.loading(pendingText, {
+        id: toastId,
+        description: (
+          <div className="font-zen">
+            {pendingDescription && <div className="mb-2 mt-1 text-sm">{pendingDescription}</div>}
+            <TxHashDisplay hash={hash} />
+          </div>
+        ),
+        action: hash
+          ? {
+              label: 'View',
+              onClick,
+            }
+          : undefined,
+        className: 'font-zen',
+      });
     }
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
-    if (isConfirmed) {
-      toast.update(toastId, {
-        render: (
-          <TransactionToast
-            title={`${successText} 🎉`}
-            description={successDescription}
-            hash={hash}
-          />
+    if (isConfirmed && hash) {
+      toast.success(`${successText} 🎉`, {
+        id: toastId,
+        description: (
+          <div className="font-zen">
+            {successDescription && <div className="mb-2 mt-1 text-sm">{successDescription}</div>}
+            <TxHashDisplay hash={hash} />
+          </div>
         ),
-        type: 'success',
-        isLoading: false,
-        autoClose: 5000,
-        onClick,
-        closeButton: true,
+        action: {
+          label: 'View',
+          onClick,
+        },
+        duration: 5000,
+        className: 'font-zen',
       });
       if (onSuccess) {
         onSuccess();
       }
     }
     if (isError || txError) {
-      toast.update(toastId, {
-        render: (
-          <StyledToast
-            title={errorText}
-            message={txError ? txError.message : 'Transaction Failed'}
-          />
+      toast.error(errorText, {
+        id: toastId,
+        description: (
+          <div className="font-zen">
+            <div className="py-2 font-inter text-xs">
+              {txError ? txError.message : 'Transaction Failed'}
+            </div>
+            {hash && <TxHashDisplay hash={hash} />}
+          </div>
         ),
-        type: 'error',
-        isLoading: false,
-        autoClose: 5000,
-        onClick,
-        closeButton: true,
+        action: hash
+          ? {
+              label: 'View',
+              onClick,
+            }
+          : undefined,
+        duration: 5000,
+        className: 'font-zen',
       });
     }
   }, [

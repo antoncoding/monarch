@@ -1,8 +1,29 @@
 'use client';
 
 import { HeroUIProvider } from '@heroui/react';
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import { ToastContainer } from 'react-toastify';
+import { ThemeProvider as NextThemesProvider, useTheme } from 'next-themes';
+import { Toaster } from 'sonner';
+
+function ToasterProvider() {
+  const { theme } = useTheme();
+
+  return (
+    <Toaster
+      position="bottom-right"
+      theme={theme as 'light' | 'dark' | 'system'}
+      toastOptions={{
+        style: {
+          background: 'var(--toast-bg)',
+          color: 'var(--toast-color)',
+          border: 'none',
+          borderRadius: '3px',
+          fontSize: '16px',
+        },
+        className: 'bg-[#fff] dark:bg-[#202426] text-[#000] dark:text-[#fff]',
+      }}
+    />
+  );
+}
 
 export function ThemeProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -14,11 +35,7 @@ export function ThemeProviders({ children }: { children: React.ReactNode }) {
       themes={['light', 'dark']}
     >
       <HeroUIProvider>{children}</HeroUIProvider>
-      <ToastContainer
-        position="bottom-right"
-        toastClassName="bg-[#fff] dark:bg-[#202426] text-[#000] dark:text-[#fff]"
-        toastStyle={{ borderRadius: '3px', fontSize: '16px' }}
-      />
+      <ToasterProvider />
     </NextThemesProvider>
   );
 }
