@@ -103,26 +103,24 @@ export function RebalanceProcessModal({
             return (
               <div
                 key={step.key}
-                className={`flex items-start gap-4 rounded border p-4 transition-colors ${
+                className={`flex items-start gap-3 rounded border p-3 transition-colors ${
                   status === 'current'
                     ? 'border-primary bg-primary/5'
-                    : 'border-gray-200 dark:border-gray-700'
+                    : 'border-gray-100 dark:border-gray-700'
                 }`}
               >
-                <div className="mt-1">
+                <div className="mt-0.5">
                   {status === 'done' ? (
-                    <FaCheckCircle className="text-lg text-primary" />
+                    <FaCheckCircle className="h-5 w-5 text-green-500" />
                   ) : status === 'current' ? (
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <FaCircle className="h-5 w-5 animate-pulse text-primary" />
                   ) : (
-                    <FaCircle className="text-gray-400" />
+                    <FaCircle className="h-5 w-5 text-gray-300 dark:text-gray-600" />
                   )}
                 </div>
-                <div className="flex flex-col">
-                  <div className="text-base font-medium">{step.label}</div>
-                  {status === 'current' && step.detail && (
-                    <div className="text-sm text-secondary">{step.detail}</div>
-                  )}
+                <div>
+                  <div className="font-medium">{step.label}</div>
+                  <div className="text-sm text-gray-500">{step.detail}</div>
                 </div>
               </div>
             );

@@ -5,7 +5,6 @@ import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/compo
 import { formatReadable } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import { MarketPosition } from '@/utils/types';
-import { ApyPreview } from './ApyPreview';
 
 type PositionWithPendingDelta = MarketPosition & { pendingDelta: number };
 
@@ -52,13 +51,15 @@ export function FromMarketsTable({
             <table className="w-full table-fixed rounded-sm font-zen text-sm">
               <colgroup>
                 <col className="w-auto" />
-                <col className="w-[165px]" />
+                <col className="w-[120px]" />
+                <col className="w-[120px]" />
                 <col className="w-[220px]" />
               </colgroup>
               <thead className="table-header bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-2 text-left">Market</th>
-                  <th className="px-4 py-2 text-left">APY</th>
+                  <th className="px-4 py-2 text-right">APY</th>
+                  <th className="px-4 py-2 text-right">Util</th>
                   <th className="px-4 py-2 text-left">Supplied Amount</th>
                 </tr>
               </thead>
@@ -101,11 +102,35 @@ export function FromMarketsTable({
                           />
                         </div>
                       </td>
-                      <td className="px-4 py-2">
-                        <ApyPreview
-                          currentApy={position.market.state.supplyApy}
-                          previewApy={apyPreview?.supplyApy ?? null}
-                        />
+                      <td className="px-4 py-2 text-right">
+                        {apyPreview ? (
+                          <span className="whitespace-nowrap text-sm text-foreground">
+                            <span className="line-through opacity-50">
+                              {formatReadable(position.market.state.supplyApy * 100)}%
+                            </span>
+                            {' → '}
+                            <span>{formatReadable(apyPreview.supplyApy * 100)}%</span>
+                          </span>
+                        ) : (
+                          <span className="whitespace-nowrap text-sm text-foreground">
+                            {formatReadable(position.market.state.supplyApy * 100)}%
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {apyPreview ? (
+                          <span className="whitespace-nowrap text-sm text-foreground">
+                            <span className="line-through opacity-50">
+                              {formatReadable(position.market.state.utilization * 100)}%
+                            </span>
+                            {' → '}
+                            <span>{formatReadable(apyPreview.utilization * 100)}%</span>
+                          </span>
+                        ) : (
+                          <span className="whitespace-nowrap text-sm text-foreground">
+                            {formatReadable(position.market.state.utilization * 100)}%
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-2">
                         <div className="flex items-center gap-2 justify-end">
