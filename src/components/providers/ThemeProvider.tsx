@@ -7,19 +7,21 @@ import { Toaster } from 'sonner';
 function ToasterProvider() {
   const { theme } = useTheme();
 
+  const isDark = theme === 'dark';
+
   return (
     <Toaster
       position="bottom-right"
-      theme={theme as 'light' | 'dark' | 'system'}
+      theme={(theme as 'light' | 'dark' | 'system' | undefined) ?? 'system'}
       toastOptions={{
         style: {
-          background: 'var(--toast-bg)',
-          color: 'var(--toast-color)',
+          background: isDark ? '#202426' : '#fff',
+          color: isDark ? '#fff' : '#000',
           border: 'none',
           borderRadius: '3px',
           fontSize: '16px',
         },
-        className: 'bg-[#fff] dark:bg-[#202426] text-[#000] dark:text-[#fff]',
+        className: 'font-zen',
       }}
     />
   );

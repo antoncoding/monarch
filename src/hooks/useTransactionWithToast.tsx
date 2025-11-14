@@ -70,24 +70,26 @@ export function useTransactionWithToast({
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
-    if (isConfirmed && hash) {
-      toast.success(`${successText} 🎉`, {
-        id: toastId,
-        description: (
-          <div className="font-zen">
-            {successDescription && <div className="mb-2 mt-1 text-sm">{successDescription}</div>}
-            <TxHashDisplay hash={hash} />
-          </div>
-        ),
-        action: {
-          label: 'View',
-          onClick,
-        },
-        duration: 5000,
-        className: 'font-zen',
-      });
-      if (onSuccess) {
-        onSuccess();
+    if (isConfirmed) {
+      if (hash) {
+        toast.success(`${successText} 🎉`, {
+          id: toastId,
+          description: (
+            <div className="font-zen">
+              {successDescription && <div className="mb-2 mt-1 text-sm">{successDescription}</div>}
+              <TxHashDisplay hash={hash} />
+            </div>
+          ),
+          action: {
+            label: 'View',
+            onClick,
+          },
+          duration: 5000,
+          className: 'font-zen',
+        });
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     }
     if (isError || txError) {
