@@ -3,20 +3,20 @@ import { Tooltip } from '@heroui/react';
 import { formatReadable } from '@/utils/balance';
 import { TooltipContent } from '@/components/TooltipContent';
 
-type ApyPreviewProps = {
-  currentApy: number;
-  previewApy?: number | null;
+type UtilizationPreviewProps = {
+  currentUtilization: number;
+  previewUtilization?: number | null;
 };
 
 /**
- * Standardized APY preview component.
- * Shows preview APY if available, otherwise shows current APY.
+ * Standardized Utilization preview component.
+ * Shows preview utilization if available, otherwise shows current utilization.
  * Displays tooltip on hover showing before/after values.
  */
-export function ApyPreview({ currentApy, previewApy }: ApyPreviewProps) {
-  const formattedCurrent = formatReadable(currentApy * 100);
-  const formattedPreview = previewApy ? formatReadable(previewApy * 100) : null;
-  const hasPreview = Boolean(previewApy && formattedPreview);
+export function UtilizationPreview({ currentUtilization, previewUtilization }: UtilizationPreviewProps) {
+  const formattedCurrent = formatReadable(currentUtilization * 100);
+  const formattedPreview = previewUtilization ? formatReadable(previewUtilization * 100) : null;
+  const hasPreview = Boolean(previewUtilization && formattedPreview);
 
   // Show preview value if available, otherwise show current value
   const displayValue = hasPreview ? formattedPreview : formattedCurrent;
@@ -37,7 +37,7 @@ export function ApyPreview({ currentApy, previewApy }: ApyPreviewProps) {
       }}
       content={
         <TooltipContent
-          title="APY Change"
+          title="Utilization Change"
           detail={`${formattedCurrent}% → ${formattedPreview}%`}
         />
       }
