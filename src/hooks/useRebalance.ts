@@ -8,7 +8,7 @@ import { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
-import { useMorphoBundlerAuthorization } from './useMorphoBundlerAuthorization';
+import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
 import { useStyledToast } from './useStyledToast';
 import { useUserMarketsCache } from './useUserMarketsCache';
@@ -43,11 +43,11 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     isBundlerAuthorized,
     isAuthorizingBundler,
     authorizeBundlerWithSignature,
-    authorizeBundlerWithTransaction,
+    authorizeWithTransaction,
     refetchIsBundlerAuthorized,
-  } = useMorphoBundlerAuthorization({
+  } = useMorphoAuthorization({
     chainId: groupedPosition.chainId,
-    bundlerAddress,
+    authorized: bundlerAddress,
   });
 
   // Hook for Permit2 handling
@@ -266,11 +266,11 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       } else {
         // --- Standard ERC20 Flow ---
         setCurrentStep('authorize_bundler_tx');
-        const bundlerTxAuthorized = await authorizeBundlerWithTransaction(); // Authorize Bundler via TX if needed
+        const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
         if (!bundlerTxAuthorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
         }
-        // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeBundlerWithTransaction
+        // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
 
         setCurrentStep('approve_token');
         if (!isTokenApproved) {
@@ -360,7 +360,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     authorizePermit2,
     authorizeBundlerWithSignature,
     signForBundlers,
-    authorizeBundlerWithTransaction,
+    authorizeWithTransaction,
     isTokenApproved,
     approveToken,
     generateRebalanceTxData,

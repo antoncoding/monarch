@@ -7,7 +7,7 @@ import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
-import { useMorphoBundlerAuthorization } from './useMorphoBundlerAuthorization';
+import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
@@ -50,11 +50,11 @@ export function useBorrowTransaction({
     isBundlerAuthorized,
     isAuthorizingBundler,
     authorizeBundlerWithSignature,
-    authorizeBundlerWithTransaction,
+    authorizeWithTransaction,
     refetchIsBundlerAuthorized,
-  } = useMorphoBundlerAuthorization({
+  } = useMorphoAuthorization({
     chainId: market.morphoBlue.chain.id,
-    bundlerAddress,
+    authorized: bundlerAddress,
   });
 
   // Get approval for collateral token
@@ -147,11 +147,11 @@ export function useBorrowTransaction({
       } else {
         // --- Standard ERC20 Flow ---
         setCurrentStep('authorize_bundler_tx');
-        const bundlerTxAuthorized = await authorizeBundlerWithTransaction(); // Authorize Bundler via TX if needed
+        const bundlerTxAuthorized = await authorizeWithTransaction(); // Authorize Bundler via TX if needed
         if (!bundlerTxAuthorized) {
           throw new Error('Failed to authorize Bundler via transaction.'); // Stop if auth tx fails/is rejected
         }
-        // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeBundlerWithTransaction
+        // Wait for tx confirmation implicitly handled by useTransactionWithToast within authorizeWithTransaction
 
         if (collateralAmount > 0n) {
           setCurrentStep('approve_token');
@@ -270,7 +270,7 @@ export function useBorrowTransaction({
     authorizePermit2,
     authorizeBundlerWithSignature,
     signForBundlers,
-    authorizeBundlerWithTransaction,
+    authorizeWithTransaction,
     isApproved,
     approve,
     batchAddUserMarkets,

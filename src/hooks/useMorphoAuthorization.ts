@@ -7,15 +7,15 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getMorphoAddress } from '@/utils/morpho';
 import { useStyledToast } from './useStyledToast';
 
-type UseMorphoBundlerAuthorizationProps = {
+type UseMorphoAuthorizationProps = {
   chainId: number;
-  bundlerAddress: Address;
+  authorized: Address;
 };
 
-export const useMorphoBundlerAuthorization = ({
+export const useMorphoAuthorization = ({
   chainId,
-  bundlerAddress,
-}: UseMorphoBundlerAuthorizationProps) => {
+  authorized,
+}: UseMorphoAuthorizationProps) => {
   const { address: account } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const toast = useStyledToast();
@@ -25,10 +25,10 @@ export const useMorphoBundlerAuthorization = ({
     address: getMorphoAddress(chainId),
     abi: morphoAbi,
     functionName: 'isAuthorized',
-    args: [account as Address, bundlerAddress],
+    args: [account as Address, authorized],
     chainId: chainId,
     query: {
-      enabled: !!account && !!bundlerAddress,
+      enabled: !!account && !!authorized,
     },
   });
 
@@ -87,7 +87,7 @@ export const useMorphoBundlerAuthorization = ({
 
       const message = {
         authorizer: account,
-        authorized: bundlerAddress,
+        authorized: authorized,
         isAuthorized: true,
         nonce: nonce,
         deadline: BigInt(deadline),
@@ -108,7 +108,7 @@ export const useMorphoBundlerAuthorization = ({
         args: [
           {
             authorizer: account as Address,
-            authorized: bundlerAddress,
+            authorized: authorized,
             isAuthorized: true,
             nonce: BigInt(nonce),
             deadline: BigInt(deadline),
@@ -140,17 +140,28 @@ export const useMorphoBundlerAuthorization = ({
     isBundlerAuthorized,
     nonce,
     chainId,
-    bundlerAddress,
+    authorized,
     signTypedDataAsync,
     refetchIsBundlerAuthorized,
     refetchNonce,
     toast,
   ]);
 
-  const authorizeBundlerWithTransaction = useCallback(async () => {
-    if (!account || isBundlerAuthorized === true) {
-      console.log('Skipping authorizeBundlerWithTransaction:', { account, isBundlerAuthorized });
-      return true; // Already authorized or no account
+  const authorizeWithTransaction = useCallback(async (shouldAuthorize?: boolean) => {
+    const authorize = shouldAuthorize ?? true;
+    if (!account) {
+      console.log('Skipping authorizeWithTransaction: no account');
+      return true; // No account
+    }
+
+    // Skip if trying to authorize when already authorized, or revoke when not authorized
+    if (authorize && isBundlerAuthorized === true) {
+      console.log('Already authorized, skipping');
+      return true;
+    }
+    if (!authorize && isBundlerAuthorized === false) {
+      console.log('Already not authorized, skipping');
+      return true;
     }
 
     setIsAuthorizing(true);
@@ -162,7 +173,7 @@ export const useMorphoBundlerAuthorization = ({
         data: encodeFunctionData({
           abi: morphoAbi,
           functionName: 'setAuthorization',
-          args: [bundlerAddress, true],
+          args: [authorized, authorize],
         }),
         chainId: chainId,
       });
@@ -178,13 +189,13 @@ export const useMorphoBundlerAuthorization = ({
     } finally {
       setIsAuthorizing(false);
     }
-  }, [account, isBundlerAuthorized, bundlerAddress, sendBundlerAuthorizationTx, chainId, toast]);
+  }, [account, isBundlerAuthorized, authorized, sendBundlerAuthorizationTx, chainId, toast]);
 
   return {
     isBundlerAuthorized,
     isAuthorizingBundler: isAuthorizing || isConfirmingBundlerTx,
     authorizeBundlerWithSignature,
-    authorizeBundlerWithTransaction,
+    authorizeWithTransaction,
     refetchIsBundlerAuthorized,
   };
 };
