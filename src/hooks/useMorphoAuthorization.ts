@@ -147,10 +147,20 @@ export const useMorphoAuthorization = ({
     toast,
   ]);
 
-  const authorizeWithTransaction = useCallback(async () => {
-    if (!account || isBundlerAuthorized === true) {
-      console.log('Skipping authorizeWithTransaction:', { account, isBundlerAuthorized });
-      return true; // Already authorized or no account
+  const authorizeWithTransaction = useCallback(async (shouldAuthorize: boolean = true) => {
+    if (!account) {
+      console.log('Skipping authorizeWithTransaction: no account');
+      return true; // No account
+    }
+
+    // Skip if trying to authorize when already authorized, or revoke when not authorized
+    if (shouldAuthorize && isBundlerAuthorized === true) {
+      console.log('Already authorized, skipping');
+      return true;
+    }
+    if (!shouldAuthorize && isBundlerAuthorized === false) {
+      console.log('Already not authorized, skipping');
+      return true;
     }
 
     setIsAuthorizing(true);
@@ -162,7 +172,7 @@ export const useMorphoAuthorization = ({
         data: encodeFunctionData({
           abi: morphoAbi,
           functionName: 'setAuthorization',
-          args: [authorized, true],
+          args: [authorized, shouldAuthorize],
         }),
         chainId: chainId,
       });
