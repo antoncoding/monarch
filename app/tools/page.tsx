@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { isAddress } from 'viem';
-import { useChainId } from 'wagmi';
+import { useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import { useMorphoAuthorization } from '@/hooks/useMorphoAuthorization';
@@ -12,15 +12,18 @@ import NetworkFilter from 'app/markets/components/NetworkFilter';
 
 export default function ToolsPage() {
   const currentChainId = useChainId();
+  const { switchChain } = useSwitchChain();
   const [selectedChainId, setSelectedChainId] = React.useState<number>(currentChainId);
   const [addressInput, setAddressInput] = React.useState('');
   const [isValidAddress, setIsValidAddress] = React.useState<boolean | null>(null);
   const toast = useStyledToast();
 
-  // Update selected chain when wallet chain changes
+  const needsSwitchChain = currentChainId !== selectedChainId;
+
+  // Initialize selected chain to current chain on first mount only
   React.useEffect(() => {
     setSelectedChainId(currentChainId);
-  }, [currentChainId]);
+  }, []);
 
   const {
     isBundlerAuthorized: isAuthorized,
@@ -29,7 +32,7 @@ export default function ToolsPage() {
     refetchIsBundlerAuthorized: refetchIsAuthorized,
   } = useMorphoAuthorization({
     chainId: selectedChainId,
-    authorized: addressInput as `0x${string}`,
+    authorized: (isValidAddress ? addressInput : '0x0000000000000000000000000000000000000000') as `0x${string}`,
   });
 
   // Validate address on input change
@@ -56,6 +59,11 @@ export default function ToolsPage() {
       return;
     }
 
+    if (needsSwitchChain) {
+      switchChain({ chainId: selectedChainId });
+      return;
+    }
+
     void authorizeWithTransaction(true).then((success) => {
       if (success) {
         void refetchIsAuthorized();
@@ -66,6 +74,11 @@ export default function ToolsPage() {
   const handleRevoke = () => {
     if (!isValidAddress || !addressInput) {
       toast.error('Invalid Address', 'Please enter a valid Ethereum address');
+      return;
+    }
+
+    if (needsSwitchChain) {
+      switchChain({ chainId: selectedChainId });
       return;
     }
 
@@ -89,8 +102,7 @@ export default function ToolsPage() {
     return baseClass;
   };
 
-  const needsSwitchChain = currentChainId !== selectedChainId;
-
+  
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -148,7 +160,7 @@ export default function ToolsPage() {
                     <Button
                       variant="secondary"
                       onPress={handleRevoke}
-                      isDisabled={!isValidAddress || !addressInput || isAuthorizing || needsSwitchChain}
+                      isDisabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
                       {isAuthorizing
@@ -161,9 +173,7 @@ export default function ToolsPage() {
                     <Button
                       variant="cta"
                       onPress={handleAuthorize}
-                      isDisabled={
-                        !isValidAddress || !addressInput || isAuthorizing || needsSwitchChain
-                      }
+                      isDisabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
                       {isAuthorizing
@@ -181,15 +191,10 @@ export default function ToolsPage() {
                     <p className="text-xs text-red-500">Invalid address</p>
                   )}
                   {addressInput && isValidAddress === true && isAuthorized === true && (
-                    <p className="text-xs text-green-500">✓ Already authorized</p>
+                    <p className="text-xs text-green-500">✓ Authorized on {getNetworkName(selectedChainId)}</p>
                   )}
-                  {addressInput && isValidAddress === true && isAuthorized === false && (
-                    <p className="text-xs text-secondary">Not yet authorized</p>
-                  )}
-                  {needsSwitchChain && (
-                    <p className="text-xs text-secondary">
-                      Switch to {getNetworkName(selectedChainId)} to authorize
-                    </p>
+                  {addressInput && isValidAddress === true && isAuthorized === false && !needsSwitchChain && (
+                    <p className="text-xs text-secondary">Not authorized</p>
                   )}
                 </div>
               </div>
