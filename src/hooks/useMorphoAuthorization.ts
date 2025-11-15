@@ -7,7 +7,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getMorphoAddress } from '@/utils/morpho';
 import { useStyledToast } from './useStyledToast';
 
-type useMorphoAuthorizationProps = {
+type UseMorphoAuthorizationProps = {
   chainId: number;
   authorized: Address;
 };
@@ -15,7 +15,7 @@ type useMorphoAuthorizationProps = {
 export const useMorphoAuthorization = ({
   chainId,
   authorized,
-}: useMorphoAuthorizationProps) => {
+}: UseMorphoAuthorizationProps) => {
   const { address: account } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const toast = useStyledToast();
@@ -147,18 +147,19 @@ export const useMorphoAuthorization = ({
     toast,
   ]);
 
-  const authorizeWithTransaction = useCallback(async (shouldAuthorize: boolean = true) => {
+  const authorizeWithTransaction = useCallback(async (shouldAuthorize?: boolean) => {
+    const authorize = shouldAuthorize ?? true;
     if (!account) {
       console.log('Skipping authorizeWithTransaction: no account');
       return true; // No account
     }
 
     // Skip if trying to authorize when already authorized, or revoke when not authorized
-    if (shouldAuthorize && isBundlerAuthorized === true) {
+    if (authorize && isBundlerAuthorized === true) {
       console.log('Already authorized, skipping');
       return true;
     }
-    if (!shouldAuthorize && isBundlerAuthorized === false) {
+    if (!authorize && isBundlerAuthorized === false) {
       console.log('Already not authorized, skipping');
       return true;
     }
@@ -172,7 +173,7 @@ export const useMorphoAuthorization = ({
         data: encodeFunctionData({
           abi: morphoAbi,
           functionName: 'setAuthorization',
-          args: [authorized, shouldAuthorize],
+          args: [authorized, authorize],
         }),
         chainId: chainId,
       });

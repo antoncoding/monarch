@@ -50,28 +50,30 @@ export default function ToolsPage() {
     }
   }, [isValidAddress, addressInput, selectedChainId, refetchIsAuthorized]);
 
-  const handleAuthorize = async () => {
+  const handleAuthorize = () => {
     if (!isValidAddress || !addressInput) {
       toast.error('Invalid Address', 'Please enter a valid Ethereum address');
       return;
     }
 
-    const success = await authorizeWithTransaction(true);
-    if (success) {
-      await refetchIsAuthorized();
-    }
+    void authorizeWithTransaction(true).then((success) => {
+      if (success) {
+        void refetchIsAuthorized();
+      }
+    });
   };
 
-  const handleRevoke = async () => {
+  const handleRevoke = () => {
     if (!isValidAddress || !addressInput) {
       toast.error('Invalid Address', 'Please enter a valid Ethereum address');
       return;
     }
 
-    const success = await authorizeWithTransaction(false);
-    if (success) {
-      await refetchIsAuthorized();
-    }
+    void authorizeWithTransaction(false).then((success) => {
+      if (success) {
+        void refetchIsAuthorized();
+      }
+    });
   };
 
   const getInputClassName = () => {
