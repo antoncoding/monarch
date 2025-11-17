@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button } from '@/components/common/Button';
-import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
-import type { MarketWithSelection } from '@/components/common/MarketsTableWithSameLoanAsset';
+import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTable';
+import type { MarketWithSelection } from '@/components/common/MarketsTable';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { useOnboarding } from './OnboardingContext';
 

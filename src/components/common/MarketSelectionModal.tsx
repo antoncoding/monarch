@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { Address } from 'viem';
 import { Button } from '@/components/common/Button';
-import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
+import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTable';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
