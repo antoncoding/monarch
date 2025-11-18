@@ -2,12 +2,10 @@ import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
-import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionSnapshot, type PositionSnapshot } from '@/utils/positions';
+import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import { Market } from '@/utils/types';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
@@ -111,35 +109,6 @@ const fetchSourceMarketKeys = async (
   return sourcePositionMarkets;
 };
 
-// Helper function to fetch market data from the appropriate source
-const fetchMarketData = async (marketKey: string, chainId: number): Promise<Market | null> => {
-  let market: Market | null = null;
-
-  // Try Morpho API first if supported
-  if (supportsMorphoApi(chainId)) {
-    try {
-      console.log(`Attempting to fetch market data via Morpho API for ${marketKey}`);
-      market = await fetchMorphoMarket(marketKey, chainId);
-    } catch (morphoError) {
-      console.error(`Failed to fetch market data via Morpho API:`, morphoError);
-      // Continue to Subgraph fallback
-    }
-  }
-
-  // If Morpho API failed or not supported, try Subgraph
-  if (!market) {
-    try {
-      console.log(`Attempting to fetch market data via Subgraph for ${marketKey}`);
-      market = await fetchSubgraphMarket(marketKey, chainId);
-    } catch (subgraphError) {
-      console.error(`Failed to fetch market data via Subgraph:`, subgraphError);
-      market = null;
-    }
-  }
-
-  return market;
-};
-
 // --- Main Hook --- //
 
 const useUserPositions = (
@@ -205,60 +174,69 @@ const useUserPositions = (
 
       const { finalMarketKeys } = initialData;
 
-      // Fetch market data and snapshots in parallel
-      const marketDataPromises = finalMarketKeys.map(async (marketInfo) => {
-        const market = await fetchMarketData(marketInfo.marketUniqueKey, marketInfo.chainId);
-        if (!market) {
-          console.warn(
-            `[Positions] Market data not found for ${marketInfo.marketUniqueKey} on chain ${marketInfo.chainId}. Skipping snapshot fetch.`,
-          );
-          return null;
-        }
-
-        const publicClient = getClient(
-          marketInfo.chainId as SupportedNetworks,
-          customRpcUrls[marketInfo.chainId as SupportedNetworks] ?? undefined,
-        );
-        if (!publicClient) {
-          console.error(`[Positions] No public client available for chain ${marketInfo.chainId}`);
-          return null;
-        }
-
-        const snapshot = await queryClient.fetchQuery({
-          queryKey: positionKeys.snapshot(marketInfo.marketUniqueKey, user, marketInfo.chainId),
-          queryFn: async () =>
-            fetchPositionSnapshot(
-              marketInfo.marketUniqueKey,
-              user as Address,
-              marketInfo.chainId,
-              0,
-              publicClient,
-            ),
-          staleTime: 15000, // 15 seconds - keep position data fresh
-          gcTime: 5 * 60 * 1000,
-        });
-
-        return snapshot ? { market, state: snapshot } : null;
+      // Group markets by chainId for batched fetching
+      const marketsByChain = new Map<number, PositionMarket[]>();
+      finalMarketKeys.forEach((marketInfo) => {
+        const existing = marketsByChain.get(marketInfo.chainId) ?? [];
+        existing.push(marketInfo);
+        marketsByChain.set(marketInfo.chainId, existing);
       });
 
-      const snapshots = await Promise.all(marketDataPromises);
+      // Build market data map from allMarkets context (no need to fetch individually)
+      const marketDataMap = new Map<string, Market>();
+      allMarkets.forEach((market) => {
+        marketDataMap.set(market.uniqueKey.toLowerCase(), market);
+      });
 
-      // Process valid snapshots
-      const validPositions = snapshots
-        .filter(
-          (item): item is NonNullable<typeof item> & { state: NonNullable<PositionSnapshot> } =>
-            item !== null && item.state !== null,
-        )
-        .filter((position) => {
-          const hasSupply = position.state.supplyShares.toString() !== '0';
-          const hasBorrow = position.state.borrowShares.toString() !== '0';
-          const hasCollateral = position.state.collateral.toString() !== '0';
-          return showEmpty || hasSupply || hasBorrow || hasCollateral;
-        })
-        .map((position) => ({
-          state: position.state,
-          market: position.market,
-        }));
+      // Fetch snapshots for each chain using batched multicall
+      const allSnapshots = new Map<string, PositionSnapshot>();
+      await Promise.all(
+        Array.from(marketsByChain.entries()).map(async ([chainId, markets]) => {
+          const publicClient = getClient(
+            chainId as SupportedNetworks,
+            customRpcUrls[chainId as SupportedNetworks] ?? undefined,
+          );
+          if (!publicClient) {
+            console.error(`[Positions] No public client available for chain ${chainId}`);
+            return;
+          }
+
+          const marketIds = markets.map((m) => m.marketUniqueKey);
+          const snapshots = await fetchPositionsSnapshots(
+            marketIds,
+            user as Address,
+            chainId,
+            0,
+            publicClient,
+          );
+
+          // Merge into allSnapshots
+          snapshots.forEach((snapshot, marketId) => {
+            allSnapshots.set(marketId.toLowerCase(), snapshot);
+          });
+        }),
+      );
+
+      // Combine market data with snapshots
+      const validPositions: EnhancedMarketPosition[] = [];
+      finalMarketKeys.forEach((marketInfo) => {
+        const marketKey = marketInfo.marketUniqueKey.toLowerCase();
+        const market = marketDataMap.get(marketKey);
+        const snapshot = allSnapshots.get(marketKey);
+
+        if (!market || !snapshot) return;
+
+        const hasSupply = snapshot.supplyShares.toString() !== '0';
+        const hasBorrow = snapshot.borrowShares.toString() !== '0';
+        const hasCollateral = snapshot.collateral.toString() !== '0';
+
+        if (showEmpty || hasSupply || hasBorrow || hasCollateral) {
+          validPositions.push({
+            state: snapshot,
+            market: market,
+          });
+        }
+      });
 
       // Update market cache
       const marketsToCache = validPositions

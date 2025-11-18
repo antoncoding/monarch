@@ -4,7 +4,7 @@ import { Address } from 'viem';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { SupportedNetworks } from '@/utils/networks';
 import {
-  calculateEarningsFromPeriod as calculateEarnings,
+  calculateEarningsFromPeriod,
   initializePositionsWithEmptyEarnings,
 } from '@/utils/positions';
 import { estimatedBlockNumber } from '@/utils/rpc';
@@ -163,7 +163,7 @@ const useUserPositionsSummaryData = (
 
         const customRpcUrl = customRpcUrls[chainId] ?? undefined;
 
-        const earned = await calculateEarnings(
+        const earned = await calculateEarningsFromPeriod(
           position,
           history.items,
           user as Address,

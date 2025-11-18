@@ -70,6 +70,146 @@ function convertSharesToAssets(shares: bigint, totalAssets: bigint, totalShares:
 }
 
 /**
+ * Fetches position snapshots for multiple markets using multicall for efficiency.
+ * All markets must be on the same chain, for the same user, at the same block.
+ *
+ * @param marketIds - Array of market unique IDs
+ * @param userAddress - The user's address
+ * @param chainId - The chain ID of the network
+ * @param blockNumber - The block number to fetch positions at (0 for latest)
+ * @param client - The viem PublicClient to use for the request
+ * @returns Map of marketId to PositionSnapshot
+ */
+export async function fetchPositionsSnapshots(
+  marketIds: string[],
+  userAddress: Address,
+  chainId: number,
+  blockNumber: number,
+  client: PublicClient,
+): Promise<Map<string, PositionSnapshot>> {
+  const result = new Map<string, PositionSnapshot>();
+
+  if (marketIds.length === 0) {
+    return result;
+  }
+
+  try {
+    const isNow = blockNumber === 0;
+    const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
+
+    console.log(`Fetching ${marketIds.length} position snapshots at ${isNow ? 'current block' : `block ${blockNumber}`}`);
+
+    // Step 1: Multicall to get all position data
+    const positionContracts = marketIds.map((marketId) => ({
+      address: morphoAddress as `0x${string}`,
+      abi: morphoABI,
+      functionName: 'position' as const,
+      args: [marketId as `0x${string}`, userAddress],
+    }));
+
+    const positionResults = await client.multicall({
+      contracts: positionContracts,
+      allowFailure: true,
+      blockNumber: isNow ? undefined : BigInt(blockNumber),
+    });
+
+    // Process position results and identify which markets need market data
+    const positions = new Map<string, Position>();
+    const marketsNeedingData: string[] = [];
+
+    positionResults.forEach((posResult, index) => {
+      const marketId = marketIds[index];
+      if (posResult.status === 'success' && posResult.result) {
+        const position = arrayToPosition(posResult.result as readonly bigint[]);
+        positions.set(marketId, position);
+
+        // Check if this position has any shares/collateral
+        if (
+          position.supplyShares !== 0n ||
+          position.borrowShares !== 0n ||
+          position.collateral !== 0n
+        ) {
+          marketsNeedingData.push(marketId);
+        } else {
+          // No shares, set zero snapshot immediately
+          result.set(marketId, {
+            supplyShares: '0',
+            supplyAssets: '0',
+            borrowShares: '0',
+            borrowAssets: '0',
+            collateral: '0',
+          });
+        }
+      } else {
+        console.warn(`Failed to fetch position for market ${marketId}`);
+      }
+    });
+
+    // Step 2: Multicall to get market data for positions with shares
+    if (marketsNeedingData.length > 0) {
+      const marketContracts = marketsNeedingData.map((marketId) => ({
+        address: morphoAddress as `0x${string}`,
+        abi: morphoABI,
+        functionName: 'market' as const,
+        args: [marketId as `0x${string}`],
+      }));
+
+      const marketResults = await client.multicall({
+        contracts: marketContracts,
+        allowFailure: true,
+        blockNumber: isNow ? undefined : BigInt(blockNumber),
+      });
+
+      // Process market results and create final snapshots
+      marketResults.forEach((marketResult, index) => {
+        const marketId = marketsNeedingData[index];
+        const position = positions.get(marketId);
+
+        if (!position) return;
+
+        if (marketResult.status === 'success' && marketResult.result) {
+          const market = arrayToMarket(marketResult.result as readonly bigint[]);
+
+          const supplyAssets = convertSharesToAssets(
+            position.supplyShares,
+            market.totalSupplyAssets,
+            market.totalSupplyShares,
+          );
+
+          const borrowAssets = convertSharesToAssets(
+            position.borrowShares,
+            market.totalBorrowAssets,
+            market.totalBorrowShares,
+          );
+
+          result.set(marketId, {
+            supplyShares: position.supplyShares.toString(),
+            supplyAssets: supplyAssets.toString(),
+            borrowShares: position.borrowShares.toString(),
+            borrowAssets: borrowAssets.toString(),
+            collateral: position.collateral.toString(),
+          });
+        } else {
+          console.warn(`Failed to fetch market data for ${marketId}`);
+        }
+      });
+    }
+
+    console.log(`Completed fetching ${result.size} position snapshots`);
+    return result;
+  } catch (error) {
+    console.error(`Error fetching position snapshots:`, {
+      marketIds,
+      userAddress,
+      blockNumber,
+      chainId,
+      error,
+    });
+    return result;
+  }
+}
+
+/**
  * Fetches a position snapshot for a specific market, user, and block number using a PublicClient
  *
  * @param marketId - The unique ID of the market
@@ -86,84 +226,8 @@ export async function fetchPositionSnapshot(
   blockNumber: number,
   client: PublicClient,
 ): Promise<PositionSnapshot | null> {
-  try {
-    const isNow = blockNumber === 0;
-
-    if (!isNow) {
-      console.log(`Get user position ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
-    } else {
-      console.log(`Get user position ${marketId.slice(0, 6)} at current block`);
-    }
-
-    // First get the position data
-    const positionArray = (await client.readContract({
-      address: getMorphoAddress(chainId as SupportedNetworks),
-      abi: morphoABI,
-      functionName: 'position',
-      args: [marketId as `0x${string}`, userAddress as Address],
-      blockNumber: isNow ? undefined : BigInt(blockNumber),
-    })) as readonly bigint[];
-
-    // Convert array to position object
-    const position = arrayToPosition(positionArray);
-
-    // If position has no shares, return zeros early
-    if (
-      position.supplyShares === 0n &&
-      position.borrowShares === 0n &&
-      position.collateral === 0n
-    ) {
-      return {
-        supplyShares: '0',
-        supplyAssets: '0',
-        borrowShares: '0',
-        borrowAssets: '0',
-        collateral: '0',
-      };
-    }
-
-    // Only fetch market data if position has shares
-    const marketArray = (await client.readContract({
-      address: getMorphoAddress(chainId as SupportedNetworks),
-      abi: morphoABI,
-      functionName: 'market',
-      args: [marketId as `0x${string}`],
-      blockNumber: isNow ? undefined : BigInt(blockNumber),
-    })) as readonly bigint[];
-
-    // Convert array to market object
-    const market = arrayToMarket(marketArray);
-
-    // Convert shares to assets
-    const supplyAssets = convertSharesToAssets(
-      position.supplyShares,
-      market.totalSupplyAssets,
-      market.totalSupplyShares,
-    );
-
-    const borrowAssets = convertSharesToAssets(
-      position.borrowShares,
-      market.totalBorrowAssets,
-      market.totalBorrowShares,
-    );
-
-    return {
-      supplyShares: position.supplyShares.toString(),
-      supplyAssets: supplyAssets.toString(),
-      borrowShares: position.borrowShares.toString(),
-      borrowAssets: borrowAssets.toString(),
-      collateral: position.collateral.toString(),
-    };
-  } catch (error) {
-    console.error(`Error reading position:`, {
-      marketId,
-      userAddress,
-      blockNumber,
-      chainId,
-      error,
-    });
-    return null;
-  }
+  const snapshots = await fetchPositionsSnapshots([marketId], userAddress, chainId, blockNumber, client);
+  return snapshots.get(marketId) ?? null;
 }
 
 /**
