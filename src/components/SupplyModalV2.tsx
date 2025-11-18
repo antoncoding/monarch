@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { LuArrowRightLeft } from "react-icons/lu";
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
+import { useFreshMarketState } from '@/hooks/useFreshMarketState';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { SupplyModalContent } from './SupplyModalContent';
@@ -27,6 +28,10 @@ export function SupplyModalV2({
   const [supplyPreviewAmount, setSupplyPreviewAmount] = useState<bigint | undefined>();
   const [withdrawPreviewAmount, setWithdrawPreviewAmount] = useState<bigint | undefined>();
 
+  // Fetch fresh market state from RPC to avoid stale liquidity/supply data
+  const { market: freshMarket } = useFreshMarketState(market);
+  const activeMarket = freshMarket ?? market;
+
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
 
   return (
@@ -38,15 +43,15 @@ export function SupplyModalV2({
       className="w-full max-w-lg"
     >
       <ModalHeader
-        title={`${mode === 'supply' ? 'Supply' : 'Withdraw'} ${market.loanAsset.symbol}`}
+        title={`${mode === 'supply' ? 'Supply' : 'Withdraw'} ${activeMarket.loanAsset.symbol}`}
         description={
           mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'
         }
         mainIcon={
           <TokenIcon
-            address={market.loanAsset.address}
-            chainId={market.morphoBlue.chain.id}
-            symbol={market.loanAsset.symbol}
+            address={activeMarket.loanAsset.address}
+            chainId={activeMarket.morphoBlue.chain.id}
+            symbol={activeMarket.loanAsset.symbol}
             width={24}
             height={24}
           />
@@ -67,7 +72,7 @@ export function SupplyModalV2({
       />
       <ModalBody className="gap-6">
         <MarketDetailsBlock
-          market={market}
+          market={activeMarket}
           showDetailsLink={!isMarketPage}
           defaultCollapsed
           mode="supply"
@@ -83,7 +88,7 @@ export function SupplyModalV2({
 
         {mode === 'supply' ? (
           <SupplyModalContent
-            market={market}
+            market={activeMarket}
             onClose={() => onOpenChange(false)}
             refetch={refetch ?? (() => {})}
             onAmountChange={setSupplyPreviewAmount}
@@ -91,7 +96,7 @@ export function SupplyModalV2({
         ) : (
           <WithdrawModalContent
             position={position}
-            market={market}
+            market={activeMarket}
             onClose={() => onOpenChange(false)}
             refetch={refetch ?? (() => {})}
             onAmountChange={setWithdrawPreviewAmount}

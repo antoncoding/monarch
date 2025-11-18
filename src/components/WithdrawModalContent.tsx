@@ -43,8 +43,8 @@ export function WithdrawModalContent({
   );
   const { address: account, isConnected, chainId } = useAccount();
 
-  // Use market from either position or direct prop
-  const activeMarket = position?.market ?? market;
+  // Prefer the market prop (which has fresh state) over position.market
+  const activeMarket = market ?? position?.market;
 
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: activeMarket?.morphoBlue.chain.id ?? 0,
