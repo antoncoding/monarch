@@ -13,6 +13,7 @@ import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -553,6 +554,22 @@ export function MarketsTableWithSameLoanAsset({
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
   const { findToken } = useTokens();
 
+  // Extract just the Market objects for fresh fetching
+  const marketsList = useMemo(() => markets.map((m) => m.market), [markets]);
+
+  // Fetch fresh market state from RPC to get current liquidity/supply data
+  const { markets: freshMarketsList } = useFreshMarketsState(marketsList);
+
+  // Merge fresh market data back into MarketWithSelection
+  const marketsWithFreshState = useMemo(() => {
+    if (!freshMarketsList) return markets;
+
+    return markets.map((m) => {
+      const freshMarket = freshMarketsList.find((fm) => fm.uniqueKey === m.market.uniqueKey);
+      return freshMarket ? { ...m, market: freshMarket } : m;
+    });
+  }, [markets, freshMarketsList]);
+
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showTrustedVaultsModal, setShowTrustedVaultsModal] = useState(false);
@@ -723,11 +740,11 @@ export function MarketsTableWithSameLoanAsset({
 
   // Filter and sort markets using the new shared filtering system
   const processedMarkets = useMemo(() => {
-    // Extract just the markets for filtering
-    const marketsList = markets.map((m) => m.market);
+    // Extract just the markets for filtering (using fresh state)
+    const marketsListForFilter = marketsWithFreshState.map((m) => m.market);
 
     // Apply global filters using the shared utility
-    let filtered = filterMarkets(marketsList, {
+    let filtered = filterMarkets(marketsListForFilter, {
       showUnknownTokens: includeUnknownTokens,
       showUnknownOracle,
       selectedCollaterals: collateralFilter,
@@ -776,11 +793,11 @@ export function MarketsTableWithSameLoanAsset({
 
     // Map back to MarketWithSelection
     return filtered.map((market) => {
-      const original = markets.find((m) => m.market.uniqueKey === market.uniqueKey);
+      const original = marketsWithFreshState.find((m) => m.market.uniqueKey === market.uniqueKey);
       return original ?? { market, isSelected: false };
     });
   }, [
-    markets,
+    marketsWithFreshState,
     collateralFilter,
     oracleFilter,
     sortColumn,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LuArrowRightLeft } from "react-icons/lu";
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { useFreshMarketState } from '@/hooks/useFreshMarketState';
+import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { SupplyModalContent } from './SupplyModalContent';
@@ -29,8 +29,8 @@ export function SupplyModalV2({
   const [withdrawPreviewAmount, setWithdrawPreviewAmount] = useState<bigint | undefined>();
 
   // Fetch fresh market state from RPC to avoid stale liquidity/supply data
-  const { market: freshMarket } = useFreshMarketState(market);
-  const activeMarket = freshMarket ?? market;
+  const { markets: freshMarkets } = useFreshMarketsState([market]);
+  const activeMarket = freshMarkets?.[0] ?? market;
 
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
 
