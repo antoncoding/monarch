@@ -234,7 +234,7 @@ const useUserPositions = (
               0,
               publicClient,
             ),
-          staleTime: 30000,
+          staleTime: 15000, // 15 seconds - keep position data fresh
           gcTime: 5 * 60 * 1000,
         });
 

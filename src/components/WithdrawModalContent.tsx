@@ -43,8 +43,8 @@ export function WithdrawModalContent({
   );
   const { address: account, isConnected, chainId } = useAccount();
 
-  // Use market from either position or direct prop
-  const activeMarket = position?.market ?? market;
+  // Prefer the market prop (which has fresh state) over position.market
+  const activeMarket = market ?? position?.market;
 
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: activeMarket?.morphoBlue.chain.id ?? 0,
@@ -83,15 +83,19 @@ export function WithdrawModalContent({
       return;
     }
 
-    if (!position) {
-      toast.error('No position', 'You do not have a position in this market to withdraw from.');
-      return;
+    // Calculate withdraw parameters - use asset-based withdrawal if no position detected
+    let assetsToWithdraw: string;
+    let sharesToWithdraw: string;
+
+    if (position) {
+      const isMax = withdrawAmount.toString() === position.state.supplyAssets.toString();
+      assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
+      sharesToWithdraw = isMax ? position.state.supplyShares : '0';
+    } else {
+      // No position detected - use asset-based withdrawal
+      assetsToWithdraw = withdrawAmount.toString();
+      sharesToWithdraw = '0';
     }
-
-    const isMax = withdrawAmount.toString() === position.state.supplyAssets.toString();
-
-    const assetsToWithdraw = isMax ? '0' : withdrawAmount.toString();
-    const sharesToWithdraw = isMax ? position.state.supplyShares : '0';
 
     sendTransaction({
       account,
@@ -167,12 +171,8 @@ export function WithdrawModalContent({
                     setValue={handleWithdrawAmountChange}
                     setError={setInputError}
                     exceedMaxErrMessage="Insufficient Liquidity"
+                    error={inputError}
                   />
-                  {inputError && (
-                    <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
-                      {inputError}
-                    </p>
-                  )}
                 </div>
                 {needSwitchChain ? (
                   <Button onPress={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
@@ -180,7 +180,7 @@ export function WithdrawModalContent({
                   </Button>
                 ) : (
                   <Button
-                    isDisabled={!isConnected || isConfirming || !position || !withdrawAmount}
+                    isDisabled={!isConnected || isConfirming || !withdrawAmount}
                     onPress={() => void withdraw()}
                     className="ml-2 min-w-32"
                     variant="cta"

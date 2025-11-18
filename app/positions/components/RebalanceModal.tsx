@@ -52,6 +52,8 @@ export function RebalanceModal({
     currentStep,
   } = useRebalance(groupedPosition);
 
+  // Filter eligible markets (same loan asset and chain)
+  // Fresh state is fetched by MarketsTableWithSameLoanAsset component
   const eligibleMarkets = useMemo(() => {
     return markets.filter(
       (market) =>
