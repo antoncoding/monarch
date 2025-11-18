@@ -1,5 +1,4 @@
 import { useCallback, useState, useEffect } from 'react';
-import { Cross2Icon } from '@radix-ui/react-icons';
 
 import { parseUnits } from 'viem';
 import { formatBalance } from '@/utils/balance';
