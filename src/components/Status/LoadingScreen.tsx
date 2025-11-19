@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { BarLoader } from 'react-spinners';
 import loadingImg from '../imgs/aragon/loading.png';
@@ -18,12 +18,24 @@ const loadingPhrases = [
   'Connecting to Morpho...',
 ];
 
-function TypingAnimation({ phrases }: { phrases: string[] }) {
+function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; singleMode?: boolean }) {
   const [displayText, setDisplayText] = useState('');
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [showCursor, setShowCursor] = useState(true);
+  const prevPhraseRef = useRef<string>(phrases[0]);
+
+  // Reset animation when phrase changes in single mode
+  useEffect(() => {
+    if (singleMode && phrases[0] !== prevPhraseRef.current) {
+      prevPhraseRef.current = phrases[0];
+      setDisplayText('');
+      setIsDeleting(false);
+      setIsPaused(false);
+      setPhraseIndex(0);
+    }
+  }, [phrases, singleMode]);
 
   useEffect(() => {
     const cursorInterval = setInterval(() => {
@@ -35,6 +47,10 @@ function TypingAnimation({ phrases }: { phrases: string[] }) {
 
   useEffect(() => {
     if (isPaused) {
+      // In single mode, stay paused forever after typing completes
+      if (singleMode) {
+        return;
+      }
       const pauseTimeout = setTimeout(() => {
         setIsPaused(false);
         setIsDeleting(true);
@@ -68,7 +84,7 @@ function TypingAnimation({ phrases }: { phrases: string[] }) {
     }, isDeleting ? deletingSpeed : typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [displayText, phraseIndex, isDeleting, isPaused, phrases]);
+  }, [displayText, phraseIndex, isDeleting, isPaused, phrases, singleMode]);
 
   return (
     <span className="inline-flex items-center">
@@ -85,7 +101,7 @@ function TypingAnimation({ phrases }: { phrases: string[] }) {
 
 export default function LoadingScreen({ message, className }: LoadingScreenProps) {
   const phrases = message ? [message] : loadingPhrases;
-  const showTyping = !message;
+  const singleMode = !!message;
 
   return (
     <div
@@ -96,7 +112,7 @@ export default function LoadingScreen({ message, className }: LoadingScreenProps
       <Image src={loadingImg} alt="Logo" width={200} height={200} className="py-4" />
       <BarLoader width={100} color="#f45f2d" height={2} className="pb-1" />
       <p className="pt-4 text-center text-secondary">
-        {showTyping ? <TypingAnimation phrases={phrases} /> : message}
+        <TypingAnimation phrases={phrases} singleMode={singleMode} />
       </p>
     </div>
   );
