@@ -178,6 +178,15 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   {
+    symbol: 'USDS',
+    img: require('../imgs/tokens/usds.svg') as string,
+    decimals: 18,
+    networks: [
+      { chain: mainnet, address: '0xdC035D45d973E3EC169d2276DDab16f1e407384F' },
+    ],
+    peg: TokenPeg.USD,
+  },
+  {
     symbol: 'wUSDM',
     img: require('../imgs/tokens/wusdm.png') as string,
     decimals: 18,
