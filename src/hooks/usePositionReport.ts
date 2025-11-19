@@ -5,7 +5,7 @@ import {
   filterTransactionsInPeriod,
 } from '@/utils/interest';
 import { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionsSnapshots, PositionSnapshot } from '@/utils/positions';
+import { fetchPositionsSnapshots } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from './useCustomRpc';

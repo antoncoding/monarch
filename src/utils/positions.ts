@@ -1,14 +1,10 @@
 import { Address, formatUnits, PublicClient } from 'viem';
 import morphoABI from '@/abis/morpho';
-import { calculateEarningsFromSnapshot } from './interest';
 import { getMorphoAddress } from './morpho';
 import { SupportedNetworks } from './networks';
-import { getClient } from './rpc';
 import {
   MarketPosition,
   MarketPositionWithEarnings,
-  PositionEarnings,
-  UserTransaction,
   GroupedPosition,
 } from './types';
 
@@ -96,8 +92,6 @@ export async function fetchPositionsSnapshots(
   try {
     const isNow = blockNumber === 0;
     const morphoAddress = getMorphoAddress(chainId as SupportedNetworks);
-
-    console.log(`Fetching ${marketIds.length} position snapshots at ${isNow ? 'current block' : `block ${blockNumber}`}`);
 
     // Step 1: Multicall to get all position data
     const positionContracts = marketIds.map((marketId) => ({
@@ -195,7 +189,6 @@ export async function fetchPositionsSnapshots(
       });
     }
 
-    console.log(`Completed fetching ${result.size} position snapshots`);
     return result;
   } catch (error) {
     console.error(`Error fetching position snapshots:`, {
@@ -286,149 +279,25 @@ export async function fetchMarketSnapshot(
   }
 }
 
-/**
- * Calculates earnings for a position across different time periods
- *
- * @param position - The market position
- * @param transactions - User transactions for the position
- * @param userAddress - The user's address
- * @param chainId - The chain ID
- * @param blockNumbers - Block numbers for different time periods
- * @param customRpcUrl - The custom RPC URL to use for the request
- * @returns Position earnings data
- */
-export async function calculateEarningsFromPeriod(
-  position: MarketPosition,
-  transactions: UserTransaction[],
-  userAddress: Address,
-  chainId: SupportedNetworks,
-  blockNumbers: { day?: number; week?: number; month?: number },
-  customRpcUrl?: string,
-): Promise<PositionEarnings> {
-  if (!blockNumbers) {
-    return {
-      lifetimeEarned: '0',
-      last24hEarned: null,
-      last7dEarned: null,
-      last30dEarned: null,
-    };
-  }
 
-  const currentBalance = BigInt(position.state.supplyAssets);
-  const marketId = position.market.uniqueKey;
-  const marketTxs = transactions.filter((tx) => tx.data?.market?.uniqueKey === marketId);
-  const now = Math.floor(Date.now() / 1000);
-
-  const client = getClient(chainId, customRpcUrl);
-
-  // Only fetch snapshots for requested periods
-  const snapshotPromises: (Promise<PositionSnapshot | null> | null)[] = [
-    blockNumbers.day ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.day, client) : null,
-    blockNumbers.week ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.week, client) : null,
-    blockNumbers.month ? fetchPositionSnapshot(marketId, userAddress, chainId, blockNumbers.month, client) : null,
-  ];
-
-  const snapshots = await Promise.all(snapshotPromises.map(async p => p ?? Promise.resolve(null)));
-
-  const [snapshot24h, snapshot7d, snapshot30d] = snapshots;
-
-  const lifetimeEarnings = calculateEarningsFromSnapshot(currentBalance, 0n, marketTxs, 0, now);
-  const last24hEarnings = snapshot24h && blockNumbers.day
-    ? calculateEarningsFromSnapshot(
-        currentBalance,
-        BigInt(snapshot24h.supplyAssets),
-        marketTxs,
-        now - 24 * 60 * 60,
-        now,
-      )
-    : null;
-  const last7dEarnings = snapshot7d && blockNumbers.week
-    ? calculateEarningsFromSnapshot(
-        currentBalance,
-        BigInt(snapshot7d.supplyAssets),
-        marketTxs,
-        now - 7 * 24 * 60 * 60,
-        now,
-      )
-    : null;
-  const last30dEarnings = snapshot30d && blockNumbers.month
-    ? calculateEarningsFromSnapshot(
-        currentBalance,
-        BigInt(snapshot30d.supplyAssets),
-        marketTxs,
-        now - 30 * 24 * 60 * 60,
-        now,
-      )
-    : null;
-
-  return {
-    lifetimeEarned: lifetimeEarnings.earned.toString(),
-    last24hEarned: last24hEarnings ? last24hEarnings.earned.toString() : null,
-    last7dEarned: last7dEarnings ? last7dEarnings.earned.toString() : null,
-    last30dEarned: last30dEarnings ? last30dEarnings.earned.toString() : null,
-  };
-}
-
-/**
- * Export enum for earnings period selection
- */
-export enum EarningsPeriod {
-  All = 'all',
-  Day = '1D',
-  Week = '7D',
-  Month = '30D',
-}
-
-/**
- * Get the earnings value for a specific period
- *
- * @param position - Position with earnings data
- * @param period - The period to get earnings for
- * @returns The earnings value as a string
- */
-export function getEarningsForPeriod(
-  position: MarketPositionWithEarnings,
-  period: EarningsPeriod,
-): string | null {
-  if (!position.earned) return '0';
-
-  switch (period) {
-    case EarningsPeriod.All:
-      return position.earned.lifetimeEarned;
-    case EarningsPeriod.Day:
-      return position.earned.last24hEarned;
-    case EarningsPeriod.Week:
-      return position.earned.last7dEarned;
-    case EarningsPeriod.Month:
-      return position.earned.last30dEarned;
-    default:
-      return '0';
-  }
-}
 
 /**
  * Get combined earnings for a group of positions
  *
  * @param groupedPosition - The grouped position
- * @param period - The period to get earnings for
  * @returns The total earnings as a string or null
  */
-export function getGroupedEarnings(
-  groupedPosition: GroupedPosition,
-  period: EarningsPeriod,
-): string | null {
-  return (
-    groupedPosition.markets
-      .reduce(
-        (total, position) => {
-          const earnings = getEarningsForPeriod(position, period);
-          if (earnings === null) return null;
-          return total === null ? BigInt(earnings) : total + BigInt(earnings);
-        },
-        null as bigint | null,
-      )
-      ?.toString() ?? null
-  );
+export function getGroupedEarnings(groupedPosition: GroupedPosition): string | null {
+  let total = 0n;
+
+  for (const position of groupedPosition.markets) {
+    const earnings = position.earned;
+    if (earnings) {
+      total += BigInt(earnings);
+    }
+  }
+
+  return total.toString();
 }
 
 /**
@@ -471,7 +340,7 @@ export function groupPositionsByLoanAsset(
       // Check if position should be included in the group
       const shouldInclude =
         BigInt(position.state.supplyShares) > 0 ||
-        getEarningsForPeriod(position, EarningsPeriod.All) !== '0';
+        position.earned !== '0'
 
       if (shouldInclude) {
         groupedPosition.markets.push(position);
@@ -565,11 +434,6 @@ export function initializePositionsWithEmptyEarnings(
 ): MarketPositionWithEarnings[] {
   return positions.map((position) => ({
     ...position,
-    earned: {
-      lifetimeEarned: '0',
-      last24hEarned: null,
-      last7dEarned: null,
-      last30dEarned: null,
-    },
+    earned: '0',
   }));
 }

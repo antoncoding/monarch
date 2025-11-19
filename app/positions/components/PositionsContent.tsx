@@ -16,7 +16,7 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
-import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
+import useUserPositionsSummaryData, { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './onboarding/OnboardingModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
@@ -26,6 +26,7 @@ export default function Positions() {
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
   const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
+  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
 
   const { account } = useParams<{ account: string }>();
   const { address } = useAccount();
@@ -49,9 +50,20 @@ export default function Positions() {
     isRefetching,
     positions: marketPositions,
     refetch,
-  } = useUserPositionsSummaryData(account);
+    loadingStates,
+  } = useUserPositionsSummaryData(account, earningsPeriod);
 
   const loading = isMarketsLoading || isPositionsLoading;
+
+  // Generate loading message based on current state
+  const loadingMessage = useMemo(() => {
+    if (isMarketsLoading) return 'Loading markets...';
+    if (loadingStates.positions) return 'Loading user positions...';
+    if (loadingStates.blocks) return 'Fetching block numbers...';
+    if (loadingStates.snapshots) return 'Loading historical snapshots...';
+    if (loadingStates.transactions) return 'Loading transaction history...';
+    return 'Loading...';
+  }, [isMarketsLoading, loadingStates]);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
 
@@ -122,7 +134,7 @@ export default function Positions() {
         />
 
         {loading ? (
-          <LoadingScreen message="Loading Supplies..." className="mt-10" />
+          <LoadingScreen message={loadingMessage} className="mt-10" />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
@@ -151,6 +163,8 @@ export default function Positions() {
               refetch={() => void refetch()}
               isRefetching={isRefetching}
               isLoadingEarnings={isEarningsLoading}
+              earningsPeriod={earningsPeriod}
+              setEarningsPeriod={setEarningsPeriod}
             />
           </div>
         )}

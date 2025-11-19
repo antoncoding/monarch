@@ -21,7 +21,7 @@ export type MarketPosition = {
 };
 
 export type MarketPositionWithEarnings = MarketPosition & {
-  earned: PositionEarnings;
+  earned: string;
 };
 
 export enum UserTxTypes {

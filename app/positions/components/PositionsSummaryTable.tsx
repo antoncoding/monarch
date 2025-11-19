@@ -24,10 +24,10 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import {
-  EarningsPeriod,
   getGroupedEarnings,
   groupPositionsByLoanAsset,
   processCollaterals,
@@ -127,6 +127,8 @@ type PositionsSummaryTableProps = {
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
   isLoadingEarnings?: boolean;
+  earningsPeriod: EarningsPeriod;
+  setEarningsPeriod: (period: EarningsPeriod) => void;
 };
 
 export function PositionsSummaryTable({
@@ -138,14 +140,14 @@ export function PositionsSummaryTable({
   isRefetching,
   isLoadingEarnings,
   account,
+  earningsPeriod,
+  setEarningsPeriod,
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
     null,
   );
-
-  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>(EarningsPeriod.Day);
   const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(
     PositionsShowEmptyKey,
     false,
@@ -164,10 +166,10 @@ export function PositionsSummaryTable({
   }, [account, address]);
 
   const periodLabels: Record<EarningsPeriod, string> = {
-    [EarningsPeriod.All]: 'All Time',
-    [EarningsPeriod.Day]: '1D',
-    [EarningsPeriod.Week]: '7D',
-    [EarningsPeriod.Month]: '30D',
+    'all': 'All Time',
+    'day': '1D',
+    'week': '7D',
+    'month': '30D',
   };
 
   const groupedPositions = useMemo(
@@ -329,7 +331,7 @@ export function PositionsSummaryTable({
               const isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy;
 
-              const earnings = getGroupedEarnings(groupedPosition, earningsPeriod);
+              const earnings = getGroupedEarnings(groupedPosition);
 
               return (
                 <React.Fragment key={rowKey}>

@@ -38,3 +38,4 @@ export const monarchWhitelistedMarkets: WhitelistMarketData[] = [
     offsetWarnings: ['unrecognized_collateral_asset'],
   },
 ];
+
