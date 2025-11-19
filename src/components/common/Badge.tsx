@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
+import { twMerge } from 'tailwind-merge';
 
 const badge = tv({
   base: 'inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium',
@@ -29,5 +30,5 @@ export type BadgeProps = {
 } & VariantProps<typeof badge>;
 
 export function Badge({ children, variant, size, className }: BadgeProps) {
-  return <span className={badge({ variant, size, className })}>{children}</span>;
+  return <span className={twMerge(badge({ variant, size, className }))}>{children}</span>;
 }
