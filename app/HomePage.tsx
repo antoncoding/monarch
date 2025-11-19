@@ -160,7 +160,7 @@ function CustomTypingAnimation() {
   };
 
   return (
-    <div className="text-left font-zen text-xl leading-relaxed text-secondary sm:text-2xl md:text-3xl">
+    <div className="text-center font-zen text-base leading-relaxed text-secondary sm:text-xl md:text-left md:text-3xl">
       {renderColoredText()}
       <span
         className="ml-1 inline-block"
@@ -192,11 +192,11 @@ function HomePage() {
         {/* Hero Section - Full Screen */}
         <section className="relative flex min-h-screen flex-col justify-between">
           <div className="container mx-auto flex flex-1 flex-col items-center justify-center">
-            <div className="flex w-full flex-col items-center" style={{ marginTop: '-5vh' }}>
+            <div className="flex w-full flex-col items-center md:-mt-[5vh]">
               <div className="flex w-full flex-col items-center px-4">
                 {/* Logo and Product Title - Horizontal Layout */}
-                <div className="mb-6 inline-flex items-center gap-3 sm:mb-8 sm:gap-4">
-                  <h1 className="m-0 font-zen text-4xl leading-none text-primary" style={{ padding: 0 }}>
+                <div className="mb-4 inline-flex items-center gap-2 sm:mb-6 sm:gap-3 md:mb-8 md:gap-4">
+                  <h1 className="m-0 font-zen text-2xl leading-none text-primary sm:text-3xl md:text-4xl" style={{ padding: 0 }}>
                     Welcome to Monarch
                   </h1>
                   <Image
@@ -204,31 +204,31 @@ function HomePage() {
                     alt="Monarch Logo"
                     width={60}
                     height={60}
-                    className="h-10 w-10 sm:h-12 sm:w-12 md:h-14 md:w-14"
+                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-14 md:w-14"
                   />
                 </div>
 
                 {/* Tagline with typing animation */}
-                <div className="w-full max-w-xl px-4 sm:max-w-2xl">
-                  <div className="mb-8 flex h-[6rem] flex-col items-start justify-start sm:mb-10 sm:h-[5rem] md:h-[6rem]" style={{ marginLeft: '5rem' }}>
+                <div className="w-full max-w-xl px-2 sm:max-w-2xl sm:px-4">
+                  <div className="mb-6 flex h-[4.5rem] flex-col items-center justify-start sm:mb-8 sm:h-[5rem] md:mb-10 md:h-[6rem] md:items-start md:pl-20">
                     <CustomTypingAnimation />
                   </div>
                 </div>
               </div>
 
               {/* CTA Buttons */}
-              <div className="flex w-full justify-center gap-4 px-4 sm:w-auto sm:flex-row">
+              <div className="flex w-full flex-col items-center gap-3 px-4 sm:w-auto sm:flex-row sm:gap-4">
                 <Button
                   variant="default"
-                  className="w-full px-10 py-4 font-zen sm:w-auto flex items-center gap-2"
+                  className="flex w-full items-center justify-center gap-2 px-6 py-3 font-zen sm:w-auto sm:px-10 sm:py-4"
                   size="lg"
                   onPress={() => scrollToSection('section-1')}
                 >
                   Learn More
                   <RiArrowDownLine className="h-5 w-5" />
                 </Button>
-                <Link href="/markets" className="block w-full sm:w-auto no-underline">
-                  <Button variant="cta" className="w-full px-10 py-4 font-zen" size="lg">
+                <Link href="/markets" className="block w-full no-underline sm:w-auto">
+                  <Button variant="cta" className="w-full px-6 py-3 font-zen sm:px-10 sm:py-4" size="lg">
                     Explore Markets
                   </Button>
                 </Link>
@@ -255,34 +255,34 @@ function HomePage() {
         {/* Section 1: Introducing Monarch - Full Screen, Left Layout with Image */}
         <section
           id="section-1"
-          className="flex min-h-screen w-full items-center bg-surface py-16 md:py-24"
+          className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24"
         >
-          <div className="container mx-auto px-6">
-            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-[2fr_1fr]">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="mx-auto grid max-w-7xl items-center gap-8 md:gap-12 md:grid-cols-[2fr_1fr]">
               {/* Text Content */}
               <div>
-                <h2 className="mb-6 font-zen text-4xl text-primary">
+                <h2 className="mb-4 font-zen text-2xl text-primary sm:mb-6 sm:text-3xl md:text-4xl">
                   Introducing Monarch
                 </h2>
-                <p className="mb-6 text-2xl text-secondary">
+                <p className="mb-4 text-lg text-secondary sm:mb-6 sm:text-xl md:text-2xl">
                   Advanced Interface for Morpho Blue
                 </p>
-                <div className="space-y-6">
-                  <p className="text-lg leading-relaxed">
+                <div className="space-y-4 sm:space-y-6">
+                  <p className="text-base leading-relaxed sm:text-lg">
                     Morpho Blue is the core protocol of the Morpho ecosystem—a decentralized, immutable, and neutral lending protocol that enables the creation of lending markets with any assets.
                   </p>
-                  <p className="text-lg leading-relaxed">
+                  <p className="text-base leading-relaxed sm:text-lg">
                     Monarch is an advanced interface for Morpho Blue, providing powerful tools to interact directly with the protocol—from simple lending to creating your own automated vaults.
                   </p>
                 </div>
-                <div className="mt-8 flex gap-4">
+                <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
                   <a
                     href="https://docs.morpho.org/learn/concepts/market/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="no-underline"
                   >
-                    <Button variant="secondary" size="lg" className="font-zen flex items-center gap-2">
+                    <Button variant="secondary" size="lg" className="w-full font-zen flex items-center justify-center gap-2 sm:w-auto">
                       More about Morpho Blue
                       <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
@@ -290,7 +290,7 @@ function HomePage() {
                   <Button
                     variant="cta"
                     size="lg"
-                    className="font-zen flex items-center gap-2"
+                    className="font-zen flex items-center justify-center gap-2"
                     onPress={() => scrollToSection('section-2')}
                   >
                     Continue
@@ -300,12 +300,13 @@ function HomePage() {
               </div>
 
               {/* Morpho Logo */}
-              <div className="flex items-center justify-center">
+              <div className="hidden items-center justify-center sm:flex">
                 <Image
                   src={mounted && theme === 'dark' ? morphoLogoDark : morphoLogoLight}
                   alt="Morpho Logo"
                   width={180}
                   height={180}
+                  className="h-32 w-32 md:h-[180px] md:w-[180px]"
                 />
               </div>
             </div>
@@ -313,33 +314,33 @@ function HomePage() {
         </section>
 
         {/* Section 2: Morpho Vaults - Full Screen, Right Layout with Image */}
-        <section id="section-2" className="flex min-h-screen w-full items-center bg-main py-16 md:py-24">
-          <div className="container mx-auto px-6">
-            <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-[2fr_1fr] md:grid-flow-dense">
+        <section id="section-2" className="flex w-full items-center bg-main py-12 md:min-h-screen md:py-24">
+          <div className="container mx-auto px-4 sm:px-6">
+            <div className="mx-auto grid max-w-7xl items-center gap-8 md:gap-12 md:grid-cols-[2fr_1fr] md:grid-flow-dense">
               {/* Text Content */}
               <div className="md:col-start-1">
-                <h2 className="mb-6 font-zen text-4xl text-primary">
+                <h2 className="mb-4 font-zen text-2xl text-primary sm:mb-6 sm:text-3xl md:text-4xl">
                   Morpho Vaults
                 </h2>
-                <p className="mb-6 text-2xl text-secondary">
+                <p className="mb-4 text-lg text-secondary sm:mb-6 sm:text-xl md:text-2xl">
                   Curated Risk Management
                 </p>
-                <div className="space-y-6">
-                  <p className="text-lg leading-relaxed">
+                <div className="space-y-4 sm:space-y-6">
+                  <p className="text-base leading-relaxed sm:text-lg">
                     Morpho Vaults are intermediate contracts managed by professional risk curators who simplify risk management for suppliers. These vaults provide a simplified user experience with managed risk exposure and ERC4626 token compatibility.
                   </p>
-                  <p className="text-lg leading-relaxed">
+                  <p className="text-base leading-relaxed sm:text-lg">
                     However, they come with trade-offs: less control over parameters, limited customization, and potential performance fees charged by curators.
                   </p>
                 </div>
-                <div className="mt-8 flex gap-4">
+                <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:gap-4">
                   <a
                     href="https://docs.morpho.org/curate/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="no-underline"
                   >
-                    <Button variant="secondary" size="lg" className="font-zen flex items-center gap-2">
+                    <Button variant="secondary" size="lg" className="w-full font-zen flex items-center justify-center gap-2 sm:w-auto">
                       Learn about Risk Curation
                       <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
@@ -347,7 +348,7 @@ function HomePage() {
                   <Button
                     variant="cta"
                     size="lg"
-                    className="font-zen flex items-center gap-2"
+                    className="font-zen flex items-center justify-center gap-2"
                     onPress={() => scrollToSection('section-3')}
                   >
                     Why Monarch
@@ -357,13 +358,13 @@ function HomePage() {
               </div>
 
               {/* Vault Image */}
-              <div className="md:col-start-2 flex items-center justify-center">
+              <div className="hidden items-center justify-center sm:flex md:col-start-2">
                 <Image
                   src={vaultImage}
                   alt="Morpho Vaults"
                   width={200}
                   height={200}
-                  className="rounded-lg"
+                  className="h-32 w-32 rounded-lg md:h-[200px] md:w-[200px]"
                 />
               </div>
             </div>
@@ -371,31 +372,31 @@ function HomePage() {
         </section>
 
         {/* Section 3: Direct Market Access - Full Screen, Left Layout with Animation */}
-        <section id="section-3" className="flex min-h-screen w-full items-center bg-surface py-16 md:py-24">
-          <div className="container mx-auto px-6">
+        <section id="section-3" className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="mx-auto max-w-7xl">
               {/* Text Content - Centered */}
-              <div className="mb-12 text-center">
-                <h2 className="mb-6 font-zen text-4xl text-primary">
+              <div className="mb-8 text-center sm:mb-12">
+                <h2 className="mb-4 font-zen text-2xl text-primary sm:mb-6 sm:text-3xl md:text-4xl">
                   Why Monarch?
                 </h2>
-                <p className="mb-6 text-2xl text-secondary">
+                <p className="mb-4 text-lg text-secondary sm:mb-6 sm:text-xl md:text-2xl">
                   Advanced Tools for DeFi Power Users
                 </p>
-                <div className="mx-auto max-w-3xl space-y-6 text-left">
-                  <p className="text-lg leading-relaxed">
+                <div className="mx-auto max-w-3xl space-y-4 text-left sm:space-y-6">
+                  <p className="text-base leading-relaxed sm:text-lg">
                     Monarch provides direct access to Morpho Blue markets with no intermediaries and zero fees. Our powerful tools are designed for sophisticated users who want maximum control and capital efficiency:
                   </p>
-                  <ul className="space-y-4 text-lg leading-relaxed">
-                    <li className="flex gap-3">
+                  <ul className="space-y-3 text-base leading-relaxed sm:space-y-4 sm:text-lg">
+                    <li className="flex gap-2 sm:gap-3">
                       <span className="text-monarch-orange">•</span>
                       <span><strong>Market Discovery:</strong> Find the best lending opportunities with the highest APY while understanding the risk trade-offs.</span>
                     </li>
-                    <li className="flex gap-3">
+                    <li className="flex gap-2 sm:gap-3">
                       <span className="text-monarch-orange">•</span>
                       <span><strong>Risk Analysis:</strong> Comprehensive risk metrics and analytics on every market, helping you make informed decisions.</span>
                     </li>
-                    <li className="flex gap-3">
+                    <li className="flex gap-2 sm:gap-3">
                       <span className="text-monarch-orange">•</span>
                       <span><strong>Smart Rebalancing:</strong> Tools designed to help you identify optimal yield opportunities and easily rebalance your positions across multiple markets.</span>
                     </li>
@@ -404,22 +405,22 @@ function HomePage() {
               </div>
 
               {/* Rebalance Animation */}
-              <div className="mb-12 flex items-center justify-center">
+              <div className="mb-8 flex items-center justify-center sm:mb-12">
                 <RebalanceAnimation />
               </div>
 
               {/* CTA Buttons - Centered */}
-              <div className="flex justify-center gap-4">
+              <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Button
                   variant="secondary"
                   size="lg"
-                  className="font-zen opacity-50 cursor-not-allowed"
+                  className="w-full cursor-not-allowed font-zen opacity-50 sm:w-auto"
                   isDisabled
                 >
                   Auto Vault <Badge variant='success'>  Coming Soon </Badge>
                 </Button>
-                <Link href="/markets" className="no-underline">
-                  <Button variant="cta" size="lg" className="font-zen">
+                <Link href="/markets" className="block w-full no-underline sm:w-auto">
+                  <Button variant="cta" size="lg" className="w-full font-zen">
                     Explore Markets
                   </Button>
                 </Link>
@@ -495,11 +496,11 @@ function HomePage() {
 
         {/* Footer CTA - Full Screen */}
         <section className="flex min-h-screen w-full flex-col items-center justify-center bg-main py-16 text-center md:py-24">
-          <div className="container mx-auto px-6">
-            <h2 className="mb-6 font-zen text-4xl text-primary">
+          <div className="container mx-auto px-4 sm:px-6">
+            <h2 className="mb-4 font-zen text-2xl text-primary sm:mb-6 sm:text-3xl md:text-4xl">
               Join the Monarch Community
             </h2>
-            <p className="mx-auto mb-12 max-w-2xl text-2xl text-secondary">
+            <p className="mx-auto mb-8 max-w-2xl text-base text-secondary sm:mb-12 sm:text-xl md:text-2xl">
               Connect with us and stay updated on the latest features and developments in decentralized lending.
             </p>
 
