@@ -5,7 +5,7 @@ import {
   filterTransactionsInPeriod,
 } from '@/utils/interest';
 import { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionSnapshot } from '@/utils/positions';
+import { fetchPositionsSnapshots } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from './useCustomRpc';
@@ -104,63 +104,72 @@ export const usePositionReport = (
       }
     }
 
-    const marketReports = (
-      await Promise.all(
-        relevantPositions.map(async (position) => {
-          const publicClient = getClient(
-            position.market.morphoBlue.chain.id,
-            customRpcUrls[position.market.morphoBlue.chain.id as SupportedNetworks] ?? undefined,
-          );
-          const startSnapshot = await fetchPositionSnapshot(
-            position.market.uniqueKey,
-            account,
-            position.market.morphoBlue.chain.id,
-            startBlockNumber,
-            publicClient,
-          );
-          const endSnapshot = await fetchPositionSnapshot(
-            position.market.uniqueKey,
-            account,
-            position.market.morphoBlue.chain.id,
-            endBlockNumber,
-            publicClient,
-          );
+    // Batch fetch all snapshots using multicall
+    const marketIds = relevantPositions.map((position) => position.market.uniqueKey);
+    const publicClient = getClient(
+      selectedAsset.chainId as SupportedNetworks,
+      customRpcUrls[selectedAsset.chainId as SupportedNetworks] ?? undefined,
+    );
 
-          if (!startSnapshot || !endSnapshot) {
-            return;
-          }
+    // Fetch start and end snapshots in parallel (batched per block number)
+    const [startSnapshots, endSnapshots] = await Promise.all([
+      fetchPositionsSnapshots(
+        marketIds,
+        account,
+        selectedAsset.chainId,
+        startBlockNumber,
+        publicClient,
+      ),
+      fetchPositionsSnapshots(
+        marketIds,
+        account,
+        selectedAsset.chainId,
+        endBlockNumber,
+        publicClient,
+      ),
+    ]);
 
-          const marketTransactions = filterTransactionsInPeriod(
-            allTransactions.filter(
-              (tx) => tx.data?.market?.uniqueKey === position.market.uniqueKey,
-            ),
-            startTimestamp,
-            endTimestamp,
-          );
+    // Process positions with their snapshots
+    const marketReports = relevantPositions
+      .map((position) => {
+        const marketKey = position.market.uniqueKey;
+        const startSnapshot = startSnapshots.get(marketKey);
+        const endSnapshot = endSnapshots.get(marketKey);
 
-          const earnings = calculateEarningsFromSnapshot(
-            BigInt(endSnapshot.supplyAssets),
-            BigInt(startSnapshot.supplyAssets),
-            marketTransactions,
-            startTimestamp,
-            endTimestamp,
-          );
+        if (!startSnapshot || !endSnapshot) {
+          return null;
+        }
 
-          return {
-            market: position.market,
-            interestEarned: earnings.earned,
-            totalDeposits: earnings.totalDeposits,
-            totalWithdraws: earnings.totalWithdraws,
-            apy: earnings.apy,
-            avgCapital: earnings.avgCapital,
-            effectiveTime: earnings.effectiveTime,
-            startBalance: BigInt(startSnapshot.supplyAssets),
-            endBalance: BigInt(endSnapshot.supplyAssets),
-            transactions: marketTransactions,
-          };
-        }),
-      )
-    ).filter((report) => report !== null && report !== undefined) as PositionReport[];
+        const marketTransactions = filterTransactionsInPeriod(
+          allTransactions.filter(
+            (tx) => tx.data?.market?.uniqueKey === marketKey,
+          ),
+          startTimestamp,
+          endTimestamp,
+        );
+
+        const earnings = calculateEarningsFromSnapshot(
+          BigInt(endSnapshot.supplyAssets),
+          BigInt(startSnapshot.supplyAssets),
+          marketTransactions,
+          startTimestamp,
+          endTimestamp,
+        );
+
+        return {
+          market: position.market,
+          interestEarned: earnings.earned,
+          totalDeposits: earnings.totalDeposits,
+          totalWithdraws: earnings.totalWithdraws,
+          apy: earnings.apy,
+          avgCapital: earnings.avgCapital,
+          effectiveTime: earnings.effectiveTime,
+          startBalance: BigInt(startSnapshot.supplyAssets),
+          endBalance: BigInt(endSnapshot.supplyAssets),
+          transactions: marketTransactions,
+        };
+      })
+      .filter((report): report is PositionReport => report !== null);
 
     const totalInterestEarned = marketReports.reduce(
       (sum, report) => sum + BigInt(report.interestEarned),

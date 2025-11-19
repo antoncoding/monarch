@@ -74,7 +74,8 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress
       ? morphoMarketV1Adapter
       : undefined,
-    { periods: ['day'], chainIds: [chainId] }
+    'day',
+    [chainId]
   );
 
   // Calculate vault APY from adapter positions (weighted average)
@@ -108,9 +109,9 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     let total = 0n;
 
     adapterPositions.forEach((position) => {
-      if (position.earned?.last24hEarned) {
+      if (position.earned) {
         // Sum up all earnings (assumes they're in raw bigint string format)
-        total += BigInt(position.earned.last24hEarned);
+        total += BigInt(position.earned);
       }
     });
 
