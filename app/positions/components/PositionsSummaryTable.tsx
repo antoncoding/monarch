@@ -378,7 +378,7 @@ export function PositionsSummaryTable({
                         ) : (
                           <span className="font-medium">
                             {(() => {
-                              if (earnings === null) return '-';
+                              if (earnings === 0n) return '-';
                               return (
                                 formatReadable(
                                   Number(

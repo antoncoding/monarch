@@ -285,9 +285,9 @@ export async function fetchMarketSnapshot(
  * Get combined earnings for a group of positions
  *
  * @param groupedPosition - The grouped position
- * @returns The total earnings as a string or null
+ * @returns The total earnings as a string
  */
-export function getGroupedEarnings(groupedPosition: GroupedPosition): string | null {
+export function getGroupedEarnings(groupedPosition: GroupedPosition): bigint {
   let total = 0n;
 
   for (const position of groupedPosition.markets) {
@@ -297,7 +297,7 @@ export function getGroupedEarnings(groupedPosition: GroupedPosition): string | n
     }
   }
 
-  return total.toString();
+  return total;
 }
 
 /**
