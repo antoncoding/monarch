@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { tv, type VariantProps } from 'tailwind-variants';
 import { twMerge } from 'tailwind-merge';
+import { tv, type VariantProps } from 'tailwind-variants';
 
 const badge = tv({
   base: 'inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs font-medium',
