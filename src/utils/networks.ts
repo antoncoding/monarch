@@ -154,7 +154,7 @@ export const networks: NetworkConfig[] = [
     maxBlockDelay: 5,
     nativeTokenSymbol: 'MON',
     wrappedNativeToken: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
-    explorerUrl: 'https://monad.socialscan.io',
+    explorerUrl: 'https://monadscan.com',
   }
 ];
 

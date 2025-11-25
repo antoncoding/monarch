@@ -1,5 +1,3 @@
-import { Vault } from "@morpho-org/blue-sdk";
-
 // Default fallback logo for unknown curators
 export const DEFAULT_VAULT_LOGO = '/imgs/curators/unknown.svg';
 
