@@ -1,3 +1,5 @@
+import { Vault } from "@morpho-org/blue-sdk";
+
 // Default fallback logo for unknown curators
 export const DEFAULT_VAULT_LOGO = '/imgs/curators/unknown.svg';
 
@@ -368,6 +370,13 @@ export const known_vaults: KnownVault[] = [
     name: 'Felix WHYPE',
     asset: '0x5555555555555555555555555555555555555555',
   },
+  {
+    address: '0xbeeffeA75cFC4128ebe10C8D7aE22016D215060D',
+    curator: VaultCurator.Steakhouse,
+    chainId: 143,
+    name: "Steakhouse High Yield AUSD",
+    asset: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a'
+  }
 ];
 
 export const defaultTrustedVaults: TrustedVault[] = known_vaults

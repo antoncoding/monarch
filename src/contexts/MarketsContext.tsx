@@ -177,23 +177,28 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           ALL_SUPPORTED_NETWORKS.map(async (network) => {
             try {
               let networkMarkets: Market[] = [];
+              let trySubgraph = false
 
               // Try Morpho API first if supported
               if (supportsMorphoApi(network)) {
                 try {
                   console.log(`Attempting to fetch markets via Morpho API for ${network}`);
                   networkMarkets = await fetchMorphoMarkets(network);
+                  console.log()
                 } catch (morphoError) {
+                  trySubgraph = true
                   console.error(
                     `Failed to fetch markets via Morpho API for ${network}:`,
                     morphoError,
                   );
                   // Continue to Subgraph fallback
                 }
+              } else {
+                trySubgraph = true
               }
 
               // If Morpho API failed or not supported, try Subgraph
-              if (networkMarkets.length === 0) {
+              if (trySubgraph) {
                 try {
                   console.log(`Attempting to fetch markets via Subgraph for ${network}`);
                   networkMarkets = await fetchSubgraphMarkets(network);

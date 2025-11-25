@@ -1,6 +1,6 @@
 import { createPublicClient, http, PublicClient } from 'viem';
-import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
-import { getDefaultRPC, getViemChain, SupportedNetworks, hyperevm } from './networks';
+import { arbitrum, base, mainnet, polygon, unichain, monad } from 'viem/chains';
+import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm } from './networks';
 
 // Default clients (cached)
 let defaultClients: Partial<Record<SupportedNetworks, PublicClient>> = {};
@@ -30,8 +30,12 @@ const initializeDefaultClients = () => {
         transport: http(getDefaultRPC(SupportedNetworks.Arbitrum)),
       }) as PublicClient,
       [SupportedNetworks.HyperEVM]: createPublicClient({
-        chain: hyperevm,
+        chain: hyperEvm,
         transport: http(getDefaultRPC(SupportedNetworks.HyperEVM)),
+      }) as PublicClient,
+      [SupportedNetworks.Monad]: createPublicClient({
+        chain: monad,
+        transport: http(getDefaultRPC(SupportedNetworks.Monad)),
       }) as PublicClient,
     };
   }

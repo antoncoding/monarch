@@ -11,9 +11,9 @@ import {
   walletConnectWallet
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import { base, mainnet, polygon, unichain, arbitrum } from 'wagmi/chains';
+import { base, mainnet, polygon, unichain, arbitrum, monad } from 'wagmi/chains';
 import { CustomRpcUrls } from '@/hooks/useCustomRpc';
-import { SupportedNetworks, getDefaultRPC, hyperevm } from '@/utils/networks';
+import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
 
 const wallets =
@@ -52,17 +52,19 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
   const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? getDefaultRPC(SupportedNetworks.Unichain)
   const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? getDefaultRPC(SupportedNetworks.Arbitrum)
   const rpcHyperEVM = customRpcUrls[SupportedNetworks.HyperEVM] ?? getDefaultRPC(SupportedNetworks.HyperEVM)
+  const rpcMonad = customRpcUrls[SupportedNetworks.Monad] ?? getDefaultRPC(SupportedNetworks.Monad)
 
   return createConfig({
     ssr: true,
-    chains: [mainnet, base, polygon, unichain, arbitrum, hyperevm],
+    chains: [mainnet, base, polygon, unichain, arbitrum, hyperEvm, monad],
     transports: {
       [mainnet.id]: http(rpcMainnet),
       [base.id]: http(rpcBase),
       [polygon.id]: http(rpcPolygon),
       [unichain.id]: http(rpcUnichain),
       [arbitrum.id]: http(rpcArbitrum),
-      [hyperevm.id]: http(rpcHyperEVM)
+      [hyperEvm.id]: http(rpcHyperEVM),
+      [monad.id]: http(rpcMonad)
     },
     connectors: [...connectors],
   });
