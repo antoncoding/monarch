@@ -28,6 +28,7 @@ const useLiquidations = () => {
         ALL_SUPPORTED_NETWORKS.map(async (network) => {
           try {
             let networkLiquidatedKeys: Set<string>;
+            let trySubgraph = false
 
             // Try Morpho API first if supported
             if (supportsMorphoApi(network)) {
@@ -38,13 +39,15 @@ const useLiquidations = () => {
                 console.error(`Failed to fetch liquidated markets via Morpho API:`, morphoError);
                 // Continue to Subgraph fallback
                 networkLiquidatedKeys = new Set();
+                trySubgraph = true
               }
             } else {
               networkLiquidatedKeys = new Set();
+              trySubgraph = true
             }
 
             // If Morpho API failed or not supported, try Subgraph
-            if (networkLiquidatedKeys.size === 0) {
+            if (trySubgraph) {
               try {
                 console.log(`Attempting to fetch liquidated markets via Subgraph for ${network}`);
                 networkLiquidatedKeys = await fetchSubgraphLiquidatedMarketKeys(network);

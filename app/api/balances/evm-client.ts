@@ -9,13 +9,14 @@ type TokenBalance = {
 /**
  * Fetches ERC20 token balances for a given address on HyperEVM by directly calling balanceOf on each token contract
  */
-export async function getHyperEVMBalances(
+export async function getKnownBalancesWithClient(
   userAddress: string,
   tokenAddresses: string[],
+  network: SupportedNetworks
 ): Promise<TokenBalance[]> {
   const client = createPublicClient({
-    chain: getViemChain(SupportedNetworks.HyperEVM),
-    transport: http(getDefaultRPC(SupportedNetworks.HyperEVM)),
+    chain: getViemChain(network),
+    transport: http(getDefaultRPC(network)),
   });
 
   // Create multicall contracts for all token addresses
@@ -54,7 +55,7 @@ export async function getHyperEVMBalances(
 
     return tokens;
   } catch (error) {
-    console.error('Failed to fetch HyperEVM balances via multicall:', error);
-    throw new Error('Failed to fetch balances from HyperEVM');
+    console.error(`Failed to fetch balances via multicall on chain ${network}:`, error);
+    throw new Error('Failed to fetch balances ');
   }
 }

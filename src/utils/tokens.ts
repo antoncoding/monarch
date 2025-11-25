@@ -1,5 +1,5 @@
-import { Chain, base, mainnet, polygon, unichain, arbitrum } from 'viem/chains';
-import { getWrappedNativeToken, hyperevm } from './networks';
+import { Chain, base, mainnet, polygon, unichain, arbitrum, monad } from 'viem/chains';
+import { getWrappedNativeToken, hyperEvm } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
 
@@ -58,7 +58,8 @@ const supportedTokens = [
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
       { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
       { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' },
-      { chain: hyperevm, address: '0xb88339cb7199b77e23db6e890353e22632ba630f' },
+      { chain: hyperEvm, address: '0xb88339cb7199b77e23db6e890353e22632ba630f' },
+      { chain: monad, address: '0x754704bc059f8c67012fed69bc8a327a5aafb603' }
     ],
     peg: TokenPeg.USD,
   },
@@ -160,7 +161,10 @@ const supportedTokens = [
     symbol: 'aUSD',
     img: require('../imgs/tokens/aUSD.webp') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' }],
+    networks: [
+      { chain: mainnet, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
+      { chain: monad, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' }
+    ],
     protocol: {
       name: 'Agora',
       isProxy: true,
@@ -230,6 +234,7 @@ const supportedTokens = [
       // which is determined by isWETH function
       // This is solely for displaying and linking to eth.
       { chain: polygon, address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619' },
+      { chain: monad, address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242' }
     ],
     peg: TokenPeg.ETH,
   },
@@ -253,6 +258,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0' },
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
       { chain: arbitrum, address: '0x5979D7b546E38E414F7E9822514be443A4800529' },
+      { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' }
     ],
     peg: TokenPeg.ETH,
   },
@@ -298,6 +304,7 @@ const supportedTokens = [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
       { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
+      { chain: monad, address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c' }
     ],
     peg: TokenPeg.BTC,
   },
@@ -575,68 +582,71 @@ const supportedTokens = [
     decimals: 18,
     networks: [{ chain: base, address: '0x4c5d8A75F3762c1561D96f177694f67378705E98' }],
   },
-  // HyperEVM
+  // hyperEvm
   {
     symbol: 'USD₮0',
     img: require('../imgs/tokens/usdt0.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' }],
+    networks: [
+      { chain: hyperEvm, address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' },
+      { chain: monad, address: '0xe7cd86e13AC4309349F30B3435a9d337750fC82D' }
+    ],
     peg: TokenPeg.USD,
   },
   {
     symbol: 'WHYPE',
     img: require('../imgs/tokens/whype.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0x5555555555555555555555555555555555555555' }],
+    networks: [{ chain: hyperEvm, address: '0x5555555555555555555555555555555555555555' }],
   },
   {
     symbol: 'UETH',
     img: require('../imgs/tokens/ueth.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0xBe6727B535545C67d5cAa73dEa54865B92CF7907' }],
+    networks: [{ chain: hyperEvm, address: '0xBe6727B535545C67d5cAa73dEa54865B92CF7907' }],
     peg: TokenPeg.ETH,
   },
   {
     symbol: 'UBTC',
     img: require('../imgs/tokens/ubtc.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463' }],
+    networks: [{ chain: hyperEvm, address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463' }],
     peg: TokenPeg.BTC,
   },
   {
     symbol: 'wstHYPE',
     img: require('../imgs/tokens/wsthype.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0x94e8396e0869c9f2200760af0621afd240e1cf38' }],
+    networks: [{ chain: hyperEvm, address: '0x94e8396e0869c9f2200760af0621afd240e1cf38' }],
   },
   {
     symbol: 'kHYPE',
     img: require('../imgs/tokens/khype.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0xfd739d4e423301ce9385c1fb8850539d657c296d' }],
+    networks: [{ chain: hyperEvm, address: '0xfd739d4e423301ce9385c1fb8850539d657c296d' }],
   },
   {
     symbol: 'hbUSDT',
     img: require('../imgs/tokens/hbusdt.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb' }],
+    networks: [{ chain: hyperEvm, address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb' }],
     peg: TokenPeg.USD,
   },
   {
     symbol: 'USH',
     img: require('../imgs/tokens/ush.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0x8ff0dd9f9c40a0d76ef1bcfaf5f98c1610c74bd8' }],
+    networks: [{ chain: hyperEvm, address: '0x8ff0dd9f9c40a0d76ef1bcfaf5f98c1610c74bd8' }],
     peg: TokenPeg.USD,
   },
   {
     symbol: 'USDHL',
     img: require('../imgs/tokens/usdhl.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperevm, address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5' }],
+    networks: [{ chain: hyperEvm, address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5' }],
     peg: TokenPeg.USD,
   },
-  // End of HyperEVM
+  // End of hyperEvm
   {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,

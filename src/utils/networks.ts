@@ -1,5 +1,5 @@
 import { Address, Chain, defineChain } from 'viem';
-import { arbitrum, base, mainnet, polygon, unichain } from 'viem/chains';
+import { arbitrum, base, mainnet, polygon, unichain, monad, hyperEvm as hyperEvmOld } from 'viem/chains';
 import { v2AgentsBase } from './monarch-agent';
 import { AgentMetadata } from './types';
 
@@ -11,7 +11,8 @@ export enum SupportedNetworks {
   Polygon = 137,
   Unichain = 130,
   Arbitrum = 42161,
-  HyperEVM = 999
+  HyperEVM = 999,
+  Monad = 143
 }
 
 export const ALL_SUPPORTED_NETWORKS = [
@@ -21,25 +22,12 @@ export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.Unichain,
   SupportedNetworks.Arbitrum,
   SupportedNetworks.HyperEVM,
+  SupportedNetworks.Monad
 ];
 
 // use hyperevm as custom chain 
-export const hyperevm = defineChain({
-  id: 999,
-  name: 'hyperevm',
-  nativeCurrency: { name: 'HYPE', symbol: 'HYPE', decimals: 18 },
-  rpcUrls: {
-    default: {
-      http: ['https://rpc.hypurrscan.io'],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: 'HyperEVMScan',
-      url: 'https://hyperevmscan.io/',
-      apiUrl: 'https://api.hyperevmscan.io/api',
-    },
-  },
+export const hyperEvm = defineChain({
+  ...hyperEvmOld,
   contracts: {
     multicall3: {
       address: '0xcA11bde05977b3631167028862bE2a173976CA11',
@@ -146,7 +134,7 @@ export const networks: NetworkConfig[] = [
   },
   {
     network: SupportedNetworks.HyperEVM,
-    chain: hyperevm,
+    chain: hyperEvm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'HyperEVM',
     defaultRPC: `https://hyperliquid-mainnet.g.alchemy.com/v2/${alchemyKey}`,
@@ -156,6 +144,18 @@ export const networks: NetworkConfig[] = [
     wrappedNativeToken: '0x5555555555555555555555555555555555555555',
     explorerUrl: 'https://hyperevmscan.io',
   },
+  {
+    network: SupportedNetworks.Monad,
+    chain: monad,
+    logo: require('../imgs/chains/monad.png') as string,
+    name: 'Monad',
+    defaultRPC: `https://monad-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    blocktime: 1,
+    maxBlockDelay: 5,
+    nativeTokenSymbol: 'MON',
+    wrappedNativeToken: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
+    explorerUrl: 'https://monadscan.com',
+  }
 ];
 
 export const isSupportedChain = (chainId: number) => {

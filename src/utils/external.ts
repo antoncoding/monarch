@@ -3,7 +3,7 @@ import { getNetworkName, SupportedNetworks, getExplorerUrl } from './networks';
 const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   let network = getNetworkName(chainId)?.toLowerCase();
   if (chainId === SupportedNetworks.HyperEVM) {
-    return 'hyperliquid';
+    return 'hyperevm';
   } else if (chainId === SupportedNetworks.Mainnet) {
     return 'ethereum';
   }
@@ -46,6 +46,8 @@ const getChainNameForMerkl = (chainId: number): string => {
       return 'arbitrum';
     case SupportedNetworks.HyperEVM:
       return 'hyperevm';
+    case SupportedNetworks.Monad:
+        return 'monad';
     default:
       return 'ethereum';
   }

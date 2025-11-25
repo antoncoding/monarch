@@ -55,6 +55,8 @@ export function SupplyModalContent({
     signAndSupply,
   } = useSupplyMarket(market, onSuccess);
 
+  console.log('tokenBalance', tokenBalance)
+
   // Handle supply amount change
   const handleSupplyAmountChange = useCallback(
     (amount: bigint) => {

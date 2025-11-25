@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
-import { getHyperEVMBalances } from './evm-client';
+import { getKnownBalancesWithClient } from './evm-client';
 
 type TokenBalance = {
   contractAddress: string;
@@ -35,9 +35,12 @@ export async function GET(req: NextRequest) {
           .map(network => network.address)
       );
 
-    // Special handling for HyperEVM - use direct balanceOf calls via multicall
-    if (chainIdNum === SupportedNetworks.HyperEVM) {
-      const tokens = await getHyperEVMBalances(address, tokenAddresses);
+    // Special handling for hyper and monad: no alchemy support
+    if (
+      chainIdNum === SupportedNetworks.HyperEVM || 
+      chainIdNum === SupportedNetworks.Monad
+    ) {
+      const tokens = await getKnownBalancesWithClient(address, tokenAddresses, chainIdNum);
       return NextResponse.json({ tokens });
     }
 
