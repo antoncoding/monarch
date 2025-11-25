@@ -147,7 +147,7 @@ export const networks: NetworkConfig[] = [
   {
     network: SupportedNetworks.Monad,
     chain: monad,
-    logo: require('../imgs/chains/monad.png') as string,
+    logo: require('../imgs/chains/monad.svg') as string,
     name: 'Monad',
     defaultRPC: `https://monad-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     blocktime: 1,
