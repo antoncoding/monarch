@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       chainIdNum === SupportedNetworks.HyperEVM || 
       chainIdNum === SupportedNetworks.Monad
     ) {
-      const tokens = await getKnownBalancesWithClient(address, tokenAddresses, SupportedNetworks.HyperEVM);
+      const tokens = await getKnownBalancesWithClient(address, tokenAddresses, chainIdNum);
       return NextResponse.json({ tokens });
     }
 

@@ -184,7 +184,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                 try {
                   console.log(`Attempting to fetch markets via Morpho API for ${network}`);
                   networkMarkets = await fetchMorphoMarkets(network);
-                  console.log()
                 } catch (morphoError) {
                   trySubgraph = true
                   console.error(
