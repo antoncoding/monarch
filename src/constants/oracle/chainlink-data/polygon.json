@@ -44,6 +44,17 @@
     "isSVR": false
   },
   {
+    "ens": "ybtc-btc",
+    "heartbeat": 86400,
+    "path": "ybtc-btc",
+    "proxyAddress": "0xB07E55f850228977a7B32ef9Ac519fee41B45d7d",
+    "threshold": 0.05,
+    "feedCategory": "high",
+    "baseAsset": "YBTC",
+    "quoteAsset": "BTC",
+    "isSVR": false
+  },
+  {
     "ens": "wbtc-btc",
     "heartbeat": 86400,
     "path": "wbtc-btc",
@@ -172,6 +183,17 @@
     "threshold": 0.5,
     "feedCategory": "medium",
     "baseAsset": "LBTC",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "dola-usd",
+    "heartbeat": 86400,
+    "path": "dola-usd",
+    "proxyAddress": "0x39a65EB47827fC6A3e1b62Ea6f8a54e130E20611",
+    "threshold": 0.5,
+    "feedCategory": "medium",
+    "baseAsset": "DOLA",
     "quoteAsset": "USD",
     "isSVR": false
   },

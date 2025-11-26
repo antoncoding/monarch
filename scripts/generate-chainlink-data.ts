@@ -42,6 +42,8 @@ const ENDPOINTS = {
   base: 'https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-base-1.json',
   polygon: 'https://reference-data-directory.vercel.app/feeds-polygon-mainnet-katana.json',
   arbitrum: 'https://reference-data-directory.vercel.app/feeds-ethereum-mainnet-arbitrum-1.json',
+  hyperevm: 'https://reference-data-directory.vercel.app/feeds-hyperliquid-mainnet.json',
+  monad: 'https://reference-data-directory.vercel.app/feeds-monad-mainnet.json',
 } as const;
 
 const cleanOracleEntry = (entry: RawOracleEntry): CleanOracleEntry => {

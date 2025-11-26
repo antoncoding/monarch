@@ -1,7 +1,9 @@
 import { isSupportedChain, SupportedNetworks } from '@/utils/networks';
 import arbitrumRawData from './arbitrum.json';
 import baseRawData from './base.json';
+import hyperevmRawData from './hyperevm.json';
 import mainnetRawData from './mainnet.json';
+import monadRaw from './monad.json';
 import polygonRawData from './polygon.json';
 import { ChainlinkOracleEntry } from './types';
 
@@ -11,8 +13,8 @@ export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Polygon]: polygonRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Arbitrum]: arbitrumRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Unichain]: [] as ChainlinkOracleEntry[],
-  [SupportedNetworks.HyperEVM]: [] as ChainlinkOracleEntry[],
-  [SupportedNetworks.Monad]: [] as ChainlinkOracleEntry[],
+  [SupportedNetworks.HyperEVM]: hyperevmRawData as ChainlinkOracleEntry[],
+  [SupportedNetworks.Monad]: monadRaw as ChainlinkOracleEntry[],
 } as const;
 
 export const getAllOracles = (): Record<SupportedNetworks, ChainlinkOracleEntry[]> =>
@@ -56,6 +58,12 @@ export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
   }
   if (chainId === SupportedNetworks.Arbitrum) {
     return `https://data.chain.link/feeds/arbitrum/mainnet/${ens}`;
+  }
+  if (chainId === SupportedNetworks.HyperEVM) {
+    return `https://data.chain.link/feeds/hyperliquid/mainnet/${ens}`
+  }
+  if (chainId === SupportedNetworks.Monad) {
+    return `https://data.chain.link/feeds/monad/mainnet/${ens}`;
   }
   return '';
 };

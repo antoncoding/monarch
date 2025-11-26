@@ -291,6 +291,16 @@
   },
   {
     "ens": null,
+    "path": "milli-usd-datalink-dexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "MILLI",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "brbtc-usd-datalink-dexprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -326,6 +336,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "HUMA",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "m-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "M",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -411,6 +431,16 @@
   },
   {
     "ens": null,
+    "path": "googlx-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "GOOGLx",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "axl-usd-refprice-mainnet-staging",
     "proxyAddress": "",
     "threshold": 0,
@@ -435,7 +465,7 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "METAX",
+    "baseAsset": "METAx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -466,6 +496,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "SKL",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "mon-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "MON",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -551,6 +591,16 @@
   },
   {
     "ens": null,
+    "path": "xvs-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XVS",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "bal-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -581,6 +631,16 @@
   },
   {
     "ens": null,
+    "path": "xpl-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XPL",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "sushi-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -596,6 +656,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "AIXBT",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "-g-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "0G",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -786,6 +856,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "METIS",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "cusdo-usd-streams-dexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "CUSDO",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1011,31 +1091,11 @@
   },
   {
     "ens": null,
-    "path": "usd-usd-refprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "USD1",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "lbtc-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "LBTC",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
-    "path": "bone-usd-refprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "BONE",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1085,7 +1145,7 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "AMZNX",
+    "baseAsset": "AMZNx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1111,11 +1171,31 @@
   },
   {
     "ens": null,
+    "path": "avnt-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "AVNT",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "om-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "OM",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "btcb-usd-streams-dexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "BTCB",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1165,7 +1245,7 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "MSTRX",
+    "baseAsset": "MSTRx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1181,11 +1261,11 @@
   },
   {
     "ens": null,
-    "path": "neiroeth-usd-refprice-mainnet-production",
+    "path": "usol-usd-streams-cexprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "NEIROETH",
+    "baseAsset": "USOL",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1326,6 +1406,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "KMNO",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "linea-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "LINEA",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1531,21 +1621,21 @@
   },
   {
     "ens": null,
-    "path": "myx-usd-streams-dexprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "MYX",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "griffain-usd-refprice-mainnet-staging",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "GRIFFAIN",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "aster-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "ASTER",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1571,16 +1661,6 @@
   },
   {
     "ens": null,
-    "path": "omg-usd-refprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "OMG",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "zbtc-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -1595,7 +1675,7 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "NVDAX",
+    "baseAsset": "NVDAx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1605,7 +1685,17 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "QQQX",
+    "baseAsset": "QQQx",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "ubtc-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "UBTC",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1671,31 +1761,11 @@
   },
   {
     "ens": null,
-    "path": "wen-usd-refprice-mainnet-staging",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "WEN",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "hbar-usd-refprice-mainnet-staging",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "HBAR",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
-    "path": "neiroeth-usd-refprice-mainnet-staging",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "NEIROETH",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1737,26 +1807,6 @@
     "feedCategory": "",
     "baseAsset": "",
     "quoteAsset": "",
-    "isSVR": false
-  },
-  {
-    "ens": null,
-    "path": "manyu-usd-streams-dexprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "MANYU",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
-    "path": "meth-usd-refprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "METH",
-    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -2031,11 +2081,21 @@
   },
   {
     "ens": null,
+    "path": "pbtc-usd-streams-dexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "PBTC",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "aaplx-usd-streams-cexprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "AAPLX",
+    "baseAsset": "AAPLx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2056,16 +2116,6 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "FRAX",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
-    "path": "vsol-usd-refprice-mainnet-production",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "VSOL",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2096,6 +2146,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "AERO",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usdh-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USDH",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2175,7 +2235,17 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "SPYX",
+    "baseAsset": "SPYx",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "myx-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "MYX",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2215,7 +2285,7 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "COINX",
+    "baseAsset": "COINx",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2266,6 +2336,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "BNSOL",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "ueth-usd-streams-cexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "UETH",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2471,6 +2551,16 @@
   },
   {
     "ens": null,
+    "path": "wbtc-uniswap-usd-streams-dexprice-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "WBTC.UNISWAP",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "bat-usd-refprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -2521,6 +2611,16 @@
   },
   {
     "ens": null,
+    "path": "xyz100-usdc-datalink-hyperliquid-fundingrate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XYZ100",
+    "quoteAsset": "USDC",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "sol-usdt-binance-fundingrate-mainnet-staging",
     "proxyAddress": "",
     "threshold": 0,
@@ -2537,6 +2637,36 @@
     "feedCategory": "low",
     "baseAsset": "BTC",
     "quoteAsset": "USDT",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "ena-usdc-datalink-hyperliquid-fundingrate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "ENA",
+    "quoteAsset": "USDC",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "hype-usdc-datalink-hyperliquid-fundingrate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "HYPE",
+    "quoteAsset": "USDC",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "sol-usdc-datalink-hyperliquid-fundingrate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "SOL",
+    "quoteAsset": "USDC",
     "isSVR": false
   },
   {
@@ -2701,12 +2831,32 @@
   },
   {
     "ens": null,
+    "path": "alp-sol-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "ALP",
+    "quoteAsset": "SOL",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "sdeusd-deusd-exrate-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "medium",
     "baseAsset": "SDEUSD",
     "quoteAsset": "DEUSD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "susdu-usdu-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "sUSDu ",
+    "quoteAsset": "USDU",
     "isSVR": false
   },
   {
@@ -2721,12 +2871,12 @@
   },
   {
     "ens": null,
-    "path": "syrupusdc-usdc-exrate-deprecated-mainnet-production",
+    "path": "flp-usd-streams-exchangerate-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "medium",
-    "baseAsset": "SyrupUSDC",
-    "quoteAsset": "USDC",
+    "baseAsset": "FLP.1",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -2741,6 +2891,16 @@
   },
   {
     "ens": null,
+    "path": "inf-sol-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "INF",
+    "quoteAsset": "SOL",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "wsrusd-rusd-streams-exchangerate-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -2751,11 +2911,41 @@
   },
   {
     "ens": null,
+    "path": "unibtc-btc-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "UNIBTC",
+    "quoteAsset": "BTC",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "usr-usd-streams-exchangerate-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "medium",
     "baseAsset": "USR",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "flp-1-sol-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "FLP.1",
+    "quoteAsset": "SOL",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "alp-usd-streams-exchangerate-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "medium",
+    "baseAsset": "ALP",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -2871,6 +3061,16 @@
   },
   {
     "ens": null,
+    "path": "pltr-usd-streams-equityprice-timestamped-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "PLTR",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "vtv-usd-streams-equityprice-timestamped-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -2956,6 +3156,16 @@
     "threshold": 0,
     "feedCategory": "low",
     "baseAsset": "BRKB",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "sbet-usd-streams-equityprice-timestamped-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "SBET",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -3391,6 +3601,16 @@
   },
   {
     "ens": null,
+    "path": "usd-krw-streams-forexprice-timestamped-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "KRW",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "avgo-usd-streams-equityprice-timestamped-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -3551,6 +3771,36 @@
   },
   {
     "ens": null,
+    "path": "crclx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "CRCLx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "spyx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "SPYx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "aaplx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "AAPLx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "onre-nav-usd-streams-netassetvalue-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
@@ -3561,11 +3811,81 @@
   },
   {
     "ens": null,
+    "path": "mstrx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "MSTRx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "nvdax-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "NVDAx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "metax-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "METAx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "coinx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "COINx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
     "path": "udg-por-datalink-proofofreserves-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "custom",
     "baseAsset": "UDG",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "googlx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "GOOGLx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "tslax-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "TSLAx",
+    "quoteAsset": "POR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "qqqx-por-datalink-proofofreserves-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "custom",
+    "baseAsset": "QQQx",
     "quoteAsset": "POR",
     "isSVR": false
   },
@@ -3700,6 +4020,406 @@
     "isSVR": false
   },
   {
+    "ens": null,
+    "path": "db1-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "DB1",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "ads-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "ADS",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "fsxe-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "FSXE",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-try-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "TRY",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-cnh-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "CNH",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "eun5-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "EUN5",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "1nba-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "1NBA",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "sxr8-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "SXR8",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "dbxd-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "DBXD",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-thb-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "THB",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "sie-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "SIE",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "sap-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "SAP",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "moh-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "MOH",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "air-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "AIR",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "eur-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "EUR",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "xau-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XAU",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-jpy-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "JPY",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-ils-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "ILS",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-sek-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "SEK",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-pln-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "PLN",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "xpd-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XPD",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "is3n-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "IS3N",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "fsms-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "FSMS",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-cad-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "CAD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-inr-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "INR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-sgd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "SGD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "eni-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "ENI",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-zar-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "ZAR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-hkd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "HKD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-nok-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "NOK",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-dkk-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "DKK",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "ies-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "IES",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-chf-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "CHF",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-czk-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "CZK",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "usd-mxn-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "USD",
+    "quoteAsset": "MXN",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "xag-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XAG",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "xpt-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "XPT",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "fdxs-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "FDXS",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "gbp-usd-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "GBP",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "path": "lysx-eur-datalink-deutscheboerse-mainnet-production",
+    "proxyAddress": "",
+    "threshold": 0,
+    "feedCategory": "low",
+    "baseAsset": "LYSX",
+    "quoteAsset": "EUR",
+    "isSVR": false
+  },
+  {
     "ens": "aapl-usd",
     "heartbeat": 86400,
     "path": "aapl-usd",
@@ -3707,6 +4427,17 @@
     "threshold": 0.5,
     "feedCategory": "low",
     "baseAsset": "AAPL",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "ab-usd",
+    "heartbeat": 86400,
+    "path": "ab-usd",
+    "proxyAddress": "0x3d9145b5804E13Bc14d19c3DDbd3DA8fD02b5034",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "AB",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -3796,6 +4527,17 @@
     "feedCategory": "custom",
     "baseAsset": "wstUSR",
     "quoteAsset": "stUSR",
+    "isSVR": false
+  },
+  {
+    "ens": "aoabt-reserves",
+    "heartbeat": 86400,
+    "path": "aoabt-por",
+    "proxyAddress": "0x496DC5AAbf2f118D78816B7358e69dC784D3De65",
+    "threshold": 0.01,
+    "feedCategory": "custom",
+    "baseAsset": "AoABT",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -3909,6 +4651,17 @@
     "isSVR": false
   },
   {
+    "ens": "tac-usd",
+    "heartbeat": 86400,
+    "path": "tac-usd",
+    "proxyAddress": "0x3815dd45CDe3BfAf1E3db6D7FF9EF3b437d6D0E0",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "TAC",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "googl-usd",
     "heartbeat": 86400,
     "path": "googl-usd",
@@ -3982,6 +4735,17 @@
     "threshold": 0.3,
     "feedCategory": "low",
     "baseAsset": "CNY",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "kaia-usd",
+    "heartbeat": 86400,
+    "path": "kaia-usd",
+    "proxyAddress": "0x413b219D371C352f6d1E9A39f5CE4c869EdA9476",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "KAIA",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -4090,7 +4854,7 @@
     "path": "deusd-usd",
     "proxyAddress": "0xa2b9BFb5CE1c7ABBC6609de17e5968eA2c20a5f1",
     "threshold": 0.5,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "DEUSD",
     "quoteAsset": "USD",
     "isSVR": false
@@ -4118,12 +4882,23 @@
     "isSVR": false
   },
   {
+    "ens": "ton-usd",
+    "heartbeat": 86400,
+    "path": "ton-usd",
+    "proxyAddress": "0x0301e5D0A8f7490444ebd1921E3d0f0fe7722786",
+    "threshold": 0.5,
+    "feedCategory": "low",
+    "baseAsset": "TON",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "anon-usd",
     "heartbeat": 86400,
     "path": "anon-usd",
     "proxyAddress": "0x38ACD8CA9612737D2Ba42881b544626A8E18b061",
     "threshold": 0.5,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "ANON",
     "quoteAsset": "USD",
     "isSVR": false
@@ -4469,8 +5244,8 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "",
-    "quoteAsset": "",
+    "baseAsset": "PENDLE",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -4995,16 +5770,6 @@
   },
   {
     "ens": null,
-    "path": "omni-usd-premium-staging-experimental",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "OMNI",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "moodeng-usd-premium-staging-experimental-v03",
     "proxyAddress": "",
     "threshold": 0,
@@ -5369,8 +6134,8 @@
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
-    "baseAsset": "",
-    "quoteAsset": "",
+    "baseAsset": "DAI",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -5907,6 +6672,17 @@
     "isSVR": false
   },
   {
+    "ens": "0g-usd",
+    "heartbeat": 86400,
+    "path": "0g-usd",
+    "proxyAddress": "0x47C38C695639aE97A00f57D6D9f5ece1DebB033C",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "0G",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "aud-usd",
     "heartbeat": 86400,
     "path": "aud-usd",
@@ -5915,6 +6691,17 @@
     "feedCategory": "low",
     "baseAsset": "AUD",
     "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "aave-network-emergency-count-arbitrum",
+    "heartbeat": 86400,
+    "path": "aave-network-emergency-count-arbitrum",
+    "proxyAddress": "0x0d20576Fae18e89A28e75B63BFce5D1B8586d739",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -6083,6 +6870,17 @@
     "isSVR": false
   },
   {
+    "ens": "glv-btcusdc-usd",
+    "heartbeat": 86400,
+    "path": "glv-btc-usdc-usd",
+    "proxyAddress": "0x88d7538A4cD2664FCd610FE2a39b9ac01E430d3e",
+    "threshold": 0.25,
+    "feedCategory": "new",
+    "baseAsset": "GLV",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "gns-usd",
     "heartbeat": 86400,
     "path": "gns-usd",
@@ -6102,6 +6900,17 @@
     "feedCategory": "deprecating",
     "baseAsset": "",
     "quoteAsset": "",
+    "isSVR": false
+  },
+  {
+    "ens": "usdai-usd",
+    "heartbeat": 86400,
+    "path": "usdai-usd",
+    "proxyAddress": "0xF3d6b05E69918d71807Ab005791daCcEC5de8C78",
+    "threshold": 0.5,
+    "feedCategory": "high",
+    "baseAsset": "USDAI",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -6879,16 +7688,6 @@
   },
   {
     "ens": null,
-    "path": "omni-usd-premium-prod-v03",
-    "proxyAddress": "",
-    "threshold": 0,
-    "feedCategory": "low",
-    "baseAsset": "OMNI",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": null,
     "path": "icp-usd-premium-prod",
     "proxyAddress": "",
     "threshold": 0,
@@ -7109,7 +7908,7 @@
   },
   {
     "ens": null,
-    "path": "ai16z-usd-premium-prod-v03",
+    "path": "ai16z-usd-streams-dexprice-mainnet-production",
     "proxyAddress": "",
     "threshold": 0,
     "feedCategory": "low",
@@ -7674,7 +8473,7 @@
     "path": "mkr-usd",
     "proxyAddress": "0xdE9f0894670c4EFcacF370426F10C3AD2Cdf147e",
     "threshold": 0.5,
-    "feedCategory": "low",
+    "feedCategory": "high",
     "baseAsset": "MKR",
     "quoteAsset": "USD",
     "isSVR": false
@@ -7731,6 +8530,17 @@
     "threshold": 0.3,
     "feedCategory": "medium",
     "baseAsset": "FRAX",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "syrupusdt-usd-exchange-rate",
+    "heartbeat": 86400,
+    "path": "syrupusdt-usd-exchange-rate",
+    "proxyAddress": "0xdB0c64eFa0395063033b10769A80c62F885A620a",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "syrupUSDT",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -7905,7 +8715,7 @@
     "path": "iotx-usd",
     "proxyAddress": "0x484A1b29ED1Ea038dBd75D7c7293714343363122",
     "threshold": 0.5,
-    "feedCategory": "medium",
+    "feedCategory": "deprecating",
     "baseAsset": "IOTX",
     "quoteAsset": "USD",
     "isSVR": false
@@ -7916,7 +8726,7 @@
     "path": "mvi-usd",
     "proxyAddress": "0x87B679C03e9672Af516a9E08085e1F4FA1722A3D",
     "threshold": 0.5,
-    "feedCategory": "hidden",
+    "feedCategory": "deprecating",
     "baseAsset": "MVI",
     "quoteAsset": "USD",
     "isSVR": false
@@ -7952,17 +8762,6 @@
     "feedCategory": "high",
     "baseAsset": "solvBTC",
     "quoteAsset": "BTC",
-    "isSVR": false
-  },
-  {
-    "ens": "ftm-usd",
-    "heartbeat": 86400,
-    "path": "ftm-usd",
-    "proxyAddress": "0xFeaC1A3936514746e70170c0f539e70b23d36F19",
-    "threshold": 0.5,
-    "feedCategory": "high",
-    "baseAsset": "FTM",
-    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -8169,7 +8968,7 @@
     "path": "btc-usd-marketcap",
     "proxyAddress": "0x7519bCA20e21725557Bb98d9032124f8885a26C2",
     "threshold": 0.5,
-    "feedCategory": "custom",
+    "feedCategory": "deprecating",
     "baseAsset": "BTC",
     "quoteAsset": "USD",
     "isSVR": false
@@ -8367,7 +9166,7 @@
     "path": "usdx-usd",
     "proxyAddress": "0x68148201f743eFE9AfC2Bc62F9d6D5672d118Bb3",
     "threshold": 0.5,
-    "feedCategory": "",
+    "feedCategory": "deprecating",
     "baseAsset": "",
     "quoteAsset": "",
     "isSVR": false
@@ -8384,6 +9183,17 @@
     "isSVR": false
   },
   {
+    "ens": "glv-wethusdc-usd",
+    "heartbeat": 86400,
+    "path": "glv-weth-usdc-usd",
+    "proxyAddress": "0xF9329B38084cbE893894F19a518Fc6Cd306D9930",
+    "threshold": 0.25,
+    "feedCategory": "new",
+    "baseAsset": "GLV",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "weeth-eth",
     "heartbeat": 86400,
     "path": "weeth-eth",
@@ -8392,6 +9202,17 @@
     "feedCategory": "medium",
     "baseAsset": "weETH",
     "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "aoabt-nav",
+    "heartbeat": 86400,
+    "path": "aoabt-nav",
+    "proxyAddress": "0x36194c6DBB4218036d5f1ef070e9900896f84e06",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "AoABT",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -8527,6 +9348,17 @@
     "isSVR": false
   },
   {
+    "ens": "fragsol-sol-exchange-rate",
+    "heartbeat": 86400,
+    "path": "fragsol-sol-exchange-rate",
+    "proxyAddress": "0xF230542B263Ad8F37a4c6d640F42BcE2Ec7C6cA3",
+    "threshold": 0.1,
+    "feedCategory": "custom",
+    "baseAsset": "fragSOL",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "l2-sequencer-uptime-status-feed",
     "path": "l2-sequencer-uptime-status-feed",
     "proxyAddress": "0xFdB631F5EE196F0ed6FAa767959853A9F217697D",
@@ -8553,7 +9385,7 @@
     "path": "eth-usd-marketcap",
     "proxyAddress": "0xB1f70A229FE7cceD0428245db8B1f6C48c7Ea82a",
     "threshold": 2,
-    "feedCategory": "custom",
+    "feedCategory": "deprecating",
     "baseAsset": "ETH",
     "quoteAsset": "USD",
     "isSVR": false
@@ -8636,6 +9468,17 @@
     "isSVR": false
   },
   {
+    "ens": "s-usd",
+    "heartbeat": 86400,
+    "path": "s-usd",
+    "proxyAddress": "0xFeaC1A3936514746e70170c0f539e70b23d36F19",
+    "threshold": 0.5,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "trump-usd",
     "heartbeat": 86400,
     "path": "trump-usd",
@@ -8676,6 +9519,17 @@
     "threshold": 0.3,
     "feedCategory": "medium",
     "baseAsset": "STETH",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "xpl-usd",
+    "heartbeat": 86400,
+    "path": "xpl-usd",
+    "proxyAddress": "0x1b47b4124b9A5094C59710E6b9126e5e32a4fb8E",
+    "threshold": 0.5,
+    "feedCategory": "low",
+    "baseAsset": "XPL",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -8845,6 +9699,28 @@
     "isSVR": false
   },
   {
+    "ens": "aoabtb-nav",
+    "heartbeat": 86400,
+    "path": "aoabtb-nav",
+    "proxyAddress": "0xC1D05bAd3Acd3D11329c9A6e417A613d32aC4a78",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "AoABTb",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "eth-usd-svr",
+    "proxyAddress": "0xAfF2135E3CE17578929C0ab714e2923f0C40b0DC",
+    "threshold": 0.05,
+    "feedCategory": "low",
+    "baseAsset": "ETH",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
     "ens": "teth-wsteth-exchange-rate",
     "heartbeat": 86400,
     "path": "teth-wsteth-exchange-rate",
@@ -8929,6 +9805,17 @@
     "threshold": 0.5,
     "feedCategory": "low",
     "baseAsset": "APT",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "susdai-usd",
+    "heartbeat": 86400,
+    "path": "susdai-usd",
+    "proxyAddress": "0x021126143D0B6e20Bb69beFcc860e7E523df8055",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "SUSDAI",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -9230,6 +10117,17 @@
     "isSVR": false
   },
   {
+    "ens": "mon-usd",
+    "heartbeat": 86400,
+    "path": "mon-usd",
+    "proxyAddress": "0x0225781042C46dB247e009FFEAd5aEf044f3E7BE",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "MON",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "ada-usd",
     "heartbeat": 86400,
     "path": "ada-usd",
@@ -9359,17 +10257,6 @@
     "feedCategory": "custom",
     "baseAsset": "frxETH",
     "quoteAsset": "ETH",
-    "isSVR": false
-  },
-  {
-    "ens": "usdv-usd",
-    "heartbeat": 86400,
-    "path": "usdv-usd",
-    "proxyAddress": "0x7Fa028B87e73deb66DcFf9Fa40f4C7C6Dd2Fd254",
-    "threshold": 1,
-    "feedCategory": "hidden",
-    "baseAsset": "USDV",
-    "quoteAsset": "USD",
     "isSVR": false
   }
 ]
