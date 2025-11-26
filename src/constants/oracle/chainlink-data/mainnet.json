@@ -44,14 +44,14 @@
     "isSVR": false
   },
   {
-    "ens": "ethfi-usd",
-    "heartbeat": 86400,
-    "path": "ethfi-usd",
-    "proxyAddress": "0x19678515847d8DE85034dAD0390e09c3048d31cd",
-    "threshold": 2,
-    "feedCategory": "low",
-    "baseAsset": "ETHFI",
-    "quoteAsset": "USD",
+    "ens": "vbill-nav-aave-llamaguard",
+    "heartbeat": 97200,
+    "path": "vbill-nav-aave-llamaguard",
+    "proxyAddress": "0x5ed77a9D9b7cc80E9d0D7711024AF38C2643C1c4",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "VBILL NAV",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -71,7 +71,7 @@
     "path": "deusd-usd",
     "proxyAddress": "0x471a6299C027Bd81ed4D66069dc510Bd0569f4F8",
     "threshold": 0.5,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "DEUSD",
     "quoteAsset": "USD",
     "isSVR": false
@@ -110,14 +110,14 @@
     "isSVR": false
   },
   {
-    "ens": "neiro-usd",
+    "ens": "usdd-usdc-exchange-rate",
     "heartbeat": 86400,
-    "path": "neiro-usd",
-    "proxyAddress": "0x771cf56aE75bC907193177237b423A9DA831280A",
-    "threshold": 2,
-    "feedCategory": "medium",
-    "baseAsset": "NEIRO",
-    "quoteAsset": "USD",
+    "path": "usdd-usdc-exchange-rate",
+    "proxyAddress": "0xBfC7d98Eea35380ceEC0a1DC1702Ea186723602C",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "USDD",
+    "quoteAsset": "USDC",
     "isSVR": false
   },
   {
@@ -173,17 +173,6 @@
     "feedCategory": "medium",
     "baseAsset": "weETH",
     "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": "jaaa-nav",
-    "heartbeat": 86400,
-    "path": "jaaa-nav-aave-llamarisk",
-    "proxyAddress": "0x1E41Ef40AC148706c114534E8192Ca608f80fC48",
-    "threshold": 1e-7,
-    "feedCategory": "custom",
-    "baseAsset": "JAAA",
-    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -250,6 +239,17 @@
     "feedCategory": "medium",
     "baseAsset": "SUSHI",
     "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
+    "ens": "cusdo-usd",
+    "heartbeat": 86400,
+    "path": "cusdo-usd",
+    "proxyAddress": "0x5b79480BbF13930B777B2Cb9Ca8d664B7AA3aa6a",
+    "threshold": 0.5,
+    "feedCategory": "high",
+    "baseAsset": "CUSDO",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -407,6 +407,17 @@
     "isSVR": false
   },
   {
+    "ens": "ustb-nav-aave-llamaguard",
+    "heartbeat": 97200,
+    "path": "ustb-nav-aave-llamaguard",
+    "proxyAddress": "0xde49c7B5C0E54b1624ED21C7D88bA6593d444Aa0",
+    "threshold": 1e-7,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "usdc-eth",
     "heartbeat": 86400,
     "path": "usdc-eth",
@@ -462,6 +473,17 @@
     "isSVR": false
   },
   {
+    "ens": "uscc-nav-aave-llamaguard",
+    "heartbeat": 97200,
+    "path": "uscc-nav-aave-llamaguard",
+    "proxyAddress": "0x19e2d716288751c5A59deaB61af012D5DF895962",
+    "threshold": 1e-7,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "calculated-xsushi-eth",
     "heartbeat": 86400,
     "path": "calc-xsushi-eth",
@@ -492,6 +514,17 @@
     "feedCategory": "medium",
     "baseAsset": "LINK",
     "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
+    "ens": "dta-live-simulation",
+    "heartbeat": 100800,
+    "path": "dta-live-simulation",
+    "proxyAddress": "0x1e4A7099B1aadb303378C496A256697dFE452F51",
+    "threshold": 1e-7,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -572,13 +605,13 @@
     "isSVR": false
   },
   {
-    "ens": "uscc-nav-aave-llamarisk",
+    "ens": "usyc-nav-aave-llamaguard",
     "heartbeat": 97200,
-    "path": "uscc-nav-aave-llamarisk",
-    "proxyAddress": "0x19e2d716288751c5A59deaB61af012D5DF895962",
+    "path": "usyc-nav-aave-llamaguard",
+    "proxyAddress": "0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9",
     "threshold": 1e-7,
-    "feedCategory": "custom",
-    "baseAsset": "USCC",
+    "feedCategory": "",
+    "baseAsset": "",
     "quoteAsset": "",
     "isSVR": false
   },
@@ -616,6 +649,17 @@
     "isSVR": false
   },
   {
+    "ens": "jaaa-nav-aave-llamaguard",
+    "heartbeat": 86400,
+    "path": "jaaa-nav-aave-llamaguard",
+    "proxyAddress": "0x1E41Ef40AC148706c114534E8192Ca608f80fC48",
+    "threshold": 1e-7,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "zbu-usd",
     "heartbeat": 86400,
     "path": "zbu-usd",
@@ -634,6 +678,17 @@
     "threshold": 0.5,
     "feedCategory": "custom",
     "baseAsset": "cbBTC",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
+    "ens": "crdt-nav",
+    "heartbeat": 86400,
+    "path": "crdt-nav",
+    "proxyAddress": "0x13376a8e614FBc0942F62fA57E8938FD8AB6a2A1",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "CRDT",
     "quoteAsset": "",
     "isSVR": false
   },
@@ -671,6 +726,17 @@
     "isSVR": false
   },
   {
+    "ens": "ust-eth",
+    "heartbeat": 86400,
+    "path": "ust-eth",
+    "proxyAddress": "0xa20623070413d42a5C01Db2c8111640DD7A5A03a",
+    "threshold": 3,
+    "feedCategory": "medium",
+    "baseAsset": "UST",
+    "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
     "ens": null,
     "heartbeat": 3600,
     "path": "comp-usd-shared-svr",
@@ -687,7 +753,7 @@
     "path": "avail-usd",
     "proxyAddress": "0xEBca574f1cE4d17cd02c20F47Ef8210C08Cc4255",
     "threshold": 2,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "AVAIL",
     "quoteAsset": "USD",
     "isSVR": false
@@ -825,17 +891,6 @@
     "isSVR": false
   },
   {
-    "ens": "mim-usd",
-    "heartbeat": 86400,
-    "path": "mim-usd",
-    "proxyAddress": "0x7A364e8770418566e3eb2001A96116E6138Eb32F",
-    "threshold": 0.5,
-    "feedCategory": "",
-    "baseAsset": "MIM",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
     "ens": "metis-healthcheck",
     "heartbeat": 86400,
     "path": "metis-hc",
@@ -926,7 +981,7 @@
   {
     "ens": "uscc-nav",
     "heartbeat": 95400,
-    "path": "uscc-nav",
+    "path": "uscc-nav-per-share",
     "proxyAddress": "0xAfFd8F5578E8590665de561bdE9E7BAdb99300d9",
     "threshold": 1e-7,
     "feedCategory": "custom",
@@ -1009,6 +1064,17 @@
     "feedCategory": "custom",
     "baseAsset": "SUSD1+",
     "quoteAsset": "USD1",
+    "isSVR": false
+  },
+  {
+    "ens": "dola-usd",
+    "heartbeat": 86400,
+    "path": "dola-usd",
+    "proxyAddress": "0xE33592594f72Cc7ec8a05788be8E8455746C3a32",
+    "threshold": 0.5,
+    "feedCategory": "medium",
+    "baseAsset": "DOLA",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -1149,9 +1215,20 @@
     "path": "mkr-eth",
     "proxyAddress": "0x24551a8Fb2A7211A25a17B1481f043A8a8adC7f2",
     "threshold": 1,
-    "feedCategory": "medium",
+    "feedCategory": "high",
     "baseAsset": "MKR",
     "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
+    "ens": "susdd-usdd-exchange-rate",
+    "heartbeat": 86400,
+    "path": "susdd-usdd-exchange-rate",
+    "proxyAddress": "0xB51dB716F1558Be00dE3DdAe4a94C9b605dEA526",
+    "threshold": 0.5,
+    "feedCategory": "custom",
+    "baseAsset": "sUSDD",
+    "quoteAsset": "USDD",
     "isSVR": false
   },
   {
@@ -1199,15 +1276,15 @@
     "isSVR": false
   },
   {
-    "ens": "jtrsy-nav",
-    "heartbeat": 97200,
-    "path": "jtrsy-nav-aave-llamarisk",
-    "proxyAddress": "0x23adce82907D20c509101E2Af0723A9e16224EFb",
-    "threshold": 1e-7,
-    "feedCategory": "custom",
-    "baseAsset": "JTRSY",
-    "quoteAsset": "",
-    "isSVR": false
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "usdt-usd-shared-svr",
+    "proxyAddress": "0xe108E75d6bA28F14EA51F24F886c0B6BBeca575a",
+    "threshold": 0.25,
+    "feedCategory": "low",
+    "baseAsset": "USDT",
+    "quoteAsset": "USD",
+    "isSVR": true
   },
   {
     "ens": "usr-usd",
@@ -1243,6 +1320,17 @@
     "isSVR": false
   },
   {
+    "ens": "usdd-usdt-exchange-rate",
+    "heartbeat": 86400,
+    "path": "usdd-usdt-exchange-rate",
+    "proxyAddress": "0x014f606c37Cfd6Fc42Ec11D10086DF500125e0A5",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "USDD",
+    "quoteAsset": "USDT",
+    "isSVR": false
+  },
+  {
     "ens": "busd-usd",
     "heartbeat": 86400,
     "path": "busd-usd",
@@ -1272,6 +1360,17 @@
     "threshold": 0.5,
     "feedCategory": "low",
     "baseAsset": "ETH",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
+    "ens": null,
+    "heartbeat": 82800,
+    "path": "usdc-usd-shared-svr",
+    "proxyAddress": "0x84E045745ED829c5b778aBB17104FC2600020850",
+    "threshold": 0.25,
+    "feedCategory": "low",
+    "baseAsset": "USDC",
     "quoteAsset": "USD",
     "isSVR": true
   },
@@ -1316,17 +1415,6 @@
     "threshold": 2,
     "feedCategory": "medium",
     "baseAsset": "SWELL",
-    "quoteAsset": "ETH",
-    "isSVR": false
-  },
-  {
-    "ens": "ftm-eth",
-    "heartbeat": 86400,
-    "path": "ftm-eth",
-    "proxyAddress": "0x2DE7E4a9488488e0058B95854CC2f7955B35dC9b",
-    "threshold": 3,
-    "feedCategory": "high",
-    "baseAsset": "FTM",
     "quoteAsset": "ETH",
     "isSVR": false
   },
@@ -1438,17 +1526,6 @@
     "feedCategory": "medium",
     "baseAsset": "DAI",
     "quoteAsset": "ETH",
-    "isSVR": false
-  },
-  {
-    "ens": "ustb-aum",
-    "heartbeat": 93600,
-    "path": "ustb-aum",
-    "proxyAddress": "0xf3Ab3e54DE3b4BCaEbef6C66Cec0a3a88f262757",
-    "threshold": 1e-7,
-    "feedCategory": "custom",
-    "baseAsset": "USTB",
-    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -1617,17 +1694,6 @@
     "isSVR": false
   },
   {
-    "ens": "ust-eth",
-    "heartbeat": 86400,
-    "path": "ust-eth",
-    "proxyAddress": "0xa20623070413d42a5C01Db2c8111640DD7A5A03a",
-    "threshold": 3,
-    "feedCategory": "medium",
-    "baseAsset": "UST",
-    "quoteAsset": "ETH",
-    "isSVR": false
-  },
-  {
     "ens": "eur-usd",
     "heartbeat": 86400,
     "path": "eur-usd",
@@ -1716,17 +1782,6 @@
     "isSVR": false
   },
   {
-    "ens": "stbt-por",
-    "heartbeat": 86400,
-    "path": "stbt-por",
-    "proxyAddress": "0xad4A9bED9a5E2c1c9a6E43D35Db53c83873dd901",
-    "threshold": 0.001,
-    "feedCategory": "custom",
-    "baseAsset": "STBT",
-    "quoteAsset": "",
-    "isSVR": false
-  },
-  {
     "ens": "ftt-eth",
     "heartbeat": 86400,
     "path": "ftt-eth",
@@ -1735,17 +1790,6 @@
     "feedCategory": "medium",
     "baseAsset": "FTT",
     "quoteAsset": "ETH",
-    "isSVR": false
-  },
-  {
-    "ens": "usyc-nav",
-    "heartbeat": 97200,
-    "path": "usyc-nav-aave-llamarisk",
-    "proxyAddress": "0xE8E65Fb9116875012F5990Ecaab290B3531DbeB9",
-    "threshold": 1e-7,
-    "feedCategory": "custom",
-    "baseAsset": "USYC",
-    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -1768,17 +1812,6 @@
     "feedCategory": "low",
     "baseAsset": "PHP",
     "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
-    "ens": "ustb-nav-aave-llamarisk",
-    "heartbeat": 97200,
-    "path": "ustb-nav-aave-llamarisk",
-    "proxyAddress": "0xde49c7B5C0E54b1624ED21C7D88bA6593d444Aa0",
-    "threshold": 0.0001,
-    "feedCategory": "custom",
-    "baseAsset": "USTB",
-    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -1815,6 +1848,17 @@
     "isSVR": false
   },
   {
+    "ens": "cash-nav",
+    "heartbeat": 86400,
+    "path": "cashplus-nav",
+    "proxyAddress": "0x66C0dB1A21047f0c156d2F39b33B1A47E9fE4583",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "CASH+",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "trump-usd",
     "heartbeat": 86400,
     "path": "trump-usd",
@@ -1841,7 +1885,7 @@
     "heartbeat": 86400,
     "path": "wbtc-btc",
     "proxyAddress": "0xfdFD9C85aD200c506Cf9e21F1FD8dd01932FBB23",
-    "threshold": 2,
+    "threshold": 0.5,
     "feedCategory": "medium",
     "baseAsset": "WBTC",
     "quoteAsset": "BTC",
@@ -2287,6 +2331,17 @@
     "feedCategory": "medium",
     "baseAsset": "tBTC",
     "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "m-reserves",
+    "heartbeat": 86400,
+    "path": "m-reserves",
+    "proxyAddress": "0x83BefF09647663136A00cF2C30Ed948FeaffA2a6",
+    "threshold": 0.5,
+    "feedCategory": "custom",
+    "baseAsset": "M",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -2741,6 +2796,17 @@
     "isSVR": false
   },
   {
+    "ens": "jtrsy-nav-aave-llamaguard",
+    "heartbeat": 97200,
+    "path": "jtrsy-nav-aave-llamaguard",
+    "proxyAddress": "0x23adce82907D20c509101E2Af0723A9e16224EFb",
+    "threshold": 1e-7,
+    "feedCategory": "",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "secured-overnight-financing-rate",
     "heartbeat": 86400,
     "path": "sofr-rate",
@@ -2752,20 +2818,9 @@
     "isSVR": false
   },
   {
-    "ens": "ampl-usd",
-    "heartbeat": 172800,
-    "path": "ampl-usd",
-    "proxyAddress": "0xe20CA8D7546932360e37E9D72c1a47334af57706",
-    "threshold": 1000,
-    "feedCategory": "custom",
-    "baseAsset": "AMPL",
-    "quoteAsset": "USD",
-    "isSVR": false
-  },
-  {
     "ens": "ustb-nav-per-share",
     "heartbeat": 95400,
-    "path": "ustb-nav",
+    "path": "ustb-nav-per-share",
     "proxyAddress": "0x289B5036cd942e619E1Ee48670F98d214E745AAC",
     "threshold": 0.0001,
     "feedCategory": "custom",
@@ -2851,6 +2906,17 @@
     "isSVR": true
   },
   {
+    "ens": "xlayer-healthcheck",
+    "heartbeat": 86400,
+    "path": "xlayer-hc",
+    "proxyAddress": "0xa01aFd01f29fd9Cd14f9B6239349219DAE407562",
+    "threshold": 0.5,
+    "feedCategory": "custom",
+    "baseAsset": "",
+    "quoteAsset": "",
+    "isSVR": false
+  },
+  {
     "ens": "zrx-usd",
     "heartbeat": 86400,
     "path": "zrx-usd",
@@ -2867,7 +2933,7 @@
     "path": "mkr-usd",
     "proxyAddress": "0xec1D1B3b0443256cc3860e24a46F108e699484Aa",
     "threshold": 1,
-    "feedCategory": "low",
+    "feedCategory": "high",
     "baseAsset": "MKR",
     "quoteAsset": "USD",
     "isSVR": false

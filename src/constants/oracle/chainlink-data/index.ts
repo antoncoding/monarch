@@ -3,6 +3,8 @@ import arbitrumRawData from './arbitrum.json';
 import baseRawData from './base.json';
 import mainnetRawData from './mainnet.json';
 import polygonRawData from './polygon.json';
+import hyperevmRawData from './hyperevm.json';
+import monadRaw from './monad.json';
 import { ChainlinkOracleEntry } from './types';
 
 export const CHAINLINK_ORACLES = {
@@ -11,8 +13,8 @@ export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Polygon]: polygonRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Arbitrum]: arbitrumRawData as ChainlinkOracleEntry[],
   [SupportedNetworks.Unichain]: [] as ChainlinkOracleEntry[],
-  [SupportedNetworks.HyperEVM]: [] as ChainlinkOracleEntry[],
-  [SupportedNetworks.Monad]: [] as ChainlinkOracleEntry[],
+  [SupportedNetworks.HyperEVM]: hyperevmRawData as ChainlinkOracleEntry[],
+  [SupportedNetworks.Monad]: monadRaw as ChainlinkOracleEntry[],
 } as const;
 
 export const getAllOracles = (): Record<SupportedNetworks, ChainlinkOracleEntry[]> =>

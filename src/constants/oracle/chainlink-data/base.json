@@ -22,6 +22,17 @@
     "isSVR": false
   },
   {
+    "ens": "susdai-usdai-exchange-rate",
+    "heartbeat": 86400,
+    "path": "susdai-usdai-exchange-rate",
+    "proxyAddress": "0x1a42ec779Ed3e5249d9b83Ad6B51492953080Ad9",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "sUSDai",
+    "quoteAsset": "USDai",
+    "isSVR": false
+  },
+  {
     "ens": "axl-usd",
     "heartbeat": 86400,
     "path": "axl-usd",
@@ -42,6 +53,17 @@
     "baseAsset": "wstETH",
     "quoteAsset": "stETH",
     "isSVR": false
+  },
+  {
+    "ens": null,
+    "heartbeat": 3600,
+    "path": "eurc-usd-svr",
+    "proxyAddress": "0x9867186e52d2F1C2c565CDA6E747101Fa56501e0",
+    "threshold": 0.1,
+    "feedCategory": "low",
+    "baseAsset": "EURC",
+    "quoteAsset": "USD",
+    "isSVR": true
   },
   {
     "ens": "susdz-usdz-exchange-rate",
@@ -143,6 +165,17 @@
     "isSVR": false
   },
   {
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "usdc-usd-svr",
+    "proxyAddress": "0x458138Fc0D67027E9A6778ef40a6ffC318c69061",
+    "threshold": 0.3,
+    "feedCategory": "low",
+    "baseAsset": "USDC",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
     "ens": "syrupusdcusdc-exchange-rate",
     "heartbeat": 86400,
     "path": "syrupusdc-usdc-exchange-rate",
@@ -185,6 +218,17 @@
     "baseAsset": "SGD",
     "quoteAsset": "USD",
     "isSVR": false
+  },
+  {
+    "ens": null,
+    "heartbeat": 1200,
+    "path": "btc-usd-svr",
+    "proxyAddress": "0x32F587986D3fb47601157c19615d568BeD0BCabc",
+    "threshold": 0.1,
+    "feedCategory": "low",
+    "baseAsset": "BTC",
+    "quoteAsset": "USD",
+    "isSVR": true
   },
   {
     "ens": "teth-wsteth-exchange-rate",
@@ -316,6 +360,17 @@
     "feedCategory": "medium",
     "baseAsset": "LINK",
     "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
+    "ens": "dola-usd",
+    "heartbeat": 86400,
+    "path": "dola-usd",
+    "proxyAddress": "0x4aEE0164400FE35B6b400F2d767A618Bcb96a02D",
+    "threshold": 0.5,
+    "feedCategory": "medium",
+    "baseAsset": "DOLA",
+    "quoteAsset": "USD",
     "isSVR": false
   },
   {
@@ -528,6 +583,17 @@
     "isSVR": false
   },
   {
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "aave-usd-svr",
+    "proxyAddress": "0x65B5d02E1Fff839b8B67Fa26F8540e5f11454316",
+    "threshold": 0.5,
+    "feedCategory": "low",
+    "baseAsset": "AAVE",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
     "ens": "wstusr-stusr-exchange-rate",
     "heartbeat": 86400,
     "path": "wstusr-stusr-exchange-rate",
@@ -664,7 +730,7 @@
     "path": "avail-usd",
     "proxyAddress": "0x947eD6A3664fCE27a365b720286c01074d3782E0",
     "threshold": 2,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "AVAIL",
     "quoteAsset": "USD",
     "isSVR": false
@@ -712,6 +778,17 @@
     "baseAsset": "SUSDE",
     "quoteAsset": "USD",
     "isSVR": false
+  },
+  {
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "gho-usd-svr",
+    "proxyAddress": "0x1B5FEF61Ff9B690364359b03cC07E060b12Bd3C1",
+    "threshold": 0.25,
+    "feedCategory": "medium",
+    "baseAsset": "GHO",
+    "quoteAsset": "GHO",
+    "isSVR": true
   },
   {
     "ens": "aud-usd",
@@ -766,6 +843,17 @@
     "feedCategory": "low",
     "baseAsset": "AAVE",
     "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "ccusdc-usdc-exchange-rate",
+    "heartbeat": 86400,
+    "path": "ccusdc-usdc-exchange-rate",
+    "proxyAddress": "0x1Bb54D3d4edBB52B83BC89Da5B176Facc90D46bc",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "ccUSDC",
+    "quoteAsset": "USDC",
     "isSVR": false
   },
   {
@@ -854,6 +942,17 @@
     "feedCategory": "custom",
     "baseAsset": "ultraETHs",
     "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
+    "ens": "aave-network-emergency-count-base",
+    "heartbeat": 86400,
+    "path": "aave-network-emergency-count-base",
+    "proxyAddress": "0xd9c5B59A913d75AC44EB51b7E0F3f5B58816ECAc",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -989,12 +1088,23 @@
     "isSVR": false
   },
   {
+    "ens": "yetheth-exchange-rate",
+    "heartbeat": 86400,
+    "path": "yeth-eth-exchange-rate",
+    "proxyAddress": "0xaE95742Cf839529798Bcd1610c6E0AFEBA0cBC03",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "yETH",
+    "quoteAsset": "ETH",
+    "isSVR": false
+  },
+  {
     "ens": "usdx-usd",
     "heartbeat": 86400,
     "path": "usdx-usd",
     "proxyAddress": "0xC342785EE44b9F8a40a564200CDF14dFCefd36C3",
     "threshold": 0.5,
-    "feedCategory": "",
+    "feedCategory": "deprecating",
     "baseAsset": "",
     "quoteAsset": "",
     "isSVR": false
@@ -1132,6 +1242,17 @@
     "isSVR": false
   },
   {
+    "ens": null,
+    "heartbeat": 86400,
+    "path": "usdt-usd-svr",
+    "proxyAddress": "0xE5fa3A4e4208858ADdf2CDb4e12651E89f1f1A70",
+    "threshold": 0.3,
+    "feedCategory": "low",
+    "baseAsset": "USDT",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
     "ens": "unibtc-btc-exchange-rate",
     "heartbeat": 86400,
     "path": "unibtc-btc-exchange-rate",
@@ -1189,7 +1310,7 @@
   {
     "ens": "ceth-reserves",
     "heartbeat": 86400,
-    "path": "ceth-reserves",
+    "path": "teth-reserves",
     "proxyAddress": "0x0b68ac37a1668DAaab1882543368E076C38C40e9",
     "threshold": 1e-7,
     "feedCategory": "custom",
@@ -1253,6 +1374,17 @@
     "isSVR": false
   },
   {
+    "ens": "synd-usd",
+    "heartbeat": 86400,
+    "path": "synd-usd",
+    "proxyAddress": "0x1fC950BbC12E93c15A3eEb62db978eb3cC567943",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "SYND",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "lseth-eth",
     "heartbeat": 86400,
     "path": "lseth-eth",
@@ -1286,6 +1418,17 @@
     "isSVR": false
   },
   {
+    "ens": null,
+    "heartbeat": 1200,
+    "path": "eth-usd-svr",
+    "proxyAddress": "0xa4250cE1aA15Ff4cb5E5a8655293b65694e436Ed",
+    "threshold": 0.15,
+    "feedCategory": "low",
+    "baseAsset": "ETH",
+    "quoteAsset": "USD",
+    "isSVR": true
+  },
+  {
     "ens": "morpho-usd",
     "heartbeat": 86400,
     "path": "morpho-usd",
@@ -1315,6 +1458,17 @@
     "threshold": 0.1,
     "feedCategory": "low",
     "baseAsset": "WBTC",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "mamo-usd",
+    "heartbeat": 86400,
+    "path": "mamo-usd",
+    "proxyAddress": "0xeF7541b388a77C1709a3d44BfBfC5c1ED3F0Ac94",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "MAMO",
     "quoteAsset": "USD",
     "isSVR": false
   },
@@ -1352,6 +1506,17 @@
     "isSVR": false
   },
   {
+    "ens": "usdai-usd",
+    "heartbeat": 86400,
+    "path": "usdai-usd",
+    "proxyAddress": "0xFCb2C36ac8A91cE9D3c94590ED239E1f683467fe",
+    "threshold": 0.5,
+    "feedCategory": "high",
+    "baseAsset": "USDAI",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
     "ens": "moobifi-usd",
     "heartbeat": 86400,
     "path": "moobifi-usd",
@@ -1360,6 +1525,17 @@
     "feedCategory": "",
     "baseAsset": "",
     "quoteAsset": "",
+    "isSVR": false
+  },
+  {
+    "ens": "ybtcbtc-exchange-rate",
+    "heartbeat": 86400,
+    "path": "ybtc-btc-exchange-rate",
+    "proxyAddress": "0x95Eba7bE2f755a298984bd714822994f1d4B6313",
+    "threshold": 0.05,
+    "feedCategory": "custom",
+    "baseAsset": "yBTC",
+    "quoteAsset": "BTC",
     "isSVR": false
   },
   {
@@ -1379,9 +1555,20 @@
     "path": "anon-usd",
     "proxyAddress": "0x674e028B95330E77F5cF89834254a6Bfa806f3a2",
     "threshold": 0.5,
-    "feedCategory": "high",
+    "feedCategory": "deprecating",
     "baseAsset": "ANON",
     "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "gldy-reserves",
+    "heartbeat": 86400,
+    "path": "gldy-reserves",
+    "proxyAddress": "0xf488FA1B4Ac8210bf0b2d212176ca28c48F86708",
+    "threshold": 1e-7,
+    "feedCategory": "custom",
+    "baseAsset": "",
+    "quoteAsset": "",
     "isSVR": false
   },
   {
@@ -1535,6 +1722,17 @@
     "threshold": 0.3,
     "feedCategory": "low",
     "baseAsset": "NZD",
+    "quoteAsset": "USD",
+    "isSVR": false
+  },
+  {
+    "ens": "avnt-usd",
+    "heartbeat": 86400,
+    "path": "avnt-usd",
+    "proxyAddress": "0x50997b806B574501cC34a2a6d845e4dc1Bd9Aa8c",
+    "threshold": 0.5,
+    "feedCategory": "new",
+    "baseAsset": "AVNT",
     "quoteAsset": "USD",
     "isSVR": false
   },
