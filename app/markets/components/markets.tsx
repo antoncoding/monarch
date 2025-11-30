@@ -368,7 +368,6 @@ export default function Markets({
     }
 
     setFilteredMarkets(sorted);
-    resetPage();
   }, [
     rawMarkets,
     sortColumn,
@@ -387,13 +386,31 @@ export default function Markets({
     minLiquidityEnabled,
     trustedVaultsOnly,
     searchQuery,
-    resetPage,
     hasTrustedVault,
   ]);
 
   useEffect(() => {
     applyFiltersAndSort();
   }, [applyFiltersAndSort]);
+
+  // Reset page only when filters change (not when sorting or starring changes)
+  useEffect(() => {
+    resetPage();
+  }, [
+    selectedNetwork,
+    includeUnknownTokens,
+    showUnknownOracle,
+    selectedCollaterals,
+    selectedLoanAssets,
+    selectedOracles,
+    usdFilters,
+    minSupplyEnabled,
+    minBorrowEnabled,
+    minLiquidityEnabled,
+    trustedVaultsOnly,
+    searchQuery,
+    resetPage,
+  ]);
 
   const titleOnclick = useCallback(
     (column: number) => {
