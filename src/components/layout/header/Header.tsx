@@ -35,7 +35,7 @@ function Header({ ghost }: HeaderProps) {
       <div className="h-[80px] w-full md:h-[120px]" /> {/* Spacer div */}
       <header
         data-scroll-state={scrollState}
-        className="bg-main fixed left-0 right-0 top-0 flex h-[80px] justify-center pt-4 md:h-[120px] md:pt-8"
+        className="bg-main fixed left-0 right-0 top-0 flex h-[60px] justify-center md:h-[120px] md:pt-4"
         style={{ zIndex: 40 }} // Lower z-index to work with modal backdrop
       >
         <Menu />
