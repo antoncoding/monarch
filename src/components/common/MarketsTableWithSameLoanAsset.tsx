@@ -537,13 +537,7 @@ function MarketRow({
       {columnVisibility.utilizationRate && (
         <td data-label="Utilization" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
           <p className="text-sm">
-            {(() => {
-              const supplyUsd = market.state.supplyAssetsUsd;
-              const borrowUsd = market.state.borrowAssetsUsd;
-              if (!supplyUsd || supplyUsd === 0) return '—';
-              const utilization = (borrowUsd / supplyUsd) * 100;
-              return `${utilization.toFixed(2)}%`;
-            })()}
+            {`${(market.state.utilization * 100).toFixed(2)}%`}
           </p>
         </td>
       )}
