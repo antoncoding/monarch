@@ -41,5 +41,5 @@ export const COLUMN_DESCRIPTIONS: Record<keyof ColumnVisibility, string> = {
   borrowAPY: 'Annual percentage rate for borrowers',
   rateAtTarget: 'Interest rate at target utilization',
   trustedBy: 'Highlights your trusted vaults that currently supply this market',
-  utilizationRate: 'Percentage of supplied assets currently borrowed (borrow / supply)',
+  utilizationRate: 'Percentage of supplied assets currently borrowed',
 };
