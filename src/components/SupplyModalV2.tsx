@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LuArrowRightLeft } from "react-icons/lu";
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
@@ -28,11 +28,30 @@ export function SupplyModalV2({
   const [supplyPreviewAmount, setSupplyPreviewAmount] = useState<bigint | undefined>();
   const [withdrawPreviewAmount, setWithdrawPreviewAmount] = useState<bigint | undefined>();
 
+  // Reset preview amounts and mode when modal is first opened to prevent stale state
+  useEffect(() => {
+    setMode(defaultMode);
+    setSupplyPreviewAmount(undefined);
+    setWithdrawPreviewAmount(undefined);
+  }, [defaultMode]);
+
   // Fetch fresh market state from RPC to avoid stale liquidity/supply data
   const { markets: freshMarkets } = useFreshMarketsState([market]);
   const activeMarket = freshMarkets?.[0] ?? market;
 
   const hasPosition = position && BigInt(position.state.supplyAssets) > 0n;
+
+  // Calculate supply delta for preview based on current mode and amounts
+  // Only use positive values to prevent incorrect APY direction
+  const supplyDelta = useMemo(() => {
+    if (mode === 'supply') {
+      // Supply mode: positive delta if amount is valid
+      return supplyPreviewAmount && supplyPreviewAmount > 0n ? supplyPreviewAmount : undefined;
+    } else {
+      // Withdraw mode: negative delta (withdrawal) if amount is valid
+      return withdrawPreviewAmount && withdrawPreviewAmount > 0n ? -withdrawPreviewAmount : undefined;
+    }
+  }, [mode, supplyPreviewAmount, withdrawPreviewAmount]);
 
   return (
     <Modal
@@ -61,8 +80,14 @@ export function SupplyModalV2({
           hasPosition ? (
             <button
               type="button"
-              onClick={() => setMode(mode === 'supply' ? 'withdraw' : 'supply')}
-              className="flex items-center gap-1 text-sm font-medium text-primary transition hover:text-white"
+              onClick={() => {
+                const newMode = mode === 'supply' ? 'withdraw' : 'supply';
+                setMode(newMode);
+                // Reset preview amounts when switching modes to prevent stale state
+                setSupplyPreviewAmount(undefined);
+                setWithdrawPreviewAmount(undefined);
+              }}
+              className="flex items-center gap-1 text-sm font-medium text-primary transition hover:text-secondary"
             >
               <LuArrowRightLeft className="h-3 w-3 rotate-90" />
               {mode === 'supply' ? 'Withdraw' : 'Supply'}
@@ -77,13 +102,7 @@ export function SupplyModalV2({
           defaultCollapsed
           mode="supply"
           showRewards
-          supplyDelta={
-            mode === 'supply'
-              ? supplyPreviewAmount
-              : withdrawPreviewAmount
-              ? -withdrawPreviewAmount
-              : undefined
-          }
+          supplyDelta={supplyDelta}
         />
 
         {mode === 'supply' ? (
