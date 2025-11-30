@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
+import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -30,6 +30,12 @@ export default function NavbarMobile() {
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+    setIsMenuOpen(false);
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank');
+    setIsMenuOpen(false);
   };
 
   const handleNavigation = (path: string) => {
@@ -44,7 +50,7 @@ export default function NavbarMobile() {
           <Image src={logo} alt="logo" height={24} />
         </Link>
 
-        <Dropdown onOpenChange={setIsMenuOpen} placement="bottom-start" className="z-50 rounded-sm">
+        <Dropdown isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} placement="bottom-start" className="z-50 rounded-sm">
           <DropdownTrigger>
             <button
               type="button"
@@ -102,21 +108,21 @@ export default function NavbarMobile() {
               <DropdownItem
                 key="docs"
                 startContent={<RiBookLine className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
+                onClick={() => handleExternalLink(EXTERNAL_LINKS.docs)}
               >
                 Docs
               </DropdownItem>
               <DropdownItem
                 key="discord"
                 startContent={<RiDiscordFill className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.discord, '_blank')}
+                onClick={() => handleExternalLink(EXTERNAL_LINKS.discord)}
               >
                 Discord
               </DropdownItem>
               <DropdownItem
                 key="github"
                 startContent={<RiGithubFill className="h-4 w-4" />}
-                onClick={() => window.open(EXTERNAL_LINKS.github, '_blank')}
+                onClick={() => handleExternalLink(EXTERNAL_LINKS.github)}
               >
                 GitHub
               </DropdownItem>

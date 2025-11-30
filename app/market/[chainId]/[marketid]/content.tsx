@@ -183,20 +183,21 @@ function MarketContent() {
   return (
     <>
       <Header />
-      <div className="container mx-auto px-4 py-8 pb-4 font-zen">
-        {/* navigation bottons */}
-        <div className="flex justify-between">
-          <Button onPress={handleBackToMarkets} size="md" className="mb-4">
+      <div className="mx-auto max-w-7xl px-6 py-8 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
+        {/* navigation buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button onPress={handleBackToMarkets} size="md" className="w-auto">
             <ChevronLeftIcon className="mr-2" />
-            Back to Markets
+            <span className="hidden sm:inline">Back to Markets</span>
+            <span className="sm:hidden">Back</span>
           </Button>
 
-          <div className="flex gap-2">
-            <Button onPress={() => setShowSupplyModal(true)}>Supply</Button>
-            <Button onPress={() => setShowBorrowModal(true)}>Borrow</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onPress={() => setShowSupplyModal(true)} className="flex-1 sm:flex-none">Supply</Button>
+            <Button onPress={() => setShowBorrowModal(true)} className="flex-1 sm:flex-none">Borrow</Button>
             <Button
               size="md"
-              className="mb-4"
+              className="w-full sm:w-auto"
               onPress={() => {
                 void window.open(
                   getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
@@ -204,7 +205,8 @@ function MarketContent() {
                 );
               }}
             >
-              View on Morpho
+              <span className="hidden sm:inline">View on Morpho</span>
+              <span className="sm:hidden">Morpho</span>
               <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
             </Button>
           </div>
@@ -243,7 +245,7 @@ function MarketContent() {
           />
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
               <span>Basic Info</span>
