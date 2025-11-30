@@ -10,6 +10,7 @@ export enum SortColumn {
   BorrowAPY = 9,
   RateAtTarget = 10,
   TrustedBy = 11,
+  UtilizationRate = 12,
 }
 
 // Gas cost to simplify tx flow: do not need to estimate gas for transactions

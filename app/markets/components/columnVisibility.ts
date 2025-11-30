@@ -8,6 +8,7 @@ export type ColumnVisibility = {
   borrowAPY: boolean;
   rateAtTarget: boolean;
   trustedBy: boolean;
+  utilizationRate: boolean;
 };
 
 export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
@@ -18,6 +19,7 @@ export const DEFAULT_COLUMN_VISIBILITY: ColumnVisibility = {
   borrowAPY: false,
   rateAtTarget: false,
   trustedBy: false,
+  utilizationRate: false,
 };
 
 export const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
@@ -28,6 +30,7 @@ export const COLUMN_LABELS: Record<keyof ColumnVisibility, string> = {
   borrowAPY: 'Borrow APY',
   rateAtTarget: 'Target Rate',
   trustedBy: 'Trusted By',
+  utilizationRate: 'Utilization',
 };
 
 export const COLUMN_DESCRIPTIONS: Record<keyof ColumnVisibility, string> = {
@@ -38,4 +41,5 @@ export const COLUMN_DESCRIPTIONS: Record<keyof ColumnVisibility, string> = {
   borrowAPY: 'Annual percentage rate for borrowers',
   rateAtTarget: 'Interest rate at target utilization',
   trustedBy: 'Highlights your trusted vaults that currently supply this market',
+  utilizationRate: 'Percentage of supplied assets currently borrowed (borrow / supply)',
 };

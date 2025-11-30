@@ -54,7 +54,8 @@ export function MarketTableBody({
     (columnVisibility.supplyAPY ? 1 : 0) +
     (columnVisibility.borrowAPY ? 1 : 0) +
     (columnVisibility.rateAtTarget ? 1 : 0) +
-    (columnVisibility.trustedBy ? 1 : 0);
+    (columnVisibility.trustedBy ? 1 : 0) +
+    (columnVisibility.utilizationRate ? 1 : 0);
 
   const getTrustedVaultsForMarket = (market: Market): TrustedVault[] => {
     if (!columnVisibility.trustedBy || !market.supplyingVaults?.length) {
@@ -213,6 +214,19 @@ export function MarketTableBody({
                 <td data-label="Target Rate" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
                     {item.state.apyAtTarget ? `${(item.state.apyAtTarget * 100).toFixed(2)}%` : '—'}
+                  </p>
+                </td>
+              )}
+              {columnVisibility.utilizationRate && (
+                <td data-label="Utilization" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                  <p className="text-sm">
+                    {(() => {
+                      const supplyUsd = item.state.supplyAssetsUsd;
+                      const borrowUsd = item.state.borrowAssetsUsd;
+                      if (!supplyUsd || supplyUsd === 0) return '—';
+                      const utilization = (borrowUsd / supplyUsd) * 100;
+                      return `${utilization.toFixed(2)}%`;
+                    })()}
                   </p>
                 </td>
               )}
