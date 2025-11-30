@@ -187,8 +187,8 @@ function VolumeChart({
         </div>
       </CardHeader>
       <CardBody>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="lg:col-span-2">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center text-primary">
                 <Spinner size={30} />

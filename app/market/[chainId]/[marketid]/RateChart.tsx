@@ -125,8 +125,8 @@ function RateChart({
         />
       </CardHeader>
       <CardBody>
-        <div className="mb-4 grid grid-cols-1 gap-8 md:grid-cols-3">
-          <div className="md:col-span-2">
+        <div className="mb-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="lg:col-span-2">
             {isLoading ? (
               <div className="flex h-64 items-center justify-center">
                 <Spinner size={30} />
