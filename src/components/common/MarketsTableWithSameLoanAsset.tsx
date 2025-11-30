@@ -73,6 +73,7 @@ enum SortColumn {
   RateAtTarget = 6,
   Risk = 7,
   TrustedBy = 8,
+  UtilizationRate = 9,
 }
 
 function getTrustedVaultsForMarket(
@@ -533,6 +534,13 @@ function MarketRow({
           </p>
         </td>
       )}
+      {columnVisibility.utilizationRate && (
+        <td data-label="Utilization" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+          <p className="text-sm">
+            {`${(market.state.utilization * 100).toFixed(2)}%`}
+          </p>
+        </td>
+      )}
       <td data-label="Indicators" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
         <MarketIndicators market={market} showRisk />
       </td>
@@ -778,6 +786,7 @@ export function MarketsTableWithSameLoanAsset({
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.Risk]: '', // No sorting for risk
       [SortColumn.TrustedBy]: '',
+      [SortColumn.UtilizationRate]: 'state.utilization',
     };
 
     const propertyPath = sortPropertyMap[sortColumn];
@@ -826,7 +835,15 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
-  const emptyStateColumns = (showSelectColumn ? 7 : 6) + (columnVisibility.trustedBy ? 1 : 0);
+  const emptyStateColumns = (showSelectColumn ? 7 : 6) +
+    (columnVisibility.trustedBy ? 1 : 0) +
+    (columnVisibility.totalSupply ? 1 : 0) +
+    (columnVisibility.totalBorrow ? 1 : 0) +
+    (columnVisibility.liquidity ? 1 : 0) +
+    (columnVisibility.supplyAPY ? 1 : 0) +
+    (columnVisibility.borrowAPY ? 1 : 0) +
+    (columnVisibility.rateAtTarget ? 1 : 0) +
+    (columnVisibility.utilizationRate ? 1 : 0);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -1015,6 +1032,15 @@ export function MarketsTableWithSameLoanAsset({
                 <HTSortable
                   label="Rate at Target"
                   column={SortColumn.RateAtTarget}
+                  sortColumn={sortColumn}
+                  sortDirection={sortDirection}
+                  onSort={handleSort}
+                />
+              )}
+              {columnVisibility.utilizationRate && (
+                <HTSortable
+                  label="Utilization"
+                  column={SortColumn.UtilizationRate}
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onSort={handleSort}

@@ -341,6 +341,7 @@ export default function Markets({
         [SortColumn.BorrowAPY]: 'state.borrowApy',
         [SortColumn.RateAtTarget]: 'state.apyAtTarget',
         [SortColumn.TrustedBy]: '',
+        [SortColumn.UtilizationRate]: 'state.utilization',
       };
       const propertyPath = sortPropertyMap[sortColumn];
       if (propertyPath) {
