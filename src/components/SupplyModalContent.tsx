@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Switch } from '@heroui/react';
+import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -53,9 +54,8 @@ export function SupplyModalContent({
     supplyPending,
     approveAndSupply,
     signAndSupply,
+    refetch: refetchBalance
   } = useSupplyMarket(market, onSuccess);
-
-  console.log('tokenBalance', tokenBalance)
 
   // Handle supply amount change
   const handleSupplyAmountChange = useCallback(
@@ -111,13 +111,23 @@ export function SupplyModalContent({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="opacity-80">Supply amount</span>
-                    <p className="font-inter text-xs opacity-50">
-                      Balance:{' '}
-                      {useEth
-                        ? formatBalance(ethBalance ?? BigInt(0), 18)
-                        : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
-                      {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
-                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-inter text-xs opacity-50">
+                        Balance:{' '}
+                        {useEth
+                          ? formatBalance(ethBalance ?? BigInt(0), 18)
+                          : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
+                        {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => void refetchBalance()}
+                        className="opacity-50 transition hover:opacity-100"
+                        aria-label="Refetch balance"
+                      >
+                        <ReloadIcon className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-2 flex items-start justify-between">

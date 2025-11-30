@@ -40,6 +40,7 @@ export type UseSupplyMarketReturn = {
   // Actions
   approveAndSupply: () => Promise<void>;
   signAndSupply: () => Promise<void>;
+  refetch: () => void;
 };
 
 export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupplyMarketReturn {
@@ -56,14 +57,14 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const toast = useStyledToast();
 
   // Get token balance
-  const { data: tokenBalance } = useBalance({
+  const { data: tokenBalance, refetch: refetchToken } = useBalance({
     token: market.loanAsset.address as `0x${string}`,
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
 
   // Get ETH balance
-  const { data: ethBalance } = useBalance({
+  const { data: ethBalance, refetch: refetchETH } = useBalance({
     address: account,
     chainId: market.morphoBlue.chain.id,
   });
@@ -91,6 +92,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     amount: supplyAmount,
     tokenSymbol: market.loanAsset.symbol,
   });
+
+  const refetch = useCallback(() => {
+    void refetchToken()
+    void refetchETH()
+  }, [refetchETH, refetchToken])
 
   // Transaction handler
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
@@ -348,6 +354,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     // Balance data
     tokenBalance: tokenBalance?.value,
     ethBalance: ethBalance?.value,
+    refetch: refetch,
 
     // Transaction state
     isApproved,
