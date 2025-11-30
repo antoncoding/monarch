@@ -165,6 +165,22 @@ export default function Markets({
     'compact',
   );
 
+  // Force compact mode on mobile - track window size
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Effective table view mode - always compact on mobile
+  const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
+
   const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
     'userTrustedVaults',
     defaultTrustedVaults,
@@ -579,40 +595,43 @@ export default function Markets({
               </Button>
             </Tooltip>
 
-            <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
-              content={
-                <TooltipContent
-                  icon={
-                    tableViewMode === 'compact' ? (
-                      <RiExpandHorizontalLine size={14} />
-                    ) : (
-                      <CgCompress size={14} />
-                    )
-                  }
-                  title={tableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-                  detail={tableViewMode === 'compact' ? 'Expand table to full width, useful when more columns are enabled.' : 'Restore compact table view'}
-                />
-              }
-            >
-              <Button
-                isIconOnly
-                aria-label="Toggle table width"
-                variant="light"
-                size="sm"
-                className="text-secondary min-w-0 px-2"
-                onPress={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+            {/* Hide expand/compact toggle on mobile */}
+            <div className="hidden md:block">
+              <Tooltip
+                classNames={{
+                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                }}
+                content={
+                  <TooltipContent
+                    icon={
+                      effectiveTableViewMode === 'compact' ? (
+                        <RiExpandHorizontalLine size={14} />
+                      ) : (
+                        <CgCompress size={14} />
+                      )
+                    }
+                    title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
+                    detail={effectiveTableViewMode === 'compact' ? 'Expand table to full width, useful when more columns are enabled.' : 'Restore compact table view'}
+                  />
+                }
               >
-                {tableViewMode === 'compact' ? (
-                  <RiExpandHorizontalLine size={16} />
-                ) : (
-                  <CgCompress size={16} />
-                )}
-              </Button>
-            </Tooltip>
+                <Button
+                  isIconOnly
+                  aria-label="Toggle table width"
+                  variant="light"
+                  size="sm"
+                  className="text-secondary min-w-0 px-2"
+                  onPress={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                >
+                  {effectiveTableViewMode === 'compact' ? (
+                    <RiExpandHorizontalLine size={16} />
+                  ) : (
+                    <CgCompress size={16} />
+                  )}
+                </Button>
+              </Tooltip>
+            </div>
 
             <Tooltip
               classNames={{
@@ -636,11 +655,11 @@ export default function Markets({
         </div>
       </div>
 
-      {/* Table Section - can expand beyond container in expanded mode */}
-      <div className={tableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
+      {/* Table Section - centered when expanded, full width when compact */}
+      <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
 
         {loading ? (
-          <div className={tableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
+          <div className={effectiveTableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
             <LoadingScreen
               message="Loading Morpho Blue Markets..."
               className="min-h-[300px] w-full"
@@ -649,7 +668,7 @@ export default function Markets({
         ) : rawMarkets == null ? (
           <div className="flex justify-center"> No data </div>
         ) : (
-          <div className={tableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
+          <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
             {filteredMarkets.length > 0 ? (
               <MarketsTable
                 markets={filteredMarkets}
@@ -667,9 +686,9 @@ export default function Markets({
                 setSelectedMarket={setSelectedMarket}
                 columnVisibility={columnVisibility}
                 trustedVaults={userTrustedVaults}
-                className={tableViewMode === 'compact' ? 'w-full' : undefined}
-                wrapperClassName={tableViewMode === 'compact' ? 'w-full' : undefined}
-                tableClassName={tableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
+                className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
+                wrapperClassName={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
+                tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
                 addBlacklistedMarket={addBlacklistedMarket}
                 isBlacklisted={isBlacklisted}
               />
