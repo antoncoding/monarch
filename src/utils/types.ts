@@ -189,7 +189,7 @@ export type AggregatedRewardType = {
     pendingAmount: bigint;
     claimed: bigint;
   };
-  programs: ('vault-reward' | 'market-reward' | 'uniform-reward')[];
+  programs: ('vault-reward' | 'market-reward' | 'uniform-reward' | 'merkl')[];
 };
 
 export type RebalanceAction = {

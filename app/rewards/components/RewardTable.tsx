@@ -112,6 +112,8 @@ export default function RewardTable({
                     d.asset.chain_id === tokenReward.asset.chain_id,
                 );
 
+                const isMerklReward = tokenReward.programs.includes('merkl');
+
                 return (
                   <TableRow key={index} className="hover:bg-gray-100 dark:hover:bg-gray-800">
                     <TableCell>
@@ -206,47 +208,63 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell align="center">
                       <div className="flex justify-center">
-                        <Button
-                          variant="interactive"
-                          size="sm"
-                          isDisabled={
-                            tokenReward.total.claimable === BigInt(0) || distribution === undefined
-                          }
-                          onPress={() => {
-                            void (async () => {
-                              if (!account) {
-                                toast.error(
-                                  'No account connected',
-                                  'Please connect your wallet to continue.',
-                                );
-                                return;
-                              }
-                              if (!distribution) {
-                                toast.error(
-                                  'No claim data',
-                                  'No claim data found for this reward please try again later.',
-                                );
-                                return;
-                              }
-                              if (chainId !== distribution.distributor.chain_id) {
-                                // Set the target chain ID and switch
-                                setTargetChainId(distribution.distributor.chain_id);
-                                switchToNetwork();
-                                // Wait for network switch
-                                await new Promise((resolve) => setTimeout(resolve, 1000));
-                              }
-                              sendTransaction({
-                                account: account as Address,
-                                to: distribution.distributor.address as Address,
-                                data: distribution.tx_data as `0x${string}`,
-                                chainId: distribution.distributor.chain_id,
-                                // allow estimating gas
-                              });
-                            })();
-                          }}
-                        >
-                          Claim
-                        </Button>
+                        {isMerklReward ? (
+                          <Link
+                            href={`https://app.merkl.xyz/users/${account}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              variant="interactive"
+                              size="sm"
+                              isDisabled={tokenReward.total.claimable === BigInt(0)}
+                            >
+                              Claim on Merkl
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Button
+                            variant="interactive"
+                            size="sm"
+                            isDisabled={
+                              tokenReward.total.claimable === BigInt(0) || distribution === undefined
+                            }
+                            onPress={() => {
+                              void (async () => {
+                                if (!account) {
+                                  toast.error(
+                                    'No account connected',
+                                    'Please connect your wallet to continue.',
+                                  );
+                                  return;
+                                }
+                                if (!distribution) {
+                                  toast.error(
+                                    'No claim data',
+                                    'No claim data found for this reward please try again later.',
+                                  );
+                                  return;
+                                }
+                                if (chainId !== distribution.distributor.chain_id) {
+                                  // Set the target chain ID and switch
+                                  setTargetChainId(distribution.distributor.chain_id);
+                                  switchToNetwork();
+                                  // Wait for network switch
+                                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                                }
+                                sendTransaction({
+                                  account: account as Address,
+                                  to: distribution.distributor.address as Address,
+                                  data: distribution.tx_data as `0x${string}`,
+                                  chainId: distribution.distributor.chain_id,
+                                  // allow estimating gas
+                                });
+                              })();
+                            }}
+                          >
+                            Claim
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
