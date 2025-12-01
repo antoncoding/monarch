@@ -9,6 +9,7 @@
     "format": "prettier --log-level warn --write .",
     "format:check": "prettier --check .",
     "generate:chainlink": "tsx scripts/generate-chainlink-data.ts",
+    "generate:redstone": "tsx scripts/generate-redstone-data.ts",
     "lint": "next lint --fix",
     "lint:check": "next lint",
     "start": "next start",
