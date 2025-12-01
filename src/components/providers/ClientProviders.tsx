@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { LiquidationsProvider } from '@/contexts/LiquidationsContext';
 import { MarketsProvider } from '@/contexts/MarketsContext';
 import { MerklCampaignsProvider } from '@/contexts/MerklCampaignsContext';
 import { OnboardingProvider } from 'app/positions/components/onboarding/OnboardingContext';
@@ -14,9 +15,11 @@ export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <TokenProvider>
       <MarketsProvider>
-        <MerklCampaignsProvider>
-          <OnboardingProvider>{children}</OnboardingProvider>
-        </MerklCampaignsProvider>
+        <LiquidationsProvider>
+          <MerklCampaignsProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </MerklCampaignsProvider>
+        </LiquidationsProvider>
       </MarketsProvider>
     </TokenProvider>
   );
