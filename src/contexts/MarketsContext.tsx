@@ -8,12 +8,12 @@ import {
   useEffect,
   useState,
   useMemo,
+  useRef,
 } from 'react';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
-import useLiquidations from '@/hooks/useLiquidations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { monarchWhitelistedMarkets } from '@/utils/markets';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
@@ -73,39 +73,28 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     isDefaultBlacklisted,
   } = useBlacklistedMarkets();
 
-  const {
-    loading: liquidationsLoading,
-    liquidatedMarketKeys,
-    error: liquidationsError,
-    refetch: refetchLiquidations,
-  } = useLiquidations();
 
   // Computed markets based on the setting
   const markets = useMemo(() => {
     return showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
   }, [showUnwhitelistedMarkets, allMarkets, whitelistedMarkets]);
 
-  // Helper to add metadata (liquidation status, whitelist info) to markets
-  const addMarketMetadata = useCallback(
-    (marketsToEnrich: Market[]) => {
-      return marketsToEnrich.map((market) => {
-        const isProtectedByLiquidationBots = liquidatedMarketKeys.has(market.uniqueKey);
-        const isMonarchWhitelisted =
-          !market.whitelisted &&
-          monarchWhitelistedMarkets.some(
-            (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
-          );
+  // Helper to add metadata (whitelist info) to markets
+  const addMarketMetadata = useCallback((marketsToEnrich: Market[]) => {
+    return marketsToEnrich.map((market) => {
+      const isMonarchWhitelisted =
+        !market.whitelisted &&
+        monarchWhitelistedMarkets.some(
+          (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
+        );
 
-        return {
-          ...market,
-          whitelisted: market.whitelisted || isMonarchWhitelisted,
-          isProtectedByLiquidationBots,
-          isMonarchWhitelisted,
-        };
-      });
-    },
-    [liquidatedMarketKeys],
-  );
+      return {
+        ...market,
+        whitelisted: market.whitelisted || isMonarchWhitelisted,
+        isMonarchWhitelisted,
+      };
+    });
+  }, []);
 
   // Process markets helper function
   const processMarkets = useCallback(
@@ -242,23 +231,30 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     [processMarkets],
   );
 
-  useEffect(() => {
-    if (!liquidationsLoading && whitelistedMarkets.length === 0) {
-      void fetchMarkets().catch(console.error);
-    }
+  // Keep a stable ref to fetchMarkets to prevent duplicate fetches
+  const fetchMarketsRef = useRef(fetchMarkets);
+  fetchMarketsRef.current = fetchMarkets;
 
-    // Set up refresh interval
+  // OPTIMIZATION: Fetch markets immediately on mount (parallel with liquidations)
+  // This removes the serial dependency where markets waited for liquidations to finish.
+  // Markets load fast → show to user → badges appear when liquidations finish.
+  useEffect(() => {
+    void fetchMarketsRef.current().catch(console.error);
+  }, []); // Only run once on mount
+
+  // Set up refresh interval (separate from initial fetch)
+  useEffect(() => {
     const refreshInterval = setInterval(
       () => {
-        void fetchMarkets(true).catch(console.error);
+        void fetchMarketsRef.current(true).catch(console.error);
       },
       5 * 60 * 1000,
     ); // Refresh every 5 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [liquidationsLoading, fetchMarkets, whitelistedMarkets.length]);
+  }, []); // Only set up once on mount
 
-  // Automatically reapply blacklist filter when blacklist changes
+  // Automatically reapply filters when blacklist changes
   useEffect(() => {
     if (rawMarkets.length > 0) {
       applyBlacklistFilter();
@@ -268,14 +264,13 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        await refetchLiquidations();
         await fetchMarkets(true);
         onSuccess?.();
       } catch (err) {
         console.error('Error during refetch:', err);
       }
     },
-    [refetchLiquidations, fetchMarkets],
+    [fetchMarkets],
   );
 
   const refresh = useCallback(async () => {
@@ -284,7 +279,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     setAllMarkets([]);
     setError(null);
     try {
-      await refetchLiquidations();
       await fetchMarkets();
     } catch (_error) {
       console.error('Failed to refresh markets:', _error);
@@ -292,10 +286,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     } finally {
       setLoading(false);
     }
-  }, [refetchLiquidations, fetchMarkets]);
+  }, [fetchMarkets]);
 
-  const isLoading = loading || liquidationsLoading;
-  const combinedError = error || liquidationsError;
+  const isLoading = loading;
+  const combinedError = error;
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(

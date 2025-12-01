@@ -3,6 +3,7 @@ import { Tooltip } from '@heroui/react';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/TooltipContent';
+import { useLiquidationsContext } from '@/contexts/LiquidationsContext';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { Market } from '@/utils/types';
 import { RewardsIndicator } from 'app/markets/components/RewardsIndicator';
@@ -22,6 +23,10 @@ export function MarketIndicators({
   isStared = false,
   hasUserPosition = false,
 }: MarketIndicatorsProps) {
+  // Check liquidation protection status on-demand (like Merkl rewards pattern)
+  const { isProtectedByLiquidationBots } = useLiquidationsContext();
+  const hasLiquidationProtection = isProtectedByLiquidationBots(market.uniqueKey);
+
   // Compute risk warnings if needed
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
   const hasWarnings = warnings.length > 0;
@@ -70,7 +75,7 @@ export function MarketIndicators({
       )}
 
       {/* Universal Indicators */}
-      {market.isProtectedByLiquidationBots && (
+      {hasLiquidationProtection && (
         <Tooltip
           classNames={{
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
