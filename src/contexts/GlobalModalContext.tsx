@@ -1,18 +1,20 @@
 import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
+type ModalContent = Exclude<ReactNode, Promise<any>>;
+
 type ModalContextType = {
-  openModal: (content: ReactNode) => void;
+  openModal: (content: ModalContent) => void;
   closeModal: () => void;
-  toggleModal: (content: ReactNode) => void;
+  toggleModal: (content: ModalContent) => void;
   isOpen: boolean;
 };
 
 const GlobalModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export function GlobalModalProvider({ children }: { children: ReactNode }) {
-  const [modalContent, setModalContent] = useState<ReactNode | null>(null);
+  const [modalContent, setModalContent] = useState<ModalContent | null>(null);
 
-  const openModal = useCallback((content: ReactNode) => {
+  const openModal = useCallback((content: ModalContent) => {
     setModalContent(content);
   }, []);
 
@@ -20,7 +22,7 @@ export function GlobalModalProvider({ children }: { children: ReactNode }) {
     setModalContent(null);
   }, []);
 
-  const toggleModal = useCallback((content: ReactNode) => {
+  const toggleModal = useCallback((content: ModalContent) => {
     // If any modal is currently open, close it
     // Otherwise, open the new content
     setModalContent((current) => (current ? null : content));
