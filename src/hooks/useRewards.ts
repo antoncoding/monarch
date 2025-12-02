@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Address } from 'viem';
+import { MerklChain, MerklToken } from '@/utils/merklTypes';
 import { RewardResponseType } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
@@ -20,13 +21,6 @@ export type DistributionResponseType = {
   tx_data: string;
 };
 
-type MerklToken = {
-  address: string;
-  symbol: string;
-  decimals: number;
-  price?: number;
-};
-
 type MerklReward = {
   distributionChainId: number;
   root: string;
@@ -35,14 +29,11 @@ type MerklReward = {
   claimed: string;
   pending: string;
   proofs: string[];
-  token: MerklToken;
+  token: Pick<MerklToken, 'address' | 'symbol' | 'decimals' | 'price'>;
 };
 
 type MerklApiResponse = {
-  chain: {
-    id: number;
-    name: string;
-  };
+  chain: MerklChain;
   rewards: MerklReward[];
 }[];
 
