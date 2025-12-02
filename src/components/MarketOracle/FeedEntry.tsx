@@ -14,6 +14,7 @@ import { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
+import { RedstoneFeedTooltip } from './RedstoneFeedTooltip';
 import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 
 type FeedEntryProps = {
@@ -44,6 +45,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
   const vendorIcon = OracleVendorIcons[vendor];
   const isChainlink = vendor === PriceFeedVendors.Chainlink;
   const isCompound = vendor === PriceFeedVendors.Compound;
+  const isRedstone = vendor === PriceFeedVendors.Redstone;
   // Type-safe SVR check using discriminated union
   const isSVR = vendor === PriceFeedVendors.Chainlink && data?.isSVR;
 
@@ -57,6 +59,8 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
         return <CompoundFeedTooltip feed={feed} compoundData={data} chainId={chainId} />;
 
       case PriceFeedVendors.Redstone:
+        return <RedstoneFeedTooltip feed={feed} redstoneData={data} chainId={chainId} />;
+
       case PriceFeedVendors.PythNetwork:
       case PriceFeedVendors.Oval:
       case PriceFeedVendors.Lido:
@@ -106,7 +110,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
             </span>
           )}
 
-          {(isChainlink || isCompound) && vendorIcon ? (
+          {(isChainlink || isCompound || isRedstone) && vendorIcon ? (
             <Image src={vendorIcon} alt="Oracle" width={12} height={12} className="flex-shrink-0" />
           ) : (
             <IoHelpCircleOutline size={14} className="flex-shrink-0 text-secondary" />

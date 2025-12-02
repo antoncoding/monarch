@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { GlobalModalProvider } from '@/contexts/GlobalModalContext';
 import { LiquidationsProvider } from '@/contexts/LiquidationsContext';
 import { MarketsProvider } from '@/contexts/MarketsContext';
 import { MerklCampaignsProvider } from '@/contexts/MerklCampaignsContext';
@@ -13,14 +14,16 @@ type ClientProvidersProps = {
 
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <TokenProvider>
-      <MarketsProvider>
-        <LiquidationsProvider>
-          <MerklCampaignsProvider>
-            <OnboardingProvider>{children}</OnboardingProvider>
-          </MerklCampaignsProvider>
-        </LiquidationsProvider>
-      </MarketsProvider>
-    </TokenProvider>
+    <GlobalModalProvider>
+      <TokenProvider>
+        <MarketsProvider>
+          <LiquidationsProvider>
+            <MerklCampaignsProvider>
+              <OnboardingProvider>{children}</OnboardingProvider>
+            </MerklCampaignsProvider>
+          </LiquidationsProvider>
+        </MarketsProvider>
+      </TokenProvider>
+    </GlobalModalProvider>
   );
 }

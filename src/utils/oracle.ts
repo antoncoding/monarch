@@ -6,6 +6,11 @@ import {
 } from '@/constants/oracle/chainlink-data';
 import { getCompoundFeed, CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
 import { getGeneralFeed, isGeneralFeed, GeneralPriceFeed } from '@/constants/oracle/general-feeds';
+import {
+  getRedstoneOracle,
+  RedstoneOracleEntry,
+  isRedstoneOracle,
+} from '@/constants/oracle/redstone-data';
 import { isSupportedChain } from './networks';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
 
@@ -69,12 +74,17 @@ export type CompoundFeedResult = {
   };
 };
 
+export type RedstoneFeedResult = {
+  vendor: PriceFeedVendors.Redstone;
+  data: RedstoneOracleEntry;
+  assetPair: {
+    baseAsset: string;
+    quoteAsset: string;
+  };
+};
+
 export type GeneralFeedResult = {
-  vendor:
-    | PriceFeedVendors.Redstone
-    | PriceFeedVendors.PythNetwork
-    | PriceFeedVendors.Oval
-    | PriceFeedVendors.Lido;
+  vendor: PriceFeedVendors.PythNetwork | PriceFeedVendors.Oval | PriceFeedVendors.Lido;
   data: GeneralPriceFeed;
   assetPair: {
     baseAsset: string;
@@ -95,6 +105,7 @@ export type UnknownFeedResult = {
 export type FeedVendorResult =
   | ChainlinkFeedResult
   | CompoundFeedResult
+  | RedstoneFeedResult
   | GeneralFeedResult
   | UnknownFeedResult;
 
@@ -137,6 +148,23 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
     }
   }
 
+  // Check if it's a Redstone feed
+  if (isRedstoneOracle(chainId, address)) {
+    const redstoneData = getRedstoneOracle(chainId, address);
+    if (redstoneData) {
+      // Parse path to get base and quote assets (e.g., "btc/usd" -> ["btc", "usd"])
+      const [baseAsset, quoteAsset] = redstoneData.path.split('/').map((s) => s.toUpperCase());
+      return {
+        vendor: PriceFeedVendors.Redstone,
+        data: redstoneData,
+        assetPair: {
+          baseAsset: baseAsset ?? 'Unknown',
+          quoteAsset: quoteAsset ?? 'Unknown',
+        },
+      } satisfies RedstoneFeedResult;
+    }
+  }
+
   // Check if it's a general price feed (from various vendors via Morpho's API data)
   if (isGeneralFeed(address, chainId)) {
     const generalFeedData = getGeneralFeed(address, chainId);
@@ -145,16 +173,7 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
       const vendorName = generalFeedData.vendor.toLowerCase();
 
       // Return proper discriminated union based on vendor
-      if (vendorName === 'redstone') {
-        return {
-          vendor: PriceFeedVendors.Redstone,
-          data: generalFeedData,
-          assetPair: {
-            baseAsset: generalFeedData.pair[0],
-            quoteAsset: generalFeedData.pair[1],
-          },
-        } satisfies GeneralFeedResult;
-      }
+      // Note: Redstone is now handled separately above with our own data
 
       if (vendorName === 'pyth network' || vendorName === 'pyth') {
         return {
