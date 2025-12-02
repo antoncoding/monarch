@@ -46,6 +46,7 @@ export function TokenIcon({
         width={width}
         height={height}
         style={{ opacity }}
+        unoptimized
       />
     );
 

@@ -75,7 +75,7 @@ const supportedTokens = [
   },
   {
     symbol: 'eUSD',
-    img: require('../imgs/tokens/eusd.svg') as string,
+    img: require('../imgs/tokens/eusd.png') as string,
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0xA0d69E286B938e21CBf7E51D71F6A4c8918f482F' },
@@ -103,7 +103,7 @@ const supportedTokens = [
   },
   {
     symbol: 'USD0++',
-    img: require('../imgs/tokens/usd0pp.svg') as string,
+    img: require('../imgs/tokens/usd0pp.webp') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0x35D8949372D46B7a3D5A56006AE77B215fc69bC0' }],
     protocol: {
@@ -481,7 +481,7 @@ const supportedTokens = [
   },
   {
     symbol: 'pufETH',
-    img: require('../imgs/tokens/pufETH.webp') as string,
+    img: require('../imgs/tokens/pufETH.png') as string,
     decimals: 18,
     networks: [{ chain: mainnet, address: '0xD9A442856C234a39a81a089C06451EBAa4306a72' }],
     peg: TokenPeg.ETH,
