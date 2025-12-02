@@ -75,7 +75,12 @@ export default function Rewards() {
           acc[key].total.claimable += BigInt(reward.amount.claimable_now);
           acc[key].total.pendingAmount += BigInt(reward.amount.claimable_next);
           acc[key].total.claimed += BigInt(reward.amount.claimed);
-          acc[key].programs.push(reward.type);
+          // Mark if this is a Merkl reward
+          if (reward.program_id === 'merkl') {
+            acc[key].programs.push('merkl');
+          } else {
+            acc[key].programs.push(reward.type);
+          }
         } else if (reward.type === 'market-reward' || reward.type === 'vault-reward') {
           // go through all posible keys of rewad object: for_supply, for_borrow, for_collateral}
 
