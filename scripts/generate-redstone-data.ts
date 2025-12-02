@@ -76,6 +76,7 @@ const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
   oseth: 'eth',
   pufeth: 'eth',
   wsteth: 'eth',
+  rseth: 'eth',
   
   // HYPE derivative tokens -> HYPE underlying
   sthype: 'hype',
