@@ -23,7 +23,7 @@ export function GlobalModalProvider({ children }: { children: ReactNode }) {
   const toggleModal = useCallback((content: ReactNode) => {
     // If any modal is currently open, close it
     // Otherwise, open the new content
-    setModalContent(async (current) => (current ? null : content));
+    setModalContent((current) => (current ? null : content));
   }, []);
 
   const value = useMemo(

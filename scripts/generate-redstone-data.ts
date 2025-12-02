@@ -3,6 +3,15 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 
+type PriceFeedConfig = {
+  priceFeedAddress: string;
+  updateTriggersOverrides?: {
+    deviationPercentage?: number;
+    timeSinceLastUpdateInMilliseconds?: number;
+    [key: string]: any;
+  };
+};
+
 type RawRedstoneConfig = {
   chain: {
     name: string;
@@ -15,16 +24,7 @@ type RawRedstoneConfig = {
   adapterContract: string;
   adapterContractType: string;
   dataServiceId: string;
-  priceFeeds: {
-    [key: string]: {
-      priceFeedAddress: string;
-      updateTriggersOverrides?: {
-        deviationPercentage?: number;
-        timeSinceLastUpdateInMilliseconds?: number;
-        [key: string]: any;
-      };
-    };
-  };
+  priceFeeds: Record<string, PriceFeedConfig>;
   [key: string]: any;
 };
 
@@ -212,7 +212,7 @@ const main = async (): Promise<void> => {
   console.log('Starting Redstone oracle data generation...\n');
 
   try {
-    const networks = Object.keys(ENDPOINTS) as Array<keyof typeof ENDPOINTS>;
+    const networks = Object.keys(ENDPOINTS) as (keyof typeof ENDPOINTS)[];
 
     for (const network of networks) {
       const cleanData = await fetchAndProcessData(network);
