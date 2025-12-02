@@ -34,6 +34,29 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Button } from '@/components/common/Button';
 ```
 
+### Global Modal Context
+
+Use `useGlobalModal` when you need a modal to persist independently of the component that triggers it:
+
+```tsx
+import { useGlobalModal } from '@/contexts/GlobalModalContext';
+
+// In your component (e.g., inside a tooltip)
+const { toggleModal, closeModal } = useGlobalModal();
+
+<button onClick={() => toggleModal(<MyModal isOpen onClose={closeModal} />)}>
+  <HelpIcon />
+</button>
+```
+
+**When to use:**
+- Modals triggered from tooltips (modal stays open when tooltip closes)
+- Modals triggered from ephemeral UI that may unmount
+
+**When NOT to use:**
+- Standard page-level modals with local state
+- Cases where parent component stays mounted
+
 ### Standard Modal Pattern
 
 Use this pattern for primary workflows, settings, and management interfaces:
