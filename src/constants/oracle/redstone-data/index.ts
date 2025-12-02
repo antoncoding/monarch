@@ -4,6 +4,7 @@ import baseRawData from './base.json';
 import hyperevmRawData from './hyperevm.json';
 import mainnetRawData from './mainnet.json';
 import monadRawData from './monad.json';
+import unichainRawData from './unichain.json';
 import polygonRawData from './polygon.json';
 import { RedstoneOracleEntry } from './types';
 
@@ -12,7 +13,7 @@ export const REDSTONE_ORACLES = {
   [SupportedNetworks.Base]: baseRawData as RedstoneOracleEntry[],
   [SupportedNetworks.Polygon]: polygonRawData as RedstoneOracleEntry[],
   [SupportedNetworks.Arbitrum]: arbitrumRawData as RedstoneOracleEntry[],
-  [SupportedNetworks.Unichain]: [] as RedstoneOracleEntry[],
+  [SupportedNetworks.Unichain]: unichainRawData as RedstoneOracleEntry[],
   [SupportedNetworks.HyperEVM]: hyperevmRawData as RedstoneOracleEntry[],
   [SupportedNetworks.Monad]: monadRawData as RedstoneOracleEntry[],
 } as const;

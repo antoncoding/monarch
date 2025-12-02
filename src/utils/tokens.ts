@@ -258,7 +258,8 @@ const supportedTokens = [
       { chain: mainnet, address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0' },
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
       { chain: arbitrum, address: '0x5979D7b546E38E414F7E9822514be443A4800529' },
-      { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' }
+      { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' },
+      { chain: unichain, address: '0xc02fe7317d4eb8753a02c35fe019786854a92001' },
     ],
     peg: TokenPeg.ETH,
   },
@@ -303,6 +304,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
+      { chain: unichain, address: '0x927B51f251480a681271180DA4de28D44EC4AfB8' },
       { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
       { chain: monad, address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c' }
     ],
@@ -346,7 +348,10 @@ const supportedTokens = [
     symbol: 'rsETH',
     img: require('../imgs/tokens/rseth.png') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0xA1290d69c65A6Fe4DF752f95823fae25cB99e5A7' }],
+    networks: [
+      { chain: mainnet, address: '0xA1290d69c65A6Fe4DF752f95823fae25cB99e5A7' },
+      { chain: unichain, address: '0xc3eACf0612346366Db554C991D7858716db09f58' }
+    ],
     peg: TokenPeg.ETH,
   },
   {
@@ -362,6 +367,7 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee' },
       { chain: base, address: '0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A' },
+      { chain: unichain, address: '0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7' }
     ],
     peg: TokenPeg.ETH,
   },
@@ -416,10 +422,8 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110' },
-      {
-        chain: base,
-        address: '0x2416092f143378750bb29b79eD961ab195CcEea5',
-      },
+      { chain: base, address: '0x2416092f143378750bb29b79eD961ab195CcEea5'},
+      { chain: unichain, address: '0x2416092f143378750bb29b79eD961ab195CcEea5' }
     ],
     peg: TokenPeg.ETH,
   },
@@ -589,7 +593,8 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: hyperEvm, address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' },
-      { chain: monad, address: '0xe7cd86e13AC4309349F30B3435a9d337750fC82D' }
+      { chain: monad, address: '0xe7cd86e13AC4309349F30B3435a9d337750fC82D' },
+      { chain: unichain, address: '0x9151434b16b9763660705744891fA906F660EcC5' }
     ],
     peg: TokenPeg.USD,
   },

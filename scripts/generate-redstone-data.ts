@@ -48,6 +48,7 @@ const ENDPOINTS = {
   arbitrum: 'arbitrumOneMultiFeed.json',
   hyperevm: 'hyperevmMultiFeed.json',
   monad: 'monadMultiFeed.json',
+  unichain: 'unichainMultiFeed.json'
 } as const;
 
 /**
