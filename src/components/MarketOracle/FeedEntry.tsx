@@ -13,8 +13,8 @@ import {
 import { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
-import { RedstoneFeedTooltip } from './RedstoneFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
+import { RedstoneFeedTooltip } from './RedstoneFeedTooltip';
 import { UnknownFeedTooltip } from './UnknownFeedTooltip';
 
 type FeedEntryProps = {

@@ -4,13 +4,13 @@ import {
   ChainlinkOracleEntry,
   isChainlinkOracle,
 } from '@/constants/oracle/chainlink-data';
+import { getCompoundFeed, CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
+import { getGeneralFeed, isGeneralFeed, GeneralPriceFeed } from '@/constants/oracle/general-feeds';
 import {
   getRedstoneOracle,
   RedstoneOracleEntry,
   isRedstoneOracle,
 } from '@/constants/oracle/redstone-data';
-import { getCompoundFeed, CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
-import { getGeneralFeed, isGeneralFeed, GeneralPriceFeed } from '@/constants/oracle/general-feeds';
 import { isSupportedChain } from './networks';
 import { MorphoChainlinkOracleData, OracleFeed } from './types';
 

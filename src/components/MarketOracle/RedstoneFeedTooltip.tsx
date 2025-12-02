@@ -3,11 +3,11 @@ import Link from 'next/link';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import { RedstoneOracleEntry } from '@/constants/oracle/redstone-data';
+import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { OracleFeed } from '@/utils/types';
-import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import { RedstoneTypesModal } from './RedstoneTypesModal';
 
 type RedstoneFeedTooltipProps = {
