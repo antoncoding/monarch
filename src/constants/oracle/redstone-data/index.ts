@@ -4,9 +4,9 @@ import baseRawData from './base.json';
 import hyperevmRawData from './hyperevm.json';
 import mainnetRawData from './mainnet.json';
 import monadRawData from './monad.json';
-import unichainRawData from './unichain.json';
 import polygonRawData from './polygon.json';
 import { RedstoneOracleEntry } from './types';
+import unichainRawData from './unichain.json';
 
 export const REDSTONE_ORACLES = {
   [SupportedNetworks.Mainnet]: mainnetRawData as RedstoneOracleEntry[],
