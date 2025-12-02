@@ -16,7 +16,7 @@
     "threshold": 0.5
   },
   {
-    "path": "pzeth/eth",
+    "path": "pzeth/unknown",
     "priceFeedAddress": "0x0d7697a15bce933cE8671Ba3D60ab062dA216C60",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -72,7 +72,7 @@
     "threshold": 1
   },
   {
-    "path": "pumpbtc/btc",
+    "path": "pumpbtc/unknown",
     "priceFeedAddress": "0x85C4F855Bc0609D2584405819EdAEa3aDAbfE97D",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -176,7 +176,7 @@
     "threshold": 0.5
   },
   {
-    "path": "berastone/usd",
+    "path": "berastone/unknown",
     "priceFeedAddress": "0x4f67Fd74cff274Ef2942223c0f3166b856410AdD",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -232,7 +232,7 @@
     "threshold": 1
   },
   {
-    "path": "buidl/usd",
+    "path": "buidl/unknown",
     "priceFeedAddress": "0xb9BD795BB71012c0F3cd1D9c9A4c686F2d3524A4",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -240,7 +240,7 @@
     "threshold": 0.1
   },
   {
-    "path": "deusd/usd",
+    "path": "deusd/unknown",
     "priceFeedAddress": "0xcA727511c9d542AAb9eF406d24E5bbbE4567c22d",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -248,7 +248,7 @@
     "threshold": 0.2
   },
   {
-    "path": "egeth/eth",
+    "path": "egeth/unknown",
     "priceFeedAddress": "0x4914B59AB7f030d605c336CDc3f7470a2e16A53b",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -264,7 +264,7 @@
     "threshold": 0.2
   },
   {
-    "path": "bfbtc/btc",
+    "path": "bfbtc/unknown",
     "priceFeedAddress": "0xe0d290eBA865A6CA14c1C9bFD9CD839FA8d54543",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -272,7 +272,7 @@
     "threshold": 0.5
   },
   {
-    "path": "hlscope/usd",
+    "path": "hlscope/unknown",
     "priceFeedAddress": "0x1f14a50bA904A28CF6088e71B6a15561074398d7",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -280,7 +280,7 @@
     "threshold": 0.5
   },
   {
-    "path": "acred/usd",
+    "path": "acred/unknown",
     "priceFeedAddress": "0xD6BcbbC87bFb6c8964dDc73DC3EaE6d08865d51C",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -296,7 +296,7 @@
     "threshold": 0.5
   },
   {
-    "path": "usdtb/usd",
+    "path": "usdtb/unknown",
     "priceFeedAddress": "0x692F045EFaC629a4d3C54DE4d8dDb1D225b5A976",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -328,7 +328,7 @@
     "threshold": 1
   },
   {
-    "path": "taceth/eth",
+    "path": "taceth/unknown",
     "priceFeedAddress": "0x9D0aB80d6B68144a6BBb5c7447Eb84EdaaC18519",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -336,7 +336,7 @@
     "threshold": 0.5
   },
   {
-    "path": "tacusd/usd",
+    "path": "tacusd/unknown",
     "priceFeedAddress": "0xa90E0136cB598E1cEf28dc54932C17033B54538C",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -344,7 +344,7 @@
     "threshold": 0.5
   },
   {
-    "path": "tacbtc/btc",
+    "path": "tacbtc/unknown",
     "priceFeedAddress": "0x0A6FD5820f797e517297fEFf90AaEcD8e2Dc77b3",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -352,7 +352,7 @@
     "threshold": 0.5
   },
   {
-    "path": "sweth/eth",
+    "path": "sweth/unknown",
     "priceFeedAddress": "0x061bB36F8b67bB922937C102092498dcF4619F86",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -400,7 +400,7 @@
     "threshold": 1
   },
   {
-    "path": "hwhlp/usd",
+    "path": "hwhlp/unknown",
     "priceFeedAddress": "0x03138081aeD44E2E0Eb10361Ee41D84EDD22a05f",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -432,7 +432,7 @@
     "threshold": 0.05
   },
   {
-    "path": "cusd/usd",
+    "path": "cusd/unknown",
     "priceFeedAddress": "0x9A5a3c3Ed0361505cC1D4e824B3854De5724434A",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -480,7 +480,7 @@
     "threshold": 0.5
   },
   {
-    "path": "yusd/usd",
+    "path": "yusd/unknown",
     "priceFeedAddress": "0x2e65b1a44FDC30976d7e2397D16c425A8A7Aa4F6",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -488,7 +488,7 @@
     "threshold": 0.25
   },
   {
-    "path": "rsweth/eth",
+    "path": "rsweth/unknown",
     "priceFeedAddress": "0x3A236F67Fce401D87D7215695235e201966576E4",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -496,7 +496,7 @@
     "threshold": 1
   },
   {
-    "path": "syusd/yusd",
+    "path": "syusd/unknown",
     "priceFeedAddress": "0xab6982a14e811DF558F49C79923723281D0DD16A",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -504,7 +504,7 @@
     "threshold": 0.25
   },
   {
-    "path": "stac/usd",
+    "path": "stac/unknown",
     "priceFeedAddress": "0xEdC6287D3D41b322AF600317628D7E226DD3add4",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -520,7 +520,7 @@
     "threshold": 0.1
   },
   {
-    "path": "sierra/usd",
+    "path": "sierra/unknown",
     "priceFeedAddress": "0x9269127F104C040AB526575573c23F3e67401aD9",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",

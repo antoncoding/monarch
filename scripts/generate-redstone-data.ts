@@ -50,115 +50,56 @@ const ENDPOINTS = {
   monad: 'monadMultiFeed.json',
 } as const;
 
-// Mapping of tokens to their underlying/pegged assets
-// Used for FUNDAMENTAL feeds to determine the correct quote asset
-const TOKEN_PEG_MAPPING: Record<string, string> = {
-  // BTC-pegged tokens
+/**
+ * Mapping of derivative tokens to their underlying assets
+ *
+ * For FUNDAMENTAL feeds, Redstone tracks the on-chain exchange rate between
+ * an underlying asset and its derivative (e.g., wstETH/stETH from Lido).
+ * This mapping determines the correct quote asset for fundamental price feeds.
+ *
+ * Examples:
+ * - wstETH (derivative) -> ETH (underlying asset)
+ * - LBTC (derivative) -> BTC (underlying asset)
+ * - sUSDe (derivative) -> USDe (underlying asset)
+ */
+const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
+  // BTC derivative tokens -> BTC underlying
   lbtc: 'btc',
-  wbtc: 'btc',
-  cbbtc: 'btc',
-  tbtc: 'btc',
-  ebtc: 'btc',
-  ubtc: 'btc',
-  solvbtc: 'btc',
-  pumpbtc: 'btc',
-  bfbtc: 'btc',
-  tacbtc: 'btc',
+  
+  // ETH derivative tokens -> ETH underlying
+  susde: 'usde',
 
-  // ETH-pegged tokens
-  weth: 'eth',
-  cbeth: 'eth',
   reth: 'eth',
-  wsteth: 'eth',
   weeth: 'eth',
   ezeth: 'eth',
   oseth: 'eth',
   pufeth: 'eth',
-  rseth: 'eth',
-  rsweth: 'eth',
-  apxeth: 'eth',
-  bsdeth: 'eth',
-  ueth: 'eth',
-  'eth+': 'eth',
-  sweth: 'eth',
-  pzeth: 'eth',
-  egeth: 'eth',
-  taceth: 'eth',
-  cmeth: 'eth',
-
-  // USD-pegged tokens
-  usdc: 'usd',
-  usdt: 'usd',
-  dai: 'usd',
-  usde: 'usd',
-  usds: 'usd',
-  frax: 'usd',
-  pyusd: 'usd',
-  eusd: 'usd',
-  ausd: 'usd',
-  crvusd: 'usd',
-  usda: 'usd',
-  usd0: 'usd',
-  usdhl: 'usd',
-  usdt0: 'usd',
-  usdz: 'usd',
-  ush: 'usd',
-  usyc: 'usd',
-  usr: 'usd',
-  hyusd: 'usd',
-  usd3: 'usd',
-  deusd: 'usd',
-  fxusd: 'usd',
-  usdx: 'usd',
-  yusd: 'usd',
-  tacusd: 'usd',
-  cusd: 'usd',
-
-  // Staked/wrapped versions of stablecoins
-  susde: 'usde',
-  sdai: 'dai',
-  susds: 'usds',
-  syusd: 'yusd',
-
-  // SOL-pegged
-  usol: 'sol',
-
-  // MATIC/POL
-  maticx: 'pol',
-  wpol: 'pol',
-
-  // HYPE-pegged
+  wsteth: 'eth',
+  
+  // HYPE derivative tokens -> HYPE underlying
   sthype: 'hype',
   mhype: 'hype',
   khype: 'hype',
   hbhype: 'hype',
   lsthype: 'hype',
-  behype: 'hype',
 
-  // Other pegged tokens
+  // Other derivative tokens
   hbusdt: 'usdt',
   hbbtc: 'btc',
 
-  // Interest-bearing tokens
-  buidl: 'usd',
-  buidl_i_ethereum: 'usd',
-  vbill_ethereum: 'usd',
-  usdtb: 'usd',
   thbill: 'usd',
-  ibenji_ethereum: 'usd',
-
-  // Specific fundamental tokens
-  acred: 'usd',
-  stac: 'usd',
-  sierra: 'usd',
-  hlscope: 'usd',
-  hwhlp: 'usd',
-  rlp: 'usd',
-  susde_fundamental: 'usde',
-  susdx_eth: 'eth',
-  berastone: 'usd',
 };
 
+/**
+ * Generates the price feed path for a Redstone feed
+ *
+ * For FUNDAMENTAL feeds: Returns derivative/underlying pair (e.g., "wsteth/eth")
+ * For STANDARD feeds: Returns token/usd pair (e.g., "btc/usd")
+ *
+ * @param feedName - The raw feed name from Redstone config
+ * @param isFundamental - Whether this is a fundamental (contract rate) feed
+ * @returns The normalized path in format "base/quote"
+ */
 const generatePath = (feedName: string, isFundamental: boolean): string => {
   // Check if the feed already contains a pair (e.g., "eBTC/WBTC" or "stHYPE/HYPE")
   if (feedName.includes('/')) {
@@ -176,16 +117,17 @@ const generatePath = (feedName: string, isFundamental: boolean): string => {
   const baseNameLower = baseName.toLowerCase();
 
   if (isFundamental) {
-    // For FUNDAMENTAL feeds, try to find the pegged asset
-    const pegAsset = TOKEN_PEG_MAPPING[baseNameLower];
-    if (pegAsset) {
-      return `${baseNameLower}/${pegAsset}`;
+    // For FUNDAMENTAL feeds, find the underlying asset the derivative tracks
+    // e.g., wstETH (derivative) tracks its exchange rate to ETH (underlying)
+    const underlyingAsset = FUNDAMENTAL_TO_UNDERLYING_MAPPING[baseNameLower];
+    if (underlyingAsset) {
+      return `${baseNameLower}/${underlyingAsset}`;
     }
-    // If no mapping found, use "unknown" as quote
+    // If no mapping found, use "unknown" as underlying asset
     return `${baseNameLower}/unknown`;
   }
 
-  // For non-fundamental feeds, default to USD pair
+  // For STANDARD (market) feeds, default to USD pair
   return `${baseNameLower}/usd`;
 };
 

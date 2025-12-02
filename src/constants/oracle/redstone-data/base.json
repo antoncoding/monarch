@@ -120,7 +120,7 @@
     "threshold": 0.1
   },
   {
-    "path": "yusd/usd",
+    "path": "yusd/unknown",
     "priceFeedAddress": "0x6A1c87d11dDe3D1d52c24f8EC59B91019f14170D",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -128,7 +128,7 @@
     "threshold": 0.25
   },
   {
-    "path": "syusd/yusd",
+    "path": "syusd/unknown",
     "priceFeedAddress": "0x4154f0e4dc70DFA4219309fBea34322225E17b68",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",

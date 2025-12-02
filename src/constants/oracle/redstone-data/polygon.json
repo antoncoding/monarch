@@ -1,6 +1,6 @@
 [
   {
-    "path": "hlscope/usd",
+    "path": "hlscope/unknown",
     "priceFeedAddress": "0x780fe28dBac08eBa781de833A5E860C86D524251",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
@@ -8,7 +8,7 @@
     "threshold": 0.5
   },
   {
-    "path": "acred/usd",
+    "path": "acred/unknown",
     "priceFeedAddress": "0xBF4Fa84B5433660a4194B5FbaF41c3d11B47ed77",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
