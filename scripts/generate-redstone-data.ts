@@ -48,6 +48,7 @@ const ENDPOINTS = {
   arbitrum: 'arbitrumOneMultiFeed.json',
   hyperevm: 'hyperevmMultiFeed.json',
   monad: 'monadMultiFeed.json',
+  unichain: 'unichainMultiFeed.json'
 } as const;
 
 /**
@@ -75,6 +76,7 @@ const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
   oseth: 'eth',
   pufeth: 'eth',
   wsteth: 'eth',
+  rseth: 'eth',
   
   // HYPE derivative tokens -> HYPE underlying
   sthype: 'hype',

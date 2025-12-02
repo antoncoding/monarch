@@ -80,7 +80,7 @@
     "threshold": 0.5
   },
   {
-    "path": "rseth/unknown",
+    "path": "rseth/eth",
     "priceFeedAddress": "0x84AD474c33c9cCefB1a2D8b77Bdd88bDc592f96b",
     "fundamental": true,
     "dataServiceId": "redstone-primary-prod",
