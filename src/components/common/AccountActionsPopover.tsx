@@ -7,12 +7,11 @@ import { LuCopy, LuUser } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
-import type { SupportedNetworks } from '@/utils/networks';
+import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
 
 type AccountActionsPopoverProps = {
   address: Address;
-  chainId?: number;
   children: ReactNode;
 };
 
@@ -24,7 +23,6 @@ type AccountActionsPopoverProps = {
  */
 export function AccountActionsPopover({
   address,
-  chainId = 1,
   children,
 }: AccountActionsPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,10 +44,10 @@ export function AccountActionsPopover({
   }, [address]);
 
   const handleViewExplorer = useCallback(() => {
-    const explorerUrl = getExplorerURL(address, chainId as SupportedNetworks);
+    const explorerUrl = getExplorerURL(address, SupportedNetworks.Mainnet);
     window.open(explorerUrl, '_blank', 'noopener,noreferrer');
     setIsOpen(false);
-  }, [address, chainId]);
+  }, [address]);
 
   return (
     <Popover

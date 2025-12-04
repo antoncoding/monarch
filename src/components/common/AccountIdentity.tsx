@@ -13,12 +13,11 @@ import { Name } from '@/components/common/Name';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
-import type { SupportedNetworks } from '@/utils/networks';
+import { SupportedNetworks } from '@/utils/networks';
 import type { Address } from 'viem';
 
 type AccountIdentityProps = {
   address: Address;
-  chainId?: number;
   variant?: 'badge' | 'compact' | 'full';
   linkTo?: 'explorer' | 'profile' | 'none';
   copyable?: boolean;
@@ -41,7 +40,6 @@ type AccountIdentityProps = {
  */
 export function AccountIdentity({
   address,
-  chainId,
   variant = 'badge',
   linkTo = 'none',
   copyable = false,
@@ -53,7 +51,7 @@ export function AccountIdentity({
   const { address: connectedAddress, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
-  const { vaultName, shortAddress } = useAddressLabel(address, chainId);
+  const { vaultName, shortAddress } = useAddressLabel(address);
   const { data: ensName } = useEnsName({
     address: address as `0x${string}`,
     chainId: 1,
@@ -73,15 +71,13 @@ export function AccountIdentity({
 
     if (linkTo === 'none') return null;
     if (linkTo === 'explorer') {
-      const numericChainId = Number(chainId ?? 1);
-      if (!Number.isFinite(numericChainId)) return null;
-      return getExplorerURL(address as `0x${string}`, numericChainId as SupportedNetworks);
+      return getExplorerURL(address as `0x${string}`, SupportedNetworks.Mainnet);
     }
     if (linkTo === 'profile') {
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, chainId, showActions]);
+  }, [linkTo, address, showActions]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -157,7 +153,7 @@ export function AccountIdentity({
 
     if (showActions) {
       return (
-        <AccountActionsPopover address={address} chainId={chainId}>
+        <AccountActionsPopover address={address}>
           {badgeElement}
         </AccountActionsPopover>
       );
@@ -235,7 +231,7 @@ export function AccountIdentity({
 
     if (showActions) {
       return (
-        <AccountActionsPopover address={address} chainId={chainId}>
+        <AccountActionsPopover address={address}>
           {compactElement}
         </AccountActionsPopover>
       );
@@ -340,7 +336,7 @@ export function AccountIdentity({
 
   if (showActions) {
     return (
-      <AccountActionsPopover address={address} chainId={chainId}>
+      <AccountActionsPopover address={address}>
         {fullElement}
       </AccountActionsPopover>
     );
