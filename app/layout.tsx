@@ -4,6 +4,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
+import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
@@ -33,10 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProviders>
           <QueryProvider>
             <OnchainProviders>
-              <ClientProviders>
-                {children}
-                <RiskNotificationModal />
-              </ClientProviders>
+              <VaultRegistryProvider>
+                <ClientProviders>
+                  {children}
+                  <RiskNotificationModal />
+                </ClientProviders>
+              </VaultRegistryProvider>
             </OnchainProviders>
           </QueryProvider>
         </ThemeProviders>

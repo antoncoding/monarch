@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
-import { AddressIdentity } from '@/components/common/AddressIdentity';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
@@ -86,7 +86,11 @@ export function TransactionTableBody({
           <tr key={op.txId} className="hover:bg-hovered">
             {/* User Address */}
             <td data-label="User" className="z-50" style={{ minWidth: '120px' }}>
-              <AddressIdentity address={op.user as `0x${string}`} chainId={selectedNetwork} />
+              <AccountIdentity
+                address={op.user as `0x${string}`}
+                variant="badge"
+                linkTo="profile"
+              />
             </td>
 
             {/* Loan Asset */}

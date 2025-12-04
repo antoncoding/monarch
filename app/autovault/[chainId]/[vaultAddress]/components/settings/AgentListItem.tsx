@@ -1,6 +1,6 @@
 import { Address } from 'viem';
 import { AgentIcon } from '@/components/AgentIcon';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { findAgent } from '@/utils/monarch-agent';
 
 type AgentListItemProps = {
@@ -14,7 +14,7 @@ export function AgentListItem({ address }: AgentListItemProps) {
     <div className="flex items-center gap-2">
       <AgentIcon address={address} width={24} height={24} />
       {agent && <span className="text-sm font-medium">{agent.name}</span>}
-      <AddressDisplay address={address} size="sm" />
+      <AccountIdentity address={address} variant="badge" />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Address } from 'viem';
-import { AddressDisplay } from './AddressDisplay';
+import { AccountIdentity } from './AccountIdentity';
 
 type AllocatorCardProps = {
   name: string;
@@ -50,7 +50,7 @@ export function AllocatorCard({
           )}
         </div>
         <div className="text-xs text-secondary">
-          <AddressDisplay address={address} />
+          <AccountIdentity address={address} variant="full" />
         </div>
         <p className="text-sm text-secondary">{description}</p>
       </div>

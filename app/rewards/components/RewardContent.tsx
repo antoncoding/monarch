@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Address } from 'viem';
 import { useBalance } from 'wagmi';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
@@ -162,7 +162,7 @@ export default function Rewards() {
           <h1 className="font-zen">Reward</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-8 sm:flex-row">
-          <AddressDisplay address={account as Address} />
+          <AccountIdentity address={account as Address} variant="full" showAddress />
         </div>
         <div className="space-y-4">
           <section>

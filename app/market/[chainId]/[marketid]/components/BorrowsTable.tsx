@@ -13,11 +13,11 @@ import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import { Address } from 'viem';
 import { formatUnits } from 'viem';
-import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Badge } from '@/components/common/Badge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketBorrows } from '@/hooks/useMarketBorrows';
-import { getExplorerURL, getExplorerTxURL } from '@/utils/external';
+import { getExplorerTxURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 // Helper functions to format data
@@ -104,15 +104,11 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
           {paginatedBorrows.map((borrow) => (
             <TableRow key={borrow.hash}>
               <TableCell>
-                <Link
-                  href={getExplorerURL(borrow.userAddress, chainId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-primary"
-                >
-                  <AccountWithAvatar address={borrow.userAddress as Address} />
-                  <ExternalLinkIcon className="ml-1" />
-                </Link>
+                <AccountIdentity
+                  address={borrow.userAddress as Address}
+                  variant="compact"
+                  linkTo="profile"
+                />
               </TableCell>
               <TableCell>
                 <Badge variant={borrow.type === 'MarketRepay' ? 'success' : 'danger'}>

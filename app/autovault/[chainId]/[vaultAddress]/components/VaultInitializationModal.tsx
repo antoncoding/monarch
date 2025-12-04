@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { Address, zeroAddress } from 'viem';
 import { Button } from '@/components/common';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
@@ -94,7 +94,7 @@ function AdapterCapStep({
       <div className="rounded bg-hovered/60 p-4 space-y-4">
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter address</span>
-          <AddressDisplay address={adapterAddress} />
+          <AccountIdentity address={adapterAddress} variant="full" />
         </div>
         <div className="space-y-2">
           <span className="text-xs uppercase text-secondary">Adapter cap (%)</span>
@@ -141,14 +141,14 @@ function FinalizeSetupStep({
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter</span>
           {adapterIsReady ? (
-            <AddressDisplay address={adapter} />
+            <AccountIdentity address={adapter} variant="full" />
           ) : (
             <span className="text-xs text-secondary">Adapter not detected yet.</span>
           )}
         </div>
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Morpho registry</span>
-          <AddressDisplay address={registryAddress} />
+          <AccountIdentity address={registryAddress} variant="full" />
         </div>
         <ul className="list-disc space-y-1 pl-4 text-xs text-secondary">
           <li>Only Morpho-approved adapters can be enabled after this step.</li>
