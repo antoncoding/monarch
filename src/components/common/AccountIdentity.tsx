@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink, LuCopy } from 'react-icons/lu';
-import { useAccount } from 'wagmi';
+import { useAccount, useEnsName } from 'wagmi';
 import type { Address } from 'viem';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/common/AccountActionsPopover';
@@ -54,6 +54,10 @@ export function AccountIdentity({
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
   const { vaultName, shortAddress } = useAddressLabel(address, chainId);
+  const { data: ensName } = useEnsName({
+    address: address as `0x${string}`,
+    chainId: 1,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -64,6 +68,9 @@ export function AccountIdentity({
   }, [address, connectedAddress, isConnected, mounted]);
 
   const href = useMemo(() => {
+    // When showActions is enabled, don't use linkTo - popover handles navigation
+    if (showActions) return null;
+
     if (linkTo === 'none') return null;
     if (linkTo === 'explorer') {
       const numericChainId = Number(chainId ?? 1);
@@ -74,7 +81,7 @@ export function AccountIdentity({
       return `/positions/${address}`;
     }
     return null;
-  }, [linkTo, address, chainId]);
+  }, [linkTo, address, chainId, showActions]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -291,10 +298,10 @@ export function AccountIdentity({
         </span>
       )}
 
-      {/* ENS badge (if showAddress is enabled, shows ENS or address) */}
-      {showAddress && !vaultName && (
+      {/* ENS badge (only show if there's an actual ENS name) */}
+      {showAddress && !vaultName && ensName && (
         <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
-          <Name address={address as `0x${string}`} />
+          {ensName}
         </span>
       )}
 
@@ -341,7 +348,8 @@ export function AccountIdentity({
     ) : (
       <motion.div
         className={fullClasses}
-        {...interactiveProps}
+        onClick={copyable ? () => void handleCopy() : undefined}
+        style={{ cursor: copyable ? 'pointer' : 'default' }}
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
