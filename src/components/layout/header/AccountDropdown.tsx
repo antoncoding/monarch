@@ -5,7 +5,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/r
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import { useAccount, useDisconnect } from 'wagmi';
-import AccountWithENS from '@/components/Account/AccountWithENS';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
@@ -59,8 +59,9 @@ export function AccountDropdown() {
           isReadOnly
           showDivider={false}
         >
-          <div className="flex w-full flex-col gap-2">
-            <AccountWithENS address={address} />
+          <div className="flex w-full items-center gap-2">
+            <Avatar address={address} size={16} />
+            <AccountIdentity address={address} variant="badge" />
           </div>
         </DropdownItem>
 

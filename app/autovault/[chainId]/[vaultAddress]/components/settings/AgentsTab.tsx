@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Address } from 'viem';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
@@ -75,12 +75,7 @@ export function AgentsTab({
           <p className="text-xs text-secondary">{description}</p>
         </div>
         {normalized ? (
-          <AddressDisplay
-            address={normalized}
-            size="sm"
-            showExplorerLink
-            copyable
-          />
+          <AccountIdentity address={normalized} variant="compact" linkTo="explorer" copyable />
         ) : (
           <span className="text-xs text-secondary">Not assigned</span>
         )}
@@ -235,11 +230,11 @@ export function AgentsTab({
         ) : (
           <div className="flex flex-wrap gap-2">
             {sentinels.map((address) => (
-              <AddressDisplay
+              <AccountIdentity
                 key={address}
                 address={address as Address}
-                size="sm"
-                showExplorerLink
+                variant="compact"
+                linkTo="explorer"
                 copyable
               />
             ))}

@@ -437,6 +437,79 @@ Add an action link (like explorer) in the top-right corner:
 - Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
 - Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
 
+### Account Identity Component
+
+**AccountIdentity** (`@/components/common/AccountIdentity`)
+- Unified component for displaying addresses, vault names, and ENS names
+- Three variants: `badge`, `compact`, `full`
+- All avatars are round by default
+
+**Variant Behaviors:**
+
+**Badge** - Minimal inline (no avatar)
+- Shows: Vault name → ENS name → Shortened address
+
+**Compact** - Avatar (16px) wrapped in badge
+- Avatar + (Vault name → ENS name → Shortened address)
+- Single badge wraps both avatar and text
+
+**Full** - Horizontal layout with all info
+- Avatar (36px) + Address badge + Extra badges (all on one line, centered)
+- **Address badge**: Always shows shortened address (e.g., 0x1234...5678), click to copy
+- **Extra badges** (shown based on conditions):
+  - Connected badge (if wallet is connected)
+  - ENS badge (if `showAddress=true` and no vault name)
+  - Vault badge (if address is a known vault)
+
+**Styling Rules:**
+- Use `rounded-sm` for badges (not `rounded`)
+- Background: `bg-hovered` (or `bg-green-500/10` for connected)
+- Text: `font-monospace` with `text-secondary` or `text-primary`
+- No underscores in variable names
+- All avatars are round
+- Full variant: all elements centered vertically
+
+```tsx
+import { AccountIdentity } from '@/components/common/AccountIdentity';
+
+// Badge variant - minimal inline (no avatar)
+<AccountIdentity
+  address={address}
+  variant="badge"
+  linkTo="profile"
+  showCopy
+/>
+
+// Compact variant - avatar (16px) wrapped in badge background
+<AccountIdentity
+  address={address}
+  variant="compact"
+  linkTo="explorer"
+  chainId={1}
+/>
+
+// Full variant - avatar + address + extra info badges
+<AccountIdentity
+  address={address}
+  variant="full"
+  showAddress  // Shows ENS badge if available
+/>
+
+// Full variant for vault address
+<AccountIdentity
+  address={vaultAddress}
+  variant="full"
+  chainId={1}  // Will show vault name badge if recognized
+/>
+```
+
+**Props:**
+- `variant`: `'badge'` | `'compact'` | `'full'`
+- `linkTo`: `'explorer'` | `'profile'` | `'none'`
+- `showCopy`: Show copy icon at end of badge
+- `copyable`: Make entire component clickable to copy
+- `showAddress`: Show ENS badge (full variant only)
+
 ### Market Display Components
 
 Use the right component for displaying market information:

@@ -9,7 +9,7 @@ import { IoRefreshOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { getSlicedAddress } from '@/utils/address';
@@ -146,7 +146,12 @@ export default function VaultContent() {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <AddressDisplay address={vaultAddressValue} chainId={chainId} size="sm" showExplorerLink />
+              <AccountIdentity
+                address={vaultAddressValue}
+                chainId={chainId}
+                variant="compact"
+                linkTo="explorer"
+              />
               <Button
                 variant="light"
                 size="sm"

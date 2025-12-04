@@ -5,6 +5,7 @@ import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
 import OnchainProviders from '@/OnchainProviders';
+import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
@@ -33,10 +34,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProviders>
           <QueryProvider>
             <OnchainProviders>
-              <ClientProviders>
-                {children}
-                <RiskNotificationModal />
-              </ClientProviders>
+              <VaultRegistryProvider>
+                <ClientProviders>
+                  {children}
+                  <RiskNotificationModal />
+                </ClientProviders>
+              </VaultRegistryProvider>
             </OnchainProviders>
           </QueryProvider>
         </ThemeProviders>

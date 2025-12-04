@@ -9,7 +9,7 @@ import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import { Address } from 'viem';
 import { useAccount } from 'wagmi';
-import { AddressDisplay } from '@/components/common/AddressDisplay';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -79,7 +79,7 @@ export default function Positions() {
           <h1 className="font-zen">Portfolio</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
-          <AddressDisplay address={account as Address} />
+          <AccountIdentity address={account as Address} variant="full" showAddress />
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
               <Button size="md" className="font-zen text-secondary">

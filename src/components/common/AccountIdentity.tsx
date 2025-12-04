@@ -1,0 +1,301 @@
+'use client';
+
+import { useMemo, useState, useEffect, useCallback, type HTMLAttributes } from 'react';
+import clsx from 'clsx';
+import { FaCircle } from 'react-icons/fa';
+import { LuExternalLink, LuCopy } from 'react-icons/lu';
+import Link from 'next/link';
+import type { Address } from 'viem';
+import { useAccount } from 'wagmi';
+import { Avatar } from '@/components/Avatar/Avatar';
+import { Name } from '@/components/common/Name';
+import { useAddressLabel } from '@/hooks/useAddressLabel';
+import { useStyledToast } from '@/hooks/useStyledToast';
+import { getExplorerURL } from '@/utils/external';
+import type { SupportedNetworks } from '@/utils/networks';
+
+type AccountIdentityProps = {
+  address: Address;
+  chainId?: number;
+  variant?: 'badge' | 'compact' | 'full';
+  linkTo?: 'explorer' | 'profile' | 'none';
+  copyable?: boolean;
+  showCopy?: boolean;
+  showAddress?: boolean;
+  className?: string;
+};
+
+/**
+ * Unified component for displaying account identities across the app.
+ *
+ * Badge & Compact: Show vault name → ENS name → shortened address
+ * Full: Always show address badge + optional extra badges (connected, ENS, vault)
+ *
+ * Variants:
+ * - badge: Minimal inline badge (no avatar)
+ * - compact: Avatar (16px) wrapped in badge background
+ * - full: Avatar (36px) + address badge + extra badges (all centered on one line)
+ */
+export function AccountIdentity({
+  address,
+  chainId,
+  variant = 'badge',
+  linkTo = 'none',
+  copyable = false,
+  showCopy = false,
+  showAddress = false,
+  className,
+}: AccountIdentityProps) {
+  const { address: connectedAddress, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+  const toast = useStyledToast();
+  const { vaultName, shortAddress } = useAddressLabel(address, chainId);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isOwner = useMemo(() => {
+    return mounted && isConnected && address === connectedAddress;
+  }, [address, connectedAddress, isConnected, mounted]);
+
+  const href = useMemo(() => {
+    if (linkTo === 'none') return null;
+    if (linkTo === 'explorer') {
+      const numericChainId = Number(chainId ?? 1);
+      if (!Number.isFinite(numericChainId)) return null;
+      return getExplorerURL(address as `0x${string}`, numericChainId as SupportedNetworks);
+    }
+    if (linkTo === 'profile') {
+      return `/positions/${address}`;
+    }
+    return null;
+  }, [linkTo, address, chainId]);
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      toast.success('Address copied', `${address.slice(0, 6)}...${address.slice(-4)}`);
+    } catch (error) {
+      console.error('Failed to copy address', error);
+    }
+  }, [address, toast]);
+
+  const handleKeyDown = useCallback<NonNullable<HTMLAttributes<HTMLDivElement>['onKeyDown']>>(
+    (event) => {
+      if (!copyable) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        void handleCopy();
+      }
+    },
+    [copyable, handleCopy],
+  );
+
+  const interactiveProps: HTMLAttributes<HTMLDivElement> = copyable
+    ? {
+        role: 'button',
+        tabIndex: 0,
+        onClick: () => void handleCopy(),
+        onKeyDown: handleKeyDown,
+      }
+    : {};
+
+  // Badge variant - minimal inline badge (no avatar)
+  if (variant === 'badge') {
+    const content = (
+      <>
+        {vaultName ?? <Name address={address as `0x${string}`} />}
+        {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
+        {showCopy && (
+          <LuCopy
+            className="h-3 w-3 cursor-pointer transition-colors hover:text-primary"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void handleCopy();
+            }}
+          />
+        )}
+      </>
+    );
+
+    const badgeClasses = clsx(
+      'inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary',
+      copyable && 'cursor-pointer transition-colors hover:brightness-110',
+      href &&
+        'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
+      className,
+    );
+
+    if (href) {
+      return (
+        <Link
+          href={href}
+          target={linkTo === 'explorer' ? '_blank' : undefined}
+          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+          className={badgeClasses}
+          onClick={(e) => {
+            if (copyable) {
+              e.preventDefault();
+              void handleCopy();
+            } else if (linkTo === 'explorer') {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {content}
+        </Link>
+      );
+    }
+
+    return (
+      <div className={badgeClasses} {...interactiveProps}>
+        {content}
+      </div>
+    );
+  }
+
+  // Compact variant - avatar (16px) wrapped in badge background
+  if (variant === 'compact') {
+    const badgeContent = (
+      <>
+        <Avatar address={address} size={16} />
+        <span className="font-zen text-xs">
+          {vaultName ?? <Name address={address as `0x${string}`} />}
+        </span>
+        {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
+        {showCopy && (
+          <LuCopy
+            className="h-3 w-3 cursor-pointer transition-colors hover:text-primary"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void handleCopy();
+            }}
+          />
+        )}
+      </>
+    );
+
+    const compactClasses = clsx(
+      'inline-flex items-center gap-1.5 rounded-sm px-1.5 py-1 font-zen text-xs',
+      mounted && isOwner ? 'bg-green-500/10 text-green-500' : 'bg-hovered text-secondary',
+      copyable && 'cursor-pointer transition-colors hover:brightness-110',
+      href &&
+        'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
+      className,
+    );
+
+    if (href) {
+      return (
+        <Link
+          href={href}
+          target={linkTo === 'explorer' ? '_blank' : undefined}
+          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+          className={compactClasses}
+          onClick={(e) => {
+            if (copyable) {
+              e.preventDefault();
+              void handleCopy();
+            } else if (linkTo === 'explorer') {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {badgeContent}
+        </Link>
+      );
+    }
+
+    return (
+      <div className={compactClasses} {...interactiveProps}>
+        {badgeContent}
+      </div>
+    );
+  }
+
+  // Full variant - avatar + address badge + extra info badges (all on one line, centered)
+  const fullContent = (
+    <>
+      <Avatar address={address} size={36} />
+
+      {/* Address badge - always shows shortened address, click to copy */}
+      <span
+        className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-zen text-sm text-secondary transition-colors hover:brightness-110"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          void handleCopy();
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            void handleCopy();
+          }
+        }}
+      >
+        {shortAddress}
+        <LuCopy className="h-3.5 w-3.5" />
+      </span>
+
+      {/* Connected indicator badge */}
+      {mounted && isOwner && (
+        <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/10 px-2 py-1 font-zen text-xs text-green-500">
+          <FaCircle size={6} />
+          Connected
+        </span>
+      )}
+
+      {/* ENS badge (if showAddress is enabled, shows ENS or address) */}
+      {showAddress && !vaultName && (
+        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
+          <Name address={address as `0x${string}`} />
+        </span>
+      )}
+
+      {/* Vault name badge (if it's a vault) */}
+      {vaultName && (
+        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
+          {vaultName}
+        </span>
+      )}
+
+      {/* Explorer link */}
+      {linkTo === 'explorer' && href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="text-secondary transition-colors hover:text-primary"
+          aria-label="View on explorer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LuExternalLink className="h-4 w-4" />
+        </a>
+      )}
+    </>
+  );
+
+  const fullClasses = clsx(
+    'flex items-center gap-2',
+    copyable && 'cursor-pointer transition-colors hover:brightness-110',
+    className,
+  );
+
+  if (href && linkTo === 'profile') {
+    return (
+      <Link href={href} className={fullClasses}>
+        {fullContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={fullClasses} {...interactiveProps}>
+      {fullContent}
+    </div>
+  );
+}

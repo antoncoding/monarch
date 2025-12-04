@@ -12,7 +12,7 @@ import {
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import { Address, formatUnits } from 'viem';
-import AccountWithAvatar from '@/components/Account/AccountWithAvatar';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
@@ -110,15 +110,11 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
               <TableRow key={liquidation.hash}>
                 <TableCell>
                   {isLiquidatorAddress ? (
-                    <Link
-                      href={getExplorerURL(liquidation.liquidator, chainId)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-primary"
-                    >
-                      <AccountWithAvatar address={liquidation.liquidator as Address} />
-                      <ExternalLinkIcon className="ml-1" />
-                    </Link>
+                    <AccountIdentity
+                      address={liquidation.liquidator as Address}
+                      variant="compact"
+                      linkTo="profile"
+                    />
                   ) : (
                     <span>{liquidation.liquidator}</span>
                   )}
