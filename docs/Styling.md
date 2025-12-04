@@ -509,6 +509,24 @@ import { AccountIdentity } from '@/components/common/AccountIdentity';
 - `showCopy`: Show copy icon at end of badge
 - `copyable`: Make entire component clickable to copy
 - `showAddress`: Show ENS badge (full variant only)
+- `showActions`: Show actions popover on click (default: `true`)
+
+**Actions Popover (Default Behavior):**
+
+By default, clicking any AccountIdentity shows a minimal popover with:
+1. **Copy Address** - Copies address to clipboard
+2. **View Account** - Navigate to positions page
+3. **View on Explorer** - Opens Etherscan in new tab
+
+To disable: `showActions={false}`
+
+```tsx
+// Default - shows actions popover on click
+<AccountIdentity address={address} variant="badge" />
+
+// Disable actions (e.g., in dropdown menus)
+<AccountIdentity address={address} variant="badge" showActions={false} />
+```
 
 ### Market Display Components
 

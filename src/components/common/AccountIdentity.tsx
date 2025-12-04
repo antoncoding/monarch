@@ -9,6 +9,7 @@ import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { Name } from '@/components/common/Name';
+import { AccountActionsPopover } from '@/components/common/AccountActionsPopover';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
@@ -22,6 +23,7 @@ type AccountIdentityProps = {
   copyable?: boolean;
   showCopy?: boolean;
   showAddress?: boolean;
+  showActions?: boolean;
   className?: string;
 };
 
@@ -44,6 +46,7 @@ export function AccountIdentity({
   copyable = false,
   showCopy = false,
   showAddress = false,
+  showActions = true,
   className,
 }: AccountIdentityProps) {
   const { address: connectedAddress, isConnected } = useAccount();
@@ -128,32 +131,38 @@ export function AccountIdentity({
       className,
     );
 
-    if (href) {
-      return (
-        <Link
-          href={href}
-          target={linkTo === 'explorer' ? '_blank' : undefined}
-          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
-          className={badgeClasses}
-          onClick={(e) => {
-            if (copyable) {
-              e.preventDefault();
-              void handleCopy();
-            } else if (linkTo === 'explorer') {
-              e.stopPropagation();
-            }
-          }}
-        >
-          {content}
-        </Link>
-      );
-    }
-
-    return (
+    const badgeElement = href ? (
+      <Link
+        href={href}
+        target={linkTo === 'explorer' ? '_blank' : undefined}
+        rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+        className={badgeClasses}
+        onClick={(e) => {
+          if (copyable) {
+            e.preventDefault();
+            void handleCopy();
+          } else if (linkTo === 'explorer') {
+            e.stopPropagation();
+          }
+        }}
+      >
+        {content}
+      </Link>
+    ) : (
       <div className={badgeClasses} {...interactiveProps}>
         {content}
       </div>
     );
+
+    if (showActions) {
+      return (
+        <AccountActionsPopover address={address} chainId={chainId}>
+          {badgeElement}
+        </AccountActionsPopover>
+      );
+    }
+
+    return badgeElement;
   }
 
   // Compact variant - avatar (16px) wrapped in badge background
@@ -187,32 +196,38 @@ export function AccountIdentity({
       className,
     );
 
-    if (href) {
-      return (
-        <Link
-          href={href}
-          target={linkTo === 'explorer' ? '_blank' : undefined}
-          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
-          className={compactClasses}
-          onClick={(e) => {
-            if (copyable) {
-              e.preventDefault();
-              void handleCopy();
-            } else if (linkTo === 'explorer') {
-              e.stopPropagation();
-            }
-          }}
-        >
-          {badgeContent}
-        </Link>
-      );
-    }
-
-    return (
+    const compactElement = href ? (
+      <Link
+        href={href}
+        target={linkTo === 'explorer' ? '_blank' : undefined}
+        rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+        className={compactClasses}
+        onClick={(e) => {
+          if (copyable) {
+            e.preventDefault();
+            void handleCopy();
+          } else if (linkTo === 'explorer') {
+            e.stopPropagation();
+          }
+        }}
+      >
+        {badgeContent}
+      </Link>
+    ) : (
       <div className={compactClasses} {...interactiveProps}>
         {badgeContent}
       </div>
     );
+
+    if (showActions) {
+      return (
+        <AccountActionsPopover address={address} chainId={chainId}>
+          {compactElement}
+        </AccountActionsPopover>
+      );
+    }
+
+    return compactElement;
   }
 
   // Full variant - avatar + address badge + extra info badges (all on one line, centered)
@@ -285,17 +300,24 @@ export function AccountIdentity({
     className,
   );
 
-  if (href && linkTo === 'profile') {
-    return (
+  const fullElement =
+    href && linkTo === 'profile' ? (
       <Link href={href} className={fullClasses}>
         {fullContent}
       </Link>
+    ) : (
+      <div className={fullClasses} {...interactiveProps}>
+        {fullContent}
+      </div>
+    );
+
+  if (showActions) {
+    return (
+      <AccountActionsPopover address={address} chainId={chainId}>
+        {fullElement}
+      </AccountActionsPopover>
     );
   }
 
-  return (
-    <div className={fullClasses} {...interactiveProps}>
-      {fullContent}
-    </div>
-  );
+  return fullElement;
 }

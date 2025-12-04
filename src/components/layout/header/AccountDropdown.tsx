@@ -59,9 +59,9 @@ export function AccountDropdown() {
           isReadOnly
           showDivider={false}
         >
-          <div className="flex w-full items-center gap-2">
-            <Avatar address={address} size={16} />
-            <AccountIdentity address={address} variant="badge" />
+          <div className="flex w-full items-center gap-3">
+            <Avatar address={address} size={32} />
+            <AccountIdentity address={address} variant="badge" showActions={false} />
           </div>
         </DropdownItem>
 
