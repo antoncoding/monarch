@@ -5,10 +5,10 @@ import { Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LuCopy, LuUser } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
-import type { Address } from 'viem';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { Address } from 'viem';
 
 type AccountActionsPopoverProps = {
   address: Address;

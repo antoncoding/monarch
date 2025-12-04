@@ -1,13 +1,12 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback, type HTMLAttributes } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink, LuCopy } from 'react-icons/lu';
 import { useAccount, useEnsName } from 'wagmi';
-import type { Address } from 'viem';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/common/AccountActionsPopover';
 import { Name } from '@/components/common/Name';
@@ -15,6 +14,7 @@ import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 import type { SupportedNetworks } from '@/utils/networks';
+import type { Address } from 'viem';
 
 type AccountIdentityProps = {
   address: Address;
@@ -91,26 +91,6 @@ export function AccountIdentity({
       console.error('Failed to copy address', error);
     }
   }, [address, toast]);
-
-  const handleKeyDown = useCallback<NonNullable<HTMLAttributes<HTMLDivElement>['onKeyDown']>>(
-    (event) => {
-      if (!copyable) return;
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        void handleCopy();
-      }
-    },
-    [copyable, handleCopy],
-  );
-
-  const interactiveProps: HTMLAttributes<HTMLDivElement> = copyable
-    ? {
-        role: 'button',
-        tabIndex: 0,
-        onClick: () => void handleCopy(),
-        onKeyDown: handleKeyDown,
-      }
-    : {};
 
   // Badge variant - minimal inline badge (no avatar)
   if (variant === 'badge') {
