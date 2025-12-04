@@ -148,7 +148,6 @@ export default function VaultContent() {
             <div className="flex items-center gap-3">
               <AccountIdentity
                 address={vaultAddressValue}
-                chainId={chainId}
                 variant="compact"
                 linkTo="explorer"
               />
