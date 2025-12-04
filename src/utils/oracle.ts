@@ -503,7 +503,7 @@ export function checkFeedsPath(
     const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join(
       '*',
     )}`;
-    missingPath = `Feed path mismatch: got ${actualPath}, expected ${expectedPath}`;
+    missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected`;
   }
 
   return {
