@@ -1,12 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { IoHelpCircleOutline } from 'react-icons/io5';
 import { Address } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import { ChainlinkOracleEntry, getChainlinkFeedUrl } from '@/constants/oracle/chainlink-data';
+import { useGlobalModal } from '@/contexts/GlobalModalContext';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { OracleFeed } from '@/utils/types';
+import { ChainlinkRiskTiersModal } from './ChainlinkRiskTiersModal';
 
 type ChainlinkFeedTooltipProps = {
   feed: OracleFeed;
@@ -15,6 +18,7 @@ type ChainlinkFeedTooltipProps = {
 };
 
 export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: ChainlinkFeedTooltipProps) {
+  const { toggleModal, closeModal } = useGlobalModal();
   const baseAsset = feed.pair?.[0] ?? chainlinkData?.baseAsset ?? 'Unknown';
   const quoteAsset = feed.pair?.[1] ?? chainlinkData?.quoteAsset ?? 'Unknown';
 
@@ -75,7 +79,23 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
             </div>
             <div className="flex items-center justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Risk Tier:</span>
-              {getRiskTierBadge(chainlinkData.feedCategory)}
+              <div className="flex items-center gap-1">
+                {getRiskTierBadge(chainlinkData.feedCategory)}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleModal(
+                      <ChainlinkRiskTiersModal isOpen onClose={() => closeModal()} />,
+                    );
+                  }}
+                  className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
+                  type="button"
+                  aria-label="Learn about risk tiers"
+                >
+                  <IoHelpCircleOutline size={14} />
+                </button>
+              </div>
             </div>
             <div className="flex justify-between font-zen text-sm">
               <span className="text-gray-600 dark:text-gray-400">Deviation Threshold:</span>
