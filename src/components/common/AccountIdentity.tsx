@@ -2,14 +2,15 @@
 
 import { useMemo, useState, useEffect, useCallback, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink, LuCopy } from 'react-icons/lu';
-import Link from 'next/link';
-import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
+import type { Address } from 'viem';
 import { Avatar } from '@/components/Avatar/Avatar';
-import { Name } from '@/components/common/Name';
 import { AccountActionsPopover } from '@/components/common/AccountActionsPopover';
+import { Name } from '@/components/common/Name';
 import { useAddressLabel } from '@/hooks/useAddressLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
@@ -132,26 +133,39 @@ export function AccountIdentity({
     );
 
     const badgeElement = href ? (
-      <Link
-        href={href}
-        target={linkTo === 'explorer' ? '_blank' : undefined}
-        rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
+        <Link
+          href={href}
+          target={linkTo === 'explorer' ? '_blank' : undefined}
+          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+          className={badgeClasses}
+          onClick={(e) => {
+            if (copyable) {
+              e.preventDefault();
+              void handleCopy();
+            } else if (linkTo === 'explorer') {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {content}
+        </Link>
+      </motion.div>
+    ) : (
+      <motion.div
         className={badgeClasses}
-        onClick={(e) => {
-          if (copyable) {
-            e.preventDefault();
-            void handleCopy();
-          } else if (linkTo === 'explorer') {
-            e.stopPropagation();
-          }
-        }}
+        onClick={copyable ? () => void handleCopy() : undefined}
+        style={{ cursor: copyable ? 'pointer' : 'default' }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {content}
-      </Link>
-    ) : (
-      <div className={badgeClasses} {...interactiveProps}>
-        {content}
-      </div>
+      </motion.div>
     );
 
     if (showActions) {
@@ -197,26 +211,39 @@ export function AccountIdentity({
     );
 
     const compactElement = href ? (
-      <Link
-        href={href}
-        target={linkTo === 'explorer' ? '_blank' : undefined}
-        rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
+        <Link
+          href={href}
+          target={linkTo === 'explorer' ? '_blank' : undefined}
+          rel={linkTo === 'explorer' ? 'noopener noreferrer' : undefined}
+          className={compactClasses}
+          onClick={(e) => {
+            if (copyable) {
+              e.preventDefault();
+              void handleCopy();
+            } else if (linkTo === 'explorer') {
+              e.stopPropagation();
+            }
+          }}
+        >
+          {badgeContent}
+        </Link>
+      </motion.div>
+    ) : (
+      <motion.div
         className={compactClasses}
-        onClick={(e) => {
-          if (copyable) {
-            e.preventDefault();
-            void handleCopy();
-          } else if (linkTo === 'explorer') {
-            e.stopPropagation();
-          }
-        }}
+        onClick={copyable ? () => void handleCopy() : undefined}
+        style={{ cursor: copyable ? 'pointer' : 'default' }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
         {badgeContent}
-      </Link>
-    ) : (
-      <div className={compactClasses} {...interactiveProps}>
-        {badgeContent}
-      </div>
+      </motion.div>
     );
 
     if (showActions) {
@@ -302,13 +329,25 @@ export function AccountIdentity({
 
   const fullElement =
     href && linkTo === 'profile' ? (
-      <Link href={href} className={fullClasses}>
-        {fullContent}
-      </Link>
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
+        <Link href={href} className={fullClasses}>
+          {fullContent}
+        </Link>
+      </motion.div>
     ) : (
-      <div className={fullClasses} {...interactiveProps}>
+      <motion.div
+        className={fullClasses}
+        {...interactiveProps}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
         {fullContent}
-      </div>
+      </motion.div>
     );
 
   if (showActions) {

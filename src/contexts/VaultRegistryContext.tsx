@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 import type { MorphoVault } from '@/data-sources/morpho-api/vaults';
+import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
 import type { Address } from 'viem';
 
 type VaultRegistryContextType = {

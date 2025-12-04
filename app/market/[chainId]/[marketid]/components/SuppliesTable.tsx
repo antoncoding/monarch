@@ -17,7 +17,7 @@ import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Badge } from '@/components/common/Badge';
 import { TokenIcon } from '@/components/TokenIcon';
 import useMarketSupplies from '@/hooks/useMarketSupplies';
-import { getExplorerURL, getExplorerTxURL } from '@/utils/external';
+import { getExplorerTxURL } from '@/utils/external';
 import { Market } from '@/utils/types';
 
 // Helper functions to format data

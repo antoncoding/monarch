@@ -468,6 +468,7 @@ Add an action link (like explorer) in the top-right corner:
 - No underscores in variable names
 - All avatars are round
 - Full variant: all elements centered vertically
+- Smooth Framer Motion animations on all interactions
 
 ```tsx
 import { AccountIdentity } from '@/components/common/AccountIdentity';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
-import type { Address } from 'viem';
 import { useVaultRegistry } from '@/contexts/VaultRegistryContext';
 import { getSlicedAddress } from '@/utils/address';
+import type { Address } from 'viem';
 
 type UseAddressLabelReturn = {
   vaultName: string | undefined;

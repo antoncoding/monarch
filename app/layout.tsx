@@ -4,8 +4,8 @@ import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import RiskNotificationModal from '@/components/RiskNotificationModal';
-import OnchainProviders from '@/OnchainProviders';
 import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
+import OnchainProviders from '@/OnchainProviders';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';

@@ -2,7 +2,8 @@
 
 import { useState, useCallback, type ReactNode } from 'react';
 import { Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
-import { LuCopy, LuUser, LuExternalLink } from 'react-icons/lu';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LuCopy, LuUser } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
 import type { Address } from 'viem';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -65,34 +66,53 @@ export function AccountActionsPopover({
         <div className="cursor-pointer">{children}</div>
       </PopoverTrigger>
       <PopoverContent>
-        <div className="flex min-w-[180px] flex-col rounded-sm bg-surface font-zen">
-          {/* Copy Address */}
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
-          >
-            <LuCopy className="h-4 w-4" />
-            <span>Copy Address</span>
-          </button>
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="flex min-w-[180px] flex-col rounded-sm bg-surface font-zen"
+            >
+              {/* Copy Address */}
+              <motion.button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <LuCopy className="h-4 w-4" />
+                <span>Copy Address</span>
+              </motion.button>
 
-          {/* View Account */}
-          <button
-            onClick={handleViewAccount}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
-          >
-            <LuUser className="h-4 w-4" />
-            <span>View Account</span>
-          </button>
+              {/* View Account */}
+              <motion.button
+                type="button"
+                onClick={handleViewAccount}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <LuUser className="h-4 w-4" />
+                <span>View Account</span>
+              </motion.button>
 
-          {/* View on Explorer */}
-          <button
-            onClick={handleViewExplorer}
-            className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
-          >
-            <SiEthereum className="h-4 w-4" />
-            <span>View on Explorer</span>
-          </button>
-        </div>
+              {/* View on Explorer */}
+              <motion.button
+                type="button"
+                onClick={handleViewExplorer}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-secondary transition-colors hover:bg-hovered hover:text-primary"
+                whileHover={{ x: 2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <SiEthereum className="h-4 w-4" />
+                <span>View on Explorer</span>
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </PopoverContent>
     </Popover>
   );

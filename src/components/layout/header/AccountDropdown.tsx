@@ -5,8 +5,8 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/r
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import { useAccount, useDisconnect } from 'wagmi';
-import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Avatar } from '@/components/Avatar/Avatar';
+import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 

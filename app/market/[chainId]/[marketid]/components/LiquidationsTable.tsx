@@ -15,7 +15,7 @@ import { Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
-import { getExplorerTxURL, getExplorerURL } from '@/utils/external';
+import { getExplorerTxURL } from '@/utils/external';
 import { Market, MarketLiquidationTransaction } from '@/utils/types';
 
 // Helper functions to format data
