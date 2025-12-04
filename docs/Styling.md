@@ -464,7 +464,7 @@ Add an action link (like explorer) in the top-right corner:
 **Styling Rules:**
 - Use `rounded-sm` for badges (not `rounded`)
 - Background: `bg-hovered` (or `bg-green-500/10` for connected)
-- Text: `font-monospace` with `text-secondary` or `text-primary`
+- Text: `font-zen` with `text-secondary` or `text-primary`
 - No underscores in variable names
 - All avatars are round
 - Full variant: all elements centered vertically
