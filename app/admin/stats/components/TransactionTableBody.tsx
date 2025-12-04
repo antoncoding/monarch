@@ -88,7 +88,6 @@ export function TransactionTableBody({
             <td data-label="User" className="z-50" style={{ minWidth: '120px' }}>
               <AccountIdentity
                 address={op.user as `0x${string}`}
-                chainId={selectedNetwork}
                 variant="badge"
                 linkTo="profile"
               />
