@@ -1,5 +1,6 @@
 'use client';
 
+import clsx from 'clsx';
 import { useEnsName } from 'wagmi';
 
 type NameProps = {
@@ -17,7 +18,12 @@ export function Name({ address, className = '' }: NameProps) {
     return <span className={className}>...</span>;
   }
 
+  // Use font-zen for ENS names, font-monospace (smaller) for addresses
+  const fontClass = ensName ? 'font-zen' : 'font-monospace text-[0.9em]';
+
   return (
-    <span className={className}>{ensName ?? `${address.slice(0, 6)}...${address.slice(-4)}`}</span>
+    <span className={clsx(fontClass, className)}>
+      {ensName ?? `${address.slice(0, 6)}...${address.slice(-4)}`}
+    </span>
   );
 }

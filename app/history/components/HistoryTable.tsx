@@ -11,18 +11,18 @@ import {
   TableRow,
   TableCell,
 } from '@heroui/react';
-import { ExternalLinkIcon, ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';
 import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 import { Badge } from '@/components/common/Badge';
+import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
-import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import {
@@ -417,14 +417,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                   {/* Transaction */}
                   <TableCell>
                     <div className="flex justify-center">
-                      <Link
-                        href={getExplorerTxURL(tx.hash, market.morphoBlue.chain.id)}
-                        target="_blank"
-                        className="flex items-center gap-1 text-sm hover:underline"
-                      >
-                        {tx.hash.slice(0, 6)}...{tx.hash.slice(-4)}
-                        <ExternalLinkIcon />
-                      </Link>
+                      <TransactionIdentity txHash={tx.hash} chainId={market.morphoBlue.chain.id} />
                     </div>
                   </TableCell>
                 </TableRow>

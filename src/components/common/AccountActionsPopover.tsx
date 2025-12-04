@@ -57,11 +57,11 @@ export function AccountActionsPopover({
       offset={8}
       classNames={{
         base: 'p-0',
-        content: 'p-0 bg-surface shadow-lg border border-primary/10',
+        content: 'p-0 bg-surface shadow-lg border-none',
       }}
     >
       <PopoverTrigger>
-        <div className="cursor-pointer">{children}</div>
+        <div className="cursor-pointer outline-none focus:outline-none">{children}</div>
       </PopoverTrigger>
       <PopoverContent>
         <AnimatePresence>

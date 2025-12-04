@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Link,
   Pagination,
   Table,
   TableHeader,
@@ -9,19 +8,13 @@ import {
   TableRow,
   TableCell,
 } from '@heroui/react';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import { Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
+import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
-import { getExplorerTxURL } from '@/utils/external';
 import { Market, MarketLiquidationTransaction } from '@/utils/types';
-
-// Helper functions to format data
-const formatAddress = (address: string) => {
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-};
 
 type LiquidationsTableProps = {
   chainId: number;
@@ -168,16 +161,8 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   )}
                 </TableCell>
                 <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-                <TableCell className="text-right font-zen">
-                  <Link
-                    href={getExplorerTxURL(liquidation.hash, chainId)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center text-sm text-secondary"
-                  >
-                    {formatAddress(liquidation.hash)}
-                    <ExternalLinkIcon className="ml-1" />
-                  </Link>
+                <TableCell className="text-right">
+                  <TransactionIdentity txHash={liquidation.hash} chainId={chainId} />
                 </TableCell>
               </TableRow>
             );
