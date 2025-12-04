@@ -27,7 +27,7 @@ export function TransactionIdentity({
       href={getExplorerTxURL(txHash, chainId)}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1 rounded bg-hovered px-2 py-1 font-monospace text-xs text-secondary no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700 ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-monospace text-[0.65rem] text-secondary no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700 ${className}`}
       onClick={(e) => e.stopPropagation()}
     >
       {formatTxHash(txHash, showFullHash)}

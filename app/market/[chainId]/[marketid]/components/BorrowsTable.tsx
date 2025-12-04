@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Link,
   Pagination,
   Table,
   TableHeader,
@@ -9,21 +8,15 @@ import {
   TableRow,
   TableCell,
 } from '@heroui/react';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Badge } from '@/components/common/Badge';
+import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketBorrows } from '@/hooks/useMarketBorrows';
-import { getExplorerTxURL } from '@/utils/external';
 import { Market } from '@/utils/types';
-
-// Helper functions to format data
-const formatAddress = (address: string) => {
-  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-};
 
 type BorrowsTableProps = {
   chainId: number;
@@ -130,16 +123,8 @@ export function BorrowsTable({ chainId, market }: BorrowsTableProps) {
                 )}
               </TableCell>
               <TableCell>{moment.unix(borrow.timestamp).fromNow()}</TableCell>
-              <TableCell className="text-right font-zen">
-                <Link
-                  href={getExplorerTxURL(borrow.hash, chainId)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-sm text-secondary"
-                >
-                  {formatAddress(borrow.hash)}
-                  <ExternalLinkIcon className="ml-1" />
-                </Link>
+              <TableCell className="text-right">
+                <TransactionIdentity txHash={borrow.hash} chainId={chainId} />
               </TableCell>
             </TableRow>
           ))}

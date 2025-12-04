@@ -92,7 +92,7 @@ export function AccountIdentity({
   if (variant === 'badge') {
     const content = (
       <>
-        {vaultName ?? <Name address={address as `0x${string}`} />}
+        {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
         {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
         {showCopy && (
           <LuCopy
@@ -108,7 +108,7 @@ export function AccountIdentity({
     );
 
     const badgeClasses = clsx(
-      'inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary',
+      'inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 text-xs text-secondary',
       copyable && 'cursor-pointer transition-colors hover:brightness-110',
       href &&
         'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
@@ -167,8 +167,8 @@ export function AccountIdentity({
     const badgeContent = (
       <>
         <Avatar address={address} size={16} />
-        <span className="font-zen text-xs">
-          {vaultName ?? <Name address={address as `0x${string}`} />}
+        <span className="text-xs">
+          {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
         </span>
         {linkTo === 'explorer' && <LuExternalLink className="h-3 w-3" />}
         {showCopy && (
@@ -185,7 +185,7 @@ export function AccountIdentity({
     );
 
     const compactClasses = clsx(
-      'inline-flex items-center gap-1.5 rounded-sm px-1.5 py-1 font-zen text-xs',
+      'inline-flex items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs',
       mounted && isOwner ? 'bg-green-500/10 text-green-500' : 'bg-hovered text-secondary',
       copyable && 'cursor-pointer transition-colors hover:brightness-110',
       href &&
@@ -247,7 +247,7 @@ export function AccountIdentity({
 
       {/* Address badge - always shows shortened address, click to copy */}
       <span
-        className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-zen text-sm text-secondary transition-colors hover:brightness-110"
+        className="inline-flex cursor-pointer items-center gap-1 rounded-sm bg-hovered px-2 py-1 font-monospace text-xs text-secondary transition-colors hover:brightness-110"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
