@@ -249,7 +249,7 @@ function RateChart({
                     color="primary"
                     showValueLabel
                     classNames={{
-                      value: 'font-monospace text-sm',
+                      value: 'font-zen text-sm',
                       base: 'my-2',
                       label: 'text-base',
                     }}
@@ -257,19 +257,19 @@ function RateChart({
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Supply APY:</span>
-                  <span className="font-monospace text-sm">
+                  <span className="font-zen text-sm">
                     {formatPercentage(getCurrentApyValue('supply'))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Borrow APY:</span>
-                  <span className="font-monospace text-sm">
+                  <span className="font-zen text-sm">
                     {formatPercentage(getCurrentApyValue('borrow'))}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Rate at U Target:</span>
-                  <span className="font-monospace text-sm">
+                  <span className="font-zen text-sm">
                     {formatPercentage(getCurrentapyAtTargetValue())}
                   </span>
                 </div>
@@ -288,25 +288,25 @@ function RateChart({
                   <>
                     <div className="flex items-center justify-between">
                       <span>Utilization Rate:</span>
-                      <span className="font-monospace text-sm">
+                      <span className="font-zen text-sm">
                         {formatPercentage(getAverageUtilizationRate())}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Supply APY:</span>
-                      <span className="font-monospace text-sm">
+                      <span className="font-zen text-sm">
                         {formatPercentage(getAverageApyValue('supply'))}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Borrow APY:</span>
-                      <span className="font-monospace text-sm">
+                      <span className="font-zen text-sm">
                         {formatPercentage(getAverageApyValue('borrow'))}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Rate at U Target:</span>
-                      <span className="font-monospace text-sm">
+                      <span className="font-zen text-sm">
                         {formatPercentage(getAverageapyAtTargetValue())}
                       </span>
                     </div>
