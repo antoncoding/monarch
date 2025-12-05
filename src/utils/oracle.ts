@@ -42,7 +42,7 @@ export enum PriceFeedVendors {
 export const OracleVendorIcons: Record<PriceFeedVendors, string> = {
   [PriceFeedVendors.Chainlink]: require('../imgs/oracles/chainlink.png') as string,
   [PriceFeedVendors.PythNetwork]: require('../imgs/oracles/pyth.png') as string,
-  [PriceFeedVendors.Redstone]: require('../imgs/oracles/redstone.png') as string,
+  [PriceFeedVendors.Redstone]: require('../imgs/oracles/redstone.svg') as string,
   [PriceFeedVendors.Oval]: require('../imgs/oracles/uma.png') as string,
   [PriceFeedVendors.Compound]: require('../imgs/oracles/compound.webp') as string,
   [PriceFeedVendors.Lido]: require('../imgs/oracles/lido.png') as string,
