@@ -1,11 +1,9 @@
 import { useLocalStorage } from './useLocalStorage';
 
-type SymbolFilters = {
-  [symbol: string]: {
+type SymbolFilters = Record<string, {
     minSupplyAmount: string;
     minBorrowAmount: string;
-  };
-};
+  }>;
 
 /**
  * Hook to manage transaction filter settings with localStorage persistence

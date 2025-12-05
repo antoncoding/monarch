@@ -1,5 +1,5 @@
 import { marketSuppliesQuery } from '@/graphql/morpho-api-queries';
-import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
+import { PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Type specifically for the raw Morpho API response structure within this module
@@ -41,9 +41,9 @@ type MorphoAPISuppliesResponse = {
  */
 export const fetchMorphoMarketSupplies = async (
   marketId: string,
-  minAssets: string = '0',
-  first: number = 8,
-  skip: number = 0,
+  minAssets = '0',
+  first = 8,
+  skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
   const variables = {
     uniqueKey: marketId, // Ensure this matches the variable name in the query

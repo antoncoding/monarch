@@ -27,7 +27,7 @@ import { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from 'app/markets/components/columnVisibility';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
-import { Pagination } from '../../../app/markets/components/Pagination';
+import { TablePagination } from '../../../app/market/[chainId]/[marketid]/components/TablePagination';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
 import { MarketIndicators } from '../MarketIndicators';
@@ -1074,13 +1074,13 @@ export function MarketsTableWithSameLoanAsset({
       </div>
 
       {/* Pagination */}
-      <Pagination
+      <TablePagination
         totalPages={totalPages}
+        totalEntries={processedMarkets.length}
         currentPage={safePage}
+        pageSize={safePerPage}
         onPageChange={setCurrentPage}
-        entriesPerPage={safePerPage}
-        isDataLoaded
-        size="sm"
+        isLoading={false}
       />
 
       {/* Settings Modal */}

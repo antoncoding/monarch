@@ -4,7 +4,7 @@ import { SupportedNetworks } from '@/utils/networks';
 import { Transaction } from '@/utils/statsUtils';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { Pagination } from '../../../markets/components/Pagination';
+import { TablePagination } from '../../../market/[chainId]/[marketid]/components/TablePagination';
 import { TransactionTableBody } from './TransactionTableBody';
 
 type TransactionsTableProps = {
@@ -241,12 +241,13 @@ export function TransactionsTable({
               />
             </table>
             <div className="p-4">
-              <Pagination
+              <TablePagination
                 totalPages={totalPages}
+                totalEntries={sortedData.length}
                 currentPage={currentPage}
+                pageSize={entriesPerPage}
                 onPageChange={setCurrentPage}
-                entriesPerPage={entriesPerPage}
-                isDataLoaded={sortedData.length > 0}
+                isLoading={false}
               />
             </div>
           </>

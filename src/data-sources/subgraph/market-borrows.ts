@@ -35,9 +35,9 @@ export const fetchSubgraphMarketBorrows = async (
   marketId: string,
   loanAssetId: string,
   network: SupportedNetworks,
-  minAssets: string = '0',
-  first: number = 8,
-  skip: number = 0,
+  minAssets = '0',
+  first = 8,
+  skip = 0,
 ): Promise<PaginatedMarketActivityTransactions> => {
   const subgraphUrl = getSubgraphUrl(network);
   if (!subgraphUrl) {

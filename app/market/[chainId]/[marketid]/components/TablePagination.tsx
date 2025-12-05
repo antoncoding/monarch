@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Input, Popover, PopoverTrigger, PopoverContent, Tooltip } from '@heroui/react';
 import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
-import { Button } from '@/components/ui/button';
 import { TooltipContent } from '@/components/TooltipContent';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 type TablePaginationProps = {

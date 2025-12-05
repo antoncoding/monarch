@@ -1,5 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
 import { fetchSubgraphMarketBorrows } from '@/data-sources/subgraph/market-borrows';
@@ -22,11 +22,10 @@ export const useMarketBorrows = (
   marketId: string | undefined,
   loanAssetId: string | undefined,
   network: SupportedNetworks | undefined,
-  minAssets: string = '0',
-  page: number = 1,
-  pageSize: number = 8,
+  minAssets = '0',
+  page = 1,
+  pageSize = 8,
 ) => {
-  const skip = (page - 1) * pageSize;
   const queryClient = useQueryClient();
 
   // Both Morpho API and Subgraph now use server-side pagination
@@ -68,7 +67,7 @@ export const useMarketBorrows = (
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketActivityTransactions | null>({
     queryKey: queryKey,
-    queryFn: () => queryFn(page),
+    queryFn: async () => queryFn(page),
     enabled: !!marketId && !!loanAssetId && !!network,
     staleTime: 1000 * 60 * 5, // 5 minutes - keep cached data fresh longer
     placeholderData: (previousData) => previousData ?? null,
@@ -84,9 +83,9 @@ export const useMarketBorrows = (
     // Prefetch previous page
     if (page > 1) {
       const prevPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page - 1, pageSize];
-      queryClient.prefetchQuery({
+      void queryClient.prefetchQuery({
         queryKey: prevPageKey,
-        queryFn: () => queryFn(page - 1),
+        queryFn: async () => queryFn(page - 1),
         staleTime: 1000 * 60 * 5,
       });
     }
@@ -94,9 +93,9 @@ export const useMarketBorrows = (
     // Prefetch next page
     if (page < totalPages) {
       const nextPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page + 1, pageSize];
-      queryClient.prefetchQuery({
+      void queryClient.prefetchQuery({
         queryKey: nextPageKey,
-        queryFn: () => queryFn(page + 1),
+        queryFn: async () => queryFn(page + 1),
         staleTime: 1000 * 60 * 5,
       });
     }
