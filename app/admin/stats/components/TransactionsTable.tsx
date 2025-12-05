@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { TablePagination } from '@/components/common/TablePagination';
 import { SupportedNetworks } from '@/utils/networks';
 import { Transaction } from '@/utils/statsUtils';
 import { findToken } from '@/utils/tokens';
 import { Market } from '@/utils/types';
-import { TablePagination } from '../../../market/[chainId]/[marketid]/components/TablePagination';
 import { TransactionTableBody } from './TransactionTableBody';
 
 type TransactionsTableProps = {

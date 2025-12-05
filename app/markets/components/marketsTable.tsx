@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
+import { TablePagination } from '@/components/common/TablePagination';
 import { type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import { TablePagination } from '../../market/[chainId]/[marketid]/components/TablePagination';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';

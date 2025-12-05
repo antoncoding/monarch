@@ -11,11 +11,11 @@ import moment from 'moment';
 import { Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Spinner } from '@/components/common/Spinner';
+import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { Market, MarketLiquidationTransaction } from '@/utils/types';
-import { TablePagination } from './TablePagination';
 
 type LiquidationsTableProps = {
   chainId: number;

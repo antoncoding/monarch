@@ -16,13 +16,13 @@ import { Button } from '@/components/common';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Badge } from '@/components/common/Badge';
 import { Spinner } from '@/components/common/Spinner';
+import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import useMarketSupplies from '@/hooks/useMarketSupplies';
 import { Market } from '@/utils/types';
-import { TablePagination } from './TablePagination';
 
 type SuppliesTableProps = {
   chainId: number;

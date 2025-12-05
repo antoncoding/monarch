@@ -437,6 +437,80 @@ Add an action link (like explorer) in the top-right corner:
 - Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
 - Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
 
+### TablePagination Component
+
+**TablePagination** (`@/components/common/TablePagination`)
+- Unified pagination component for all tables in the app
+- Provides consistent styling, smart page numbers with ellipsis, and jump-to-page functionality
+- All text uses `font-zen !font-normal` (no bold styling)
+
+**Features:**
+- Smart page numbers with ellipsis for large page counts (shows 7 pages max)
+- Jump-to-page search icon (appears when >10 pages)
+- Optional entry count display ("Showing X-Y of Z entries")
+- Loading states with disabled buttons
+- Rounded-md styling with bg-surface
+- Tighter spacing (gap-2) when used in layouts
+
+**Props:**
+- `currentPage`: Current active page (1-indexed)
+- `totalPages`: Total number of pages
+- `totalEntries`: Total number of items across all pages
+- `pageSize`: Number of items per page
+- `onPageChange`: Callback when page changes
+- `isLoading?`: Show loading state (default: false)
+- `showEntryCount?`: Display entry count below controls (default: true)
+
+**Usage Examples:**
+
+```tsx
+import { TablePagination } from '@/components/common/TablePagination';
+
+// Basic usage with entry count
+<TablePagination
+  currentPage={currentPage}
+  totalPages={totalPages}
+  totalEntries={data.length}
+  pageSize={pageSize}
+  onPageChange={setCurrentPage}
+  isLoading={isFetching}
+/>
+
+// Without entry count (e.g., main markets table)
+<TablePagination
+  currentPage={currentPage}
+  totalPages={totalPages}
+  totalEntries={markets.length}
+  pageSize={entriesPerPage}
+  onPageChange={setCurrentPage}
+  isLoading={false}
+  showEntryCount={false}
+/>
+
+// In a table layout with tighter spacing
+<div className="flex flex-col gap-2">
+  <table className="responsive rounded-md font-zen">
+    {/* table content */}
+  </table>
+  <TablePagination
+    currentPage={page}
+    totalPages={Math.ceil(total / size)}
+    totalEntries={total}
+    pageSize={size}
+    onPageChange={setPage}
+    isLoading={isLoading}
+  />
+</div>
+```
+
+**Styling Notes:**
+- Uses `font-zen !font-normal` throughout (overrides button's default font-medium)
+- All buttons have consistent 8px height (h-8)
+- Rounded-md container with bg-surface and shadow-sm
+- Primary color for active page button
+- Jump-to-page popover with Input and Go button
+- Entry count uses text-xs text-secondary
+
 ### Account Identity Component
 
 **AccountIdentity** (`@/components/common/AccountIdentity`)
