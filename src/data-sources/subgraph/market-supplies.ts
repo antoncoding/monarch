@@ -1,7 +1,7 @@
 import { marketDepositsWithdrawsQuery } from '@/graphql/morpho-subgraph-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import shared utility
-import { MarketActivityTransaction } from '@/utils/types';
+import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Types specific to the Subgraph response for this query
@@ -24,46 +24,55 @@ type SubgraphSuppliesWithdrawsResponse = {
 
 /**
  * Fetches market supply/withdraw activities (deposits/withdraws of loan asset) from the Subgraph.
- * Uses the shared subgraph fetcher and URL utility.
+ * NOTE: Because deposits and withdraws are fetched separately and merged client-side,
+ * we cannot do proper server-side pagination. Instead, we fetch a large batch (200 items)
+ * from both sources, merge and sort them, then apply client-side pagination.
+ * This ensures correct ordering and prevents skipped items.
  * @param marketId The ID of the market.
  * @param loanAssetId The address of the loan asset.
  * @param network The blockchain network.
- * @returns A promise resolving to an array of unified MarketActivityTransaction objects.
+ * @param minAssets Minimum asset amount to filter transactions (optional, defaults to 0).
+ * @param first Number of items to return per page (optional, defaults to 8).
+ * @param skip Number of items to skip for pagination (optional, defaults to 0).
+ * @returns A promise resolving to paginated MarketActivityTransaction objects.
  */
 export const fetchSubgraphMarketSupplies = async (
   marketId: string,
   loanAssetId: string,
   network: SupportedNetworks,
-): Promise<MarketActivityTransaction[]> => {
+  minAssets = '0',
+  first = 8,
+  skip = 0,
+): Promise<PaginatedMarketActivityTransactions> => {
   const subgraphUrl = getSubgraphUrl(network);
   if (!subgraphUrl) {
-    // Error handling for missing URL remains important
     console.error(`No Subgraph URL configured for network: ${network}`);
     throw new Error(`Subgraph URL not available for network ${network}`);
   }
 
+  const fetchBatchSize = 200;
+
   const variables = {
-    marketId, // Ensure these match the types expected by the Subgraph query (e.g., Bytes)
+    marketId,
     loanAssetId,
+    minAssets,
+    first: fetchBatchSize,
+    skip: 0,
   };
 
   try {
-    // Use the shared fetcher
     const result = await subgraphGraphqlFetcher<SubgraphSuppliesWithdrawsResponse>(
       subgraphUrl,
       marketDepositsWithdrawsQuery,
       variables,
     );
 
-    // Fetcher handles network and basic GraphQL errors, proceed with data processing
     const deposits = result.data?.deposits ?? [];
     const withdraws = result.data?.withdraws ?? [];
 
-    // Map deposits and withdraws to the unified type
     const mappedDeposits: MarketActivityTransaction[] = deposits.map((d) => ({
       type: 'MarketSupply',
       hash: d.hash,
-      // Ensure timestamp is treated as a number
       timestamp: typeof d.timestamp === 'string' ? parseInt(d.timestamp, 10) : d.timestamp,
       amount: d.amount,
       userAddress: d.account.id,
@@ -77,17 +86,21 @@ export const fetchSubgraphMarketSupplies = async (
       userAddress: w.account.id,
     }));
 
-    // Combine and sort by timestamp descending (most recent first)
+    // Merge and sort by timestamp, then apply client-side pagination
     const combined = [...mappedDeposits, ...mappedWithdraws];
-
     combined.sort((a, b) => b.timestamp - a.timestamp);
 
-    return combined;
+    const startIndex = skip;
+    const endIndex = skip + first;
+    const items = combined.slice(startIndex, endIndex);
+    const totalCount = combined.length;
+
+    return {
+      items,
+      totalCount,
+    };
   } catch (error) {
-    // Catch errors from the fetcher or during processing
     console.error(`Error fetching or processing Subgraph market supplies for ${marketId}:`, error);
-    // Re-throw the error to be handled by the calling hook (useQuery)
-    // Ensuring the error object is an instance of Error
     if (error instanceof Error) {
       throw error;
     }

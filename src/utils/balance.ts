@@ -45,7 +45,7 @@ export function formatReadable(num: number | string, precision = 2): string {
   }
 }
 
-export function formatSimple(num: number) {
+export function formatSimple(num: number | bigint) {
   return new Intl.NumberFormat('en-us', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 4,

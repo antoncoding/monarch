@@ -438,9 +438,10 @@ export const marketLiquidationsQuery = `
 `;
 
 export const marketSuppliesQuery = `
-  query getMarketSupplyActivities($uniqueKey: String!, $first: Int, $skip: Int) {
+  query getMarketSupplyActivities($uniqueKey: String!, $minAssets: BigInt!,  $first: Int, $skip: Int) {
     transactions (where: {
       marketUniqueKey_in: [$uniqueKey],
+      assets_gte: $minAssets,
       type_in: [MarketSupply, MarketWithdraw]
     },
     first: $first,
@@ -471,9 +472,10 @@ export const marketSuppliesQuery = `
 `;
 
 export const marketBorrowsQuery = `
-  query getMarketBorrowActivities($uniqueKey: String!, $first: Int, $skip: Int) {
+  query getMarketBorrowActivities($uniqueKey: String!, $minAssets: BigInt, $first: Int, $skip: Int) {
     transactions (where: {
       marketUniqueKey_in: [$uniqueKey],
+      assets_gte: $minAssets,
       type_in: [MarketBorrow, MarketRepay]
     },
     first: $first,

@@ -1,5 +1,5 @@
 import { marketSuppliesQuery } from '@/graphql/morpho-api-queries';
-import { MarketActivityTransaction } from '@/utils/types';
+import { PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Type specifically for the raw Morpho API response structure within this module
@@ -19,6 +19,12 @@ type MorphoAPISuppliesResponse = {
           address: string;
         };
       }[];
+      pageInfo?: {
+        countTotal: number;
+        count: number;
+        limit: number;
+        skip: number;
+      };
     };
   };
   // Error handling is now done by the fetcher
@@ -28,15 +34,22 @@ type MorphoAPISuppliesResponse = {
  * Fetches market supply/withdraw activities from the Morpho Blue API.
  * Uses the shared Morpho API fetcher.
  * @param marketId The unique key or ID of the market.
- * @returns A promise resolving to an array of unified MarketActivityTransaction objects.
+ * @param minAssets Minimum asset amount to filter transactions (optional, defaults to 0).
+ * @param first Number of items to fetch per page (optional, defaults to 8).
+ * @param skip Number of items to skip for pagination (optional, defaults to 0).
+ * @returns A promise resolving to paginated MarketActivityTransaction objects.
  */
 export const fetchMorphoMarketSupplies = async (
   marketId: string,
-): Promise<MarketActivityTransaction[]> => {
+  minAssets = '0',
+  first = 8,
+  skip = 0,
+): Promise<PaginatedMarketActivityTransactions> => {
   const variables = {
     uniqueKey: marketId, // Ensure this matches the variable name in the query
-    first: 1000,
-    skip: 0,
+    minAssets,
+    first,
+    skip,
   };
 
   try {
@@ -48,9 +61,10 @@ export const fetchMorphoMarketSupplies = async (
 
     // Fetcher handles network and basic GraphQL errors
     const items = result.data?.transactions?.items ?? [];
+    const totalCount = result.data?.transactions?.pageInfo?.countTotal ?? 0;
 
     // Map to unified type
-    return items.map((item) => ({
+    const mappedItems = items.map((item) => ({
       type: item.type,
       hash: item.hash,
       timestamp: item.timestamp,
@@ -58,6 +72,11 @@ export const fetchMorphoMarketSupplies = async (
       userAddress: item.user.address,
       // Note: 'shares' from Morpho API is omitted in the unified type
     }));
+
+    return {
+      items: mappedItems,
+      totalCount,
+    };
   } catch (error) {
     // Catch errors from the fetcher or during processing
     console.error(
