@@ -388,6 +388,12 @@ export type MarketActivityTransaction = {
   userAddress: string; // Unified field for user address
 };
 
+// Paginated result type for market activity transactions
+export type PaginatedMarketActivityTransactions = {
+  items: MarketActivityTransaction[];
+  totalCount: number;
+};
+
 // Type for Liquidation Transactions (Simplified based on original hook)
 export type MarketLiquidationTransaction = {
   type: 'MarketLiquidation';

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Pagination,
   Table,
   TableHeader,
   TableBody,
@@ -11,10 +10,12 @@ import {
 import moment from 'moment';
 import { Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
+import { Spinner } from '@/components/common/Spinner';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
 import { Market, MarketLiquidationTransaction } from '@/utils/types';
+import { TablePagination } from './TablePagination';
 
 type LiquidationsTableProps = {
   chainId: number;
@@ -31,7 +32,8 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
     error,
   } = useMarketLiquidations(market?.uniqueKey, chainId);
 
-  const totalPages = Math.ceil((liquidations ?? []).length / pageSize);
+  const totalCount = (liquidations ?? []).length;
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -56,28 +58,22 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
     <div className="mt-8">
       <h4 className="mb-4 text-lg text-secondary">Liquidations</h4>
 
-      <Table
-        key={tableKey}
-        aria-label="Liquidations history"
-        classNames={{
-          wrapper: 'bg-surface shadow-sm rounded',
-          table: 'bg-surface',
-        }}
-        bottomContent={
-          totalPages > 1 ? (
-            <div className="flex w-full justify-center">
-              <Pagination
-                isCompact
-                showControls
-                color="primary"
-                page={currentPage}
-                total={totalPages}
-                onChange={handlePageChange}
-              />
-            </div>
-          ) : null
-        }
-      >
+      <div className="relative">
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-surface/80 backdrop-blur-sm">
+            <Spinner size={24} />
+          </div>
+        )}
+
+        <Table
+          key={tableKey}
+          aria-label="Liquidations history"
+          classNames={{
+            wrapper: 'bg-surface shadow-sm rounded',
+            table: 'bg-surface',
+          }}
+        >
         <TableHeader>
           <TableColumn>LIQUIDATOR</TableColumn>
           <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
@@ -169,6 +165,18 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
           })}
         </TableBody>
       </Table>
+      </div>
+
+      {totalCount > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalEntries={totalCount}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }

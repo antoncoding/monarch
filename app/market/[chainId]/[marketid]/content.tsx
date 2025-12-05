@@ -8,7 +8,7 @@ import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { formatUnits } from 'viem';
+import { formatUnits, parseUnits } from 'viem';
 import { useAccount } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
@@ -20,6 +20,7 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
+import { useTransactionFilters } from '@/hooks/useTransactionFilters';
 import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
@@ -32,6 +33,7 @@ import { CampaignBadge } from './components/CampaignBadge';
 import { LiquidationsTable } from './components/LiquidationsTable';
 import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
+import TransactionFiltersModal from './components/TransactionFiltersModal';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
 
@@ -80,6 +82,7 @@ function MarketContent() {
   );
   const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('Asset');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
 
   // 4. Data fetching hooks - use unified time range
   const {
@@ -88,6 +91,14 @@ function MarketContent() {
     error: marketError,
     refetch: refetchMarket,
   } = useMarketData(marketid as string, network);
+
+  // Transaction filters with localStorage persistence (per symbol)
+  const {
+    minSupplyAmount,
+    minBorrowAmount,
+    setMinSupplyAmount,
+    setMinBorrowAmount,
+  } = useTransactionFilters(market?.loanAsset?.symbol ?? '');
 
   const {
     data: historicalData,
@@ -117,6 +128,29 @@ function MarketContent() {
       BigInt(10 ** market.loanAsset.decimals);
     return formatUnits(adjusted, 36);
   }, [oraclePrice, market]);
+
+  // convert to token amounts
+  const scaledMinSupplyAmount = useMemo(() => {
+    if (!market || !minSupplyAmount || minSupplyAmount === '0' || minSupplyAmount === '') {
+      return '0';
+    }
+    try {
+      return parseUnits(minSupplyAmount, market.loanAsset.decimals).toString();
+    } catch {
+      return '0';
+    }
+  }, [minSupplyAmount, market]);
+
+  const scaledMinBorrowAmount = useMemo(() => {
+    if (!market || !minBorrowAmount || minBorrowAmount === '0' || minBorrowAmount === '') {
+      return '0';
+    }
+    try {
+      return parseUnits(minBorrowAmount, market.loanAsset.decimals).toString();
+    } catch {
+      return '0';
+    }
+  }, [minBorrowAmount, market]);
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
@@ -230,6 +264,18 @@ function MarketContent() {
             refetch={handleRefreshAllSync}
             isRefreshing={isRefreshing}
             position={userPosition}
+          />
+        )}
+
+        {showTransactionFiltersModal && (
+          <TransactionFiltersModal
+            isOpen={showTransactionFiltersModal}
+            onOpenChange={setShowTransactionFiltersModal}
+            minSupplyAmount={minSupplyAmount}
+            minBorrowAmount={minBorrowAmount}
+            onMinSupplyChange={setMinSupplyAmount}
+            onMinBorrowChange={setMinBorrowAmount}
+            loanAssetSymbol={market.loanAsset.symbol}
           />
         )}
 
@@ -372,7 +418,7 @@ function MarketContent() {
           />
         </div>
 
-        <h4 className="pt-4 text-2xl font-semibold">Volume</h4>
+        <h4 className="pt-4 text-2xl">Volume</h4>
         <VolumeChart
           historicalData={historicalData?.volumes}
           market={market}
@@ -384,7 +430,7 @@ function MarketContent() {
           setVolumeView={setVolumeView}
         />
 
-        <h4 className="pt-4 text-2xl font-semibold">Rates</h4>
+        <h4 className="pt-4 text-2xl">Rates</h4>
         <RateChart
           historicalData={historicalData?.rates}
           market={market}
@@ -394,12 +440,22 @@ function MarketContent() {
           handleTimeframeChange={handleTimeframeChange}
         />
 
-        <h4 className="pt-4 text-2xl font-semibold">Activities </h4>
+        <h4 className="pt-4 text-2xl">Activities</h4>
 
         {/* divider */}
         <div className="my-4 h-[2px] w-full bg-gray-200 dark:bg-gray-800" />
-        <SuppliesTable chainId={network} market={market} />
-        <BorrowsTable chainId={network} market={market} />
+        <SuppliesTable
+          chainId={network}
+          market={market}
+          minAssets={scaledMinSupplyAmount}
+          onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+        />
+        <BorrowsTable
+          chainId={network}
+          market={market}
+          minAssets={scaledMinBorrowAmount}
+          onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+        />
         <LiquidationsTable chainId={network} market={market} />
       </div>
     </>

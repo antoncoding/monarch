@@ -1,7 +1,7 @@
 import { marketDepositsWithdrawsQuery } from '@/graphql/morpho-subgraph-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import shared utility
-import { MarketActivityTransaction } from '@/utils/types';
+import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Types specific to the Subgraph response for this query
@@ -24,17 +24,23 @@ type SubgraphSuppliesWithdrawsResponse = {
 
 /**
  * Fetches market supply/withdraw activities (deposits/withdraws of loan asset) from the Subgraph.
- * Uses the shared subgraph fetcher and URL utility.
+ * Uses the shared subgraph fetcher and URL utility with server-side pagination.
  * @param marketId The ID of the market.
  * @param loanAssetId The address of the loan asset.
  * @param network The blockchain network.
- * @returns A promise resolving to an array of unified MarketActivityTransaction objects.
+ * @param minAssets Minimum asset amount to filter transactions (optional, defaults to 0).
+ * @param first Number of items to fetch per page (optional, defaults to 8).
+ * @param skip Number of items to skip for pagination (optional, defaults to 0).
+ * @returns A promise resolving to paginated MarketActivityTransaction objects.
  */
 export const fetchSubgraphMarketSupplies = async (
   marketId: string,
   loanAssetId: string,
   network: SupportedNetworks,
-): Promise<MarketActivityTransaction[]> => {
+  minAssets: string = '0',
+  first: number = 8,
+  skip: number = 0,
+): Promise<PaginatedMarketActivityTransactions> => {
   const subgraphUrl = getSubgraphUrl(network);
   if (!subgraphUrl) {
     // Error handling for missing URL remains important
@@ -42,9 +48,15 @@ export const fetchSubgraphMarketSupplies = async (
     throw new Error(`Subgraph URL not available for network ${network}`);
   }
 
+  // Fetch one extra item to detect if there are more pages
+  const fetchFirst = first + 1;
+
   const variables = {
     marketId, // Ensure these match the types expected by the Subgraph query (e.g., Bytes)
     loanAssetId,
+    minAssets,
+    first: fetchFirst,
+    skip,
   };
 
   try {
@@ -79,10 +91,23 @@ export const fetchSubgraphMarketSupplies = async (
 
     // Combine and sort by timestamp descending (most recent first)
     const combined = [...mappedDeposits, ...mappedWithdraws];
-
     combined.sort((a, b) => b.timestamp - a.timestamp);
 
-    return combined;
+    // Check if we got more items than requested (meaning there are more pages)
+    const hasMore = combined.length > first;
+
+    // Return only the requested number of items (not the extra one)
+    const items = hasMore ? combined.slice(0, first) : combined;
+
+    // Estimate total count:
+    // - If we got more items than requested, we know there's at least skip + first + 1
+    // - Otherwise, the total is skip + actual items received
+    const totalCount = hasMore ? skip + first + 1 : skip + items.length;
+
+    return {
+      items,
+      totalCount,
+    };
   } catch (error) {
     // Catch errors from the fetcher or during processing
     console.error(`Error fetching or processing Subgraph market supplies for ${marketId}:`, error);

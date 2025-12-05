@@ -154,12 +154,13 @@ export const marketHourlySnapshotsQuery = `
 
 // --- Query for Market Supplies/Withdraws (Deposits/Withdraws of Loan Asset) ---
 export const marketDepositsWithdrawsQuery = `
-  query getMarketDepositsWithdraws($marketId: Bytes!, $loanAssetId: Bytes!) {
+  query getMarketDepositsWithdraws($marketId: Bytes!, $loanAssetId: Bytes!, $minAssets: String, $first: Int!, $skip: Int!) {
     deposits(
-      first: 1000, # Subgraph max limit
+      first: $first,
+      skip: $skip,
       orderBy: timestamp,
       orderDirection: desc,
-      where: { market: $marketId, asset: $loanAssetId }
+      where: { market: $marketId, asset: $loanAssetId, amount_gt: $minAssets }
     ) {
       amount
       account { id }
@@ -167,10 +168,11 @@ export const marketDepositsWithdrawsQuery = `
       hash
     }
     withdraws(
-      first: 1000, # Subgraph max limit
+      first: $first,
+      skip: $skip,
       orderBy: timestamp,
       orderDirection: desc,
-      where: { market: $marketId, asset: $loanAssetId }
+      where: { market: $marketId, asset: $loanAssetId, amount_gt: $minAssets }
     ) {
       amount
       account { id }
@@ -183,12 +185,13 @@ export const marketDepositsWithdrawsQuery = `
 
 // --- Query for Market Borrows/Repays (Borrows/Repays of Loan Asset) ---
 export const marketBorrowsRepaysQuery = `
-  query getMarketBorrowsRepays($marketId: Bytes!, $loanAssetId: Bytes!) {
+  query getMarketBorrowsRepays($marketId: Bytes!, $loanAssetId: Bytes!, $minAssets: BigInt, $first: Int!, $skip: Int!) {
     borrows(
-      first: 1000,
+      first: $first,
+      skip: $skip,
       orderBy: timestamp,
       orderDirection: desc,
-      where: { market: $marketId, asset: $loanAssetId }
+      where: { market: $marketId, asset: $loanAssetId, amount_gt: $minAssets }
     ) {
       amount
       account { id }
@@ -196,10 +199,11 @@ export const marketBorrowsRepaysQuery = `
       hash
     }
     repays(
-      first: 1000,
+      first: $first,
+      skip: $skip,
       orderBy: timestamp,
       orderDirection: desc,
-      where: { market: $marketId, asset: $loanAssetId }
+      where: { market: $marketId, asset: $loanAssetId, amount_gt: $minAssets }
     ) {
       amount
       account { id }

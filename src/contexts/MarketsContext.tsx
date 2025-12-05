@@ -196,7 +196,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                     `Failed to fetch markets via Subgraph for ${network}:`,
                     subgraphError,
                   );
-                  throw subgraphError; // Throw to be caught by outer catch
                 }
               }
 

@@ -27,7 +27,8 @@
       "Bash(timeout 30 pnpm exec tsc --noEmit --pretty)",
       "Bash(identify:*)",
       "Bash(sips:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(pnpm dlx:*)"
     ],
     "deny": []
   }

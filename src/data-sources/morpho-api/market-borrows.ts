@@ -1,6 +1,6 @@
 import { marketBorrowsQuery } from '@/graphql/morpho-api-queries';
 // Import the shared type from its new location
-import { MarketActivityTransaction } from '@/utils/types';
+import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Type specifically for the raw Morpho API response structure for borrows/repays
@@ -19,6 +19,12 @@ type MorphoAPIBorrowsResponse = {
           address: string;
         };
       }[];
+      pageInfo?: {
+        countTotal: number;
+        count: number;
+        limit: number;
+        skip: number;
+      };
     };
   };
 };
@@ -27,15 +33,22 @@ type MorphoAPIBorrowsResponse = {
  * Fetches market borrow/repay activities from the Morpho Blue API.
  * Uses the shared Morpho API fetcher.
  * @param marketId The unique key or ID of the market.
- * @returns A promise resolving to an array of unified MarketActivityTransaction objects.
+ * @param minAssets Minimum asset amount to filter transactions (optional, defaults to 0).
+ * @param first Number of items to fetch per page (optional, defaults to 8).
+ * @param skip Number of items to skip for pagination (optional, defaults to 0).
+ * @returns A promise resolving to paginated MarketActivityTransaction objects.
  */
 export const fetchMorphoMarketBorrows = async (
   marketId: string,
-): Promise<MarketActivityTransaction[]> => {
+  minAssets: string = '0',
+  first: number = 8,
+  skip: number = 0,
+): Promise<PaginatedMarketActivityTransactions> => {
   const variables = {
     uniqueKey: marketId,
-    first: 1000,
-    skip: 0,
+    minAssets,
+    first,
+    skip,
   };
 
   try {
@@ -45,15 +58,21 @@ export const fetchMorphoMarketBorrows = async (
     );
 
     const items = result.data?.transactions?.items ?? [];
+    const totalCount = result.data?.transactions?.pageInfo?.countTotal ?? 0;
 
     // Map to unified type (reusing MarketActivityTransaction)
-    return items.map((item) => ({
+    const mappedItems = items.map((item) => ({
       type: item.type, // Directly use 'MarketBorrow' or 'MarketRepay'
       hash: item.hash,
       timestamp: item.timestamp,
       amount: item.data.assets, // Map 'assets' to 'amount'
       userAddress: item.user.address,
     }));
+
+    return {
+      items: mappedItems,
+      totalCount,
+    };
   } catch (error) {
     console.error(`Error fetching or processing Morpho API market borrows for ${marketId}:`, error);
     if (error instanceof Error) {
