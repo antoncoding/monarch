@@ -22,6 +22,7 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import useMarketSupplies from '@/hooks/useMarketSupplies';
+import { formatSimple } from '@/utils/balance';
 import { Market } from '@/utils/types';
 
 type SuppliesTableProps = {
@@ -135,7 +136,7 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                {formatUnits(BigInt(supply.amount), market.loanAsset.decimals)}
+                {formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}
                 {market?.loanAsset?.symbol && (
                   <span className="ml-1 inline-flex items-center">
                     <TokenIcon

@@ -22,6 +22,7 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrows } from '@/hooks/useMarketBorrows';
+import { formatSimple } from '@/utils/balance';
 import { Market } from '@/utils/types';
 
 type BorrowsTableProps = {
@@ -141,7 +142,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatUnits(BigInt(borrow.amount), market.loanAsset.decimals)}
+                  {formatSimple(Number(formatUnits(BigInt(borrow.amount), market.loanAsset.decimals)))}
                   {market?.loanAsset?.symbol && (
                     <span className="ml-1 inline-flex items-center">
                       <TokenIcon
