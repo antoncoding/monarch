@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketBorrows } from '@/data-sources/morpho-api/market-borrows';
@@ -28,11 +28,9 @@ export const useMarketBorrows = (
 ) => {
   const queryClient = useQueryClient();
 
-  // Both Morpho API and Subgraph now use server-side pagination
   const queryKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page, pageSize];
 
-  // Query function to fetch data
-  const queryFn = async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
+  const queryFn = useCallback(async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
     if (!marketId || !loanAssetId || !network) {
       return null;
     }
@@ -47,23 +45,22 @@ export const useMarketBorrows = (
         result = await fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip);
       } catch (morphoError) {
         console.error(`Failed to fetch borrows via Morpho API:`, morphoError);
-        // Continue to Subgraph fallback
       }
     }
 
-    // If Morpho API failed or not supported, try Subgraph
+    // Fallback to Subgraph if Morpho API failed or not supported
     if (!result) {
       try {
         console.log(`Attempting to fetch borrows via Subgraph for ${marketId} (page ${targetPage})`);
         result = await fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
       } catch (subgraphError) {
         console.error(`Failed to fetch borrows via Subgraph:`, subgraphError);
-        result = null;
+        throw subgraphError;
       }
     }
 
     return result;
-  };
+  }, [marketId, loanAssetId, network, minAssets, pageSize]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketActivityTransactions | null>({
     queryKey: queryKey,
@@ -80,7 +77,6 @@ export const useMarketBorrows = (
 
     const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
-    // Prefetch previous page
     if (page > 1) {
       const prevPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page - 1, pageSize];
       void queryClient.prefetchQuery({
@@ -90,7 +86,6 @@ export const useMarketBorrows = (
       });
     }
 
-    // Prefetch next page
     if (page < totalPages) {
       const nextPageKey = ['marketBorrows', marketId, loanAssetId, network, minAssets, page + 1, pageSize];
       void queryClient.prefetchQuery({
@@ -99,9 +94,8 @@ export const useMarketBorrows = (
         staleTime: 1000 * 60 * 5,
       });
     }
-  }, [page, marketId, loanAssetId, network, minAssets, pageSize, data, queryClient]);
+  }, [page, data, queryClient, queryFn]);
 
-  // Return react-query result structure
   return {
     data: data,
     isLoading: isLoading,

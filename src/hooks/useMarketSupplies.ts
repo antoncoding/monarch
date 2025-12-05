@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
@@ -28,11 +28,9 @@ export const useMarketSupplies = (
 ) => {
   const queryClient = useQueryClient();
 
-  // Both Morpho API and Subgraph now use server-side pagination
   const queryKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page, pageSize];
 
-  // Query function to fetch data
-  const queryFn = async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
+  const queryFn = useCallback(async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
     if (!marketId || !loanAssetId || !network) {
       return null;
     }
@@ -47,23 +45,22 @@ export const useMarketSupplies = (
         result = await fetchMorphoMarketSupplies(marketId, minAssets, pageSize, targetSkip);
       } catch (morphoError) {
         console.error(`Failed to fetch supplies via Morpho API:`, morphoError);
-        // Continue to Subgraph fallback
       }
     }
 
-    // If Morpho API failed or not supported, try Subgraph
+    // Fallback to Subgraph if Morpho API failed or not supported
     if (!result) {
       try {
         console.log(`Attempting to fetch supplies via Subgraph for ${marketId} (page ${targetPage})`);
         result = await fetchSubgraphMarketSupplies(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
       } catch (subgraphError) {
         console.error(`Failed to fetch supplies via Subgraph:`, subgraphError);
-        result = null;
+        throw subgraphError;
       }
     }
 
     return result;
-  };
+  }, [marketId, loanAssetId, network, minAssets, pageSize]);
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketActivityTransactions | null>({
     queryKey: queryKey,
@@ -80,7 +77,6 @@ export const useMarketSupplies = (
 
     const totalPages = data.totalCount > 0 ? Math.ceil(data.totalCount / pageSize) : 0;
 
-    // Prefetch previous page
     if (page > 1) {
       const prevPageKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page - 1, pageSize];
       void queryClient.prefetchQuery({
@@ -90,7 +86,6 @@ export const useMarketSupplies = (
       });
     }
 
-    // Prefetch next page
     if (page < totalPages) {
       const nextPageKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page + 1, pageSize];
       void queryClient.prefetchQuery({
@@ -99,7 +94,7 @@ export const useMarketSupplies = (
         staleTime: 1000 * 60 * 5,
       });
     }
-  }, [page, marketId, loanAssetId, network, minAssets, pageSize, data, queryClient]);
+  }, [page, data, queryClient, queryFn]);
 
   return {
     data: data,
