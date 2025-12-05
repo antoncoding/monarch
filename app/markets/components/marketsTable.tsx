@@ -3,11 +3,11 @@ import { FaRegStar, FaStar } from 'react-icons/fa';
 import { type TrustedVault } from '@/constants/vaults/known_vaults';
 import { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
+import { TablePagination } from '../../market/[chainId]/[marketid]/components/TablePagination';
 import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
 import { HTSortable } from './MarketTableUtils';
-import { TablePagination } from '../../market/[chainId]/[marketid]/components/TablePagination';
 
 type MarketsTableProps = {
   sortColumn: number;
@@ -64,7 +64,7 @@ function MarketsTable({
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
-  const containerClassName = ['flex flex-col gap-4 pb-4', className]
+  const containerClassName = ['flex flex-col gap-2 pb-4', className]
     .filter((value): value is string => Boolean(value))
     .join(' ');
   const tableWrapperClassName = ['overflow-x-auto', wrapperClassName]
@@ -212,6 +212,7 @@ function MarketsTable({
         pageSize={entriesPerPage}
         onPageChange={setCurrentPage}
         isLoading={false}
+        showEntryCount={false}
       />
     </div>
   );

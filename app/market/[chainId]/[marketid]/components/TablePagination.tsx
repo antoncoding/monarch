@@ -92,7 +92,7 @@ export function TablePagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="mt-6 flex flex-col items-center justify-center gap-3">
+    <div className="mt-6 flex flex-col items-center justify-center gap-3 font-zen">
       {/* Page controls */}
       <div className="flex items-center gap-1 rounded-md bg-surface p-1 shadow-sm">
         {/* Previous button */}
@@ -101,7 +101,7 @@ export function TablePagination({
           size="icon"
           disabled={currentPage === 1 || isLoading}
           onClick={() => onPageChange(currentPage - 1)}
-          className="h-8 w-8"
+          className="h-8 w-8 font-zen !font-normal"
         >
           <ChevronLeftIcon className="h-4 w-4" />
         </Button>
@@ -111,7 +111,7 @@ export function TablePagination({
           {pageNumbers.map((page, idx) =>
             page === 'ellipsis' ? (
               <span key={`ellipsis-${idx}`} className={cn(
-                "flex h-8 items-center justify-center text-secondary",
+                "flex h-8 items-center justify-center text-secondary font-zen !font-normal",
                 totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm'
               )}>
                 ...
@@ -124,7 +124,7 @@ export function TablePagination({
                 onClick={() => onPageChange(page)}
                 disabled={isLoading}
                 className={cn(
-                  'h-8 transition-all duration-200',
+                  'h-8 transition-all duration-200 font-zen !font-normal',
                   totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm',
                   currentPage === page && 'bg-primary text-primary-foreground hover:bg-primary/90',
                 )}
@@ -141,7 +141,7 @@ export function TablePagination({
           size="icon"
           disabled={currentPage === totalPages || isLoading}
           onClick={() => onPageChange(currentPage + 1)}
-          className="h-8 w-8"
+          className="h-8 w-8 font-zen !font-normal"
         >
           <ChevronRightIcon className="h-4 w-4" />
         </Button>
@@ -168,15 +168,15 @@ export function TablePagination({
                     variant="ghost"
                     size="icon"
                     disabled={isLoading}
-                    className="h-8 w-8"
+                    className="h-8 w-8 font-zen !font-normal"
                   >
                     <MagnifyingGlassIcon className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
               </Tooltip>
               <PopoverContent className="p-4">
-                <div className="flex flex-col gap-2.5">
-                  <p className="text-sm font-medium">Jump to page</p>
+                <div className="flex flex-col gap-2.5 font-zen">
+                  <p className="text-sm !font-normal">Jump to page</p>
                   <div className="flex items-center gap-2">
                     <Input
                       autoFocus
@@ -197,7 +197,7 @@ export function TablePagination({
                       size="sm"
                       onClick={handleJumpToPage}
                       disabled={!jumpPage}
-                      className="h-8"
+                      className="h-8 font-zen !font-normal"
                     >
                       Go
                     </Button>
@@ -211,7 +211,7 @@ export function TablePagination({
 
       {/* Entry count - below controls */}
       {showEntryCount && (
-        <div className="text-xs text-secondary">
+        <div className="text-xs text-secondary font-zen !font-normal">
           Showing {startEntry}-{endEntry} of {totalEntries} entries
         </div>
       )}
