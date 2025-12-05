@@ -7,7 +7,7 @@ import { ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import { MarketTableBody } from './MarketTableBody';
 import { HTSortable } from './MarketTableUtils';
-import { Pagination } from './Pagination';
+import { TablePagination } from '../../market/[chainId]/[marketid]/components/TablePagination';
 
 type MarketsTableProps = {
   sortColumn: number;
@@ -205,12 +205,13 @@ function MarketsTable({
           />
         </table>
       </div>
-      <Pagination
+      <TablePagination
         totalPages={totalPages}
+        totalEntries={markets.length}
         currentPage={currentPage}
+        pageSize={entriesPerPage}
         onPageChange={setCurrentPage}
-        entriesPerPage={entriesPerPage}
-        isDataLoaded={markets.length > 0}
+        isLoading={false}
       />
     </div>
   );
