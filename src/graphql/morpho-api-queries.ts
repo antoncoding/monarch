@@ -14,6 +14,57 @@ export const feedFieldsFragment = `
   }
 `;
 
+// Query for fetching oracles (used for cache generation and runtime fetching)
+export const oraclesQuery = `
+  query getOracles($first: Int, $skip: Int, $where: OraclesFilters) {
+    oracles(first: $first, skip: $skip, where: $where) {
+      items {
+        address
+        chain {
+          id
+        }
+        data {
+          ... on MorphoChainlinkOracleData {
+            baseFeedOne {
+              ...FeedFields
+            }
+            baseFeedTwo {
+              ...FeedFields
+            }
+            quoteFeedOne {
+              ...FeedFields
+            }
+            quoteFeedTwo {
+              ...FeedFields
+            }
+          }
+          ... on MorphoChainlinkOracleV2Data {
+            baseFeedOne {
+              ...FeedFields
+            }
+            baseFeedTwo {
+              ...FeedFields
+            }
+            quoteFeedOne {
+              ...FeedFields
+            }
+            quoteFeedTwo {
+              ...FeedFields
+            }
+          }
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }
+  }
+  ${feedFieldsFragment}
+`;
+
 // for both API type Market and MarketListItem
 const commonMarketFields = `
 lltv
@@ -81,38 +132,6 @@ supplyingVaults {
   address
 }
 
-oracle {
-  data {
-    ... on MorphoChainlinkOracleData {
-      baseFeedOne {
-        ...FeedFields
-      }
-      baseFeedTwo {
-        ...FeedFields
-      }
-      quoteFeedOne {
-        ...FeedFields
-      }
-      quoteFeedTwo {
-        ...FeedFields
-      }
-    }
-    ... on MorphoChainlinkOracleV2Data {
-      baseFeedOne {
-        ...FeedFields
-      }
-      baseFeedTwo {
-        ...FeedFields
-      }
-      quoteFeedOne {
-        ...FeedFields
-      }
-      quoteFeedTwo {
-        ...FeedFields
-      }
-    }
-  }
-}
 riskAnalysis {
   analysis {
     ... on CredoraRiskAnalysis {
@@ -219,38 +238,6 @@ export const marketsQuery = `
       type
       level
       __typename
-    }
-    oracle {
-      data {
-        ... on MorphoChainlinkOracleData {
-          baseFeedOne {
-            ...FeedFields
-          }
-          baseFeedTwo {
-            ...FeedFields
-          }
-          quoteFeedOne {
-            ...FeedFields
-          }
-          quoteFeedTwo {
-            ...FeedFields
-          }
-        }
-        ... on MorphoChainlinkOracleV2Data {
-          baseFeedOne {
-            ...FeedFields
-          }
-          baseFeedTwo {
-            ...FeedFields
-          }
-          quoteFeedOne {
-            ...FeedFields
-          }
-          quoteFeedTwo {
-            ...FeedFields
-          }
-        }
-      }
     }
     riskAnalysis {
       analysis {

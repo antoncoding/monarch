@@ -118,7 +118,7 @@ export function MarketIndicators({
         chainId={market.morphoBlue.chain.id}
         marketId={market.uniqueKey}
         loanTokenAddress={market.loanAsset.address}
-        whitelisted={market.whitelisted && !market.isMonarchWhitelisted}
+        whitelisted={market.whitelisted}
       />
 
       {/* Risk Warnings */}

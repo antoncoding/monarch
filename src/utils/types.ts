@@ -264,6 +264,31 @@ export type MorphoChainlinkOracleData = {
   quoteFeedTwo: OracleFeed | null;
 };
 
+// Oracle item from Morpho API oracles query
+export type OracleItem = {
+  address: string;
+  chain: {
+    id: number;
+  };
+  data: MorphoChainlinkOracleData | null;
+};
+
+// Oracles query response from Morpho API
+export type OraclesQueryResponse = {
+  data: {
+    oracles: {
+      items: OracleItem[];
+      pageInfo: {
+        countTotal: number;
+        count: number;
+        limit: number;
+        skip: number;
+      };
+    };
+  };
+  errors?: { message: string }[];
+};
+
 // Update the Market type
 export type Market = {
   id: string;
@@ -314,8 +339,6 @@ export type Market = {
   // whether we have USD price such has supplyUSD, borrowUSD, collateralUSD, etc. If not, use estimationP
   hasUSDPrice: boolean;
   warnings: MarketWarning[];
-  isMonarchWhitelisted?: boolean;
-
   oracle?: {
     data: MorphoChainlinkOracleData;
   };

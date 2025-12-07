@@ -46,8 +46,8 @@ export const fetchSubgraphMarketSupplies = async (
 ): Promise<PaginatedMarketActivityTransactions> => {
   const subgraphUrl = getSubgraphUrl(network);
   if (!subgraphUrl) {
-    console.error(`No Subgraph URL configured for network: ${network}`);
-    throw new Error(`Subgraph URL not available for network ${network}`);
+    console.warn(`No Subgraph URL configured for network: ${network}. Returning empty results.`);
+    return { items: [], totalCount: 0 };
   }
 
   const fetchBatchSize = 200;

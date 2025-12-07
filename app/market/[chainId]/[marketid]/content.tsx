@@ -92,6 +92,9 @@ function MarketContent() {
     refetch: refetchMarket,
   } = useMarketData(marketid as string, network);
 
+
+  console.log('market', market);
+
   // Transaction filters with localStorage persistence (per symbol)
   const {
     minSupplyAmount,
@@ -287,7 +290,7 @@ function MarketContent() {
             marketId={marketid as string}
             loanTokenAddress={market.loanAsset.address}
             chainId={market.morphoBlue.chain.id}
-            whitelisted={market.whitelisted && !market.isMonarchWhitelisted}
+            whitelisted={market.whitelisted}
           />
         </div>
 

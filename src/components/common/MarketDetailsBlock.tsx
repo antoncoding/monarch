@@ -37,7 +37,7 @@ export function MarketDetailsBlock({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
-    whitelisted: market.whitelisted && !market.isMonarchWhitelisted
+    whitelisted: market.whitelisted
   });
 
   // Calculate preview state when supplyDelta or borrowDelta is provided

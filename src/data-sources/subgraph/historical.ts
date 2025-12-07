@@ -115,7 +115,7 @@ export const fetchSubgraphMarketHistoricalData = async (
 
   const subgraphApiUrl = getSubgraphUrl(network);
   if (!subgraphApiUrl) {
-    console.error(`Subgraph URL for network ${network} is not defined.`);
+    console.warn(`Subgraph URL for network ${network} is not defined. Cannot fetch historical data.`);
     return null; // Return null
   }
 

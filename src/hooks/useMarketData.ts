@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { SupportedNetworks } from '@/utils/networks';
@@ -13,6 +15,7 @@ export const useMarketData = (
 ) => {
   const queryKey = ['marketData', uniqueKey, network];
   const publicClient = usePublicClient({ chainId: network });
+  const { getOracleData } = useOracleDataContext();
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
     queryKey: queryKey,
@@ -99,8 +102,27 @@ export const useMarketData = (
     retry: 1,
   });
 
+  // Enrich with oracle data OUTSIDE the query to avoid re-triggering the entire fetch
+  // when oracle data context updates
+  const enrichedMarket = useMemo(() => {
+    if (!data || !network) return data;
+
+    const oracleData = getOracleData(data.oracleAddress, network);
+
+    if (oracleData) {
+      return {
+        ...data,
+        oracle: {
+          data: oracleData,
+        },
+      };
+    }
+
+    return data;
+  }, [data, network, getOracleData]);
+
   return {
-    data: data,
+    data: enrichedMarket,
     isLoading: isLoading,
     error: error,
     refetch: refetch,
