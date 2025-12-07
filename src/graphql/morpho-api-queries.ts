@@ -147,7 +147,6 @@ export const marketFragment = `
   fragment MarketFields on Market {
     ${commonMarketFields}
   }
-  ${feedFieldsFragment}
 `;
 
 // hotfix: remove MarketFields on MarketListItem
@@ -155,7 +154,6 @@ export const marketsFragment = `
   fragment MarketFields on Market {
     ${commonMarketFields}
   }
-  ${feedFieldsFragment}
 `;
 
 // hotfix: remove MarketFields on MarketListItem
@@ -248,7 +246,6 @@ export const marketsQuery = `
       }
     }
   }
-  ${feedFieldsFragment}
 `;
 
 export const userPositionsQuery = `
