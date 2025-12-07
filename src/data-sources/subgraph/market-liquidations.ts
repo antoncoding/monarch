@@ -44,8 +44,8 @@ export const fetchSubgraphMarketLiquidations = async (
 ): Promise<MarketLiquidationTransaction[]> => {
   const subgraphUrl = getSubgraphUrl(network);
   if (!subgraphUrl) {
-    console.error(`No Subgraph URL configured for network: ${network}`);
-    throw new Error(`Subgraph URL not available for network ${network}`);
+    console.warn(`No Subgraph URL configured for network: ${network}. Returning empty results.`);
+    return [];
   }
 
   const variables = { marketId };

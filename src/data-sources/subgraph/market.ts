@@ -291,8 +291,8 @@ export const fetchSubgraphMarket = async (
   const subgraphApiUrl = getSubgraphUrl(network);
 
   if (!subgraphApiUrl) {
-    console.error(`Subgraph URL for network ${network} is not defined.`);
-    throw new Error(`Subgraph URL for network ${network} is not defined.`);
+    console.warn(`Subgraph URL for network ${network} is not defined. Cannot fetch market.`);
+    return null;
   }
 
   try {
@@ -336,8 +336,8 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
   const subgraphApiUrl = getSubgraphUrl(network);
 
   if (!subgraphApiUrl) {
-    console.error(`Subgraph URL for network ${network} is not defined.`);
-    throw new Error(`Subgraph URL for network ${network} is not defined.`);
+    console.warn(`Subgraph URL for network ${network} is not defined. Skipping subgraph fetch.`);
+    return [];
   }
 
   // Construct variables for the query, adding blacklistTokens

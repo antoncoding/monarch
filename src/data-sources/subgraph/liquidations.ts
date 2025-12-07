@@ -22,8 +22,8 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
 ): Promise<Set<string>> => {
   const subgraphApiUrl = getSubgraphUrl(network);
   if (!subgraphApiUrl) {
-    console.error(`Subgraph URL for network ${network} is not defined.`);
-    throw new Error(`Subgraph URL for network ${network} is not defined.`);
+    console.warn(`Subgraph URL for network ${network} is not defined. Skipping liquidation check.`);
+    return new Set<string>();
   }
 
   const liquidatedKeys = new Set<string>();

@@ -1,7 +1,7 @@
 import { SupportedNetworks } from './networks';
 
 export const URLS = {
-  MORPHO_BLUE_API: 'https://blue-api.morpho.org/graphql',
+  MORPHO_BLUE_API: 'https://blue-api-2.morpho.org/graphql',
   MORPHO_REWARDS_API: 'https://rewards.morpho.org/v1',
 } as const;
 
