@@ -4,6 +4,7 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { oraclesQuery } from '../src/graphql/morpho-api-queries';
 import { ALL_SUPPORTED_NETWORKS } from "../src/utils/networks"
+import { URLS } from '../src/utils/urls';
 
 // Types matching Morpho API oracle response
 type OracleFeed = {
@@ -54,7 +55,7 @@ type CachedOracleEntry = {
   data: MorphoChainlinkOracleData;
 };
 
-const MORPHO_API_URL = 'https://blue-api.morpho.org/graphql';
+const MORPHO_API_URL = URLS.MORPHO_BLUE_API;
 const SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS;
 
 const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
@@ -65,20 +66,7 @@ export const useMarketData = (
         }
       }
 
-      // 4. Enrich with oracle data if needed
-      if (finalMarket && !finalMarket.oracle?.data && network) {
-        const oracleData = getOracleData(finalMarket.oracleAddress, network);
-        if (oracleData) {
-          finalMarket = {
-            ...finalMarket,
-            oracle: {
-              data: oracleData,
-            },
-          };
-        }
-      }
-
-      // 5. If we have both snapshot and market data, override the state fields with snapshot
+      // 4. If we have both snapshot and market data, override the state fields with snapshot
       if (snapshot && finalMarket) {
         console.log(`Found market snapshot for ${uniqueKey}, overriding state with on-chain data.`);
         finalMarket = {
@@ -114,8 +102,27 @@ export const useMarketData = (
     retry: 1,
   });
 
+  // Enrich with oracle data OUTSIDE the query to avoid re-triggering the entire fetch
+  // when oracle data context updates
+  const enrichedMarket = useMemo(() => {
+    if (!data || !network) return data;
+
+    const oracleData = getOracleData(data.oracleAddress, network);
+
+    if (oracleData) {
+      return {
+        ...data,
+        oracle: {
+          data: oracleData,
+        },
+      };
+    }
+
+    return data;
+  }, [data, network, getOracleData]);
+
   return {
-    data: data,
+    data: enrichedMarket,
     isLoading: isLoading,
     error: error,
     refetch: refetch,
