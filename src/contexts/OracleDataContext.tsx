@@ -13,7 +13,7 @@ import {
 import oracleCacheData from '@/constants/oracle/oracle-cache.json';
 import { oraclesQuery } from '@/graphql/morpho-api-queries';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
-import { MorphoChainlinkOracleData } from '@/utils/types';
+import { MorphoChainlinkOracleData, OraclesQueryResponse } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
 // Type for cached oracle entry
@@ -25,27 +25,6 @@ type CachedOracleEntry = {
 
 // Import oracle cache with proper typing
 const oracleCache: CachedOracleEntry[] = oracleCacheData as CachedOracleEntry[];
-
-type OraclesQueryResponse = {
-  data: {
-    oracles: {
-      items: {
-        address: string;
-        chain: {
-          id: number;
-        };
-        data: MorphoChainlinkOracleData | null;
-      }[];
-      pageInfo: {
-        countTotal: number;
-        count: number;
-        limit: number;
-        skip: number;
-      };
-    };
-  };
-  errors?: { message: string }[];
-};
 
 export type OracleDataContextType = {
   getOracleData: (oracleAddress: string, chainId: number) => MorphoChainlinkOracleData | null;

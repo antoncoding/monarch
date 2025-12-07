@@ -4,49 +4,12 @@ import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { oraclesQuery } from '../src/graphql/morpho-api-queries';
 import { ALL_SUPPORTED_NETWORKS } from "../src/utils/networks"
+import {
+  MorphoChainlinkOracleData,
+  OracleItem,
+  OraclesQueryResponse,
+} from '../src/utils/types';
 import { URLS } from '../src/utils/urls';
-
-// Types matching Morpho API oracle response
-type OracleFeed = {
-  address: string;
-  chain: {
-    id: number;
-  };
-  description: string | null;
-  id: string;
-  pair: string[] | null;
-  vendor: string | null;
-};
-
-type MorphoChainlinkOracleData = {
-  baseFeedOne: OracleFeed | null;
-  baseFeedTwo: OracleFeed | null;
-  quoteFeedOne: OracleFeed | null;
-  quoteFeedTwo: OracleFeed | null;
-};
-
-type OracleItem = {
-  address: string;
-  chain: {
-    id: number;
-  };
-  data: MorphoChainlinkOracleData | null;
-};
-
-type OraclesQueryResponse = {
-  data: {
-    oracles: {
-      items: OracleItem[];
-      pageInfo: {
-        countTotal: number;
-        count: number;
-        limit: number;
-        skip: number;
-      };
-    };
-  };
-  errors?: { message: string }[];
-};
 
 // Cached oracle entry for storage
 type CachedOracleEntry = {
