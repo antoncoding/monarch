@@ -11,11 +11,11 @@ import {
   useRef,
 } from 'react';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { monarchWhitelistedMarkets } from '@/utils/markets';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import { Market } from '@/utils/types';
 
@@ -73,28 +73,54 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     isDefaultBlacklisted,
   } = useBlacklistedMarkets();
 
+  // Oracle data context for enriching markets
+  const { getOracleData } = useOracleDataContext();
+
+  // Helper to enrich a market with oracle data
+  const enrichMarketWithOracleData = useCallback(
+    (market: Market): Market => {
+      // If market already has oracle data (from Morpho API), keep it
+      if (market.oracle?.data) {
+        return market;
+      }
+
+      // Otherwise, try to get oracle data from the oracle context
+      const oracleData = getOracleData(market.oracleAddress, market.morphoBlue.chain.id);
+
+      if (oracleData) {
+        return {
+          ...market,
+          oracle: {
+            data: oracleData,
+          },
+        };
+      }
+
+      // No oracle data available
+      return market;
+    },
+    [getOracleData],
+  );
 
   // Computed markets based on the setting
   const markets = useMemo(() => {
     return showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
   }, [showUnwhitelistedMarkets, allMarkets, whitelistedMarkets]);
 
-  // Helper to add metadata (whitelist info) to markets
-  const addMarketMetadata = useCallback((marketsToEnrich: Market[]) => {
-    return marketsToEnrich.map((market) => {
-      const isMonarchWhitelisted =
-        !market.whitelisted &&
-        monarchWhitelistedMarkets.some(
-          (whitelistedMarket) => whitelistedMarket.id === market.uniqueKey.toLowerCase(),
-        );
+  // Helper to add metadata (oracle data) to markets
+  const addMarketMetadata = useCallback(
+    (marketsToEnrich: Market[]) => {
+      return marketsToEnrich.map((market) => {
+        // Enrich with oracle data
+        const enrichedMarket = enrichMarketWithOracleData(market);
 
-      return {
-        ...market,
-        whitelisted: market.whitelisted || isMonarchWhitelisted,
-        isMonarchWhitelisted,
-      };
-    });
-  }, []);
+        // Return market with oracle data enriched
+        // Note: whitelisted flag comes from Morpho API and indicates universal rewards eligibility
+        return enrichedMarket;
+      });
+    },
+    [enrichMarketWithOracleData],
+  );
 
   // Process markets helper function
   const processMarkets = useCallback(

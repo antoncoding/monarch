@@ -5,6 +5,7 @@ import { GlobalModalProvider } from '@/contexts/GlobalModalContext';
 import { LiquidationsProvider } from '@/contexts/LiquidationsContext';
 import { MarketsProvider } from '@/contexts/MarketsContext';
 import { MerklCampaignsProvider } from '@/contexts/MerklCampaignsContext';
+import { OracleDataProvider } from '@/contexts/OracleDataContext';
 import { OnboardingProvider } from 'app/positions/components/onboarding/OnboardingContext';
 import { TokenProvider } from './TokenProvider';
 
@@ -16,13 +17,15 @@ export function ClientProviders({ children }: ClientProvidersProps) {
   return (
     <GlobalModalProvider>
       <TokenProvider>
-        <MarketsProvider>
-          <LiquidationsProvider>
-            <MerklCampaignsProvider>
-              <OnboardingProvider>{children}</OnboardingProvider>
-            </MerklCampaignsProvider>
-          </LiquidationsProvider>
-        </MarketsProvider>
+        <OracleDataProvider>
+          <MarketsProvider>
+            <LiquidationsProvider>
+              <MerklCampaignsProvider>
+                <OnboardingProvider>{children}</OnboardingProvider>
+              </MerklCampaignsProvider>
+            </LiquidationsProvider>
+          </MarketsProvider>
+        </OracleDataProvider>
       </TokenProvider>
     </GlobalModalProvider>
   );

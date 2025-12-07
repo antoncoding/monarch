@@ -10,6 +10,7 @@
     "format:check": "prettier --check .",
     "generate:chainlink": "tsx scripts/generate-chainlink-data.ts",
     "generate:redstone": "tsx scripts/generate-redstone-data.ts",
+    "generate:oracle": "tsx scripts/generate-oracle-cache.ts",
     "lint": "next lint --fix",
     "lint:check": "next lint",
     "start": "next start",

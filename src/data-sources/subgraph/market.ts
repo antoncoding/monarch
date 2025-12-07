@@ -268,8 +268,6 @@ const transformSubgraphMarketToMarket = (
       data: oracleDataToUse, // Use the determined oracle data
     },
     hasUSDPrice: hasUSDPrice,
-    isMonarchWhitelisted: false,
-
 
     // todo: not able to parse bad debt now
     realizedBadDebt: {

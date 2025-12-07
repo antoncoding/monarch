@@ -30,8 +30,6 @@ type MarketsGraphQLResponse = {
 const processMarketData = (market: Market): Market => {
   return {
     ...market,
-    isMonarchWhitelisted: false,
-
     // Standard API always have USD price!
     hasUSDPrice: true,
   };

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
+import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import { SupportedNetworks } from '@/utils/networks';
@@ -13,6 +14,7 @@ export const useMarketData = (
 ) => {
   const queryKey = ['marketData', uniqueKey, network];
   const publicClient = usePublicClient({ chainId: network });
+  const { getOracleData } = useOracleDataContext();
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
     queryKey: queryKey,
@@ -63,7 +65,20 @@ export const useMarketData = (
         }
       }
 
-      // 4. If we have both snapshot and market data, override the state fields with snapshot
+      // 4. Enrich with oracle data if needed
+      if (finalMarket && !finalMarket.oracle?.data && network) {
+        const oracleData = getOracleData(finalMarket.oracleAddress, network);
+        if (oracleData) {
+          finalMarket = {
+            ...finalMarket,
+            oracle: {
+              data: oracleData,
+            },
+          };
+        }
+      }
+
+      // 5. If we have both snapshot and market data, override the state fields with snapshot
       if (snapshot && finalMarket) {
         console.log(`Found market snapshot for ${uniqueKey}, overriding state with on-chain data.`);
         finalMarket = {
