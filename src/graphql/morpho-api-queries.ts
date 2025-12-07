@@ -132,38 +132,6 @@ supplyingVaults {
   address
 }
 
-oracle {
-  data {
-    ... on MorphoChainlinkOracleData {
-      baseFeedOne {
-        ...FeedFields
-      }
-      baseFeedTwo {
-        ...FeedFields
-      }
-      quoteFeedOne {
-        ...FeedFields
-      }
-      quoteFeedTwo {
-        ...FeedFields
-      }
-    }
-    ... on MorphoChainlinkOracleV2Data {
-      baseFeedOne {
-        ...FeedFields
-      }
-      baseFeedTwo {
-        ...FeedFields
-      }
-      quoteFeedOne {
-        ...FeedFields
-      }
-      quoteFeedTwo {
-        ...FeedFields
-      }
-    }
-  }
-}
 riskAnalysis {
   analysis {
     ... on CredoraRiskAnalysis {
@@ -270,38 +238,6 @@ export const marketsQuery = `
       type
       level
       __typename
-    }
-    oracle {
-      data {
-        ... on MorphoChainlinkOracleData {
-          baseFeedOne {
-            ...FeedFields
-          }
-          baseFeedTwo {
-            ...FeedFields
-          }
-          quoteFeedOne {
-            ...FeedFields
-          }
-          quoteFeedTwo {
-            ...FeedFields
-          }
-        }
-        ... on MorphoChainlinkOracleV2Data {
-          baseFeedOne {
-            ...FeedFields
-          }
-          baseFeedTwo {
-            ...FeedFields
-          }
-          quoteFeedOne {
-            ...FeedFields
-          }
-          quoteFeedTwo {
-            ...FeedFields
-          }
-        }
-      }
     }
     riskAnalysis {
       analysis {

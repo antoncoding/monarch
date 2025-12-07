@@ -77,14 +77,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const { getOracleData } = useOracleDataContext();
 
   // Helper to enrich a market with oracle data
+  // Oracle data is always fetched from OracleDataContext (which uses API -> Cache -> Whitelist)
   const enrichMarketWithOracleData = useCallback(
     (market: Market): Market => {
-      // If market already has oracle data (from Morpho API), keep it
-      if (market.oracle?.data) {
-        return market;
-      }
-
-      // Otherwise, try to get oracle data from the oracle context
+      // Get oracle data from the oracle context (API -> Cache -> Whitelist fallback)
       const oracleData = getOracleData(market.oracleAddress, market.morphoBlue.chain.id);
 
       if (oracleData) {
@@ -96,7 +92,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
         };
       }
 
-      // No oracle data available
+      // No oracle data available - return market without oracle data
       return market;
     },
     [getOracleData],

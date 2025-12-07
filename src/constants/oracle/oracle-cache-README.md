@@ -18,11 +18,10 @@ Oracle contracts are **immutable** once a market is created. By separating oracl
 ```
 OracleDataContext (loads once on app start)
   ↓
-  1. Fetch from Morpho API (all networks in parallel)
-  2. Fallback to oracle-cache.json if API fails
-  3. Merge with oracle-whitelist.ts overrides
+  1. Load oracle-cache.json immediately (synchronous)
+  2. Fetch from Morpho API (all networks in parallel, overwrites cache)
   ↓
-MarketsContext / useMarketData
+ MarketsContext / useMarketData
   ↓
   Enrich markets with oracle data via getOracleData(address, chainId)
   ↓
@@ -74,13 +73,14 @@ type CachedOracleEntry = {
 };
 ```
 
-## Priority Order
+## Data Source Priority
 
 When looking up oracle data:
 
-1. **Highest Priority**: Oracle whitelist (`src/config/oracle-whitelist.ts`)
-2. **Medium Priority**: Morpho API (fetched on app start)
-3. **Lowest Priority**: oracle-cache.json (fallback)
+1. **Morpho API** (fetched on app start, overwrites cache)
+2. **oracle-cache.json** (pre-loaded immediately for fast initial render)
+
+The cache provides instant oracle data while the API is fetching. Once API data arrives, it overwrites the cache for the most up-to-date information.
 
 ## Maintenance
 

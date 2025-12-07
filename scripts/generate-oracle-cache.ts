@@ -60,7 +60,7 @@ const SUPPORTED_NETWORKS = ALL_SUPPORTED_NETWORKS;
 const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
   const allOracles: OracleItem[] = [];
   let skip = 0;
-  const pageSize = 100;
+  const pageSize = 1000;
 
   console.log(`\n🔍 Fetching oracles for chain ${chainId}...`);
 

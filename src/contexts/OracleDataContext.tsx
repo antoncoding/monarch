@@ -10,12 +10,10 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { Address } from 'viem';
-import { getWhitelistedOracleData } from '@/config/oracle-whitelist';
 import oracleCacheData from '@/constants/oracle/oracle-cache.json';
 import { oraclesQuery } from '@/graphql/morpho-api-queries';
-import { ALL_SUPPORTED_NETWORKS, SupportedNetworks } from '@/utils/networks';
-import { MorphoChainlinkOracleData, OracleFeed } from '@/utils/types';
+import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
+import { MorphoChainlinkOracleData } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
 // Type for cached oracle entry
@@ -101,7 +99,7 @@ export function OracleDataProvider({ children }: OracleDataProviderProps) {
       await Promise.all(
         ALL_SUPPORTED_NETWORKS.map(async (network) => {
           let skip = 0;
-          const pageSize = 100;
+          const pageSize = 1000;
 
           try {
             while (true) {
@@ -187,15 +185,9 @@ export function OracleDataProvider({ children }: OracleDataProviderProps) {
   }, []);
 
   // Get oracle data for a specific oracle address and chain
+  // Data source priority: Morpho API (fetched) → Cache (pre-loaded)
   const getOracleData = useCallback(
     (oracleAddress: string, chainId: number): MorphoChainlinkOracleData | null => {
-      // First, check whitelist (highest priority)
-      const whitelistedData = getWhitelistedOracleData(oracleAddress as Address, chainId);
-      if (whitelistedData) {
-        return whitelistedData;
-      }
-
-      // Then check our oracle data map (from API or cache)
       const key = createKey(oracleAddress, chainId);
       return oracleDataMap.get(key) ?? null;
     },
