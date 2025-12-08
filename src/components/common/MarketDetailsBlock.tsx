@@ -3,9 +3,12 @@ import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
+import { convertApyToApr } from '@/utils/rateMath';
 import { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
@@ -33,6 +36,9 @@ export function MarketDetailsBlock({
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
@@ -55,16 +61,19 @@ export function MarketDetailsBlock({
     return null;
   }, [market, supplyDelta, borrowDelta, mode]);
 
-  // Helper to format APY based on mode
-  const getAPY = () => {
+  // Helper to format rate based on mode
+  const getRate = () => {
     const apy = mode === 'supply' ? market.state.supplyApy : market.state.borrowApy;
-    return (apy * 100).toFixed(2);
+    const rate = isAprDisplay ? convertApyToApr(apy) : apy;
+    return (rate * 100).toFixed(2);
   };
 
-  const getPreviewAPY = () => {
+  const getPreviewRate = () => {
     if (!previewState) return null;
     const apy = mode === 'supply' ? previewState.supplyApy : previewState.borrowApy;
-    return apy ? (apy * 100).toFixed(2) : null;
+    if (!apy) return null;
+    const rate = isAprDisplay ? convertApyToApr(apy) : apy;
+    return (rate * 100).toFixed(2);
   };
 
   return (
@@ -135,15 +144,15 @@ export function MarketDetailsBlock({
                 <span>·</span>
                 {previewState !== null ? (
                   <span>
-                    <span className="line-through opacity-50">{getAPY()}%</span>
+                    <span className="line-through opacity-50">{getRate()}%</span>
                     {' → '}
                     <span className="font-semibold">
-                      {getPreviewAPY()}%
+                      {getPreviewRate()}%
                     </span>
-                    {' APY'}
+                    {' '}{rateLabel}
                   </span>
                 ) : (
-                  <span>{getAPY()}% APY</span>
+                  <span>{getRate()}% {rateLabel}</span>
                 )}
                 <span>·</span>
                 <span>{(Number(market.lltv) / 1e16).toFixed(0)}% LLTV</span>
@@ -194,14 +203,14 @@ export function MarketDetailsBlock({
                       </p>
                       {previewState !== null ? (
                         <p className="text-right text-sm font-bold">
-                          <span className="line-through opacity-50">{getAPY()}%</span>
+                          <span className="line-through opacity-50">{getRate()}%</span>
                           {' → '}
                           <span>
-                            {getPreviewAPY()}%
+                            {getPreviewRate()}%
                           </span>
                         </p>
                       ) : (
-                        <p className="text-right text-sm font-bold">{getAPY()}%</p>
+                        <p className="text-right text-sm font-bold">{getRate()}%</p>
                       )}
                     </div>
                     {showRewards && hasActiveRewards && (

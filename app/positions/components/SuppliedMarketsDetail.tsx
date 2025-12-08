@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/common';
+import { RateFormatted } from '@/components/common/RateFormatted';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
 import { MarketIndicators } from '@/components/MarketIndicators';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
@@ -56,7 +58,7 @@ function MarketRow({
         />
       </td>
       <td data-label="APY" className="text-center">
-        {formatReadable(position.market.state.supplyApy * 100)}%
+        <RateFormatted value={position.market.state.supplyApy} />
       </td>
       <td data-label="Supplied" className="text-center">
         {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
@@ -111,6 +113,8 @@ export function SuppliedMarketsDetail({
   showEmptyPositions,
   showCollateralExposure,
 }: SuppliedMarketsDetailProps) {
+  const { short: rateLabel } = useRateLabel();
+
   // Sort active markets by size first
   const sortedMarkets = [...groupedPosition.markets].sort(
     (a, b) =>
@@ -186,7 +190,7 @@ export function SuppliedMarketsDetail({
             <tr>
               <th>Market</th>
               <th> Collateral & Parameters </th>
-              <th>APY</th>
+              <th>{rateLabel}</th>
               <th>Supplied</th>
               <th>% of Portfolio</th>
               <th>Indicators</th>

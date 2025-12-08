@@ -28,7 +28,8 @@
       "Bash(identify:*)",
       "Bash(sips:*)",
       "Bash(awk:*)",
-      "Bash(pnpm dlx:*)"
+      "Bash(pnpm dlx:*)",
+      "Bash(oracle ask:*)"
     ],
     "deny": []
   }

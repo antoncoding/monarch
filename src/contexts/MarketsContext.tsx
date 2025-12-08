@@ -34,6 +34,8 @@ export type MarketsContextType = {
   setShowUnwhitelistedMarkets: (value: boolean) => void;
   showFullRewardAPY: boolean;
   setShowFullRewardAPY: (value: boolean) => void;
+  isAprDisplay: boolean;
+  setIsAprDisplay: (value: boolean) => void;
   isBlacklisted: (uniqueKey: string) => boolean;
   addBlacklistedMarket: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   removeBlacklistedMarket: (uniqueKey: string) => void;
@@ -63,6 +65,9 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
   // Global setting for showing full reward APY (base + external rewards)
   const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
+
+  // Global setting for showing APR instead of APY
+  const [isAprDisplay, setIsAprDisplay] = useLocalStorage('settings-apr-display', false);
 
   // Blacklisted markets management
   const {
@@ -328,6 +333,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
       setShowFullRewardAPY,
+      isAprDisplay,
+      setIsAprDisplay,
       isBlacklisted,
       addBlacklistedMarket,
       removeBlacklistedMarket,
@@ -347,6 +354,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setShowUnwhitelistedMarkets,
       showFullRewardAPY,
       setShowFullRewardAPY,
+      isAprDisplay,
+      setIsAprDisplay,
       isBlacklisted,
       addBlacklistedMarket,
       removeBlacklistedMarket,

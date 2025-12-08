@@ -6,9 +6,12 @@ import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
 import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { parseCapIdParams } from '@/utils/morpho';
 import { SupportedNetworks, getNetworkImg } from '@/utils/networks';
+import { convertApyToApr } from '@/utils/rateMath';
 
 type VaultListV2Props = {
   vaults: UserVaultV2[];
@@ -17,6 +20,8 @@ type VaultListV2Props = {
 
 export function VaultListV2({ vaults, loading }: VaultListV2Props) {
   const { findToken } = useTokens();
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
 
   if (loading) {
     return (
@@ -53,7 +58,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
             <tr>
               <th className="font-normal">ID</th>
               <th className="font-normal">Asset</th>
-              <th className="font-normal">APY</th>
+              <th className="font-normal">{rateLabel}</th>
               <th className="font-normal">Collaterals</th>
               <th className="font-normal">Action</th>
             </tr>
@@ -95,10 +100,11 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                     </div>
                   </td>
 
-                  {/* APY */}
-                  <td data-label="APY">
+                  {/* APY/APR */}
+                  <td data-label={rateLabel}>
                     <span className="font-zen text-sm">
-                      {vault.avgApy && (vault.avgApy * 100).toFixed(2) + '%'} 
+                      {vault.avgApy &&
+                        ((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2) + '%'}
                     </span>
                   </td>
 

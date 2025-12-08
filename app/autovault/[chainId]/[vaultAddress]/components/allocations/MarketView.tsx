@@ -1,7 +1,10 @@
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { MarketAllocation } from '@/types/vaultAllocations';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
+import { convertApyToApr } from '@/utils/rateMath';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
 
@@ -20,6 +23,9 @@ export function MarketView({
   vaultAssetDecimals,
   chainId,
 }: MarketViewProps) {
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
   // Sort by allocation amount (most to least)
   const sortedItems = [...allocations].sort((a, b) => {
     if (a.allocation > b.allocation) return -1;
@@ -33,7 +39,7 @@ export function MarketView({
         <thead>
           <tr className="text-xs text-secondary">
             <th className="pb-3 text-left font-normal">Market</th>
-            <th className="pb-3 text-right font-normal">APY</th>
+            <th className="pb-3 text-right font-normal">{rateLabel}</th>
             <th className="pb-3 text-right font-normal">Total Supply</th>
             <th className="pb-3 text-right font-normal">Liquidity</th>
             <th className="pb-3 text-right font-normal">Amount</th>
@@ -46,7 +52,8 @@ export function MarketView({
             const { market, allocation } = item;
             const percentage =
               totalAllocation > 0n ? parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
-            const supplyApy = (market.state.supplyApy * 100).toFixed(2);
+            const displayRate = (isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy);
+            const supplyRate = (displayRate * 100).toFixed(2);
             const hasAllocation = allocation > 0n;
             const totalSupply = formatReadable(
               formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString()
@@ -70,9 +77,9 @@ export function MarketView({
                   />
                 </td>
 
-                {/* APY */}
+                {/* APY/APR */}
                 <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
-                  {supplyApy}%
+                  {supplyRate}%
                 </td>
 
                 {/* Total Supply */}

@@ -13,11 +13,14 @@ import { Badge } from '@/components/common/Badge';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { ReportSummary } from '@/hooks/usePositionReport';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkName } from '@/utils/networks';
+import { convertApyToApr } from '@/utils/rateMath';
 
 import { Market } from '@/utils/types';
 
@@ -68,6 +71,12 @@ function MarketSummaryBlock({
   apy,
   hasActivePosition,
 }: MarketInfoBlockProps) {
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
+  // Convert to APR if display mode is enabled
+  const displayRate = isAprDisplay ? convertApyToApr(apy) : apy;
+
   return (
     <div className="bg-surface flex items-center justify-between rounded-sm border-gray-100 p-3 dark:border-gray-700">
       <div className="flex items-center gap-4">
@@ -103,8 +112,8 @@ function MarketSummaryBlock({
       </div>
       <div className="flex items-center gap-8">
         <div className="flex flex-col items-end gap-1">
-          <div className="text-md font-mono text-gray-400">{(apy * 100).toFixed(2)}%</div>
-          <div className="text-xs text-gray-500">APY</div>
+          <div className="text-md font-mono text-gray-400">{(displayRate * 100).toFixed(2)}%</div>
+          <div className="text-xs text-gray-500">{rateLabel}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
           <div
@@ -123,6 +132,14 @@ function MarketSummaryBlock({
 
 export function ReportTable({ report, asset, startDate, endDate, chainId }: ReportTableProps) {
   const [expandedMarkets, setExpandedMarkets] = useState<Set<string>>(new Set());
+
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
+  // Convert APY to APR if display mode is enabled
+  const displayGroupedRate = isAprDisplay
+    ? convertApyToApr(report.groupedEarnings.apy)
+    : report.groupedEarnings.apy;
 
   const formatter = useDateFormatter({ dateStyle: 'long' });
 
@@ -183,8 +200,8 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
             </p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">APY</h3>
-            <p className="mt-1 text-lg ">{(report.groupedEarnings.apy * 100).toFixed(2)}%</p>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{rateLabel}</h3>
+            <p className="mt-1 text-lg ">{(displayGroupedRate * 100).toFixed(2)}%</p>
           </div>
         </div>
       </div>

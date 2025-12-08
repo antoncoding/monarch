@@ -8,7 +8,9 @@ import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
+import { convertApyToApr } from '@/utils/rateMath';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { Market, MarketPosition } from '@/utils/types';
 import { APYBreakdownTooltip } from 'app/markets/components/APYBreakdownTooltip';
@@ -51,7 +53,9 @@ export function PositionStats({
     userPosition && hasPosition(userPosition) ? 'user' : 'global',
   );
 
-  const { showFullRewardAPY } = useMarkets();
+  const { showFullRewardAPY, isAprDisplay } = useMarkets();
+  const { label: rateLabel } = useRateLabel({ prefix: 'Supply' });
+  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
@@ -140,15 +144,19 @@ export function PositionStats({
       );
     }
 
-    // Global stats - calculate APYs
+    // Global stats - calculate rates
     const baseSupplyAPY = market.state.supplyApy * 100;
+    const baseBorrowAPY = market.state.borrowApy * 100;
+
+    // Convert to APR if display mode is enabled
+    const baseSupplyRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) * 100 : baseSupplyAPY;
+    const baseBorrowRate = isAprDisplay ? convertApyToApr(market.state.borrowApy) * 100 : baseBorrowAPY;
+
     const extraRewards = hasActiveRewards
       ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0)
       : 0;
-    const fullSupplyAPY = baseSupplyAPY + extraRewards;
-    const displaySupplyAPY = showFullRewardAPY && hasActiveRewards ? fullSupplyAPY : baseSupplyAPY;
-
-    const borrowAPY = market.state.borrowApy * 100;
+    const fullSupplyRate = baseSupplyRate + extraRewards;
+    const displaySupplyRate = showFullRewardAPY && hasActiveRewards ? fullSupplyRate : baseSupplyRate;
 
     return (
       <div className="space-y-2">
@@ -195,16 +203,16 @@ export function PositionStats({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span>Supply APY:</span>
+          <span>{rateLabel}:</span>
           <div className="flex items-center gap-2">
             {hasActiveRewards ? (
               <APYBreakdownTooltip
                 baseAPY={baseSupplyAPY}
                 activeCampaigns={activeCampaigns}
-                fullAPY={fullSupplyAPY}
+                fullAPY={baseSupplyAPY + extraRewards}
               >
                 <span className="cursor-help">
-                  {baseSupplyAPY.toFixed(2)}%
+                  {baseSupplyRate.toFixed(2)}%
                   <span className="text-green-600 dark:text-green-400">
                     {' '}
                     (+{extraRewards.toFixed(2)}%)
@@ -212,14 +220,14 @@ export function PositionStats({
                 </span>
               </APYBreakdownTooltip>
             ) : (
-              <span>{displaySupplyAPY.toFixed(2)}%</span>
+              <span>{displaySupplyRate.toFixed(2)}%</span>
             )}
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span>Borrow APY:</span>
+          <span>{borrowRateLabel}:</span>
           <div className="flex items-center gap-2">
-            <span>{borrowAPY.toFixed(2)}%</span>
+            <span>{baseBorrowRate.toFixed(2)}%</span>
           </div>
         </div>
       </div>

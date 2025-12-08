@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/react';
 import { Progress } from '@heroui/react';
 import {
@@ -16,6 +16,9 @@ import {
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
+import { convertApyToApr } from '@/utils/rateMath';
 import { MarketRates } from '@/utils/types';
 import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
@@ -36,50 +39,64 @@ function RateChart({
   selectedTimeRange,
   handleTimeframeChange,
 }: RateChartProps) {
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
   const [visibleLines, setVisibleLines] = useState({
     supplyApy: true,
     borrowApy: true,
     apyAtTarget: true,
   });
 
-  const getChartData = () => {
+  const getChartData = useMemo(() => {
     if (!historicalData) return [];
     const { supplyApy, borrowApy, apyAtTarget } = historicalData;
 
-    return supplyApy.map((point: TimeseriesDataPoint, index: number) => ({
-      x: point.x,
-      supplyApy: point.y,
-      borrowApy: borrowApy[index]?.y || 0,
-      apyAtTarget: apyAtTarget[index]?.y || 0,
-    }));
-  };
+    return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
+      // Convert values to APR if display mode is enabled
+      const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
+      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y || 0) : (borrowApy[index]?.y || 0);
+      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y || 0) : (apyAtTarget[index]?.y || 0);
+
+      return {
+        x: point.x,
+        supplyApy: supplyVal,
+        borrowApy: borrowVal,
+        apyAtTarget: targetVal,
+      };
+    });
+  }, [historicalData, isAprDisplay]);
 
   const formatPercentage = (value: number) => `${(value * 100).toFixed(2)}%`;
 
   const getCurrentApyValue = (type: 'supply' | 'borrow') => {
-    return type === 'supply' ? market.state.supplyApy : market.state.borrowApy;
+    const apy = type === 'supply' ? market.state.supplyApy : market.state.borrowApy;
+    return isAprDisplay ? convertApyToApr(apy) : apy;
   };
 
   const getAverageApyValue = (type: 'supply' | 'borrow') => {
     if (!historicalData) return 0;
     const data = type === 'supply' ? historicalData.supplyApy : historicalData.borrowApy;
-    return data.length > 0
+    const avgApy = data.length > 0
       ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length
       : 0;
+    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
 
   const getCurrentapyAtTargetValue = () => {
-    return market.state.apyAtTarget;
+    const apy = market.state.apyAtTarget;
+    return isAprDisplay ? convertApyToApr(apy) : apy;
   };
 
   const getAverageapyAtTargetValue = () => {
     if (!historicalData?.apyAtTarget || historicalData.apyAtTarget.length === 0) return 0;
-    return (
+    const avgApy = (
       historicalData.apyAtTarget.reduce(
         (sum: number, point: TimeseriesDataPoint) => sum + point.y,
         0,
       ) / historicalData.apyAtTarget.length
     );
+    return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
 
   const getCurrentUtilizationRate = () => {
@@ -131,7 +148,7 @@ function RateChart({
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={400} id="rate-chart">
-                <AreaChart data={getChartData()}>
+                <AreaChart data={getChartData}>
                   <defs>
                     <linearGradient id="rateChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop
@@ -203,7 +220,7 @@ function RateChart({
                   <Area
                     type="monotone"
                     dataKey="supplyApy"
-                    name="Supply APY"
+                    name={`Supply ${rateLabel}`}
                     stroke={CHART_COLORS.supply.stroke}
                     strokeWidth={2}
                     fill="url(#rateChart-supplyGradient)"
@@ -213,7 +230,7 @@ function RateChart({
                   <Area
                     type="monotone"
                     dataKey="borrowApy"
-                    name="Borrow APY"
+                    name={`Borrow ${rateLabel}`}
                     stroke={CHART_COLORS.borrow.stroke}
                     strokeWidth={2}
                     fill="url(#rateChart-borrowGradient)"
