@@ -619,6 +619,12 @@ const supportedTokens = [
     peg: TokenPeg.BTC,
   },
   {
+    symbol: 'ARB',
+    img: require('../imgs/tokens/arb.png') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0x912CE59144191C1204E64559FE8253a0e49E6548' }],
+  },
+  {
     symbol: 'wstHYPE',
     img: require('../imgs/tokens/wsthype.png') as string,
     decimals: 18,
