@@ -22,8 +22,8 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
-import { convertApyToApr } from '@/utils/rateMath';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { convertApyToApr } from '@/utils/rateMath';
 import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';

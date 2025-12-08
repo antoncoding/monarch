@@ -22,19 +22,19 @@ import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarkets } from '@/hooks/useMarkets';
+import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { convertApyToApr } from '@/utils/rateMath';
 import { getNetworkImg } from '@/utils/networks';
 import {
   getGroupedEarnings,
   groupPositionsByLoanAsset,
   processCollaterals,
 } from '@/utils/positions';
+import { convertApyToApr } from '@/utils/rateMath';
 import { PositionsShowEmptyKey, PositionsShowCollateralExposureKey } from '@/utils/storageKeys';
 import {
   MarketPosition,
