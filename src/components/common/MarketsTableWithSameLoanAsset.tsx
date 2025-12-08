@@ -542,7 +542,9 @@ function MarketRow({
       {columnVisibility.rateAtTarget && (
         <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
           <p className="text-sm">
-            {market.state.apyAtTarget ? `${(market.state.apyAtTarget * 100).toFixed(2)}%` : '—'}
+            {market.state.apyAtTarget
+              ? `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`
+              : '—'}
           </p>
         </td>
       )}
