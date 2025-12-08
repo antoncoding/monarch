@@ -1,6 +1,194 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": [
-    "ultracite/core"
+  "extends": ["ultracite/core"],
+
+  // Override formatter to match old Prettier config
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,  // Was 80 in ultracite, 100 in prettier
+    "attributePosition": "auto",
+    "bracketSpacing": true
+  },
+
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "always",  // Match prettier
+      "bracketSameLine": false,      // Match prettier
+      "jsxQuoteStyle": "double",     // Match prettier (jsxSingleQuote: false)
+      "quoteProperties": "asNeeded",
+      "quoteStyle": "single",        // Match prettier
+      "semicolons": "always",        // Match prettier
+      "trailingCommas": "all"        // Match prettier (was "es5" in ultracite)
+    }
+  },
+
+  // Disable auto-organizing imports initially to prevent mass changes
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off",      // Disable for now - was causing mass changes
+        "useSortedAttributes": "off",   // Disable for gentle migration
+        "useSortedKeys": "off"
+      }
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      // Override strict style rules that conflict with team preferences
+      "style": {
+        // Team allows named functions in callbacks (for displayName)
+        "useBlockStatements": "off",
+
+        // Team preference - allow some flexibility
+        "useConsistentCurlyBraces": "off",
+        "noParameterAssign": "off",
+
+        // Keep filenamingConvention disabled during migration
+        "useFilenamingConvention": "off",
+
+        // Don't force default exports
+        "noDefaultExport": "off",
+
+        // Team uses enums
+        "noEnum": "off",
+
+        // Allow nested ternaries (team decision)
+        "noNestedTernary": "off",
+
+        // Team allows non-null assertions when needed
+        "noNonNullAssertion": "off",
+
+        // Allow parameter properties (TS)
+        "noParameterProperties": "off",
+
+        // Don't enforce during migration - too opinionated
+        "noUselessElse": "off",
+        "noNegationElse": "off",
+        "useCollapsedElseIf": "off"
+      },
+
+      "complexity": {
+        // Team uses forEach sometimes
+        "noForEach": "off",
+
+        // Team prefers function declarations (useArrowFunction is in complexity)
+        "useArrowFunction": "off",
+
+        // Allow void operator (async fire-and-forget)
+        "noVoid": "off",
+
+        // Don't force optional chain everywhere yet
+        "useOptionalChain": "off",
+
+        // Don't force simplified logic during migration
+        "useSimplifiedLogicExpression": "off"
+      },
+
+      "suspicious": {
+        // Team explicitly allows any in some places
+        "noExplicitAny": "off",
+
+        // Allow console for now (common in scripts)
+        "noConsole": "off",
+
+        // Don't enforce during migration
+        "noImplicitAnyLet": "off",
+        "noEvolvingTypes": "off"
+      },
+
+      "correctness": {
+        // Hook deps disabled in old config - keep off for migration
+        "useExhaustiveDependencies": "off",
+
+        // Don't enforce unused function params yet
+        "noUnusedFunctionParameters": "off"
+      },
+
+      "a11y": {
+        // Match old jsx-a11y rules that were disabled
+        "noStaticElementInteractions": "off",
+        "noAutofocus": "off",
+        "noSvgWithoutTitle": "off"
+      },
+
+      "nursery": {
+        // Disable aggressive nursery rules during migration
+        "noShadow": "off",
+        "noUselessUndefined": "off",
+        "useFind": "off",
+        "useSpread": "off",
+
+        // Keep sorted classes off initially
+        "useSortedClasses": "off",
+
+        // These are too aggressive for migration
+        "noLeakedRender": "off",
+        "useConsistentArrowReturn": "off",
+        "noEqualsToNull": "off",
+        "noIncrementDecrement": "off"
+      }
+    }
+  },
+
+  // Override ultracite's test file settings if needed
+  "overrides": [
+    {
+      "includes": [
+        "src/abis/**/*",
+        ".eslintrc-old.js",
+        ".stylelintrc.json",
+        "biome.jsonc",
+        "tsconfig.json"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["**/*.config.{js,ts,mjs,cjs,mts,cts}", "*.config.{js,ts,mjs,cjs,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.{ts,tsx,js,jsx}", "**/__tests__/**/*"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          },
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/scripts/**/*", "**/bin/**/*"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    }
   ]
 }

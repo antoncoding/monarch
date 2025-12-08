@@ -31,7 +31,9 @@
       "Bash(pnpm dlx:*)",
       "Bash(oracle ask:*)",
       "Bash(pnpm list:*)",
-      "Bash(pnpm why:*)"
+      "Bash(pnpm why:*)",
+      "Bash(npx biome:*)",
+      "Bash(timeout 60 npx biome check:*)"
     ],
     "deny": []
   }
