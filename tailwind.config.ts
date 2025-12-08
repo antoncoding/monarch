@@ -5,7 +5,7 @@ import type { Config } from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
 const { heroui } = require('@heroui/theme');
 
-const MONARCH_PRIMARY = '#f45f2d'
+const MONARCH_PRIMARY = '#f45f2d';
 
 const config: Config = {
   content: [

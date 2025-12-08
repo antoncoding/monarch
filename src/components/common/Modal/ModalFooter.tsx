@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { ModalFooter as HeroModalFooter } from '@heroui/react';
 
 type ModalFooterProps = {
@@ -7,9 +7,5 @@ type ModalFooterProps = {
 };
 
 export function ModalFooter({ children, className = '' }: ModalFooterProps) {
-  return (
-    <HeroModalFooter className={`font-zen ${className}`}>
-      {children}
-    </HeroModalFooter>
-  );
+  return <HeroModalFooter className={`font-zen ${className}`}>{children}</HeroModalFooter>;
 }

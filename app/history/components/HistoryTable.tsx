@@ -1,16 +1,6 @@
-import React from 'react';
+import type React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import {
-  Chip,
-  Link,
-  Pagination,
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-} from '@heroui/react';
+import { Chip, Link, Pagination, Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';
@@ -25,13 +15,7 @@ import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
 import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
-import {
-  UserTxTypes,
-  UserRebalancerInfo,
-  Market,
-  MarketPosition,
-  UserTransaction,
-} from '@/utils/types';
+import { UserTxTypes, type UserRebalancerInfo, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
 
 type HistoryTableProps = {
   account: string | undefined;
@@ -85,11 +69,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
     if (!selectedAsset) return [];
 
     return allMarkets
-      .filter(
-        (m) =>
-          m.loanAsset.symbol === selectedAsset.symbol &&
-          m.morphoBlue.chain.id === selectedAsset.chainId,
-      )
+      .filter((m) => m.loanAsset.symbol === selectedAsset.symbol && m.morphoBlue.chain.id === selectedAsset.chainId)
       .map((m) => m.uniqueKey);
   }, [selectedAsset, allMarkets]);
 
@@ -133,15 +113,16 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
     }
   };
 
-  const filteredAssets = uniqueAssets.filter((asset) =>
-    asset.symbol.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filteredAssets = uniqueAssets.filter((asset) => asset.symbol.toLowerCase().includes(query.toLowerCase()));
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
   return (
     <div className="space-y-4">
-      <div className="relative w-full" ref={dropdownRef}>
+      <div
+        className="relative w-full"
+        ref={dropdownRef}
+      >
         <div
           className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
             isOpen ? 'bg-surface-dark' : ''
@@ -173,9 +154,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     height="16"
                     className="rounded-full"
                   />
-                  <span className="text-xs text-gray-600 dark:text-gray-300">
-                    {getNetworkName(selectedAsset.chainId)}
-                  </span>
+                  <span className="text-xs text-gray-600 dark:text-gray-300">{getNetworkName(selectedAsset.chainId)}</span>
                 </div>
               </div>
             ) : (
@@ -196,13 +175,15 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
               className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
             />
             <div className="relative">
-              <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
+              <ul
+                className="custom-scrollbar max-h-60 overflow-auto pb-12"
+                role="listbox"
+              >
                 {filteredAssets.map((asset, idx) => (
                   <li
                     key={`${asset.symbol}-${asset.chainId}-${idx}`}
                     className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                      selectedAsset?.symbol === asset.symbol &&
-                      selectedAsset?.chainId === asset.chainId
+                      selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
                         ? 'bg-gray-300 dark:bg-gray-700'
                         : ''
                     }`}
@@ -213,10 +194,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                       setCurrentPage(1);
                     }}
                     role="option"
-                    aria-selected={
-                      selectedAsset?.symbol === asset.symbol &&
-                      selectedAsset?.chainId === asset.chainId
-                    }
+                    aria-selected={selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId}
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
@@ -245,9 +223,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                           height="16"
                           className="rounded-full"
                         />
-                        <span className="text-xs text-gray-600 dark:text-gray-300">
-                          {getNetworkName(asset.chainId)}
-                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-300">{getNetworkName(asset.chainId)}</span>
                       </div>
                     </div>
                   </li>
@@ -305,124 +281,115 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
             <TableColumn className="text-center">Transaction</TableColumn>
           </TableHeader>
           <TableBody emptyContent="No transactions found">
-            {history.filter(tx => tx.data.market !== undefined).map((tx, index) => {
-              // safely cast here because we only fetch txs for unique id in "markets"
-              const market = allMarkets.find(
-                (m) => m.uniqueKey === tx.data.market.uniqueKey,
-              ) as Market;
+            {history
+              .filter((tx) => tx.data.market !== undefined)
+              .map((tx, index) => {
+                // safely cast here because we only fetch txs for unique id in "markets"
+                const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
-              const networkImg = getNetworkImg(market.morphoBlue.chain.id);
-              const networkName = getNetworkName(market.morphoBlue.chain.id);
-              const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-              const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
+                const networkImg = getNetworkImg(market.morphoBlue.chain.id);
+                const networkName = getNetworkName(market.morphoBlue.chain.id);
+                const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
+                const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
 
-              // Find the rebalancer info for the specific network of the transaction
-              const networkRebalancerInfo = rebalancerInfos.find(
-                (info) => info.network === market.morphoBlue.chain.id,
-              );
-              // Check if the transaction hash exists in the transactions of the found rebalancer info
-              const isAgent = networkRebalancerInfo?.transactions.some(
-                (agentTx) => agentTx.transactionHash === tx.hash,
-              );
+                // Find the rebalancer info for the specific network of the transaction
+                const networkRebalancerInfo = rebalancerInfos.find((info) => info.network === market.morphoBlue.chain.id);
+                // Check if the transaction hash exists in the transactions of the found rebalancer info
+                const isAgent = networkRebalancerInfo?.transactions.some((agentTx) => agentTx.transactionHash === tx.hash);
 
-              return (
-                <TableRow key={index.toFixed()}>
-                  {/* Network & Asset */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={20}
-                          height={20}
-                        />
-                        <span className="text-default-600">{market.loanAsset.symbol}</span>
-                      </div>
-                      <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                        {networkImg && (
-                          <Image
-                            src={networkImg}
-                            alt="network"
-                            width="16"
-                            height="16"
-                            className="rounded-full"
+                return (
+                  <TableRow key={index.toFixed()}>
+                    {/* Network & Asset */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <TokenIcon
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            symbol={market.loanAsset.symbol}
+                            width={20}
+                            height={20}
                           />
+                          <span className="text-default-600">{market.loanAsset.symbol}</span>
+                        </div>
+                        <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                          {networkImg && (
+                            <Image
+                              src={networkImg}
+                              alt="network"
+                              width="16"
+                              height="16"
+                              className="rounded-full"
+                            />
+                          )}
+                          <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Market Details */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                          className="font-monospace text-xs hover:underline"
+                        >
+                          {market.uniqueKey.slice(2, 8)}
+                        </Link>
+                        <div className="flex items-center gap-1">
+                          <TokenIcon
+                            address={market.collateralAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            symbol={market.collateralAsset.symbol}
+                            width={16}
+                            height={16}
+                          />
+                          <span className="text-sm text-default-500">{market.collateralAsset.symbol}</span>
+                        </div>
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          className="bg-default-100 text-xs"
+                          radius="sm"
+                        >
+                          {formatReadable(lltv)}%
+                        </Chip>
+                      </div>
+                    </TableCell>
+
+                    {/* Action & Amount */}
+                    <TableCell>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-medium">{actionTypeToText(tx.type)}</span>
+                        <span className={tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'}>
+                          {sign}
+                          {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))} {market.loanAsset.symbol}
+                        </span>
+                        {isAgent && (
+                          <Badge size="sm">
+                            <RiRobot2Line />
+                          </Badge>
                         )}
-                        <span className="text-xs text-gray-600 dark:text-gray-300">
-                          {networkName}
-                        </span>
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  {/* Market Details */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-                        className="font-monospace text-xs hover:underline"
-                      >
-                        {market.uniqueKey.slice(2, 8)}
-                      </Link>
-                      <div className="flex items-center gap-1">
-                        <TokenIcon
-                          address={market.collateralAsset.address}
+                    {/* Time */}
+                    <TableCell>
+                      <div className="flex justify-center text-sm text-default-500">{moment.unix(tx.timestamp).fromNow()}</div>
+                    </TableCell>
+
+                    {/* Transaction */}
+                    <TableCell>
+                      <div className="flex justify-center">
+                        <TransactionIdentity
+                          txHash={tx.hash}
                           chainId={market.morphoBlue.chain.id}
-                          symbol={market.collateralAsset.symbol}
-                          width={16}
-                          height={16}
                         />
-                        <span className="text-sm text-default-500">
-                          {market.collateralAsset.symbol}
-                        </span>
                       </div>
-                      <Chip size="sm" variant="flat" className="bg-default-100 text-xs" radius="sm">
-                        {formatReadable(lltv)}%
-                      </Chip>
-                    </div>
-                  </TableCell>
-
-                  {/* Action & Amount */}
-                  <TableCell>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="font-medium">{actionTypeToText(tx.type)}</span>
-                      <span
-                        className={
-                          tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'
-                        }
-                      >
-                        {sign}
-                        {formatReadable(
-                          Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)),
-                        )}{' '}
-                        {market.loanAsset.symbol}
-                      </span>
-                      {isAgent && (
-                        <Badge size="sm">
-                          <RiRobot2Line />
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-
-                  {/* Time */}
-                  <TableCell>
-                    <div className="flex justify-center text-sm text-default-500">
-                      {moment.unix(tx.timestamp).fromNow()}
-                    </div>
-                  </TableCell>
-
-                  {/* Transaction */}
-                  <TableCell>
-                    <div className="flex justify-center">
-                      <TransactionIdentity txHash={tx.hash} chainId={market.morphoBlue.chain.id} />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       )}

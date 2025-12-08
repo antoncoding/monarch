@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketLiquidations } from '@/data-sources/morpho-api/market-liquidations';
 import { fetchSubgraphMarketLiquidations } from '@/data-sources/subgraph/market-liquidations';
-import { SupportedNetworks } from '@/utils/networks';
-import { MarketLiquidationTransaction } from '@/utils/types'; // Use simplified type
+import type { SupportedNetworks } from '@/utils/networks';
+import type { MarketLiquidationTransaction } from '@/utils/types'; // Use simplified type
 
 /**
  * Hook to fetch all liquidations for a specific market, using the appropriate data source.
@@ -11,10 +11,7 @@ import { MarketLiquidationTransaction } from '@/utils/types'; // Use simplified 
  * @param network The blockchain network.
  * @returns List of liquidation transactions for the market.
  */
-export const useMarketLiquidations = (
-  marketId: string | undefined,
-  network: SupportedNetworks | undefined,
-) => {
+export const useMarketLiquidations = (marketId: string | undefined, network: SupportedNetworks | undefined) => {
   // Note: loanAssetId is not needed for liquidations query
   const queryKey = ['marketLiquidations', marketId, network];
 

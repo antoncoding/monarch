@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
-import { Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount, useSwitchChain } from 'wagmi';
 
 import wrapperABI from '@/abis/morpho-wrapper';
@@ -65,7 +65,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
           args: [account, amount],
         }),
       });
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to wrap MORPHO.');
       setShowProcessModal(false);
     }

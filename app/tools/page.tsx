@@ -7,7 +7,7 @@ import { Button } from '@/components/common';
 import Header from '@/components/layout/header/Header';
 import { useMorphoAuthorization } from '@/hooks/useMorphoAuthorization';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import NetworkFilter from 'app/markets/components/NetworkFilter';
 
 export default function ToolsPage() {
@@ -90,8 +90,7 @@ export default function ToolsPage() {
   };
 
   const getInputClassName = () => {
-    let baseClass =
-      'h-14 w-full rounded-sm bg-hovered px-3 py-2 text-sm focus:border-primary focus:outline-none';
+    let baseClass = 'h-14 w-full rounded-sm bg-hovered px-3 py-2 text-sm focus:border-primary focus:outline-none';
 
     if (addressInput && isValidAddress === false) {
       baseClass += ' border border-red-500 focus:border-red-500';
@@ -102,7 +101,6 @@ export default function ToolsPage() {
     return baseClass;
   };
 
-  
   return (
     <div className="flex w-full flex-col justify-between font-zen">
       <Header />
@@ -117,17 +115,14 @@ export default function ToolsPage() {
             <div className="bg-surface flex flex-col gap-6 rounded p-6">
               {/* Description */}
               <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-medium text-primary">
-                  Authorize Address on Morpho Blue
-                </h3>
+                <h3 className="text-lg font-medium text-primary">Authorize Address on Morpho Blue</h3>
                 <p className="text-sm text-secondary">
-                  You can authorize a custom address or contract to manage your Morpho Blue
-                  position. This allows the authorized address to supply, borrow, withdraw, and
-                  repay on your behalf.
+                  You can authorize a custom address or contract to manage your Morpho Blue position. This allows the authorized address to
+                  supply, borrow, withdraw, and repay on your behalf.
                 </p>
                 <p className="text-sm text-red-500">
-                  ⚠️ Warning: Only authorize audited contracts or addresses you control. An
-                  authorized address has full control over your Morpho Blue positions.
+                  ⚠️ Warning: Only authorize audited contracts or addresses you control. An authorized address has full control over your
+                  Morpho Blue positions.
                 </p>
               </div>
 
@@ -163,11 +158,7 @@ export default function ToolsPage() {
                       isDisabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
-                      {isAuthorizing
-                        ? 'Revoking...'
-                        : needsSwitchChain
-                          ? 'Switch Network'
-                          : 'Revoke'}
+                      {isAuthorizing ? 'Revoking...' : needsSwitchChain ? 'Switch Network' : 'Revoke'}
                     </Button>
                   ) : (
                     <Button
@@ -176,20 +167,14 @@ export default function ToolsPage() {
                       isDisabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
-                      {isAuthorizing
-                        ? 'Authorizing...'
-                        : needsSwitchChain
-                          ? 'Switch Network'
-                          : 'Authorize'}
+                      {isAuthorizing ? 'Authorizing...' : needsSwitchChain ? 'Switch Network' : 'Authorize'}
                     </Button>
                   )}
                 </div>
 
                 {/* Feedback Messages */}
                 <div className="min-h-4">
-                  {addressInput && isValidAddress === false && (
-                    <p className="text-xs text-red-500">Invalid address</p>
-                  )}
+                  {addressInput && isValidAddress === false && <p className="text-xs text-red-500">Invalid address</p>}
                   {addressInput && isValidAddress === true && isAuthorized === true && (
                     <p className="text-xs text-green-500">✓ Authorized on {getNetworkName(selectedChainId)}</p>
                   )}

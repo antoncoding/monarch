@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/common';
@@ -11,8 +11,8 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { Market } from '@/utils/types';
-import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import type { Market } from '@/utils/types';
+import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { FromMarketsTable } from './FromMarketsTable';
 import { RebalanceActionInput } from './RebalanceActionInput';
 import { RebalanceCart } from './RebalanceCart';
@@ -26,13 +26,7 @@ type RebalanceModalProps = {
   isRefetching: boolean;
 };
 
-export function RebalanceModal({
-  groupedPosition,
-  isOpen,
-  onOpenChange,
-  refetch,
-  isRefetching,
-}: RebalanceModalProps) {
+export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch, isRefetching }: RebalanceModalProps) {
   const [selectedFromMarketUniqueKey, setSelectedFromMarketUniqueKey] = useState('');
   const [selectedToMarketUniqueKey, setSelectedToMarketUniqueKey] = useState('');
   const [amount, setAmount] = useState<string>('0');
@@ -43,22 +37,14 @@ export function RebalanceModal({
 
   // Use computed markets based on user setting
   const { markets } = useMarkets();
-  const {
-    rebalanceActions,
-    addRebalanceAction,
-    removeRebalanceAction,
-    executeRebalance,
-    isProcessing,
-    currentStep,
-  } = useRebalance(groupedPosition);
+  const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing, currentStep } =
+    useRebalance(groupedPosition);
 
   // Filter eligible markets (same loan asset and chain)
   // Fresh state is fetched by MarketsTableWithSameLoanAsset component
   const eligibleMarkets = useMemo(() => {
     return markets.filter(
-      (market) =>
-        market.loanAsset.address === groupedPosition.loanAssetAddress &&
-        market.morphoBlue.chain.id === groupedPosition.chainId,
+      (market) => market.loanAsset.address === groupedPosition.loanAssetAddress && market.morphoBlue.chain.id === groupedPosition.chainId,
     );
   }, [markets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
@@ -95,13 +81,7 @@ export function RebalanceModal({
       return false;
     }
     return true;
-  }, [
-    selectedFromMarketUniqueKey,
-    selectedToMarketUniqueKey,
-    amount,
-    groupedPosition.loanAssetDecimals,
-    toast,
-  ]);
+  }, [selectedFromMarketUniqueKey, selectedToMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, toast]);
 
   const getMarkets = useCallback(() => {
     const fromMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedFromMarketUniqueKey);
@@ -109,9 +89,7 @@ export function RebalanceModal({
     const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
     if (!fromMarket || !toMarket) {
-      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${
-        !toMarket ? '"To" Market' : ''
-      }`;
+      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${!toMarket ? '"To" Market' : ''}`;
 
       toast.error('Invalid market selection', errorMessage);
       return null;
@@ -121,9 +99,7 @@ export function RebalanceModal({
   }, [eligibleMarkets, selectedFromMarketUniqueKey, selectedToMarketUniqueKey, toast]);
 
   const checkBalance = useCallback(() => {
-    const oldBalance = groupedPosition.markets.find(
-      (m) => m.market.uniqueKey === selectedFromMarketUniqueKey,
-    )?.state.supplyAssets;
+    const oldBalance = groupedPosition.markets.find((m) => m.market.uniqueKey === selectedFromMarketUniqueKey)?.state.supplyAssets;
 
     const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
     const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
@@ -134,44 +110,30 @@ export function RebalanceModal({
       return false;
     }
     return true;
-  }, [
-    selectedFromMarketUniqueKey,
-    amount,
-    groupedPosition.loanAssetDecimals,
-    getPendingDelta,
-    toast,
-  ]);
+  }, [selectedFromMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, getPendingDelta, toast]);
 
-  const createAction = useCallback(
-    (
-      fromMarket: Market,
-      toMarket: Market,
-      actionAmount: bigint,
-      isMax: boolean,
-    ): RebalanceAction => {
-      return {
-        fromMarket: {
-          loanToken: fromMarket.loanAsset.address,
-          collateralToken: fromMarket.collateralAsset.address,
-          oracle: fromMarket.oracleAddress,
-          irm: fromMarket.irmAddress,
-          lltv: fromMarket.lltv,
-          uniqueKey: fromMarket.uniqueKey,
-        },
-        toMarket: {
-          loanToken: toMarket.loanAsset.address,
-          collateralToken: toMarket.collateralAsset.address,
-          oracle: toMarket.oracleAddress,
-          irm: toMarket.irmAddress,
-          lltv: toMarket.lltv,
-          uniqueKey: toMarket.uniqueKey,
-        },
-        amount: actionAmount,
-        isMax,
-      };
-    },
-    [],
-  );
+  const createAction = useCallback((fromMarket: Market, toMarket: Market, actionAmount: bigint, isMax: boolean): RebalanceAction => {
+    return {
+      fromMarket: {
+        loanToken: fromMarket.loanAsset.address,
+        collateralToken: fromMarket.collateralAsset.address,
+        oracle: fromMarket.oracleAddress,
+        irm: fromMarket.irmAddress,
+        lltv: fromMarket.lltv,
+        uniqueKey: fromMarket.uniqueKey,
+      },
+      toMarket: {
+        loanToken: toMarket.loanAsset.address,
+        collateralToken: toMarket.collateralAsset.address,
+        oracle: toMarket.oracleAddress,
+        irm: toMarket.irmAddress,
+        lltv: toMarket.lltv,
+        uniqueKey: toMarket.uniqueKey,
+      },
+      amount: actionAmount,
+      isMax,
+    };
+  }, []);
 
   const resetSelections = useCallback(() => {
     setSelectedFromMarketUniqueKey('');
@@ -186,10 +148,7 @@ export function RebalanceModal({
 
       setSelectedFromMarketUniqueKey(marketUniqueKey);
       // Convert the amount to a string with the correct number of decimals
-      const formattedAmount = formatUnits(
-        BigInt(Math.floor(maxAmount)),
-        groupedPosition.loanAssetDecimals,
-      );
+      const formattedAmount = formatUnits(BigInt(Math.floor(maxAmount)), groupedPosition.loanAssetDecimals);
       setAmount(formattedAmount);
     },
     [eligibleMarkets, groupedPosition.loanAssetDecimals],
@@ -208,17 +167,14 @@ export function RebalanceModal({
     if (!checkBalance()) return;
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
-    const selectedPosition = groupedPosition.markets.find(
-      (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
-    );
+    const selectedPosition = groupedPosition.markets.find((p) => p.market.uniqueKey === selectedFromMarketUniqueKey);
 
     // Get the pending delta for this market
     const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0;
 
     // Check if this is a max amount considering pending delta
     const isMaxAmount =
-      selectedPosition !== undefined &&
-      BigInt(selectedPosition.state.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
+      selectedPosition !== undefined && BigInt(selectedPosition.state.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
@@ -250,7 +206,7 @@ export function RebalanceModal({
         switchToNetwork();
         // Wait a bit for the network switch to complete
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (error) {
+      } catch (_error) {
         toast.error('Something went wrong', 'Failed to switch network. Please try again');
         return;
       }
@@ -275,7 +231,9 @@ export function RebalanceModal({
 
   const handleManualRefresh = () => {
     refetch(() => {
-      toast.info('Data refreshed', 'Position data updated', { icon: <span>🚀</span> });
+      toast.info('Data refreshed', 'Position data updated', {
+        icon: <span>🚀</span>,
+      });
     });
   };
 
@@ -290,9 +248,7 @@ export function RebalanceModal({
         <ModalHeader
           title={
             <div className="flex items-center gap-2">
-              <span className="text-2xl">
-                Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position
-              </span>
+              <span className="text-2xl">Rebalance {groupedPosition.loanAsset ?? 'Unknown'} Position</span>
               {isRefetching && <Spinner size={20} />}
             </div>
           }
@@ -308,11 +264,9 @@ export function RebalanceModal({
               height={28}
             />
           }
-          onClose={()=>onOpenChange(false)}
+          onClose={() => onOpenChange(false)}
           auxiliaryAction={{
-            icon: (
-              <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
-            ),
+            icon: <ReloadIcon className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />,
             onClick: () => {
               if (!isRefetching) {
                 handleManualRefresh();
@@ -322,41 +276,40 @@ export function RebalanceModal({
           }}
         />
         <ModalBody className="gap-4">
+          <FromMarketsTable
+            positions={groupedPosition.markets
+              .filter((p) => BigInt(p.state.supplyShares) > 0)
+              .map((market) => ({
+                ...market,
+                pendingDelta: getPendingDelta(market.market.uniqueKey),
+              }))}
+            selectedMarketUniqueKey={selectedFromMarketUniqueKey}
+            onSelectMarket={setSelectedFromMarketUniqueKey}
+            onSelectMax={handleMaxSelect}
+          />
 
-            <FromMarketsTable
-              positions={groupedPosition.markets
-                .filter((p) => BigInt(p.state.supplyShares) > 0)
-                .map((market) => ({
-                  ...market,
-                  pendingDelta: getPendingDelta(market.market.uniqueKey),
-                }))}
-              selectedMarketUniqueKey={selectedFromMarketUniqueKey}
-              onSelectMarket={setSelectedFromMarketUniqueKey}
-              onSelectMax={handleMaxSelect}
-            />
+          <RebalanceActionInput
+            amount={amount}
+            setAmount={setAmount}
+            selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
+            selectedToMarketUniqueKey={selectedToMarketUniqueKey}
+            groupedPosition={groupedPosition}
+            eligibleMarkets={eligibleMarkets}
+            token={{
+              address: groupedPosition.loanAssetAddress,
+              chainId: groupedPosition.chainId,
+            }}
+            onAddAction={handleAddAction}
+            onToMarketClick={() => setShowToModal(true)}
+            onClearToMarket={() => setSelectedToMarketUniqueKey('')}
+          />
 
-            <RebalanceActionInput
-              amount={amount}
-              setAmount={setAmount}
-              selectedFromMarketUniqueKey={selectedFromMarketUniqueKey}
-              selectedToMarketUniqueKey={selectedToMarketUniqueKey}
-              groupedPosition={groupedPosition}
-              eligibleMarkets={eligibleMarkets}
-              token={{
-                address: groupedPosition.loanAssetAddress,
-                chainId: groupedPosition.chainId,
-              }}
-              onAddAction={handleAddAction}
-              onToMarketClick={() => setShowToModal(true)}
-              onClearToMarket={() => setSelectedToMarketUniqueKey('')}
-            />
-
-            <RebalanceCart
-              rebalanceActions={rebalanceActions}
-              groupedPosition={groupedPosition}
-              eligibleMarkets={eligibleMarkets}
-              removeRebalanceAction={removeRebalanceAction}
-            />
+          <RebalanceCart
+            rebalanceActions={rebalanceActions}
+            groupedPosition={groupedPosition}
+            eligibleMarkets={eligibleMarkets}
+            removeRebalanceAction={removeRebalanceAction}
+          />
         </ModalBody>
         <ModalFooter className="mx-2">
           <Button

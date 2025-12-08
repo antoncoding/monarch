@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
-import { Address } from 'viem';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
+import type { Address } from 'viem';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import { parseCapIdParams } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { useAllocations } from './useAllocations';
 import { useMarkets } from './useMarkets';
@@ -85,9 +85,7 @@ export function useVaultAllocations({
 
       // Only include if this is a market cap with a valid market ID
       if (params.type === 'market' && params.marketId) {
-        const market = allMarkets.find(
-          (m) => m.uniqueKey.toLowerCase() === params.marketId?.toLowerCase()
-        );
+        const market = allMarkets.find((m) => m.uniqueKey.toLowerCase() === params.marketId?.toLowerCase());
 
         // Only include if we can find the market
         if (market) {
@@ -108,18 +106,10 @@ export function useVaultAllocations({
   }, [marketCaps, allMarkets]);
 
   // Combine all valid caps for fetching allocations
-  const allValidCaps = useMemo(
-    () => [...validCollateralCaps, ...validMarketCaps],
-    [validCollateralCaps, validMarketCaps]
-  );
+  const allValidCaps = useMemo(() => [...validCollateralCaps, ...validMarketCaps], [validCollateralCaps, validMarketCaps]);
 
   // Fetch allocations only for valid, recognized caps
-  const {
-    allocations,
-    loading,
-    error,
-    refetch,
-  } = useAllocations({
+  const { allocations, loading, error, refetch } = useAllocations({
     vaultAddress,
     chainId,
     caps: allValidCaps,
@@ -140,7 +130,7 @@ export function useVaultAllocations({
         ...cap,
         allocation: allocationMap.get(cap.capId) ?? 0n,
       })),
-    [parsedCollateralCaps, allocationMap]
+    [parsedCollateralCaps, allocationMap],
   );
 
   // Merge allocations with parsed market data
@@ -150,7 +140,7 @@ export function useVaultAllocations({
         ...cap,
         allocation: allocationMap.get(cap.capId) ?? 0n,
       })),
-    [parsedMarketCaps, allocationMap]
+    [parsedMarketCaps, allocationMap],
   );
 
   return {

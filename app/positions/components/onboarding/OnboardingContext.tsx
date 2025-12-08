@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
-import { Market } from '@/utils/types';
-import { TokenWithMarkets } from './types';
+import type { Market } from '@/utils/types';
+import type { TokenWithMarkets } from './types';
 
 export const ONBOARDING_STEPS = [
   {
@@ -10,8 +10,16 @@ export const ONBOARDING_STEPS = [
     description: 'Choose the asset you want to supply',
   },
   { id: 'market-selection', title: 'Select Markets', description: '' },
-  { id: 'setup', title: 'Position Setup', description: 'Configure your initial position' },
-  { id: 'success', title: 'Complete', description: 'Position created successfully' },
+  {
+    id: 'setup',
+    title: 'Position Setup',
+    description: 'Configure your initial position',
+  },
+  {
+    id: 'success',
+    title: 'Complete',
+    description: 'Position created successfully',
+  },
 ] as const;
 
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number]['id'];

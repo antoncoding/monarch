@@ -1,16 +1,8 @@
 import { useState } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Tooltip,
-} from '@heroui/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
 import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -23,7 +15,7 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrows } from '@/hooks/useMarketBorrows';
 import { formatSimple } from '@/utils/balance';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type BorrowsTableProps = {
   chainId: number;
@@ -55,11 +47,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
   const tableKey = `borrows-table-${currentPage}`;
 
   if (error) {
-    return (
-      <p className="text-danger">
-        Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}
-      </p>
-    );
+    return <p className="text-danger">Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}</p>;
   }
 
   return (
@@ -118,7 +106,10 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             <TableColumn>TYPE</TableColumn>
             <TableColumn align="end">AMOUNT</TableColumn>
             <TableColumn>TIME</TableColumn>
-            <TableColumn className="font-mono" align="end">
+            <TableColumn
+              className="font-mono"
+              align="end"
+            >
               TRANSACTION
             </TableColumn>
           </TableHeader>
@@ -157,7 +148,10 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
                 </TableCell>
                 <TableCell>{moment.unix(borrow.timestamp).fromNow()}</TableCell>
                 <TableCell className="text-right">
-                  <TransactionIdentity txHash={borrow.hash} chainId={chainId} />
+                  <TransactionIdentity
+                    txHash={borrow.hash}
+                    chainId={chainId}
+                  />
                 </TableCell>
               </TableRow>
             ))}

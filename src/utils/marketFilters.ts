@@ -6,10 +6,10 @@
  */
 
 import { parseNumericThreshold } from '@/utils/markets';
-import { SupportedNetworks } from '@/utils/networks';
-import { parsePriceFeedVendors, PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
-import { ERC20Token } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import { parsePriceFeedVendors, type PriceFeedVendors, getOracleType, OracleType } from '@/utils/oracle';
+import type { ERC20Token } from '@/utils/tokens';
+import type { Market } from '@/utils/types';
 
 // ============================================================================
 // Types
@@ -98,9 +98,7 @@ export const createUnknownOracleFilter = (showUnknownOracle: boolean): MarketFil
     if (!market.oracle) return false;
 
     const info = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id);
-    const isCustom =
-      getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id) ===
-      OracleType.Custom;
+    const isCustom = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id) === OracleType.Custom;
     const isUnknown = isCustom || (info?.hasUnknown ?? false);
 
     return !isUnknown;
@@ -116,11 +114,7 @@ export const createCollateralFilter = (selectedCollaterals: string[]): MarketFil
   }
   return (market) => {
     return selectedCollaterals.some((combinedKey) =>
-      combinedKey
-        .split('|')
-        .includes(
-          `${market.collateralAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`,
-        ),
+      combinedKey.split('|').includes(`${market.collateralAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`),
     );
   };
 };
@@ -134,11 +128,7 @@ export const createLoanAssetFilter = (selectedLoanAssets: string[]): MarketFilte
   }
   return (market) => {
     return selectedLoanAssets.some((combinedKey) =>
-      combinedKey
-        .split('|')
-        .includes(
-          `${market.loanAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`,
-        ),
+      combinedKey.split('|').includes(`${market.loanAsset.address.toLowerCase()}-${market.morphoBlue.chain.id}`),
     );
   };
 };
@@ -152,10 +142,7 @@ export const createOracleFilter = (selectedOracles: PriceFeedVendors[]): MarketF
   }
   return (market) => {
     if (!market.oracle) return false;
-    const marketOracles = parsePriceFeedVendors(
-      market.oracle.data,
-      market.morphoBlue.chain.id,
-    ).vendors;
+    const marketOracles = parsePriceFeedVendors(market.oracle.data, market.morphoBlue.chain.id).vendors;
     return marketOracles.some((oracle) => selectedOracles.includes(oracle));
   };
 };
@@ -257,10 +244,7 @@ export const applyFilters = (markets: Market[], filters: MarketFilter[]): Market
  * Create all filters from options and apply them to markets.
  * This is the main entry point for filtering markets.
  */
-export const filterMarkets = (
-  markets: Market[],
-  options: MarketFilterOptions,
-): Market[] => {
+export const filterMarkets = (markets: Market[], options: MarketFilterOptions): Market[] => {
   const filters: MarketFilter[] = [];
 
   // Network filter
@@ -320,11 +304,7 @@ export type MarketSortFn = (a: Market, b: Market) => number;
  * Sort markets by a comparison function and direction.
  * Handles null-safe sorting where null/undefined values always go to the end.
  */
-export const sortMarkets = (
-  markets: Market[],
-  sortFn: MarketSortFn,
-  direction: SortDirection = -1,
-): Market[] => {
+export const sortMarkets = (markets: Market[], sortFn: MarketSortFn, direction: SortDirection = -1): Market[] => {
   return [...markets].sort((a, b) => {
     const result = sortFn(a, b);
     // If result is infinity, it means one value is null - keep it at the end regardless of direction
@@ -362,8 +342,8 @@ export const createPropertySort = (propertyPath: string): MarketSortFn => {
 
     // Only one is null/undefined - return Infinity to ensure it goes to the end
     // The sortMarkets function will not apply direction to infinite values
-    if (aIsNullish) return Infinity;
-    if (bIsNullish) return -Infinity;
+    if (aIsNullish) return Number.POSITIVE_INFINITY;
+    if (bIsNullish) return Number.NEGATIVE_INFINITY;
 
     // Type guard for comparable values
     if (typeof aValue === 'number' && typeof bValue === 'number') {

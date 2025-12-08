@@ -1,11 +1,11 @@
 import { Card, CardBody, CardHeader } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type VaultCollateralsCardProps = {
   collateralCaps: VaultV2Cap[];
@@ -31,7 +31,7 @@ export function VaultCollateralsCard({
   }
 
   const collateralTokens = collateralCaps
-    .map(cap => {
+    .map((cap) => {
       const parsed = parseCapIdParams(cap.idParams);
       return parsed.collateralToken;
     })
@@ -44,7 +44,10 @@ export function VaultCollateralsCard({
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Collaterals</span>
         {isOwner && (
-          <GearIcon className="h-4 w-4 cursor-pointer text-secondary hover:text-primary" onClick={onManageCaps} />
+          <GearIcon
+            className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
+            onClick={onManageCaps}
+          />
         )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
@@ -53,7 +56,10 @@ export function VaultCollateralsCard({
         ) : hasCollaterals ? (
           <div className="flex flex-wrap gap-1.5 justify-center">
             {collateralTokens.map((tokenAddress) => (
-              <div key={tokenAddress} className="flex items-center">
+              <div
+                key={tokenAddress}
+                className="flex items-center"
+              >
                 <TokenIcon
                   address={tokenAddress}
                   chainId={chainId}

@@ -1,4 +1,4 @@
-import { Address } from 'viem';
+import type { Address } from 'viem';
 
 // Corresponds to tokenFragment
 export type SubgraphToken = {

@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { useMorphoAuthorization } from './useMorphoAuthorization';
@@ -29,12 +29,7 @@ export type BorrowStepType =
   | 'approve_token' // For standard flow: Step 2 (if needed)
   | 'execute'; // Common final step
 
-export function useBorrowTransaction({
-  market,
-  collateralAmount,
-  borrowAmount,
-  onSuccess,
-}: UseBorrowTransactionProps) {
+export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess }: UseBorrowTransactionProps) {
   const [currentStep, setCurrentStep] = useState<BorrowStepType>('approve_permit2');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
@@ -46,16 +41,11 @@ export function useBorrowTransaction({
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);
 
   // Hook for Morpho bundler authorization (both sig and tx)
-  const {
-    isBundlerAuthorized,
-    isAuthorizingBundler,
-    authorizeBundlerWithSignature,
-    authorizeWithTransaction,
-    refetchIsBundlerAuthorized,
-  } = useMorphoAuthorization({
-    chainId: market.morphoBlue.chain.id,
-    authorized: bundlerAddress,
-  });
+  const { isBundlerAuthorized, isAuthorizingBundler, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized } =
+    useMorphoAuthorization({
+      chainId: market.morphoBlue.chain.id,
+      authorized: bundlerAddress,
+    });
 
   // Get approval for collateral token
   const {
@@ -83,9 +73,7 @@ export function useBorrowTransaction({
 
   const { isConfirming: borrowPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'borrow',
-    pendingText: `Borrowing ${formatBalance(borrowAmount, market.loanAsset.decimals)} ${
-      market.loanAsset.symbol
-    }`,
+    pendingText: `Borrowing ${formatBalance(borrowAmount, market.loanAsset.decimals)} ${market.loanAsset.symbol}`,
     successText: `${market.loanAsset.symbol} Borrowed`,
     errorText: 'Failed to borrow',
     chainId,
@@ -100,10 +88,7 @@ export function useBorrowTransaction({
   // Core transaction execution logic
   const executeBorrowTransaction = useCallback(async () => {
     const minSharesToBorrow =
-      borrowAmount === 0n
-        ? 0n
-        : (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) -
-          1n;
+      borrowAmount === 0n ? 0n : (borrowAmount * BigInt(market.state.supplyShares)) / BigInt(market.state.supplyAssets) - 1n;
 
     try {
       const transactions: `0x${string}`[] = [];

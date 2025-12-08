@@ -1,30 +1,12 @@
-import { Address } from 'viem';
-import {
-  marketQuery as subgraphMarketQuery,
-  marketsQuery as subgraphMarketsQuery,
-} from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
+import type { Address } from 'viem';
+import { marketQuery as subgraphMarketQuery, marketsQuery as subgraphMarketsQuery } from '@/graphql/morpho-subgraph-queries'; // Assuming query is here
 import { formatBalance } from '@/utils/balance';
-import { SupportedNetworks } from '@/utils/networks';
-import {
-  SubgraphMarket,
-  SubgraphMarketQueryResponse,
-  SubgraphMarketsQueryResponse,
-  SubgraphToken,
-} from '@/utils/subgraph-types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { SubgraphMarket, SubgraphMarketQueryResponse, SubgraphMarketsQueryResponse, SubgraphToken } from '@/utils/subgraph-types';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import {
-  blacklistTokens,
-  ERC20Token,
-  findToken,
-  UnknownERC20Token,
-  TokenPeg,
-} from '@/utils/tokens';
-import { Market, MarketWarning } from '@/utils/types';
-import {
-  SUBGRAPH_NO_PRICE,
-  UNRECOGNIZED_COLLATERAL,
-  UNRECOGNIZED_LOAN,
-} from '@/utils/warnings';
+import { blacklistTokens, type ERC20Token, findToken, type UnknownERC20Token, TokenPeg } from '@/utils/tokens';
+import type { Market, MarketWarning } from '@/utils/types';
+import { SUBGRAPH_NO_PRICE, UNRECOGNIZED_COLLATERAL, UNRECOGNIZED_LOAN } from '@/utils/warnings';
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Define the structure for the fetched prices locally
@@ -40,8 +22,7 @@ type CoinGeckoPriceResponse = {
 };
 
 // CoinGecko API endpoint
-const COINGECKO_API_URL =
-  'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd';
+const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd';
 
 // Fetcher for major prices needed for estimation
 const priceCache: { data?: LocalMajorPrices; ts?: number } = {};
@@ -80,7 +61,7 @@ const fetchLocalMajorPrices = async (): Promise<LocalMajorPrices> => {
 const safeParseFloat = (value: string | null | undefined): number => {
   if (value === null || value === undefined) return 0;
   try {
-    return parseFloat(value);
+    return Number.parseFloat(value);
   } catch {
     return 0;
   }
@@ -89,7 +70,7 @@ const safeParseFloat = (value: string | null | undefined): number => {
 const safeParseInt = (value: string | null | undefined): number => {
   if (value === null || value === undefined) return 0;
   try {
-    return parseInt(value, 10);
+    return Number.parseInt(value, 10);
   } catch {
     return 0;
   }
@@ -139,8 +120,7 @@ const transformSubgraphMarketToMarket = (
 
   // @todo: might update due to input token being used here
   const supplyAssets = subgraphMarket.totalSupply ?? subgraphMarket.inputTokenBalance ?? '0';
-  const borrowAssets =
-    subgraphMarket.totalBorrow ?? subgraphMarket.variableBorrowedTokenBalance ?? '0';
+  const borrowAssets = subgraphMarket.totalBorrow ?? subgraphMarket.variableBorrowedTokenBalance ?? '0';
   const collateralAssets = subgraphMarket.totalCollateral ?? '0';
 
   const timestamp = safeParseInt(subgraphMarket.lastUpdate);
@@ -188,8 +168,7 @@ const transformSubgraphMarketToMarket = (
   const liquidityAssets = (BigInt(supplyAssets) - BigInt(borrowAssets)).toString();
   const liquidityAssetsUsd = formatBalance(liquidityAssets, loanAsset.decimals) * loanAssetPrice;
 
-  const collateralAssetsUsd =
-    formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
+  const collateralAssetsUsd = formatBalance(collateralAssets, collateralAsset.decimals) * collateralAssetPrice;
 
   const marketDetail = {
     id: marketId,
@@ -223,7 +202,7 @@ const transformSubgraphMarketToMarket = (
 
       // AdaptiveCurveIRM APY if utilization was at target
       apyAtTarget: 0, // Not available from subgraph
-      
+
       // AdaptiveCurveIRM rate per second if utilization was at target
       rateAtTarget: '0', // Not available from subgraph
     },
@@ -240,7 +219,7 @@ const transformSubgraphMarketToMarket = (
 
     // todo: not able to parse bad debt now
     realizedBadDebt: {
-      underlying: '0'
+      underlying: '0',
     },
 
     // todo: no way to parse supplying vaults now
@@ -251,10 +230,7 @@ const transformSubgraphMarketToMarket = (
 };
 
 // Fetcher for market details from Subgraph
-export const fetchSubgraphMarket = async (
-  uniqueKey: string,
-  network: SupportedNetworks,
-): Promise<Market | null> => {
+export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market | null> => {
   const subgraphApiUrl = getSubgraphUrl(network);
 
   if (!subgraphApiUrl) {
@@ -263,13 +239,9 @@ export const fetchSubgraphMarket = async (
   }
 
   try {
-    const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(
-      subgraphApiUrl,
-      subgraphMarketQuery,
-      {
-        id: uniqueKey.toLowerCase(),
-      },
-    );
+    const response = await subgraphGraphqlFetcher<SubgraphMarketQueryResponse>(subgraphApiUrl, subgraphMarketQuery, {
+      id: uniqueKey.toLowerCase(),
+    });
 
     // Handle cases where GraphQL errors resulted in missing data
     const marketData = response?.data?.market;
@@ -326,16 +298,12 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     const marketsData = response?.data?.markets;
 
     if (!marketsData || !Array.isArray(marketsData)) {
-      console.warn(
-        `No markets found or invalid format in Subgraph response for network ${network}.`,
-      );
+      console.warn(`No markets found or invalid format in Subgraph response for network ${network}.`);
       return [];
     }
 
     const majorPrices = await fetchLocalMajorPrices();
-    return marketsData.map((market) =>
-      transformSubgraphMarketToMarket(market, network, majorPrices),
-    );
+    return marketsData.map((market) => transformSubgraphMarketToMarket(market, network, majorPrices));
   } catch (error) {
     console.error(`Error fetching subgraph markets on ${network}:`, error);
     return [];

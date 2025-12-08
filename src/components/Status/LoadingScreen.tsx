@@ -10,13 +10,7 @@ type LoadingScreenProps = {
   className?: string;
 };
 
-const loadingPhrases = [
-  'Loading...',
-  'Fetching data...',
-  'Almost there...',
-  'Preparing your view...',
-  'Connecting to Morpho...',
-];
+const loadingPhrases = ['Loading...', 'Fetching data...', 'Almost there...', 'Preparing your view...', 'Connecting to Morpho...'];
 
 function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; singleMode?: boolean }) {
   const [displayText, setDisplayText] = useState('');
@@ -66,22 +60,25 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
     const typingSpeed = 40;
     const deletingSpeed = 25;
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        if (displayText.length < targetText.length) {
-          setDisplayText(targetText.slice(0, displayText.length + 1));
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting) {
+          if (displayText.length < targetText.length) {
+            setDisplayText(targetText.slice(0, displayText.length + 1));
+          } else {
+            setIsPaused(true);
+          }
         } else {
-          setIsPaused(true);
+          if (displayText.length > 0) {
+            setDisplayText(displayText.slice(0, -1));
+          } else {
+            setIsDeleting(false);
+            setPhraseIndex(getNextPhraseIndex(phraseIndex));
+          }
         }
-      } else {
-        if (displayText.length > 0) {
-          setDisplayText(displayText.slice(0, -1));
-        } else {
-          setIsDeleting(false);
-          setPhraseIndex(getNextPhraseIndex(phraseIndex));
-        }
-      }
-    }, isDeleting ? deletingSpeed : typingSpeed);
+      },
+      isDeleting ? deletingSpeed : typingSpeed,
+    );
 
     return () => clearTimeout(timeout);
   }, [displayText, phraseIndex, isDeleting, isPaused, phrases, singleMode]);
@@ -109,10 +106,24 @@ export default function LoadingScreen({ message, className }: LoadingScreenProps
         className ?? ''
       }`}
     >
-      <Image src={loadingImg} alt="Logo" width={200} height={200} className="py-4" />
-      <BarLoader width={100} color="#f45f2d" height={2} className="pb-1" />
+      <Image
+        src={loadingImg}
+        alt="Logo"
+        width={200}
+        height={200}
+        className="py-4"
+      />
+      <BarLoader
+        width={100}
+        color="#f45f2d"
+        height={2}
+        className="pb-1"
+      />
       <p className="pt-4 text-center text-secondary">
-        <TypingAnimation phrases={phrases} singleMode={singleMode} />
+        <TypingAnimation
+          phrases={phrases}
+          singleMode={singleMode}
+        />
       </p>
     </div>
   );

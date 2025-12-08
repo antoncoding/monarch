@@ -1,4 +1,4 @@
-import { createPublicClient, http, PublicClient } from 'viem';
+import { createPublicClient, http, type PublicClient } from 'viem';
 import { arbitrum, base, mainnet, polygon, unichain, monad } from 'viem/chains';
 import { getDefaultRPC, getViemChain, SupportedNetworks, hyperEvm } from './networks';
 
@@ -42,10 +42,7 @@ const initializeDefaultClients = () => {
 };
 
 // Create a client with custom RPC URL
-function createClientWithCustomRpc(
-  chainId: SupportedNetworks,
-  rpcUrl: string,
-): PublicClient {
+function createClientWithCustomRpc(chainId: SupportedNetworks, rpcUrl: string): PublicClient {
   const chain = getViemChain(chainId);
   if (!chain) {
     throw new Error(`Unsupported chainId: ${chainId}`);
@@ -85,11 +82,7 @@ export async function estimatedBlockNumber(
   timestamp: number;
 }> {
   const fetchBlock = async () => {
-    const blockResponse = await fetch(
-      `/api/block?` +
-        `timestamp=${encodeURIComponent(timestamp)}` +
-        `&chainId=${encodeURIComponent(chainId)}`,
-    );
+    const blockResponse = await fetch(`/api/block?timestamp=${encodeURIComponent(timestamp)}&chainId=${encodeURIComponent(chainId)}`);
 
     if (!blockResponse.ok) {
       const errorData = (await blockResponse.json()) as { error?: string };
@@ -108,7 +101,7 @@ export async function estimatedBlockNumber(
 
   try {
     return await fetchBlock();
-  } catch (error) {
+  } catch (_error) {
     console.log('First attempt failed, retrying in 2 seconds...');
     await new Promise((resolve) => setTimeout(resolve, 2000));
     return await fetchBlock();

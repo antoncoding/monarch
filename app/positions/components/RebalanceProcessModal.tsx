@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { LuArrowRightLeft } from "react-icons/lu";
+import { LuArrowRightLeft } from 'react-icons/lu';
 
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { RebalanceStepType } from '@/hooks/useRebalance';
+import type { RebalanceStepType } from '@/hooks/useRebalance';
 
 type RebalanceProcessModalProps = {
   currentStep: RebalanceStepType;
@@ -40,9 +40,7 @@ export function RebalanceProcessModal({
       {
         key: 'execute',
         label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${
-          actionsCount > 1 ? 's' : ''
-        }.`,
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
       },
     ];
 
@@ -60,9 +58,7 @@ export function RebalanceProcessModal({
       {
         key: 'execute',
         label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${
-          actionsCount > 1 ? 's' : ''
-        }.`,
+        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
       },
     ];
 
@@ -88,7 +84,13 @@ export function RebalanceProcessModal({
   };
 
   return (
-    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={onOpenChange}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Rebalancing ${tokenSymbol} Positions`}
         description={`Executing ${actionsCount} action${actionsCount === 1 ? '' : 's'} in this batch`}
@@ -104,9 +106,7 @@ export function RebalanceProcessModal({
               <div
                 key={step.key}
                 className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-100 dark:border-gray-700'
+                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
                 }`}
               >
                 <div className="mt-0.5">

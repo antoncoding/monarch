@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { TablePagination } from '@/components/common/TablePagination';
-import { SupportedNetworks } from '@/utils/networks';
-import { Transaction } from '@/utils/statsUtils';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Transaction } from '@/utils/statsUtils';
 import { findToken } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { TransactionTableBody } from './TransactionTableBody';
 
 type TransactionsTableProps = {
@@ -39,13 +39,7 @@ type SortableHeaderProps = {
   onSort: (key: SortKey) => void;
 };
 
-function SortableHeader({
-  label,
-  sortKeyValue,
-  currentSortKey,
-  sortDirection,
-  onSort,
-}: SortableHeaderProps) {
+function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
     <th
       className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
@@ -55,11 +49,7 @@ function SortableHeader({
       <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
         <div>{label}</div>
         {currentSortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? (
-            <FiChevronUp className="h-4 w-4" />
-          ) : (
-            <FiChevronDown className="h-4 w-4" />
-          ))}
+          (sortDirection === 'asc' ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />)}
       </div>
     </th>
   );
@@ -151,12 +141,8 @@ export function TransactionsTable({
 
     // Filter by loan assets
     if (selectedLoanAssets.length > 0) {
-      const selectedAddresses = selectedLoanAssets.flatMap((assetKey) =>
-        assetKey.split('|').map((key) => key.split('-')[0].toLowerCase()),
-      );
-      filtered = filtered.filter((op) =>
-        selectedAddresses.includes(op.loanAddress.toLowerCase()),
-      );
+      const selectedAddresses = selectedLoanAssets.flatMap((assetKey) => assetKey.split('|').map((key) => key.split('-')[0].toLowerCase()));
+      filtered = filtered.filter((op) => selectedAddresses.includes(op.loanAddress.toLowerCase()));
     }
 
     // Filter by sides

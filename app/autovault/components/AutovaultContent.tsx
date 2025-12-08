@@ -31,17 +31,13 @@ export default function AutovaultContent() {
           </div>
           <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
             <div className="flex flex-col">
-              <p className="text-sm text-secondary">
-                Automate your vault management with intelligent agents
-              </p>
+              <p className="text-sm text-secondary">Automate your vault management with intelligent agents</p>
             </div>
           </div>
 
           <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <p className="mb-6 text-lg text-secondary">
-                Connect your wallet to view and manage your autovaults
-              </p>
+              <p className="mb-6 text-lg text-secondary">Connect your wallet to view and manage your autovaults</p>
               <AccountConnect />
             </div>
           </div>
@@ -60,9 +56,7 @@ export default function AutovaultContent() {
 
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
           <div className="flex flex-col">
-            <p className="text-sm text-secondary">
-              Automate your vault management with intelligent agents
-            </p>
+            <p className="text-sm text-secondary">Automate your vault management with intelligent agents</p>
           </div>
           <div className="flex gap-4">
             <Button
@@ -71,14 +65,20 @@ export default function AutovaultContent() {
               className="font-zen"
               onPress={handleCreateVault}
             >
-              <FaPlus size={14} className="mr-2" />
+              <FaPlus
+                size={14}
+                className="mr-2"
+              />
               Create Autovault
             </Button>
           </div>
         </div>
 
         <div className="mt-4">
-          <VaultListV2 vaults={vaults} loading={vaultsLoading} />
+          <VaultListV2
+            vaults={vaults}
+            loading={vaultsLoading}
+          />
         </div>
 
         {/* Deployment Modal */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { DateValue } from '@heroui/react';
+import type { DateValue } from '@heroui/react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import { getLocalTimeZone } from '@internationalized/date';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
@@ -14,7 +14,7 @@ import { NetworkIcon } from '@/components/common/NetworkIcon';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/hooks/useMarkets';
-import { ReportSummary } from '@/hooks/usePositionReport';
+import type { ReportSummary } from '@/hooks/usePositionReport';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { getExplorerTxURL } from '@/utils/external';
@@ -22,7 +22,7 @@ import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkName } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
 
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type MarketInfoBlockProps = {
   market: Market;
@@ -63,14 +63,7 @@ const formatDays = (seconds: number) => {
   return days.toFixed(2);
 };
 
-function MarketSummaryBlock({
-  market,
-  interestEarned,
-  decimals,
-  symbol,
-  apy,
-  hasActivePosition,
-}: MarketInfoBlockProps) {
+function MarketSummaryBlock({ market, interestEarned, decimals, symbol, apy, hasActivePosition }: MarketInfoBlockProps) {
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
 
@@ -116,11 +109,7 @@ function MarketSummaryBlock({
           <div className="text-xs text-gray-500">{rateLabel}</div>
         </div>
         <div className="flex flex-col items-end gap-1">
-          <div
-            className={`text-md font-mono ${
-              hasActivePosition ? 'text-green-600' : 'text-gray-400'
-            }`}
-          >
+          <div className={`text-md font-mono ${hasActivePosition ? 'text-green-600' : 'text-gray-400'}`}>
             {formatNumber(interestEarned, decimals)} {symbol}
           </div>
           <div className="text-xs text-gray-500">Interest Earned</div>
@@ -137,9 +126,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
   const { short: rateLabel } = useRateLabel();
 
   // Convert APY to APR if display mode is enabled
-  const displayGroupedRate = isAprDisplay
-    ? convertApyToApr(report.groupedEarnings.apy)
-    : report.groupedEarnings.apy;
+  const displayGroupedRate = isAprDisplay ? convertApyToApr(report.groupedEarnings.apy) : report.groupedEarnings.apy;
 
   const formatter = useDateFormatter({ dateStyle: 'long' });
 
@@ -161,17 +148,13 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm text-gray-500">
-                Generated for{' '}
-                <span className="font-medium text-gray-700 dark:text-gray-300">{asset.symbol}</span>{' '}
-                from {formatter.format(startDate.toDate(getLocalTimeZone()))} to{' '}
-                {formatter.format(endDate.toDate(getLocalTimeZone()))}
+                Generated for <span className="font-medium text-gray-700 dark:text-gray-300">{asset.symbol}</span> from{' '}
+                {formatter.format(startDate.toDate(getLocalTimeZone()))} to {formatter.format(endDate.toDate(getLocalTimeZone()))}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <NetworkIcon networkId={chainId} />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {getNetworkName(chainId)}
-              </span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{getNetworkName(chainId)}</span>
             </div>
           </div>
         </div>
@@ -182,9 +165,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
             <p className="mt-1 text-lg ">{formatDays(report.period)} Days</p>
           </div>
           <div>
-            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Total Interest Earned
-            </h3>
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Interest Earned</h3>
             <p className="mt-1 text-lg text-green-600 dark:text-green-400">
               {formatNumber(BigInt(report.totalInterestEarned), asset.decimals)} {asset.symbol}
             </p>
@@ -192,11 +173,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Net Flow</h3>
             <p className="mt-1 text-lg">
-              {formatNumber(
-                BigInt(report.totalDeposits) - BigInt(report.totalWithdraws),
-                asset.decimals,
-              )}{' '}
-              {asset.symbol}
+              {formatNumber(BigInt(report.totalDeposits) - BigInt(report.totalWithdraws), asset.decimals)} {asset.symbol}
             </p>
           </div>
           <div>
@@ -262,28 +239,23 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Start Balance</div>
                           <div className="font-mono">
-                            {formatNumber(BigInt(marketReport.startBalance), asset.decimals)}{' '}
-                            {asset.symbol}
+                            {formatNumber(BigInt(marketReport.startBalance), asset.decimals)} {asset.symbol}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">End Balance</div>
                           <div className="font-mono">
-                            {formatNumber(BigInt(marketReport.endBalance), asset.decimals)}{' '}
-                            {asset.symbol}
+                            {formatNumber(BigInt(marketReport.endBalance), asset.decimals)} {asset.symbol}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Duration</div>
-                          <div className="font-mono">
-                            {formatDays(Number(marketReport.effectiveTime))} days
-                          </div>
+                          <div className="font-mono">{formatDays(Number(marketReport.effectiveTime))} days</div>
                         </div>
                         <div className="flex flex-col gap-2 text-center text-sm">
                           <div className="text-gray-500">Average Capital</div>
                           <div className="font-mono">
-                            {formatNumber(BigInt(marketReport.avgCapital), asset.decimals)}{' '}
-                            {asset.symbol}
+                            {formatNumber(BigInt(marketReport.avgCapital), asset.decimals)} {asset.symbol}
                           </div>
                         </div>
                       </div>
@@ -310,21 +282,13 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                                   <TableCell>
                                     <Badge>{actionTypeToText(tx.type)}</Badge>
                                   </TableCell>
+                                  <TableCell>{moment(Number(tx.timestamp) * 1000).format('MMM D, YYYY HH:mm')}</TableCell>
                                   <TableCell>
-                                    {moment(Number(tx.timestamp) * 1000).format(
-                                      'MMM D, YYYY HH:mm',
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)}{' '}
-                                    {asset.symbol}
+                                    {formatNumber(BigInt(tx.data?.assets || '0'), asset.decimals)} {asset.symbol}
                                   </TableCell>
                                   <TableCell>
                                     <Link
-                                      href={getExplorerTxURL(
-                                        tx.hash,
-                                        marketReport.market.morphoBlue.chain.id,
-                                      )}
+                                      href={getExplorerTxURL(tx.hash, marketReport.market.morphoBlue.chain.id)}
                                       target="_blank"
                                       className="flex items-center gap-1 text-gray-500 hover:text-gray-700"
                                     >

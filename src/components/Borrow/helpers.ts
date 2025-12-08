@@ -28,8 +28,7 @@ const getLTVStatus = (ltv: bigint, lltv: bigint): LTVStatus => {
 };
 
 // Helper function to get color classes
-export const getLTVColor = (ltv: bigint, lltv: bigint) =>
-  `text-${getLTVStatus(ltv, lltv).colorClass}`;
+export const getLTVColor = (ltv: bigint, lltv: bigint) => `text-${getLTVStatus(ltv, lltv).colorClass}`;
 
 export const getLTVProgressColor = (ltv: bigint, lltv: bigint): string => {
   if (ltv === BigInt(0)) return 'bg-gray-500/80';

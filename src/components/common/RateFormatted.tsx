@@ -1,4 +1,3 @@
-import React from 'react';
 import { useMarkets } from '@/hooks/useMarkets';
 import { convertApyToApr } from '@/utils/rateMath';
 
@@ -35,12 +34,7 @@ type RateFormattedProps = {
  * // Shows "5.00% APY" or "4.88% APR" based on setting
  * <RateFormatted value={0.05} showLabel />
  */
-export function RateFormatted({
-  value,
-  showLabel = false,
-  precision = 2,
-  className = '',
-}: RateFormattedProps) {
+export function RateFormatted({ value, showLabel = false, precision = 2, className = '' }: RateFormattedProps) {
   const { isAprDisplay } = useMarkets();
 
   // Convert APY to APR if the user has enabled APR display mode
@@ -52,5 +46,10 @@ export function RateFormatted({
   // Append label if requested
   const label = showLabel ? ` ${isAprDisplay ? 'APR' : 'APY'}` : '';
 
-  return <span className={className}>{formattedValue}{label}</span>;
+  return (
+    <span className={className}>
+      {formattedValue}
+      {label}
+    </span>
+  );
 }

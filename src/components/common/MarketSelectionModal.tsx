@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react';
 import { FiSearch } from 'react-icons/fi';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
-import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Market } from '@/utils/types';
 
 type MarketSelectionModalProps = {
   title?: string;
@@ -49,16 +49,12 @@ export function MarketSelectionModal({
 
     // Filter by vault asset if provided
     if (vaultAsset) {
-      filtered = filtered.filter(
-        (m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase()
-      );
+      filtered = filtered.filter((m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase());
     }
 
     // Exclude already selected markets if provided
     if (excludeMarketIds) {
-      filtered = filtered.filter(
-        (m) => !excludeMarketIds.has(m.uniqueKey.toLowerCase())
-      );
+      filtered = filtered.filter((m) => !excludeMarketIds.has(m.uniqueKey.toLowerCase()));
     }
 
     return filtered;
@@ -87,19 +83,15 @@ export function MarketSelectionModal({
   };
 
   const handleConfirm = () => {
-    const marketsToReturn = availableMarkets.filter((m) =>
-      selectedMarkets.has(m.uniqueKey)
-    );
+    const marketsToReturn = availableMarkets.filter((m) => selectedMarkets.has(m.uniqueKey));
     onSelect(marketsToReturn);
     onOpenChange(false);
   };
 
   const selectedCount = selectedMarkets.size;
-  const buttonText = confirmButtonText ?? (
-    multiSelect
-      ? `Select ${selectedCount > 0 ? selectedCount : ''} Market${selectedCount !== 1 ? 's' : ''}`
-      : 'Select Market'
-  );
+  const buttonText =
+    confirmButtonText ??
+    (multiSelect ? `Select ${selectedCount > 0 ? selectedCount : ''} Market${selectedCount !== 1 ? 's' : ''}` : 'Select Market');
 
   return (
     <Modal
@@ -118,56 +110,64 @@ export function MarketSelectionModal({
         onClose={() => onOpenChange(false)}
       />
       <ModalBody>
-            {marketsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Spinner size={24} />
-              </div>
-            ) : availableMarkets.length === 0 ? (
-              <div className="py-12 text-center text-sm text-secondary">
-                {excludeMarketIds && excludeMarketIds.size > 0
-                  ? 'No more markets available to select.'
-                  : 'No markets found matching the criteria.'}
-              </div>
-            ) : (
-              <MarketsTableWithSameLoanAsset
-                markets={availableMarkets.map((m) => ({
-                  market: m,
-                  isSelected: selectedMarkets.has(m.uniqueKey),
-                }))}
-                onToggleMarket={handleToggleMarket}
-                disabled={false}
-                uniqueCollateralTokens={undefined}
-                showSelectColumn={multiSelect}
-              />
-            )}
+        {marketsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size={24} />
+          </div>
+        ) : availableMarkets.length === 0 ? (
+          <div className="py-12 text-center text-sm text-secondary">
+            {excludeMarketIds && excludeMarketIds.size > 0
+              ? 'No more markets available to select.'
+              : 'No markets found matching the criteria.'}
+          </div>
+        ) : (
+          <MarketsTableWithSameLoanAsset
+            markets={availableMarkets.map((m) => ({
+              market: m,
+              isSelected: selectedMarkets.has(m.uniqueKey),
+            }))}
+            onToggleMarket={handleToggleMarket}
+            disabled={false}
+            uniqueCollateralTokens={undefined}
+            showSelectColumn={multiSelect}
+          />
+        )}
       </ModalBody>
       <ModalFooter className="flex items-center justify-between">
-            {multiSelect ? (
-              <>
-                <p className="text-xs text-secondary">
-                  {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="cta"
-                    size="sm"
-                    isDisabled={selectedCount === 0}
-                    onPress={handleConfirm}
-                  >
-                    {buttonText}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="flex w-full justify-end">
-                <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
-                  Cancel
-                </Button>
-              </div>
-            )}
+        {multiSelect ? (
+          <>
+            <p className="text-xs text-secondary">
+              {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="subtle"
+                size="sm"
+                onPress={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="cta"
+                size="sm"
+                isDisabled={selectedCount === 0}
+                onPress={handleConfirm}
+              >
+                {buttonText}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <div className="flex w-full justify-end">
+            <Button
+              variant="subtle"
+              size="sm"
+              onPress={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
       </ModalFooter>
     </Modal>
   );

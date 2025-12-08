@@ -1,0 +1,280 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/core"],
+
+  "formatter": {
+    "enabled": true,
+    "lineWidth": 140  // Increased to 140 to allow longer one-line code
+  },
+
+  "javascript": {
+    "formatter": {
+      "arrowParentheses": "always",  // Match prettier
+      "bracketSameLine": false,      // Match prettier
+      "jsxQuoteStyle": "double",     // Match prettier (jsxSingleQuote: false)
+      "quoteProperties": "asNeeded",
+      "quoteStyle": "single",        // Match prettier
+      "semicolons": "always",        // Match prettier
+      "trailingCommas": "all",       // Match prettier (was "es5" in ultracite)
+      "attributePosition": "multiline"  // Force JSX attributes on separate lines for readability
+    }
+  },
+
+  // Disable auto-organizing imports initially to prevent mass changes
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off",      // Disable for now - was causing mass changes
+        "useSortedAttributes": "off",   // Disable for gentle migration
+        "useSortedKeys": "off"
+      }
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      // Override strict style rules that conflict with team preferences
+      "style": {
+        // Team allows named functions in callbacks (for displayName)
+        "useBlockStatements": "off",
+
+        // Team preference - allow some flexibility
+        "useConsistentCurlyBraces": "off",
+        "noParameterAssign": "off",
+
+        // Keep filenamingConvention disabled during migration
+        "useFilenamingConvention": "off",
+
+        // Don't force default exports
+        "noDefaultExport": "off",
+
+        // Team uses enums
+        "noEnum": "off",
+
+        // Allow nested ternaries (team decision)
+        "noNestedTernary": "off",
+
+        // Team allows non-null assertions when needed
+        "noNonNullAssertion": "off",
+
+        // Allow parameter properties (TS)
+        "noParameterProperties": "off",
+
+        // Don't enforce during migration - too opinionated
+        "noUselessElse": "off",
+        "noNegationElse": "off",
+        "useCollapsedElseIf": "off",
+
+        // Object shorthand - disable for gentle migration
+        "useConsistentObjectDefinitions": "off",
+
+        // ENABLED - Safe, auto-fixable style improvements
+        "useImportType": {
+          "level": "warn",
+          "fix": "safe"  // Converts imports to type imports - safe & improves bundle size
+        },
+        "useNumberNamespace": {
+          "level": "warn",
+          "fix": "safe"  // parseInt -> Number.parseInt (modern JS)
+        },
+        "useShorthandAssign": {
+          "level": "warn",
+          "fix": "safe"  // x = x + 1 -> x += 1
+        },
+        "useTemplate": {
+          "level": "warn",
+          "fix": "safe"  // "a" + b -> `a${b}` - more readable
+        },
+
+        // Keep these OFF - more opinionated
+        "useNumericSeparators": "off",  // 1_000_000 formatting
+        "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
+        "useReadonlyClassProperties": "off",  // readonly keyword
+        "useNodejsImportProtocol": "off",  // node: protocol
+        "useDefaultSwitchClause": "off",  // Requires default in switch
+        "useConst": "off",  // let -> const (too opinionated)
+        "noExportedImports": "off",  // Re-exports
+        "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
+        "useConsistentTypeDefinitions": "off"  // type vs interface
+      },
+
+      "complexity": {
+        // Team uses forEach sometimes
+        "noForEach": "off",
+
+        // Team prefers function declarations (useArrowFunction is in complexity)
+        "useArrowFunction": "off",
+
+        // Allow void operator (async fire-and-forget)
+        "noVoid": "off",
+
+        // Don't force optional chain everywhere yet
+        "useOptionalChain": "off",
+
+        // Don't force simplified logic during migration
+        "useSimplifiedLogicExpression": "off",
+
+        // Disable for gentle migration
+        "noExcessiveCognitiveComplexity": "off",  // 59 errors - refactoring needed
+        "noUselessUndefinedInitialization": "off",  // 4 errors
+        "useIndexOf": "off",  // 1 error
+        "noUselessSwitchCase": "off",  // 1 error
+        "noUselessFragments": "off"  // 1 error
+      },
+
+      "performance": {
+        // Disable for gentle migration
+        "useTopLevelRegex": "off",  // 15 errors
+        "noBarrelFile": "off",  // 9 errors
+        "noNamespaceImport": "off"  // 7 errors
+      },
+
+      "suspicious": {
+        // Team explicitly allows any in some places
+        "noExplicitAny": "off",
+
+        // Allow console for now (common in scripts)
+        "noConsole": "off",
+
+        // Don't enforce during migration
+        "noImplicitAnyLet": "off",
+        "noEvolvingTypes": "off",
+
+        // Disable for gentle migration
+        "noArrayIndexKey": "off",  // 13 errors
+        "useIterableCallbackReturn": "off",  // 8 errors
+        "noEmptyBlockStatements": "off",  // 8 errors
+        "useAwait": "off",  // 5 errors
+        "noGlobalIsNan": "off",  // 5 errors
+        "noUnknownAtRules": "off",  // 3 errors (CSS)
+        "noDoubleEquals": "off",  // 3 errors
+        "noBitwiseOperators": "off",  // 2 errors
+        "useNumberToFixedDigitsArgument": "off",  // 1 error
+        "noGlobalIsFinite": "off"  // 1 error
+      },
+
+      "correctness": {
+        // Hook deps disabled in old config - keep off for migration
+        "useExhaustiveDependencies": "off",
+
+        // Don't enforce unused function params yet
+        "noUnusedFunctionParameters": "off",
+
+        // ENABLED - Safe correctness rules that catch real bugs
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noUnusedVariables": {
+          "level": "warn",  // Warn instead of error for gentleness
+          "fix": "safe"
+        },
+        "useParseIntRadix": {
+          "level": "error",
+          "fix": "safe"  // Auto-adds radix parameter to parseInt
+        },
+        "noUnreachable": "error",  // Dead code - definitely a bug
+        "noUndeclaredVariables": "error",  // Typo or missing import
+        "noSwitchDeclarations": "error"  // Variable declarations in switch - bug prone
+      },
+
+      "security": {
+        // Team uses dangerouslySetInnerHTML for Google Analytics
+        "noDangerouslySetInnerHtml": "off"
+      },
+
+      "a11y": {
+        // Match old jsx-a11y rules that were disabled
+        "noStaticElementInteractions": "off",
+        "noAutofocus": "off",
+        "noSvgWithoutTitle": "off",
+
+        // Disable for gentle migration
+        "noNoninteractiveElementToInteractiveRole": "off",  // 11 errors
+        "useSemanticElements": "off",  // 10 errors
+        "useAriaPropsSupportedByRole": "off",  // 1 error
+        "noRedundantRoles": "off",  // 1 error
+        "noNoninteractiveElementInteractions": "off"  // 1 error
+      },
+
+      "nursery": {
+        // Disable aggressive nursery rules during migration
+        "noShadow": "off",
+        "noUselessUndefined": "off",
+        "useFind": "off",
+        "useSpread": "off",
+
+        // Keep sorted classes off initially
+        "useSortedClasses": "off",
+
+        // These are too aggressive for migration
+        "noLeakedRender": "off",
+        "useConsistentArrowReturn": "off",
+        "noEqualsToNull": "off",
+        "noIncrementDecrement": "off",
+
+        // Disable for gentle migration
+        "useMaxParams": "off"  // 9 errors
+      }
+    }
+  },
+
+  // Override ultracite's test file settings if needed
+  "overrides": [
+    {
+      "includes": [
+        "src/abis/**/*",
+        ".eslintrc-old.js",
+        ".stylelintrc.json",
+        "biome.jsonc",
+        "tsconfig.json",
+        "src/constants/oracle/**/*.json",
+        "public/manifest.json"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": ["**/*.config.{js,ts,mjs,cjs,mts,cts}", "*.config.{js,ts,mjs,cjs,mts,cts}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDefaultExport": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.{ts,tsx,js,jsx}", "**/__tests__/**/*"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          },
+          "suspicious": {
+            "noConsole": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/scripts/**/*", "**/bin/**/*"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "style": {
+            "noProcessEnv": "off"
+          }
+        }
+      }
+    }
+  ]
+}

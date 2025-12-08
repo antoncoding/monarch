@@ -1,24 +1,17 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { DateValue } from '@heroui/react';
-import {
-  parseDate,
-  getLocalTimeZone,
-  today,
-  parseAbsoluteToLocal,
-  ZonedDateTime,
-  now,
-} from '@internationalized/date';
+import type { DateValue } from '@heroui/react';
+import { parseDate, getLocalTimeZone, today, parseAbsoluteToLocal, type ZonedDateTime, now } from '@internationalized/date';
 import { useDateFormatter } from '@react-aria/i18n';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { Button } from '@/components/common/Button';
 import DatePicker from '@/components/common/DatePicker';
 import { Spinner } from '@/components/common/Spinner';
 import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { usePositionReport } from '@/hooks/usePositionReport';
-import { ReportSummary } from '@/hooks/usePositionReport';
+import type { ReportSummary } from '@/hooks/usePositionReport';
 import useUserPositions from '@/hooks/useUserPositions';
 import { getMorphoGenesisDate } from '@/utils/morpho';
 import { AssetSelector, type AssetKey } from './AssetSelector';
@@ -55,9 +48,7 @@ export default function ReportContent({ account }: { account: Address }) {
 
   // Calculate minimum allowed date based on selected chain's genesis
   const minDate = useMemo(() => {
-    return selectedAsset
-      ? parseAbsoluteToLocal(getMorphoGenesisDate(selectedAsset.chainId).toISOString())
-      : today(getLocalTimeZone());
+    return selectedAsset ? parseAbsoluteToLocal(getMorphoGenesisDate(selectedAsset.chainId).toISOString()) : today(getLocalTimeZone());
   }, [selectedAsset]);
 
   // Calculate maximum allowed date (today)
@@ -79,11 +70,7 @@ export default function ReportContent({ account }: { account: Address }) {
     if (!reportState || !selectedAsset) return;
 
     // Reset report if inputs change
-    if (
-      reportState.asset.address !== selectedAsset.address ||
-      reportState.startDate !== startDate ||
-      reportState.endDate !== endDate
-    ) {
+    if (reportState.asset.address !== selectedAsset.address || reportState.startDate !== startDate || reportState.endDate !== endDate) {
       setReportState(null);
     }
   }, [selectedAsset, startDate, endDate, reportState]);
@@ -111,13 +98,7 @@ export default function ReportContent({ account }: { account: Address }) {
     setEndDate(exactHourDate);
   };
 
-  const { generateReport } = usePositionReport(
-    positions || [],
-    account,
-    selectedAsset,
-    startDate.toDate(),
-    endDate.toDate(),
-  );
+  const { generateReport } = usePositionReport(positions || [], account, selectedAsset, startDate.toDate(), endDate.toDate());
 
   // Generate report
   const handleGenerateReport = async () => {
@@ -147,13 +128,8 @@ export default function ReportContent({ account }: { account: Address }) {
       if (isStart && date.compare(endDate) > 0) return 'Start date cannot be after end date';
       if (!isStart && date.compare(startDate) < 0) return 'End date cannot be before start date';
       if (selectedAsset) {
-        const genesisDate = parseDate(
-          getMorphoGenesisDate(selectedAsset.chainId).toISOString().split('T')[0],
-        );
-        if (date.compare(genesisDate) < 0)
-          return `Date cannot be before ${formatter.format(
-            genesisDate.toDate(getLocalTimeZone()),
-          )}`;
+        const genesisDate = parseDate(getMorphoGenesisDate(selectedAsset.chainId).toISOString().split('T')[0]);
+        if (date.compare(genesisDate) < 0) return `Date cannot be before ${formatter.format(genesisDate.toDate(getLocalTimeZone()))}`;
       }
       return undefined;
     },
@@ -190,9 +166,7 @@ export default function ReportContent({ account }: { account: Address }) {
         {loading ? (
           <LoadingScreen message="Loading User Info..." />
         ) : positions.length === 0 ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-secondary">
-            No positions available.
-          </div>
+          <div className="w-full items-center rounded-md p-12 text-center text-secondary">No positions available.</div>
         ) : (
           <div className="mt-4 space-y-6">
             {/* Controls Row */}
@@ -239,17 +213,18 @@ export default function ReportContent({ account }: { account: Address }) {
                 onClick={() => {
                   void handleGenerateReport();
                 }}
-                isDisabled={
-                  !selectedAsset ||
-                  isGenerating ||
-                  isReportCurrent ||
-                  !!startDateError ||
-                  !!endDateError
-                }
+                isDisabled={!selectedAsset || isGenerating || isReportCurrent || !!startDateError || !!endDateError}
                 className="inline-flex h-14 min-w-[120px] items-center gap-2"
                 variant="cta"
               >
-                {isGenerating ? <Spinner size={20} color="currentColor" /> : 'Generate'}
+                {isGenerating ? (
+                  <Spinner
+                    size={20}
+                    color="currentColor"
+                  />
+                ) : (
+                  'Generate'
+                )}
               </Button>
             </div>
 

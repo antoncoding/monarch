@@ -1,3 +1,4 @@
+// OLD ESLINT CONFIG (for reference during migration)
 module.exports = {
   root: true,
   reportUnusedDisableDirectives: true,

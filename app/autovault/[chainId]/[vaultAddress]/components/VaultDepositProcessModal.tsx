@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiDownload } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { VaultDepositStepType } from '@/hooks/useVaultV2Deposit';
+import type { VaultDepositStepType } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
 
 type VaultDepositProcessModalProps = {
@@ -102,9 +102,7 @@ export function VaultDepositProcessModal({
             <div
               key={step.key}
               className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                status === 'current'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-gray-100 dark:border-gray-700'
+                status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
               }`}
             >
               <div className="mt-0.5">

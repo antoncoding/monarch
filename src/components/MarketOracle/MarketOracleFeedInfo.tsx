@@ -1,4 +1,4 @@
-import { OracleFeed } from '@/utils/types';
+import type { OracleFeed } from '@/utils/types';
 import { FeedEntry } from './FeedEntry';
 
 type MarketOracleFeedInfoProps = {
@@ -27,17 +27,16 @@ export function MarketOracleFeedInfo({
   const hasAnyFeed = baseFeedOne || baseFeedTwo || quoteFeedOne || quoteFeedTwo;
 
   if (!hasAnyFeed) {
-    return (
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400">
-        No feed routes available
-      </div>
-    );
+    return <div className="text-center text-sm text-gray-500 dark:text-gray-400">No feed routes available</div>;
   }
 
   const renderFeed = (feed: OracleFeed | null | undefined) =>
     feed ? (
       <div className="w-full">
-        <FeedEntry feed={feed} chainId={chainId} />
+        <FeedEntry
+          feed={feed}
+          chainId={chainId}
+        />
       </div>
     ) : (
       <EmptyFeedSlot />
@@ -47,9 +46,7 @@ export function MarketOracleFeedInfo({
     <div className="space-y-2">
       {(baseFeedOne || baseFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-            Base:
-          </span>
+          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Base:</span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(baseFeedOne)}</div>
             <div className="w-28">{renderFeed(baseFeedTwo)}</div>
@@ -59,9 +56,7 @@ export function MarketOracleFeedInfo({
 
       {(quoteFeedOne || quoteFeedTwo) && (
         <div className="flex items-center justify-between">
-          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-            Quote:
-          </span>
+          <span className="flex-shrink-0 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">Quote:</span>
           <div className="flex gap-2">
             <div className="w-28">{renderFeed(quoteFeedOne)}</div>
             <div className="w-28">{renderFeed(quoteFeedTwo)}</div>

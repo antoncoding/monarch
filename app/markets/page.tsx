@@ -25,8 +25,7 @@ export default async function MarketPage({ searchParams }: PageProps) {
   // Parse and validate parameters server-side
   const networkParam = params.network;
   const defaultNetwork = (() => {
-    return networkParam &&
-      Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
+    return networkParam && Object.values(SupportedNetworks).includes(Number(networkParam) as SupportedNetworks)
       ? (Number(networkParam) as SupportedNetworks)
       : null;
   })();

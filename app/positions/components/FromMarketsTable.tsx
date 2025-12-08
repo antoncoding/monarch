@@ -7,7 +7,7 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import { convertApyToApr } from '@/utils/rateMath';
-import { MarketPosition } from '@/utils/types';
+import type { MarketPosition } from '@/utils/types';
 
 type PositionWithPendingDelta = MarketPosition & { pendingDelta: number };
 
@@ -20,12 +20,7 @@ type FromMarketsTableProps = {
 
 const PER_PAGE = 5;
 
-export function FromMarketsTable({
-  positions,
-  selectedMarketUniqueKey,
-  onSelectMarket,
-  onSelectMax,
-}: FromMarketsTableProps) {
+export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectMarket, onSelectMax }: FromMarketsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
@@ -77,10 +72,7 @@ export function FromMarketsTable({
                   const rawMarketLiquidity = BigInt(position.market.state.liquidityAssets);
                   const adjustedMarketLiquidity = rawMarketLiquidity + pendingDeltaBigInt;
 
-                  const maxTransferableAmount =
-                    userNetSupply < adjustedMarketLiquidity
-                      ? userNetSupply
-                      : adjustedMarketLiquidity;
+                  const maxTransferableAmount = userNetSupply < adjustedMarketLiquidity ? userNetSupply : adjustedMarketLiquidity;
 
                   const isSelected = position.market.uniqueKey === selectedMarketUniqueKey;
                   const apyPreview = getApyPreview(position);
@@ -112,34 +104,28 @@ export function FromMarketsTable({
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">
                               {formatReadable(
-                                (isAprDisplay
-                                  ? convertApyToApr(position.market.state.supplyApy)
-                                  : position.market.state.supplyApy) * 100
-                              )}%
+                                (isAprDisplay ? convertApyToApr(position.market.state.supplyApy) : position.market.state.supplyApy) * 100,
+                              )}
+                              %
                             </span>
                             {' → '}
                             <span>
-                              {formatReadable(
-                                (isAprDisplay ? convertApyToApr(apyPreview.supplyApy) : apyPreview.supplyApy) * 100
-                              )}%
+                              {formatReadable((isAprDisplay ? convertApyToApr(apyPreview.supplyApy) : apyPreview.supplyApy) * 100)}%
                             </span>
                           </span>
                         ) : (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             {formatReadable(
-                              (isAprDisplay
-                                ? convertApyToApr(position.market.state.supplyApy)
-                                : position.market.state.supplyApy) * 100
-                            )}%
+                              (isAprDisplay ? convertApyToApr(position.market.state.supplyApy) : position.market.state.supplyApy) * 100,
+                            )}
+                            %
                           </span>
                         )}
                       </td>
                       <td className="px-4 py-2 text-right">
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
-                            <span className="line-through opacity-50">
-                              {formatReadable(position.market.state.utilization * 100)}%
-                            </span>
+                            <span className="line-through opacity-50">{formatReadable(position.market.state.utilization * 100)}%</span>
                             {' → '}
                             <span>{formatReadable(apyPreview.utilization * 100)}%</span>
                           </span>
@@ -166,10 +152,7 @@ export function FromMarketsTable({
                             onPress={() => {
                               onSelectMarket(position.market.uniqueKey);
                               if (onSelectMax && maxTransferableAmount > 0n) {
-                                onSelectMax(
-                                  position.market.uniqueKey,
-                                  Number(maxTransferableAmount),
-                                );
+                                onSelectMax(position.market.uniqueKey, Number(maxTransferableAmount));
                               }
                             }}
                             onClick={(e: React.MouseEvent) => {

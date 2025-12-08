@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
 import { createWagmiConfig } from '@/store/createWagmiConfig';
@@ -24,12 +24,13 @@ function WagmiConfigProvider({ children }: Props) {
 
   // Only use dynamic config when custom RPCs are explicitly set
   const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs
-    ? createWagmiConfig(projectId, customRpcUrls)
-    : staticWagmiConfig;
+  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : staticWagmiConfig;
 
   return (
-    <WagmiProvider config={wagmiConfig} reconnectOnMount>
+    <WagmiProvider
+      config={wagmiConfig}
+      reconnectOnMount
+    >
       <RainbowKitProvider
         theme={{
           lightMode: lightTheme({

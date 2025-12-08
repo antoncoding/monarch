@@ -15,11 +15,7 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
     <ConnectButton.Custom>
       {({ account, chain, openConnectModal, authenticationStatus, mounted }) => {
         const ready = mounted && authenticationStatus !== 'loading';
-        const connected =
-          ready &&
-          account &&
-          chain &&
-          (!authenticationStatus || authenticationStatus === 'authenticated');
+        const connected = ready && account && chain && (!authenticationStatus || authenticationStatus === 'authenticated');
 
         const handleClicked = () => {
           setRedirectPath(onConnectPath);
@@ -41,7 +37,11 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
             {(() => {
               if (!connected) {
                 return (
-                  <Button onPress={handleClicked} type="button" variant="cta">
+                  <Button
+                    onPress={handleClicked}
+                    type="button"
+                    variant="cta"
+                  >
                     Connect
                   </Button>
                 );

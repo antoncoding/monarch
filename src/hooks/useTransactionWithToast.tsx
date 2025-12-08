@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
 import { getExplorerTxURL } from '../utils/external';
-import { SupportedNetworks } from '../utils/networks';
+import type { SupportedNetworks } from '../utils/networks';
 
 type UseTransactionWithToastProps = {
   toastId: string;
@@ -27,12 +27,7 @@ export function useTransactionWithToast({
   successDescription,
   onSuccess,
 }: UseTransactionWithToastProps) {
-  const {
-    data: hash,
-    sendTransaction,
-    error: txError,
-    sendTransactionAsync,
-  } = useSendTransaction();
+  const { data: hash, sendTransaction, error: txError, sendTransactionAsync } = useSendTransaction();
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
@@ -52,7 +47,11 @@ export function useTransactionWithToast({
   useEffect(() => {
     if (isConfirming) {
       toast.loading(
-        <TransactionToast title={pendingText} description={pendingDescription} hash={hash} />,
+        <TransactionToast
+          title={pendingText}
+          description={pendingDescription}
+          hash={hash}
+        />,
         {
           toastId,
           onClick,
@@ -97,18 +96,7 @@ export function useTransactionWithToast({
         closeButton: true,
       });
     }
-  }, [
-    hash,
-    isConfirmed,
-    isError,
-    txError,
-    successText,
-    successDescription,
-    errorText,
-    toastId,
-    onClick,
-    onSuccess,
-  ]);
+  }, [hash, isConfirmed, isError, txError, successText, successDescription, errorText, toastId, onClick, onSuccess]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }

@@ -25,14 +25,13 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
         const isCurrent = index === currentIndex;
 
         return (
-          <div key={step.id} className="flex items-center">
+          <div
+            key={step.id}
+            className="flex items-center"
+          >
             <div
               className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${
-                isCurrent
-                  ? 'bg-primary'
-                  : isPast
-                  ? 'bg-primary bg-opacity-50'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                isCurrent ? 'bg-primary' : isPast ? 'bg-primary bg-opacity-50' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             />
           </div>

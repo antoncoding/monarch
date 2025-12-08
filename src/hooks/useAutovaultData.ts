@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Address } from 'viem';
-import { MorphoChainlinkOracleData } from '@/utils/types';
+import type { Address } from 'viem';
+import type { MorphoChainlinkOracleData } from '@/utils/types';
 
 export type VaultAllocation = {
   marketId: string;
@@ -110,9 +110,7 @@ export function useAutovaultData(account?: Address): UseAutovaultDataResult {
       const mockData: AutovaultData[] = [];
 
       // Filter to only include vaults owned by the connected address
-      const ownedVaults = mockData.filter(
-        (vault) => vault.owner.toLowerCase() === account.toLowerCase(),
-      );
+      const ownedVaults = mockData.filter((vault) => vault.owner.toLowerCase() === account.toLowerCase());
 
       setAutovaults(ownedVaults);
     } catch (err) {

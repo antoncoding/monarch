@@ -2,7 +2,7 @@ import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { GearIcon } from '@radix-ui/react-icons';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { AgentIcon } from '@/components/AgentIcon';
 import { Spinner } from '@/components/common/Spinner';
 import { TooltipContent } from '@/components/TooltipContent';
@@ -35,7 +35,10 @@ export function VaultAllocatorCard({
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
         {isOwner && (
-          <GearIcon className="h-4 w-4 cursor-pointer text-secondary hover:text-primary" onClick={onManageAgents} />
+          <GearIcon
+            className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
+            onClick={onManageAgents}
+          />
         )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">

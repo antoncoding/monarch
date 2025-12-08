@@ -1,24 +1,15 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
-import { MarketVolumes } from '@/utils/types';
-import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
+import type { MarketVolumes } from '@/utils/types';
+import type { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type VolumeChartProps = {
   historicalData: MarketVolumes | undefined;
@@ -52,20 +43,23 @@ function VolumeChart({
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
     if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 24 * 60 * 60) {
-      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     }
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   const getVolumeChartData = () => {
     if (!historicalData) return [];
 
-    const supplyData =
-      volumeView === 'USD' ? historicalData.supplyAssetsUsd : historicalData.supplyAssets;
-    const borrowData =
-      volumeView === 'USD' ? historicalData.borrowAssetsUsd : historicalData.borrowAssets;
-    const liquidityData =
-      volumeView === 'USD' ? historicalData.liquidityAssetsUsd : historicalData.liquidityAssets;
+    const supplyData = volumeView === 'USD' ? historicalData.supplyAssetsUsd : historicalData.supplyAssets;
+    const borrowData = volumeView === 'USD' ? historicalData.borrowAssetsUsd : historicalData.borrowAssets;
+    const liquidityData = volumeView === 'USD' ? historicalData.liquidityAssetsUsd : historicalData.liquidityAssets;
 
     // Process all data in a single loop
     return supplyData
@@ -75,18 +69,11 @@ function VolumeChart({
         const liquidityPoint: TimeseriesDataPoint | undefined = liquidityData[index];
 
         // Convert values based on view type
-        const supplyValue =
-          volumeView === 'USD'
-            ? point.y
-            : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals));
+        const supplyValue = volumeView === 'USD' ? point.y : Number(formatUnits(BigInt(point.y), market.loanAsset.decimals));
         const borrowValue =
-          volumeView === 'USD'
-            ? borrowPoint?.y || 0
-            : Number(formatUnits(BigInt(borrowPoint?.y || 0), market.loanAsset.decimals));
+          volumeView === 'USD' ? borrowPoint?.y || 0 : Number(formatUnits(BigInt(borrowPoint?.y || 0), market.loanAsset.decimals));
         const liquidityValue =
-          volumeView === 'USD'
-            ? liquidityPoint?.y || 0
-            : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
+          volumeView === 'USD' ? liquidityPoint?.y || 0 : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
 
         // Check if any timestamps has USD value exceeds 100B
         if (historicalData.supplyAssetsUsd[index].y >= 100_000_000_000) {
@@ -105,26 +92,16 @@ function VolumeChart({
 
   const formatValue = (value: number) => {
     const formattedValue = formatReadable(value);
-    return volumeView === 'USD'
-      ? `$${formattedValue}`
-      : `${formattedValue} ${market.loanAsset.symbol}`;
+    return volumeView === 'USD' ? `$${formattedValue}` : `${formattedValue} ${market.loanAsset.symbol}`;
   };
 
   const getCurrentVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data =
-      volumeView === 'USD'
-        ? historicalData?.[`${type}AssetsUsd`]
-        : historicalData?.[`${type}Assets`];
+    const data = volumeView === 'USD' ? historicalData?.[`${type}AssetsUsd`] : historicalData?.[`${type}Assets`];
     if (!data || data.length === 0) return { current: 0, netChange: 0, netChangePercentage: 0 };
 
     const current =
-      volumeView === 'USD'
-        ? data[data.length - 1].y
-        : Number(formatUnits(BigInt(data[data.length - 1].y), market.loanAsset.decimals));
-    const start =
-      volumeView === 'USD'
-        ? data[0].y
-        : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
+      volumeView === 'USD' ? data[data.length - 1].y : Number(formatUnits(BigInt(data[data.length - 1].y), market.loanAsset.decimals));
+    const start = volumeView === 'USD' ? data[0].y : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
     const netChange = current - start;
     const netChangePercentage = start !== 0 ? (netChange / start) * 100 : 0;
 
@@ -132,17 +109,11 @@ function VolumeChart({
   };
 
   const getAverageVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data =
-      volumeView === 'USD'
-        ? historicalData?.[`${type}AssetsUsd`]
-        : historicalData?.[`${type}Assets`];
+    const data = volumeView === 'USD' ? historicalData?.[`${type}AssetsUsd`] : historicalData?.[`${type}Assets`];
     if (!data || data.length === 0) return 0;
     const sum = data.reduce(
       (acc: number, point: TimeseriesDataPoint) =>
-        acc +
-        Number(
-          volumeView === 'USD' ? point.y : formatUnits(BigInt(point.y), market.loanAsset.decimals),
-        ),
+        acc + Number(volumeView === 'USD' ? point.y : formatUnits(BigInt(point.y), market.loanAsset.decimals)),
       0,
     );
     return sum / data.length;
@@ -194,10 +165,20 @@ function VolumeChart({
                 <Spinner size={30} />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={400} id="volume-chart">
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+                id="volume-chart"
+              >
                 <AreaChart data={getVolumeChartData()}>
                   <defs>
-                    <linearGradient id="volumeChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-supplyGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.supply.gradient.start}
@@ -209,7 +190,13 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="volumeChart-borrowGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-borrowGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.borrow.gradient.start}
@@ -221,7 +208,13 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="volumeChart-liquidityGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-liquidityGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.apyAtTarget.gradient.start}
@@ -235,8 +228,14 @@ function VolumeChart({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" tickFormatter={formatTime} />
-                  <YAxis tickFormatter={formatYAxis} domain={['auto', 'auto']} />
+                  <XAxis
+                    dataKey="x"
+                    tickFormatter={formatTime}
+                  />
+                  <YAxis
+                    tickFormatter={formatYAxis}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number, name: string) => [formatValue(value), name]}
@@ -255,9 +254,7 @@ function VolumeChart({
                     formatter={(value, entry) => (
                       <span
                         style={{
-                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
-                            ? undefined
-                            : '#999',
+                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? undefined : '#999',
                         }}
                       >
                         {value}
@@ -305,17 +302,14 @@ function VolumeChart({
                 {['supply', 'borrow', 'liquidity'].map((type) => {
                   const stats = getCurrentVolumeStats(type as 'supply' | 'borrow' | 'liquidity');
                   return (
-                    <div key={type} className="flex items-center justify-between">
+                    <div
+                      key={type}
+                      className="flex items-center justify-between"
+                    >
                       <span className="capitalize">{type}:</span>
                       <span className="font-zen text-sm">
                         {formatValue(stats.current)}
-                        <span
-                          className={
-                            stats.netChangePercentage > 0
-                              ? 'ml-2 text-green-500'
-                              : 'ml-2 text-red-500'
-                          }
-                        >
+                        <span className={stats.netChangePercentage > 0 ? 'ml-2 text-green-500' : 'ml-2 text-red-500'}>
                           ({stats.netChangePercentage > 0 ? '+' : ''}
                           {stats.netChangePercentage.toFixed(2)}%)
                         </span>
@@ -327,8 +321,7 @@ function VolumeChart({
 
               <div>
                 <h3 className="mb-1 text-lg font-semibold">
-                  Historical Averages{' '}
-                  <span className="font-normal text-gray-500">({selectedTimeframe})</span>
+                  Historical Averages <span className="font-normal text-gray-500">({selectedTimeframe})</span>
                 </h3>
                 {isLoading ? (
                   <div className="flex min-h-48 justify-center text-primary">
@@ -337,12 +330,13 @@ function VolumeChart({
                 ) : (
                   <>
                     {['supply', 'borrow', 'liquidity'].map((type) => (
-                      <div key={type} className="flex items-center justify-between">
+                      <div
+                        key={type}
+                        className="flex items-center justify-between"
+                      >
                         <span className="capitalize">{type}:</span>
                         <span className="font-zen text-sm">
-                          {formatValue(
-                            getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'),
-                          )}
+                          {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
                         </span>
                       </div>
                     ))}

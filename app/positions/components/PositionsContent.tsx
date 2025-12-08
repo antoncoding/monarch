@@ -7,7 +7,7 @@ import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
@@ -16,8 +16,8 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
-import useUserPositionsSummaryData, { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
-import { MarketPosition } from '@/utils/types';
+import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import type { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './onboarding/OnboardingModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -79,17 +79,33 @@ export default function Positions() {
           <h1 className="font-zen">Portfolio</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
-          <AccountIdentity address={account as Address} variant="full" showAddress />
+          <AccountIdentity
+            address={account as Address}
+            variant="full"
+            showAddress
+          />
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
-              <Button size="md" className="font-zen text-secondary">
-                <FaHistory size={14} className="mr-2" />
+              <Button
+                size="md"
+                className="font-zen text-secondary"
+              >
+                <FaHistory
+                  size={14}
+                  className="mr-2"
+                />
                 History
               </Button>
             </Link>
             <Link href={`/positions/report/${account}`}>
-              <Button size="md" className="font-zen text-secondary">
-                <TbReport size={15} className="mr-2" />
+              <Button
+                size="md"
+                className="font-zen text-secondary"
+              >
+                <TbReport
+                  size={15}
+                  className="mr-2"
+                />
                 Report
               </Button>
             </Link>
@@ -100,7 +116,10 @@ export default function Positions() {
                 className="font-zen"
                 onPress={() => setShowOnboardingModal(true)}
               >
-                <FaPlus size={14} className="mr-2" />
+                <FaPlus
+                  size={14}
+                  className="mr-2"
+                />
                 New Position
               </Button>
             )}
@@ -134,7 +153,10 @@ export default function Positions() {
         />
 
         {loading ? (
-          <LoadingScreen message={loadingMessage} className="mt-10" />
+          <LoadingScreen
+            message={loadingMessage}
+            className="mt-10"
+          />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
@@ -149,7 +171,10 @@ export default function Positions() {
               </Button>
             </div>
             <div className="flex justify-center">
-              <EmptyScreen message="No open supplies. Start lending now!" className="mt-2" />
+              <EmptyScreen
+                message="No open supplies. Start lending now!"
+                className="mt-2"
+              />
             </div>
           </div>
         ) : (

@@ -1,5 +1,5 @@
-import { useCallback, useState, Dispatch, SetStateAction } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
@@ -178,22 +178,12 @@ export function useVaultV2Deposit({
       setShowProcessModal(false);
 
       return true;
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       setShowProcessModal(false);
       toast.error('Deposit Failed', 'Deposit to vault failed or cancelled');
       return false;
     }
-  }, [
-    account,
-    assetAddress,
-    vaultAddress,
-    depositAmount,
-    sendTransactionAsync,
-    signForBundlers,
-    usePermit2Setting,
-    toast,
-    chainId,
-  ]);
+  }, [account, assetAddress, vaultAddress, depositAmount, sendTransactionAsync, signForBundlers, usePermit2Setting, toast, chainId]);
 
   // Approve and deposit handler
   const approveAndDeposit = useCallback(async () => {
@@ -212,7 +202,7 @@ export function useVaultV2Deposit({
           if (!permit2Authorized) {
             await authorizePermit2();
           }
-          
+
           setCurrentStep('signing');
 
           // Small delay to prevent UI glitches
@@ -265,15 +255,7 @@ export function useVaultV2Deposit({
       console.error('Error in approveAndDeposit:', error);
       setShowProcessModal(false);
     }
-  }, [
-    account,
-    authorizePermit2,
-    executeDepositTransaction,
-    usePermit2Setting,
-    isApproved,
-    approve,
-    toast,
-  ]);
+  }, [account, authorizePermit2, executeDepositTransaction, usePermit2Setting, isApproved, approve, toast]);
 
   // Sign and deposit handler (for when already authorized)
   const signAndDeposit = useCallback(async () => {

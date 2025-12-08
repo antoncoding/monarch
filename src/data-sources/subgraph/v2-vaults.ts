@@ -1,6 +1,6 @@
 import type { VaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
 import { userVaultsV2AddressesQuery } from '@/graphql/morpho-v2-subgraph-queries';
-import { SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
+import { type SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Simplified subgraph response for vault addresses
@@ -33,10 +33,7 @@ export type UserVaultV2 = VaultV2Details & {
  * Fetches only vault addresses owned by a user from the subgraph
  * This is the first step - get addresses, then fetch details from Morpho API
  */
-export const fetchUserVaultV2Addresses = async (
-  owner: string,
-  network: SupportedNetworks,
-): Promise<UserVaultV2Address[]> => {
+export const fetchUserVaultV2Addresses = async (owner: string, network: SupportedNetworks): Promise<UserVaultV2Address[]> => {
   const agentConfig = getAgentConfig(network);
 
   if (!agentConfig?.adapterSubgraphEndpoint) {
@@ -51,11 +48,7 @@ export const fetchUserVaultV2Addresses = async (
       owner: owner.toLowerCase(),
     };
 
-    const response = await subgraphGraphqlFetcher<SubgraphUserVaultsV2Response>(
-      subgraphUrl,
-      userVaultsV2AddressesQuery,
-      variables,
-    );
+    const response = await subgraphGraphqlFetcher<SubgraphUserVaultsV2Response>(subgraphUrl, userVaultsV2AddressesQuery, variables);
 
     if (response.errors) {
       console.error('GraphQL errors:', response.errors);
@@ -77,10 +70,7 @@ export const fetchUserVaultV2Addresses = async (
     console.log(`Fetched ${vaultAddresses.length} V2 vault addresses for owner ${owner} on network ${network}`);
     return vaultAddresses;
   } catch (error) {
-    console.error(
-      `Error fetching V2 vault addresses for owner ${owner} on network ${network}:`,
-      error,
-    );
+    console.error(`Error fetching V2 vault addresses for owner ${owner} on network ${network}:`, error);
     return [];
   }
 };
@@ -88,12 +78,8 @@ export const fetchUserVaultV2Addresses = async (
 /**
  * Fetches vault addresses from all networks that support V2 vaults
  */
-export const fetchUserVaultV2AddressesAllNetworks = async (
-  owner: string,
-): Promise<UserVaultV2Address[]> => {
-  const supportedNetworks = networks
-    .filter(network => isAgentAvailable(network.network))
-    .map(network => network.network);
+export const fetchUserVaultV2AddressesAllNetworks = async (owner: string): Promise<UserVaultV2Address[]> => {
+  const supportedNetworks = networks.filter((network) => isAgentAvailable(network.network)).map((network) => network.network);
 
   const promises = supportedNetworks.map(async (network) => {
     return fetchUserVaultV2Addresses(owner, network);

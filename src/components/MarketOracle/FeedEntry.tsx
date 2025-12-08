@@ -3,14 +3,9 @@ import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
-import { Address } from 'viem';
-import {
-  detectFeedVendor,
-  getTruncatedAssetName,
-  PriceFeedVendors,
-  OracleVendorIcons,
-} from '@/utils/oracle';
-import { OracleFeed } from '@/utils/types';
+import type { Address } from 'viem';
+import { detectFeedVendor, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
@@ -53,28 +48,68 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
     // Use discriminated union for type-safe tooltip selection
     switch (vendor) {
       case PriceFeedVendors.Chainlink:
-        return <ChainlinkFeedTooltip feed={feed} chainlinkData={data} chainId={chainId} />;
+        return (
+          <ChainlinkFeedTooltip
+            feed={feed}
+            chainlinkData={data}
+            chainId={chainId}
+          />
+        );
 
       case PriceFeedVendors.Compound:
-        return <CompoundFeedTooltip feed={feed} compoundData={data} chainId={chainId} />;
+        return (
+          <CompoundFeedTooltip
+            feed={feed}
+            compoundData={data}
+            chainId={chainId}
+          />
+        );
 
       case PriceFeedVendors.Redstone:
-        return <RedstoneFeedTooltip feed={feed} redstoneData={data} chainId={chainId} />;
+        return (
+          <RedstoneFeedTooltip
+            feed={feed}
+            redstoneData={data}
+            chainId={chainId}
+          />
+        );
 
       case PriceFeedVendors.PythNetwork:
       case PriceFeedVendors.Oval:
       case PriceFeedVendors.Lido:
-        return <GeneralFeedTooltip feed={feed} feedData={data} chainId={chainId} />;
+        return (
+          <GeneralFeedTooltip
+            feed={feed}
+            feedData={data}
+            chainId={chainId}
+          />
+        );
 
       case PriceFeedVendors.Unknown:
         // For unknown feeds, check if we have general feed data or fallback to unknown
         if (data) {
-          return <GeneralFeedTooltip feed={feed} feedData={data} chainId={chainId} />;
+          return (
+            <GeneralFeedTooltip
+              feed={feed}
+              feedData={data}
+              chainId={chainId}
+            />
+          );
         }
-        return <UnknownFeedTooltip feed={feed} chainId={chainId} />;
+        return (
+          <UnknownFeedTooltip
+            feed={feed}
+            chainId={chainId}
+          />
+        );
 
       default:
-        return <UnknownFeedTooltip feed={feed} chainId={chainId} />;
+        return (
+          <UnknownFeedTooltip
+            feed={feed}
+            chainId={chainId}
+          />
+        );
     }
   };
 
@@ -89,13 +124,12 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
         {showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">
-              {baseAsset}
-            </span>
-            <IoIosSwap className="flex-shrink-0 text-xs text-gray-500" size={10} />
-            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">
-              {quoteAsset}
-            </span>
+            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>
+            <IoIosSwap
+              className="flex-shrink-0 text-xs text-gray-500"
+              size={10}
+            />
+            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{quoteAsset}</span>
           </div>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-1">
@@ -111,9 +145,18 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
           )}
 
           {(isChainlink || isCompound || isRedstone) && vendorIcon ? (
-            <Image src={vendorIcon} alt="Oracle" width={12} height={12} className="flex-shrink-0" />
+            <Image
+              src={vendorIcon}
+              alt="Oracle"
+              width={12}
+              height={12}
+              className="flex-shrink-0"
+            />
           ) : (
-            <IoHelpCircleOutline size={14} className="flex-shrink-0 text-secondary" />
+            <IoHelpCircleOutline
+              size={14}
+              className="flex-shrink-0 text-secondary"
+            />
           )}
         </div>
       </div>

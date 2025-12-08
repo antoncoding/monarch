@@ -1,4 +1,3 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import { TooltipContent } from '@/components/TooltipContent';
 import { formatReadable } from '@/utils/balance';
@@ -23,11 +22,7 @@ export function MetricPreview({ currentValue, previewValue, label }: MetricPrevi
   const displayValue = hasPreview ? formattedPreview : formattedCurrent;
 
   if (!hasPreview) {
-    return (
-      <span className="inline-block min-w-[60px] whitespace-nowrap text-right text-sm text-foreground">
-        {displayValue}%
-      </span>
-    );
+    return <span className="inline-block min-w-[60px] whitespace-nowrap text-right text-sm text-foreground">{displayValue}%</span>;
   }
 
   return (

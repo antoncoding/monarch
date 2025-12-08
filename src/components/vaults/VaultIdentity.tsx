@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
-import { VaultCurator } from '@/constants/vaults/known_vaults';
+import type { VaultCurator } from '@/constants/vaults/known_vaults';
 import { getVaultURL } from '@/utils/external';
 import { VaultIcon } from './VaultIcon';
 
@@ -52,7 +52,11 @@ export function VaultIdentity({
     if (variant === 'icon') {
       return (
         <div className={`inline-flex items-center ${className}`}>
-          <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+          <VaultIcon
+            curator={curator}
+            width={iconSize}
+            height={iconSize}
+          />
         </div>
       );
     }
@@ -60,7 +64,11 @@ export function VaultIdentity({
     if (variant === 'inline') {
       return (
         <div className={`inline-flex items-center gap-2 ${className}`}>
-          <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+          <VaultIcon
+            curator={curator}
+            width={iconSize}
+            height={iconSize}
+          />
           <div className="flex flex-col leading-tight font-zen">
             <span className="text-sm text-primary">{displayName}</span>
             <span className="text-[11px] text-secondary">{curatorLabel}</span>
@@ -70,10 +78,12 @@ export function VaultIdentity({
     }
 
     return (
-      <div
-        className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}
-      >
-        <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+      <div className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}>
+        <VaultIcon
+          curator={curator}
+          width={iconSize}
+          height={iconSize}
+        />
         <div className="flex flex-col leading-tight">
           <span className="text-primary">{displayName}</span>
           <span className="font-monospace text-[10px]">{formattedAddress}</span>
@@ -102,11 +112,7 @@ export function VaultIdentity({
 
   const resolvedDetail = tooltipDetail ?? (
     <div className="flex flex-col gap-1 text-sm">
-      {showAddressInTooltip && (
-        <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">
-          {address}
-        </span>
-      )}
+      {showAddressInTooltip && <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">{address}</span>}
       <span className="text-secondary">{curatorLabel}</span>
     </div>
   );
@@ -134,7 +140,13 @@ export function VaultIdentity({
       }}
       content={
         <TooltipContent
-          icon={<VaultIcon curator={curator} width={32} height={32} />}
+          icon={
+            <VaultIcon
+              curator={curator}
+              width={32}
+              height={32}
+            />
+          }
           title={tooltipTitle}
           detail={resolvedDetail}
           secondaryDetail={tooltipSecondaryDetail}

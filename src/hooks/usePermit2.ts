@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
-import { Address } from 'abitype';
+import type { Address } from 'abitype';
 import moment from 'moment';
-import { Chain } from 'viem/chains';
+import type { Chain } from 'viem/chains';
 import { useReadContract, useSignTypedData } from 'wagmi';
 
 import permit2Abi from '@/abis/permit2';
@@ -25,14 +25,7 @@ type Props = {
  * @param refetchInterval Interval in milliseconds to refetch the contract data
  * @returns JsonMetadata
  */
-export function usePermit2({
-  user,
-  chainId = 1,
-  token,
-  spender,
-  refetchInterval = 10000,
-  amount,
-}: Props) {
+export function usePermit2({ user, chainId = 1, token, spender, refetchInterval = 10000, amount }: Props) {
   const {
     allowance: allowanceToPermit2,
     approveInfinite: authorizePermit2,
@@ -55,10 +48,7 @@ export function usePermit2({
 
   const { data: signature, signTypedDataAsync } = useSignTypedData({});
 
-  const permit2Authorized = useMemo(
-    () => !!allowanceToPermit2 && allowanceToPermit2 > amount,
-    [allowanceToPermit2, amount],
-  );
+  const permit2Authorized = useMemo(() => !!allowanceToPermit2 && allowanceToPermit2 > amount, [allowanceToPermit2, amount]);
 
   const signForBundlers = useCallback(async () => {
     if (!user || !spender || !token) throw new Error('User, spender, or token not provided');

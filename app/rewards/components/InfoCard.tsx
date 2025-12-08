@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Tooltip } from '@heroui/react';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Badge } from '@/components/common/Badge';
@@ -56,7 +56,11 @@ function BadgeButton({
     return (
       <Tooltip
         content={
-          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
+          <TooltipContent
+            className="max-w-[400px]"
+            title={tooltip.title}
+            detail={tooltip.detail}
+          />
         }
         placement="top"
       >
@@ -83,7 +87,11 @@ function BadgeComponent({
     return (
       <Tooltip
         content={
-          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
+          <TooltipContent
+            className="max-w-[400px]"
+            title={tooltip.title}
+            detail={tooltip.detail}
+          />
         }
         placement="top"
       >
@@ -95,14 +103,7 @@ function BadgeComponent({
   return BadgeElement;
 }
 
-export default function InfoCard({
-  title,
-  children,
-  tooltip,
-  badge,
-  button,
-  className = '',
-}: InfoCardProps) {
+export default function InfoCard({ title, children, tooltip, badge, button, className = '' }: InfoCardProps) {
   return (
     <div className={`bg-surface w-full rounded-sm p-4 shadow-sm ${className}`}>
       <div className="flex items-center justify-between px-2 pb-2 text-sm text-secondary">
@@ -135,7 +136,11 @@ export default function InfoCard({
               tooltip={button.tooltip}
             />
           ) : badge ? (
-            <BadgeComponent text={badge.text} variant={badge.variant} tooltip={badge.tooltip} />
+            <BadgeComponent
+              text={badge.text}
+              variant={badge.variant}
+              tooltip={badge.tooltip}
+            />
           ) : null}
         </div>
       </div>

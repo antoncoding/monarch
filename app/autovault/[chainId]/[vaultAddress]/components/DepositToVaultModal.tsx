@@ -1,7 +1,6 @@
-"use client";
+'use client';
 
-import React from 'react';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
@@ -111,11 +110,7 @@ export function DepositToVaultModal({
                       setError={setInputError}
                       exceedMaxErrMessage="Insufficient Balance"
                     />
-                    {inputError && (
-                      <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
-                        {inputError}
-                      </p>
-                    )}
+                    {inputError && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>}
                   </div>
 
                   {!permit2Authorized || (!usePermit2Setting && !isApproved) ? (
@@ -129,9 +124,7 @@ export function DepositToVaultModal({
                     </Button>
                   ) : (
                     <Button
-                      isDisabled={
-                        !isConnected || depositPending || inputError !== null || !depositAmount
-                      }
+                      isDisabled={!isConnected || depositPending || inputError !== null || !depositAmount}
                       onPress={() => void signAndDeposit()}
                       className="ml-2 min-w-32"
                       variant="cta"

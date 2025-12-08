@@ -3,8 +3,8 @@ import { Switch } from '@heroui/react';
 import { HiOutlineCube } from 'react-icons/hi';
 import { MdOutlineAccountBalance } from 'react-icons/md';
 import { Spinner } from '@/components/common/Spinner';
-import { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
-import { SupportedNetworks } from '@/utils/networks';
+import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
+import type { SupportedNetworks } from '@/utils/networks';
 import { CollateralView } from './allocations/CollateralView';
 import { MarketView } from './allocations/MarketView';
 
@@ -21,11 +21,7 @@ type VaultMarketAllocationsProps = {
 type ViewMode = 'collateral' | 'market';
 
 function ViewIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
-  return isSelected ? (
-    <HiOutlineCube className={className} />
-  ) : (
-    <MdOutlineAccountBalance className={className} />
-  );
+  return isSelected ? <HiOutlineCube className={className} /> : <MdOutlineAccountBalance className={className} />;
 }
 
 export function VaultMarketAllocations({
@@ -80,13 +76,9 @@ export function VaultMarketAllocations({
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex-1">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-lg font-medium">
-              {hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
-            </p>
+            <p className="text-lg font-medium">{hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}</p>
             <div className="flex items-center gap-3">
-              <span className="text-xs text-secondary">
-                {viewMode === 'collateral' ? 'By Collateral' : 'By Market'}
-              </span>
+              <span className="text-xs text-secondary">{viewMode === 'collateral' ? 'By Collateral' : 'By Market'}</span>
               <Switch
                 defaultSelected={viewMode === 'market'}
                 size="sm"
@@ -100,9 +92,7 @@ export function VaultMarketAllocations({
               />
             </div>
           </div>
-          <p className="text-xs text-secondary leading-relaxed">
-            {viewDescription}
-          </p>
+          <p className="text-xs text-secondary leading-relaxed">{viewDescription}</p>
         </div>
       </div>
       {/* Content */}

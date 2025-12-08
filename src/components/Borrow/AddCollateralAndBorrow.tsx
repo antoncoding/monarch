@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
@@ -13,7 +13,7 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
-import { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from '../BorrowProcessModal';
 import { TokenIcon } from '../TokenIcon';
 import { getLTVColor, getLTVProgressColor } from './helpers';
@@ -84,8 +84,7 @@ export function AddCollateralAndBorrow({
       setCurrentLTV(BigInt(0));
     } else {
       // Calculate current LTV from position data using oracle price
-      const currentCollateralValue =
-        (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
+      const currentCollateralValue = (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
 
       if (currentCollateralValue > 0) {
@@ -170,10 +169,7 @@ export function AddCollateralAndBorrow({
                     height={16}
                   />
                   <p className="font-zen text-sm">
-                    {formatBalance(
-                      BigInt(currentPosition?.state.collateral ?? 0),
-                      market.collateralAsset.decimals,
-                    )}{' '}
+                    {formatBalance(BigInt(currentPosition?.state.collateral ?? 0), market.collateralAsset.decimals)}{' '}
                     {market.collateralAsset.symbol}
                   </p>
                 </div>
@@ -189,11 +185,7 @@ export function AddCollateralAndBorrow({
                     height={16}
                   />
                   <p className="font-zen text-sm">
-                    {formatBalance(
-                      BigInt(currentPosition?.state.borrowAssets ?? 0),
-                      market.loanAsset.decimals,
-                    )}{' '}
-                    {market.loanAsset.symbol}
+                    {formatBalance(BigInt(currentPosition?.state.borrowAssets ?? 0), market.loanAsset.decimals)} {market.loanAsset.symbol}
                   </p>
                 </div>
               </div>
@@ -206,17 +198,11 @@ export function AddCollateralAndBorrow({
                 <div className="font-zen text-sm">
                   {borrowAmount > 0n || collateralAmount > 0n ? (
                     <>
-                      <span className="text-gray-400 line-through">
-                        {formatBalance(currentLTV, 16).toPrecision(4)}%
-                      </span>
-                      <span className={`ml-2 ${getLTVColor(newLTV, lltv)}`}>
-                        {formatBalance(newLTV, 16).toPrecision(4)}%
-                      </span>
+                      <span className="text-gray-400 line-through">{formatBalance(currentLTV, 16).toPrecision(4)}%</span>
+                      <span className={`ml-2 ${getLTVColor(newLTV, lltv)}`}>{formatBalance(newLTV, 16).toPrecision(4)}%</span>
                     </>
                   ) : (
-                    <span className={getLTVColor(currentLTV, lltv)}>
-                      {formatBalance(currentLTV, 16).toPrecision(4)}%
-                    </span>
+                    <span className={getLTVColor(currentLTV, lltv)}>{formatBalance(currentLTV, 16).toPrecision(4)}%</span>
                   )}
                 </div>
               </div>
@@ -230,24 +216,26 @@ export function AddCollateralAndBorrow({
                   style={{
                     width: `${Math.min(
                       100,
-                      (Number(borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) /
-                        Number(lltv)) *
-                        100,
+                      (Number(borrowAmount > 0 || collateralAmount > 0 ? newLTV : currentLTV) / Number(lltv)) * 100,
                     )}%`,
                   }}
                 />
               </div>
               <div className="mt-2 flex justify-end">
-                <p className="font-zen text-xs text-secondary">
-                  Max LTV: {formatBalance(lltv, 16)}%
-                </p>
+                <p className="font-zen text-xs text-secondary">Max LTV: {formatBalance(lltv, 16)}%</p>
               </div>
             </div>
           </div>
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">
-            <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed showRewards borrowDelta={borrowAmount} />
+            <MarketDetailsBlock
+              market={market}
+              mode="borrow"
+              defaultCollapsed
+              showRewards
+              borrowDelta={borrowAmount}
+            />
           </div>
 
           {isConnected && (
@@ -260,10 +248,7 @@ export function AddCollateralAndBorrow({
                     Balance:{' '}
                     {useEth
                       ? formatBalance(ethBalance ? ethBalance : '0', 18)
-                      : formatBalance(
-                          collateralTokenBalance ? collateralTokenBalance : '0',
-                          market.collateralAsset.decimals,
-                        )}{' '}
+                      : formatBalance(collateralTokenBalance ? collateralTokenBalance : '0', market.collateralAsset.decimals)}{' '}
                     {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
                   </p>
                 </div>
@@ -293,9 +278,7 @@ export function AddCollateralAndBorrow({
                       exceedMaxErrMessage="Insufficient Balance"
                       value={collateralAmount}
                     />
-                    {collateralInputError && (
-                      <p className="p-1 text-sm text-red-500">{collateralInputError}</p>
-                    )}
+                    {collateralInputError && <p className="p-1 text-sm text-red-500">{collateralInputError}</p>}
                   </div>
                 </div>
               </div>
@@ -305,10 +288,7 @@ export function AddCollateralAndBorrow({
                 <div className="flex items-center justify-between">
                   <p className="font text-sm">Borrow </p>
                   <p className="font text-xs opacity-50">
-                    Available:{' '}
-                    {formatReadable(
-                      formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                    )}{' '}
+                    Available: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}{' '}
                     {market.loanAsset.symbol}
                   </p>
                 </div>
@@ -322,9 +302,7 @@ export function AddCollateralAndBorrow({
                       exceedMaxErrMessage="Exceeds available liquidity"
                       value={borrowAmount}
                     />
-                    {borrowInputError && (
-                      <p className="p-1 text-sm text-red-500">{borrowInputError}</p>
-                    )}
+                    {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
                   </div>
                 </div>
               </div>
@@ -339,7 +317,11 @@ export function AddCollateralAndBorrow({
                   <AccountConnect />
                 </div>
               ) : needSwitchChain ? (
-                <Button onPress={switchToNetwork} className="min-w-32" variant="solid">
+                <Button
+                  onPress={switchToNetwork}
+                  className="min-w-32"
+                  variant="solid"
+                >
                   Switch Chain
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
@@ -380,9 +362,19 @@ export function AddCollateralAndBorrow({
             </div>
             {(borrowAmount > 0n || collateralAmount > 0n) && (
               <>
-                {newLTV >= lltv && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="error" />}
+                {newLTV >= lltv && (
+                  <LTVWarning
+                    maxLTV={lltv}
+                    currentLTV={newLTV}
+                    type="error"
+                  />
+                )}
                 {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && (
-                  <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="danger" />
+                  <LTVWarning
+                    maxLTV={lltv}
+                    currentLTV={newLTV}
+                    type="danger"
+                  />
                 )}
               </>
             )}

@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { extendVariants, Button as NextUIButton } from '@heroui/react';
 
 export const Button = extendVariants(NextUIButton, {
@@ -8,8 +8,7 @@ export const Button = extendVariants(NextUIButton, {
       default: 'bg-surface hover:bg-surface/80 transition-all duration-200 ease-in-out', // Default surface-colored button
       cta: 'bg-monarch-orange text-white hover:bg-monarch-orange/80 transition-all duration-200 ease-in-out', // Primary CTA with orange background
       secondary: 'bg-hovered text-foreground ',
-      interactive:
-        'bg-hovered text-foreground hover:bg-primary hover:text-white transition-all duration-200 ease-in-out', // Starts subtle, strong hover effect
+      interactive: 'bg-hovered text-foreground hover:bg-primary hover:text-white transition-all duration-200 ease-in-out', // Starts subtle, strong hover effect
       ghost: 'bg-transparent hover:bg-surface/5 transition-all duration-200 ease-in-out', // Most subtle variant
       subtle: 'bg-surface shadow-sm hover:shadow text-foreground hover:bg-default-100 transition-all duration-200 ease-in-out', // Subtle button with shadow, background and shadow change on hover
     },

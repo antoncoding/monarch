@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/common';
 import { RateFormatted } from '@/components/common/RateFormatted';
@@ -7,7 +6,7 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/compo
 import { MarketIndicators } from '@/components/MarketIndicators';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { MarketPosition, GroupedPosition } from '@/utils/types';
+import type { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -33,15 +32,18 @@ function MarketRow({
   setSelectedPosition: (position: MarketPosition) => void;
   rateLabel: string;
 }) {
-
-  const suppliedAmount = Number(
-    formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
-  );
+  const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
 
   return (
-    <tr key={position.market.uniqueKey} className="gap-1">
-      <td data-label="Market" className="text-center">
+    <tr
+      key={position.market.uniqueKey}
+      className="gap-1"
+    >
+      <td
+        data-label="Market"
+        className="text-center"
+      >
         <div className="flex items-center justify-center">
           <MarketIdBadge
             marketId={position.market.uniqueKey}
@@ -50,7 +52,10 @@ function MarketRow({
           />
         </div>
       </td>
-      <td data-label="Market Detail" className="align-middle p-4">
+      <td
+        data-label="Market Detail"
+        className="align-middle p-4"
+      >
         <MarketIdentity
           market={position.market}
           mode={MarketIdentityMode.Minimum}
@@ -59,13 +64,22 @@ function MarketRow({
           wide
         />
       </td>
-      <td data-label={rateLabel} className="text-center">
+      <td
+        data-label={rateLabel}
+        className="text-center"
+      >
         <RateFormatted value={position.market.state.supplyApy} />
       </td>
-      <td data-label="Supplied" className="text-center">
+      <td
+        data-label="Supplied"
+        className="text-center"
+      >
         {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
       </td>
-      <td data-label="% of Portfolio" className="text-center">
+      <td
+        data-label="% of Portfolio"
+        className="text-center"
+      >
         <div className="flex items-center">
           <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
             <div
@@ -76,10 +90,19 @@ function MarketRow({
           <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
       </td>
-      <td data-label="Indicators" className="text-center">
-        <MarketIndicators market={position.market} showRisk />
+      <td
+        data-label="Indicators"
+        className="text-center"
+      >
+        <MarketIndicators
+          market={position.market}
+          showRisk
+        />
       </td>
-      <td data-label="Actions" className="justify-center px-4 py-3">
+      <td
+        data-label="Actions"
+        className="justify-center px-4 py-3"
+      >
         <div className="flex items-center justify-center gap-2">
           <Button
             size="sm"
@@ -127,11 +150,7 @@ export function SuppliedMarketsDetail({
   // Filter based on the showEmptyPositions prop
   const filteredMarkets = showEmptyPositions
     ? sortedMarkets
-    : sortedMarkets.filter(
-        (position) =>
-          Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals)) >
-          0,
-      );
+    : sortedMarkets.filter((position) => Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals)) > 0);
 
   const totalSupply = groupedPosition.totalSupply;
 
@@ -156,10 +175,7 @@ export function SuppliedMarketsDetail({
                     className="h-full opacity-70"
                     style={{
                       width: `${collateral.percentage}%`,
-                      backgroundColor:
-                        collateral.symbol === 'Others'
-                          ? '#A0AEC0'
-                          : getCollateralColor(collateral.address),
+                      backgroundColor: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
                     }}
                     title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
                   />
@@ -167,13 +183,13 @@ export function SuppliedMarketsDetail({
               </div>
               <div className="mt-1 flex flex-wrap justify-center text-xs">
                 {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                  <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
+                  <span
+                    key={`${collateral.address}-${colIndex}`}
+                    className="mb-1 mr-2 opacity-70"
+                  >
                     <span
                       style={{
-                        color:
-                          collateral.symbol === 'Others'
-                            ? '#A0AEC0'
-                            : getCollateralColor(collateral.address),
+                        color: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
                       }}
                     >
                       ■

@@ -29,7 +29,12 @@
       "Bash(sips:*)",
       "Bash(awk:*)",
       "Bash(pnpm dlx:*)",
-      "Bash(oracle ask:*)"
+      "Bash(oracle ask:*)",
+      "Bash(pnpm list:*)",
+      "Bash(pnpm why:*)",
+      "Bash(npx biome:*)",
+      "Bash(timeout 60 npx biome check:*)",
+      "WebFetch(domain:biomejs.dev)"
     ],
     "deny": []
   }

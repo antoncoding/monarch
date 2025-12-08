@@ -1,11 +1,10 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLiquidationsContext } from '@/contexts/LiquidationsContext';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { RewardsIndicator } from 'app/markets/components/RewardsIndicator';
 
 const ICON_SIZE = 14;
@@ -17,12 +16,7 @@ type MarketIndicatorsProps = {
   hasUserPosition?: boolean;
 };
 
-export function MarketIndicators({
-  market,
-  showRisk = false,
-  isStared = false,
-  hasUserPosition = false,
-}: MarketIndicatorsProps) {
+export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
   // Check liquidation protection status on-demand (like Merkl rewards pattern)
   const { isProtectedByLiquidationBots } = useLiquidationsContext();
   const hasLiquidationProtection = isProtectedByLiquidationBots(market.uniqueKey);
@@ -44,13 +38,21 @@ export function MarketIndicators({
           }}
           content={
             <TooltipContent
-              icon={<FaStar size={ICON_SIZE} className="text-yellow-500" />}
+              icon={
+                <FaStar
+                  size={ICON_SIZE}
+                  className="text-yellow-500"
+                />
+              }
               detail="You have starred this market"
             />
           }
         >
           <div className="flex-shrink-0">
-            <FaStar size={ICON_SIZE} className="text-yellow-500" />
+            <FaStar
+              size={ICON_SIZE}
+              className="text-yellow-500"
+            />
           </div>
         </Tooltip>
       )}
@@ -83,13 +85,21 @@ export function MarketIndicators({
           }}
           content={
             <TooltipContent
-              icon={<FaShieldAlt size={ICON_SIZE} className="text-primary text-opacity-50" />}
+              icon={
+                <FaShieldAlt
+                  size={ICON_SIZE}
+                  className="text-primary text-opacity-50"
+                />
+              }
               detail="This market has on-chain liquidation events performed by liquidation bots"
             />
           }
         >
           <div className="flex-shrink-0">
-            <FaShieldAlt size={ICON_SIZE} className="text-primary text-opacity-50" />
+            <FaShieldAlt
+              size={ICON_SIZE}
+              className="text-primary text-opacity-50"
+            />
           </div>
         </Tooltip>
       )}

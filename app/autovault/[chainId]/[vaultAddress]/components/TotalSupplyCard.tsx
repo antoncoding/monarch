@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { TbTrendingUp } from 'react-icons/tb';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance } from '@/utils/balance';
 import { DepositToVaultModal } from './DepositToVaultModal';
@@ -48,8 +48,7 @@ export function TotalSupplyCard({
   }, [tokenDecimals, tokenSymbol, totalAssets]);
 
   const earnings24hLabel = useMemo(() => {
-    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined)
-      return null;
+    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined) return null;
 
     try {
       const earningsValue = formatBalance(vault24hEarnings, tokenDecimals);
@@ -93,7 +92,14 @@ export function TotalSupplyCard({
         <CardBody className="flex items-center justify-center py-3">
           <div className="flex items-center gap-2">
             <span className="text-lg text-primary">{totalAssetsLabel}</span>
-            {assetAddress && <TokenIcon address={assetAddress} chainId={chainId} width={20} height={20} />}
+            {assetAddress && (
+              <TokenIcon
+                address={assetAddress}
+                chainId={chainId}
+                width={20}
+                height={20}
+              />
+            )}
             {earnings24hLabel && (
               <Tooltip content="Total yield earned in the last 24 hours">
                 <div className="flex items-center gap-1 text-xs text-green-500">

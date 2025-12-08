@@ -28,9 +28,7 @@ export default function Input({
   error,
 }: InputProps): JSX.Element {
   // State for the input text
-  const [inputAmount, setInputAmount] = useState<string>(
-    value ? formatBalance(value, decimals).toString() : '0',
-  );
+  const [inputAmount, setInputAmount] = useState<string>(value ? formatBalance(value, decimals).toString() : '0');
   // Track if max check is bypassed
   const [bypassMax, setBypassMax] = useState<boolean>(false);
 
@@ -117,7 +115,7 @@ export default function Input({
           <Button
             size="xs"
             onClick={handleDismissError}
-            variant='secondary'
+            variant="secondary"
           >
             Ignore
           </Button>

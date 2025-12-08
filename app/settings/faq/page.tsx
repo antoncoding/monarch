@@ -43,7 +43,10 @@ function FAQPage() {
       <h1 className="mb-8 text-3xl font-bold">Frequently Asked Questions</h1>
       <div className="space-y-6">
         {faqs.map((faq, index) => (
-          <div key={index} className="bg-surface rounded p-6">
+          <div
+            key={index}
+            className="bg-surface rounded p-6"
+          >
             <h3 className="mb-2 text-lg font-semibold">{faq.question}</h3>
             <p className="text-secondary">{faq.answer}</p>
           </div>

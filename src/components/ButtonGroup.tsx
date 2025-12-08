@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import clsx from 'clsx';
 
 export type ButtonOption = {
@@ -24,17 +24,10 @@ const sizeClasses = {
 };
 
 const variantStyles = {
-  default: (isSelected: boolean) => [
-    isSelected ? 'bg-hovered hover:bg-surface z-10' : 'bg-surface hover:bg-hovered',
-    'shadow-sm',
-  ],
+  default: (isSelected: boolean) => [isSelected ? 'bg-hovered hover:bg-surface z-10' : 'bg-surface hover:bg-hovered', 'shadow-sm'],
   primary: (isSelected: boolean) => [
     isSelected
-      ? [
-          'z-10 bg-primary hover:bg-primary/90',
-          'shadow-[0_2px_8px_-2px] shadow-primary/30',
-          'border-primary/80',
-        ]
+      ? ['z-10 bg-primary hover:bg-primary/90', 'shadow-[0_2px_8px_-2px] shadow-primary/30', 'border-primary/80']
       : [
           'bg-surface hover:bg-surface/90',
           'hover:shadow-[0_2px_8px_-2px] hover:shadow-primary/20',
@@ -48,15 +41,13 @@ const variantStyles = {
   ],
 };
 
-export default function ButtonGroup({
-  options,
-  value,
-  onChange,
-  size = 'md',
-  variant = 'default',
-}: ButtonGroupProps) {
+export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default' }: ButtonGroupProps) {
   return (
-    <div className="inline-flex rounded shadow-sm" role="group" aria-label="Button group">
+    <div
+      className="inline-flex rounded shadow-sm"
+      role="group"
+      aria-label="Button group"
+    >
       {options.map((option, index) => {
         const isFirst = index === 0;
         const isLast = index === options.length - 1;
@@ -77,9 +68,7 @@ export default function ButtonGroup({
               isLast ? 'rounded-r' : 'rounded-none',
 
               // Variant & State styles
-              variant === 'default'
-                ? variantStyles.default(isSelected)
-                : variantStyles.primary(isSelected),
+              variant === 'default' ? variantStyles.default(isSelected) : variantStyles.primary(isSelected),
 
               // Hover & Focus styles
               'hover:relative hover:z-20',

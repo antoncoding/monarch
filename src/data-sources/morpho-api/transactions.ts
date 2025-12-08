@@ -1,5 +1,5 @@
 import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
-import { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
+import type { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
 import { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
@@ -11,9 +11,7 @@ type MorphoTransactionsApiResponse = {
   // errors are handled by the fetcher
 };
 
-export const fetchMorphoTransactions = async (
-  filters: TransactionFilters,
-): Promise<TransactionResponse> => {
+export const fetchMorphoTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
   // Conditionally construct the 'where' object
   const whereClause: Record<string, any> = {
     userAddress_in: filters.userAddress, // Assuming this is always required
@@ -39,14 +37,11 @@ export const fetchMorphoTransactions = async (
   }
 
   try {
-    const result = await morphoGraphqlFetcher<MorphoTransactionsApiResponse>(
-      userTransactionsQuery,
-      {
-        where: whereClause,
-        first: filters.first ?? 1000,
-        skip: filters.skip ?? 0,
-      },
-    );
+    const result = await morphoGraphqlFetcher<MorphoTransactionsApiResponse>(userTransactionsQuery, {
+      where: whereClause,
+      first: filters.first ?? 1000,
+      skip: filters.skip ?? 0,
+    });
 
     const transactions = result.data?.transactions;
     if (!transactions) {

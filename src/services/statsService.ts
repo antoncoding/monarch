@@ -3,10 +3,10 @@ import { transactionsByTimeRangeQuery } from '@/graphql/monarch-stats-queries';
 import { SupportedNetworks } from '@/utils/networks';
 import { processTransactionData } from '@/utils/statsDataProcessing';
 import {
-  TimeFrame,
-  Transaction,
-  AssetVolumeData,
-  PlatformStats,
+  type TimeFrame,
+  type Transaction,
+  type AssetVolumeData,
+  type PlatformStats,
   getTimeRange,
   getPreviousTimeRange,
   calculatePlatformStats,
@@ -28,11 +28,7 @@ export const fetchTransactionsByTimeRange = async (
   endpoint: string,
 ): Promise<Transaction[]> => {
   try {
-    console.log(
-      `Fetching transactions between ${new Date(startTime * 1000).toISOString()} and ${new Date(
-        endTime * 1000,
-      ).toISOString()}`,
-    );
+    console.log(`Fetching transactions between ${new Date(startTime * 1000).toISOString()} and ${new Date(endTime * 1000).toISOString()}`);
     console.log(`Using API endpoint: ${endpoint}`);
 
     const batchSize = 1000;
@@ -89,9 +85,7 @@ export const fetchTransactionsByTimeRange = async (
     console.log(`Found a total of ${allTransactions.length} transactions after pagination`);
 
     if (allTransactions.length === 0) {
-      console.warn(
-        'No transactions found in the specified time range. Check the API endpoint and time parameters.',
-      );
+      console.warn('No transactions found in the specified time range. Check the API endpoint and time parameters.');
     } else {
       // Log some details about the first transaction to verify structure
       const sampleTx = allTransactions[0];
@@ -115,29 +109,15 @@ export const fetchTransactionsByTimeRange = async (
 /**
  * Fetch and calculate platform-wide statistics
  */
-export const fetchPlatformStats = async (
-  timeframe: TimeFrame,
-  networkId: SupportedNetworks,
-  endpoint: string,
-): Promise<PlatformStats> => {
+export const fetchPlatformStats = async (timeframe: TimeFrame, networkId: SupportedNetworks, endpoint: string): Promise<PlatformStats> => {
   try {
     console.log(`Fetching platform stats for timeframe: ${timeframe} from network ${networkId}`);
     const currentRange = getTimeRange(timeframe);
     const previousRange = getPreviousTimeRange(timeframe);
 
     const [currentTransactions, previousTransactions] = await Promise.all([
-      fetchTransactionsByTimeRange(
-        currentRange.startTime,
-        currentRange.endTime,
-        networkId,
-        endpoint,
-      ),
-      fetchTransactionsByTimeRange(
-        previousRange.startTime,
-        previousRange.endTime,
-        networkId,
-        endpoint,
-      ),
+      fetchTransactionsByTimeRange(currentRange.startTime, currentRange.endTime, networkId, endpoint),
+      fetchTransactionsByTimeRange(previousRange.startTime, previousRange.endTime, networkId, endpoint),
     ]);
 
     return calculatePlatformStats(currentTransactions, previousTransactions);
@@ -168,12 +148,7 @@ export const fetchAssetMetrics = async (
   try {
     console.log(`Fetching asset metrics for timeframe: ${timeframe} from network ${networkId}`);
     const { startTime, endTime } = getTimeRange(timeframe);
-    const transactions = await fetchTransactionsByTimeRange(
-      startTime,
-      endTime,
-      networkId,
-      endpoint,
-    );
+    const transactions = await fetchTransactionsByTimeRange(startTime, endTime, networkId, endpoint);
 
     console.log(`Processing ${transactions.length} transactions for asset metrics`);
     if (transactions.length > 0) {
@@ -190,15 +165,9 @@ export const fetchAssetMetrics = async (
     }
 
     // Count transactions with supplies or withdrawals
-    const txWithSupplies = transactions.filter(
-      (tx) => tx.supplies && tx.supplies.length > 0,
-    ).length;
-    const txWithWithdrawals = transactions.filter(
-      (tx) => tx.withdrawals && tx.withdrawals.length > 0,
-    ).length;
-    console.log(
-      `Transactions with supplies: ${txWithSupplies}, with withdrawals: ${txWithWithdrawals}`,
-    );
+    const txWithSupplies = transactions.filter((tx) => tx.supplies && tx.supplies.length > 0).length;
+    const txWithWithdrawals = transactions.filter((tx) => tx.withdrawals && tx.withdrawals.length > 0).length;
+    console.log(`Transactions with supplies: ${txWithSupplies}, with withdrawals: ${txWithWithdrawals}`);
 
     // Build asset maps from supported tokens
     const assetSymbolMap: Record<string, string> = {};

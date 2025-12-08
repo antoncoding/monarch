@@ -25,9 +25,9 @@ import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
-import { getNetworkImg, getNetworkName, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import { TimeseriesOptions } from '@/utils/types';
+import type { TimeseriesOptions } from '@/utils/types';
 import { BorrowsTable } from './components/BorrowsTable';
 import { CampaignBadge } from './components/CampaignBadge';
 import { LiquidationsTable } from './components/LiquidationsTable';
@@ -92,16 +92,12 @@ function MarketContent() {
     refetch: refetchMarket,
   } = useMarketData(marketid as string, network);
 
-
   console.log('market', market);
 
   // Transaction filters with localStorage persistence (per symbol)
-  const {
-    minSupplyAmount,
-    minBorrowAmount,
-    setMinSupplyAmount,
-    setMinBorrowAmount,
-  } = useTransactionFilters(market?.loanAsset?.symbol ?? '');
+  const { minSupplyAmount, minBorrowAmount, setMinSupplyAmount, setMinBorrowAmount } = useTransactionFilters(
+    market?.loanAsset?.symbol ?? '',
+  );
 
   const {
     data: historicalData,
@@ -126,9 +122,7 @@ function MarketContent() {
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
     if (!market) return '0';
-    const adjusted =
-      (oraclePrice * BigInt(10 ** market.collateralAsset.decimals)) /
-      BigInt(10 ** market.loanAsset.decimals);
+    const adjusted = (oraclePrice * BigInt(10 ** market.collateralAsset.decimals)) / BigInt(10 ** market.loanAsset.decimals);
     return formatUnits(adjusted, 36);
   }, [oraclePrice, market]);
 
@@ -223,28 +217,45 @@ function MarketContent() {
       <div className="mx-auto max-w-7xl px-6 py-8 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
         {/* navigation buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button onPress={handleBackToMarkets} size="md" className="w-auto">
+          <Button
+            onPress={handleBackToMarkets}
+            size="md"
+            className="w-auto"
+          >
             <ChevronLeftIcon className="mr-2" />
             <span className="hidden sm:inline">Back to Markets</span>
             <span className="sm:hidden">Back</span>
           </Button>
 
           <div className="flex flex-wrap gap-2">
-            <Button onPress={() => setShowSupplyModal(true)} className="flex-1 sm:flex-none">Supply</Button>
-            <Button onPress={() => setShowBorrowModal(true)} className="flex-1 sm:flex-none">Borrow</Button>
+            <Button
+              onPress={() => setShowSupplyModal(true)}
+              className="flex-1 sm:flex-none"
+            >
+              Supply
+            </Button>
+            <Button
+              onPress={() => setShowBorrowModal(true)}
+              className="flex-1 sm:flex-none"
+            >
+              Borrow
+            </Button>
             <Button
               size="md"
               className="w-full sm:w-auto"
               onPress={() => {
-                void window.open(
-                  getMarketURL(market.uniqueKey, market.morphoBlue.chain.id),
-                  '_blank',
-                );
+                void window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank');
               }}
             >
               <span className="hidden sm:inline">View on Morpho</span>
               <span className="sm:hidden">Morpho</span>
-              <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
+              <Image
+                src={MORPHO_LOGO}
+                alt="Morpho Logo"
+                width={20}
+                height={20}
+                className="ml-2"
+              />
             </Button>
           </div>
         </div>
@@ -331,8 +342,7 @@ function MarketContent() {
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {getTruncatedAssetName(market.loanAsset.symbol)}{' '}
-                      <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.loanAsset.symbol)} <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>
@@ -347,16 +357,12 @@ function MarketContent() {
                       height={20}
                     />
                     <Link
-                      href={getExplorerURL(
-                        market.collateralAsset.address,
-                        market.morphoBlue.chain.id,
-                      )}
+                      href={getExplorerURL(market.collateralAsset.address, market.morphoBlue.chain.id)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center no-underline hover:underline"
                     >
-                      {getTruncatedAssetName(market.collateralAsset.symbol)}{' '}
-                      <ExternalLinkIcon className="ml-1" />
+                      {getTruncatedAssetName(market.collateralAsset.symbol)} <ExternalLinkIcon className="ml-1" />
                     </Link>
                   </div>
                 </div>
@@ -459,7 +465,10 @@ function MarketContent() {
           minAssets={scaledMinBorrowAmount}
           onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
         />
-        <LiquidationsTable chainId={network} market={market} />
+        <LiquidationsTable
+          chainId={network}
+          market={market}
+        />
       </div>
     </>
   );

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@heroui/react';
@@ -7,20 +7,18 @@ import { Button } from '@/components/common';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
-import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
+import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, type SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from './DeploymentContext';
 import { TokenSelection } from './TokenSelection';
 
-const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.filter((network) =>
-  isAgentAvailable(network),
-);
+const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.filter((network) => isAgentAvailable(network));
 
 type DeploymentModalContentProps = {
   isOpen: boolean;
 
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (open: boolean) => void;
   existingVaults: UserVaultV2[];
 };
 
@@ -100,8 +98,7 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
                     size="sm"
                   >
                     <span className="text-sm leading-5 text-secondary">
-                      I understand I already deployed an autovault for this token on{' '}
-                      {getNetworkName(selectedTokenAndNetwork.networkId)}.
+                      I understand I already deployed an autovault for this token on {getNetworkName(selectedTokenAndNetwork.networkId)}.
                     </span>
                   </Checkbox>
                 </div>
@@ -153,7 +150,11 @@ type DeploymentModalProps = {
 export function DeploymentModal({ isOpen, onOpenChange, existingVaults }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
-      <DeploymentModalContent isOpen={isOpen} onOpenChange={onOpenChange} existingVaults={existingVaults} />
+      <DeploymentModalContent
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        existingVaults={existingVaults}
+      />
     </DeploymentProvider>
   );
 }

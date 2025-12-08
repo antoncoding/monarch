@@ -1,7 +1,6 @@
-import React from 'react';
 import { formatUnits } from 'viem';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
 
@@ -42,12 +41,8 @@ export function MarketSelector({ market, onAdd, disabled = false }: MarketSelect
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
-              {getTruncatedAssetName(market.loanAsset.symbol)}
-            </span>
-            <span className="text-xs opacity-50">
-              / {getTruncatedAssetName(market.collateralAsset.symbol)}
-            </span>
+            <span className="text-sm font-medium">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
+            <span className="text-xs opacity-50">/ {getTruncatedAssetName(market.collateralAsset.symbol)}</span>
           </div>
           <div className="flex items-center gap-2 text-xs opacity-70">
             <OracleVendorBadge
@@ -61,9 +56,7 @@ export function MarketSelector({ market, onAdd, disabled = false }: MarketSelect
             <span>{formatUnits(BigInt(market.lltv), 16)}% LTV</span>
           </div>
         </div>
-        <div className="rounded bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-          Add
-        </div>
+        <div className="rounded bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Add</div>
       </div>
     </button>
   );

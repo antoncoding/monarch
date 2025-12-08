@@ -1,10 +1,10 @@
 import { useCallback, useState } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { usePermit2 } from './usePermit2';
@@ -67,10 +67,7 @@ export function useRepayTransaction({
     toastId: 'repay',
     pendingText: `${
       repayAssets > 0n || repayShares > 0n
-        ? 'Repaying ' +
-          formatBalance(repayAssets, market.loanAsset.decimals).toString() +
-          ' ' +
-          market.loanAsset.symbol
+        ? `Repaying ${formatBalance(repayAssets, market.loanAsset.decimals).toString()} ${market.loanAsset.symbol}`
         : ''
     }${
       withdrawAmount > 0n
@@ -81,22 +78,13 @@ export function useRepayTransaction({
           market.collateralAsset.symbol
         : ''
     }`,
-    successText: `${
-      repayAssets > 0n || repayShares > 0n ? market.loanAsset.symbol + ' Repaid' : ''
-    }${
-      withdrawAmount > 0n
-        ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') +
-          market.collateralAsset.symbol +
-          ' Withdrawn'
-        : ''
+    successText: `${repayAssets > 0n || repayShares > 0n ? `${market.loanAsset.symbol} Repaid` : ''}${
+      withdrawAmount > 0n ? `${(repayAssets > 0n || repayShares > 0n ? ' and ' : '') + market.collateralAsset.symbol} Withdrawn` : ''
     }`,
     errorText: 'Transaction failed',
     chainId,
     pendingDescription: `Processing transaction for market ${market.uniqueKey.slice(2, 8)}...`,
-    successDescription: `Successfully processed transaction for market ${market.uniqueKey.slice(
-      2,
-      8,
-    )}`,
+    successDescription: `Successfully processed transaction for market ${market.uniqueKey.slice(2, 8)}`,
     onSuccess,
   });
 
@@ -321,15 +309,7 @@ export function useRepayTransaction({
       console.error('Error in approveAndRepay:', error);
       setShowProcessModal(false);
     }
-  }, [
-    account,
-    authorizePermit2,
-    executeRepayTransaction,
-    usePermit2Setting,
-    isApproved,
-    approve,
-    toast,
-  ]);
+  }, [account, authorizePermit2, executeRepayTransaction, usePermit2Setting, isApproved, approve, toast]);
 
   // Function to handle signing and executing the repay transaction
   const signAndRepay = useCallback(async () => {

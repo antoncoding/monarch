@@ -4,19 +4,19 @@ import { useMemo, useState } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
-import { DistributionResponseType } from '@/hooks/useRewards';
+import type { DistributionResponseType } from '@/hooks/useRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
 import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { AggregatedRewardType } from '@/utils/types';
+import type { AggregatedRewardType } from '@/utils/types';
 
 type RewardTableProps = {
   account: string;
@@ -25,12 +25,7 @@ type RewardTableProps = {
   showClaimed: boolean;
 };
 
-export default function RewardTable({
-  rewards,
-  distributions,
-  account,
-  showClaimed,
-}: RewardTableProps) {
+export default function RewardTable({ rewards, distributions, account, showClaimed }: RewardTableProps) {
   const { chainId } = useAccount();
   const toast = useStyledToast();
   const [targetChainId, setTargetChainId] = useState<number>(chainId ?? SupportedNetworks.Mainnet);
@@ -59,8 +54,7 @@ export default function RewardTable({
         if (showClaimed) return true;
 
         // if showClaimed is not turned on, only show tokens that are claimable or have pending
-        if (tokenReward.total.claimable === 0n && tokenReward.total.pendingAmount === 0n)
-          return false;
+        if (tokenReward.total.claimable === 0n && tokenReward.total.pendingAmount === 0n) return false;
 
         return true;
       }),
@@ -92,19 +86,13 @@ export default function RewardTable({
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
                 // try find the reward token, default to 18 decimals for unknown tokens
-                const matchedToken = findToken(
-                  tokenReward.asset.address,
-                  tokenReward.asset.chain_id,
-                ) ?? {
+                const matchedToken = findToken(tokenReward.asset.address, tokenReward.asset.chain_id) ?? {
                   symbol: 'Unknown',
                   img: undefined,
                   decimals: 18,
                 };
 
-                const total =
-                  tokenReward.total.claimable +
-                  tokenReward.total.pendingAmount +
-                  tokenReward.total.claimed;
+                const total = tokenReward.total.claimable + tokenReward.total.pendingAmount + tokenReward.total.claimed;
 
                 const distribution = distributions.find(
                   (d) =>
@@ -115,7 +103,10 @@ export default function RewardTable({
                 const isMerklReward = tokenReward.programs.includes('merkl');
 
                 return (
-                  <TableRow key={index} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <TableRow
+                    key={index}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
                     <TableCell>
                       <Link
                         href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
@@ -152,11 +143,7 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <p>
-                          {formatSimple(
-                            formatBalance(tokenReward.total.claimable, matchedToken.decimals),
-                          )}
-                        </p>
+                        <p>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</p>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
@@ -167,11 +154,7 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <p>
-                          {formatSimple(
-                            formatBalance(tokenReward.total.pendingAmount, matchedToken.decimals),
-                          )}
-                        </p>
+                        <p>{formatSimple(formatBalance(tokenReward.total.pendingAmount, matchedToken.decimals))}</p>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
@@ -182,11 +165,7 @@ export default function RewardTable({
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
-                        <p>
-                          {formatSimple(
-                            formatBalance(tokenReward.total.claimed, matchedToken.decimals),
-                          )}
-                        </p>
+                        <p>{formatSimple(formatBalance(tokenReward.total.claimed, matchedToken.decimals))}</p>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
@@ -226,23 +205,15 @@ export default function RewardTable({
                           <Button
                             variant="interactive"
                             size="sm"
-                            isDisabled={
-                              tokenReward.total.claimable === BigInt(0) || distribution === undefined
-                            }
+                            isDisabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
                             onPress={() => {
                               void (async () => {
                                 if (!account) {
-                                  toast.error(
-                                    'No account connected',
-                                    'Please connect your wallet to continue.',
-                                  );
+                                  toast.error('No account connected', 'Please connect your wallet to continue.');
                                   return;
                                 }
                                 if (!distribution) {
-                                  toast.error(
-                                    'No claim data',
-                                    'No claim data found for this reward please try again later.',
-                                  );
+                                  toast.error('No claim data', 'No claim data found for this reward please try again later.');
                                   return;
                                 }
                                 if (chainId !== distribution.distributor.chain_id) {

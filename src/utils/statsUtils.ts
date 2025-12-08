@@ -96,9 +96,7 @@ export const getTimeRange = (timeframe: TimeFrame): { startTime: number; endTime
 /**
  * Calculates the previous time range for delta comparisons
  */
-export const getPreviousTimeRange = (
-  timeframe: TimeFrame,
-): { startTime: number; endTime: number } => {
+export const getPreviousTimeRange = (timeframe: TimeFrame): { startTime: number; endTime: number } => {
   const { startTime, endTime } = getTimeRange(timeframe);
   const duration = endTime - startTime;
 
@@ -111,11 +109,7 @@ export const getPreviousTimeRange = (
 /**
  * Groups transactions by time period (day/week/month)
  */
-export const groupTransactionsByPeriod = (
-  transactions: Transaction[],
-  period: MetricPeriod,
-  tokenDecimals = 18,
-): TimeSeriesData[] => {
+export const groupTransactionsByPeriod = (transactions: Transaction[], period: MetricPeriod, tokenDecimals = 18): TimeSeriesData[] => {
   if (!transactions.length) return [];
 
   const grouped: Record<string, number> = {};
@@ -128,19 +122,19 @@ export const groupTransactionsByPeriod = (
       case 'daily':
         periodKey = date.toISOString().split('T')[0];
         break;
-      case 'weekly':
+      case 'weekly': {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         periodKey = weekStart.toISOString().split('T')[0];
         break;
+      }
       case 'monthly':
         periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         break;
     }
 
     const volume =
-      Number(formatUnits(BigInt(tx.supplyVolume), tokenDecimals)) +
-      Number(formatUnits(BigInt(tx.withdrawVolume), tokenDecimals));
+      Number(formatUnits(BigInt(tx.supplyVolume), tokenDecimals)) + Number(formatUnits(BigInt(tx.withdrawVolume), tokenDecimals));
 
     if (!grouped[periodKey]) {
       grouped[periodKey] = 0;
@@ -178,10 +172,7 @@ export const calculatePercentageChange = (current: number, previous: number): nu
 /**
  * Aggregates asset volumes and metrics
  */
-export const aggregateAssetMetrics = (
-  transactions: Transaction[],
-  assetMap: Record<string, string>,
-): AssetVolumeData[] => {
+export const aggregateAssetMetrics = (transactions: Transaction[], assetMap: Record<string, string>): AssetVolumeData[] => {
   const assetMetrics: Record<string, AssetVolumeData> = {};
   const assetUsers: Record<string, Set<string>> = {};
 
@@ -210,12 +201,8 @@ export const aggregateAssetMetrics = (
 
           // Update supply metrics
           const supplyVolumeBigInt = BigInt(supply.amount ?? '0');
-          assetMetrics[assetAddress].supplyVolume = (
-            BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt
-          ).toString();
-          assetMetrics[assetAddress].totalVolume = (
-            BigInt(assetMetrics[assetAddress].totalVolume) + supplyVolumeBigInt
-          ).toString();
+          assetMetrics[assetAddress].supplyVolume = (BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt).toString();
+          assetMetrics[assetAddress].totalVolume = (BigInt(assetMetrics[assetAddress].totalVolume) + supplyVolumeBigInt).toString();
           assetMetrics[assetAddress].supplyCount += 1;
 
           // Track user
@@ -248,12 +235,8 @@ export const aggregateAssetMetrics = (
 
           // Update withdrawal metrics
           const withdrawVolumeBigInt = BigInt(withdrawal.amount ?? '0');
-          assetMetrics[assetAddress].withdrawVolume = (
-            BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt
-          ).toString();
-          assetMetrics[assetAddress].totalVolume = (
-            BigInt(assetMetrics[assetAddress].totalVolume) + withdrawVolumeBigInt
-          ).toString();
+          assetMetrics[assetAddress].withdrawVolume = (BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt).toString();
+          assetMetrics[assetAddress].totalVolume = (BigInt(assetMetrics[assetAddress].totalVolume) + withdrawVolumeBigInt).toString();
           assetMetrics[assetAddress].withdrawCount += 1;
 
           // Track user
@@ -295,12 +278,8 @@ export const aggregateAssetMetrics = (
       const supplyVolumeBigInt = BigInt(tx.supplyVolume ?? '0');
       const withdrawVolumeBigInt = BigInt(tx.withdrawVolume ?? '0');
 
-      assetMetrics[assetAddress].supplyVolume = (
-        BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt
-      ).toString();
-      assetMetrics[assetAddress].withdrawVolume = (
-        BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt
-      ).toString();
+      assetMetrics[assetAddress].supplyVolume = (BigInt(assetMetrics[assetAddress].supplyVolume) + supplyVolumeBigInt).toString();
+      assetMetrics[assetAddress].withdrawVolume = (BigInt(assetMetrics[assetAddress].withdrawVolume) + withdrawVolumeBigInt).toString();
       assetMetrics[assetAddress].totalVolume = (
         BigInt(assetMetrics[assetAddress].totalVolume) +
         supplyVolumeBigInt +
@@ -323,10 +302,7 @@ export const aggregateAssetMetrics = (
 /**
  * Calculate platform-wide statistics
  */
-export const calculatePlatformStats = (
-  currentTransactions: Transaction[],
-  previousTransactions: Transaction[],
-): PlatformStats => {
+export const calculatePlatformStats = (currentTransactions: Transaction[], previousTransactions: Transaction[]): PlatformStats => {
   // Current period calculations
   const uniqueUsers = calculateUniqueUsers(currentTransactions);
   const totalTransactions = currentTransactions.length;
@@ -349,11 +325,7 @@ export const calculatePlatformStats = (
     if (tx.supplies) {
       tx.supplies.forEach((supply) => {
         if (supply.market?.loan) {
-          uniqueMarketsSet.add(
-            `${supply.market.loan.toLowerCase()}-${
-              supply.market.collateral?.toLowerCase() ?? 'none'
-            }`,
-          );
+          uniqueMarketsSet.add(`${supply.market.loan.toLowerCase()}-${supply.market.collateral?.toLowerCase() ?? 'none'}`);
         }
       });
     }
@@ -361,11 +333,7 @@ export const calculatePlatformStats = (
     if (tx.withdrawals) {
       tx.withdrawals.forEach((withdrawal) => {
         if (withdrawal.market?.loan) {
-          uniqueMarketsSet.add(
-            `${withdrawal.market.loan.toLowerCase()}-${
-              withdrawal.market.collateral?.toLowerCase() ?? 'none'
-            }`,
-          );
+          uniqueMarketsSet.add(`${withdrawal.market.loan.toLowerCase()}-${withdrawal.market.collateral?.toLowerCase() ?? 'none'}`);
         }
       });
     }
@@ -386,10 +354,7 @@ export const calculatePlatformStats = (
 
   // Calculate deltas
   const uniqueUsersDelta = calculatePercentageChange(uniqueUsers, previousUniqueUsers);
-  const totalTransactionsDelta = calculatePercentageChange(
-    totalTransactions,
-    previousTotalTransactions,
-  );
+  const totalTransactionsDelta = calculatePercentageChange(totalTransactions, previousTotalTransactions);
   const supplyCountDelta = calculatePercentageChange(supplyCount, previousSupplyCount);
   const withdrawCountDelta = calculatePercentageChange(withdrawCount, previousWithdrawCount);
 

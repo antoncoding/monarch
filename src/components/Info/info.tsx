@@ -21,13 +21,33 @@ const levelToCellColor = (level: string) => {
 const levelToIcon = (level: string) => {
   switch (level) {
     case 'info':
-      return <FaRegLightbulb className="mr-2" size={18} />;
+      return (
+        <FaRegLightbulb
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'success':
-      return <GrStatusGood className="mr-2" size={18} />;
+      return (
+        <GrStatusGood
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'warning':
-      return <MdWarning className="mr-2" size={18} />;
+      return (
+        <MdWarning
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'alert':
-      return <MdError className="mr-2" size={18} />;
+      return (
+        <MdError
+          className="mr-2"
+          size={18}
+        />
+      );
     default:
       return '';
   }
@@ -38,15 +58,7 @@ const levelToIcon = (level: string) => {
  * @param description
  * @param level success info warning alert
  */
-export function Info({
-  description,
-  level,
-  title,
-}: {
-  description: string;
-  level: string;
-  title?: string;
-}) {
+export function Info({ description, level, title }: { description: string; level: string; title?: string }) {
   return (
     <div className={`flex items-center rounded-sm ${levelToCellColor(level)} p-4 opacity-80`}>
       {levelToIcon(level)}

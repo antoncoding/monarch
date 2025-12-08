@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
-import { Address } from 'abitype';
+import type { Address } from 'abitype';
 import { encodeFunctionData, erc20Abi, maxUint256, zeroAddress } from 'viem';
-import { Chain } from 'viem/chains';
+import type { Chain } from 'viem/chains';
 import { useAccount, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
@@ -21,14 +21,7 @@ type Props = {
  * @param refetchInterval Interval in milliseconds to refetch the contract data
  * @returns JsonMetadata
  */
-export function useAllowance({
-  user,
-  spender,
-  chainId = 1,
-  token,
-  refetchInterval = 10000,
-  tokenSymbol,
-}: Props) {
+export function useAllowance({ user, spender, chainId = 1, token, refetchInterval = 10000, tokenSymbol }: Props) {
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
 
@@ -51,10 +44,7 @@ export function useAllowance({
     errorText: 'Approve Error',
     chainId,
     pendingDescription: `Approving ${tokenSymbol ?? 'token'} for ${spender.slice(0, 6)}...`,
-    successDescription: `Successfully approved ${tokenSymbol ?? 'token'} for ${spender.slice(
-      0,
-      6,
-    )}...`,
+    successDescription: `Successfully approved ${tokenSymbol ?? 'token'} for ${spender.slice(0, 6)}...`,
   });
 
   const approveInfinite = useCallback(async () => {

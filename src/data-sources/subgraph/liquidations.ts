@@ -1,5 +1,5 @@
 import { subgraphMarketsWithLiquidationCheckQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { blacklistTokens } from '@/utils/tokens';
 import { subgraphGraphqlFetcher } from './fetchers';
@@ -17,9 +17,7 @@ type SubgraphMarketsLiquidationCheckResponse = {
   errors?: any[];
 };
 
-export const fetchSubgraphLiquidatedMarketKeys = async (
-  network: SupportedNetworks,
-): Promise<Set<string>> => {
+export const fetchSubgraphLiquidatedMarketKeys = async (network: SupportedNetworks): Promise<Set<string>> => {
   const subgraphApiUrl = getSubgraphUrl(network);
   if (!subgraphApiUrl) {
     console.warn(`Subgraph URL for network ${network} is not defined. Skipping liquidation check.`);
@@ -53,17 +51,12 @@ export const fetchSubgraphLiquidatedMarketKeys = async (
 
       markets = page.data?.markets;
     } catch (error) {
-      console.error(
-        `Error fetching liquidated market keys from subgraph for network ${network}:`,
-        error,
-      );
+      console.error(`Error fetching liquidated market keys from subgraph for network ${network}:`, error);
       break;
     }
 
     if (!markets) {
-      console.warn(
-        `No market data returned for liquidation check on network ${network} at skip ${skip}.`,
-      );
+      console.warn(`No market data returned for liquidation check on network ${network} at skip ${skip}.`);
       break; // Exit loop if no markets are returned
     }
 

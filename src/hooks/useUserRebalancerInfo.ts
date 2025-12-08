@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { userRebalancerInfoQuery } from '@/graphql/morpho-api-queries';
 import { networks, isAgentAvailable } from '@/utils/networks';
-import { UserRebalancerInfo } from '@/utils/types';
+import type { UserRebalancerInfo } from '@/utils/types';
 import { getMonarchAgentUrl } from '@/utils/urls';
 
 export function useUserRebalancerInfo(account: string | undefined) {
@@ -20,9 +20,7 @@ export function useUserRebalancerInfo(account: string | undefined) {
       setLoading(true);
       setError(null);
 
-      const agentNetworks = networks
-        .filter(network => isAgentAvailable(network.network))
-        .map(network => network.network);
+      const agentNetworks = networks.filter((network) => isAgentAvailable(network.network)).map((network) => network.network);
 
       const promises = agentNetworks.map(async (networkId) => {
         const apiUrl = getMonarchAgentUrl(networkId);
@@ -39,7 +37,9 @@ export function useUserRebalancerInfo(account: string | undefined) {
           }),
         });
 
-        const json = (await response.json()) as { data?: { user?: UserRebalancerInfo } };
+        const json = (await response.json()) as {
+          data?: { user?: UserRebalancerInfo };
+        };
 
         if (json.data?.user) {
           return {
@@ -51,9 +51,7 @@ export function useUserRebalancerInfo(account: string | undefined) {
       });
 
       const results = await Promise.all(promises);
-      const validResults = results.filter(
-        (result): result is UserRebalancerInfo => result !== null,
-      );
+      const validResults = results.filter((result): result is UserRebalancerInfo => result !== null);
 
       setData(validResults);
     } catch (err) {

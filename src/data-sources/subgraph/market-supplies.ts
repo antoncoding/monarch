@@ -1,7 +1,7 @@
 import { marketDepositsWithdrawsQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls'; // Import shared utility
-import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
+import type { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types';
 import { subgraphGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Types specific to the Subgraph response for this query
@@ -61,11 +61,7 @@ export const fetchSubgraphMarketSupplies = async (
   };
 
   try {
-    const result = await subgraphGraphqlFetcher<SubgraphSuppliesWithdrawsResponse>(
-      subgraphUrl,
-      marketDepositsWithdrawsQuery,
-      variables,
-    );
+    const result = await subgraphGraphqlFetcher<SubgraphSuppliesWithdrawsResponse>(subgraphUrl, marketDepositsWithdrawsQuery, variables);
 
     const deposits = result.data?.deposits ?? [];
     const withdraws = result.data?.withdraws ?? [];
@@ -73,7 +69,7 @@ export const fetchSubgraphMarketSupplies = async (
     const mappedDeposits: MarketActivityTransaction[] = deposits.map((d) => ({
       type: 'MarketSupply',
       hash: d.hash,
-      timestamp: typeof d.timestamp === 'string' ? parseInt(d.timestamp, 10) : d.timestamp,
+      timestamp: typeof d.timestamp === 'string' ? Number.parseInt(d.timestamp, 10) : d.timestamp,
       amount: d.amount,
       userAddress: d.account.id,
     }));
@@ -81,7 +77,7 @@ export const fetchSubgraphMarketSupplies = async (
     const mappedWithdraws: MarketActivityTransaction[] = withdraws.map((w) => ({
       type: 'MarketWithdraw',
       hash: w.hash,
-      timestamp: typeof w.timestamp === 'string' ? parseInt(w.timestamp, 10) : w.timestamp,
+      timestamp: typeof w.timestamp === 'string' ? Number.parseInt(w.timestamp, 10) : w.timestamp,
       amount: w.amount,
       userAddress: w.account.id,
     }));

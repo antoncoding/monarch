@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
@@ -9,7 +9,7 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import { getIRMTitle, previewMarketState } from '@/utils/morpho';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
 
@@ -43,7 +43,7 @@ export function MarketDetailsBlock({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
-    whitelisted: market.whitelisted
+    whitelisted: market.whitelisted,
   });
 
   // Calculate preview state when supplyDelta or borrowDelta is provided
@@ -88,7 +88,7 @@ export function MarketDetailsBlock({
             setIsExpanded(!isExpanded);
           }
         }}
-        role={disableExpansion ? undefined : "button"}
+        role={disableExpansion ? undefined : 'button'}
         tabIndex={disableExpansion ? undefined : 0}
         aria-expanded={disableExpansion ? undefined : isExpanded}
         aria-label={disableExpansion ? undefined : `${isExpanded ? 'Collapse' : 'Expand'} market details`}
@@ -116,12 +116,8 @@ export function MarketDetailsBlock({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {getTruncatedAssetName(market.loanAsset.symbol)}
-              </span>
-              <span className="text-xs opacity-50">
-                / {getTruncatedAssetName(market.collateralAsset.symbol)}
-              </span>
+              <span className="text-sm font-medium">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
+              <span className="text-xs opacity-50">/ {getTruncatedAssetName(market.collateralAsset.symbol)}</span>
               {showDetailsLink && (
                 <a
                   href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
@@ -146,13 +142,12 @@ export function MarketDetailsBlock({
                   <span>
                     <span className="line-through opacity-50">{getRate()}%</span>
                     {' → '}
-                    <span className="font-semibold">
-                      {getPreviewRate()}%
-                    </span>
-                    {' '}{rateLabel}
+                    <span className="font-semibold">{getPreviewRate()}%</span> {rateLabel}
                   </span>
                 ) : (
-                  <span>{getRate()}% {rateLabel}</span>
+                  <span>
+                    {getRate()}% {rateLabel}
+                  </span>
                 )}
                 <span>·</span>
                 <span>{(Number(market.lltv) / 1e16).toFixed(0)}% LLTV</span>
@@ -161,9 +156,7 @@ export function MarketDetailsBlock({
           </div>
 
           {!disableExpansion && (
-            <div className="text-primary opacity-70 hover:opacity-100">
-              {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-            </div>
+            <div className="text-primary opacity-70 hover:opacity-100">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</div>
           )}
         </div>
 
@@ -189,9 +182,7 @@ export function MarketDetailsBlock({
                     <span className="text-xs opacity-50">·</span>
                     <span className="text-xs opacity-70">{getIRMTitle(market.irmAddress)}</span>
                     <span className="text-xs opacity-50">·</span>
-                    <span className="text-xs opacity-70">
-                      {formatUnits(BigInt(market.lltv), 16)}%
-                    </span>
+                    <span className="text-xs opacity-70">{formatUnits(BigInt(market.lltv), 16)}%</span>
                   </div>
                 </div>
                 <div className="w-full">
@@ -205,9 +196,7 @@ export function MarketDetailsBlock({
                         <p className="text-right text-sm font-bold">
                           <span className="line-through opacity-50">{getRate()}%</span>
                           {' → '}
-                          <span>
-                            {getPreviewRate()}%
-                          </span>
+                          <span>{getPreviewRate()}%</span>
                         </p>
                       ) : (
                         <p className="text-right text-sm font-bold">{getRate()}%</p>
@@ -215,9 +204,7 @@ export function MarketDetailsBlock({
                     </div>
                     {showRewards && hasActiveRewards && (
                       <div className="flex items-start justify-between">
-                        <p className="flex items-center gap-1 font-zen text-sm opacity-50">
-                          Extra Rewards:
-                        </p>
+                        <p className="flex items-center gap-1 font-zen text-sm opacity-50">Extra Rewards:</p>
                         <div className="flex items-center gap-1">
                           <p className="text-right text-sm font-bold text-green-600 dark:text-green-400">
                             +{activeCampaigns.reduce((sum, c) => sum + c.apr, 0).toFixed(2)}%
@@ -240,22 +227,14 @@ export function MarketDetailsBlock({
                       {previewState !== null ? (
                         <p className="text-right text-sm">
                           <span className="line-through opacity-50">
-                            {formatReadable(
-                              formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                            )}
+                            {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
                           </span>
                           {' → '}
-                          <span>
-                            {formatReadable(
-                              formatBalance(previewState.totalSupplyAssets.toString(), market.loanAsset.decimals),
-                            )}
-                          </span>
+                          <span>{formatReadable(formatBalance(previewState.totalSupplyAssets.toString(), market.loanAsset.decimals))}</span>
                         </p>
                       ) : (
                         <p className="text-right text-sm">
-                          {formatReadable(
-                            formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                          )}
+                          {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}
                         </p>
                       )}
                     </div>
@@ -264,22 +243,14 @@ export function MarketDetailsBlock({
                       {previewState !== null ? (
                         <p className="text-right font-zen text-sm">
                           <span className="line-through opacity-50">
-                            {formatReadable(
-                              formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                            )}
+                            {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
                           </span>
                           {' → '}
-                          <span>
-                            {formatReadable(
-                              formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals),
-                            )}
-                          </span>
+                          <span>{formatReadable(formatBalance(previewState.liquidityAssets.toString(), market.loanAsset.decimals))}</span>
                         </p>
                       ) : (
                         <p className="text-right font-zen text-sm">
-                          {formatReadable(
-                            formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                          )}
+                          {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}
                         </p>
                       )}
                     </div>
@@ -287,18 +258,12 @@ export function MarketDetailsBlock({
                       <p className="font-zen text-sm opacity-50">Utilization:</p>
                       {previewState !== null ? (
                         <p className="text-right text-sm">
-                          <span className="line-through opacity-50">
-                            {formatReadable(market.state.utilization * 100)}%
-                          </span>
+                          <span className="line-through opacity-50">{formatReadable(market.state.utilization * 100)}%</span>
                           {' → '}
-                          <span>
-                            {formatReadable(previewState.utilization * 100)}%
-                          </span>
+                          <span>{formatReadable(previewState.utilization * 100)}%</span>
                         </p>
                       ) : (
-                        <p className="text-right text-sm">
-                          {formatReadable(market.state.utilization * 100)}%
-                        </p>
+                        <p className="text-right text-sm">{formatReadable(market.state.utilization * 100)}%</p>
                       )}
                     </div>
                   </div>

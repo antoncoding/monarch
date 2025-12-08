@@ -1,7 +1,7 @@
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { getExplorerTxURL } from '@/utils/external';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type TransactionIdentityProps = {
   txHash: string;
@@ -16,12 +16,7 @@ const formatTxHash = (hash: string, showFull: boolean): string => {
   return `${hash.substring(0, 6)}...${hash.substring(hash.length - 4)}`;
 };
 
-export function TransactionIdentity({
-  txHash,
-  chainId,
-  showFullHash = false,
-  className = '',
-}: TransactionIdentityProps) {
+export function TransactionIdentity({ txHash, chainId, showFullHash = false, className = '' }: TransactionIdentityProps) {
   return (
     <Link
       href={getExplorerTxURL(txHash, chainId)}

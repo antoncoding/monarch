@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useAccount } from 'wagmi';
@@ -10,7 +10,7 @@ import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { Button } from './common';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
@@ -21,12 +21,7 @@ type SupplyModalContentProps = {
   onAmountChange?: (amount: bigint | undefined) => void;
 };
 
-export function SupplyModalContent({
-  onClose,
-  market,
-  refetch,
-  onAmountChange,
-}: SupplyModalContentProps): JSX.Element {
+export function SupplyModalContent({ onClose, market, refetch, onAmountChange }: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const { isConnected } = useAccount();
 
@@ -54,7 +49,7 @@ export function SupplyModalContent({
     supplyPending,
     approveAndSupply,
     signAndSupply,
-    refetch: refetchBalance
+    refetch: refetchBalance,
   } = useSupplyMarket(market, onSuccess);
 
   // Handle supply amount change
@@ -134,30 +129,23 @@ export function SupplyModalContent({
                     <div className="relative flex-grow">
                       <Input
                         decimals={market.loanAsset.decimals}
-                        max={useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0)}
+                        max={useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0))}
                         setValue={handleSupplyAmountChange}
                         setError={(error: string | null) => {
-                          if (
-                            typeof error === 'string' &&
-                            !error.includes("You don't have any supplied assets")
-                          ) {
+                          if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
                             setInputError(error);
                           } else {
                             setInputError(null);
                           }
                         }}
                         exceedMaxErrMessage={
-                          supplyAmount &&
-                          supplyAmount >
-                            (useEth ? ethBalance ?? BigInt(0) : tokenBalance ?? BigInt(0))
+                          supplyAmount && supplyAmount > (useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0)))
                             ? 'Insufficient Balance'
                             : undefined
                         }
                       />
                       {inputError && !inputError.includes("You don't have any supplied assets") && (
-                        <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
-                          {inputError}
-                        </p>
+                        <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
                       )}
                     </div>
 
@@ -180,9 +168,7 @@ export function SupplyModalContent({
                       </Button>
                     ) : (
                       <Button
-                        disabled={
-                          !isConnected || supplyPending || inputError !== null || !supplyAmount
-                        }
+                        disabled={!isConnected || supplyPending || inputError !== null || !supplyAmount}
                         onPress={() => void signAndSupply()}
                         className="ml-2 min-w-32"
                         variant="cta"

@@ -1,4 +1,4 @@
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { morphoMarketV1AdaptersQuery } from '@/graphql/morpho-market-v1-adapter-queries';
 import { subgraphGraphqlFetcher } from './fetchers';
 
@@ -29,14 +29,10 @@ export async function fetchMorphoMarketV1Adapters({
   parentVault: Address;
   morpho: Address;
 }): Promise<MorphoMarketV1AdapterRecord[]> {
-  const response = await subgraphGraphqlFetcher<MorphoMarketV1AdaptersResponse>(
-    subgraphUrl,
-    morphoMarketV1AdaptersQuery,
-    {
-      parentVault: parentVault.toLowerCase(),
-      morpho: morpho.toLowerCase(),
-    },
-  );
+  const response = await subgraphGraphqlFetcher<MorphoMarketV1AdaptersResponse>(subgraphUrl, morphoMarketV1AdaptersQuery, {
+    parentVault: parentVault.toLowerCase(),
+    morpho: morpho.toLowerCase(),
+  });
 
   const adapters = response.data?.createMorphoMarketV1Adapters ?? [];
 

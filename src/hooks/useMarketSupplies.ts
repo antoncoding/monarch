@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoMarketSupplies } from '@/data-sources/morpho-api/market-supplies';
 import { fetchSubgraphMarketSupplies } from '@/data-sources/subgraph/market-supplies';
-import { SupportedNetworks } from '@/utils/networks';
-import { PaginatedMarketActivityTransactions } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 
 /**
  * Hook to fetch supply and withdraw activities for a specific market's loan asset,
@@ -30,37 +30,40 @@ export const useMarketSupplies = (
 
   const queryKey = ['marketSupplies', marketId, loanAssetId, network, minAssets, page, pageSize];
 
-  const queryFn = useCallback(async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
-    if (!marketId || !loanAssetId || !network) {
-      return null;
-    }
-
-    const targetSkip = (targetPage - 1) * pageSize;
-    let result: PaginatedMarketActivityTransactions | null = null;
-
-    // Try Morpho API first if supported
-    if (supportsMorphoApi(network)) {
-      try {
-        console.log(`Attempting to fetch supplies via Morpho API for ${marketId} (page ${targetPage})`);
-        result = await fetchMorphoMarketSupplies(marketId, minAssets, pageSize, targetSkip);
-      } catch (morphoError) {
-        console.error(`Failed to fetch supplies via Morpho API:`, morphoError);
+  const queryFn = useCallback(
+    async (targetPage: number): Promise<PaginatedMarketActivityTransactions | null> => {
+      if (!marketId || !loanAssetId || !network) {
+        return null;
       }
-    }
 
-    // Fallback to Subgraph if Morpho API failed or not supported
-    if (!result) {
-      try {
-        console.log(`Attempting to fetch supplies via Subgraph for ${marketId} (page ${targetPage})`);
-        result = await fetchSubgraphMarketSupplies(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
-      } catch (subgraphError) {
-        console.error(`Failed to fetch supplies via Subgraph:`, subgraphError);
-        throw subgraphError;
+      const targetSkip = (targetPage - 1) * pageSize;
+      let result: PaginatedMarketActivityTransactions | null = null;
+
+      // Try Morpho API first if supported
+      if (supportsMorphoApi(network)) {
+        try {
+          console.log(`Attempting to fetch supplies via Morpho API for ${marketId} (page ${targetPage})`);
+          result = await fetchMorphoMarketSupplies(marketId, minAssets, pageSize, targetSkip);
+        } catch (morphoError) {
+          console.error(`Failed to fetch supplies via Morpho API:`, morphoError);
+        }
       }
-    }
 
-    return result;
-  }, [marketId, loanAssetId, network, minAssets, pageSize]);
+      // Fallback to Subgraph if Morpho API failed or not supported
+      if (!result) {
+        try {
+          console.log(`Attempting to fetch supplies via Subgraph for ${marketId} (page ${targetPage})`);
+          result = await fetchSubgraphMarketSupplies(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
+        } catch (subgraphError) {
+          console.error(`Failed to fetch supplies via Subgraph:`, subgraphError);
+          throw subgraphError;
+        }
+      }
+
+      return result;
+    },
+    [marketId, loanAssetId, network, minAssets, pageSize],
+  );
 
   const { data, isLoading, isFetching, error, refetch } = useQuery<PaginatedMarketActivityTransactions | null>({
     queryKey: queryKey,

@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, type ReactNode, useMemo } from 'react';
 import useLiquidations from '@/hooks/useLiquidations';
 
 type LiquidationsContextType = {

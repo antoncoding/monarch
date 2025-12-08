@@ -18,11 +18,7 @@ export const subgraphGraphqlFetcher = async <T extends object>(
     const result = (await response.json()) as T;
 
     // Check for GraphQL errors - log but don't throw to allow graceful handling
-    if (
-      'errors' in result &&
-      Array.isArray((result as any).errors) &&
-      (result as any).errors.length > 0
-    ) {
+    if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
       // Log the full error for debugging but continue execution
       console.warn('Subgraph API GraphQL Error (non-fatal):', result.errors);
       // Return result with errors included so calling code can handle appropriately

@@ -5,7 +5,7 @@ import hyperevmRawData from './hyperevm.json';
 import mainnetRawData from './mainnet.json';
 import monadRaw from './monad.json';
 import polygonRawData from './polygon.json';
-import { ChainlinkOracleEntry } from './types';
+import type { ChainlinkOracleEntry } from './types';
 
 export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Mainnet]: mainnetRawData as ChainlinkOracleEntry[],
@@ -17,33 +17,22 @@ export const CHAINLINK_ORACLES = {
   [SupportedNetworks.Monad]: monadRaw as ChainlinkOracleEntry[],
 } as const;
 
-export const getAllOracles = (): Record<SupportedNetworks, ChainlinkOracleEntry[]> =>
-  CHAINLINK_ORACLES;
+export const getAllOracles = (): Record<SupportedNetworks, ChainlinkOracleEntry[]> => CHAINLINK_ORACLES;
 
-export const getOracleByPath = (
-  chain: keyof typeof CHAINLINK_ORACLES,
-  path: string,
-): ChainlinkOracleEntry | undefined => {
+export const getOracleByPath = (chain: keyof typeof CHAINLINK_ORACLES, path: string): ChainlinkOracleEntry | undefined => {
   return CHAINLINK_ORACLES[chain].find((oracle) => oracle.path === path);
 };
 
 export const isChainlinkOracle = (chainId: number, address: string): boolean => {
   if (!isSupportedChain(chainId) || !address) return false;
   const network = chainId as SupportedNetworks;
-  return CHAINLINK_ORACLES[network].some(
-    (oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase(),
-  );
+  return CHAINLINK_ORACLES[network].some((oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase());
 };
 
-export const getChainlinkOracle = (
-  chainId: number,
-  address: string,
-): ChainlinkOracleEntry | undefined => {
+export const getChainlinkOracle = (chainId: number, address: string): ChainlinkOracleEntry | undefined => {
   if (!isSupportedChain(chainId) || !address) return undefined;
   const network = chainId as SupportedNetworks;
-  return CHAINLINK_ORACLES[network].find(
-    (oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase(),
-  );
+  return CHAINLINK_ORACLES[network].find((oracle) => oracle.proxyAddress.toLowerCase() === address.toLowerCase());
 };
 
 export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
@@ -60,7 +49,7 @@ export const getChainlinkFeedUrl = (chainId: number, ens: string): string => {
     return `https://data.chain.link/feeds/arbitrum/mainnet/${ens}`;
   }
   if (chainId === SupportedNetworks.HyperEVM) {
-    return `https://data.chain.link/feeds/hyperliquid/mainnet/${ens}`
+    return `https://data.chain.link/feeds/hyperliquid/mainnet/${ens}`;
   }
   if (chainId === SupportedNetworks.Monad) {
     return `https://data.chain.link/feeds/monad/mainnet/${ens}`;

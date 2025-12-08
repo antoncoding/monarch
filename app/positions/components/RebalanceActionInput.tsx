@@ -1,5 +1,4 @@
-import React from 'react';
-import { GroupedPosition, Market } from '@/utils/types';
+import type { GroupedPosition, Market } from '@/utils/types';
 import { RebalanceActionRow } from './RebalanceActionRow';
 
 type RebalanceActionInputProps = {
@@ -29,13 +28,9 @@ export function RebalanceActionInput({
   onToMarketClick,
   onClearToMarket,
 }: RebalanceActionInputProps) {
-  const selectedFromMarket = groupedPosition.markets.find(
-    (p) => p.market.uniqueKey === selectedFromMarketUniqueKey,
-  )?.market;
+  const selectedFromMarket = groupedPosition.markets.find((p) => p.market.uniqueKey === selectedFromMarketUniqueKey)?.market;
 
-  const selectedToMarket = eligibleMarkets.find(
-    (m) => m.uniqueKey === selectedToMarketUniqueKey,
-  );
+  const selectedToMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
   return (
     <div className="mb-4 rounded-sm border border-gray-200 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-800/50">

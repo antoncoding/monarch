@@ -20,10 +20,7 @@ export function VaultRegistryProvider({ children }: { children: ReactNode }) {
   const getVaultByAddress = useMemo(
     () => (address: Address, chainId?: number) => {
       const normalizedAddress = address.toLowerCase();
-      return vaults.find(
-        (v) =>
-          v.address.toLowerCase() === normalizedAddress && (!chainId || v.chainId === chainId),
-      );
+      return vaults.find((v) => v.address.toLowerCase() === normalizedAddress && (!chainId || v.chainId === chainId));
     },
     [vaults],
   );

@@ -1,5 +1,5 @@
-import { Metadata } from 'next';
-import { Address } from 'viem';
+import type { Metadata } from 'next';
+import type { Address } from 'viem';
 import ReportContent from '../components/ReportContent';
 
 export const metadata: Metadata = {

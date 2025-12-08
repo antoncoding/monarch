@@ -6,7 +6,7 @@ import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { IoRefreshOutline } from 'react-icons/io5';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { Button } from '@/components/common';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -23,7 +23,10 @@ import { VaultSettingsModal } from './components/VaultSettingsModal';
 import { VaultSummaryMetrics } from './components/VaultSummaryMetrics';
 
 export default function VaultContent() {
-  const { chainId: chainIdParam, vaultAddress } = useParams<{ chainId: string; vaultAddress: string }>();
+  const { chainId: chainIdParam, vaultAddress } = useParams<{
+    chainId: string;
+    vaultAddress: string;
+  }>();
   const vaultAddressValue = vaultAddress as Address;
   const { address } = useAccount();
   const [hasMounted, setHasMounted] = useState(false);
@@ -45,7 +48,7 @@ export default function VaultContent() {
   const networkConfig = useMemo(() => {
     try {
       return getNetworkConfig(chainId);
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }, [chainId]);
@@ -120,9 +123,7 @@ export default function VaultContent() {
         <div className="container h-full px-[4%] py-12">
           <div className="mx-auto max-w-md rounded bg-surface p-8 text-center shadow-sm">
             <h2 className="mb-4 text-xl">Vault data unavailable</h2>
-            <p className="mb-6 text-secondary">
-              We could not load this autovault right now. Please retry in a few minutes.
-            </p>
+            <p className="mb-6 text-secondary">We could not load this autovault right now. Please retry in a few minutes.</p>
             <Link href="/autovault">
               <Button variant="cta">Back to Autovaults</Button>
             </Link>
@@ -141,9 +142,7 @@ export default function VaultContent() {
           <div className="flex items-start justify-between gap-4 pt-6">
             <div className="flex items-center gap-3">
               <h1 className="font-zen text-2xl">{title}</h1>
-              {symbolToDisplay && (
-                <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>
-              )}
+              {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
             </div>
             <div className="flex items-center gap-3">
               <AccountIdentity

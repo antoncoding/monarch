@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { fetchVaultV2Details, VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import { fetchVaultV2Details, type VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type UseVaultV2DataArgs = {
   vaultAddress?: Address;
@@ -14,11 +14,11 @@ type UseVaultV2DataArgs = {
 };
 
 export type CapData = {
-  adapterCap: VaultV2Cap | null,
-  collateralCaps: VaultV2Cap[],
-  marketCaps: VaultV2Cap[],
-  needSetupCaps: boolean
-}
+  adapterCap: VaultV2Cap | null;
+  collateralCaps: VaultV2Cap[];
+  marketCaps: VaultV2Cap[];
+  needSetupCaps: boolean;
+};
 
 export type VaultV2Data = {
   displayName: string;
@@ -31,7 +31,7 @@ export type VaultV2Data = {
   sentinels: string[];
   owner: string;
   curator: string;
-  capsData: CapData
+  capsData: CapData;
   adapters: string[];
   curatorDisplay: string;
 };
@@ -94,7 +94,7 @@ export function useVaultV2Data({
       });
 
       // if any one of the caps is not set, it means it still need setup!
-      const needSetupCaps = !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0
+      const needSetupCaps = !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0;
 
       setData({
         displayName: result.name || fallbackName,
@@ -111,7 +111,7 @@ export function useVaultV2Data({
           adapterCap,
           collateralCaps,
           marketCaps,
-          needSetupCaps
+          needSetupCaps,
         },
         adapters: result.adapters,
         curatorDisplay,
@@ -122,7 +122,6 @@ export function useVaultV2Data({
     } finally {
       setLoading(false);
     }
-     
   }, [vaultAddress, chainId]);
 
   useEffect(() => {

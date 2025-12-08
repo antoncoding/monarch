@@ -11,9 +11,7 @@ type BlacklistedMarket = {
 };
 
 export function useBlacklistedMarkets() {
-  const [customBlacklistedMarkets, setCustomBlacklistedMarkets] = useLocalStorage<
-    BlacklistedMarket[]
-  >('customBlacklistedMarkets', []);
+  const [customBlacklistedMarkets, setCustomBlacklistedMarkets] = useLocalStorage<BlacklistedMarket[]>('customBlacklistedMarkets', []);
   const { success: toastSuccess } = useStyledToast();
 
   // Combine default and custom blacklists

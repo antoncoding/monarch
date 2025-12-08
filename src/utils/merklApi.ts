@@ -1,9 +1,4 @@
-import {
-  MerklCampaignsResponse,
-  MerklApiParams,
-  MerklCampaign,
-  SimplifiedCampaign,
-} from './merklTypes';
+import type { MerklCampaignsResponse, MerklApiParams, MerklCampaign, SimplifiedCampaign } from './merklTypes';
 
 const MERKL_API_BASE_URL = 'https://api.merkl.xyz/v4';
 
@@ -44,9 +39,7 @@ export class MerklApiClient {
     }
   }
 
-  async fetchActiveCampaigns(
-    params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {},
-  ): Promise<MerklCampaignsResponse> {
+  async fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaignsResponse> {
     const now = Math.floor(Date.now() / 1000);
 
     // Single API call with reasonable limit, no pagination loop

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
 
 type ModalContent = Exclude<ReactNode, Promise<any>>;
 
@@ -30,7 +30,7 @@ export function GlobalModalProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ openModal, closeModal, toggleModal, isOpen: !!modalContent }),
-    [openModal, closeModal, toggleModal, modalContent]
+    [openModal, closeModal, toggleModal, modalContent],
   );
 
   return (

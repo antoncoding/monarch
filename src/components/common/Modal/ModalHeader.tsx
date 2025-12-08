@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { ModalHeader as HeroModalHeader } from '@heroui/react';
 import { Cross1Icon } from '@radix-ui/react-icons';
 import { twMerge } from 'tailwind-merge';
@@ -54,11 +54,7 @@ export function ModalHeader({
   // If children are provided, use them directly (for custom layouts)
   if (children) {
     return (
-      <HeroModalHeader
-        className={twMerge('flex w-full flex-col gap-1 font-zen', paddingClass, className)}
-      >
-        {children}
-      </HeroModalHeader>
+      <HeroModalHeader className={twMerge('flex w-full flex-col gap-1 font-zen', paddingClass, className)}>{children}</HeroModalHeader>
     );
   }
 
@@ -70,11 +66,7 @@ export function ModalHeader({
           {mainIcon && <div className="flex-shrink-0">{mainIcon}</div>}
           <span className={`${titleSizeClass} leading-tight`}>{title}</span>
         </div>
-        {description && (
-          <div className={`${descriptionSizeClass} text-secondary font-zen text-normal`}>
-            {description}
-          </div>
-        )}
+        {description && <div className={`${descriptionSizeClass} text-secondary font-zen text-normal`}>{description}</div>}
       </div>
       {topRightControls && (
         <div className={`absolute flex items-center gap-2 ${controlPositionClass}`}>

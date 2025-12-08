@@ -1,7 +1,7 @@
 import { marketBorrowsRepaysQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types'; // Import shared type
+import type { MarketActivityTransaction, PaginatedMarketActivityTransactions } from '@/utils/types'; // Import shared type
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Types specific to the Subgraph response for this query
@@ -51,14 +51,16 @@ export const fetchSubgraphMarketBorrows = async (
 
   const fetchBatchSize = 200;
 
-  const variables = { marketId, loanAssetId, minAssets, first: fetchBatchSize, skip: 0 };
+  const variables = {
+    marketId,
+    loanAssetId,
+    minAssets,
+    first: fetchBatchSize,
+    skip: 0,
+  };
 
   try {
-    const result = await subgraphGraphqlFetcher<SubgraphBorrowsRepaysResponse>(
-      subgraphUrl,
-      marketBorrowsRepaysQuery,
-      variables,
-    );
+    const result = await subgraphGraphqlFetcher<SubgraphBorrowsRepaysResponse>(subgraphUrl, marketBorrowsRepaysQuery, variables);
 
     const borrows = result.data?.borrows ?? [];
     const repays = result.data?.repays ?? [];
@@ -66,7 +68,7 @@ export const fetchSubgraphMarketBorrows = async (
     const mappedBorrows: MarketActivityTransaction[] = borrows.map((b) => ({
       type: 'MarketBorrow',
       hash: b.hash,
-      timestamp: typeof b.timestamp === 'string' ? parseInt(b.timestamp, 10) : b.timestamp,
+      timestamp: typeof b.timestamp === 'string' ? Number.parseInt(b.timestamp, 10) : b.timestamp,
       amount: b.amount,
       userAddress: b.account.id,
     }));
@@ -74,7 +76,7 @@ export const fetchSubgraphMarketBorrows = async (
     const mappedRepays: MarketActivityTransaction[] = repays.map((r) => ({
       type: 'MarketRepay',
       hash: r.hash,
-      timestamp: typeof r.timestamp === 'string' ? parseInt(r.timestamp, 10) : r.timestamp,
+      timestamp: typeof r.timestamp === 'string' ? Number.parseInt(r.timestamp, 10) : r.timestamp,
       amount: r.amount,
       userAddress: r.account.id,
     }));

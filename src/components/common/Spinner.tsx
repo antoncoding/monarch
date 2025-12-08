@@ -1,5 +1,3 @@
-import React from 'react';
-
 const rotateCSS = `
   @keyframes rotate360 {
     from {
@@ -25,7 +23,10 @@ export function Spinner({ size = 32, width = 3, color }: LoadingSpinnerProps) {
   return (
     <div className="inline-flex items-center justify-center">
       <style>{rotateCSS}</style>
-      <div className="flex items-center justify-center" style={{ width: size, height: size }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ width: size, height: size }}
+      >
         <div
           className={`relative ${color ?? 'text-primary'}`}
           style={{ width: size, height: size }}

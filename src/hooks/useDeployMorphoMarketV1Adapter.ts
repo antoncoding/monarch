@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { Address, encodeFunctionData, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress } from 'viem';
 import { useAccount, useChainId } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
+import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 const TX_TOAST_ID = 'deploy-morpho-market-adapter';
@@ -24,7 +24,7 @@ export function useDeployMorphoMarketV1Adapter({
   const factoryAddress = useMemo(() => {
     try {
       return getNetworkConfig(resolvedChainId).vaultConfig?.marketV1AdapterFactory ?? null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }, [resolvedChainId]);
@@ -34,12 +34,7 @@ export function useDeployMorphoMarketV1Adapter({
     return getMorphoAddress(resolvedChainId);
   }, [morphoAddress, resolvedChainId]);
 
-  const canDeploy = Boolean(
-    factoryAddress &&
-    vaultAddress &&
-    morpho &&
-    morpho !== zeroAddress,
-  );
+  const canDeploy = Boolean(factoryAddress && vaultAddress && morpho && morpho !== zeroAddress);
 
   const { isConfirming: isDeploying, sendTransactionAsync } = useTransactionWithToast({
     toastId: TX_TOAST_ID,

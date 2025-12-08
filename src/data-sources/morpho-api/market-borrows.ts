@@ -1,6 +1,6 @@
 import { marketBorrowsQuery } from '@/graphql/morpho-api-queries';
 // Import the shared type from its new location
-import { PaginatedMarketActivityTransactions } from '@/utils/types';
+import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Type specifically for the raw Morpho API response structure for borrows/repays
@@ -52,10 +52,7 @@ export const fetchMorphoMarketBorrows = async (
   };
 
   try {
-    const result = await morphoGraphqlFetcher<MorphoAPIBorrowsResponse>(
-      marketBorrowsQuery,
-      variables,
-    );
+    const result = await morphoGraphqlFetcher<MorphoAPIBorrowsResponse>(marketBorrowsQuery, variables);
 
     const items = result.data?.transactions?.items ?? [];
     const totalCount = result.data?.transactions?.pageInfo?.countTotal ?? 0;

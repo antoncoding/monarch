@@ -1,16 +1,12 @@
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 
 /**
  * Read the current allocation amount for a specific cap ID from the vault contract
  */
-export async function readAllocation(
-  vaultAddress: Address,
-  capId: `0x${string}`,
-  chainId: SupportedNetworks,
-): Promise<bigint> {
+export async function readAllocation(vaultAddress: Address, capId: `0x${string}`, chainId: SupportedNetworks): Promise<bigint> {
   try {
     const client = getClient(chainId);
     const amount = await client.readContract({
@@ -30,10 +26,7 @@ export async function readAllocation(
 /**
  * Read the current allocation amount for a specific cap ID from the vault contract
  */
-export async function readTotalAsset(
-  vaultAddress: Address,
-  chainId: SupportedNetworks,
-): Promise<bigint> {
+export async function readTotalAsset(vaultAddress: Address, chainId: SupportedNetworks): Promise<bigint> {
   try {
     const client = getClient(chainId);
     const amount = await client.readContract({

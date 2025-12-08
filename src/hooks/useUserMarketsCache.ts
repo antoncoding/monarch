@@ -47,9 +47,7 @@ export function useUserMarketsCache(address: string | undefined) {
 
       markets.forEach((market) => {
         // Check if market already exists
-        const exists = updatedMarkets.some(
-          (m) => m.marketUniqueKey === market.marketUniqueKey && m.chainId === market.chainId,
-        );
+        const exists = updatedMarkets.some((m) => m.marketUniqueKey === market.marketUniqueKey && m.chainId === market.chainId);
 
         if (!exists) {
           updatedMarkets.push(market);

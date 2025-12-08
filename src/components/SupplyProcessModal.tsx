@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiUpload } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 
 type MarketSupply = {
@@ -100,9 +100,7 @@ export function SupplyProcessModal({
     >
       <ModalHeader
         title={`Supply ${tokenSymbol}`}
-        description={
-          isMultiMarket ? `Supplying to ${supplies.length} markets` : 'Supplying to market'
-        }
+        description={isMultiMarket ? `Supplying to ${supplies.length} markets` : 'Supplying to market'}
         mainIcon={<FiUpload className="h-5 w-5" />}
         onClose={onClose}
       />
@@ -124,9 +122,7 @@ export function SupplyProcessModal({
               <div
                 key={step.key}
                 className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-100 dark:border-gray-700'
+                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
                 }`}
               >
                 <div className="mt-0.5">

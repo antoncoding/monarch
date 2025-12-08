@@ -1,9 +1,9 @@
 import { subgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
-import { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
-import { SupportedNetworks } from '@/utils/networks';
+import type { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { UserTransaction, UserTxTypes } from '@/utils/types';
-import {
+import { type UserTransaction, UserTxTypes } from '@/utils/types';
+import type {
   SubgraphAccountData,
   SubgraphBorrowTx,
   SubgraphDepositTx,
@@ -32,7 +32,7 @@ const transformSubgraphTransactions = (
     const type = tx.isCollateral ? UserTxTypes.MarketSupplyCollateral : UserTxTypes.MarketSupply;
     allTransactions.push({
       hash: tx.hash,
-      timestamp: parseInt(tx.timestamp, 10),
+      timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
       data: {
         __typename: type,
@@ -46,12 +46,10 @@ const transformSubgraphTransactions = (
   });
 
   subgraphData.withdraws.forEach((tx: SubgraphWithdrawTx) => {
-    const type = tx.isCollateral
-      ? UserTxTypes.MarketWithdrawCollateral
-      : UserTxTypes.MarketWithdraw;
+    const type = tx.isCollateral ? UserTxTypes.MarketWithdrawCollateral : UserTxTypes.MarketWithdraw;
     allTransactions.push({
       hash: tx.hash,
-      timestamp: parseInt(tx.timestamp, 10),
+      timestamp: Number.parseInt(tx.timestamp, 10),
       type: type,
       data: {
         __typename: type,
@@ -67,7 +65,7 @@ const transformSubgraphTransactions = (
   subgraphData.borrows.forEach((tx: SubgraphBorrowTx) => {
     allTransactions.push({
       hash: tx.hash,
-      timestamp: parseInt(tx.timestamp, 10),
+      timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketBorrow,
       data: {
         __typename: UserTxTypes.MarketBorrow,
@@ -83,7 +81,7 @@ const transformSubgraphTransactions = (
   subgraphData.repays.forEach((tx: SubgraphRepayTx) => {
     allTransactions.push({
       hash: tx.hash,
-      timestamp: parseInt(tx.timestamp, 10),
+      timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketRepay,
       data: {
         __typename: UserTxTypes.MarketRepay,
@@ -99,7 +97,7 @@ const transformSubgraphTransactions = (
   subgraphData.liquidations.forEach((tx: SubgraphLiquidationTx) => {
     allTransactions.push({
       hash: tx.hash,
-      timestamp: parseInt(tx.timestamp, 10),
+      timestamp: Number.parseInt(tx.timestamp, 10),
       type: UserTxTypes.MarketLiquidation,
       data: {
         __typename: UserTxTypes.MarketLiquidation,
@@ -118,9 +116,7 @@ const transformSubgraphTransactions = (
   const filteredTransactions =
     filters.marketUniqueKeys?.length === 0
       ? allTransactions
-      : allTransactions.filter(
-          (tx) => filters.marketUniqueKeys?.includes(tx.data.market.uniqueKey),
-        );
+      : allTransactions.filter((tx) => filters.marketUniqueKeys?.includes(tx.data.market.uniqueKey));
 
   const count = filteredTransactions.length;
   const countTotal = count;
@@ -135,10 +131,7 @@ const transformSubgraphTransactions = (
   };
 };
 
-export const fetchSubgraphTransactions = async (
-  filters: TransactionFilters,
-  network: SupportedNetworks,
-): Promise<TransactionResponse> => {
+export const fetchSubgraphTransactions = async (filters: TransactionFilters, network: SupportedNetworks): Promise<TransactionResponse> => {
   if (filters.userAddress.length !== 1) {
     console.warn('Subgraph fetcher currently supports only one user address.');
     return {

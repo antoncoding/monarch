@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
@@ -90,5 +90,10 @@ export function TokenIcon({
   }
 
   // Fallback to placeholder
-  return <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width, height }} />;
+  return (
+    <div
+      className="rounded-full bg-gray-300 dark:bg-gray-700"
+      style={{ width, height }}
+    />
+  );
 }

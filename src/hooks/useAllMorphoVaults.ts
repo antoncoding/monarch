@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchAllMorphoVaults, MorphoVault } from '@/data-sources/morpho-api/vaults';
+import { fetchAllMorphoVaults, type MorphoVault } from '@/data-sources/morpho-api/vaults';
 
 type UseAllMorphoVaultsReturn = {
   vaults: MorphoVault[];

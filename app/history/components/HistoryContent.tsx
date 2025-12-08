@@ -17,7 +17,11 @@ export default function HistoryContent({ account }: { account: string }) {
         <h1 className="py-4 font-zen text-2xl">Transaction History</h1>
 
         <div className="mt-4">
-          <HistoryTable account={account} positions={positions} rebalancerInfos={rebalancerInfos} />
+          <HistoryTable
+            account={account}
+            positions={positions}
+            rebalancerInfos={rebalancerInfos}
+          />
         </div>
       </div>
     </div>

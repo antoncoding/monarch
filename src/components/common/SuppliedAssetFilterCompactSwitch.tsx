@@ -97,7 +97,10 @@ export function SuppliedAssetFilterCompactSwitch({
           aria-label="Market filters"
           onPress={onOpen}
         >
-          <FiFilter size={14} style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined}} />
+          <FiFilter
+            size={14}
+            style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
+          />
         </Button>
       </Tooltip>
 
@@ -117,79 +120,110 @@ export function SuppliedAssetFilterCompactSwitch({
               mainIcon={<FiFilter size={14} />}
               onClose={close}
             />
-            <ModalBody variant="compact" className="flex flex-col gap-4">
-                <FilterSection 
-                  title="Basic Filters" 
-                  helper="Options to display markets with unknown parameters. Use with caution."
+            <ModalBody
+              variant="compact"
+              className="flex flex-col gap-4"
+            >
+              <FilterSection
+                title="Basic Filters"
+                helper="Options to display markets with unknown parameters. Use with caution."
+              >
+                <FilterRow
+                  title="Show Unknown Tokens"
+                  description="Display tokens outside of the curated list."
                 >
-                  <FilterRow
-                    title="Show Unknown Tokens"
-                    description="Display tokens outside of the curated list."
-                  >
-                    <IconSwitch selected={includeUnknownTokens} onChange={setIncludeUnknownTokens} size="xs" />
-                  </FilterRow>
-                  <FilterRow
-                    title="Show Unknown Oracles"
-                    description="Include markets with unverified oracle feeds."
-                  >
-                    <IconSwitch selected={showUnknownOracle} onChange={setShowUnknownOracle} size="xs" />
-                  </FilterRow>
-                  <FilterRow
-                    title="Show Unwhitelisted Markets"
-                    description="Surface markets that haven't been vetted by Monarch."
-                  >
-                    <IconSwitch
-                      selected={showUnwhitelistedMarkets}
-                      onChange={setShowUnwhitelistedMarkets}
-                      size="xs"
-                      color="destructive"
-                    />
-                  </FilterRow>
-                </FilterSection>
-
-                <Divider />
-
-                <FilterSection
-                  title="Advanced Filters"
-                  helper="Use advanced filters to fine-tune your market view. Use Customize Filters to adjust thresholds and manage trusted vaults."
+                  <IconSwitch
+                    selected={includeUnknownTokens}
+                    onChange={setIncludeUnknownTokens}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Show Unknown Oracles"
+                  description="Include markets with unverified oracle feeds."
                 >
-                  <FilterRow
-                    title="Trusted Vaults Only"
-                    description="Hide markets where none of your trusted vaults supply."
-                  >
-                    <div className="flex items-center gap-2">
-                      <IconSwitch selected={trustedVaultsOnly} onChange={setTrustedVaultsOnly} size="xs" />
-                    </div>
-                  </FilterRow>
-                  <FilterRow
-                    title="Min Supply"
-                    description={`Require ≥ $${thresholdCopy.minSupply} supplied.`}
-                  >
-                    <IconSwitch selected={minSupplyEnabled} onChange={setMinSupplyEnabled} size="xs" />
-                  </FilterRow>
-                  <FilterRow
-                    title="Min Borrow"
-                    description={`Require ≥ $${thresholdCopy.minBorrow} borrowed.`}
-                  >
-                    <IconSwitch selected={minBorrowEnabled} onChange={setMinBorrowEnabled} size="xs" />
-                  </FilterRow>
-                  <FilterRow
-                    title="Min Liquidity"
-                    description={`Require ≥ $${thresholdCopy.minLiquidity} liquidity.`}
-                  >
+                  <IconSwitch
+                    selected={showUnknownOracle}
+                    onChange={setShowUnknownOracle}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Show Unwhitelisted Markets"
+                  description="Surface markets that haven't been vetted by Monarch."
+                >
+                  <IconSwitch
+                    selected={showUnwhitelistedMarkets}
+                    onChange={setShowUnwhitelistedMarkets}
+                    size="xs"
+                    color="destructive"
+                  />
+                </FilterRow>
+              </FilterSection>
+
+              <Divider />
+
+              <FilterSection
+                title="Advanced Filters"
+                helper="Use advanced filters to fine-tune your market view. Use Customize Filters to adjust thresholds and manage trusted vaults."
+              >
+                <FilterRow
+                  title="Trusted Vaults Only"
+                  description="Hide markets where none of your trusted vaults supply."
+                >
+                  <div className="flex items-center gap-2">
                     <IconSwitch
-                      selected={minLiquidityEnabled}
-                      onChange={setMinLiquidityEnabled}
+                      selected={trustedVaultsOnly}
+                      onChange={setTrustedVaultsOnly}
                       size="xs"
                     />
-                  </FilterRow>
-                </FilterSection>
+                  </div>
+                </FilterRow>
+                <FilterRow
+                  title="Min Supply"
+                  description={`Require ≥ $${thresholdCopy.minSupply} supplied.`}
+                >
+                  <IconSwitch
+                    selected={minSupplyEnabled}
+                    onChange={setMinSupplyEnabled}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Min Borrow"
+                  description={`Require ≥ $${thresholdCopy.minBorrow} borrowed.`}
+                >
+                  <IconSwitch
+                    selected={minBorrowEnabled}
+                    onChange={setMinBorrowEnabled}
+                    size="xs"
+                  />
+                </FilterRow>
+                <FilterRow
+                  title="Min Liquidity"
+                  description={`Require ≥ $${thresholdCopy.minLiquidity} liquidity.`}
+                >
+                  <IconSwitch
+                    selected={minLiquidityEnabled}
+                    onChange={setMinLiquidityEnabled}
+                    size="xs"
+                  />
+                </FilterRow>
+              </FilterSection>
             </ModalBody>
             <ModalFooter className="justify-between">
-              <Button variant="flat" size="sm" onPress={handleCustomize}>
+              <Button
+                variant="flat"
+                size="sm"
+                onPress={handleCustomize}
+              >
                 Customize Filters
               </Button>
-              <Button color="primary" size="sm" onPress={close}>
+              <Button
+                color="primary"
+                size="sm"
+                onPress={close}
+              >
                 Done
               </Button>
             </ModalFooter>

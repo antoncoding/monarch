@@ -1,7 +1,7 @@
-import { Address } from 'abitype';
+import type { Address } from 'abitype';
 import { useReadContract } from 'wagmi';
 import { abi } from '@/abis/chainlinkOraclev2';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type Props = {
   oracle: Address;

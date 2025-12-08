@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
 import { TokenIcon } from '@/components/TokenIcon';
 import { getNetworkName } from '@/utils/networks';
@@ -25,9 +25,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
 
   console.log('query', query);
 
-  const filteredAssets = assets.filter((asset) =>
-    asset.symbol.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filteredAssets = assets.filter((asset) => asset.symbol.toLowerCase().includes(query.toLowerCase()));
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,7 +39,10 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
   }, []);
 
   return (
-    <div className="relative h-14 min-w-[200px]" ref={dropdownRef}>
+    <div
+      className="relative h-14 min-w-[200px]"
+      ref={dropdownRef}
+    >
       <button
         className="bg-surface relative flex h-14 w-full flex-col items-start justify-center rounded rounded-sm px-4 shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
@@ -110,13 +111,9 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                 type="button"
                 key={`${asset.address}-${asset.chainId}`}
                 role="option"
-                aria-selected={
-                  selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
-                }
+                aria-selected={selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId}
                 className={`flex w-full items-center gap-2 p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                  selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
-                    ? 'bg-gray-50 dark:bg-gray-900'
-                    : ''
+                  selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId ? 'bg-gray-50 dark:bg-gray-900' : ''
                 }`}
                 onClick={() => {
                   onSelect(asset);

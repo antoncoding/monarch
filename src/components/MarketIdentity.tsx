@@ -2,7 +2,7 @@ import { MarketIdBadge } from '@/components/MarketIdBadge';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TokenIcon } from '@/components/TokenIcon';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import { Market, TokenInfo } from '@/utils/types';
+import type { Market, TokenInfo } from '@/utils/types';
 
 export enum MarketIdentityMode {
   Normal = 'normal',
@@ -44,15 +44,17 @@ export function MarketIdentity({
   const lltv = (Number(market.lltv) / 1e16).toFixed(0);
   const loanSymbol = getTruncatedAssetName(market.loanAsset.symbol);
   const collateralAsset = (market.collateralAsset as TokenInfo | null) ?? null;
-  const collateralSymbol = collateralAsset
-    ? getTruncatedAssetName(collateralAsset.symbol)
-    : 'Idle Market';
+  const collateralSymbol = collateralAsset ? getTruncatedAssetName(collateralAsset.symbol) : 'Idle Market';
 
   // Badge mode: show ID - icon - LLTV% or just symbol
   if (mode === MarketIdentityMode.Badge) {
     return (
       <div className="flex items-center gap-1.5">
-        <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+        <MarketIdBadge
+          marketId={market.uniqueKey}
+          chainId={chainId}
+          showLink={false}
+        />
         {collateralAsset ? (
           <>
             <TokenIcon
@@ -116,7 +118,11 @@ export function MarketIdentity({
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             {showId && (
-              <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+              <MarketIdBadge
+                marketId={market.uniqueKey}
+                chainId={chainId}
+                showLink={false}
+              />
             )}
             {token ? (
               <>
@@ -136,11 +142,7 @@ export function MarketIdentity({
               <span className="text-sm whitespace-nowrap">{label}</span>
             )}
           </div>
-          {showLltv && (
-            <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-              {lltv}%
-            </span>
-          )}
+          {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}%</span>}
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
@@ -156,7 +158,11 @@ export function MarketIdentity({
     return (
       <div className="flex items-center gap-2">
         {showId && (
-          <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+          <MarketIdBadge
+            marketId={market.uniqueKey}
+            chainId={chainId}
+            showLink={false}
+          />
         )}
         {token ? (
           <>
@@ -175,11 +181,7 @@ export function MarketIdentity({
         ) : (
           <span className="text-sm whitespace-nowrap">{label}</span>
         )}
-        {showLltv && (
-          <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-            {lltv}% LLTV
-          </span>
-        )}
+        {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}
@@ -201,40 +203,26 @@ export function MarketIdentity({
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
             {showId && (
-              <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+              <MarketIdBadge
+                marketId={market.uniqueKey}
+                chainId={chainId}
+                showLink={false}
+              />
             )}
             {tokenStack}
             <div className="flex items-center gap-2">
-              <span className={`whitespace-nowrap ${isLoanFocused ? 'text-sm' : 'text-xs text-secondary'}`}>
-                {loanSymbol}
-              </span>
+              <span className={`whitespace-nowrap ${isLoanFocused ? 'text-sm' : 'text-xs text-secondary'}`}>{loanSymbol}</span>
               {collateralAsset ? (
                 <>
                   <span className="text-xs text-secondary">/</span>
-                  <span
-                    className={`whitespace-nowrap ${
-                      isLoanFocused ? 'text-xs text-secondary' : 'text-sm'
-                    }`}
-                  >
-                    {collateralSymbol}
-                  </span>
+                  <span className={`whitespace-nowrap ${isLoanFocused ? 'text-xs text-secondary' : 'text-sm'}`}>{collateralSymbol}</span>
                 </>
               ) : (
-                <span
-                  className={`whitespace-nowrap ${
-                    isLoanFocused ? 'text-xs text-secondary' : 'text-sm'
-                  }`}
-                >
-                  {collateralSymbol}
-                </span>
+                <span className={`whitespace-nowrap ${isLoanFocused ? 'text-xs text-secondary' : 'text-sm'}`}>{collateralSymbol}</span>
               )}
             </div>
           </div>
-          {showLltv && (
-            <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-              {lltv}% LLTV
-            </span>
-          )}
+          {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
@@ -250,38 +238,24 @@ export function MarketIdentity({
     return (
       <div className="flex items-center gap-3">
         {showId && (
-          <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+          <MarketIdBadge
+            marketId={market.uniqueKey}
+            chainId={chainId}
+            showLink={false}
+          />
         )}
         {tokenStack}
         <div className="flex items-center gap-2">
-          <span className={`whitespace-nowrap ${isLoanFocused ? 'text-sm' : 'text-xs text-secondary'}`}>
-            {loanSymbol}
-          </span>
+          <span className={`whitespace-nowrap ${isLoanFocused ? 'text-sm' : 'text-xs text-secondary'}`}>{loanSymbol}</span>
           {collateralAsset ? (
             <>
               <span className="text-xs text-secondary">/</span>
-              <span
-                className={`whitespace-nowrap ${
-                  isLoanFocused ? 'text-xs text-secondary' : 'text-sm'
-                }`}
-              >
-                {collateralSymbol}
-              </span>
+              <span className={`whitespace-nowrap ${isLoanFocused ? 'text-xs text-secondary' : 'text-sm'}`}>{collateralSymbol}</span>
             </>
           ) : (
-            <span
-              className={`whitespace-nowrap ${
-                isLoanFocused ? 'text-xs text-secondary' : 'text-sm'
-              }`}
-            >
-              {collateralSymbol}
-            </span>
+            <span className={`whitespace-nowrap ${isLoanFocused ? 'text-xs text-secondary' : 'text-sm'}`}>{collateralSymbol}</span>
           )}
-          {showLltv && (
-            <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-              {lltv}% LLTV
-            </span>
-          )}
+          {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
           {showOracle && (
             <OracleVendorBadge
               oracleData={market.oracle?.data}
@@ -301,7 +275,11 @@ export function MarketIdentity({
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-3">
           {showId && (
-            <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+            <MarketIdBadge
+              marketId={market.uniqueKey}
+              chainId={chainId}
+              showLink={false}
+            />
           )}
           {tokenStack}
           <div className="flex items-center gap-2">
@@ -313,11 +291,7 @@ export function MarketIdentity({
             )}
           </div>
         </div>
-        {showLltv && (
-          <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-            {lltv}% LLTV
-          </span>
-        )}
+        {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}
@@ -333,7 +307,11 @@ export function MarketIdentity({
   return (
     <div className="flex items-center gap-3">
       {showId && (
-        <MarketIdBadge marketId={market.uniqueKey} chainId={chainId} showLink={false} />
+        <MarketIdBadge
+          marketId={market.uniqueKey}
+          chainId={chainId}
+          showLink={false}
+        />
       )}
       {tokenStack}
       <div className="flex items-center gap-2">
@@ -343,11 +321,7 @@ export function MarketIdentity({
         ) : (
           <span className="text-sm whitespace-nowrap">{collateralSymbol}</span>
         )}
-        {showLltv && (
-          <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">
-            {lltv}% LLTV
-          </span>
-        )}
+        {showLltv && <span className="rounded bg-hovered px-1.5 py-0.5 text-xs font-medium text-secondary">{lltv}% LLTV</span>}
         {showOracle && (
           <OracleVendorBadge
             oracleData={market.oracle?.data}

@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiRepeat } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 
 type RepayProcessModalProps = {
@@ -85,16 +85,15 @@ export function RepayProcessModal({
     >
       <ModalHeader
         title={`${withdrawAmount > 0n ? 'Withdraw & Repay' : 'Repay'} ${tokenSymbol}`}
-        description={
-          withdrawAmount > 0n
-            ? 'Withdrawing collateral and repaying loan'
-            : 'Repaying loan to market'
-        }
+        description={withdrawAmount > 0n ? 'Withdrawing collateral and repaying loan' : 'Repaying loan to market'}
         mainIcon={<FiRepeat className="h-5 w-5" />}
         onClose={onClose}
       />
       <ModalBody className="gap-5">
-        <MarketInfoBlock market={market} amount={repayAmount} />
+        <MarketInfoBlock
+          market={market}
+          amount={repayAmount}
+        />
 
         <div className="space-y-4">
           {steps.map((step) => {
@@ -103,9 +102,7 @@ export function RepayProcessModal({
               <div
                 key={step.key}
                 className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-100 dark:border-gray-700'
+                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
                 }`}
               >
                 <div className="mt-0.5">

@@ -1,12 +1,8 @@
-import { Address, formatUnits, PublicClient } from 'viem';
+import { type Address, formatUnits, type PublicClient } from 'viem';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from './morpho';
-import { SupportedNetworks } from './networks';
-import {
-  MarketPosition,
-  MarketPositionWithEarnings,
-  GroupedPosition,
-} from './types';
+import type { SupportedNetworks } from './networks';
+import type { MarketPosition, MarketPositionWithEarnings, GroupedPosition } from './types';
 
 export type PositionSnapshot = {
   supplyAssets: string;
@@ -118,11 +114,7 @@ export async function fetchPositionsSnapshots(
         positions.set(marketId, position);
 
         // Check if this position has any shares/collateral
-        if (
-          position.supplyShares !== 0n ||
-          position.borrowShares !== 0n ||
-          position.collateral !== 0n
-        ) {
+        if (position.supplyShares !== 0n || position.borrowShares !== 0n || position.collateral !== 0n) {
           marketsNeedingData.push(marketId);
         } else {
           // No shares, set zero snapshot immediately
@@ -164,17 +156,9 @@ export async function fetchPositionsSnapshots(
         if (marketResult.status === 'success' && marketResult.result) {
           const market = arrayToMarket(marketResult.result as readonly bigint[]);
 
-          const supplyAssets = convertSharesToAssets(
-            position.supplyShares,
-            market.totalSupplyAssets,
-            market.totalSupplyShares,
-          );
+          const supplyAssets = convertSharesToAssets(position.supplyShares, market.totalSupplyAssets, market.totalSupplyShares);
 
-          const borrowAssets = convertSharesToAssets(
-            position.borrowShares,
-            market.totalBorrowAssets,
-            market.totalBorrowShares,
-          );
+          const borrowAssets = convertSharesToAssets(position.borrowShares, market.totalBorrowAssets, market.totalBorrowShares);
 
           result.set(marketId, {
             supplyShares: position.supplyShares.toString(),
@@ -279,8 +263,6 @@ export async function fetchMarketSnapshot(
   }
 }
 
-
-
 /**
  * Get combined earnings for a group of positions
  *
@@ -306,9 +288,7 @@ export function getGroupedEarnings(groupedPosition: GroupedPosition): bigint {
  * @param positions - Array of positions with earnings
  * @returns Array of grouped positions
  */
-export function groupPositionsByLoanAsset(
-  positions: MarketPositionWithEarnings[],
-): GroupedPosition[] {
+export function groupPositionsByLoanAsset(positions: MarketPositionWithEarnings[]): GroupedPosition[] {
   return positions
     .filter((position) => BigInt(position.state.supplyShares) > 0)
     .reduce((acc: GroupedPosition[], position) => {
@@ -316,9 +296,7 @@ export function groupPositionsByLoanAsset(
       const loanAssetDecimals = position.market.loanAsset.decimals;
       const chainId = position.market.morphoBlue.chain.id;
 
-      let groupedPosition = acc.find(
-        (gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId,
-      );
+      let groupedPosition = acc.find((gp) => gp.loanAssetAddress === loanAssetAddress && gp.chainId === chainId);
 
       if (!groupedPosition) {
         groupedPosition = {
@@ -338,16 +316,12 @@ export function groupPositionsByLoanAsset(
       }
 
       // Check if position should be included in the group
-      const shouldInclude =
-        BigInt(position.state.supplyShares) > 0 ||
-        position.earned !== '0'
+      const shouldInclude = BigInt(position.state.supplyShares) > 0 || position.earned !== '0';
 
       if (shouldInclude) {
         groupedPosition.markets.push(position);
 
-        const supplyAmount = Number(
-          formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals),
-        );
+        const supplyAmount = Number(formatUnits(BigInt(position.state.supplyAssets), loanAssetDecimals));
         groupedPosition.totalSupply += supplyAmount;
 
         const weightedApyContribution = supplyAmount * (position.market.state?.supplyApy ?? 0); // Use optional chaining for state
@@ -357,9 +331,7 @@ export function groupPositionsByLoanAsset(
         const collateralSymbol = position.market.collateralAsset?.symbol;
 
         if (collateralAddress && collateralSymbol) {
-          const existingCollateral = groupedPosition.collaterals.find(
-            (c) => c.address === collateralAddress,
-          );
+          const existingCollateral = groupedPosition.collaterals.find((c) => c.address === collateralAddress);
           if (existingCollateral) {
             existingCollateral.amount += supplyAmount;
           } else {
@@ -377,8 +349,7 @@ export function groupPositionsByLoanAsset(
     .map((groupedPosition) => {
       // Calculate the final average weighted APY
       if (groupedPosition.totalSupply > 0) {
-        groupedPosition.totalWeightedApy =
-          groupedPosition.totalWeightedApy / groupedPosition.totalSupply;
+        groupedPosition.totalWeightedApy /= groupedPosition.totalSupply;
       } else {
         groupedPosition.totalWeightedApy = 0; // Avoid division by zero
       }
@@ -429,9 +400,7 @@ export function processCollaterals(groupedPositions: GroupedPosition[]): Grouped
  * @param positions - Original positions without earnings data
  * @returns Positions with initialized empty earnings
  */
-export function initializePositionsWithEmptyEarnings(
-  positions: MarketPosition[],
-): MarketPositionWithEarnings[] {
+export function initializePositionsWithEmptyEarnings(positions: MarketPosition[]): MarketPositionWithEarnings[] {
   return positions.map((position) => ({
     ...position,
     earned: '0',

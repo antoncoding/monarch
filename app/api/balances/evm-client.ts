@@ -1,5 +1,5 @@
-import { createPublicClient, http, Address, erc20Abi } from 'viem';
-import { getViemChain, getDefaultRPC, SupportedNetworks } from '@/utils/networks';
+import { createPublicClient, http, type Address, erc20Abi } from 'viem';
+import { getViemChain, getDefaultRPC, type SupportedNetworks } from '@/utils/networks';
 
 type TokenBalance = {
   address: string;
@@ -12,7 +12,7 @@ type TokenBalance = {
 export async function getKnownBalancesWithClient(
   userAddress: string,
   tokenAddresses: string[],
-  network: SupportedNetworks
+  network: SupportedNetworks,
 ): Promise<TokenBalance[]> {
   const client = createPublicClient({
     chain: getViemChain(network),

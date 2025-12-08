@@ -1,26 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
-import {
-  fetchMorphoMarketHistoricalData,
-  HistoricalDataSuccessResult,
-} from '@/data-sources/morpho-api/historical';
+import { fetchMorphoMarketHistoricalData, type HistoricalDataSuccessResult } from '@/data-sources/morpho-api/historical';
 import { fetchSubgraphMarketHistoricalData } from '@/data-sources/subgraph/historical';
-import { SupportedNetworks } from '@/utils/networks';
-import { TimeseriesOptions } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { TimeseriesOptions } from '@/utils/types';
 
 export const useMarketHistoricalData = (
   uniqueKey: string | undefined,
   network: SupportedNetworks | undefined,
   options: TimeseriesOptions | undefined,
 ) => {
-  const queryKey = [
-    'marketHistoricalData',
-    uniqueKey,
-    network,
-    options?.startTimestamp,
-    options?.endTimestamp,
-    options?.interval,
-  ];
+  const queryKey = ['marketHistoricalData', uniqueKey, network, options?.startTimestamp, options?.endTimestamp, options?.interval];
 
   const { data, isLoading, error, refetch } = useQuery<HistoricalDataSuccessResult | null>({
     queryKey: queryKey,

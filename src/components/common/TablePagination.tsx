@@ -35,7 +35,7 @@ export function TablePagination({
   const endEntry = Math.min(currentPage * pageSize, totalEntries);
 
   const handleJumpToPage = () => {
-    const page = parseInt(jumpPage, 10);
+    const page = Number.parseInt(jumpPage, 10);
     if (page >= 1 && page <= totalPages) {
       onPageChange(page);
       setJumpPage('');
@@ -110,10 +110,13 @@ export function TablePagination({
         <div className="flex items-center gap-0.5">
           {pageNumbers.map((page, idx) =>
             page === 'ellipsis' ? (
-              <span key={`ellipsis-${idx}`} className={cn(
-                "flex h-8 items-center justify-center text-secondary font-zen !font-normal",
-                totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm'
-              )}>
+              <span
+                key={`ellipsis-${idx}`}
+                className={cn(
+                  'flex h-8 items-center justify-center text-secondary font-zen !font-normal',
+                  totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm',
+                )}
+              >
                 ...
               </span>
             ) : (
@@ -149,7 +152,11 @@ export function TablePagination({
         {/* Jump to page - only show if more than 10 pages */}
         {totalPages > 10 && (
           <div className="ml-1">
-            <Popover isOpen={isJumpOpen} onOpenChange={setIsJumpOpen} placement="top">
+            <Popover
+              isOpen={isJumpOpen}
+              onOpenChange={setIsJumpOpen}
+              placement="top"
+            >
               <Tooltip
                 classNames={{
                   base: 'p-0 m-0 bg-transparent shadow-sm border-none',

@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@heroui/react';
 import Image from 'next/image';
 import { AiOutlineEnter } from 'react-icons/ai';
 import { FaSearch } from 'react-icons/fa';
-import { ERC20Token, infoToKey, supportedTokens } from '@/utils/tokens';
+import { type ERC20Token, infoToKey, supportedTokens } from '@/utils/tokens';
 
 type SearchProps = {
   onSearch: (query: string) => void;
@@ -83,8 +84,7 @@ function AdvancedSearchBar({
     } else if (lastWord.includes(':')) {
       const [key, tokenQuery] = lastWord.split(':');
       const shortcutType = key as ShortcutType;
-      const tokenList =
-        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const tokenList = shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
       const tokenSuggestions = tokenList
         .filter((token) => token.symbol.toLowerCase().startsWith(tokenQuery.toLowerCase()))
         .map((token) => `${key}:${token.symbol}`);
@@ -130,13 +130,11 @@ function AdvancedSearchBar({
     } else if (suggestion.includes(':')) {
       const [type, symbol] = suggestion.split(':');
       const shortcutType = type as ShortcutType;
-      const tokenList =
-        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const tokenList = shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
       const token = tokenList.find((t) => t.symbol.toLowerCase() === symbol.toLowerCase());
       if (token) {
         const tokenId = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-        const currentSelection =
-          shortcutType === ShortcutType.Collateral ? selectedCollaterals : selectedLoanAssets;
+        const currentSelection = shortcutType === ShortcutType.Collateral ? selectedCollaterals : selectedLoanAssets;
         onFilterUpdate(shortcutType, [...currentSelection, tokenId]);
         setInputValue(''); // Clear the input after applying a filter
       }
@@ -191,7 +189,12 @@ function AdvancedSearchBar({
         onValueChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={handleInputFocus}
-        endContent={<FaSearch className="cursor-pointer text-secondary" onClick={handleSearch} />}
+        endContent={
+          <FaSearch
+            className="cursor-pointer text-secondary"
+            onClick={handleSearch}
+          />
+        }
         classNames={{
           inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px] focus-within:outline-none',
           input: 'bg-surface rounded-sm text-xs focus:outline-none',
@@ -206,9 +209,7 @@ function AdvancedSearchBar({
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {
               const isTokenSuggestion = suggestion.includes(':');
-              const token = isTokenSuggestion
-                ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1])
-                : null;
+              const token = isTokenSuggestion ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1]) : null;
 
               return (
                 <li
@@ -238,9 +239,7 @@ function AdvancedSearchBar({
                       />
                     )}
                   </div>
-                  {(index === selectedSuggestion ||
-                    suggestion.startsWith('Clean query') ||
-                    suggestion.startsWith('Search ')) && (
+                  {(index === selectedSuggestion || suggestion.startsWith('Clean query') || suggestion.startsWith('Search ')) && (
                     <div className="flex items-center text-xs text-gray-500">
                       <AiOutlineEnter className="mr-1" />
                       <span>Enter</span>

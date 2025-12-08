@@ -3,7 +3,7 @@ self.addEventListener('install', () => {
 });
 
 self.addEventListener('activate', async () => {
-  const registrations = await self.registration.getRegistrations?.();
+  const _registrations = await self.registration.getRegistrations?.();
   try {
     const keys = await caches.keys();
     await Promise.all(keys.map((key) => caches.delete(key)));

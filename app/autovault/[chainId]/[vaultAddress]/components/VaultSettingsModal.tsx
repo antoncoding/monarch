@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import { CapData } from '@/hooks/useVaultV2Data';
-import { SupportedNetworks } from '@/utils/networks';
-import { GeneralTab, AgentsTab, CapsTab, SettingsTab } from './settings';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { CapData } from '@/hooks/useVaultV2Data';
+import type { SupportedNetworks } from '@/utils/networks';
+import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from './settings';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -33,7 +33,7 @@ type VaultSettingsModalProps = {
   sentinels?: string[];
   chainId: SupportedNetworks;
   vaultAsset?: Address;
-  marketAdapter: Address; // the deploy morpho market v1 adapter 
+  marketAdapter: Address; // the deploy morpho market v1 adapter
   capData?: CapData;
   onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
   updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
@@ -147,9 +147,7 @@ export function VaultSettingsModal({
         auxiliaryAction={
           onRefresh
             ? {
-                icon: (
-                  <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                ),
+                icon: <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />,
                 onClick: () => {
                   if (!isRefreshing) {
                     onRefresh();
@@ -174,9 +172,7 @@ export function VaultSettingsModal({
                   }`}
                 >
                   {tab.label}
-                  {activeTab === tab.id && (
-                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />
-                  )}
+                  {activeTab === tab.id && <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary" />}
                 </button>
               ))}
             </div>

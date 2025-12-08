@@ -6,7 +6,7 @@ import { Button } from '@/components/common/Button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { SupportedNetworks, networks } from '@/utils/networks';
+import { type SupportedNetworks, networks } from '@/utils/networks';
 import { useCustomRpcContext } from '../providers/CustomRpcProvider';
 
 // Helper function to get expected chain ID for each network
@@ -15,10 +15,7 @@ const getExpectedChainId = (network: SupportedNetworks): number => {
 };
 
 // Helper function to validate RPC URL and check chain ID
-async function validateRpcUrl(
-  url: string,
-  expectedChainId: number,
-): Promise<{ isValid: boolean; error?: string }> {
+async function validateRpcUrl(url: string, expectedChainId: number): Promise<{ isValid: boolean; error?: string }> {
   if (!url.trim()) {
     return { isValid: true }; // Empty URL is valid (will use default)
   }
@@ -46,15 +43,21 @@ async function validateRpcUrl(
     });
 
     if (!response.ok) {
-      return { isValid: false, error: `RPC server responded with ${response.status}` };
+      return {
+        isValid: false,
+        error: `RPC server responded with ${response.status}`,
+      };
     }
 
-    const data = (await response.json()) as { error?: { message: string }; result?: string };
+    const data = (await response.json()) as {
+      error?: { message: string };
+      result?: string;
+    };
     if (data.error) {
       return { isValid: false, error: `RPC error: ${data.error.message}` };
     }
 
-    const chainId = parseInt(data.result || '0x0', 16);
+    const chainId = Number.parseInt(data.result || '0x0', 16);
     if (chainId !== expectedChainId) {
       const networkName = networks.find((n) => n.network === expectedChainId)?.name;
       return {
@@ -67,16 +70,13 @@ async function validateRpcUrl(
   } catch (error) {
     return {
       isValid: false,
-      error: `Failed to connect to RPC: ${
-        error instanceof Error ? error.message : 'Network error'
-      }`,
+      error: `Failed to connect to RPC: ${error instanceof Error ? error.message : 'Network error'}`,
     };
   }
 }
 
 function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { customRpcUrls, setRpcUrl, resetRpcUrl, resetAllRpcUrls, isUsingCustomRpc } =
-    useCustomRpcContext();
+  const { customRpcUrls, setRpcUrl, resetRpcUrl, resetAllRpcUrls, isUsingCustomRpc } = useCustomRpcContext();
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(null);
   const [inputValue, setInputValue] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -116,21 +116,15 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
       const networkName = networks.find((n) => n.network === selectedNetwork)?.name;
 
       if (url) {
-        success(
-          'RPC Updated',
-          `Custom RPC configured for ${networkName}. Please refresh the page to apply changes.`,
-        );
+        success('RPC Updated', `Custom RPC configured for ${networkName}. Please refresh the page to apply changes.`);
       } else {
-        success(
-          'RPC Reset',
-          `${networkName} now uses default Alchemy RPC. Please refresh the page to apply changes.`,
-        );
+        success('RPC Reset', `${networkName} now uses default Alchemy RPC. Please refresh the page to apply changes.`);
       }
 
       setError('');
       setInputValue('');
       setSelectedNetwork(null);
-    } catch (validationError) {
+    } catch (_validationError) {
       toastError('Validation Failed', 'Unable to validate RPC endpoint');
       setError('Failed to validate RPC endpoint');
     } finally {
@@ -143,10 +137,7 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
     const networkName = networks.find((n) => n.network === selectedNetwork)?.name;
     resetRpcUrl(selectedNetwork);
-    success(
-      'RPC Reset',
-      `${networkName} reset to default Alchemy RPC. Please refresh the page to apply changes.`,
-    );
+    success('RPC Reset', `${networkName} reset to default Alchemy RPC. Please refresh the page to apply changes.`);
 
     setInputValue('');
     setError('');
@@ -165,9 +156,7 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
     resetAllRpcUrls();
     success(
       'All RPCs Reset',
-      `${customCount} custom RPC${
-        customCount !== 1 ? 's' : ''
-      } reset to default. Please refresh the page to apply changes.`,
+      `${customCount} custom RPC${customCount !== 1 ? 's' : ''} reset to default. Please refresh the page to apply changes.`,
     );
 
     setSelectedNetwork(null);
@@ -212,40 +201,36 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
             return (
               <button
-                  key={chainId}
-                  type="button"
-                  onClick={() => handleNetworkSelect(chainId)}
-                  className={`flex items-center justify-between rounded-sm border p-3 text-left transition-all duration-200 ${
-                    isSelected
-                      ? 'border-primary bg-primary/10'
-                      : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5 dark:border-gray-700 dark:hover:border-primary/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={network.logo}
-                      alt={network.name}
-                      width={24}
-                      height={24}
-                      className="rounded-full"
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium text-primary">{network.name}</span>
-                      <span className="text-xs text-secondary">
-                        {isCustom ? 'Custom RPC configured' : 'Using default Alchemy RPC'}
-                      </span>
-                    </div>
+                key={chainId}
+                type="button"
+                onClick={() => handleNetworkSelect(chainId)}
+                className={`flex items-center justify-between rounded-sm border p-3 text-left transition-all duration-200 ${
+                  isSelected
+                    ? 'border-primary bg-primary/10'
+                    : 'border-gray-200 hover:border-primary/50 hover:bg-primary/5 dark:border-gray-700 dark:hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Image
+                    src={network.logo}
+                    alt={network.name}
+                    width={24}
+                    height={24}
+                    className="rounded-full"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-primary">{network.name}</span>
+                    <span className="text-xs text-secondary">{isCustom ? 'Custom RPC configured' : 'Using default Alchemy RPC'}</span>
                   </div>
+                </div>
 
-                  <div className="flex items-center gap-2">
-                    {isCustom && <div className="h-2 w-2 rounded-full bg-green-500" />}
-                    <span className="rounded-sm px-3 py-1.5 text-xs font-medium text-primary">
-                      {isCustom ? 'Edit' : 'Configure'}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
+                <div className="flex items-center gap-2">
+                  {isCustom && <div className="h-2 w-2 rounded-full bg-green-500" />}
+                  <span className="rounded-sm px-3 py-1.5 text-xs font-medium text-primary">{isCustom ? 'Edit' : 'Configure'}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {selectedNetwork && (
@@ -283,7 +268,11 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                     className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
                   >
                     {isValidating ? (
-                      <Spinner size={14} width={2} color="text-white" />
+                      <Spinner
+                        size={14}
+                        width={2}
+                        color="text-white"
+                      />
                     ) : (
                       <span className="truncate">Save</span>
                     )}
@@ -294,7 +283,11 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
               {isUsingCustomRpc(selectedNetwork) && (
                 <div className="flex justify-center">
-                  <Button variant="secondary" size="sm" onPress={handleReset}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onPress={handleReset}
+                  >
                     Reset to Default
                   </Button>
                 </div>
@@ -323,8 +316,7 @@ export function AdvancedRpcSettings() {
             <div className="flex flex-col gap-1">
               <h3 className="text-lg font-medium text-primary">Custom RPC Endpoints</h3>
               <p className="text-sm text-secondary">
-                Configure custom RPC URLs for blockchain networks to override default Alchemy
-                endpoints.
+                Configure custom RPC URLs for blockchain networks to override default Alchemy endpoints.
               </p>
               <p className="mt-2 text-xs text-secondary opacity-80">
                 Custom RPCs will be used for both frontend wallet connections and backend API calls.
@@ -336,14 +328,21 @@ export function AdvancedRpcSettings() {
               </p>
             </div>
 
-            <Button variant="interactive" size="sm" onPress={() => setIsModalOpen(true)}>
+            <Button
+              variant="interactive"
+              size="sm"
+              onPress={() => setIsModalOpen(true)}
+            >
               Edit
             </Button>
           </div>
         </div>
       </div>
 
-      <RpcModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <RpcModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </>
   );
 }

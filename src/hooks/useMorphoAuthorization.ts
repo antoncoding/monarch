@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Address, encodeFunctionData, parseSignature } from 'viem';
+import { type Address, encodeFunctionData, parseSignature } from 'viem';
 import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
@@ -12,10 +12,7 @@ type UseMorphoAuthorizationProps = {
   authorized: Address;
 };
 
-export const useMorphoAuthorization = ({
-  chainId,
-  authorized,
-}: UseMorphoAuthorizationProps) => {
+export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthorizationProps) => {
   const { address: account } = useAccount();
   const { signTypedDataAsync } = useSignTypedData();
   const toast = useStyledToast();
@@ -43,18 +40,17 @@ export const useMorphoAuthorization = ({
     },
   });
 
-  const { sendTransactionAsync: sendBundlerAuthorizationTx, isConfirming: isConfirmingBundlerTx } =
-    useTransactionWithToast({
-      toastId: 'morpho-authorize',
-      pendingText: 'Authorizing Bundler on Morpho',
-      successText: 'Bundler Authorized',
-      errorText: 'Failed to authorize Bundler',
-      chainId,
-      onSuccess: () => {
-        void refetchIsBundlerAuthorized();
-        void refetchNonce();
-      },
-    });
+  const { sendTransactionAsync: sendBundlerAuthorizationTx, isConfirming: isConfirmingBundlerTx } = useTransactionWithToast({
+    toastId: 'morpho-authorize',
+    pendingText: 'Authorizing Bundler on Morpho',
+    successText: 'Bundler Authorized',
+    errorText: 'Failed to authorize Bundler',
+    chainId,
+    onSuccess: () => {
+      void refetchIsBundlerAuthorized();
+      void refetchNonce();
+    },
+  });
 
   const authorizeBundlerWithSignature = useCallback(async () => {
     if (!account || isBundlerAuthorized === true || nonce === undefined) {
@@ -135,61 +131,54 @@ export const useMorphoAuthorization = ({
     } finally {
       setIsAuthorizing(false);
     }
-  }, [
-    account,
-    isBundlerAuthorized,
-    nonce,
-    chainId,
-    authorized,
-    signTypedDataAsync,
-    refetchIsBundlerAuthorized,
-    refetchNonce,
-    toast,
-  ]);
+  }, [account, isBundlerAuthorized, nonce, chainId, authorized, signTypedDataAsync, refetchIsBundlerAuthorized, refetchNonce, toast]);
 
-  const authorizeWithTransaction = useCallback(async (shouldAuthorize?: boolean) => {
-    const authorize = shouldAuthorize ?? true;
-    if (!account) {
-      console.log('Skipping authorizeWithTransaction: no account');
-      return true; // No account
-    }
-
-    // Skip if trying to authorize when already authorized, or revoke when not authorized
-    if (authorize && isBundlerAuthorized === true) {
-      console.log('Already authorized, skipping');
-      return true;
-    }
-    if (!authorize && isBundlerAuthorized === false) {
-      console.log('Already not authorized, skipping');
-      return true;
-    }
-
-    setIsAuthorizing(true);
-    try {
-      // Simple Morpho setAuthorization transaction
-      await sendBundlerAuthorizationTx({
-        account: account,
-        to: getMorphoAddress(chainId),
-        data: encodeFunctionData({
-          abi: morphoAbi,
-          functionName: 'setAuthorization',
-          args: [authorized, authorize],
-        }),
-        chainId: chainId,
-      });
-      return true;
-    } catch (error) {
-      console.error('Error during transaction authorization:', error);
-      // Toast is handled by useTransactionWithToast
-      if (error instanceof Error && error.message.includes('User rejected')) {
-        // Handle specific user rejection if not caught by useTransactionWithToast
-        toast.error('Transaction Rejected', 'Authorization transaction rejected by user');
+  const authorizeWithTransaction = useCallback(
+    async (shouldAuthorize?: boolean) => {
+      const authorize = shouldAuthorize ?? true;
+      if (!account) {
+        console.log('Skipping authorizeWithTransaction: no account');
+        return true; // No account
       }
-      return false; // Indicate failure
-    } finally {
-      setIsAuthorizing(false);
-    }
-  }, [account, isBundlerAuthorized, authorized, sendBundlerAuthorizationTx, chainId, toast]);
+
+      // Skip if trying to authorize when already authorized, or revoke when not authorized
+      if (authorize && isBundlerAuthorized === true) {
+        console.log('Already authorized, skipping');
+        return true;
+      }
+      if (!authorize && isBundlerAuthorized === false) {
+        console.log('Already not authorized, skipping');
+        return true;
+      }
+
+      setIsAuthorizing(true);
+      try {
+        // Simple Morpho setAuthorization transaction
+        await sendBundlerAuthorizationTx({
+          account: account,
+          to: getMorphoAddress(chainId),
+          data: encodeFunctionData({
+            abi: morphoAbi,
+            functionName: 'setAuthorization',
+            args: [authorized, authorize],
+          }),
+          chainId: chainId,
+        });
+        return true;
+      } catch (error) {
+        console.error('Error during transaction authorization:', error);
+        // Toast is handled by useTransactionWithToast
+        if (error instanceof Error && error.message.includes('User rejected')) {
+          // Handle specific user rejection if not caught by useTransactionWithToast
+          toast.error('Transaction Rejected', 'Authorization transaction rejected by user');
+        }
+        return false; // Indicate failure
+      } finally {
+        setIsAuthorizing(false);
+      }
+    },
+    [account, isBundlerAuthorized, authorized, sendBundlerAuthorizationTx, chainId, toast],
+  );
 
   return {
     isBundlerAuthorized,

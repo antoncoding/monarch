@@ -3,7 +3,7 @@ import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
-import { WarningWithDetail, Market } from '@/utils/types';
+import type { WarningWithDetail, Market } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
 type RiskFlagProps = {
@@ -16,11 +16,26 @@ type RiskFlagProps = {
 const levelToIcon = (level: 'green' | 'yellow' | 'red') => {
   switch (level) {
     case 'green':
-      return <GrStatusGood size={18} className="text-green-600" />;
+      return (
+        <GrStatusGood
+          size={18}
+          className="text-green-600"
+        />
+      );
     case 'yellow':
-      return <MdWarning size={18} className="text-yellow-600" />;
+      return (
+        <MdWarning
+          size={18}
+          className="text-yellow-600"
+        />
+      );
     case 'red':
-      return <MdError size={18} className="text-red-600" />;
+      return (
+        <MdError
+          size={18}
+          className="text-red-600"
+        />
+      );
   }
 };
 
@@ -44,12 +59,7 @@ const levelToStyle = (level: 'green' | 'yellow' | 'red') => {
   }
 };
 
-export function RiskIndicator({
-  level,
-  description,
-  mode = 'simple',
-  warningDetail,
-}: RiskFlagProps) {
+export function RiskIndicator({ level, description, mode = 'simple', warningDetail }: RiskFlagProps) {
   const styles = levelToStyle(level);
   const icon = levelToIcon(level);
 
@@ -99,7 +109,13 @@ export function RiskIndicatorFromWarning({
   const warnings = warningsWithDetail.filter((w) => w.category === category);
 
   if (warnings.length === 0) {
-    return <RiskIndicator level="green" description={greenDescription} mode={mode} />;
+    return (
+      <RiskIndicator
+        level="green"
+        description={greenDescription}
+        mode={mode}
+      />
+    );
   }
 
   if (warnings.some((warning) => warning.level === 'alert')) {

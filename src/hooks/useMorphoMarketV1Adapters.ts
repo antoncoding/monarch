@@ -1,16 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Address, zeroAddress } from 'viem';
-import { fetchMorphoMarketV1Adapters, MorphoMarketV1AdapterRecord } from '@/data-sources/subgraph/morpho-market-v1-adapters';
+import { type Address, zeroAddress } from 'viem';
+import { fetchMorphoMarketV1Adapters, type MorphoMarketV1AdapterRecord } from '@/data-sources/subgraph/morpho-market-v1-adapters';
 import { getMorphoAddress } from '@/utils/morpho';
-import { getNetworkConfig, SupportedNetworks } from '@/utils/networks';
+import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 
-export function useMorphoMarketV1Adapters({
-  vaultAddress,
-  chainId,
-}: {
-  vaultAddress?: Address;
-  chainId: SupportedNetworks;
-}) {
+export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
   const [adapters, setAdapters] = useState<MorphoMarketV1AdapterRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -18,7 +12,7 @@ export function useMorphoMarketV1Adapters({
   const vaultConfig = useMemo(() => {
     try {
       return getNetworkConfig(chainId).vaultConfig;
-    } catch (err) {
+    } catch (_err) {
       return undefined;
     }
   }, [chainId]);
@@ -56,7 +50,7 @@ export function useMorphoMarketV1Adapters({
     void fetchAdapters();
   }, [fetchAdapters]);
 
-  const morphoMarketV1Adapter = useMemo(() => adapters.length == 0? zeroAddress : adapters[0].adapter, [adapters])
+  const morphoMarketV1Adapter = useMemo(() => (adapters.length == 0 ? zeroAddress : adapters[0].adapter), [adapters]);
 
   return {
     morphoMarketV1Adapter,

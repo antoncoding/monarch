@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
-import { Address, maxUint128 } from 'viem';
+import { type Address, maxUint128 } from 'viem';
 import { Button } from '@/components/common/Button';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/hooks/useMarkets';
-import { CapData } from '@/hooks/useVaultV2Data';
+import type { CapData } from '@/hooks/useVaultV2Data';
 import { parseCapIdParams } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
 import { MarketCapsTable } from './MarketCapsTable';
@@ -17,16 +17,10 @@ type CurrentCapsProps = {
   isOwner: boolean;
   onStartEdit: () => void;
   vaultAsset?: Address;
-  chainId: number
+  chainId: number;
 };
 
-export function CurrentCaps({
-  existingCaps,
-  isOwner,
-  onStartEdit,
-  chainId,
-  vaultAsset
-}: CurrentCapsProps) {
+export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vaultAsset }: CurrentCapsProps) {
   const { markets, loading: marketsLoading } = useMarkets();
   const [expandedCollaterals, setExpandedCollaterals] = useState<Set<string>>(new Set());
 
@@ -46,25 +40,25 @@ export function CurrentCaps({
       }
       const value = Number(capBigInt) / 10 ** vaultAssetDecimals;
       return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    } catch (e) {
+    } catch (_e) {
       // If we can't parse it as BigInt, return as is
       return cap;
     }
   };
 
-  const hasAnyCaps = existingCaps && (
-    existingCaps.adapterCap !== null ||
-    existingCaps.collateralCaps.length > 0 ||
-    existingCaps.marketCaps.length > 0
-  );
+  const hasAnyCaps =
+    existingCaps && (existingCaps.adapterCap !== null || existingCaps.collateralCaps.length > 0 || existingCaps.marketCaps.length > 0);
 
   // Group market caps by collateral
   const marketCapsByCollateral = useMemo(() => {
-    const grouped = new Map<string, {
-      cap: NonNullable<typeof existingCaps>['marketCaps'][0];
-      market: typeof markets[0] | null;
-      capPercent: string;
-    }[]>();
+    const grouped = new Map<
+      string,
+      {
+        cap: NonNullable<typeof existingCaps>['marketCaps'][0];
+        market: (typeof markets)[0] | null;
+        capPercent: string;
+      }[]
+    >();
 
     if (!existingCaps) return grouped;
 
@@ -74,9 +68,7 @@ export function CurrentCaps({
       if (parsed.type === 'market' && parsed.marketParams?.collateralToken) {
         const collateralAddr = parsed.marketParams.collateralToken.toLowerCase();
 
-        const market = markets.find(
-          (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()
-        ) ?? null;
+        const market = markets.find((m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()) ?? null;
 
         if (!grouped.has(collateralAddr)) {
           grouped.set(collateralAddr, []);
@@ -85,7 +77,7 @@ export function CurrentCaps({
         grouped.get(collateralAddr)!.push({
           cap,
           market,
-          capPercent: (parseFloat(cap.relativeCap) / 1e16).toFixed(2),
+          capPercent: (Number.parseFloat(cap.relativeCap) / 1e16).toFixed(2),
         });
       }
     });
@@ -95,25 +87,25 @@ export function CurrentCaps({
 
   // Map collateral caps with their markets
   const collateralCapsWithMarkets = useMemo(() => {
-    return existingCaps?.collateralCaps.map((cap) => {
-      const parsed = parseCapIdParams(cap.idParams);
-      const collateralAddr = parsed.collateralToken?.toLowerCase() ?? '';
-      const marketsForCollateral = marketCapsByCollateral.get(collateralAddr) || [];
+    return (
+      existingCaps?.collateralCaps.map((cap) => {
+        const parsed = parseCapIdParams(cap.idParams);
+        const collateralAddr = parsed.collateralToken?.toLowerCase() ?? '';
+        const marketsForCollateral = marketCapsByCollateral.get(collateralAddr) || [];
 
-      // Get collateral symbol - try from token lookup first, then from market
-      const collateralToken = findToken(parsed.collateralToken as Address, chainId);
-      const collateralSymbol = collateralToken?.symbol ||
-                              marketsForCollateral[0]?.market?.collateralAsset.symbol ||
-                              'Unknown';
+        // Get collateral symbol - try from token lookup first, then from market
+        const collateralToken = findToken(parsed.collateralToken as Address, chainId);
+        const collateralSymbol = collateralToken?.symbol || marketsForCollateral[0]?.market?.collateralAsset.symbol || 'Unknown';
 
-      return {
-        cap,
-        collateralToken: parsed.collateralToken ?? 'Unknown',
-        collateralSymbol,
-        capPercent: (parseFloat(cap.relativeCap) / 1e16).toFixed(2),
-        markets: marketsForCollateral,
-      };
-    }) || [];
+        return {
+          cap,
+          collateralToken: parsed.collateralToken ?? 'Unknown',
+          collateralSymbol,
+          capPercent: (Number.parseFloat(cap.relativeCap) / 1e16).toFixed(2),
+          markets: marketsForCollateral,
+        };
+      }) || []
+    );
   }, [existingCaps, marketCapsByCollateral, chainId]);
 
   const toggleCollateral = (collateralAddr: string) => {
@@ -141,13 +133,15 @@ export function CurrentCaps({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-medium">Cap Settings</h3>
-          <p className="text-xs text-secondary">
-            Define allocation limits across markets and collaterals to control agent behavior.
-          </p>
+          <p className="text-xs text-secondary">Define allocation limits across markets and collaterals to control agent behavior.</p>
         </div>
         <div className="flex items-center gap-2">
           {isOwner && (
-            <Button variant="subtle" size="sm" onPress={onStartEdit}>
+            <Button
+              variant="subtle"
+              size="sm"
+              onPress={onStartEdit}
+            >
               {hasAnyCaps ? 'Edit caps' : 'Add caps'}
             </Button>
           )}
@@ -157,9 +151,7 @@ export function CurrentCaps({
       {!hasAnyCaps ? (
         <div className="rounded bg-hovered/30 p-6 text-center">
           <p className="text-sm text-secondary">No caps configured yet</p>
-          <p className="mt-1 text-xs text-secondary">
-            Set caps to control how agents allocate funds across markets
-          </p>
+          <p className="mt-1 text-xs text-secondary">Set caps to control how agents allocate funds across markets</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -207,23 +199,16 @@ export function CurrentCaps({
                           <span className="font-medium">{item.collateralSymbol}</span>
                           {hasMarkets && (
                             <span className="text-secondary">
-                              ({item.markets.length} market{item.markets.length !== 1 ? 's' : ''})
+                              ({item.markets.length} market
+                              {item.markets.length !== 1 ? 's' : ''})
                             </span>
                           )}
                         </div>
-                        <div className="w-20 text-right text-sm">
-                          {item.capPercent}%
-                        </div>
-                        <div className="w-24 text-right text-sm text-secondary">
-                          {formatAbsoluteCap(item.cap.absoluteCap)}
-                        </div>
+                        <div className="w-20 text-right text-sm">{item.capPercent}%</div>
+                        <div className="w-24 text-right text-sm text-secondary">{formatAbsoluteCap(item.cap.absoluteCap)}</div>
                         {hasMarkets && (
                           <div className="text-secondary">
-                            {isExpanded ? (
-                              <ChevronUpIcon className="h-4 w-4" />
-                            ) : (
-                              <ChevronDownIcon className="h-4 w-4" />
-                            )}
+                            {isExpanded ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
                           </div>
                         )}
                       </button>
@@ -231,14 +216,14 @@ export function CurrentCaps({
                       {/* Market Caps - Expandable */}
                       {isExpanded && hasMarkets && (
                         <div className="bg-hovered/10 p-3">
-                          <div className='flex gap-2'>
-                          <h5 className="text-xs font-medium text-secondary mb-3 px-1">Market Caps</h5>
-                          <MarketCapTooltip />
+                          <div className="flex gap-2">
+                            <h5 className="text-xs font-medium text-secondary mb-3 px-1">Market Caps</h5>
+                            <MarketCapTooltip />
                           </div>
                           <MarketCapsTable
                             markets={item.markets
-                              .filter(m => m.market)
-                              .map(m => ({
+                              .filter((m) => m.market)
+                              .map((m) => ({
                                 market: m.market!,
                                 relativeCap: m.capPercent,
                                 absoluteCap: m.cap.absoluteCap,
@@ -259,11 +244,9 @@ export function CurrentCaps({
           )}
 
           {/* Orphaned Market Caps (markets without collateral caps) */}
-          {existingCaps?.marketCaps.length > 0 && (
+          {existingCaps?.marketCaps.length > 0 &&
             (() => {
-              const collateralsWithCaps = new Set(
-                collateralCapsWithMarkets.map((c) => c.collateralToken.toLowerCase())
-              );
+              const collateralsWithCaps = new Set(collateralCapsWithMarkets.map((c) => c.collateralToken.toLowerCase()));
 
               const orphanedMarkets = existingCaps.marketCaps.filter((cap) => {
                 const parsed = parseCapIdParams(cap.idParams);
@@ -280,16 +263,12 @@ export function CurrentCaps({
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-medium text-secondary">Direct Market Caps</h4>
-                    <span className="text-xs text-secondary">
-                      (without collateral caps)
-                    </span>
+                    <span className="text-xs text-secondary">(without collateral caps)</span>
                   </div>
                   <div className="space-y-2">
                     {orphanedMarkets.map((cap) => {
                       const parsed = parseCapIdParams(cap.idParams);
-                      const market = markets.find(
-                        (m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase()
-                      );
+                      const market = markets.find((m) => m.uniqueKey.toLowerCase() === (parsed.marketId ?? '').toLowerCase());
 
                       if (!market) return null;
 
@@ -309,7 +288,7 @@ export function CurrentCaps({
                             <div className="flex items-center gap-4">
                               <div className="text-right">
                                 <span className="font-semibold text-primary">
-                                  {(parseFloat(cap.relativeCap) / 1e16).toFixed(2)}%
+                                  {(Number.parseFloat(cap.relativeCap) / 1e16).toFixed(2)}%
                                 </span>
                                 <span className="text-secondary ml-1">relative</span>
                               </div>
@@ -325,8 +304,7 @@ export function CurrentCaps({
                   </div>
                 </div>
               );
-            })()
-          )}
+            })()}
         </div>
       )}
     </div>

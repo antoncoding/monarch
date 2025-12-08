@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { FiArrowDownCircle } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { BorrowStepType } from '@/hooks/useBorrowTransaction';
-import { Market } from '@/utils/types';
+import type { BorrowStepType } from '@/hooks/useBorrowTransaction';
+import type { Market } from '@/utils/types';
 import { MarketInfoBlock } from './common/MarketInfoBlock';
 
 type MarketBorrow = {
@@ -128,9 +128,7 @@ export function BorrowProcessModal({
               <div
                 key={step.key}
                 className={`flex items-start gap-3 rounded border p-3 transition-colors ${
-                  status === 'current'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-gray-100 dark:border-gray-700'
+                  status === 'current' ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-700'
                 }`}
               >
                 <div className="mt-0.5">

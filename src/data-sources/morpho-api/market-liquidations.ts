@@ -1,5 +1,5 @@
 import { marketLiquidationsQuery } from '@/graphql/morpho-api-queries';
-import { MarketLiquidationTransaction } from '@/utils/types'; // Import unified type
+import type { MarketLiquidationTransaction } from '@/utils/types'; // Import unified type
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Type for the raw Morpho API response structure
@@ -28,19 +28,14 @@ type MorphoAPILiquidationsResponse = {
  * @param marketId The unique key or ID of the market.
  * @returns A promise resolving to an array of unified MarketLiquidationTransaction objects.
  */
-export const fetchMorphoMarketLiquidations = async (
-  marketId: string,
-): Promise<MarketLiquidationTransaction[]> => {
+export const fetchMorphoMarketLiquidations = async (marketId: string): Promise<MarketLiquidationTransaction[]> => {
   const variables = {
     uniqueKey: marketId,
     // Morpho API query might not need first/skip for liquidations, adjust if needed
   };
 
   try {
-    const result = await morphoGraphqlFetcher<MorphoAPILiquidationsResponse>(
-      marketLiquidationsQuery,
-      variables,
-    );
+    const result = await morphoGraphqlFetcher<MorphoAPILiquidationsResponse>(marketLiquidationsQuery, variables);
 
     const items = result.data?.transactions?.items ?? [];
 
@@ -56,10 +51,7 @@ export const fetchMorphoMarketLiquidations = async (
       // Removed optional fields not present in the simplified type
     }));
   } catch (error) {
-    console.error(
-      `Error fetching or processing Morpho API market liquidations for ${marketId}:`,
-      error,
-    );
+    console.error(`Error fetching or processing Morpho API market liquidations for ${marketId}:`, error);
     if (error instanceof Error) {
       throw error;
     }

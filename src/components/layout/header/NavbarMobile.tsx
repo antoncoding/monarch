@@ -46,11 +46,23 @@ export default function NavbarMobile() {
   return (
     <nav className="bg-surface flex h-full w-full items-center justify-between px-4">
       <div className="flex items-center gap-3">
-        <Link href="/" className="flex items-center">
-          <Image src={logo} alt="logo" height={24} />
+        <Link
+          href="/"
+          className="flex items-center"
+        >
+          <Image
+            src={logo}
+            alt="logo"
+            height={24}
+          />
         </Link>
 
-        <Dropdown isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} placement="bottom-start" className="z-50 rounded-sm">
+        <Dropdown
+          isOpen={isMenuOpen}
+          onOpenChange={setIsMenuOpen}
+          placement="bottom-start"
+          className="z-50 rounded-sm"
+        >
           <DropdownTrigger>
             <button
               type="button"
@@ -63,17 +75,17 @@ export default function NavbarMobile() {
                 'bg-transparent hover:bg-transparent active:bg-transparent',
               )}
             >
-              <HamburgerMenuIcon width="20" height="20" />
+              <HamburgerMenuIcon
+                width="20"
+                height="20"
+              />
             </button>
           </DropdownTrigger>
           <DropdownMenu
             aria-label="Navigation menu"
             className="bg-surface min-w-[200px] rounded-sm border-none shadow-md"
             itemClasses={{
-              base: [
-                'gap-4 px-4 py-2 rounded-none font-zen',
-                'data-[hover=true]:bg-hovered rounded-sm',
-              ].join(' '),
+              base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
               title: 'text-sm text-primary flex-grow font-zen',
               wrapper: 'justify-between no-underline rounded-sm',
             }}
@@ -128,10 +140,7 @@ export default function NavbarMobile() {
               </DropdownItem>
               <DropdownItem
                 key="theme"
-                startContent={
-                  mounted &&
-                  (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)
-                }
+                startContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
                 onClick={toggleTheme}
               >
                 {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}

@@ -18,11 +18,7 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
   const result = (await response.json()) as T;
 
   // Check for GraphQL errors
-  if (
-    'errors' in result &&
-    Array.isArray((result as any).errors) &&
-    (result as any).errors.length > 0
-  ) {
+  if ('errors' in result && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
     // Log the full error for debugging
     console.error('Morpho API GraphQL Error:', result.errors);
     throw new Error('Unknown GraphQL error from Morpho API');

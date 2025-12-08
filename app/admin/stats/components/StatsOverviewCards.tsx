@@ -1,7 +1,6 @@
-import React from 'react';
 import { Card, CardBody } from '@heroui/react';
-import { SupportedNetworks, getNetworkName } from '@/utils/networks';
-import { PlatformStats } from '@/utils/statsUtils';
+import { type SupportedNetworks, getNetworkName } from '@/utils/networks';
+import type { PlatformStats } from '@/utils/statsUtils';
 
 type StatsOverviewCardsProps = {
   stats: PlatformStats;
@@ -9,10 +8,8 @@ type StatsOverviewCardsProps = {
 };
 
 function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
-  const changeText =
-    change !== undefined ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '';
-  const changeColor =
-    change === undefined ? 'text-gray-500' : change > 0 ? 'text-green-500' : 'text-red-500';
+  const changeText = change !== undefined ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '';
+  const changeColor = change === undefined ? 'text-gray-500' : change > 0 ? 'text-green-500' : 'text-red-500';
 
   return (
     <Card className="bg-surface rounded-md shadow-sm">
@@ -23,9 +20,7 @@ function StatCard({ title, value, change, prefix = '' }: StatCardProps) {
             {prefix}
             {value}
           </p>
-          {change !== undefined && (
-            <span className={`ml-2 text-sm ${changeColor} font-inter`}>{changeText}</span>
-          )}
+          {change !== undefined && <span className={`ml-2 text-sm ${changeColor} font-inter`}>{changeText}</span>}
         </div>
       </CardBody>
     </Card>

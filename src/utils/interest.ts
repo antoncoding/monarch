@@ -1,4 +1,4 @@
-import { UserTransaction, UserTxTypes } from './types';
+import { type UserTransaction, UserTxTypes } from './types';
 
 export type EarningsCalculation = {
   earned: bigint;

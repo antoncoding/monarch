@@ -2,9 +2,9 @@ import { request } from 'graphql-request';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market'; // Need market data too
 import { subgraphUserPositionMarketsQuery } from '@/graphql/morpho-subgraph-queries';
 import { subgraphUserMarketPositionQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { MarketPosition } from '@/utils/types';
+import type { MarketPosition } from '@/utils/types';
 
 // The type expected by MarketPosition.state
 type MarketPositionState = {
@@ -70,10 +70,7 @@ export const fetchSubgraphUserPositionMarkets = async (
     const result = (await response.json()) as SubgraphPositionMarketResponse;
 
     if (result.errors) {
-      console.error(
-        `Subgraph error fetching position markets for ${userAddress} on ${network}:`,
-        result.errors,
-      );
+      console.error(`Subgraph error fetching position markets for ${userAddress} on ${network}:`, result.errors);
       throw new Error(result.errors.map((e) => e.message).join('; '));
     }
 
@@ -84,10 +81,7 @@ export const fetchSubgraphUserPositionMarkets = async (
       chainId: network, // The network ID is passed in
     }));
   } catch (error) {
-    console.error(
-      `Failed to fetch position markets from subgraph for ${userAddress} on ${network}:`,
-      error,
-    );
+    console.error(`Failed to fetch position markets from subgraph for ${userAddress} on ${network}:`, error);
     return []; // Return empty array on error
   }
 };
@@ -111,21 +105,15 @@ export const fetchSubgraphUserPositionForMarket = async (
     // 1. Fetch the market details first (needed for context)
     const market = await fetchSubgraphMarket(marketUniqueKey, network);
     if (!market) {
-      console.warn(
-        `Market ${marketUniqueKey} not found via subgraph on ${network} while fetching user position.`,
-      );
+      console.warn(`Market ${marketUniqueKey} not found via subgraph on ${network} while fetching user position.`);
       return null; // Cannot proceed without market details
     }
 
     // 2. Fetch the user's positions within that market
-    const response = await request<SubgraphPositionResponse>(
-      subgraphUrl,
-      subgraphUserMarketPositionQuery,
-      {
-        marketId: marketUniqueKey.toLowerCase(), // Ensure lowercase for subgraph ID matching
-        userId: userAddress.toLowerCase(),
-      },
-    );
+    const response = await request<SubgraphPositionResponse>(subgraphUrl, subgraphUserMarketPositionQuery, {
+      marketId: marketUniqueKey.toLowerCase(), // Ensure lowercase for subgraph ID matching
+      userId: userAddress.toLowerCase(),
+    });
 
     const positions = response.positions ?? [];
 
@@ -155,16 +143,9 @@ export const fetchSubgraphUserPositionForMarket = async (
             const marketTotalSupplyAssets = BigInt(market.state.supplyAssets || '0');
             const marketTotalSupplyShares = BigInt(market.state.supplyShares || '1'); // Avoid div by zero
             supplyAssets =
-              marketTotalSupplyShares > 0n
-                ? (
-                    (BigInt(supplyShares) * marketTotalSupplyAssets) /
-                    marketTotalSupplyShares
-                  ).toString()
-                : '0';
+              marketTotalSupplyShares > 0n ? ((BigInt(supplyShares) * marketTotalSupplyAssets) / marketTotalSupplyShares).toString() : '0';
           } else {
-            console.warn(
-              `Subgraph position side 'SUPPLIER' doesn't match loan asset for market ${marketUniqueKey}`,
-            );
+            console.warn(`Subgraph position side 'SUPPLIER' doesn't match loan asset for market ${marketUniqueKey}`);
           }
           break;
         case 'COLLATERAL':
@@ -173,9 +154,7 @@ export const fetchSubgraphUserPositionForMarket = async (
             // Subgraph 'balance' for collateral IS THE ASSET AMOUNT
             collateralAssets = balanceStr;
           } else {
-            console.warn(
-              `Subgraph position side 'COLLATERAL' doesn't match collateral asset for market ${marketUniqueKey}`,
-            );
+            console.warn(`Subgraph position side 'COLLATERAL' doesn't match collateral asset for market ${marketUniqueKey}`);
           }
           break;
         case 'BORROWER':
@@ -187,16 +166,9 @@ export const fetchSubgraphUserPositionForMarket = async (
             const marketTotalBorrowAssets = BigInt(market.state.borrowAssets || '0');
             const marketTotalBorrowShares = BigInt(market.state.borrowShares || '1'); // Avoid div by zero
             borrowAssets =
-              marketTotalBorrowShares > 0n
-                ? (
-                    (BigInt(borrowShares) * marketTotalBorrowAssets) /
-                    marketTotalBorrowShares
-                  ).toString()
-                : '0';
+              marketTotalBorrowShares > 0n ? ((BigInt(borrowShares) * marketTotalBorrowAssets) / marketTotalBorrowShares).toString() : '0';
           } else {
-            console.warn(
-              `Subgraph position side 'BORROWER' doesn't match loan asset for market ${marketUniqueKey}`,
-            );
+            console.warn(`Subgraph position side 'BORROWER' doesn't match loan asset for market ${marketUniqueKey}`);
           }
           break;
       }
@@ -221,10 +193,7 @@ export const fetchSubgraphUserPositionForMarket = async (
       state: state,
     };
   } catch (error) {
-    console.error(
-      `Failed to fetch user position for market ${marketUniqueKey} from Subgraph on ${network}:`,
-      error,
-    );
+    console.error(`Failed to fetch user position for market ${marketUniqueKey} from Subgraph on ${network}:`, error);
     return null; // Return null on error
   }
 };

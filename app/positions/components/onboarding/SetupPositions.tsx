@@ -39,10 +39,7 @@ export function SetupPositions() {
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
     if (!selectedToken) return 0n;
-    return BigInt(
-      balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())
-        ?.balance ?? '0',
-    );
+    return BigInt(balances.find((b) => b.address.toLowerCase() === selectedToken.address.toLowerCase())?.balance ?? '0');
   }, [balances, selectedToken]);
 
   const tokenDecimals = useMemo(() => selectedToken?.decimals ?? 0, [selectedToken]);
@@ -82,7 +79,6 @@ export function SetupPositions() {
     }
   }, [totalAmount, percentages, tokenDecimals]);
 
-
   const toggleLockAmount = useCallback(
     (marketKey: string) => {
       const newLockedAmounts = new Set(lockedAmounts);
@@ -106,18 +102,11 @@ export function SetupPositions() {
       const market = selectedMarkets.find((m) => m.uniqueKey === marketKey);
       if (!market) return;
 
-      const lockedMarkets = selectedMarkets.filter(
-        (m) => m.uniqueKey !== marketKey && lockedAmounts.has(m.uniqueKey),
-      );
-      const unlockedMarkets = selectedMarkets.filter(
-        (m) => m.uniqueKey !== marketKey && !lockedAmounts.has(m.uniqueKey),
-      );
+      const lockedMarkets = selectedMarkets.filter((m) => m.uniqueKey !== marketKey && lockedAmounts.has(m.uniqueKey));
+      const unlockedMarkets = selectedMarkets.filter((m) => m.uniqueKey !== marketKey && !lockedAmounts.has(m.uniqueKey));
 
       // Calculate total locked percentage
-      const totalLockedPercentage = lockedMarkets.reduce(
-        (sum, m) => sum + (percentages[m.uniqueKey] || 0),
-        0,
-      );
+      const totalLockedPercentage = lockedMarkets.reduce((sum, m) => sum + (percentages[m.uniqueKey] || 0), 0);
 
       // Ensure we don't exceed 100% - totalLockedPercentage
       const maxAllowedPercentage = 100 - totalLockedPercentage;
@@ -131,17 +120,11 @@ export function SetupPositions() {
       newPercentages[marketKey] = newPercentage;
 
       if (unlockedMarkets.length > 0 && remainingPercentage > 0) {
-        const currentUnlockedTotal = unlockedMarkets.reduce(
-          (sum, m) => sum + (percentages[m.uniqueKey] || 0),
-          0,
-        );
+        const currentUnlockedTotal = unlockedMarkets.reduce((sum, m) => sum + (percentages[m.uniqueKey] || 0), 0);
 
         unlockedMarkets.forEach((m) => {
           const currentPct = percentages[m.uniqueKey] || 0;
-          const proportion =
-            currentUnlockedTotal === 0
-              ? 1 / unlockedMarkets.length
-              : currentPct / currentUnlockedTotal;
+          const proportion = currentUnlockedTotal === 0 ? 1 / unlockedMarkets.length : currentPct / currentUnlockedTotal;
           newPercentages[m.uniqueKey] = remainingPercentage * proportion;
         });
       }
@@ -174,7 +157,7 @@ export function SetupPositions() {
 
         // Update this market's percentage
         handlePercentageChange(marketKey, percentage);
-      } catch (e) {
+      } catch (_e) {
         // If conversion fails, don't update the state
         console.warn(`Invalid amount format: ${cleanValue}`);
         return;
@@ -197,14 +180,13 @@ export function SetupPositions() {
       .filter((supply) => supply.amount > 0n);
   }, [selectedMarkets, amounts, tokenDecimals]);
 
-  const {
-    currentStep,
-    showProcessModal,
-    setShowProcessModal,
-    isLoadingPermit2,
-    approveAndSupply,
-    supplyPending,
-  } = useMultiMarketSupply(selectedToken!, supplies, useEth, usePermit2Setting, goToNextStep);
+  const { currentStep, showProcessModal, setShowProcessModal, isLoadingPermit2, approveAndSupply, supplyPending } = useMultiMarketSupply(
+    selectedToken!,
+    supplies,
+    useEth,
+    usePermit2Setting,
+    goToNextStep,
+  );
 
   const handleSupply = async () => {
     if (isSupplying) {
@@ -217,7 +199,7 @@ export function SetupPositions() {
         switchToNetwork();
         // Wait for network switch to complete
         await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (switchError) {
+      } catch (_switchError) {
         toast.error('Failed to switch network', 'Please try again');
         return;
       }
@@ -227,7 +209,7 @@ export function SetupPositions() {
     try {
       // trigger the tx. goToNextStep() be called as a `onSuccess` callback
       await approveAndSupply();
-    } catch (supplyError) {
+    } catch (_supplyError) {
     } finally {
       setIsSupplying(false);
     }
@@ -253,17 +235,9 @@ export function SetupPositions() {
                   max={tokenBalance}
                   setValue={setTotalAmountBigInt}
                   setError={setError}
-                  exceedMaxErrMessage={
-                    totalAmountBigInt > tokenBalance
-                      ? 'Insufficient Balance'
-                      : undefined
-                  }
+                  exceedMaxErrMessage={totalAmountBigInt > tokenBalance ? 'Insufficient Balance' : undefined}
                 />
-                {error && (
-                  <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">
-                    {error}
-                  </p>
-                )}
+                {error && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{error}</p>}
               </div>
             </div>
           </div>
@@ -303,9 +277,16 @@ export function SetupPositions() {
               const isLocked = lockedAmounts.has(market.uniqueKey);
 
               return (
-                <tr key={market.uniqueKey} className="hover:bg-hovered">
+                <tr
+                  key={market.uniqueKey}
+                  className="hover:bg-hovered"
+                >
                   {/* Market Identity */}
-                  <td data-label="Market" className="z-50" style={{ width: '280px' }}>
+                  <td
+                    data-label="Market"
+                    className="z-50"
+                    style={{ width: '280px' }}
+                  >
                     <MarketIdentity
                       market={market}
                       chainId={market.morphoBlue.chain.id}
@@ -324,7 +305,10 @@ export function SetupPositions() {
                   </td>
 
                   {/* Distribution Controls */}
-                  <td data-label="Distribution" className="z-50">
+                  <td
+                    data-label="Distribution"
+                    className="z-50"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-[120px]">
                         <Slider
@@ -333,9 +317,7 @@ export function SetupPositions() {
                           maxValue={100}
                           minValue={0}
                           value={currentPercentage}
-                          onChange={(value) =>
-                            handlePercentageChange(market.uniqueKey, Number(value))
-                          }
+                          onChange={(value) => handlePercentageChange(market.uniqueKey, Number(value))}
                           className="w-full"
                           classNames={{
                             base: 'w-full gap-2',
@@ -348,29 +330,19 @@ export function SetupPositions() {
                           <input
                             type="text"
                             value={amounts[market.uniqueKey] ?? ''}
-                            onChange={(e) =>
-                              handleAmountChange(market.uniqueKey, e.target.value)
-                            }
+                            onChange={(e) => handleAmountChange(market.uniqueKey, e.target.value)}
                             placeholder="0.0"
                             className="bg-hovered focus:border-primary h-7 w-full rounded px-2 text-right font-mono text-xs focus:outline-none"
                             disabled={isLocked}
                           />
                         </div>
-                        <span className="w-8 text-right font-mono text-xs text-gray-500">
-                          {Math.round(currentPercentage)}%
-                        </span>
+                        <span className="w-8 text-right font-mono text-xs text-gray-500">{Math.round(currentPercentage)}%</span>
                         <button
                           type="button"
                           onClick={() => toggleLockAmount(market.uniqueKey)}
-                          className={`text-primary hover:text-primary-400 ${
-                            isLocked ? 'opacity-100' : 'opacity-60'
-                          }`}
+                          className={`text-primary hover:text-primary-400 ${isLocked ? 'opacity-100' : 'opacity-60'}`}
                         >
-                          {isLocked ? (
-                            <LockClosedIcon className="h-3 w-3" />
-                          ) : (
-                            <LockOpen1Icon className="h-3 w-3" />
-                          )}
+                          {isLocked ? <LockClosedIcon className="h-3 w-3" /> : <LockOpen1Icon className="h-3 w-3" />}
                         </button>
                       </div>
                     </div>
@@ -398,7 +370,11 @@ export function SetupPositions() {
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="light" className="min-w-[120px]" onPress={goToPrevStep}>
+        <Button
+          variant="light"
+          className="min-w-[120px]"
+          onPress={goToPrevStep}
+        >
           Back
         </Button>
         <Button

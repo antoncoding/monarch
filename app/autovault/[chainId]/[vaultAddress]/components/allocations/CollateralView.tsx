@@ -1,6 +1,6 @@
 import { TokenIcon } from '@/components/TokenIcon';
-import { CollateralAllocation } from '@/types/vaultAllocations';
-import { SupportedNetworks } from '@/utils/networks';
+import type { CollateralAllocation } from '@/types/vaultAllocations';
+import type { SupportedNetworks } from '@/utils/networks';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
 
@@ -12,13 +12,7 @@ type CollateralViewProps = {
   chainId: SupportedNetworks;
 };
 
-export function CollateralView({
-  allocations,
-  totalAllocation,
-  vaultAssetSymbol,
-  vaultAssetDecimals,
-  chainId,
-}: CollateralViewProps) {
+export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol, vaultAssetDecimals, chainId }: CollateralViewProps) {
   // Sort by allocation amount (most to least)
   const sortedItems = [...allocations].sort((a, b) => {
     if (a.allocation > b.allocation) return -1;
@@ -39,33 +33,39 @@ export function CollateralView({
         </thead>
         <tbody className="space-y-2">
           {sortedItems.map((item) => {
-            const percentage =
-              totalAllocation > 0n ? parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
+            const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
             const hasAllocation = item.allocation > 0n;
 
             return (
-              <tr key={item.collateralAddress.toLowerCase()} className="rounded bg-hovered/20">
+              <tr
+                key={item.collateralAddress.toLowerCase()}
+                className="rounded bg-hovered/20"
+              >
                 <td className="p-3 rounded-l">
                   <div className="flex items-center gap-3">
-                    <TokenIcon address={item.collateralAddress} chainId={chainId} width={24} height={24} />
+                    <TokenIcon
+                      address={item.collateralAddress}
+                      chainId={chainId}
+                      width={24}
+                      height={24}
+                    />
                     <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
                   </div>
                 </td>
                 <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
-                    {hasAllocation
-                      ? `${formatAllocationAmount(item.allocation, vaultAssetDecimals)} ${vaultAssetSymbol}`
-                      : '-'}
+                    {hasAllocation ? `${formatAllocationAmount(item.allocation, vaultAssetDecimals)} ${vaultAssetSymbol}` : '-'}
                   </span>
                 </td>
                 <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
-                  <span className="whitespace-nowrap">
-                    {hasAllocation ? `${percentage.toFixed(2)}%` : '-'}
-                  </span>
+                  <span className="whitespace-nowrap">{hasAllocation ? `${percentage.toFixed(2)}%` : '-'}</span>
                 </td>
                 <td className="p-3 rounded-r w-10">
                   <div className="flex justify-center">
-                    <AllocationPieChart percentage={percentage} size={20} />
+                    <AllocationPieChart
+                      percentage={percentage}
+                      size={20}
+                    />
                   </div>
                 </td>
               </tr>

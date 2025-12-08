@@ -1,19 +1,10 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  ReactNode,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
+import { createContext, useContext, type ReactNode, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import oracleCacheData from '@/constants/oracle/oracle-cache.json';
 import { oraclesQuery } from '@/graphql/morpho-api-queries';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
-import { MorphoChainlinkOracleData, OraclesQueryResponse } from '@/utils/types';
+import type { MorphoChainlinkOracleData, OraclesQueryResponse } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
 // Type for cached oracle entry
@@ -41,9 +32,7 @@ type OracleDataProviderProps = {
 
 export function OracleDataProvider({ children }: OracleDataProviderProps) {
   // Map for fast oracle lookup: key = "oracleAddress-chainId"
-  const [oracleDataMap, setOracleDataMap] = useState<Map<string, MorphoChainlinkOracleData>>(
-    new Map(),
-  );
+  const [oracleDataMap, setOracleDataMap] = useState<Map<string, MorphoChainlinkOracleData>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown | null>(null);
 

@@ -13,7 +13,7 @@ export function usePagination(initialEntriesPerPage = 6) {
   useEffect(() => {
     const storedEntriesPerPage = storage.getItem(MarketEntriesPerPageKey);
     if (storedEntriesPerPage) {
-      setEntriesPerPage(parseInt(storedEntriesPerPage, 10));
+      setEntriesPerPage(Number.parseInt(storedEntriesPerPage, 10));
     }
   }, []);
 

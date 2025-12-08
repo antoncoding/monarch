@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
 import { useAccount, useChainId, useReadContract } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import { SupportedNetworks } from '@/utils/networks';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 export function useVaultV2({
@@ -52,15 +52,18 @@ export function useVaultV2({
     },
   });
 
-
   // Read totalAssets directly from the vault contract
-  const { data: totalAssets, refetch: refetchBalance, isLoading: loadingBalance } = useReadContract({
+  const {
+    data: totalAssets,
+    refetch: refetchBalance,
+    isLoading: loadingBalance,
+  } = useReadContract({
     address: vaultAddress,
     abi: vaultv2Abi,
     functionName: 'totalAssets',
     chainId: chainIdToUse,
     query: {
-      enabled: Boolean(vaultAddress)
+      enabled: Boolean(vaultAddress),
     },
   });
 
@@ -118,14 +121,9 @@ export function useVaultV2({
     onSuccess: onTransactionSuccess,
   });
 
-
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
-    async (
-      morphoRegistry: Address,
-      marketV1Adapter: Address,
-      allocator?: Address,
-    ): Promise<boolean> => {
+    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address): Promise<boolean> => {
       if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
@@ -220,10 +218,7 @@ export function useVaultV2({
         });
         return true;
       } catch (initError) {
-        if (
-          initError instanceof Error &&
-          initError.message.toLowerCase().includes('reject')
-        ) {
+        if (initError instanceof Error && initError.message.toLowerCase().includes('reject')) {
           // user rejected the transaction; treat as graceful cancellation
           return false;
         }
@@ -285,10 +280,7 @@ export function useVaultV2({
         });
         return true;
       } catch (metadataUpdateError) {
-        if (
-          metadataUpdateError instanceof Error &&
-          metadataUpdateError.message.toLowerCase().includes('reject')
-        ) {
+        if (metadataUpdateError instanceof Error && metadataUpdateError.message.toLowerCase().includes('reject')) {
           return false;
         }
         console.error('Failed to update vault metadata', metadataUpdateError);
@@ -536,7 +528,6 @@ export function useVaultV2({
     return String(rawSymbol);
   }, [rawSymbol]);
 
-  
   return {
     isLoading: loadingBalance,
     refetch: refetchAll,

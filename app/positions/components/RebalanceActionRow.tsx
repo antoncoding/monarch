@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ArrowRightIcon, Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/common';
@@ -6,7 +6,7 @@ import { MarketIdentity, MarketIdentityMode } from '@/components/MarketIdentity'
 import { TokenIcon } from '@/components/TokenIcon';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { previewMarketState } from '@/utils/morpho';
-import { GroupedPosition, Market } from '@/utils/types';
+import type { GroupedPosition, Market } from '@/utils/types';
 import { ApyPreview } from './ApyPreview';
 import { UtilizationPreview } from './UtilizationPreview';
 
@@ -62,10 +62,7 @@ export function RebalanceActionRow({
       return null;
     }
     try {
-      const amountBigInt =
-        typeof amount === 'string'
-          ? parseUnits(amount, groupedPosition.loanAssetDecimals)
-          : amount;
+      const amountBigInt = typeof amount === 'string' ? parseUnits(amount, groupedPosition.loanAssetDecimals) : amount;
 
       if (amountBigInt <= 0n) {
         return null;
@@ -78,10 +75,7 @@ export function RebalanceActionRow({
   }, [toMarket, amount, groupedPosition.loanAssetDecimals]);
 
   // Format amount for display
-  const displayAmount =
-    typeof amount === 'string'
-      ? amount
-      : formatUnits(amount, groupedPosition.loanAssetDecimals);
+  const displayAmount = typeof amount === 'string' ? amount : formatUnits(amount, groupedPosition.loanAssetDecimals);
 
   return (
     <div className="flex items-center">

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/common/Button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
-import { SimplifiedCampaign } from '@/utils/merklTypes';
+import type { SimplifiedCampaign } from '@/utils/merklTypes';
 
 type CampaignModalProps = {
   isOpen: boolean;
@@ -17,19 +17,11 @@ type CampaignModalProps = {
 function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
   // For SINGLETOKEN campaigns, use the targetToken address, for others use first 42 chars of marketId
   const urlIdentifier =
-    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-      ? campaign.targetToken?.address || campaign.campaignId
-      : campaign.marketId.slice(0, 42);
+    campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? campaign.targetToken?.address || campaign.campaignId : campaign.marketId.slice(0, 42);
   const merklUrl = getMerklCampaignURL(campaign.chainId, campaign.type, urlIdentifier);
 
-  const actionType =
-    campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-      ? 'lenders'
-      : 'borrowers';
-  const actionVerb =
-    campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-      ? 'lend'
-      : 'borrow';
+  const actionType = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'lenders' : 'borrowers';
+  const actionVerb = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'lend' : 'borrow';
 
   return (
     <div className="bg-hovered rounded-sm border border-gray-200/20 p-4 dark:border-gray-600/15">
@@ -37,9 +29,7 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         <div className="flex items-center gap-3">
           {/* Campaign Type Badge */}
           <span className="rounded-sm bg-green-100 px-2 py-1 text-xs text-green-700 dark:bg-green-800 dark:text-green-300">
-            {campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-              ? 'Lender Rewards'
-              : 'Borrow Rewards'}
+            {campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'Lender Rewards' : 'Borrow Rewards'}
           </span>
 
           {/* Reward Token */}
@@ -56,19 +46,24 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
         </div>
 
         {/* APR */}
-        <span className="text text-green-600 dark:text-green-400">
-          +{campaign.apr.toFixed(2)}% APR
-        </span>
+        <span className="text text-green-600 dark:text-green-400">+{campaign.apr.toFixed(2)}% APR</span>
       </div>
 
       <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
-        Extra incentives for all {actionType} who {actionVerb} to this market, earning{' '}
-        {campaign.rewardToken.symbol} rewards.
+        Extra incentives for all {actionType} who {actionVerb} to this market, earning {campaign.rewardToken.symbol} rewards.
       </div>
 
       <div className="flex justify-end">
-        <Link href={merklUrl} target="_blank" rel="noopener noreferrer">
-          <Button variant="light" size="sm" className="text-xs">
+        <Link
+          href={merklUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button
+            variant="light"
+            size="sm"
+            className="text-xs"
+          >
             <ExternalLinkIcon className="mr-1" />
             View on Merkl
           </Button>
@@ -99,7 +94,10 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
       />
       <ModalBody className="space-y-4">
         {campaigns.map((campaign) => (
-          <CampaignRow key={campaign.campaignId} campaign={campaign} />
+          <CampaignRow
+            key={campaign.campaignId}
+            campaign={campaign}
+          />
         ))}
       </ModalBody>
     </Modal>

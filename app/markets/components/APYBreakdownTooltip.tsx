@@ -1,12 +1,12 @@
-import React from 'react';
+import type React from 'react';
 import { Tooltip } from '@heroui/react';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { SimplifiedCampaign } from '@/utils/merklTypes';
+import type { SimplifiedCampaign } from '@/utils/merklTypes';
 import { convertApyToApr } from '@/utils/rateMath';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type APYBreakdownTooltipProps = {
   baseAPY: number;
@@ -18,11 +18,7 @@ type APYCellProps = {
   market: Market;
 };
 
-export function APYBreakdownTooltip({
-  baseAPY,
-  activeCampaigns,
-  children,
-}: APYBreakdownTooltipProps) {
+export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYBreakdownTooltipProps) {
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
 
@@ -43,7 +39,10 @@ export function APYBreakdownTooltip({
           <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
         {activeCampaigns.map((campaign, index) => (
-          <div key={index} className="flex items-center justify-between text-xs">
+          <div
+            key={index}
+            className="flex items-center justify-between text-xs"
+          >
             <div className="flex items-center gap-2">
               <span>{campaign.rewardToken.symbol}</span>
               <TokenIcon
@@ -86,13 +85,11 @@ export function APYCell({ market }: APYCellProps) {
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
-    whitelisted: market.whitelisted
+    whitelisted: market.whitelisted,
   });
 
   const baseAPY = market.state.supplyApy * 100;
-  const extraRewards = hasActiveRewards
-    ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0)
-    : 0;
+  const extraRewards = hasActiveRewards ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0) : 0;
 
   // Convert base rate if APR display is enabled
   const baseRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) * 100 : baseAPY;
@@ -104,7 +101,10 @@ export function APYCell({ market }: APYCellProps) {
 
   if (hasActiveRewards) {
     return (
-      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns}>
+      <APYBreakdownTooltip
+        baseAPY={baseAPY}
+        activeCampaigns={activeCampaigns}
+      >
         <span className="cursor-help">{displayRate.toFixed(2)}%</span>
       </APYBreakdownTooltip>
     );

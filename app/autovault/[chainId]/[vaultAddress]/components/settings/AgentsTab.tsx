@@ -1,12 +1,12 @@
 import { useCallback, useState } from 'react';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { AgentListItem } from './AgentListItem';
-import { AgentsTabProps } from './types';
+import type { AgentsTabProps } from './types';
 
 export function AgentsTab({
   isOwner,
@@ -61,11 +61,7 @@ export function AgentsTab({
     [onSetAllocator, needSwitchChain, switchToNetwork],
   );
 
-  const renderSingleRole = (
-    label: string,
-    description: string,
-    addressValue?: string,
-  ) => {
+  const renderSingleRole = (label: string, description: string, addressValue?: string) => {
     const normalized = addressValue ? (addressValue as Address) : undefined;
 
     return (
@@ -75,7 +71,12 @@ export function AgentsTab({
           <p className="text-xs text-secondary">{description}</p>
         </div>
         {normalized ? (
-          <AccountIdentity address={normalized} variant="compact" linkTo="explorer" copyable />
+          <AccountIdentity
+            address={normalized}
+            variant="compact"
+            linkTo="explorer"
+            copyable
+          />
         ) : (
           <span className="text-xs text-secondary">Not assigned</span>
         )}
@@ -83,11 +84,8 @@ export function AgentsTab({
     );
   };
 
-
   const currentAllocatorAddresses = allocators.map((a) => a.toLowerCase());
-  const availableAllocators = v2AgentsBase.filter(
-    (agent) => !currentAllocatorAddresses.includes(agent.address.toLowerCase()),
-  );
+  const availableAllocators = v2AgentsBase.filter((agent) => !currentAllocatorAddresses.includes(agent.address.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -98,9 +96,7 @@ export function AgentsTab({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs uppercase text-secondary">Allocators</p>
-            <p className="text-xs text-secondary">
-              Automation agents executing the configured strategy.
-            </p>
+            <p className="text-xs text-secondary">Automation agents executing the configured strategy.</p>
           </div>
           {!isEditingAllocators && (
             <Button
@@ -146,9 +142,7 @@ export function AgentsTab({
                       variant="secondary"
                       size="sm"
                       onPress={() => void handleRemoveAllocator(address as Address)}
-                      isDisabled={
-                        isUpdatingAllocator && allocatorToRemove === (address as Address)
-                      }
+                      isDisabled={isUpdatingAllocator && allocatorToRemove === (address as Address)}
                     >
                       {isUpdatingAllocator && allocatorToRemove === (address as Address) ? (
                         <span className="flex items-center gap-2">
@@ -167,9 +161,7 @@ export function AgentsTab({
 
             {availableAllocators.length > 0 && (
               <div className="space-y-3">
-                <p className="text-xs font-medium text-secondary">
-                  {allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}
-                </p>
+                <p className="text-xs font-medium text-secondary">{allocators.length > 0 ? 'Available to Add' : 'Select Allocator'}</p>
                 {availableAllocators.map((agent) => (
                   <div
                     key={agent.address}
@@ -183,9 +175,7 @@ export function AgentsTab({
                       variant="interactive"
                       size="sm"
                       onPress={() => void handleAddAllocator(agent.address as Address)}
-                      isDisabled={
-                        isUpdatingAllocator && allocatorToAdd === (agent.address as Address)
-                      }
+                      isDisabled={isUpdatingAllocator && allocatorToAdd === (agent.address as Address)}
                     >
                       {isUpdatingAllocator && allocatorToAdd === (agent.address as Address) ? (
                         <span className="flex items-center gap-2">

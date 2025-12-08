@@ -2,7 +2,7 @@ import { Info } from '@/components/Info/info';
 import { OracleTypeInfo } from '@/components/MarketOracle';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
 import { formatReadable } from '@/utils/balance';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 export function ExpandedMarketDetail({ market }: { market: Market }) {
   const oracleData = market.oracle ? market.oracle.data : null;
@@ -32,15 +32,11 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         </div>
         <div className="mb-1 flex items-start justify-between">
           <p className="font-inter text-sm opacity-80">Available Liquidity</p>
-          <p className="text-right font-zen text-sm">
-            {formatReadable(Number(market.state.liquidityAssetsUsd))}
-          </p>
+          <p className="text-right font-zen text-sm">{formatReadable(Number(market.state.liquidityAssetsUsd))}</p>
         </div>
         <div className="mb-1 flex items-start justify-between">
           <p className="font-inter text-sm opacity-80">Utilization Rate</p>
-          <p className="text-right font-zen text-sm">
-            {formatReadable(Number(market.state.utilization * 100))}%
-          </p>
+          <p className="text-right font-zen text-sm">{formatReadable(Number(market.state.utilization * 100))}%</p>
         </div>
       </div>
 
@@ -65,7 +61,10 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
         {
           // if no warning
           warningsWithDetail.length === 0 && (
-            <Info description="No warning flagged for this market!" level="success" />
+            <Info
+              description="No warning flagged for this market!"
+              level="success"
+            />
           )
         }
       </div>
