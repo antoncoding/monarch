@@ -1,7 +1,7 @@
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
-import { MarketAllocation } from '@/types/vaultAllocations';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';

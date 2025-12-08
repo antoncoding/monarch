@@ -35,6 +35,6 @@ export function convertApyToApr(apy: number): number {
  * @param precision - Number of decimal places (default: 2)
  * @returns Formatted percentage string (e.g., "5.00%")
  */
-export function formatRateAsPercentage(rate: number, precision: number = 2): string {
+export function formatRateAsPercentage(rate: number, precision = 2): string {
   return `${(rate * 100).toFixed(precision)}%`;
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { TablePagination } from '@/components/common/TablePagination';
 import { type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { ColumnVisibility } from './columnVisibility';
@@ -55,6 +56,8 @@ function MarketsTable({
   isBlacklisted,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+  const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
+  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
@@ -149,7 +152,7 @@ function MarketsTable({
               )}
               {columnVisibility.supplyAPY && (
                 <HTSortable
-                  label="Supply APY"
+                  label={supplyRateLabel}
                   sortColumn={sortColumn}
                   titleOnclick={titleOnclick}
                   sortDirection={sortDirection}
@@ -158,7 +161,7 @@ function MarketsTable({
               )}
               {columnVisibility.borrowAPY && (
                 <HTSortable
-                  label="Borrow APY"
+                  label={borrowRateLabel}
                   sortColumn={sortColumn}
                   titleOnclick={titleOnclick}
                   sortDirection={sortDirection}

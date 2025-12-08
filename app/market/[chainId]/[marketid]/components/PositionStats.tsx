@@ -10,8 +10,8 @@ import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { convertApyToApr } from '@/utils/rateMath';
 import { getTruncatedAssetName } from '@/utils/oracle';
+import { convertApyToApr } from '@/utils/rateMath';
 import { Market, MarketPosition } from '@/utils/types';
 import { APYBreakdownTooltip } from 'app/markets/components/APYBreakdownTooltip';
 
@@ -209,7 +209,6 @@ export function PositionStats({
               <APYBreakdownTooltip
                 baseAPY={baseSupplyAPY}
                 activeCampaigns={activeCampaigns}
-                fullAPY={baseSupplyAPY + extraRewards}
               >
                 <span className="cursor-help">
                   {baseSupplyRate.toFixed(2)}%

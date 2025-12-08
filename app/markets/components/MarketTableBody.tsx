@@ -1,11 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { RateFormatted } from '@/components/common/RateFormatted';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
 import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
 import { ColumnVisibility } from './columnVisibility';
@@ -45,6 +47,9 @@ export function MarketTableBody({
   addBlacklistedMarket,
   isBlacklisted,
 }: MarketTableBodyProps) {
+  const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
+  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
+
   // Calculate colspan for expanded row based on visible columns
   const visibleColumnsCount =
     9 + // Base columns: Star, ID, Loan, Collateral, Oracle, LLTV, Risk, Indicators, Actions
@@ -199,14 +204,14 @@ export function MarketTableBody({
                 />
               )}
               {columnVisibility.supplyAPY && (
-                <td data-label="Supply APY" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                <td data-label={supplyRateLabel} style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <APYCell market={item} />
                 </td>
               )}
               {columnVisibility.borrowAPY && (
-                <td data-label="Borrow APY" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
+                <td data-label={borrowRateLabel} className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
                   <p className="text-sm">
-                    {item.state.borrowApy ? `${(item.state.borrowApy * 100).toFixed(2)}%` : '—'}
+                    {item.state.borrowApy ? <RateFormatted value={item.state.borrowApy} /> : '—'}
                   </p>
                 </td>
               )}

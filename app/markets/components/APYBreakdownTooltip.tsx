@@ -4,14 +4,13 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { convertApyToApr } from '@/utils/rateMath';
 import { SimplifiedCampaign } from '@/utils/merklTypes';
+import { convertApyToApr } from '@/utils/rateMath';
 import { Market } from '@/utils/types';
 
 type APYBreakdownTooltipProps = {
   baseAPY: number;
   activeCampaigns: SimplifiedCampaign[];
-  fullAPY: number;
   children: React.ReactNode;
 };
 
@@ -22,7 +21,6 @@ type APYCellProps = {
 export function APYBreakdownTooltip({
   baseAPY,
   activeCampaigns,
-  fullAPY,
   children,
 }: APYBreakdownTooltipProps) {
   const { isAprDisplay } = useMarkets();
@@ -106,7 +104,7 @@ export function APYCell({ market }: APYCellProps) {
 
   if (hasActiveRewards) {
     return (
-      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns} fullAPY={baseAPY + extraRewards}>
+      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns}>
         <span className="cursor-help">{displayRate.toFixed(2)}%</span>
       </APYBreakdownTooltip>
     );

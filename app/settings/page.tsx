@@ -97,11 +97,12 @@ export default function SettingsPage() {
                   <h3 className="text-lg font-medium text-primary">Show APR Instead of APY</h3>
                   <p className="text-sm text-secondary">
                     Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY).
-                    APR uses continuous compounding to match per-second interest accrual.
+                    APR represents the simple annualized rate, while APY accounts for continuous compounding.
                   </p>
                   <p className="mt-2 text-xs text-secondary opacity-80">
-                    APR is calculated as ln(1 + APY) and represents the continuously compounded rate.
-                    This affects all rate displays including tables, charts, and statistics.
+                    APR is calculated as ln(1 + APY) and represents the underlying per-second rate
+                    annualized without compounding effects. This affects all rate displays including
+                    tables, charts, and statistics.
                   </p>
                 </div>
                 <IconSwitch
