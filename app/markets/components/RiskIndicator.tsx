@@ -36,6 +36,13 @@ const levelToIcon = (level: 'green' | 'yellow' | 'red') => {
           className="text-red-600"
         />
       );
+    default:
+      return (
+        <GrStatusGood
+          size={18}
+          className="text-green-600"
+        />
+      );
   }
 };
 
@@ -55,6 +62,11 @@ const levelToStyle = (level: 'green' | 'yellow' | 'red') => {
       return {
         text: 'text-red-700 dark:text-red-300',
         bar: 'bg-red-500',
+      };
+    default:
+      return {
+        text: 'text-green-700 dark:text-green-300',
+        bar: 'bg-green-500',
       };
   }
 };

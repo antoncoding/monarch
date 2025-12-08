@@ -88,6 +88,9 @@ export const getTimeRange = (timeframe: TimeFrame): { startTime: number; endTime
     case 'ALL':
       startTime = 0; // Beginning of time
       break;
+    default:
+      startTime = 0;
+      break;
   }
 
   return { startTime, endTime: now };
@@ -130,6 +133,9 @@ export const groupTransactionsByPeriod = (transactions: Transaction[], period: M
       }
       case 'monthly':
         periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        break;
+      default:
+        periodKey = date.toISOString().split('T')[0];
         break;
     }
 

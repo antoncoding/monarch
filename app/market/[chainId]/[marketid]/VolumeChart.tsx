@@ -99,7 +99,7 @@ function VolumeChart({
     const data = volumeView === 'USD' ? historicalData?.[`${type}AssetsUsd`] : historicalData?.[`${type}Assets`];
     if (!data || data.length === 0) return { current: 0, netChange: 0, netChangePercentage: 0 };
 
-    const current = volumeView === 'USD' ? data.at(-1).y : Number(formatUnits(BigInt(data.at(-1).y), market.loanAsset.decimals));
+    const current = volumeView === 'USD' ? data[-1].y : Number(formatUnits(BigInt(data[-1].y), market.loanAsset.decimals));
     const start = volumeView === 'USD' ? data[0].y : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
     const netChange = current - start;
     const netChangePercentage = start !== 0 ? (netChange / start) * 100 : 0;

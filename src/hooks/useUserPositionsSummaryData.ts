@@ -37,6 +37,8 @@ const getPeriodTimestamp = (period: EarningsPeriod): number => {
       return now - 7 * DAY;
     case 'month':
       return now - 30 * DAY;
+    default:
+      return 0;
   }
 };
 

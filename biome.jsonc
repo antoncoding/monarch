@@ -74,23 +74,10 @@
           "level": "warn",
           "fix": "safe"  // Converts imports to type imports - safe & improves bundle size
         },
-        "useNumberNamespace": {
-          "level": "warn",
-          "fix": "safe"  // parseInt -> Number.parseInt (modern JS)
-        },
-        "useShorthandAssign": {
-          "level": "warn",
-          "fix": "safe"  // x = x + 1 -> x += 1
-        },
-        "useTemplate": {
-          "level": "warn",
-          "fix": "safe"  // "a" + b -> `a${b}` - more readable
-        },
 
         // Keep these OFF - more opinionated
         "useNumericSeparators": "off",  // 1_000_000 formatting
         "useNodejsImportProtocol": "off",  // node: protocol
-        "useDefaultSwitchClause": "off"  // Requires default in switch
       },
 
       "complexity": {
