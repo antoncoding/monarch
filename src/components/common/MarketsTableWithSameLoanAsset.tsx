@@ -183,7 +183,10 @@ function CollateralFilter({
   const filteredItems = availableCollaterals.filter((token) => token.symbol.toLowerCase().includes(query.toLowerCase()));
 
   return (
-    <div className="relative z-30 w-full" ref={dropdownRef}>
+    <div
+      className="relative z-30 w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-32 cursor-pointer rounded-sm p-2 text-sm shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-surface-dark' : ''
@@ -208,7 +211,13 @@ function CollateralFilter({
                 );
                 return token ? (
                   token.img ? (
-                    <Image key={key} src={token.img} alt={token.symbol} width={14} height={14} />
+                    <Image
+                      key={key}
+                      src={token.img}
+                      alt={token.symbol}
+                      width={14}
+                      height={14}
+                    />
                   ) : (
                     <div
                       key={key}
@@ -245,7 +254,10 @@ function CollateralFilter({
               className="w-full border-none bg-transparent p-2 text-xs focus:outline-none"
             />
             <div className="relative">
-              <ul className="custom-scrollbar max-h-60 overflow-auto pb-10" role="listbox">
+              <ul
+                className="custom-scrollbar max-h-60 overflow-auto pb-10"
+                role="listbox"
+              >
                 {filteredItems.map((token) => {
                   const tokenKey = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
                   return (
@@ -266,7 +278,12 @@ function CollateralFilter({
                     >
                       <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
                       {token.img ? (
-                        <Image src={token.img} alt={token.symbol} width={14} height={14} />
+                        <Image
+                          src={token.img}
+                          alt={token.symbol}
+                          width={14}
+                          height={14}
+                        />
                       ) : (
                         <div className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-gray-200 text-[10px] dark:bg-gray-700">
                           ?
@@ -331,7 +348,10 @@ function OracleFilterComponent({
   };
 
   return (
-    <div className="relative z-30 w-full" ref={dropdownRef}>
+    <div
+      className="relative z-30 w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-32 cursor-pointer rounded-sm p-2 text-sm shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
@@ -353,9 +373,17 @@ function OracleFilterComponent({
               {selectedOracles.map((oracle, index) => (
                 <div key={index}>
                   {OracleVendorIcons[oracle] ? (
-                    <Image src={OracleVendorIcons[oracle]} alt={oracle} height={14} width={14} />
+                    <Image
+                      src={OracleVendorIcons[oracle]}
+                      alt={oracle}
+                      height={14}
+                      width={14}
+                    />
                   ) : (
-                    <IoHelpCircleOutline className="text-secondary" size={14} />
+                    <IoHelpCircleOutline
+                      className="text-secondary"
+                      size={14}
+                    />
                   )}
                 </div>
               ))}
@@ -373,7 +401,10 @@ function OracleFilterComponent({
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >
-        <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
+        <ul
+          className="custom-scrollbar max-h-60 overflow-auto"
+          role="listbox"
+        >
           {availableOracles.map((oracle) => (
             <li
               key={oracle}
@@ -392,9 +423,18 @@ function OracleFilterComponent({
             >
               <div className="flex items-center gap-2">
                 {OracleVendorIcons[oracle] ? (
-                  <Image src={OracleVendorIcons[oracle]} alt={oracle} width={14} height={14} className="rounded-full" />
+                  <Image
+                    src={OracleVendorIcons[oracle]}
+                    alt={oracle}
+                    width={14}
+                    height={14}
+                    className="rounded-full"
+                  />
                 ) : (
-                  <IoHelpCircleOutline className="text-secondary" size={14} />
+                  <IoHelpCircleOutline
+                    className="text-secondary"
+                    size={14}
+                  />
                 )}
                 <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
               </div>
@@ -459,10 +499,19 @@ function MarketRow({
           </div>
         </td>
       )}
-      <td className="z-50 py-1 text-center" style={{ minWidth: '80px' }}>
-        <MarketIdBadge marketId={market.uniqueKey} chainId={market.morphoBlue.chain.id} />
+      <td
+        className="z-50 py-1 text-center"
+        style={{ minWidth: '80px' }}
+      >
+        <MarketIdBadge
+          marketId={market.uniqueKey}
+          chainId={market.morphoBlue.chain.id}
+        />
       </td>
-      <td className="z-50 py-1 pl-4" style={{ minWidth: '240px' }}>
+      <td
+        className="z-50 py-1 pl-4"
+        style={{ minWidth: '240px' }}
+      >
         <MarketIdentity
           market={market}
           chainId={market.morphoBlue.chain.id}
@@ -475,27 +524,47 @@ function MarketRow({
         />
       </td>
       {columnVisibility.trustedBy && (
-        <td data-label="Trusted By" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+        <td
+          data-label="Trusted By"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '110px' }}
+        >
           <TrustedByCell vaults={trustedVaults} />
         </td>
       )}
       {columnVisibility.totalSupply && (
-        <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+        <td
+          data-label="Total Supply"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '120px' }}
+        >
           <p className="text-xs">{formatAmountDisplay(market.state.supplyAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.totalBorrow && (
-        <td data-label="Total Borrow" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+        <td
+          data-label="Total Borrow"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '120px' }}
+        >
           <p className="text-xs">{formatAmountDisplay(market.state.borrowAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.liquidity && (
-        <td data-label="Liquidity" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
+        <td
+          data-label="Liquidity"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '120px' }}
+        >
           <p className="text-xs">{formatAmountDisplay(market.state.liquidityAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.supplyAPY && (
-        <td data-label={supplyRateLabel} className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+        <td
+          data-label={supplyRateLabel}
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '100px' }}
+        >
           <div className="flex items-center justify-center">
             <p className="text-sm">
               {market.state.supplyApy
@@ -507,7 +576,11 @@ function MarketRow({
         </td>
       )}
       {columnVisibility.borrowAPY && (
-        <td data-label={borrowRateLabel} className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+        <td
+          data-label={borrowRateLabel}
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '100px' }}
+        >
           <p className="text-sm">
             {market.state.borrowApy
               ? `${((isAprDisplay ? convertApyToApr(market.state.borrowApy) : market.state.borrowApy) * 100).toFixed(2)}%`
@@ -516,7 +589,11 @@ function MarketRow({
         </td>
       )}
       {columnVisibility.rateAtTarget && (
-        <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
+        <td
+          data-label="Target Rate"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '110px' }}
+        >
           <p className="text-sm">
             {market.state.apyAtTarget
               ? `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`
@@ -525,12 +602,23 @@ function MarketRow({
         </td>
       )}
       {columnVisibility.utilizationRate && (
-        <td data-label="Utilization" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+        <td
+          data-label="Utilization"
+          className="z-50 py-1 text-center"
+          style={{ minWidth: '100px' }}
+        >
           <p className="text-sm">{`${(market.state.utilization * 100).toFixed(2)}%`}</p>
         </td>
       )}
-      <td data-label="Indicators" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
-        <MarketIndicators market={market} showRisk />
+      <td
+        data-label="Indicators"
+        className="z-50 py-1 text-center"
+        style={{ minWidth: '100px' }}
+      >
+        <MarketIndicators
+          market={market}
+          showRisk
+        />
       </td>
     </tr>
   );
@@ -841,7 +929,10 @@ export function MarketsTableWithSameLoanAsset({
       {showCart && selectedMarkets.length > 0 && (
         <div className="space-y-2">
           {selectedMarkets.map(({ market }) => (
-            <div key={market.uniqueKey} className="bg-hovered rounded transition-colors">
+            <div
+              key={market.uniqueKey}
+              className="bg-hovered rounded transition-colors"
+            >
               <div className="flex items-center justify-between p-2">
                 <MarketIdentity
                   market={market}
@@ -910,7 +1001,12 @@ export function MarketsTableWithSameLoanAsset({
             onOpenSettings={() => setShowSettingsModal(true)}
           />
           {showSettings && (
-            <Button variant="light" size="sm" onPress={() => setShowSettingsModal(true)} className="min-w-0 px-2">
+            <Button
+              variant="light"
+              size="sm"
+              onPress={() => setShowSettingsModal(true)}
+              className="min-w-0 px-2"
+            >
               <GearIcon className="h-4 w-4" />
             </Button>
           )}
@@ -924,7 +1020,11 @@ export function MarketsTableWithSameLoanAsset({
           setSelectedCollaterals={setCollateralFilter}
           availableCollaterals={availableCollaterals}
         />
-        <OracleFilterComponent selectedOracles={oracleFilter} setSelectedOracles={setOracleFilter} availableOracles={availableOracles} />
+        <OracleFilterComponent
+          selectedOracles={oracleFilter}
+          setSelectedOracles={setOracleFilter}
+          availableOracles={availableOracles}
+        />
       </div>
 
       {/* Table */}
@@ -1033,7 +1133,10 @@ export function MarketsTableWithSameLoanAsset({
                   onSort={handleSort}
                 />
               )}
-              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>
+              <th
+                className="text-center font-normal px-2 py-2"
+                style={{ padding: '0.5rem' }}
+              >
                 Indicators
               </th>
             </tr>
@@ -1041,7 +1144,10 @@ export function MarketsTableWithSameLoanAsset({
           <tbody>
             {paginatedMarkets.length === 0 ? (
               <tr>
-                <td colSpan={emptyStateColumns} className="py-8 text-center text-secondary">
+                <td
+                  colSpan={emptyStateColumns}
+                  className="py-8 text-center text-secondary"
+                >
                   No markets found
                 </td>
               </tr>

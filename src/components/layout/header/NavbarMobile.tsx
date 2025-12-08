@@ -46,11 +46,23 @@ export default function NavbarMobile() {
   return (
     <nav className="bg-surface flex h-full w-full items-center justify-between px-4">
       <div className="flex items-center gap-3">
-        <Link href="/" className="flex items-center">
-          <Image src={logo} alt="logo" height={24} />
+        <Link
+          href="/"
+          className="flex items-center"
+        >
+          <Image
+            src={logo}
+            alt="logo"
+            height={24}
+          />
         </Link>
 
-        <Dropdown isOpen={isMenuOpen} onOpenChange={setIsMenuOpen} placement="bottom-start" className="z-50 rounded-sm">
+        <Dropdown
+          isOpen={isMenuOpen}
+          onOpenChange={setIsMenuOpen}
+          placement="bottom-start"
+          className="z-50 rounded-sm"
+        >
           <DropdownTrigger>
             <button
               type="button"
@@ -63,7 +75,10 @@ export default function NavbarMobile() {
                 'bg-transparent hover:bg-transparent active:bg-transparent',
               )}
             >
-              <HamburgerMenuIcon width="20" height="20" />
+              <HamburgerMenuIcon
+                width="20"
+                height="20"
+              />
             </button>
           </DropdownTrigger>
           <DropdownMenu
@@ -130,7 +145,11 @@ export default function NavbarMobile() {
               >
                 {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}
               </DropdownItem>
-              <DropdownItem key="settings" startContent={<FiSettings className="h-4 w-4" />} onClick={() => handleNavigation('/settings')}>
+              <DropdownItem
+                key="settings"
+                startContent={<FiSettings className="h-4 w-4" />}
+                onClick={() => handleNavigation('/settings')}
+              >
                 Settings
               </DropdownItem>
             </DropdownSection>

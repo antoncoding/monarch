@@ -54,7 +54,10 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
             );
 
             return (
-              <tr key={market.uniqueKey} className="rounded bg-hovered/20">
+              <tr
+                key={market.uniqueKey}
+                className="rounded bg-hovered/20"
+              >
                 {/* Market Info Column */}
                 <td className="p-3 rounded-l">
                   <MarketIdentity
@@ -92,7 +95,10 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
                 {/* Pie Chart */}
                 <td className="p-3 rounded-r w-10">
                   <div className="flex justify-center">
-                    <AllocationPieChart percentage={percentage} size={20} />
+                    <AllocationPieChart
+                      percentage={percentage}
+                      size={20}
+                    />
                   </div>
                 </td>
               </tr>

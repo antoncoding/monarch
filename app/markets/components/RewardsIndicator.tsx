@@ -41,7 +41,15 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
       }}
       content={
         <TooltipContent
-          icon={<Image src={merklLogo} alt="Merkl" width={24} height={24} className="rounded-full" />}
+          icon={
+            <Image
+              src={merklLogo}
+              alt="Merkl"
+              width={24}
+              height={24}
+              className="rounded-full"
+            />
+          }
           title="External Rewards"
           detail={rewardsList}
         />

@@ -22,7 +22,11 @@ export function BlacklistConfirmationModal({ isOpen, onOpenChange, onConfirm, ma
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="md">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      size="md"
+    >
       <ModalHeader
         variant="compact"
         mainIcon={<IoWarningOutline className="h-5 w-5 text-orange-500" />}
@@ -31,11 +35,18 @@ export function BlacklistConfirmationModal({ isOpen, onOpenChange, onConfirm, ma
         className="border-b border-primary/10"
         onClose={() => onOpenChange(false)}
       />
-      <ModalBody variant="compact" className="py-6">
+      <ModalBody
+        variant="compact"
+        className="py-6"
+      >
         <div className="flex flex-col gap-4">
           <div className="bg-hovered rounded p-1">
             <div className="flex flex-col gap-1">
-              <MarketIdentity market={market} chainId={market.morphoBlue.chain.id} showId />
+              <MarketIdentity
+                market={market}
+                chainId={market.morphoBlue.chain.id}
+                showId
+              />
             </div>
           </div>
 
@@ -48,10 +59,18 @@ export function BlacklistConfirmationModal({ isOpen, onOpenChange, onConfirm, ma
         </div>
       </ModalBody>
       <ModalFooter className="border-t border-primary/10">
-        <Button variant="secondary" size="md" onPress={() => onOpenChange(false)}>
+        <Button
+          variant="secondary"
+          size="md"
+          onPress={() => onOpenChange(false)}
+        >
           Cancel
         </Button>
-        <Button variant="cta" size="md" onPress={handleConfirm}>
+        <Button
+          variant="cta"
+          size="md"
+          onPress={handleConfirm}
+        >
           Blacklist Market
         </Button>
       </ModalFooter>

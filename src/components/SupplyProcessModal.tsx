@@ -107,7 +107,11 @@ export function SupplyProcessModal({
       <ModalBody className="gap-5">
         <div className="flex flex-col gap-3">
           {supplies.map((supply) => (
-            <MarketInfoBlock market={supply.market} amount={supply.amount} key={supply.market.uniqueKey} />
+            <MarketInfoBlock
+              market={supply.market}
+              amount={supply.amount}
+              key={supply.market.uniqueKey}
+            />
           ))}
         </div>
 

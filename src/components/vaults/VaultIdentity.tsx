@@ -52,7 +52,11 @@ export function VaultIdentity({
     if (variant === 'icon') {
       return (
         <div className={`inline-flex items-center ${className}`}>
-          <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+          <VaultIcon
+            curator={curator}
+            width={iconSize}
+            height={iconSize}
+          />
         </div>
       );
     }
@@ -60,7 +64,11 @@ export function VaultIdentity({
     if (variant === 'inline') {
       return (
         <div className={`inline-flex items-center gap-2 ${className}`}>
-          <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+          <VaultIcon
+            curator={curator}
+            width={iconSize}
+            height={iconSize}
+          />
           <div className="flex flex-col leading-tight font-zen">
             <span className="text-sm text-primary">{displayName}</span>
             <span className="text-[11px] text-secondary">{curatorLabel}</span>
@@ -71,7 +79,11 @@ export function VaultIdentity({
 
     return (
       <div className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}>
-        <VaultIcon curator={curator} width={iconSize} height={iconSize} />
+        <VaultIcon
+          curator={curator}
+          width={iconSize}
+          height={iconSize}
+        />
         <div className="flex flex-col leading-tight">
           <span className="text-primary">{displayName}</span>
           <span className="font-monospace text-[10px]">{formattedAddress}</span>
@@ -81,7 +93,13 @@ export function VaultIdentity({
   })();
 
   const interactiveContent = showLink ? (
-    <Link href={vaultHref} target="_blank" rel="noopener noreferrer" className="no-underline" onClick={(e) => e.stopPropagation()}>
+    <Link
+      href={vaultHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="no-underline"
+      onClick={(e) => e.stopPropagation()}
+    >
       {baseContent}
     </Link>
   ) : (
@@ -102,7 +120,15 @@ export function VaultIdentity({
   const tooltipTitle = (
     <div className="flex items-center gap-2">
       <span>{displayName}</span>
-      {asset && <TokenIcon address={asset} chainId={chainId} width={18} height={18} disableTooltip />}
+      {asset && (
+        <TokenIcon
+          address={asset}
+          chainId={chainId}
+          width={18}
+          height={18}
+          disableTooltip
+        />
+      )}
     </div>
   );
 
@@ -114,7 +140,13 @@ export function VaultIdentity({
       }}
       content={
         <TooltipContent
-          icon={<VaultIcon curator={curator} width={32} height={32} />}
+          icon={
+            <VaultIcon
+              curator={curator}
+              width={32}
+              height={32}
+            />
+          }
           title={tooltipTitle}
           detail={resolvedDetail}
           secondaryDetail={tooltipSecondaryDetail}

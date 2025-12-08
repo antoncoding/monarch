@@ -30,7 +30,12 @@ export function RedstoneFeedTooltip({ feed, redstoneData, chainId }: RedstoneFee
         <div className="flex items-center gap-2">
           {vendorIcon && (
             <div className="flex-shrink-0">
-              <Image src={vendorIcon} alt="Redstone" width={16} height={16} />
+              <Image
+                src={vendorIcon}
+                alt="Redstone"
+                width={16}
+                height={16}
+              />
             </div>
           )}
           <div className="font-zen font-bold">Redstone Feed Details</div>
@@ -54,7 +59,12 @@ export function RedstoneFeedTooltip({ feed, redstoneData, chainId }: RedstoneFee
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    toggleModal(<RedstoneTypesModal isOpen onClose={() => closeModal()} />);
+                    toggleModal(
+                      <RedstoneTypesModal
+                        isOpen
+                        onClose={() => closeModal()}
+                      />,
+                    );
                   }}
                   className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
                   type="button"
@@ -85,7 +95,13 @@ export function RedstoneFeedTooltip({ feed, redstoneData, chainId }: RedstoneFee
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Etherscan
             </Link>
           </div>

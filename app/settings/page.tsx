@@ -94,7 +94,13 @@ export default function SettingsPage() {
                     This affects all rate displays including tables, charts, and statistics.
                   </p>
                 </div>
-                <IconSwitch selected={isAprDisplay} onChange={setIsAprDisplay} size="xs" color="primary" aria-label="Toggle APR display" />
+                <IconSwitch
+                  selected={isAprDisplay}
+                  onChange={setIsAprDisplay}
+                  size="xs"
+                  color="primary"
+                  aria-label="Toggle APR display"
+                />
               </div>
             </div>
           </div>
@@ -177,7 +183,11 @@ export default function SettingsPage() {
                     list any time.
                   </p>
                 </div>
-                <Button size="sm" variant="secondary" onPress={() => setIsTrustedVaultsModalOpen(true)}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsTrustedVaultsModalOpen(true)}
+                >
                   Edit
                 </Button>
               </div>
@@ -231,7 +241,11 @@ export default function SettingsPage() {
                     Block specific markets from appearing in your view. Blacklisted markets are completely hidden from all lists.
                   </p>
                 </div>
-                <Button size="sm" variant="secondary" onPress={() => setIsBlacklistedMarketsModalOpen(true)}>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setIsBlacklistedMarketsModalOpen(true)}
+                >
                   Edit
                 </Button>
               </div>
@@ -254,7 +268,10 @@ export default function SettingsPage() {
       />
 
       {/* Blacklisted Markets Modal */}
-      <BlacklistedMarketsModal isOpen={isBlacklistedMarketsModalOpen} onOpenChange={setIsBlacklistedMarketsModalOpen} />
+      <BlacklistedMarketsModal
+        isOpen={isBlacklistedMarketsModalOpen}
+        onOpenChange={setIsBlacklistedMarketsModalOpen}
+      />
     </div>
   );
 }

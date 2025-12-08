@@ -39,7 +39,10 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
   }, []);
 
   return (
-    <div className="relative h-14 min-w-[200px]" ref={dropdownRef}>
+    <div
+      className="relative h-14 min-w-[200px]"
+      ref={dropdownRef}
+    >
       <button
         className="bg-surface relative flex h-14 w-full flex-col items-start justify-center rounded rounded-sm px-4 shadow-sm"
         onClick={() => setIsOpen(!isOpen)}
@@ -124,7 +127,13 @@ export function AssetSelector({ selectedAsset, assets, onSelect }: AssetSelector
                   }
                 }}
               >
-                <TokenIcon address={asset.address} chainId={asset.chainId} symbol={asset.symbol} width={20} height={20} />
+                <TokenIcon
+                  address={asset.address}
+                  chainId={asset.chainId}
+                  symbol={asset.symbol}
+                  width={20}
+                  height={20}
+                />
                 <span className="font-medium">{asset.symbol}</span>
                 <div className="badge">
                   <NetworkIcon networkId={asset.chainId} />

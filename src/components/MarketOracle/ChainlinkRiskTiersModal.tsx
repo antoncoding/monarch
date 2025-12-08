@@ -12,11 +12,25 @@ export function ChainlinkRiskTiersModal({ isOpen, onClose }: ChainlinkRiskTiersM
   const chainlinkIcon = OracleVendorIcons[PriceFeedVendors.Chainlink];
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} zIndex="base" size="xl">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      zIndex="base"
+      size="xl"
+    >
       <ModalHeader
         title="Chainlink Risk Tier Categories"
         description="Risk categories assigned by Chainlink for data feeds"
-        mainIcon={chainlinkIcon ? <Image src={chainlinkIcon} alt="Chainlink" width={20} height={20} /> : undefined}
+        mainIcon={
+          chainlinkIcon ? (
+            <Image
+              src={chainlinkIcon}
+              alt="Chainlink"
+              width={20}
+              height={20}
+            />
+          ) : undefined
+        }
         onClose={onClose}
       />
 
@@ -25,7 +39,10 @@ export function ChainlinkRiskTiersModal({ isOpen, onClose }: ChainlinkRiskTiersM
           {/* Low Risk */}
           <div className="rounded-sm bg-hovered p-4">
             <div className="mb-2 flex items-center gap-2">
-              <Badge variant="success" size="sm">
+              <Badge
+                variant="success"
+                size="sm"
+              >
                 LOW RISK
               </Badge>
             </div>
@@ -38,7 +55,10 @@ export function ChainlinkRiskTiersModal({ isOpen, onClose }: ChainlinkRiskTiersM
           {/* Medium Risk */}
           <div className="rounded-sm bg-hovered p-4">
             <div className="mb-2 flex items-center gap-2">
-              <Badge variant="warning" size="sm">
+              <Badge
+                variant="warning"
+                size="sm"
+              >
                 MEDIUM RISK
               </Badge>
             </div>
@@ -52,7 +72,10 @@ export function ChainlinkRiskTiersModal({ isOpen, onClose }: ChainlinkRiskTiersM
           {/* High Risk */}
           <div className="rounded-sm bg-hovered p-4">
             <div className="mb-2 flex items-center gap-2">
-              <Badge variant="danger" size="sm">
+              <Badge
+                variant="danger"
+                size="sm"
+              >
                 HIGH RISK
               </Badge>
             </div>
@@ -66,7 +89,10 @@ export function ChainlinkRiskTiersModal({ isOpen, onClose }: ChainlinkRiskTiersM
           {/* Custom */}
           <div className="rounded-sm bg-hovered p-4">
             <div className="mb-2 flex items-center gap-2">
-              <Badge variant="primary" size="sm">
+              <Badge
+                variant="primary"
+                size="sm"
+              >
                 CUSTOM
               </Badge>
             </div>

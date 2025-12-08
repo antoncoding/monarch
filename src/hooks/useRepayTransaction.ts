@@ -67,7 +67,7 @@ export function useRepayTransaction({
     toastId: 'repay',
     pendingText: `${
       repayAssets > 0n || repayShares > 0n
-        ? 'Repaying ' + formatBalance(repayAssets, market.loanAsset.decimals).toString() + ' ' + market.loanAsset.symbol
+        ? `Repaying ${formatBalance(repayAssets, market.loanAsset.decimals).toString()} ${market.loanAsset.symbol}`
         : ''
     }${
       withdrawAmount > 0n
@@ -79,7 +79,7 @@ export function useRepayTransaction({
         : ''
     }`,
     successText: `${repayAssets > 0n || repayShares > 0n ? `${market.loanAsset.symbol} Repaid` : ''}${
-      withdrawAmount > 0n ? (repayAssets > 0n || repayShares > 0n ? ' and ' : '') + market.collateralAsset.symbol + ' Withdrawn' : ''
+      withdrawAmount > 0n ? `${(repayAssets > 0n || repayShares > 0n ? ' and ' : '') + market.collateralAsset.symbol} Withdrawn` : ''
     }`,
     errorText: 'Transaction failed',
     chainId,

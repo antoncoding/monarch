@@ -75,7 +75,14 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   {/* ID */}
                   <td data-label="ID">
                     <div className="flex items-center justify-center gap-1 font-monospace text-xs">
-                      {networkImg && <Image src={networkImg} alt="icon" width={15} height={15} />}
+                      {networkImg && (
+                        <Image
+                          src={networkImg}
+                          alt="icon"
+                          width={15}
+                          height={15}
+                        />
+                      )}
                       <span>{vault.address.slice(2, 8)}</span>
                     </div>
                   </td>
@@ -87,7 +94,12 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                         {vault.balance && token ? formatReadable(formatUnits(BigInt(vault.balance), token.decimals)) : '0'}
                       </span>
                       <span>{token?.symbol ?? 'USDC'}</span>
-                      <TokenIcon address={vault.asset} chainId={vault.networkId} width={16} height={16} />
+                      <TokenIcon
+                        address={vault.asset}
+                        chainId={vault.networkId}
+                        width={16}
+                        height={16}
+                      />
                     </div>
                   </td>
 
@@ -102,8 +114,16 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   <td data-label="Collaterals">
                     <span className="flex flex-wrap gap-1.5 justify-center">
                       {collaterals.map((tokenAddress) => (
-                        <div key={tokenAddress} className="flex items-center">
-                          <TokenIcon address={tokenAddress} chainId={vault.networkId} width={20} height={20} />
+                        <div
+                          key={tokenAddress}
+                          className="flex items-center"
+                        >
+                          <TokenIcon
+                            address={tokenAddress}
+                            chainId={vault.networkId}
+                            width={20}
+                            height={20}
+                          />
                         </div>
                       ))}
                     </span>
@@ -113,7 +133,10 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   <td data-label="Action">
                     <div className="flex justify-center">
                       <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.address}`}>
-                        <Button variant="interactive" size="sm">
+                        <Button
+                          variant="interactive"
+                          size="sm"
+                        >
                           Manage
                         </Button>
                       </Link>

@@ -17,7 +17,10 @@ export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
       <div className="flex w-full flex-col gap-3">
         {/* Header with icon and title */}
         <div className="flex items-center gap-2">
-          <IoHelpCircleOutline className="text-secondary" size={16} />
+          <IoHelpCircleOutline
+            className="text-secondary"
+            size={16}
+          />
           <div className="font-zen font-bold">Unknown Price Feed</div>
         </div>
 
@@ -34,7 +37,13 @@ export function UnknownFeedTooltip({ feed, chainId }: UnknownFeedTooltipProps) {
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Etherscan
             </Link>
           </div>

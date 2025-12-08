@@ -182,7 +182,12 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
         description="Set custom RPC URLs to override the default Alchemy connections"
         onClose={handleClose}
         actions={
-          <Button variant="secondary" size="sm" onPress={handleResetAll} isDisabled={Object.keys(customRpcUrls).length === 0}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onPress={handleResetAll}
+            isDisabled={Object.keys(customRpcUrls).length === 0}
+          >
             Reset All
           </Button>
         }
@@ -206,7 +211,13 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <Image src={network.logo} alt={network.name} width={24} height={24} className="rounded-full" />
+                  <Image
+                    src={network.logo}
+                    alt={network.name}
+                    width={24}
+                    height={24}
+                    className="rounded-full"
+                  />
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-primary">{network.name}</span>
                     <span className="text-xs text-secondary">{isCustom ? 'Custom RPC configured' : 'Using default Alchemy RPC'}</span>
@@ -256,7 +267,15 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                     isDisabled={isValidating}
                     className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
                   >
-                    {isValidating ? <Spinner size={14} width={2} color="text-white" /> : <span className="truncate">Save</span>}
+                    {isValidating ? (
+                      <Spinner
+                        size={14}
+                        width={2}
+                        color="text-white"
+                      />
+                    ) : (
+                      <span className="truncate">Save</span>
+                    )}
                   </Button>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
@@ -264,7 +283,11 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
 
               {isUsingCustomRpc(selectedNetwork) && (
                 <div className="flex justify-center">
-                  <Button variant="secondary" size="sm" onPress={handleReset}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onPress={handleReset}
+                  >
                     Reset to Default
                   </Button>
                 </div>
@@ -305,14 +328,21 @@ export function AdvancedRpcSettings() {
               </p>
             </div>
 
-            <Button variant="interactive" size="sm" onPress={() => setIsModalOpen(true)}>
+            <Button
+              variant="interactive"
+              size="sm"
+              onPress={() => setIsModalOpen(true)}
+            >
               Edit
             </Button>
           </div>
         </div>
       </div>
 
-      <RpcModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <RpcModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </>
   );
 }

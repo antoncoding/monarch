@@ -260,7 +260,10 @@ export default function StatsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          <StatsOverviewCards stats={stats.platformStats} selectedNetwork={selectedNetwork} />
+          <StatsOverviewCards
+            stats={stats.platformStats}
+            selectedNetwork={selectedNetwork}
+          />
           <AssetMetricsTable data={stats.assetMetrics} />
 
           {/* Transaction Filters */}
@@ -343,10 +346,16 @@ export default function StatsPage() {
                 }}
                 className="font-zen"
               >
-                <DropdownItem key="Supply" className="py-2">
+                <DropdownItem
+                  key="Supply"
+                  className="py-2"
+                >
                   Supply
                 </DropdownItem>
-                <DropdownItem key="Withdraw" className="py-2">
+                <DropdownItem
+                  key="Withdraw"
+                  className="py-2"
+                >
                   Withdraw
                 </DropdownItem>
               </DropdownMenu>

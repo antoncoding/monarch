@@ -59,19 +59,34 @@ export default function AutovaultContent() {
             <p className="text-sm text-secondary">Automate your vault management with intelligent agents</p>
           </div>
           <div className="flex gap-4">
-            <Button variant={hasExistingVaults ? 'secondary' : 'cta'} size="md" className="font-zen" onPress={handleCreateVault}>
-              <FaPlus size={14} className="mr-2" />
+            <Button
+              variant={hasExistingVaults ? 'secondary' : 'cta'}
+              size="md"
+              className="font-zen"
+              onPress={handleCreateVault}
+            >
+              <FaPlus
+                size={14}
+                className="mr-2"
+              />
               Create Autovault
             </Button>
           </div>
         </div>
 
         <div className="mt-4">
-          <VaultListV2 vaults={vaults} loading={vaultsLoading} />
+          <VaultListV2
+            vaults={vaults}
+            loading={vaultsLoading}
+          />
         </div>
 
         {/* Deployment Modal */}
-        <DeploymentModal isOpen={showDeploymentModal} onOpenChange={setShowDeploymentModal} existingVaults={vaults} />
+        <DeploymentModal
+          isOpen={showDeploymentModal}
+          onOpenChange={setShowDeploymentModal}
+          existingVaults={vaults}
+        />
       </div>
     </div>
   );

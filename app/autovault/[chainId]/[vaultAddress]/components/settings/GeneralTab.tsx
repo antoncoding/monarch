@@ -79,7 +79,10 @@ export function GeneralTab({
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary" htmlFor={nameInputId}>
+          <label
+            className="text-[11px] uppercase text-secondary"
+            htmlFor={nameInputId}
+          >
             Vault name
           </label>
           <Input
@@ -99,7 +102,10 @@ export function GeneralTab({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[11px] uppercase text-secondary" htmlFor={symbolInputId}>
+          <label
+            className="text-[11px] uppercase text-secondary"
+            htmlFor={symbolInputId}
+          >
             Vault symbol
           </label>
           <Input

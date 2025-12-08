@@ -75,7 +75,15 @@ export function DepositToVaultModal({
         <ModalHeader
           title={`Deposit ${assetSymbol}`}
           description={`Deposit to ${vaultName}`}
-          mainIcon={<TokenIcon address={assetAddress} chainId={chainId} symbol={assetSymbol} width={24} height={24} />}
+          mainIcon={
+            <TokenIcon
+              address={assetAddress}
+              chainId={chainId}
+              symbol={assetSymbol}
+              width={24}
+              height={24}
+            />
+          }
           onClose={onClose}
         />
         <ModalBody className="gap-6">

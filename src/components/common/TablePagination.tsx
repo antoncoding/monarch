@@ -152,18 +152,31 @@ export function TablePagination({
         {/* Jump to page - only show if more than 10 pages */}
         {totalPages > 10 && (
           <div className="ml-1">
-            <Popover isOpen={isJumpOpen} onOpenChange={setIsJumpOpen} placement="top">
+            <Popover
+              isOpen={isJumpOpen}
+              onOpenChange={setIsJumpOpen}
+              placement="top"
+            >
               <Tooltip
                 classNames={{
                   base: 'p-0 m-0 bg-transparent shadow-sm border-none',
                   content: 'p-0 m-0 bg-transparent shadow-sm border-none',
                 }}
                 content={
-                  <TooltipContent title="Jump to page" detail={`Go to a specific page (1-${totalPages})`} icon={<MagnifyingGlassIcon />} />
+                  <TooltipContent
+                    title="Jump to page"
+                    detail={`Go to a specific page (1-${totalPages})`}
+                    icon={<MagnifyingGlassIcon />}
+                  />
                 }
               >
                 <PopoverTrigger>
-                  <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8 font-zen !font-normal">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    disabled={isLoading}
+                    className="h-8 w-8 font-zen !font-normal"
+                  >
                     <MagnifyingGlassIcon className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -187,7 +200,12 @@ export function TablePagination({
                         inputWrapper: 'rounded-sm',
                       }}
                     />
-                    <Button size="sm" onClick={handleJumpToPage} disabled={!jumpPage} className="h-8 font-zen !font-normal">
+                    <Button
+                      size="sm"
+                      onClick={handleJumpToPage}
+                      disabled={!jumpPage}
+                      className="h-8 font-zen !font-normal"
+                    >
                       Go
                     </Button>
                   </div>

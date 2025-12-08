@@ -234,7 +234,12 @@ export function WithdrawCollateralAndRepay({
 
         {/* Market Details Block - includes position overview and collapsible details */}
         <div className="mb-5">
-          <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed borrowDelta={repayAssets ? -repayAssets : undefined} />
+          <MarketDetailsBlock
+            market={market}
+            mode="borrow"
+            defaultCollapsed
+            borrowDelta={repayAssets ? -repayAssets : undefined}
+          />
         </div>
 
         {isConnected && (
@@ -292,13 +297,20 @@ export function WithdrawCollateralAndRepay({
 
         {/* Action Button */}
         <div className="mt-4">
-          <div className="flex justify-end" style={{ zIndex: 1 }}>
+          <div
+            className="flex justify-end"
+            style={{ zIndex: 1 }}
+          >
             {!isConnected ? (
               <div>
                 <AccountConnect />
               </div>
             ) : needSwitchChain ? (
-              <Button onPress={switchToNetwork} className="min-w-32" variant="solid">
+              <Button
+                onPress={switchToNetwork}
+                className="min-w-32"
+                variant="solid"
+              >
                 Switch Chain
               </Button>
             ) : (
@@ -334,8 +346,20 @@ export function WithdrawCollateralAndRepay({
           </div>
           {(withdrawAmount > 0n || repayAssets > 0n) && (
             <>
-              {newLTV >= lltv && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="error" />}
-              {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="danger" />}
+              {newLTV >= lltv && (
+                <LTVWarning
+                  maxLTV={lltv}
+                  currentLTV={newLTV}
+                  type="error"
+                />
+              )}
+              {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && (
+                <LTVWarning
+                  maxLTV={lltv}
+                  currentLTV={newLTV}
+                  type="danger"
+                />
+              )}
             </>
           )}
         </div>

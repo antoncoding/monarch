@@ -78,7 +78,10 @@ export default function AssetFilter({
   }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
-    <div className="relative z-30 w-full" ref={dropdownRef}>
+    <div
+      className="relative z-30 w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-surface-dark' : ''
@@ -100,7 +103,13 @@ export default function AssetFilter({
                 const token = items.find((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset);
                 return token ? (
                   token.img ? (
-                    <Image key={asset} src={token.img} alt={token.symbol} width={18} height={18} />
+                    <Image
+                      key={asset}
+                      src={token.img}
+                      alt={token.symbol}
+                      width={18}
+                      height={18}
+                    />
                   ) : (
                     <div
                       key={asset}
@@ -137,7 +146,10 @@ export default function AssetFilter({
               className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
             />
             <div className="relative">
-              <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
+              <ul
+                className="custom-scrollbar max-h-60 overflow-auto pb-12"
+                role="listbox"
+              >
                 {filteredItems.map((token) => (
                   <li
                     key={token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')}
@@ -158,7 +170,12 @@ export default function AssetFilter({
                   >
                     <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
                     {token.img ? (
-                      <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                      <Image
+                        src={token.img}
+                        alt={token.symbol}
+                        width={18}
+                        height={18}
+                      />
                     ) : (
                       <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">
                         ?

@@ -145,7 +145,11 @@ export default function VaultContent() {
               {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
             </div>
             <div className="flex items-center gap-3">
-              <AccountIdentity address={vaultAddressValue} variant="compact" linkTo="explorer" />
+              <AccountIdentity
+                address={vaultAddressValue}
+                variant="compact"
+                linkTo="explorer"
+              />
               <Button
                 variant="light"
                 size="sm"

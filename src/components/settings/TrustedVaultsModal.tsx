@@ -122,7 +122,14 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="3xl" zIndex="settings" scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      backdrop="blur"
+      size="3xl"
+      zIndex="settings"
+      scrollBehavior="inside"
+    >
       {(onClose) => (
         <>
           <ModalHeader
@@ -154,10 +161,18 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
               />
 
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="flat" onPress={handleSelectAll}>
+                <Button
+                  size="sm"
+                  variant="flat"
+                  onPress={handleSelectAll}
+                >
                   Select All
                 </Button>
-                <Button size="sm" variant="flat" onPress={handleDeselectAll}>
+                <Button
+                  size="sm"
+                  variant="flat"
+                  onPress={handleDeselectAll}
+                >
                   Deselect All
                 </Button>
                 <div className="ml-auto text-xs text-secondary self-center">
@@ -221,7 +236,10 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
               {morphoSectionOpen &&
                 (morphoLoading ? (
                   <div className="flex justify-center py-6">
-                    <Spinner size="sm" label="Loading Morpho vaults..." />
+                    <Spinner
+                      size="sm"
+                      label="Loading Morpho vaults..."
+                    />
                   </div>
                 ) : sortedMorphoVaults.length === 0 ? (
                   <div className="text-center text-sm text-secondary py-4">
@@ -267,7 +285,11 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="secondary" onPress={onClose} size="sm">
+            <Button
+              variant="secondary"
+              onPress={onClose}
+              size="sm"
+            >
               Close
             </Button>
           </ModalFooter>

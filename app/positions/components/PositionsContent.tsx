@@ -79,23 +79,47 @@ export default function Positions() {
           <h1 className="font-zen">Portfolio</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
-          <AccountIdentity address={account as Address} variant="full" showAddress />
+          <AccountIdentity
+            address={account as Address}
+            variant="full"
+            showAddress
+          />
           <div className="flex gap-4">
             <Link href={`/history/${account}`}>
-              <Button size="md" className="font-zen text-secondary">
-                <FaHistory size={14} className="mr-2" />
+              <Button
+                size="md"
+                className="font-zen text-secondary"
+              >
+                <FaHistory
+                  size={14}
+                  className="mr-2"
+                />
                 History
               </Button>
             </Link>
             <Link href={`/positions/report/${account}`}>
-              <Button size="md" className="font-zen text-secondary">
-                <TbReport size={15} className="mr-2" />
+              <Button
+                size="md"
+                className="font-zen text-secondary"
+              >
+                <TbReport
+                  size={15}
+                  className="mr-2"
+                />
                 Report
               </Button>
             </Link>
             {isOwner && (
-              <Button variant="cta" size="md" className="font-zen" onPress={() => setShowOnboardingModal(true)}>
-                <FaPlus size={14} className="mr-2" />
+              <Button
+                variant="cta"
+                size="md"
+                className="font-zen"
+                onPress={() => setShowOnboardingModal(true)}
+              >
+                <FaPlus
+                  size={14}
+                  className="mr-2"
+                />
                 New Position
               </Button>
             )}
@@ -123,10 +147,16 @@ export default function Positions() {
           />
         )}
 
-        <OnboardingModal isOpen={showOnboardingModal} onOpenChange={setShowOnboardingModal} />
+        <OnboardingModal
+          isOpen={showOnboardingModal}
+          onOpenChange={setShowOnboardingModal}
+        />
 
         {loading ? (
-          <LoadingScreen message={loadingMessage} className="mt-10" />
+          <LoadingScreen
+            message={loadingMessage}
+            className="mt-10"
+          />
         ) : !hasSuppliedMarkets ? (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
@@ -141,7 +171,10 @@ export default function Positions() {
               </Button>
             </div>
             <div className="flex justify-center">
-              <EmptyScreen message="No open supplies. Start lending now!" className="mt-2" />
+              <EmptyScreen
+                message="No open supplies. Start lending now!"
+                className="mt-2"
+              />
             </div>
           </div>
         ) : (

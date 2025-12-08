@@ -42,14 +42,28 @@ function BadgeButton({
   tooltip?: TooltipInfo;
 }) {
   const ButtonComponent = (
-    <button type="button" onClick={handleClick} disabled={disabled} className="disabled:cursor-not-allowed disabled:opacity-50">
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      className="disabled:cursor-not-allowed disabled:opacity-50"
+    >
       <Badge variant={variant ?? 'success'}>{text}</Badge>
     </button>
   );
 
   if (tooltip) {
     return (
-      <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="top">
+      <Tooltip
+        content={
+          <TooltipContent
+            className="max-w-[400px]"
+            title={tooltip.title}
+            detail={tooltip.detail}
+          />
+        }
+        placement="top"
+      >
         {ButtonComponent}
       </Tooltip>
     );
@@ -71,7 +85,16 @@ function BadgeComponent({
 
   if (tooltip) {
     return (
-      <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="top">
+      <Tooltip
+        content={
+          <TooltipContent
+            className="max-w-[400px]"
+            title={tooltip.title}
+            detail={tooltip.detail}
+          />
+        }
+        placement="top"
+      >
         <div>{BadgeElement}</div>
       </Tooltip>
     );
@@ -87,7 +110,16 @@ export default function InfoCard({ title, children, tooltip, badge, button, clas
         <div className="flex items-center gap-2">
           <span className="leading-none">{title}</span>
           {tooltip && (
-            <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="right">
+            <Tooltip
+              content={
+                <TooltipContent
+                  className="max-w-[400px]"
+                  title={tooltip.title}
+                  detail={tooltip.detail}
+                />
+              }
+              placement="right"
+            >
               <div className="flex items-center">
                 <BsQuestionCircle className="cursor-help text-secondary" />
               </div>
@@ -104,7 +136,11 @@ export default function InfoCard({ title, children, tooltip, badge, button, clas
               tooltip={button.tooltip}
             />
           ) : badge ? (
-            <BadgeComponent text={badge.text} variant={badge.variant} tooltip={badge.tooltip} />
+            <BadgeComponent
+              text={badge.text}
+              variant={badge.variant}
+              tooltip={badge.tooltip}
+            />
           ) : null}
         </div>
       </div>

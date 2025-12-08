@@ -26,9 +26,15 @@ export default function SearchOrConnect({ path }: { path: string }) {
         <div className="flex justify-center">
           {/* {show connect button or input} */}
           {address ? (
-            <Link href={`/${path}/${address}`} className="no-underline">
+            <Link
+              href={`/${path}/${address}`}
+              className="no-underline"
+            >
               <div className="flex font-zen opacity-70 transition-all duration-200 ease-in-out hover:scale-105 hover:opacity-100">
-                <button type="button" className="text-roboto bg-surface w-80 rounded-sm p-4 px-10 ">
+                <button
+                  type="button"
+                  className="text-roboto bg-surface w-80 rounded-sm p-4 px-10 "
+                >
                   View Account {address.slice(0, 8)}
                 </button>
                 <div className="bg-monarch-orange w-15 justify-center p-6 text-center text-3xl">
@@ -38,7 +44,10 @@ export default function SearchOrConnect({ path }: { path: string }) {
               </div>
             </Link>
           ) : (
-            <div style={{ maxWidth: 250 }} className="flex justify-center">
+            <div
+              style={{ maxWidth: 250 }}
+              className="flex justify-center"
+            >
               <AccountConnect onConnectPath={path} />
             </div>
           )}

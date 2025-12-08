@@ -31,7 +31,13 @@ export default function RiskNotificationModal() {
   }
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={setIsOpen} size="3xl" scrollBehavior="inside" className="max-h-[90vh]">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={setIsOpen}
+      size="3xl"
+      scrollBehavior="inside"
+      className="max-h-[90vh]"
+    >
       <ModalHeader
         title="Welcome to Monarch"
         description="Important information before you begin"
@@ -42,7 +48,11 @@ export default function RiskNotificationModal() {
         <p className="mb-4">
           Monarch enables direct lending to the Morpho Blue protocol. Before proceeding, it's important to understand the key aspects of
           this approach. For a comprehensive overview, please visit our{' '}
-          <Link href="/" target="_blank" className="text-primary underline">
+          <Link
+            href="/"
+            target="_blank"
+            className="text-primary underline"
+          >
             home page
           </Link>
           .
@@ -59,13 +69,22 @@ export default function RiskNotificationModal() {
         <p className="mb-4">
           While this approach offers more control, it also requires a deeper understanding of market dynamics. For a detailed explanation of
           the risks and considerations, please read our{' '}
-          <Link href="/risks" target="_blank" className="text-primary underline">
+          <Link
+            href="/risks"
+            target="_blank"
+            className="text-primary underline"
+          >
             risk assessment page
           </Link>
           .
         </p>
         <div className="mt-4 rounded border-2 border-dotted border-primary p-4">
-          <Checkbox isSelected={isChecked} onValueChange={setIsChecked} className="gap-2" size="sm">
+          <Checkbox
+            isSelected={isChecked}
+            onValueChange={setIsChecked}
+            className="gap-2"
+            size="sm"
+          >
             <span className="text-zen text-sm text-secondary">
               I understand that direct lending through Monarch requires active management and have read about the associated risks.
             </span>
@@ -73,7 +92,11 @@ export default function RiskNotificationModal() {
         </div>
       </ModalBody>
       <ModalFooter>
-        <Button className="bg-monarch-orange text-white" onPress={handleConfirm} isDisabled={!isChecked}>
+        <Button
+          className="bg-monarch-orange text-white"
+          onPress={handleConfirm}
+          isDisabled={!isChecked}
+        >
           Confirm and Proceed
         </Button>
       </ModalFooter>

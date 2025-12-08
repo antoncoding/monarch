@@ -37,7 +37,11 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
             {(() => {
               if (!connected) {
                 return (
-                  <Button onPress={handleClicked} type="button" variant="cta">
+                  <Button
+                    onPress={handleClicked}
+                    type="button"
+                    variant="cta"
+                  >
                     Connect
                   </Button>
                 );

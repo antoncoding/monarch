@@ -189,7 +189,12 @@ function AdvancedSearchBar({
         onValueChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={handleInputFocus}
-        endContent={<FaSearch className="cursor-pointer text-secondary" onClick={handleSearch} />}
+        endContent={
+          <FaSearch
+            className="cursor-pointer text-secondary"
+            onClick={handleSearch}
+          />
+        }
         classNames={{
           inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px] focus-within:outline-none',
           input: 'bg-surface rounded-sm text-xs focus:outline-none',
@@ -197,7 +202,10 @@ function AdvancedSearchBar({
         autoComplete="off"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <div ref={suggestionsRef} className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg">
+        <div
+          ref={suggestionsRef}
+          className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg"
+        >
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {
               const isTokenSuggestion = suggestion.includes(':');
@@ -222,7 +230,13 @@ function AdvancedSearchBar({
                   <div className="flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
                     {suggestion}
                     {isTokenSuggestion && token && token.img && (
-                      <Image src={token.img} alt={suggestion.split(':')[1]} width={12} height={12} className="ml-1" />
+                      <Image
+                        src={token.img}
+                        alt={suggestion.split(':')[1]}
+                        width={12}
+                        height={12}
+                        className="ml-1"
+                      />
                     )}
                   </div>
                   {(index === selectedSuggestion || suggestion.startsWith('Clean query') || suggestion.startsWith('Search ')) && (

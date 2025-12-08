@@ -33,7 +33,11 @@ export function StatsOverviewCards({ stats, selectedNetwork }: StatsOverviewCard
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <StatCard title={`Unique Users on ${networkName}`} value={stats.uniqueUsers.toLocaleString()} change={stats.uniqueUsersDelta} />
+      <StatCard
+        title={`Unique Users on ${networkName}`}
+        value={stats.uniqueUsers.toLocaleString()}
+        change={stats.uniqueUsersDelta}
+      />
       <StatCard
         title={`Total Transactions on ${networkName}`}
         value={stats.totalTransactions.toLocaleString()}
@@ -49,7 +53,10 @@ export function StatsOverviewCards({ stats, selectedNetwork }: StatsOverviewCard
         value={stats.withdrawCount.toLocaleString()}
         change={stats.withdrawCountDelta}
       />
-      <StatCard title={`Unique Markets on ${networkName}`} value={stats.activeMarkets.toLocaleString()} />
+      <StatCard
+        title={`Unique Markets on ${networkName}`}
+        value={stats.activeMarkets.toLocaleString()}
+      />
     </div>
   );
 }

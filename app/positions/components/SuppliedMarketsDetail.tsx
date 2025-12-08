@@ -36,13 +36,26 @@ function MarketRow({
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
 
   return (
-    <tr key={position.market.uniqueKey} className="gap-1">
-      <td data-label="Market" className="text-center">
+    <tr
+      key={position.market.uniqueKey}
+      className="gap-1"
+    >
+      <td
+        data-label="Market"
+        className="text-center"
+      >
         <div className="flex items-center justify-center">
-          <MarketIdBadge marketId={position.market.uniqueKey} chainId={position.market.morphoBlue.chain.id} showNetworkIcon={false} />
+          <MarketIdBadge
+            marketId={position.market.uniqueKey}
+            chainId={position.market.morphoBlue.chain.id}
+            showNetworkIcon={false}
+          />
         </div>
       </td>
-      <td data-label="Market Detail" className="align-middle p-4">
+      <td
+        data-label="Market Detail"
+        className="align-middle p-4"
+      >
         <MarketIdentity
           market={position.market}
           mode={MarketIdentityMode.Minimum}
@@ -51,24 +64,45 @@ function MarketRow({
           wide
         />
       </td>
-      <td data-label={rateLabel} className="text-center">
+      <td
+        data-label={rateLabel}
+        className="text-center"
+      >
         <RateFormatted value={position.market.state.supplyApy} />
       </td>
-      <td data-label="Supplied" className="text-center">
+      <td
+        data-label="Supplied"
+        className="text-center"
+      >
         {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
       </td>
-      <td data-label="% of Portfolio" className="text-center">
+      <td
+        data-label="% of Portfolio"
+        className="text-center"
+      >
         <div className="flex items-center">
           <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
-            <div className="h-full rounded-full bg-blue-500" style={{ width: `${percentageOfPortfolio}%` }} />
+            <div
+              className="h-full rounded-full bg-blue-500"
+              style={{ width: `${percentageOfPortfolio}%` }}
+            />
           </div>
           <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
       </td>
-      <td data-label="Indicators" className="text-center">
-        <MarketIndicators market={position.market} showRisk />
+      <td
+        data-label="Indicators"
+        className="text-center"
+      >
+        <MarketIndicators
+          market={position.market}
+          showRisk
+        />
       </td>
-      <td data-label="Actions" className="justify-center px-4 py-3">
+      <td
+        data-label="Actions"
+        className="justify-center px-4 py-3"
+      >
         <div className="flex items-center justify-center gap-2">
           <Button
             size="sm"
@@ -149,7 +183,10 @@ export function SuppliedMarketsDetail({
               </div>
               <div className="mt-1 flex flex-wrap justify-center text-xs">
                 {groupedPosition.processedCollaterals.map((collateral, colIndex) => (
-                  <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
+                  <span
+                    key={`${collateral.address}-${colIndex}`}
+                    className="mb-1 mr-2 opacity-70"
+                  >
                     <span
                       style={{
                         color: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),

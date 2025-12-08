@@ -29,7 +29,10 @@ function StepIndicator({ currentStep }: { currentStep: StepId }) {
         const isPast = index < currentIndex;
         const isCurrent = index === currentIndex;
         return (
-          <div key={step} className="flex items-center">
+          <div
+            key={step}
+            className="flex items-center"
+          >
             <div
               className={`h-[6px] w-8 rounded transition-colors duration-300 ${
                 isCurrent ? 'bg-primary' : isPast ? 'bg-primary/50' : 'bg-gray-200 dark:bg-gray-700'
@@ -88,7 +91,10 @@ function AdapterCapStep({
       <div className="rounded bg-hovered/60 p-4 space-y-4">
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter address</span>
-          <AccountIdentity address={adapterAddress} variant="full" />
+          <AccountIdentity
+            address={adapterAddress}
+            variant="full"
+          />
         </div>
         <div className="space-y-2">
           <span className="text-xs uppercase text-secondary">Adapter cap (%)</span>
@@ -132,14 +138,20 @@ function FinalizeSetupStep({
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter</span>
           {adapterIsReady ? (
-            <AccountIdentity address={adapter} variant="full" />
+            <AccountIdentity
+              address={adapter}
+              variant="full"
+            />
           ) : (
             <span className="text-xs text-secondary">Adapter not detected yet.</span>
           )}
         </div>
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Morpho registry</span>
-          <AccountIdentity address={registryAddress} variant="full" />
+          <AccountIdentity
+            address={registryAddress}
+            variant="full"
+          />
         </div>
         <ul className="list-disc space-y-1 pl-4 text-xs text-secondary">
           <li>Only Morpho-approved adapters can be enabled after this step.</li>
@@ -304,7 +316,13 @@ export function VaultInitializationModal({
     // Step 1: Set adapter cap
     if (stepIndex === 1) {
       return (
-        <Button variant="cta" size="sm" className="min-w-[150px]" isDisabled={!canProceedFromAdapterCap} onPress={() => setStepIndex(2)}>
+        <Button
+          variant="cta"
+          size="sm"
+          className="min-w-[150px]"
+          isDisabled={!canProceedFromAdapterCap}
+          onPress={() => setStepIndex(2)}
+        >
           Next: Finalize setup
         </Button>
       );
@@ -313,7 +331,13 @@ export function VaultInitializationModal({
     // Step 2: Finalize setup -> move to agent selection
     if (stepIndex === 2) {
       return (
-        <Button variant="cta" size="sm" className="min-w-[170px]" isDisabled={!canProceedToAgents} onPress={() => setStepIndex(3)}>
+        <Button
+          variant="cta"
+          size="sm"
+          className="min-w-[170px]"
+          isDisabled={!canProceedToAgents}
+          onPress={() => setStepIndex(3)}
+        >
           Next: Choose agent
         </Button>
       );
@@ -368,19 +392,40 @@ export function VaultInitializationModal({
       />
       <ModalBody className="space-y-6 px-2">
         {currentStep === 'deploy' && (
-          <DeployAdapterStep loading={showLoading} adapterDetected={adapterDetected} adapterAddress={marketAdapter} />
+          <DeployAdapterStep
+            loading={showLoading}
+            adapterDetected={adapterDetected}
+            adapterAddress={marketAdapter}
+          />
         )}
         {currentStep === 'adapter-cap' && (
-          <AdapterCapStep adapterAddress={marketAdapter} adapterCapRelative={adapterCapRelative} onSetAdapterCap={setAdapterCapRelative} />
+          <AdapterCapStep
+            adapterAddress={marketAdapter}
+            adapterCapRelative={adapterCapRelative}
+            onSetAdapterCap={setAdapterCapRelative}
+          />
         )}
         {currentStep === 'finalize' && (
-          <FinalizeSetupStep adapter={marketAdapter} registryAddress={registryAddress} isInitializing={isInitializing} />
+          <FinalizeSetupStep
+            adapter={marketAdapter}
+            registryAddress={registryAddress}
+            isInitializing={isInitializing}
+          />
         )}
-        {currentStep === 'agents' && <AgentSelectionStep selectedAgent={selectedAgent} onSelectAgent={setSelectedAgent} />}
+        {currentStep === 'agents' && (
+          <AgentSelectionStep
+            selectedAgent={selectedAgent}
+            onSelectAgent={setSelectedAgent}
+          />
+        )}
       </ModalBody>
       <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
         {showBackButton && (
-          <Button variant="ghost" size="sm" onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}
+          >
             Back
           </Button>
         )}

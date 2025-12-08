@@ -71,7 +71,12 @@ export function AgentsTab({
           <p className="text-xs text-secondary">{description}</p>
         </div>
         {normalized ? (
-          <AccountIdentity address={normalized} variant="compact" linkTo="explorer" copyable />
+          <AccountIdentity
+            address={normalized}
+            variant="compact"
+            linkTo="explorer"
+            copyable
+          />
         ) : (
           <span className="text-xs text-secondary">Not assigned</span>
         )}
@@ -94,7 +99,12 @@ export function AgentsTab({
             <p className="text-xs text-secondary">Automation agents executing the configured strategy.</p>
           </div>
           {!isEditingAllocators && (
-            <Button variant="interactive" size="sm" onPress={() => setIsEditingAllocators(true)} isDisabled={!isOwner}>
+            <Button
+              variant="interactive"
+              size="sm"
+              onPress={() => setIsEditingAllocators(true)}
+              isDisabled={!isOwner}
+            >
               {allocators.length === 0 ? 'Add allocators' : 'Edit'}
             </Button>
           )}
@@ -107,7 +117,10 @@ export function AgentsTab({
           ) : (
             <div className="space-y-2">
               {allocators.map((address) => (
-                <div key={address} className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50">
+                <div
+                  key={address}
+                  className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+                >
                   <AgentListItem address={address as Address} />
                 </div>
               ))}
@@ -180,7 +193,11 @@ export function AgentsTab({
             )}
 
             <div className="flex justify-end">
-              <Button variant="ghost" size="sm" onPress={() => setIsEditingAllocators(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => setIsEditingAllocators(false)}
+              >
                 Done
               </Button>
             </div>

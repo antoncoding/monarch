@@ -172,7 +172,13 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
 
           {totalPages > 1 && (
             <div className="flex justify-center">
-              <Pagination total={totalPages} page={currentPage} onChange={setCurrentPage} color="primary" size="sm" />
+              <Pagination
+                total={totalPages}
+                page={currentPage}
+                onChange={setCurrentPage}
+                color="primary"
+                size="sm"
+              />
             </div>
           )}
         </>

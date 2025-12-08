@@ -54,7 +54,10 @@ function RiskContent() {
 
         <p className="mb-2 text-secondary">
           This page covers advanced topics. For a comprehensive overview of Monarch, please visit our{' '}
-          <Link href="/" className="text-primary underline">
+          <Link
+            href="/"
+            className="text-primary underline"
+          >
             home page
           </Link>
           .
@@ -66,7 +69,10 @@ function RiskContent() {
         </p>
 
         {riskSections.map((section) => (
-          <div key={section.mainTitle} className="mb-8">
+          <div
+            key={section.mainTitle}
+            className="mb-8"
+          >
             <h2 className="text-2xl font-semibold">{section.mainTitle}</h2>
             <h3 className="mb-4 text-lg text-secondary">{section.subTitle}</h3>
             <div className="text-normal">{section.content}</div>

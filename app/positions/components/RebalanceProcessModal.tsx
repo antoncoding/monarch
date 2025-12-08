@@ -84,7 +84,13 @@ export function RebalanceProcessModal({
   };
 
   return (
-    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={onOpenChange}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Rebalancing ${tokenSymbol} Positions`}
         description={`Executing ${actionsCount} action${actionsCount === 1 ? '' : 's'} in this batch`}

@@ -33,7 +33,12 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
             {items.map((item) => {
               const networkImg = getNetworkImg(Number(item.key));
               return networkImg ? (
-                <Image key={item.key} src={networkImg} alt="icon" height="18" />
+                <Image
+                  key={item.key}
+                  src={networkImg}
+                  alt="icon"
+                  height="18"
+                />
               ) : (
                 <span key={item.key}>{item.textValue}</span>
               );
@@ -44,10 +49,18 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
     >
       {networks.map((network) => {
         return (
-          <SelectItem key={network.network} textValue={network.name}>
+          <SelectItem
+            key={network.network}
+            textValue={network.name}
+          >
             <div className="flex items-center justify-between">
               <p>{network.name}</p>
-              <Image className="ml-auto" src={network.logo} alt="icon" height="18" />
+              <Image
+                className="ml-auto"
+                src={network.logo}
+                alt="icon"
+                height="18"
+              />
             </div>
           </SelectItem>
         );

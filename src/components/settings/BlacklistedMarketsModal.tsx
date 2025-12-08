@@ -73,7 +73,14 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
   }, [filteredAvailableMarkets, currentPage]);
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="3xl" zIndex="settings" scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      backdrop="blur"
+      size="3xl"
+      zIndex="settings"
+      scrollBehavior="inside"
+    >
       {(onClose) => (
         <>
           <ModalHeader
@@ -225,7 +232,11 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="secondary" onPress={onClose} size="sm">
+            <Button
+              variant="secondary"
+              onPress={onClose}
+              size="sm"
+            >
               Close
             </Button>
           </ModalFooter>

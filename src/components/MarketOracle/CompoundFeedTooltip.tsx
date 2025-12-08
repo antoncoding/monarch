@@ -47,7 +47,10 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
     const variant = variantMap[category as keyof typeof variantMap] || 'primary';
 
     return (
-      <Badge variant={variant} size="sm">
+      <Badge
+        variant={variant}
+        size="sm"
+      >
         {category.toUpperCase()} RISK
       </Badge>
     );
@@ -60,7 +63,12 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
         <div className="flex items-center gap-2">
           {compoundLogo && (
             <div className="flex-shrink-0">
-              <Image src={compoundLogo} alt="Compound" width={16} height={16} />
+              <Image
+                src={compoundLogo}
+                alt="Compound"
+                width={16}
+                height={16}
+              />
             </div>
           )}
           <div className="font-zen font-bold">Compound Feed Details</div>
@@ -86,7 +94,14 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
         {underlyingChainlinkData && (
           <div className="space-y-2 border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
             <div className="mb-2 flex items-center gap-2">
-              {chainlinkLogo && <Image src={chainlinkLogo} alt="Chainlink" width={12} height={12} />}
+              {chainlinkLogo && (
+                <Image
+                  src={chainlinkLogo}
+                  alt="Chainlink"
+                  width={12}
+                  height={12}
+                />
+              )}
               <span className="font-zen text-sm font-medium text-gray-700 dark:text-gray-300">Underlying Chainlink Feed</span>
             </div>
             <div className="flex justify-between font-zen text-sm">
@@ -101,7 +116,12 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    toggleModal(<ChainlinkRiskTiersModal isOpen onClose={() => closeModal()} />);
+                    toggleModal(
+                      <ChainlinkRiskTiersModal
+                        isOpen
+                        onClose={() => closeModal()}
+                      />,
+                    );
                   }}
                   className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
                   type="button"
@@ -128,7 +148,13 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Compound Feed
             </Link>
             <Link
@@ -137,7 +163,13 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Underlying Feed
             </Link>
             {chainlinkUrl && (
@@ -147,7 +179,14 @@ export function CompoundFeedTooltip({ feed, compoundData, chainId }: CompoundFee
                 rel="noopener noreferrer"
                 className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
               >
-                {chainlinkLogo && <Image src={chainlinkLogo} alt="Chainlink" width={12} height={12} />}
+                {chainlinkLogo && (
+                  <Image
+                    src={chainlinkLogo}
+                    alt="Chainlink"
+                    width={12}
+                    height={12}
+                  />
+                )}
                 Chainlink
               </Link>
             )}

@@ -70,7 +70,13 @@ export default function MarketSettingsModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl" zIndex="settings">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      backdrop="blur"
+      size="xl"
+      zIndex="settings"
+    >
       {(onClose) => (
         <>
           <ModalHeader
@@ -86,7 +92,10 @@ export default function MarketSettingsModal({
                 Edit the numbers that power the Filters modal. Enable or disable filters directly from the Filters button on the markets
                 page.
               </p>
-              <SettingItem title="Min Supply (USD)" description="Only show markets where supplied assets meet this threshold.">
+              <SettingItem
+                title="Min Supply (USD)"
+                description="Only show markets where supplied assets meet this threshold."
+              >
                 <Input
                   aria-label="Minimum supply value"
                   name="minSupply"
@@ -103,7 +112,10 @@ export default function MarketSettingsModal({
                 />
               </SettingItem>
               <Divider />
-              <SettingItem title="Min Borrow (USD)" description="Only show markets where borrowed assets meet this threshold.">
+              <SettingItem
+                title="Min Borrow (USD)"
+                description="Only show markets where borrowed assets meet this threshold."
+              >
                 <Input
                   aria-label="Minimum borrow value"
                   name="minBorrow"
@@ -120,7 +132,10 @@ export default function MarketSettingsModal({
                 />
               </SettingItem>
               <Divider />
-              <SettingItem title="Min Liquidity (USD)" description="Only show markets where available liquidity meets this threshold.">
+              <SettingItem
+                title="Min Liquidity (USD)"
+                description="Only show markets where available liquidity meets this threshold."
+              >
                 <Input
                   aria-label="Minimum liquidity value"
                   name="minLiquidity"
@@ -149,7 +164,10 @@ export default function MarketSettingsModal({
                       key={key}
                       className="flex items-center justify-between gap-2 rounded p-2 bg-surface hover:bg-surface-dark transition-colors"
                     >
-                      <label htmlFor={`col-${key}`} className="flex-grow cursor-pointer">
+                      <label
+                        htmlFor={`col-${key}`}
+                        className="flex-grow cursor-pointer"
+                      >
                         <p className="text-sm font-medium text-primary">{COLUMN_LABELS[key]}</p>
                         <p className="text-xs text-secondary">{COLUMN_DESCRIPTIONS[key]}</p>
                       </label>
@@ -174,7 +192,10 @@ export default function MarketSettingsModal({
 
             <div className="bg-surface-soft flex flex-col gap-3 rounded p-4">
               <h3 className="text-xs uppercase text-secondary">View Options</h3>
-              <SettingItem title="Show Full Reward APY" description="Include external rewards when displaying APY.">
+              <SettingItem
+                title="Show Full Reward APY"
+                description="Include external rewards when displaying APY."
+              >
                 <IconSwitch
                   selected={showFullRewardAPY}
                   onChange={setShowFullRewardAPY}
@@ -192,19 +213,30 @@ export default function MarketSettingsModal({
                         <h4 className="font-zen text-base font-medium text-primary">Trusted Vaults</h4>
                         <p className="font-zen text-xs text-secondary">Vaults that power the "Trusted By" column and filters.</p>
                       </div>
-                      <Button size="sm" variant="flat" onPress={onOpenTrustedVaultsModal} className="flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant="flat"
+                        onPress={onOpenTrustedVaultsModal}
+                        className="flex-shrink-0"
+                      >
                         Manage
                       </Button>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <TrustedByCell vaults={trustedVaults ?? []} badgeSize={26} />
+                      <TrustedByCell
+                        vaults={trustedVaults ?? []}
+                        badgeSize={26}
+                      />
                       <span className="text-xs text-secondary">{totalVaults} total</span>
                     </div>
                   </div>
                 </>
               )}
               <Divider />
-              <SettingItem title="Entries Per Page" description="Number of markets shown on each page.">
+              <SettingItem
+                title="Entries Per Page"
+                description="Number of markets shown on each page."
+              >
                 <div className="flex items-center gap-2">
                   <Input
                     aria-label="Entries per page"
@@ -217,7 +249,10 @@ export default function MarketSettingsModal({
                     className="w-24"
                     onKeyDown={(e) => e.key === 'Enter' && handleCustomEntriesSubmit()}
                   />
-                  <Button size="sm" onPress={handleCustomEntriesSubmit}>
+                  <Button
+                    size="sm"
+                    onPress={handleCustomEntriesSubmit}
+                  >
                     Update
                   </Button>
                 </div>
@@ -225,7 +260,10 @@ export default function MarketSettingsModal({
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+            <Button
+              variant="light"
+              onPress={onClose}
+            >
               Close
             </Button>
           </ModalFooter>

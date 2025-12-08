@@ -21,13 +21,33 @@ const levelToCellColor = (level: string) => {
 const levelToIcon = (level: string) => {
   switch (level) {
     case 'info':
-      return <FaRegLightbulb className="mr-2" size={18} />;
+      return (
+        <FaRegLightbulb
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'success':
-      return <GrStatusGood className="mr-2" size={18} />;
+      return (
+        <GrStatusGood
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'warning':
-      return <MdWarning className="mr-2" size={18} />;
+      return (
+        <MdWarning
+          className="mr-2"
+          size={18}
+        />
+      );
     case 'alert':
-      return <MdError className="mr-2" size={18} />;
+      return (
+        <MdError
+          className="mr-2"
+          size={18}
+        />
+      );
     default:
       return '';
   }

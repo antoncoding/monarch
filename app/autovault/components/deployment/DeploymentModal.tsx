@@ -91,7 +91,12 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
 
               {userAlreadyHasVault && selectedTokenAndNetwork && (
                 <div className="rounded bg-primary/5 p-3">
-                  <Checkbox isSelected={ackExistingVault} onValueChange={setAckExistingVault} className="items-center gap-2" size="sm">
+                  <Checkbox
+                    isSelected={ackExistingVault}
+                    onValueChange={setAckExistingVault}
+                    className="items-center gap-2"
+                    size="sm"
+                  >
                     <span className="text-sm leading-5 text-secondary">
                       I understand I already deployed an autovault for this token on {getNetworkName(selectedTokenAndNetwork.networkId)}.
                     </span>
@@ -145,7 +150,11 @@ type DeploymentModalProps = {
 export function DeploymentModal({ isOpen, onOpenChange, existingVaults }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
-      <DeploymentModalContent isOpen={isOpen} onOpenChange={onOpenChange} existingVaults={existingVaults} />
+      <DeploymentModalContent
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        existingVaults={existingVaults}
+      />
     </DeploymentProvider>
   );
 }

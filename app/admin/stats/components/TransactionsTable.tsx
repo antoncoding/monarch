@@ -221,7 +221,10 @@ export function TransactionsTable({
                   />
                 </tr>
               </thead>
-              <TransactionTableBody operations={currentEntries} selectedNetwork={selectedNetwork} />
+              <TransactionTableBody
+                operations={currentEntries}
+                selectedNetwork={selectedNetwork}
+              />
             </table>
             <div className="p-4">
               <TablePagination

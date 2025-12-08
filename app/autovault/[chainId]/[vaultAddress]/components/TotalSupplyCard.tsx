@@ -92,7 +92,14 @@ export function TotalSupplyCard({
         <CardBody className="flex items-center justify-center py-3">
           <div className="flex items-center gap-2">
             <span className="text-lg text-primary">{totalAssetsLabel}</span>
-            {assetAddress && <TokenIcon address={assetAddress} chainId={chainId} width={20} height={20} />}
+            {assetAddress && (
+              <TokenIcon
+                address={assetAddress}
+                chainId={chainId}
+                width={20}
+                height={20}
+              />
+            )}
             {earnings24hLabel && (
               <Tooltip content="Total yield earned in the last 24 hours">
                 <div className="flex items-center gap-1 text-xs text-green-500">

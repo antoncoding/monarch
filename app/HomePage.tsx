@@ -144,7 +144,10 @@ function CustomTypingAnimation() {
         // Add highlighted text (only if fully typed)
         const highlightedPortion = remainingText.slice(index, index + word.length);
         elements.push(
-          <span key={`highlight-${keyIndex++}`} style={{ color }}>
+          <span
+            key={`highlight-${keyIndex++}`}
+            style={{ color }}
+          >
             {highlightedPortion}
           </span>,
         );
@@ -163,7 +166,10 @@ function CustomTypingAnimation() {
   return (
     <div className="text-center font-zen text-base leading-relaxed text-secondary sm:text-xl md:text-left md:text-3xl">
       {renderColoredText()}
-      <span className="ml-1 inline-block" style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}>
+      <span
+        className="ml-1 inline-block"
+        style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}
+      >
         |
       </span>
     </div>
@@ -194,10 +200,19 @@ function HomePage() {
               <div className="flex w-full flex-col items-center">
                 {/* Logo and Product Title - Horizontal Layout */}
                 <div className="mb-4 inline-flex items-center gap-2 sm:mb-6 sm:gap-3 md:mb-8 md:gap-4">
-                  <h1 className="m-0 font-zen text-3xl leading-none text-primary sm:text-3xl md:text-4xl" style={{ padding: 0 }}>
+                  <h1
+                    className="m-0 font-zen text-3xl leading-none text-primary sm:text-3xl md:text-4xl"
+                    style={{ padding: 0 }}
+                  >
                     Welcome to Monarch
                   </h1>
-                  <Image src={logo} alt="Monarch Logo" width={60} height={60} className="h-8 w-8 sm:h-10 sm:w-10 md:h-14 md:w-14" />
+                  <Image
+                    src={logo}
+                    alt="Monarch Logo"
+                    width={60}
+                    height={60}
+                    className="h-8 w-8 sm:h-10 sm:w-10 md:h-14 md:w-14"
+                  />
                 </div>
 
                 {/* Tagline with typing animation */}
@@ -219,8 +234,15 @@ function HomePage() {
                   Learn More
                   <RiArrowDownLine className="h-5 w-5" />
                 </Button>
-                <Link href="/markets" className="block no-underline">
-                  <Button variant="cta" className="w-auto min-w-[200px] px-8 py-3 font-zen sm:px-10 sm:py-4" size="lg">
+                <Link
+                  href="/markets"
+                  className="block no-underline"
+                >
+                  <Button
+                    variant="cta"
+                    className="w-auto min-w-[200px] px-8 py-3 font-zen sm:px-10 sm:py-4"
+                    size="lg"
+                  >
                     Explore Markets
                   </Button>
                 </Link>
@@ -245,7 +267,10 @@ function HomePage() {
         </section>
 
         {/* Section 1: Introducing Monarch - Full Screen, Left Layout with Image */}
-        <section id="section-1" className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24">
+        <section
+          id="section-1"
+          className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24"
+        >
           <div className="container mx-auto px-6 sm:px-8 md:px-12">
             <div className="mx-auto grid max-w-7xl items-center gap-8 md:gap-12 md:grid-cols-[2fr_1fr]">
               {/* Text Content */}
@@ -269,7 +294,11 @@ function HomePage() {
                     rel="noopener noreferrer"
                     className="inline-block no-underline"
                   >
-                    <Button variant="secondary" size="lg" className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
+                    >
                       More about Morpho Blue
                       <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
@@ -301,7 +330,10 @@ function HomePage() {
         </section>
 
         {/* Section 2: Morpho Vaults - Full Screen, Right Layout with Image */}
-        <section id="section-2" className="flex w-full items-center bg-main py-12 md:min-h-screen md:py-24">
+        <section
+          id="section-2"
+          className="flex w-full items-center bg-main py-12 md:min-h-screen md:py-24"
+        >
           <div className="container mx-auto px-6 sm:px-8 md:px-12">
             <div className="mx-auto grid max-w-7xl items-center gap-8 md:gap-12 md:grid-cols-[2fr_1fr] md:grid-flow-dense">
               {/* Text Content */}
@@ -319,8 +351,17 @@ function HomePage() {
                   </p>
                 </div>
                 <div className="mt-6 flex flex-col items-center gap-3 sm:mt-8 sm:flex-row sm:gap-4">
-                  <a href="https://docs.morpho.org/curate/" target="_blank" rel="noopener noreferrer" className="inline-block no-underline">
-                    <Button variant="secondary" size="lg" className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2">
+                  <a
+                    href="https://docs.morpho.org/curate/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block no-underline"
+                  >
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
+                    >
                       More about Risk Curation
                       <RiExternalLinkLine className="h-5 w-5" />
                     </Button>
@@ -352,7 +393,10 @@ function HomePage() {
         </section>
 
         {/* Section 3: Direct Market Access - Full Screen, Left Layout with Animation */}
-        <section id="section-3" className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24">
+        <section
+          id="section-3"
+          className="flex w-full items-center bg-surface py-12 md:min-h-screen md:py-24"
+        >
           <div className="container mx-auto px-6 sm:px-8 md:px-12">
             <div className="mx-auto max-w-7xl">
               {/* Text Content - Centered */}
@@ -397,11 +441,23 @@ function HomePage() {
 
               {/* CTA Buttons - Centered */}
               <div className="mx-auto flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                <Button variant="secondary" size="lg" className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50" isDisabled>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50"
+                  isDisabled
+                >
                   Auto Vault <Badge variant="success"> Coming Soon </Badge>
                 </Button>
-                <Link href="/markets" className="block no-underline">
-                  <Button variant="cta" size="lg" className="w-auto min-w-[200px] font-zen">
+                <Link
+                  href="/markets"
+                  className="block no-underline"
+                >
+                  <Button
+                    variant="cta"
+                    size="lg"
+                    className="w-auto min-w-[200px] font-zen"
+                  >
                     Explore Markets
                   </Button>
                 </Link>

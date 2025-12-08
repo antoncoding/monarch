@@ -52,7 +52,13 @@ export default function TransactionFiltersModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl" zIndex="settings">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      backdrop="blur"
+      size="xl"
+      zIndex="settings"
+    >
       {(onClose) => (
         <>
           <ModalHeader
@@ -103,7 +109,10 @@ export default function TransactionFiltersModal({
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button variant="light" onPress={onClose}>
+            <Button
+              variant="light"
+              onPress={onClose}
+            >
               Close
             </Button>
           </ModalFooter>

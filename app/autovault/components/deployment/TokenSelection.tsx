@@ -28,7 +28,15 @@ type TokenNetwork = {
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
-  return <Image src={url as string} alt={`networkId-${networkId}`} width={16} height={16} className="rounded-full" />;
+  return (
+    <Image
+      src={url as string}
+      alt={`networkId-${networkId}`}
+      width={16}
+      height={16}
+      className="rounded-full"
+    />
+  );
 }
 
 type TokenSelectionProps = {
@@ -163,7 +171,11 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
               >
                 {isSelected && (
                   <div className="absolute top-2 right-2 h-4 w-4 rounded-full bg-primary flex items-center justify-center">
-                    <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="h-2 w-2 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -175,7 +187,12 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <TokenIcon address={tokenNetwork.address} chainId={tokenNetwork.networkId} width={20} height={20} />
+                    <TokenIcon
+                      address={tokenNetwork.address}
+                      chainId={tokenNetwork.networkId}
+                      width={20}
+                      height={20}
+                    />
                     <span className="font-medium">
                       {formatReadable(formatUnits(tokenNetwork.balance, tokenNetwork.decimals))} {tokenNetwork.symbol}
                     </span>

@@ -12,11 +12,25 @@ export function RedstoneTypesModal({ isOpen, onClose }: RedstoneTypesModalProps)
   const redstoneIcon = OracleVendorIcons[PriceFeedVendors.Redstone];
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()} zIndex="base" size="xl">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      zIndex="base"
+      size="xl"
+    >
       <ModalHeader
         title="Redstone Feed Types"
         description="Understanding market and fundamental price feeds"
-        mainIcon={redstoneIcon ? <Image src={redstoneIcon} alt="Redstone" width={20} height={20} /> : undefined}
+        mainIcon={
+          redstoneIcon ? (
+            <Image
+              src={redstoneIcon}
+              alt="Redstone"
+              width={20}
+              height={20}
+            />
+          ) : undefined
+        }
         onClose={onClose}
       />
 
@@ -42,7 +56,10 @@ export function RedstoneTypesModal({ isOpen, onClose }: RedstoneTypesModalProps)
 
             {/* Warning Box */}
             <div className="mt-3 flex items-center rounded-sm bg-yellow-200 p-4 text-yellow-700 opacity-80">
-              <MdWarning className="mr-2 flex-shrink-0" size={18} />
+              <MdWarning
+                className="mr-2 flex-shrink-0"
+                size={18}
+              />
               <div>
                 <h4 className="text-xs font-bold">Trust Assumptions</h4>
                 <p className="text-xs">Relies on protocol smart contract structure and underlying reserve liquidity.</p>

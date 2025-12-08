@@ -48,12 +48,24 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
 
         <div className="w-full gap-2 ">
           {warningsWithDetail.map((warning) => {
-            return <Info key={warning.code} description={warning.description} level={warning.level} title={' '} />;
+            return (
+              <Info
+                key={warning.code}
+                description={warning.description}
+                level={warning.level}
+                title={' '}
+              />
+            );
           })}
         </div>
         {
           // if no warning
-          warningsWithDetail.length === 0 && <Info description="No warning flagged for this market!" level="success" />
+          warningsWithDetail.length === 0 && (
+            <Info
+              description="No warning flagged for this market!"
+              level="success"
+            />
+          )
         }
       </div>
     </div>

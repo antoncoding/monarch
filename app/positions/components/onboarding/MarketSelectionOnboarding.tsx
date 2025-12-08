@@ -38,7 +38,11 @@ export function MarketSelectionOnboarding() {
     return (
       <div className="flex h-full flex-col items-center justify-center">
         <p className="text-gray-400">No token selected. Please go back and select a token.</p>
-        <Button variant="light" onPress={goToPrevStep} className="mt-4 min-w-[120px]">
+        <Button
+          variant="light"
+          onPress={goToPrevStep}
+          className="mt-4 min-w-[120px]"
+        >
           Back
         </Button>
       </div>
@@ -80,10 +84,19 @@ export function MarketSelectionOnboarding() {
 
       {/* Navigation - ALWAYS VISIBLE */}
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-        <Button variant="light" onPress={goToPrevStep} className="min-w-[120px]">
+        <Button
+          variant="light"
+          onPress={goToPrevStep}
+          className="min-w-[120px]"
+        >
           Back
         </Button>
-        <Button variant="cta" onPress={goToNextStep} isDisabled={!canGoNext} className="min-w-[120px]">
+        <Button
+          variant="cta"
+          onPress={goToNextStep}
+          isDisabled={!canGoNext}
+          className="min-w-[120px]"
+        >
           Continue
         </Button>
       </div>

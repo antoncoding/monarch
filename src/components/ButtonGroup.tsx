@@ -43,7 +43,11 @@ const variantStyles = {
 
 export default function ButtonGroup({ options, value, onChange, size = 'md', variant = 'default' }: ButtonGroupProps) {
   return (
-    <div className="inline-flex rounded shadow-sm" role="group" aria-label="Button group">
+    <div
+      className="inline-flex rounded shadow-sm"
+      role="group"
+      aria-label="Button group"
+    >
       {options.map((option, index) => {
         const isFirst = index === 0;
         const isLast = index === options.length - 1;

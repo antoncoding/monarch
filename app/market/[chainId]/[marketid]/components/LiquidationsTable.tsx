@@ -65,7 +65,10 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
             <TableColumn align="end">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableColumn>
             <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
             <TableColumn>TIME</TableColumn>
-            <TableColumn className="font-mono" align="end">
+            <TableColumn
+              className="font-mono"
+              align="end"
+            >
               TRANSACTION
             </TableColumn>
           </TableHeader>
@@ -82,7 +85,11 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                 <TableRow key={liquidation.hash}>
                   <TableCell>
                     {isLiquidatorAddress ? (
-                      <AccountIdentity address={liquidation.liquidator as Address} variant="compact" linkTo="profile" />
+                      <AccountIdentity
+                        address={liquidation.liquidator as Address}
+                        variant="compact"
+                        linkTo="profile"
+                      />
                     ) : (
                       <span>{liquidation.liquidator}</span>
                     )}
@@ -137,7 +144,10 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   </TableCell>
                   <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
                   <TableCell className="text-right">
-                    <TransactionIdentity txHash={liquidation.hash} chainId={chainId} />
+                    <TransactionIdentity
+                      txHash={liquidation.hash}
+                      chainId={chainId}
+                    />
                   </TableCell>
                 </TableRow>
               );

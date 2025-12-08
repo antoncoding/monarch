@@ -150,7 +150,11 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                     </div>
 
                     {needSwitchChain ? (
-                      <Button onPress={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
+                      <Button
+                        onPress={switchToNetwork}
+                        className="ml-2 min-w-32"
+                        variant="secondary"
+                      >
                         Switch Chain
                       </Button>
                     ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (

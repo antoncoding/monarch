@@ -89,7 +89,10 @@ function RebalanceAnimation() {
   return (
     <div className="flex items-center justify-center gap-2 py-4 sm:gap-3">
       {slots.map((slot, index) => (
-        <div key={index} className="relative h-12 w-12 overflow-hidden rounded-md bg-surface shadow-md sm:h-14 sm:w-14">
+        <div
+          key={index}
+          className="relative h-12 w-12 overflow-hidden rounded-md bg-surface shadow-md sm:h-14 sm:w-14"
+        >
           {/* Current token - slides up when spinning */}
           <div
             className={`absolute inset-0 flex items-center justify-center ${

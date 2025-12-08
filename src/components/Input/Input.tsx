@@ -112,7 +112,11 @@ export default function Input({
       {error && !bypassMax && (
         <div className="mt-1 flex items-center gap-2">
           <span className="text-sm text-red-500">{error}</span>
-          <Button size="xs" onClick={handleDismissError} variant="secondary">
+          <Button
+            size="xs"
+            onClick={handleDismissError}
+            variant="secondary"
+          >
             Ignore
           </Button>
         </div>

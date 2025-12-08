@@ -165,10 +165,20 @@ function VolumeChart({
                 <Spinner size={30} />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={400} id="volume-chart">
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+                id="volume-chart"
+              >
                 <AreaChart data={getVolumeChartData()}>
                   <defs>
-                    <linearGradient id="volumeChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-supplyGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.supply.gradient.start}
@@ -180,7 +190,13 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="volumeChart-borrowGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-borrowGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.borrow.gradient.start}
@@ -192,7 +208,13 @@ function VolumeChart({
                         stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="volumeChart-liquidityGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="volumeChart-liquidityGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.apyAtTarget.gradient.start}
@@ -206,8 +228,14 @@ function VolumeChart({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" tickFormatter={formatTime} />
-                  <YAxis tickFormatter={formatYAxis} domain={['auto', 'auto']} />
+                  <XAxis
+                    dataKey="x"
+                    tickFormatter={formatTime}
+                  />
+                  <YAxis
+                    tickFormatter={formatYAxis}
+                    domain={['auto', 'auto']}
+                  />
                   <Tooltip
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}
                     formatter={(value: number, name: string) => [formatValue(value), name]}
@@ -274,7 +302,10 @@ function VolumeChart({
                 {['supply', 'borrow', 'liquidity'].map((type) => {
                   const stats = getCurrentVolumeStats(type as 'supply' | 'borrow' | 'liquidity');
                   return (
-                    <div key={type} className="flex items-center justify-between">
+                    <div
+                      key={type}
+                      className="flex items-center justify-between"
+                    >
                       <span className="capitalize">{type}:</span>
                       <span className="font-zen text-sm">
                         {formatValue(stats.current)}
@@ -299,7 +330,10 @@ function VolumeChart({
                 ) : (
                   <>
                     {['supply', 'borrow', 'liquidity'].map((type) => (
-                      <div key={type} className="flex items-center justify-between">
+                      <div
+                        key={type}
+                        className="flex items-center justify-between"
+                      >
                         <span className="capitalize">{type}:</span>
                         <span className="font-zen text-sm">
                           {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}

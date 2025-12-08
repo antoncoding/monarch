@@ -14,9 +14,17 @@ type OracleVendorBadgeProps = {
 
 const renderVendorIcon = (vendor: PriceFeedVendors) =>
   OracleVendorIcons[vendor] ? (
-    <Image src={OracleVendorIcons[vendor]} alt={vendor} width={16} height={16} />
+    <Image
+      src={OracleVendorIcons[vendor]}
+      alt={vendor}
+      width={16}
+      height={16}
+    />
   ) : (
-    <IoHelpCircleOutline className="text-secondary" size={18} />
+    <IoHelpCircleOutline
+      className="text-secondary"
+      size={18}
+    />
   );
 
 /**
@@ -35,14 +43,20 @@ function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip =
     <div className="flex items-center space-x-1 rounded p-1">
       {showText && <span className="mr-1 text-xs font-medium">{hasUnknown ? 'Unknown' : vendors.join(', ')}</span>}
       {isCustom ? (
-        <IoWarningOutline className="text-secondary" size={16} />
+        <IoWarningOutline
+          className="text-secondary"
+          size={16}
+        />
       ) : hasCompletelyUnknown || hasTaggedUnknown ? (
         // Show core vendor icons plus question mark for any unknown types
         <>
           {coreVendors.map((vendor, index) => (
             <React.Fragment key={index}>{renderVendorIcon(vendor)}</React.Fragment>
           ))}
-          <IoHelpCircleOutline className="text-secondary" size={18} />
+          <IoHelpCircleOutline
+            className="text-secondary"
+            size={18}
+          />
         </>
       ) : (
         // Only core vendors, show their icons
@@ -100,7 +114,10 @@ function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip =
     };
 
     return (
-      <Tooltip content={getTooltipContent()} className="rounded-sm">
+      <Tooltip
+        content={getTooltipContent()}
+        className="rounded-sm"
+      >
         {content}
       </Tooltip>
     );

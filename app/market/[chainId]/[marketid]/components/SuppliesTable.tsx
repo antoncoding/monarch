@@ -55,7 +55,13 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
               base: 'p-0 m-0 bg-transparent shadow-sm border-none',
               content: 'p-0 m-0 bg-transparent shadow-sm border-none',
             }}
-            content={<TooltipContent title="Filters" detail="Filter transactions by minimum amount" icon={<FiFilter size={14} />} />}
+            content={
+              <TooltipContent
+                title="Filters"
+                detail="Filter transactions by minimum amount"
+                icon={<FiFilter size={14} />}
+              />
+            }
           >
             <Button
               isIconOnly
@@ -65,7 +71,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
               aria-label="Transaction filters"
               onPress={onOpenFiltersModal}
             >
-              <FiFilter size={14} style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }} />
+              <FiFilter
+                size={14}
+                style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
+              />
             </Button>
           </Tooltip>
         </div>
@@ -92,7 +101,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
             <TableColumn>TYPE</TableColumn>
             <TableColumn align="end">AMOUNT</TableColumn>
             <TableColumn>TIME</TableColumn>
-            <TableColumn className="font-mono" align="end">
+            <TableColumn
+              className="font-mono"
+              align="end"
+            >
               TRANSACTION
             </TableColumn>
           </TableHeader>
@@ -104,7 +116,11 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
             {supplies.map((supply) => (
               <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
                 <TableCell>
-                  <AccountIdentity address={supply.userAddress as Address} variant="compact" linkTo="profile" />
+                  <AccountIdentity
+                    address={supply.userAddress as Address}
+                    variant="compact"
+                    linkTo="profile"
+                  />
                 </TableCell>
                 <TableCell>
                   <Badge variant={supply.type === 'MarketSupply' ? 'success' : 'danger'}>
@@ -127,7 +143,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                 </TableCell>
                 <TableCell>{moment.unix(supply.timestamp).fromNow()}</TableCell>
                 <TableCell className="text-right">
-                  <TransactionIdentity txHash={supply.hash} chainId={chainId} />
+                  <TransactionIdentity
+                    txHash={supply.hash}
+                    chainId={chainId}
+                  />
                 </TableCell>
               </TableRow>
             ))}

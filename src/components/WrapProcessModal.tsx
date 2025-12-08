@@ -30,7 +30,13 @@ export function WrapProcessModal({ amount, currentStep, onOpenChange }: WrapProc
   );
 
   return (
-    <Modal isOpen onOpenChange={onOpenChange} size="lg" isDismissable={false} backdrop="blur">
+    <Modal
+      isOpen
+      onOpenChange={onOpenChange}
+      size="lg"
+      isDismissable={false}
+      backdrop="blur"
+    >
       <ModalHeader
         title={`Wrapping ${formatBalance(amount, 18)} MORPHO`}
         description="Track each step to move legacy MORPHO into the new token"

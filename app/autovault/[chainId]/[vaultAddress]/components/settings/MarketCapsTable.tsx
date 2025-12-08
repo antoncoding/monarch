@@ -67,7 +67,10 @@ export function MarketCapsTable({
       )}
       <div className="space-y-1">
         {markets.map((row) => (
-          <div key={row.market.uniqueKey} className="flex items-center gap-2 rounded bg-surface py-1 px-2">
+          <div
+            key={row.market.uniqueKey}
+            className="flex items-center gap-2 rounded bg-surface py-1 px-2"
+          >
             <div className="flex-1 flex items-center gap-2">
               <MarketIdentity
                 market={row.market}

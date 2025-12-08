@@ -239,7 +239,12 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
 
   return (
     <>
-      <Modal isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false} size="4xl">
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        isDismissable={false}
+        size="4xl"
+      >
         <ModalHeader
           title={
             <div className="flex items-center gap-2">

@@ -243,7 +243,13 @@ export function SetupPositions() {
           </div>
           <div className="flex min-w-[200px] flex-col items-end">
             <div className="flex items-center gap-2">
-              <Image src={selectedToken.logoURI ?? ''} alt={selectedToken.symbol} width={20} height={20} className="rounded-full" />
+              <Image
+                src={selectedToken.logoURI ?? ''}
+                alt={selectedToken.symbol}
+                width={20}
+                height={20}
+                className="rounded-full"
+              />
               <span className="text-sm text-gray-500">Wallet Balance</span>
             </div>
             <div className="flex items-center gap-2">
@@ -271,9 +277,16 @@ export function SetupPositions() {
               const isLocked = lockedAmounts.has(market.uniqueKey);
 
               return (
-                <tr key={market.uniqueKey} className="hover:bg-hovered">
+                <tr
+                  key={market.uniqueKey}
+                  className="hover:bg-hovered"
+                >
                   {/* Market Identity */}
-                  <td data-label="Market" className="z-50" style={{ width: '280px' }}>
+                  <td
+                    data-label="Market"
+                    className="z-50"
+                    style={{ width: '280px' }}
+                  >
                     <MarketIdentity
                       market={market}
                       chainId={market.morphoBlue.chain.id}
@@ -292,7 +305,10 @@ export function SetupPositions() {
                   </td>
 
                   {/* Distribution Controls */}
-                  <td data-label="Distribution" className="z-50">
+                  <td
+                    data-label="Distribution"
+                    className="z-50"
+                  >
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-[120px]">
                         <Slider
@@ -354,7 +370,11 @@ export function SetupPositions() {
 
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
-        <Button variant="light" className="min-w-[120px]" onPress={goToPrevStep}>
+        <Button
+          variant="light"
+          className="min-w-[120px]"
+          onPress={goToPrevStep}
+        >
           Back
         </Button>
         <Button

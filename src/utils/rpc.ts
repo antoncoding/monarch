@@ -82,9 +82,7 @@ export async function estimatedBlockNumber(
   timestamp: number;
 }> {
   const fetchBlock = async () => {
-    const blockResponse = await fetch(
-      `/api/block?` + `timestamp=${encodeURIComponent(timestamp)}` + `&chainId=${encodeURIComponent(chainId)}`,
-    );
+    const blockResponse = await fetch(`/api/block?timestamp=${encodeURIComponent(timestamp)}&chainId=${encodeURIComponent(chainId)}`);
 
     if (!blockResponse.ok) {
       const errorData = (await blockResponse.json()) as { error?: string };

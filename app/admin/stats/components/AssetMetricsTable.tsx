@@ -140,8 +140,15 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                 const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
 
                 return (
-                  <tr key={`${asset.assetAddress}-${asset.chainId}`} className="hover:bg-hovered">
-                    <td data-label="Asset" className="z-50" style={{ minWidth: '120px' }}>
+                  <tr
+                    key={`${asset.assetAddress}-${asset.chainId}`}
+                    className="hover:bg-hovered"
+                  >
+                    <td
+                      data-label="Asset"
+                      className="z-50"
+                      style={{ minWidth: '120px' }}
+                    >
                       <div className="flex items-center gap-2">
                         <TokenIcon
                           address={asset.assetAddress}
@@ -153,21 +160,41 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                         <span className="font-zen text-sm">{asset.assetSymbol ?? 'Unknown'}</span>
                       </div>
                     </td>
-                    <td data-label="Total Volume" className="z-50 text-center" style={{ minWidth: '120px' }}>
+                    <td
+                      data-label="Total Volume"
+                      className="z-50 text-center"
+                      style={{ minWidth: '120px' }}
+                    >
                       <span className="text-sm">
                         {asset.totalVolumeFormatted ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}` : '—'}
                       </span>
                     </td>
-                    <td data-label="Total Transactions" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                    <td
+                      data-label="Total Transactions"
+                      className="z-50 text-center"
+                      style={{ minWidth: '100px' }}
+                    >
                       <span className="text-sm">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</span>
                     </td>
-                    <td data-label="Supply Count" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                    <td
+                      data-label="Supply Count"
+                      className="z-50 text-center"
+                      style={{ minWidth: '100px' }}
+                    >
                       <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
                     </td>
-                    <td data-label="Withdraw Count" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                    <td
+                      data-label="Withdraw Count"
+                      className="z-50 text-center"
+                      style={{ minWidth: '100px' }}
+                    >
                       <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
                     </td>
-                    <td data-label="Unique Users" className="z-50 text-center" style={{ minWidth: '100px' }}>
+                    <td
+                      data-label="Unique Users"
+                      className="z-50 text-center"
+                      style={{ minWidth: '100px' }}
+                    >
                       <span className="text-sm">{asset.uniqueUsers.toLocaleString()}</span>
                     </td>
                   </tr>

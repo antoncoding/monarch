@@ -37,10 +37,18 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
             const hasAllocation = item.allocation > 0n;
 
             return (
-              <tr key={item.collateralAddress.toLowerCase()} className="rounded bg-hovered/20">
+              <tr
+                key={item.collateralAddress.toLowerCase()}
+                className="rounded bg-hovered/20"
+              >
                 <td className="p-3 rounded-l">
                   <div className="flex items-center gap-3">
-                    <TokenIcon address={item.collateralAddress} chainId={chainId} width={24} height={24} />
+                    <TokenIcon
+                      address={item.collateralAddress}
+                      chainId={chainId}
+                      width={24}
+                      height={24}
+                    />
                     <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
                   </div>
                 </td>
@@ -54,7 +62,10 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
                 </td>
                 <td className="p-3 rounded-r w-10">
                   <div className="flex justify-center">
-                    <AllocationPieChart percentage={percentage} size={20} />
+                    <AllocationPieChart
+                      percentage={percentage}
+                      size={20}
+                    />
                   </div>
                 </td>
               </tr>

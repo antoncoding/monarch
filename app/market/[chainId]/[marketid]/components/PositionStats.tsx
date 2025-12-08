@@ -168,7 +168,10 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
           <span>{rateLabel}:</span>
           <div className="flex items-center gap-2">
             {hasActiveRewards ? (
-              <APYBreakdownTooltip baseAPY={baseSupplyAPY} activeCampaigns={activeCampaigns}>
+              <APYBreakdownTooltip
+                baseAPY={baseSupplyAPY}
+                activeCampaigns={activeCampaigns}
+              >
                 <span className="cursor-help">
                   {baseSupplyRate.toFixed(2)}%<span className="text-green-600 dark:text-green-400"> (+{extraRewards.toFixed(2)}%)</span>
                 </span>

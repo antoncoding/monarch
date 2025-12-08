@@ -32,9 +32,19 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
 
 export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
   return (
-    <td data-label={dataLabel ?? symbol} className="z-50" style={{ minWidth: '9px' }}>
+    <td
+      data-label={dataLabel ?? symbol}
+      className="z-50"
+      style={{ minWidth: '9px' }}
+    >
       <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-        <TokenIcon address={asset} chainId={chainId} width={16} height={16} symbol={symbol} />
+        <TokenIcon
+          address={asset}
+          chainId={chainId}
+          width={16}
+          height={16}
+          symbol={symbol}
+        />
         <a
           className="group flex items-center gap-0.5 no-underline hover:underline"
           href={getAssetURL(asset, chainId)}
@@ -65,7 +75,11 @@ export function TDTotalSupplyOrBorrow({
   symbol: string;
 }) {
   return (
-    <td data-label={dataLabel} className="z-50" style={{ minWidth: '120px' }}>
+    <td
+      data-label={dataLabel}
+      className="z-50"
+      style={{ minWidth: '120px' }}
+    >
       <p className="z-50">${`${formatReadable(Number(assetsUSD))}   `} </p>
       <p className="z-50 opacity-70">{`${formatReadable(formatBalance(assets, decimals))} ${symbol}`}</p>
     </td>

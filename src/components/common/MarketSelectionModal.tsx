@@ -140,17 +140,30 @@ export function MarketSelectionModal({
               {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
             </p>
             <div className="flex items-center gap-2">
-              <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
+              <Button
+                variant="subtle"
+                size="sm"
+                onPress={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
-              <Button variant="cta" size="sm" isDisabled={selectedCount === 0} onPress={handleConfirm}>
+              <Button
+                variant="cta"
+                size="sm"
+                isDisabled={selectedCount === 0}
+                onPress={handleConfirm}
+              >
                 {buttonText}
               </Button>
             </div>
           </>
         ) : (
           <div className="flex w-full justify-end">
-            <Button variant="subtle" size="sm" onPress={() => onOpenChange(false)}>
+            <Button
+              variant="subtle"
+              size="sm"
+              onPress={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
           </div>

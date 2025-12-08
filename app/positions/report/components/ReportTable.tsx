@@ -86,13 +86,20 @@ function MarketSummaryBlock({ market, interestEarned, decimals, symbol, apy, has
           <div className="flex items-center gap-2">
             <Badge size="sm">{market.collateralAsset.symbol}</Badge>
             <Badge size="sm">{formatUnits(BigInt(market.lltv), 16)}% LTV</Badge>
-            <Link href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`} className="no-underline" target="_blank">
+            <Link
+              href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+              className="no-underline"
+              target="_blank"
+            >
               <div className="badge text-xs hover:underline">{market.uniqueKey.slice(2, 8)}</div>
             </Link>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-500">Oracle: </span>
-            <OracleVendorBadge oracleData={market.oracle?.data} chainId={market.morphoBlue.chain.id} />
+            <OracleVendorBadge
+              oracleData={market.oracle?.data}
+              chainId={market.morphoBlue.chain.id}
+            />
           </div>
         </div>
       </div>
@@ -203,8 +210,15 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
               const hasActivePosition = BigInt(marketReport.endBalance) > 0n;
 
               return (
-                <div key={marketKey} className="bg-surface rounded border border-gray-200 dark:border-gray-700">
-                  <button type="button" className="w-full hover:bg-gray-50 dark:hover:bg-gray-800" onClick={() => toggleMarket(marketKey)}>
+                <div
+                  key={marketKey}
+                  className="bg-surface rounded border border-gray-200 dark:border-gray-700"
+                >
+                  <button
+                    type="button"
+                    className="w-full hover:bg-gray-50 dark:hover:bg-gray-800"
+                    onClick={() => toggleMarket(marketKey)}
+                  >
                     <MarketSummaryBlock
                       market={marketReport.market}
                       interestEarned={marketReport.interestEarned}

@@ -22,7 +22,13 @@ export function VaultIcon({ curator, width = 24, height = 24, className = '' }: 
         height: `${height}px`,
       }}
     >
-      <Image src={logoSrc} alt={`${curator} logo`} width={width} height={height} className="object-contain p-0.5" />
+      <Image
+        src={logoSrc}
+        alt={`${curator} logo`}
+        width={width}
+        height={height}
+        className="object-contain p-0.5"
+      />
     </div>
   );
 }

@@ -71,26 +71,58 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
         const marketPath = op.market ? `/market/${selectedNetwork}/${op.market.uniqueKey}` : null;
 
         return (
-          <tr key={op.txId} className="hover:bg-hovered">
+          <tr
+            key={op.txId}
+            className="hover:bg-hovered"
+          >
             {/* User Address */}
-            <td data-label="User" className="z-50" style={{ minWidth: '120px' }}>
-              <AccountIdentity address={op.user as `0x${string}`} variant="badge" linkTo="profile" />
+            <td
+              data-label="User"
+              className="z-50"
+              style={{ minWidth: '120px' }}
+            >
+              <AccountIdentity
+                address={op.user as `0x${string}`}
+                variant="badge"
+                linkTo="profile"
+              />
             </td>
 
             {/* Loan Asset */}
-            <td data-label="Loan Asset" className="z-50" style={{ minWidth: '100px' }}>
+            <td
+              data-label="Loan Asset"
+              className="z-50"
+              style={{ minWidth: '100px' }}
+            >
               <div className="flex items-center gap-1.5">
-                <TokenIcon address={op.loanAddress} chainId={selectedNetwork} symbol={op.loanSymbol} width={16} height={16} />
+                <TokenIcon
+                  address={op.loanAddress}
+                  chainId={selectedNetwork}
+                  symbol={op.loanSymbol}
+                  width={16}
+                  height={16}
+                />
                 <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(op.loanSymbol)}</span>
               </div>
             </td>
 
             {/* Market */}
-            <td data-label="Market" className="z-50" style={{ minWidth: '200px' }}>
+            <td
+              data-label="Market"
+              className="z-50"
+              style={{ minWidth: '200px' }}
+            >
               {op.market && marketPath ? (
-                <Link href={marketPath} className="no-underline hover:no-underline">
+                <Link
+                  href={marketPath}
+                  className="no-underline hover:no-underline"
+                >
                   <div className="flex items-center gap-2">
-                    <MarketIdBadge marketId={op.market.uniqueKey} chainId={op.market.morphoBlue.chain.id} showLink={false} />
+                    <MarketIdBadge
+                      marketId={op.market.uniqueKey}
+                      chainId={op.market.morphoBlue.chain.id}
+                      showLink={false}
+                    />
                     <MarketIdentity
                       market={op.market}
                       focus={MarketIdentityFocus.Collateral}
@@ -105,7 +137,11 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
             </td>
 
             {/* Side */}
-            <td data-label="Side" className="z-50 text-center" style={{ minWidth: '80px' }}>
+            <td
+              data-label="Side"
+              className="z-50 text-center"
+              style={{ minWidth: '80px' }}
+            >
               <span
                 className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
                   op.side === 'Supply' ? 'text-green-500' : 'text-red-500'
@@ -116,17 +152,32 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
             </td>
 
             {/* Amount */}
-            <td data-label="Amount" className="z-50" style={{ minWidth: '120px' }}>
+            <td
+              data-label="Amount"
+              className="z-50"
+              style={{ minWidth: '120px' }}
+            >
               <span className="text-sm">{formatAmount(op.amount, op.side, op.loanAddress, selectedNetwork)}</span>
             </td>
 
             {/* Transaction Hash */}
-            <td data-label="Tx Hash" className="z-50" style={{ minWidth: '120px' }}>
-              <TransactionIdentity txHash={op.txHash} chainId={selectedNetwork} />
+            <td
+              data-label="Tx Hash"
+              className="z-50"
+              style={{ minWidth: '120px' }}
+            >
+              <TransactionIdentity
+                txHash={op.txHash}
+                chainId={selectedNetwork}
+              />
             </td>
 
             {/* Time */}
-            <td data-label="Time" className="z-50" style={{ minWidth: '90px' }}>
+            <td
+              data-label="Time"
+              className="z-50"
+              style={{ minWidth: '90px' }}
+            >
               <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(op.timestamp)}</span>
             </td>
           </tr>

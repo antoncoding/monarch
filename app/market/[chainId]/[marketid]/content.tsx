@@ -217,17 +217,27 @@ function MarketContent() {
       <div className="mx-auto max-w-7xl px-6 py-8 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
         {/* navigation buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button onPress={handleBackToMarkets} size="md" className="w-auto">
+          <Button
+            onPress={handleBackToMarkets}
+            size="md"
+            className="w-auto"
+          >
             <ChevronLeftIcon className="mr-2" />
             <span className="hidden sm:inline">Back to Markets</span>
             <span className="sm:hidden">Back</span>
           </Button>
 
           <div className="flex flex-wrap gap-2">
-            <Button onPress={() => setShowSupplyModal(true)} className="flex-1 sm:flex-none">
+            <Button
+              onPress={() => setShowSupplyModal(true)}
+              className="flex-1 sm:flex-none"
+            >
               Supply
             </Button>
-            <Button onPress={() => setShowBorrowModal(true)} className="flex-1 sm:flex-none">
+            <Button
+              onPress={() => setShowBorrowModal(true)}
+              className="flex-1 sm:flex-none"
+            >
               Borrow
             </Button>
             <Button
@@ -239,7 +249,13 @@ function MarketContent() {
             >
               <span className="hidden sm:inline">View on Morpho</span>
               <span className="sm:hidden">Morpho</span>
-              <Image src={MORPHO_LOGO} alt="Morpho Logo" width={20} height={20} className="ml-2" />
+              <Image
+                src={MORPHO_LOGO}
+                alt="Morpho Logo"
+                width={20}
+                height={20}
+                className="ml-2"
+              />
             </Button>
           </div>
         </div>
@@ -295,7 +311,15 @@ function MarketContent() {
               <span>Basic Info</span>
               <span className="text-sm text-gray-500">
                 <div className="flex items-center">
-                  {networkImg && <Image src={networkImg} alt={network.toString()} width={18} height={18} className="mr-2" />}
+                  {networkImg && (
+                    <Image
+                      src={networkImg}
+                      alt={network.toString()}
+                      width={18}
+                      height={18}
+                      className="mr-2"
+                    />
+                  )}
                   {getNetworkName(network)}
                 </div>
               </span>
@@ -441,7 +465,10 @@ function MarketContent() {
           minAssets={scaledMinBorrowAmount}
           onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
         />
-        <LiquidationsTable chainId={network} market={market} />
+        <LiquidationsTable
+          chainId={network}
+          market={market}
+        />
       </div>
     </>
   );

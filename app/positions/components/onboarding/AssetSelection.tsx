@@ -15,7 +15,15 @@ import type { TokenWithMarkets } from './types';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
-  return <Image src={url as string} alt={`networkId-${networkId}`} width={16} height={16} className="rounded-full" />;
+  return (
+    <Image
+      src={url as string}
+      alt={`networkId-${networkId}`}
+      width={16}
+      height={16}
+      className="rounded-full"
+    />
+  );
 }
 
 export function AssetSelection() {
@@ -88,7 +96,10 @@ export function AssetSelection() {
           <p className="text-lg">No assets available</p>
           <p className="text-sm text-gray-400">You need to have some assets in your wallet to supply</p>
           <Link href="/markets">
-            <Button color="primary" className="rounded">
+            <Button
+              color="primary"
+              className="rounded"
+            >
               View Markets
             </Button>
           </Link>
@@ -105,7 +116,15 @@ export function AssetSelection() {
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition-transform duration-300 group-hover:scale-110 dark:bg-gray-700">
-                {token.logoURI && <Image src={token.logoURI} alt={token.symbol} width={32} height={32} className="rounded-full" />}
+                {token.logoURI && (
+                  <Image
+                    src={token.logoURI}
+                    alt={token.symbol}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                )}
               </div>
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex items-center justify-between">

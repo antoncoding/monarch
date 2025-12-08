@@ -27,7 +27,10 @@ function WagmiConfigProvider({ children }: Props) {
   const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : staticWagmiConfig;
 
   return (
-    <WagmiProvider config={wagmiConfig} reconnectOnMount>
+    <WagmiProvider
+      config={wagmiConfig}
+      reconnectOnMount
+    >
       <RainbowKitProvider
         theme={{
           lightMode: lightTheme({

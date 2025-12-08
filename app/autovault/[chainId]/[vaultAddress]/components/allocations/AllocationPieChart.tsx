@@ -12,7 +12,12 @@ export function AllocationPieChart({ percentage, size = 16 }: AllocationPieChart
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <svg height={size} width={size} className="inline-block" style={{ transform: 'rotate(-90deg)' }}>
+    <svg
+      height={size}
+      width={size}
+      className="inline-block"
+      style={{ transform: 'rotate(-90deg)' }}
+    >
       {/* Background circle - always same opacity */}
       <circle
         stroke="currentColor"

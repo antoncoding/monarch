@@ -10,5 +10,11 @@ type UtilizationPreviewProps = {
  * Thin wrapper around MetricPreview for utilization-specific usage.
  */
 export function UtilizationPreview({ currentUtilization, previewUtilization }: UtilizationPreviewProps) {
-  return <MetricPreview currentValue={currentUtilization} previewValue={previewUtilization} label="Utilization" />;
+  return (
+    <MetricPreview
+      currentValue={currentUtilization}
+      previewValue={previewUtilization}
+      label="Utilization"
+    />
+  );
 }

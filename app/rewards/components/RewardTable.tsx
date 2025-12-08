@@ -103,7 +103,10 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                 const isMerklReward = tokenReward.programs.includes('merkl');
 
                 return (
-                  <TableRow key={index} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <TableRow
+                    key={index}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                  >
                     <TableCell>
                       <Link
                         href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
@@ -113,7 +116,12 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                         onClick={(e) => e.stopPropagation()}
                       >
                         <p>{matchedToken.symbol}</p>
-                        <TokenIcon address={tokenReward.asset.address} chainId={tokenReward.asset.chain_id} width={20} height={20} />
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={20}
+                          height={20}
+                        />
                       </Link>
                     </TableCell>
                     <TableCell>
@@ -126,39 +134,70 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                             height={20}
                           />
                         ) : (
-                          <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width: 20, height: 20 }} />
+                          <div
+                            className="rounded-full bg-gray-300 dark:bg-gray-700"
+                            style={{ width: 20, height: 20 }}
+                          />
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</p>
-                        <TokenIcon address={tokenReward.asset.address} chainId={tokenReward.asset.chain_id} width={16} height={16} />
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>{formatSimple(formatBalance(tokenReward.total.pendingAmount, matchedToken.decimals))}</p>
-                        <TokenIcon address={tokenReward.asset.address} chainId={tokenReward.asset.chain_id} width={16} height={16} />
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>{formatSimple(formatBalance(tokenReward.total.claimed, matchedToken.decimals))}</p>
-                        <TokenIcon address={tokenReward.asset.address} chainId={tokenReward.asset.chain_id} width={16} height={16} />
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center gap-2">
                         <p>{formatSimple(formatBalance(total, matchedToken.decimals))}</p>
-                        <TokenIcon address={tokenReward.asset.address} chainId={tokenReward.asset.chain_id} width={16} height={16} />
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={16}
+                          height={16}
+                        />
                       </div>
                     </TableCell>
                     <TableCell align="center">
                       <div className="flex justify-center">
                         {isMerklReward ? (
-                          <Link href={`https://app.merkl.xyz/users/${account}`} target="_blank" rel="noopener noreferrer">
-                            <Button variant="interactive" size="sm" isDisabled={tokenReward.total.claimable === BigInt(0)}>
+                          <Link
+                            href={`https://app.merkl.xyz/users/${account}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button
+                              variant="interactive"
+                              size="sm"
+                              isDisabled={tokenReward.total.claimable === BigInt(0)}
+                            >
                               Claim on Merkl
                             </Button>
                           </Link>

@@ -37,7 +37,10 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
   };
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div
+      className="relative w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
@@ -60,9 +63,17 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
               {selectedOracles.map((oracle, index) => (
                 <div key={index}>
                   {OracleVendorIcons[oracle] ? (
-                    <Image src={OracleVendorIcons[oracle]} alt={oracle} height={16} width={16} />
+                    <Image
+                      src={OracleVendorIcons[oracle]}
+                      alt={oracle}
+                      height={16}
+                      width={16}
+                    />
                   ) : (
-                    <IoHelpCircleOutline className="text-secondary" size={16} />
+                    <IoHelpCircleOutline
+                      className="text-secondary"
+                      size={16}
+                    />
                   )}
                 </div>
               ))}
@@ -80,7 +91,10 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >
-        <ul className="custom-scrollbar max-h-60 overflow-auto" role="listbox">
+        <ul
+          className="custom-scrollbar max-h-60 overflow-auto"
+          role="listbox"
+        >
           {Object.values(PriceFeedVendors).map((oracle) => (
             <li
               key={oracle}
@@ -99,9 +113,18 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
             >
               <div className="flex items-center gap-2">
                 {OracleVendorIcons[oracle] ? (
-                  <Image src={OracleVendorIcons[oracle]} alt={oracle} width={16} height={16} className="rounded-full" />
+                  <Image
+                    src={OracleVendorIcons[oracle]}
+                    alt={oracle}
+                    width={16}
+                    height={16}
+                    className="rounded-full"
+                  />
                 ) : (
-                  <IoHelpCircleOutline className="text-secondary" size={16} />
+                  <IoHelpCircleOutline
+                    className="text-secondary"
+                    size={16}
+                  />
                 )}
                 <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
               </div>

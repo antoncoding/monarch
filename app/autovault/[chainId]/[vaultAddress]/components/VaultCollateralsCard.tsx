@@ -43,7 +43,12 @@ export function VaultCollateralsCard({
     <Card className={cardStyle}>
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Collaterals</span>
-        {isOwner && <GearIcon className="h-4 w-4 cursor-pointer text-secondary hover:text-primary" onClick={onManageCaps} />}
+        {isOwner && (
+          <GearIcon
+            className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
+            onClick={onManageCaps}
+          />
+        )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
@@ -51,8 +56,16 @@ export function VaultCollateralsCard({
         ) : hasCollaterals ? (
           <div className="flex flex-wrap gap-1.5 justify-center">
             {collateralTokens.map((tokenAddress) => (
-              <div key={tokenAddress} className="flex items-center">
-                <TokenIcon address={tokenAddress} chainId={chainId} width={20} height={20} />
+              <div
+                key={tokenAddress}
+                className="flex items-center"
+              >
+                <TokenIcon
+                  address={tokenAddress}
+                  chainId={chainId}
+                  width={20}
+                  height={20}
+                />
               </div>
             ))}
           </div>

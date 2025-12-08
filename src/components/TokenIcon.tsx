@@ -39,7 +39,15 @@ export function TokenIcon({
   // If we have a token with an image, use that
   if (token?.img) {
     const img = (
-      <Image className="rounded-full" src={token.img} alt={token.symbol} width={width} height={height} style={{ opacity }} unoptimized />
+      <Image
+        className="rounded-full"
+        src={token.img}
+        alt={token.symbol}
+        width={width}
+        height={height}
+        style={{ opacity }}
+        unoptimized
+      />
     );
 
     const title = customTooltipTitle ?? token.symbol;
@@ -82,5 +90,10 @@ export function TokenIcon({
   }
 
   // Fallback to placeholder
-  return <div className="rounded-full bg-gray-300 dark:bg-gray-700" style={{ width, height }} />;
+  return (
+    <div
+      className="rounded-full bg-gray-300 dark:bg-gray-700"
+      style={{ width, height }}
+    />
+  );
 }

@@ -119,7 +119,10 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
   return (
     <div className="space-y-4">
-      <div className="relative w-full" ref={dropdownRef}>
+      <div
+        className="relative w-full"
+        ref={dropdownRef}
+      >
         <div
           className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
             isOpen ? 'bg-surface-dark' : ''
@@ -172,7 +175,10 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
               className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
             />
             <div className="relative">
-              <ul className="custom-scrollbar max-h-60 overflow-auto pb-12" role="listbox">
+              <ul
+                className="custom-scrollbar max-h-60 overflow-auto pb-12"
+                role="listbox"
+              >
                 {filteredAssets.map((asset, idx) => (
                   <li
                     key={`${asset.symbol}-${asset.chainId}-${idx}`}
@@ -201,10 +207,22 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <TokenIcon address={asset.address} chainId={asset.chainId} symbol={asset.symbol} width={18} height={18} />
+                      <TokenIcon
+                        address={asset.address}
+                        chainId={asset.chainId}
+                        symbol={asset.symbol}
+                        width={18}
+                        height={18}
+                      />
                       <span>{asset.symbol}</span>
                       <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                        <Image src={getNetworkImg(asset.chainId) as string} alt="network" width="16" height="16" className="rounded-full" />
+                        <Image
+                          src={getNetworkImg(asset.chainId) as string}
+                          alt="network"
+                          width="16"
+                          height="16"
+                          className="rounded-full"
+                        />
                         <span className="text-xs text-gray-600 dark:text-gray-300">{getNetworkName(asset.chainId)}</span>
                       </div>
                     </div>
@@ -295,7 +313,15 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                           <span className="text-default-600">{market.loanAsset.symbol}</span>
                         </div>
                         <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                          {networkImg && <Image src={networkImg} alt="network" width="16" height="16" className="rounded-full" />}
+                          {networkImg && (
+                            <Image
+                              src={networkImg}
+                              alt="network"
+                              width="16"
+                              height="16"
+                              className="rounded-full"
+                            />
+                          )}
                           <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
                         </div>
                       </div>
@@ -320,7 +346,12 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                           />
                           <span className="text-sm text-default-500">{market.collateralAsset.symbol}</span>
                         </div>
-                        <Chip size="sm" variant="flat" className="bg-default-100 text-xs" radius="sm">
+                        <Chip
+                          size="sm"
+                          variant="flat"
+                          className="bg-default-100 text-xs"
+                          radius="sm"
+                        >
                           {formatReadable(lltv)}%
                         </Chip>
                       </div>
@@ -350,7 +381,10 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     {/* Transaction */}
                     <TableCell>
                       <div className="flex justify-center">
-                        <TransactionIdentity txHash={tx.hash} chainId={market.morphoBlue.chain.id} />
+                        <TransactionIdentity
+                          txHash={tx.hash}
+                          chainId={market.morphoBlue.chain.id}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

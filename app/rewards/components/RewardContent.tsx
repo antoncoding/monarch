@@ -141,7 +141,11 @@ export default function Rewards() {
           <h1 className="font-zen">Reward</h1>
         </div>
         <div className="flex flex-col items-center justify-between pb-8 sm:flex-row">
-          <AccountIdentity address={account as Address} variant="full" showAddress />
+          <AccountIdentity
+            address={account as Address}
+            variant="full"
+            showAddress
+          />
         </div>
         <div className="space-y-4">
           <section>
@@ -175,7 +179,12 @@ export default function Rewards() {
               >
                 <div className="flex items-center gap-2 text-base">
                   <span className="font-base">{formatSimple(formatBalance(morphoBalance, 18))}</span>
-                  <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
+                  <TokenIcon
+                    address={MORPHO_TOKEN_MAINNET}
+                    chainId={SupportedNetworks.Mainnet}
+                    width={18}
+                    height={18}
+                  />
                 </div>
               </InfoCard>
 
@@ -196,7 +205,12 @@ export default function Rewards() {
               >
                 <div className="flex items-center gap-2 text-base">
                   <span>{formatSimple(formatBalance(totalClaimable, 18))}</span>
-                  <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
+                  <TokenIcon
+                    address={MORPHO_TOKEN_MAINNET}
+                    chainId={SupportedNetworks.Mainnet}
+                    width={18}
+                    height={18}
+                  />
                 </div>
               </InfoCard>
 
@@ -218,7 +232,12 @@ export default function Rewards() {
                 >
                   <div className="flex items-center gap-2 text-base">
                     {morphoBalanceLegacy && <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>}
-                    <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
+                    <TokenIcon
+                      address={MORPHO_TOKEN_MAINNET}
+                      chainId={SupportedNetworks.Mainnet}
+                      width={18}
+                      height={18}
+                    />
                   </div>
                 </InfoCard>
               )}
@@ -231,7 +250,12 @@ export default function Rewards() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-secondary">Show Claimed</span>
-                <Switch size="sm" isSelected={showClaimed} onValueChange={setShowClaimed} aria-label="Show claimed rewards" />
+                <Switch
+                  size="sm"
+                  isSelected={showClaimed}
+                  onValueChange={setShowClaimed}
+                  aria-label="Show claimed rewards"
+                />
               </div>
             </div>
             {loadingRewards ? (
@@ -239,13 +263,22 @@ export default function Rewards() {
             ) : rewards.length === 0 ? (
               <EmptyScreen message="No rewards" />
             ) : (
-              <RewardTable account={account} rewards={allRewards} distributions={distributions} showClaimed={showClaimed} />
+              <RewardTable
+                account={account}
+                rewards={allRewards}
+                distributions={distributions}
+                showClaimed={showClaimed}
+              />
             )}
           </section>
         </div>
       </div>
       {showProcessModal && (
-        <WrapProcessModal amount={morphoBalanceLegacy?.value ?? 0n} currentStep={currentStep} onOpenChange={setShowProcessModal} />
+        <WrapProcessModal
+          amount={morphoBalanceLegacy?.value ?? 0n}
+          currentStep={currentStep}
+          onOpenChange={setShowProcessModal}
+        />
       )}
     </div>
   );

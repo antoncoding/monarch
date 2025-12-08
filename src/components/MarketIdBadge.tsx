@@ -15,7 +15,14 @@ export function MarketIdBadge({ marketId, chainId, showNetworkIcon = false, show
 
   return (
     <div className="flex items-center gap-1.5">
-      {showNetworkIcon && chainImg && <Image src={chainImg} alt={`Chain ${chainId}`} width={15} height={15} />}
+      {showNetworkIcon && chainImg && (
+        <Image
+          src={chainImg}
+          alt={`Chain ${chainId}`}
+          width={15}
+          height={15}
+        />
+      )}
       {showLink ? (
         <Link
           className="group flex items-center justify-center no-underline hover:underline"

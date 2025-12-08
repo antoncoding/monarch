@@ -418,8 +418,16 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
                 const isNew = !info.existingCapId;
 
                 return (
-                  <div key={info.collateralAddress} className="flex items-center gap-2 text-xs rounded bg-surface py-1 px-2">
-                    <TokenIcon address={info.collateralAddress} chainId={chainId} width={20} height={20} />
+                  <div
+                    key={info.collateralAddress}
+                    className="flex items-center gap-2 text-xs rounded bg-surface py-1 px-2"
+                  >
+                    <TokenIcon
+                      address={info.collateralAddress}
+                      chainId={chainId}
+                      width={20}
+                      height={20}
+                    />
                     <div className="flex-1 flex items-center gap-2">
                       <span className="font-medium">{info.collateralSymbol}</span>
                       {isNew && <Badge variant="primary">New</Badge>}
@@ -516,7 +524,12 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
 
         {/* Add Market Button */}
         <div className="flex items-center justify-center">
-          <Button variant="subtle" size="sm" onPress={() => setShowAddMarketModal(true)} isDisabled={!isOwner}>
+          <Button
+            variant="subtle"
+            size="sm"
+            onPress={() => setShowAddMarketModal(true)}
+            isDisabled={!isOwner}
+          >
             <PlusIcon className="h-4 w-4 mr-1" />
             Add Market Cap
           </Button>
@@ -526,10 +539,19 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         <div className="flex items-center justify-between border-t border-divider/30 pt-4">
           <div />
           <div className="flex items-center gap-2">
-            <Button variant="subtle" size="sm" onPress={onCancel}>
+            <Button
+              variant="subtle"
+              size="sm"
+              onPress={onCancel}
+            >
               Cancel
             </Button>
-            <Button variant="cta" size="sm" isDisabled={!hasChanges || isUpdating} onPress={() => void handleSave()}>
+            <Button
+              variant="cta"
+              size="sm"
+              isDisabled={!hasChanges || isUpdating}
+              onPress={() => void handleSave()}
+            >
               {isUpdating ? (
                 <span className="flex items-center gap-2">
                   <Spinner size={12} /> Saving...

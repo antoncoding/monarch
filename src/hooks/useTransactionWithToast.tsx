@@ -46,18 +46,31 @@ export function useTransactionWithToast({
 
   useEffect(() => {
     if (isConfirming) {
-      toast.loading(<TransactionToast title={pendingText} description={pendingDescription} hash={hash} />, {
-        toastId,
-        onClick,
-        closeButton: true,
-      });
+      toast.loading(
+        <TransactionToast
+          title={pendingText}
+          description={pendingDescription}
+          hash={hash}
+        />,
+        {
+          toastId,
+          onClick,
+          closeButton: true,
+        },
+      );
     }
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
     if (isConfirmed) {
       toast.update(toastId, {
-        render: <TransactionToast title={`${successText} 🎉`} description={successDescription} hash={hash} />,
+        render: (
+          <TransactionToast
+            title={`${successText} 🎉`}
+            description={successDescription}
+            hash={hash}
+          />
+        ),
         type: 'success',
         isLoading: false,
         autoClose: 5000,
@@ -70,7 +83,12 @@ export function useTransactionWithToast({
     }
     if (isError || txError) {
       toast.update(toastId, {
-        render: <StyledToast title={errorText} message={txError ? txError.message : 'Transaction Failed'} />,
+        render: (
+          <StyledToast
+            title={errorText}
+            message={txError ? txError.message : 'Transaction Failed'}
+          />
+        ),
         type: 'error',
         isLoading: false,
         autoClose: 5000,

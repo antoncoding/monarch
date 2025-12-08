@@ -21,7 +21,11 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="mt-4">
-        <Button variant="cta" className="min-w-[120px]" onPress={handleFinished}>
+        <Button
+          variant="cta"
+          className="min-w-[120px]"
+          onPress={handleFinished}
+        >
           Close
         </Button>
       </div>

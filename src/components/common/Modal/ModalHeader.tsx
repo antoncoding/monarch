@@ -72,12 +72,22 @@ export function ModalHeader({
         <div className={`absolute flex items-center gap-2 ${controlPositionClass}`}>
           {actions && <div className="flex items-center gap-2">{actions}</div>}
           {auxiliaryAction && handleAuxiliaryClick && (
-            <button type="button" onClick={handleAuxiliaryClick} aria-label={auxiliaryAction.ariaLabel} className={iconButtonBaseClass}>
+            <button
+              type="button"
+              onClick={handleAuxiliaryClick}
+              aria-label={auxiliaryAction.ariaLabel}
+              className={iconButtonBaseClass}
+            >
               {auxiliaryAction.icon}
             </button>
           )}
           {showCloseIcon && handleClose && (
-            <button type="button" onClick={handleClose} aria-label={closeButtonAriaLabel} className={iconButtonBaseClass}>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label={closeButtonAriaLabel}
+              className={iconButtonBaseClass}
+            >
               <Cross1Icon className="h-3.5 w-3.5" />
             </button>
           )}

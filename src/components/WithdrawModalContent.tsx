@@ -150,7 +150,11 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
                   />
                 </div>
                 {needSwitchChain ? (
-                  <Button onPress={switchToNetwork} className="ml-2 min-w-32" variant="secondary">
+                  <Button
+                    onPress={switchToNetwork}
+                    className="ml-2 min-w-32"
+                    variant="secondary"
+                  >
                     Switch Chain
                   </Button>
                 ) : (

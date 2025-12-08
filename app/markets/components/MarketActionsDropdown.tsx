@@ -58,10 +58,20 @@ export function MarketActionsDropdown({
   };
 
   return (
-    <div onClick={handleClick} onKeyDown={handleKeyDown} role="button" tabIndex={-1}>
+    <div
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={-1}
+    >
       <Dropdown className="rounded-sm">
         <DropdownTrigger>
-          <Button size="xs" variant="interactive" className="text-xs" isIconOnly>
+          <Button
+            size="xs"
+            variant="interactive"
+            className="text-xs"
+            isIconOnly
+          >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
         </DropdownTrigger>

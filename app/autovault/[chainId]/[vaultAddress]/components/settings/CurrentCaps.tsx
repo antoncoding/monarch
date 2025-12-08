@@ -137,7 +137,11 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
         </div>
         <div className="flex items-center gap-2">
           {isOwner && (
-            <Button variant="subtle" size="sm" onPress={onStartEdit}>
+            <Button
+              variant="subtle"
+              size="sm"
+              onPress={onStartEdit}
+            >
               {hasAnyCaps ? 'Edit caps' : 'Add caps'}
             </Button>
           )}
@@ -173,7 +177,10 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
                   const hasMarkets = item.markets.length > 0;
 
                   return (
-                    <div key={item.cap.capId} className="rounded bg-surface overflow-hidden">
+                    <div
+                      key={item.cap.capId}
+                      className="rounded bg-surface overflow-hidden"
+                    >
                       {/* Collateral Cap Row */}
                       <button
                         type="button"
@@ -182,7 +189,12 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
                         disabled={!hasMarkets}
                         aria-expanded={hasMarkets ? isExpanded : undefined}
                       >
-                        <TokenIcon address={item.collateralToken as Address} chainId={chainId} width={20} height={20} />
+                        <TokenIcon
+                          address={item.collateralToken as Address}
+                          chainId={chainId}
+                          width={20}
+                          height={20}
+                        />
                         <div className="flex-1 flex items-center gap-2">
                           <span className="font-medium">{item.collateralSymbol}</span>
                           {hasMarkets && (
@@ -261,9 +273,15 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
                       if (!market) return null;
 
                       return (
-                        <div key={cap.capId} className="rounded bg-surface overflow-hidden">
+                        <div
+                          key={cap.capId}
+                          className="rounded bg-surface overflow-hidden"
+                        >
                           <div className="p-3">
-                            <MarketDetailsBlock market={market} disableExpansion />
+                            <MarketDetailsBlock
+                              market={market}
+                              disableExpansion
+                            />
                           </div>
                           <div className="flex items-center gap-2 bg-hovered/10 px-3 py-2 border-t border-divider/20 text-xs">
                             <span className="flex-1 text-secondary">Caps:</span>

@@ -174,7 +174,11 @@ export default function ReportContent({ account }: { account: Address }) {
               {/* Left side controls group */}
               <div className="flex items-start gap-4">
                 {/* Asset Selector */}
-                <AssetSelector selectedAsset={selectedAsset} assets={uniqueAssets} onSelect={handleAssetChange} />
+                <AssetSelector
+                  selectedAsset={selectedAsset}
+                  assets={uniqueAssets}
+                  onSelect={handleAssetChange}
+                />
 
                 {/* Date Pickers */}
                 <DatePicker
@@ -213,7 +217,14 @@ export default function ReportContent({ account }: { account: Address }) {
                 className="inline-flex h-14 min-w-[120px] items-center gap-2"
                 variant="cta"
               >
-                {isGenerating ? <Spinner size={20} color="currentColor" /> : 'Generate'}
+                {isGenerating ? (
+                  <Spinner
+                    size={20}
+                    color="currentColor"
+                  />
+                ) : (
+                  'Generate'
+                )}
               </Button>
             </div>
 

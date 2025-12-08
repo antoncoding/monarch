@@ -15,7 +15,8 @@
       "quoteProperties": "asNeeded",
       "quoteStyle": "single",        // Match prettier
       "semicolons": "always",        // Match prettier
-      "trailingCommas": "all"        // Match prettier (was "es5" in ultracite)
+      "trailingCommas": "all",       // Match prettier (was "es5" in ultracite)
+      "attributePosition": "multiline"  // Force JSX attributes on separate lines for readability
     }
   },
 

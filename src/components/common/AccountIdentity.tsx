@@ -115,7 +115,11 @@ export function AccountIdentity({
     );
 
     const badgeElement = href ? (
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
         <Link
           href={href}
           target={linkTo === 'explorer' ? '_blank' : undefined}
@@ -157,7 +161,10 @@ export function AccountIdentity({
   if (variant === 'compact') {
     const badgeContent = (
       <>
-        <Avatar address={address} size={16} />
+        <Avatar
+          address={address}
+          size={16}
+        />
         <span className="text-xs">
           {vaultName ? <span className="font-zen">{vaultName}</span> : <Name address={address as `0x${string}`} />}
         </span>
@@ -184,7 +191,11 @@ export function AccountIdentity({
     );
 
     const compactElement = href ? (
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
+      <motion.div
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
         <Link
           href={href}
           target={linkTo === 'explorer' ? '_blank' : undefined}
@@ -225,7 +236,10 @@ export function AccountIdentity({
   // Full variant - avatar + address badge + extra info badges (all on one line, centered)
   const fullContent = (
     <>
-      <Avatar address={address} size={36} />
+      <Avatar
+        address={address}
+        size={36}
+      />
 
       {/* Address badge - always shows shortened address, click to copy */}
       <span
@@ -286,8 +300,15 @@ export function AccountIdentity({
 
   const fullElement =
     href && linkTo === 'profile' ? (
-      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
-        <Link href={href} className={fullClasses}>
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+      >
+        <Link
+          href={href}
+          className={fullClasses}
+        >
           {fullContent}
         </Link>
       </motion.div>

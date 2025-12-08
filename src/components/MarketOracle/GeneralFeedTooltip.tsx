@@ -25,7 +25,12 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
         <div className="flex items-center gap-2">
           {vendorIcon && (
             <div className="flex-shrink-0">
-              <Image src={vendorIcon} alt={feedData.vendor} width={16} height={16} />
+              <Image
+                src={vendorIcon}
+                alt={feedData.vendor}
+                width={16}
+                height={16}
+              />
             </div>
           )}
           <div className="font-zen font-bold">Price Feed Details</div>
@@ -64,7 +69,13 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Etherscan
             </Link>
           </div>

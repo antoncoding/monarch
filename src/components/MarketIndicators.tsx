@@ -36,10 +36,23 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
             content: 'p-0 m-0 bg-transparent shadow-sm border-none',
           }}
-          content={<TooltipContent icon={<FaStar size={ICON_SIZE} className="text-yellow-500" />} detail="You have starred this market" />}
+          content={
+            <TooltipContent
+              icon={
+                <FaStar
+                  size={ICON_SIZE}
+                  className="text-yellow-500"
+                />
+              }
+              detail="You have starred this market"
+            />
+          }
         >
           <div className="flex-shrink-0">
-            <FaStar size={ICON_SIZE} className="text-yellow-500" />
+            <FaStar
+              size={ICON_SIZE}
+              className="text-yellow-500"
+            />
           </div>
         </Tooltip>
       )}
@@ -50,7 +63,12 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
             content: 'p-0 m-0 bg-transparent shadow-sm border-none',
           }}
-          content={<TooltipContent icon={<FaUser size={ICON_SIZE} />} detail="You have supplied to this market" />}
+          content={
+            <TooltipContent
+              icon={<FaUser size={ICON_SIZE} />}
+              detail="You have supplied to this market"
+            />
+          }
         >
           <div className="flex-shrink-0">
             <FaUser size={ICON_SIZE} />
@@ -67,13 +85,21 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           }}
           content={
             <TooltipContent
-              icon={<FaShieldAlt size={ICON_SIZE} className="text-primary text-opacity-50" />}
+              icon={
+                <FaShieldAlt
+                  size={ICON_SIZE}
+                  className="text-primary text-opacity-50"
+                />
+              }
               detail="This market has on-chain liquidation events performed by liquidation bots"
             />
           }
         >
           <div className="flex-shrink-0">
-            <FaShieldAlt size={ICON_SIZE} className="text-primary text-opacity-50" />
+            <FaShieldAlt
+              size={ICON_SIZE}
+              className="text-primary text-opacity-50"
+            />
           </div>
         </Tooltip>
       )}
@@ -120,7 +146,10 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
           }
         >
           <div className="flex-shrink-0">
-            <FiAlertCircle size={ICON_SIZE} className={warningLevel === 'alert' ? 'text-red-500' : 'text-yellow-500'} />
+            <FiAlertCircle
+              size={ICON_SIZE}
+              className={warningLevel === 'alert' ? 'text-red-500' : 'text-yellow-500'}
+            />
           </div>
         </Tooltip>
       )}

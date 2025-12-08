@@ -33,7 +33,10 @@ export function MarketOracleFeedInfo({
   const renderFeed = (feed: OracleFeed | null | undefined) =>
     feed ? (
       <div className="w-full">
-        <FeedEntry feed={feed} chainId={chainId} />
+        <FeedEntry
+          feed={feed}
+          chainId={chainId}
+        />
       </div>
     ) : (
       <EmptyFeedSlot />

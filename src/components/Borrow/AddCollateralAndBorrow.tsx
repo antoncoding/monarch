@@ -229,7 +229,13 @@ export function AddCollateralAndBorrow({
 
           {/* Market Details Block - includes position overview and collapsible details */}
           <div className="mb-5">
-            <MarketDetailsBlock market={market} mode="borrow" defaultCollapsed showRewards borrowDelta={borrowAmount} />
+            <MarketDetailsBlock
+              market={market}
+              mode="borrow"
+              defaultCollapsed
+              showRewards
+              borrowDelta={borrowAmount}
+            />
           </div>
 
           {isConnected && (
@@ -311,7 +317,11 @@ export function AddCollateralAndBorrow({
                   <AccountConnect />
                 </div>
               ) : needSwitchChain ? (
-                <Button onPress={switchToNetwork} className="min-w-32" variant="solid">
+                <Button
+                  onPress={switchToNetwork}
+                  className="min-w-32"
+                  variant="solid"
+                >
                   Switch Chain
                 </Button>
               ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
@@ -352,8 +362,20 @@ export function AddCollateralAndBorrow({
             </div>
             {(borrowAmount > 0n || collateralAmount > 0n) && (
               <>
-                {newLTV >= lltv && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="error" />}
-                {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && <LTVWarning maxLTV={lltv} currentLTV={newLTV} type="danger" />}
+                {newLTV >= lltv && (
+                  <LTVWarning
+                    maxLTV={lltv}
+                    currentLTV={newLTV}
+                    type="error"
+                  />
+                )}
+                {newLTV < lltv && newLTV >= (lltv * 90n) / 100n && (
+                  <LTVWarning
+                    maxLTV={lltv}
+                    currentLTV={newLTV}
+                    type="danger"
+                  />
+                )}
               </>
             )}
           </div>

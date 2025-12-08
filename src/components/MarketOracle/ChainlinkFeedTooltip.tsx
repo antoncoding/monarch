@@ -39,7 +39,10 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
     const variant = variantMap[category as keyof typeof variantMap] || 'primary';
 
     return (
-      <Badge variant={variant} size="sm">
+      <Badge
+        variant={variant}
+        size="sm"
+      >
         {category.toUpperCase()} RISK
       </Badge>
     );
@@ -52,7 +55,12 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
         <div className="flex items-center gap-2">
           {vendorIcon && (
             <div className="flex-shrink-0">
-              <Image src={vendorIcon} alt="Chainlink" width={16} height={16} />
+              <Image
+                src={vendorIcon}
+                alt="Chainlink"
+                width={16}
+                height={16}
+              />
             </div>
           )}
           <div className="font-zen font-bold">Chainlink Feed Details</div>
@@ -64,7 +72,10 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
             {baseAsset} / {quoteAsset}
           </div>
           {chainlinkData?.isSVR && (
-            <Badge variant="warning" size="sm">
+            <Badge
+              variant="warning"
+              size="sm"
+            >
               SVR
             </Badge>
           )}
@@ -85,7 +96,12 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    toggleModal(<ChainlinkRiskTiersModal isOpen onClose={() => closeModal()} />);
+                    toggleModal(
+                      <ChainlinkRiskTiersModal
+                        isOpen
+                        onClose={() => closeModal()}
+                      />,
+                    );
                   }}
                   className="cursor-pointer text-gray-500 transition-colors hover:text-gray-700 dark:hover:text-gray-300"
                   type="button"
@@ -112,7 +128,13 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
+              <Image
+                src={etherscanLogo}
+                alt="Etherscan"
+                width={12}
+                height={12}
+                className="rounded-sm"
+              />
               Etherscan
             </Link>
             {chainlinkUrl && (
@@ -122,7 +144,14 @@ export function ChainlinkFeedTooltip({ feed, chainlinkData, chainId }: Chainlink
                 rel="noopener noreferrer"
                 className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
               >
-                {vendorIcon && <Image src={vendorIcon} alt="Chainlink" width={12} height={12} />}
+                {vendorIcon && (
+                  <Image
+                    src={vendorIcon}
+                    alt="Chainlink"
+                    width={12}
+                    height={12}
+                  />
+                )}
                 Chainlink
               </Link>
             )}

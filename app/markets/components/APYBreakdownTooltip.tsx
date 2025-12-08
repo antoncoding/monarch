@@ -39,7 +39,10 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYB
           <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
         {activeCampaigns.map((campaign, index) => (
-          <div key={index} className="flex items-center justify-between text-xs">
+          <div
+            key={index}
+            className="flex items-center justify-between text-xs"
+          >
             <div className="flex items-center gap-2">
               <span>{campaign.rewardToken.symbol}</span>
               <TokenIcon
@@ -98,7 +101,10 @@ export function APYCell({ market }: APYCellProps) {
 
   if (hasActiveRewards) {
     return (
-      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns}>
+      <APYBreakdownTooltip
+        baseAPY={baseAPY}
+        activeCampaigns={activeCampaigns}
+      >
         <span className="cursor-help">{displayRate.toFixed(2)}%</span>
       </APYBreakdownTooltip>
     );

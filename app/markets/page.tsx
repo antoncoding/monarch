@@ -35,5 +35,11 @@ export default async function MarketPage({ searchParams }: PageProps) {
   const loanAssets = params.loanAssets ? params.loanAssets.split(',').filter(Boolean) : [];
 
   // Pass parsed params to client component
-  return <MarketContent initialNetwork={defaultNetwork} initialCollaterals={collaterals} initialLoanAssets={loanAssets} />;
+  return (
+    <MarketContent
+      initialNetwork={defaultNetwork}
+      initialCollaterals={collaterals}
+      initialLoanAssets={loanAssets}
+    />
+  );
 }

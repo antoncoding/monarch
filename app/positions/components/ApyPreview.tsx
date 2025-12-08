@@ -12,5 +12,11 @@ type ApyPreviewProps = {
  */
 export function ApyPreview({ currentApy, previewApy }: ApyPreviewProps) {
   const { short: rateLabel } = useRateLabel();
-  return <MetricPreview currentValue={currentApy} previewValue={previewApy} label={rateLabel} />;
+  return (
+    <MetricPreview
+      currentValue={currentApy}
+      previewValue={previewApy}
+      label={rateLabel}
+    />
+  );
 }

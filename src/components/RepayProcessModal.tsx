@@ -90,7 +90,10 @@ export function RepayProcessModal({
         onClose={onClose}
       />
       <ModalBody className="gap-5">
-        <MarketInfoBlock market={market} amount={repayAmount} />
+        <MarketInfoBlock
+          market={market}
+          amount={repayAmount}
+        />
 
         <div className="space-y-4">
           {steps.map((step) => {

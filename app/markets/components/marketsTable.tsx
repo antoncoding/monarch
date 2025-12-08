@@ -180,15 +180,24 @@ function MarketsTable({
                   targetColumn={SortColumn.UtilizationRate}
                 />
               )}
-              <th className="font-normal px-2 py-2 whitespace-nowrap" style={{ padding: '0.35rem 0.8rem' }}>
+              <th
+                className="font-normal px-2 py-2 whitespace-nowrap"
+                style={{ padding: '0.35rem 0.8rem' }}
+              >
                 {' '}
                 Risk{' '}
               </th>
-              <th className="font-normal px-2 py-2 whitespace-nowrap" style={{ padding: '0.35rem 0.8rem' }}>
+              <th
+                className="font-normal px-2 py-2 whitespace-nowrap"
+                style={{ padding: '0.35rem 0.8rem' }}
+              >
                 {' '}
                 Indicators{' '}
               </th>
-              <th className="font-normal px-2 py-2 whitespace-nowrap" style={{ padding: '0.35rem 0.8rem' }}>
+              <th
+                className="font-normal px-2 py-2 whitespace-nowrap"
+                style={{ padding: '0.35rem 0.8rem' }}
+              >
                 {' '}
                 Actions{' '}
               </th>

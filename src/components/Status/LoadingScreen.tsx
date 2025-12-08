@@ -86,7 +86,10 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
   return (
     <span className="inline-flex items-center">
       <span>{displayText}</span>
-      <span className="ml-0.5 inline-block" style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}>
+      <span
+        className="ml-0.5 inline-block"
+        style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}
+      >
         |
       </span>
     </span>
@@ -103,10 +106,24 @@ export default function LoadingScreen({ message, className }: LoadingScreenProps
         className ?? ''
       }`}
     >
-      <Image src={loadingImg} alt="Logo" width={200} height={200} className="py-4" />
-      <BarLoader width={100} color="#f45f2d" height={2} className="pb-1" />
+      <Image
+        src={loadingImg}
+        alt="Logo"
+        width={200}
+        height={200}
+        className="py-4"
+      />
+      <BarLoader
+        width={100}
+        color="#f45f2d"
+        height={2}
+        className="pb-1"
+      />
       <p className="pt-4 text-center text-secondary">
-        <TypingAnimation phrases={phrases} singleMode={singleMode} />
+        <TypingAnimation
+          phrases={phrases}
+          singleMode={singleMode}
+        />
       </p>
     </div>
   );

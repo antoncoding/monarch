@@ -31,7 +31,12 @@ export function MetricPreview({ currentValue, previewValue, label }: MetricPrevi
         base: 'p-0 m-0 bg-transparent shadow-sm border-none',
         content: 'p-0 m-0 bg-transparent shadow-sm border-none',
       }}
-      content={<TooltipContent title={`${label} Change`} detail={`${formattedCurrent}% → ${formattedPreview}%`} />}
+      content={
+        <TooltipContent
+          title={`${label} Change`}
+          detail={`${formattedCurrent}% → ${formattedPreview}%`}
+        />
+      }
     >
       <span className="inline-block min-w-[60px] cursor-help whitespace-nowrap border-b border-dashed border-gray-400 text-right text-sm text-foreground">
         {displayValue}%

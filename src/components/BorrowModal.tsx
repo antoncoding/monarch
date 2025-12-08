@@ -63,7 +63,11 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
   );
 
   return (
-    <Modal isOpen onOpenChange={onOpenChange} size="lg">
+    <Modal
+      isOpen
+      onOpenChange={onOpenChange}
+      size="lg"
+    >
       <ModalHeader
         mainIcon={mainIcon}
         onClose={() => onOpenChange(false)}

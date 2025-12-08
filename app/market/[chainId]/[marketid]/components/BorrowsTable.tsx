@@ -60,7 +60,13 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               base: 'p-0 m-0 bg-transparent shadow-sm border-none',
               content: 'p-0 m-0 bg-transparent shadow-sm border-none',
             }}
-            content={<TooltipContent title="Filters" detail="Filter transactions by minimum amount" icon={<FiFilter size={14} />} />}
+            content={
+              <TooltipContent
+                title="Filters"
+                detail="Filter transactions by minimum amount"
+                icon={<FiFilter size={14} />}
+              />
+            }
           >
             <Button
               isIconOnly
@@ -70,7 +76,10 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               aria-label="Transaction filters"
               onPress={onOpenFiltersModal}
             >
-              <FiFilter size={14} style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }} />
+              <FiFilter
+                size={14}
+                style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
+              />
             </Button>
           </Tooltip>
         </div>
@@ -97,7 +106,10 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             <TableColumn>TYPE</TableColumn>
             <TableColumn align="end">AMOUNT</TableColumn>
             <TableColumn>TIME</TableColumn>
-            <TableColumn className="font-mono" align="end">
+            <TableColumn
+              className="font-mono"
+              align="end"
+            >
               TRANSACTION
             </TableColumn>
           </TableHeader>
@@ -109,7 +121,11 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             {borrows.map((borrow) => (
               <TableRow key={`borrow-${borrow.hash}-${borrow.amount.toString()}`}>
                 <TableCell>
-                  <AccountIdentity address={borrow.userAddress as Address} variant="compact" linkTo="profile" />
+                  <AccountIdentity
+                    address={borrow.userAddress as Address}
+                    variant="compact"
+                    linkTo="profile"
+                  />
                 </TableCell>
                 <TableCell>
                   <Badge variant={borrow.type === 'MarketRepay' ? 'success' : 'danger'}>
@@ -132,7 +148,10 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
                 </TableCell>
                 <TableCell>{moment.unix(borrow.timestamp).fromNow()}</TableCell>
                 <TableCell className="text-right">
-                  <TransactionIdentity txHash={borrow.hash} chainId={chainId} />
+                  <TransactionIdentity
+                    txHash={borrow.hash}
+                    chainId={chainId}
+                  />
                 </TableCell>
               </TableRow>
             ))}

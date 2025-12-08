@@ -128,10 +128,20 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
                 <Spinner size={30} />
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={400} id="rate-chart">
+              <ResponsiveContainer
+                width="100%"
+                height={400}
+                id="rate-chart"
+              >
                 <AreaChart data={getChartData}>
                   <defs>
-                    <linearGradient id="rateChart-supplyGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="rateChart-supplyGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.supply.gradient.start}
@@ -143,7 +153,13 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
                         stopOpacity={CHART_COLORS.supply.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="rateChart-borrowGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="rateChart-borrowGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.borrow.gradient.start}
@@ -155,7 +171,13 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
                         stopOpacity={CHART_COLORS.borrow.gradient.endOpacity}
                       />
                     </linearGradient>
-                    <linearGradient id="rateChart-targetGradient" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient
+                      id="rateChart-targetGradient"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
                       <stop
                         offset="0%"
                         stopColor={CHART_COLORS.apyAtTarget.gradient.start}
@@ -169,7 +191,10 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="x" tickFormatter={formatTime} />
+                  <XAxis
+                    dataKey="x"
+                    tickFormatter={formatTime}
+                  />
                   <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
                   <Tooltip
                     labelFormatter={(unixTime) => new Date(unixTime * 1000).toLocaleString()}

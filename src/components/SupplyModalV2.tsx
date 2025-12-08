@@ -54,7 +54,13 @@ export function SupplyModalV2({
   }, [mode, supplyPreviewAmount, withdrawPreviewAmount]);
 
   return (
-    <Modal isOpen onOpenChange={onOpenChange} size="lg" scrollBehavior="inside" className="w-full max-w-lg">
+    <Modal
+      isOpen
+      onOpenChange={onOpenChange}
+      size="lg"
+      scrollBehavior="inside"
+      className="w-full max-w-lg"
+    >
       <ModalHeader
         title={`${mode === 'supply' ? 'Supply' : 'Withdraw'} ${activeMarket.loanAsset.symbol}`}
         description={mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'}

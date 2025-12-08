@@ -461,7 +461,12 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        {showSupplyModal && selectedMarket && <SupplyModalV2 market={selectedMarket} onOpenChange={setShowSupplyModal} />}
+        {showSupplyModal && selectedMarket && (
+          <SupplyModalV2
+            market={selectedMarket}
+            onOpenChange={setShowSupplyModal}
+          />
+        )}
 
         <MarketSettingsModal
           isOpen={isSettingsModalOpen}
@@ -525,7 +530,10 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
               />
 
-              <OracleFilter selectedOracles={selectedOracles} setSelectedOracles={setSelectedOracles} />
+              <OracleFilter
+                selectedOracles={selectedOracles}
+                setSelectedOracles={setSelectedOracles}
+              />
             </div>
           </div>
 
@@ -559,7 +567,12 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 base: 'p-0 m-0 bg-transparent shadow-sm border-none',
                 content: 'p-0 m-0 bg-transparent shadow-sm border-none',
               }}
-              content={<TooltipContent title="Refresh" detail="Fetch the latest market data" />}
+              content={
+                <TooltipContent
+                  title="Refresh"
+                  detail="Fetch the latest market data"
+                />
+              }
             >
               <Button
                 disabled={loading || isRefetching}
@@ -610,7 +623,12 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 base: 'p-0 m-0 bg-transparent shadow-sm border-none',
                 content: 'p-0 m-0 bg-transparent shadow-sm border-none',
               }}
-              content={<TooltipContent title="Preferences" detail="Adjust thresholds and columns" />}
+              content={
+                <TooltipContent
+                  title="Preferences"
+                  detail="Adjust thresholds and columns"
+                />
+              }
             >
               <Button
                 isIconOnly
@@ -631,7 +649,10 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
       <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
         {loading ? (
           <div className={effectiveTableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
-            <LoadingScreen message="Loading Morpho Blue Markets..." className="min-h-[300px] w-full" />
+            <LoadingScreen
+              message="Loading Morpho Blue Markets..."
+              className="min-h-[300px] w-full"
+            />
           </div>
         ) : rawMarkets == null ? (
           <div className="flex justify-center"> No data </div>

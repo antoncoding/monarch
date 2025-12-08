@@ -82,7 +82,11 @@ export function PendingMarketCap({
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-secondary">
-              <OracleVendorBadge oracleData={market.oracle?.data} showText={false} chainId={market.morphoBlue.chain.id} />
+              <OracleVendorBadge
+                oracleData={market.oracle?.data}
+                showText={false}
+                chainId={market.morphoBlue.chain.id}
+              />
               <span>·</span>
               <span>{market.state?.supplyApy ? (market.state.supplyApy * 100).toFixed(2) : '0.00'}% APY</span>
             </div>

@@ -53,12 +53,25 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
     const categoryWarnings = uniqueWarnings.filter((w) => w.category === category);
 
     if (categoryWarnings.length === 0) {
-      return <RiskIndicator level="green" description={greenDesc} mode="complex" />;
+      return (
+        <RiskIndicator
+          level="green"
+          description={greenDesc}
+          mode="complex"
+        />
+      );
     }
 
     if (categoryWarnings.some((w) => w.level === 'alert')) {
       const alertWarning = categoryWarnings.find((w) => w.level === 'alert');
-      return <RiskIndicator level="red" description={`One or more markets have: ${redDesc}`} mode="complex" warningDetail={alertWarning} />;
+      return (
+        <RiskIndicator
+          level="red"
+          description={`One or more markets have: ${redDesc}`}
+          mode="complex"
+          warningDetail={alertWarning}
+        />
+      );
     }
 
     return (
@@ -209,8 +222,15 @@ export function PositionsSummaryTable({
               <GearIcon className="h-4 w-4" />
             </NextUIButton>
           </DropdownTrigger>
-          <DropdownMenu aria-label="Position table settings" className="bg-surface rounded p-2" closeOnSelect={false}>
-            <DropdownItem key="show-empty" className="flex h-auto gap-2 p-0">
+          <DropdownMenu
+            aria-label="Position table settings"
+            className="bg-surface rounded p-2"
+            closeOnSelect={false}
+          >
+            <DropdownItem
+              key="show-empty"
+              className="flex h-auto gap-2 p-0"
+            >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Empty Positions</span>
                 <Switch
@@ -225,7 +245,10 @@ export function PositionsSummaryTable({
                 />
               </div>
             </DropdownItem>
-            <DropdownItem key="show-collateral-exposure" className="flex h-auto gap-2 p-0">
+            <DropdownItem
+              key="show-collateral-exposure"
+              className="flex h-auto gap-2 p-0"
+            >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Collateral Exposure</span>
                 <Switch
@@ -264,7 +287,10 @@ export function PositionsSummaryTable({
                     }
                   >
                     <div className="cursor-help">
-                      <BsQuestionCircle size={14} className="text-gray-400" />
+                      <BsQuestionCircle
+                        size={14}
+                        className="text-gray-400"
+                      />
                     </div>
                   </Tooltip>
                 </span>
@@ -284,7 +310,10 @@ export function PositionsSummaryTable({
 
               return (
                 <React.Fragment key={rowKey}>
-                  <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(rowKey)}>
+                  <tr
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => toggleRow(rowKey)}
+                  >
                     <td className="w-10 text-center">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</td>
                     <td className="w-10">
                       <div className="flex items-center justify-center">
@@ -318,7 +347,11 @@ export function PositionsSummaryTable({
                       <div className="flex items-center justify-center gap-2">
                         {isLoadingEarnings ? (
                           <div className="flex items-center justify-center">
-                            <PulseLoader size={4} color="#f45f2d" margin={3} />
+                            <PulseLoader
+                              size={4}
+                              color="#f45f2d"
+                              margin={3}
+                            />
                           </div>
                         ) : (
                           <span className="font-medium">
@@ -355,12 +388,18 @@ export function PositionsSummaryTable({
                         )}
                       </div>
                     </td>
-                    <td data-label="Warnings" className="align-middle">
+                    <td
+                      data-label="Warnings"
+                      className="align-middle"
+                    >
                       <div className="flex items-center justify-center gap-1">
                         <AggregatedRiskIndicators groupedPosition={groupedPosition} />
                       </div>
                     </td>
-                    <td data-label="Actions" className="justify-center px-4 py-3">
+                    <td
+                      data-label="Actions"
+                      className="justify-center px-4 py-3"
+                    >
                       <div className="flex items-center justify-center">
                         <Button
                           size="sm"
@@ -384,7 +423,10 @@ export function PositionsSummaryTable({
                   <AnimatePresence>
                     {expandedRows.has(rowKey) && (
                       <tr className="bg-surface">
-                        <td colSpan={10} className="bg-surface">
+                        <td
+                          colSpan={10}
+                          className="bg-surface"
+                        >
                           <motion.div
                             initial={{ height: 0 }}
                             animate={{ height: 'auto' }}

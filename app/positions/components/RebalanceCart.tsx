@@ -23,7 +23,10 @@ export function RebalanceCart({ rebalanceActions, groupedPosition, eligibleMarke
         const toMarket = eligibleMarkets.find((m) => m.uniqueKey === action.toMarket.uniqueKey);
 
         return (
-          <div key={index} className="rounded-sm border border-gray-200 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+          <div
+            key={index}
+            className="rounded-sm border border-gray-200 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-800/50"
+          >
             <RebalanceActionRow
               mode="display"
               fromMarket={fromMarket}

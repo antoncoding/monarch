@@ -86,7 +86,12 @@ export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
           />
         </div>
       ))}
-      {vaults.length > preview.length && <MoreVaultsBadge vaults={vaults.slice(preview.length)} badgeSize={badgeSize} />}
+      {vaults.length > preview.length && (
+        <MoreVaultsBadge
+          vaults={vaults.slice(preview.length)}
+          badgeSize={badgeSize}
+        />
+      )}
     </div>
   );
 }

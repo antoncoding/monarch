@@ -50,7 +50,11 @@ export function NavbarLink({
 export function NavbarTitle() {
   return (
     <div className="flex h-8 items-center justify-start gap-4">
-      <Image src={logo} alt="logo" height={30} />
+      <Image
+        src={logo}
+        alt="logo"
+        height={30}
+      />
       <Link
         href="/"
         passHref
@@ -91,7 +95,10 @@ export function Navbar() {
               {/* <NavbarLink href="/autovault" matchKey="/autovault">
                 Autovault
               </NavbarLink> */}
-              <NavbarLink href={address ? `/rewards/${address}` : '/rewards'} matchKey="/rewards">
+              <NavbarLink
+                href={address ? `/rewards/${address}` : '/rewards'}
+                matchKey="/rewards"
+              >
                 Rewards
               </NavbarLink>
             </>
@@ -101,13 +108,20 @@ export function Navbar() {
               {/* <NavbarLink href="/autovault" matchKey="/autovault">
                 Autovault
               </NavbarLink> */}
-              <NavbarLink href="/rewards" matchKey="/rewards">
+              <NavbarLink
+                href="/rewards"
+                matchKey="/rewards"
+              >
                 Rewards
               </NavbarLink>
             </>
           )}
 
-          <Dropdown onOpenChange={setIsMoreOpen} placement="bottom-end" className="z-50 rounded-sm">
+          <Dropdown
+            onOpenChange={setIsMoreOpen}
+            placement="bottom-end"
+            className="z-50 rounded-sm"
+          >
             <DropdownTrigger>
               <button
                 type="button"
@@ -162,7 +176,11 @@ export function Navbar() {
               >
                 {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
               </DropdownItem>
-              <DropdownItem key="settings" endContent={<FiSettings className="h-4 w-4" />} onClick={() => router.push('/settings')}>
+              <DropdownItem
+                key="settings"
+                endContent={<FiSettings className="h-4 w-4" />}
+                onClick={() => router.push('/settings')}
+              >
                 Settings
               </DropdownItem>
             </DropdownMenu>

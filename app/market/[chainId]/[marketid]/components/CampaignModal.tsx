@@ -34,7 +34,13 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
 
           {/* Reward Token */}
           <div className="flex items-center gap-2">
-            <Image src={campaign.rewardToken.icon} alt={campaign.rewardToken.symbol} width={20} height={20} className="rounded-full" />
+            <Image
+              src={campaign.rewardToken.icon}
+              alt={campaign.rewardToken.symbol}
+              width={20}
+              height={20}
+              className="rounded-full"
+            />
             <span className="text-normal">{campaign.rewardToken.symbol}</span>
           </div>
         </div>
@@ -48,8 +54,16 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
       </div>
 
       <div className="flex justify-end">
-        <Link href={merklUrl} target="_blank" rel="noopener noreferrer">
-          <Button variant="light" size="sm" className="text-xs">
+        <Link
+          href={merklUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button
+            variant="light"
+            size="sm"
+            className="text-xs"
+          >
             <ExternalLinkIcon className="mr-1" />
             View on Merkl
           </Button>
@@ -80,7 +94,10 @@ export function CampaignModal({ isOpen, onClose, campaigns }: CampaignModalProps
       />
       <ModalBody className="space-y-4">
         {campaigns.map((campaign) => (
-          <CampaignRow key={campaign.campaignId} campaign={campaign} />
+          <CampaignRow
+            key={campaign.campaignId}
+            campaign={campaign}
+          />
         ))}
       </ModalBody>
     </Modal>
