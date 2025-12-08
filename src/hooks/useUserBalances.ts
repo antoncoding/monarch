@@ -43,7 +43,7 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
         if (!response.ok) {
           const errorMessage = await response
             .json()
-            .then((data) => (data?.error as string | undefined) ?? 'Failed to fetch balances')
+            .then((errorData) => (errorData?.error as string | undefined) ?? 'Failed to fetch balances')
             .catch(() => 'Failed to fetch balances');
           throw new Error(errorMessage);
         }

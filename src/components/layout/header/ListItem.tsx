@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import * as NavigationMenu from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 
-export const ListItem = forwardRef(function ListItem(
+export const ListItem = forwardRef(function ListItemComponent(
   {
     children,
     target,

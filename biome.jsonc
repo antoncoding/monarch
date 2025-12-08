@@ -179,10 +179,8 @@
 
       "nursery": {
         // Disable aggressive nursery rules during migration
-        "noShadow": "off",
+        // "noShadow": "off",
         "noUselessUndefined": "off",
-        "useFind": "off",
-        "useSpread": "off",
 
         // Keep sorted classes off initially
         "useSortedClasses": "off",

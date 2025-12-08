@@ -230,11 +230,11 @@ export function useVaultV2({
   );
 
   const updateNameAndSymbol = useCallback(
-    async ({ name, symbol }: { name?: string; symbol?: string }): Promise<boolean> => {
+    async ({ name: newName, symbol: newSymbol }: { name?: string; symbol?: string }): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
-      const nextName = name?.trim();
-      const nextSymbol = symbol?.trim();
+      const nextName = newName?.trim();
+      const nextSymbol = newSymbol?.trim();
 
       const calls: `0x${string}`[] = [];
 
