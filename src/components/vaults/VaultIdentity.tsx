@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
-import { VaultCurator } from '@/constants/vaults/known_vaults';
+import type { VaultCurator } from '@/constants/vaults/known_vaults';
 import { getVaultURL } from '@/utils/external';
 import { VaultIcon } from './VaultIcon';
 
@@ -70,9 +70,7 @@ export function VaultIdentity({
     }
 
     return (
-      <div
-        className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}
-      >
+      <div className={`inline-flex items-center gap-2 rounded bg-hovered px-2 py-1 text-xs text-secondary ${className}`}>
         <VaultIcon curator={curator} width={iconSize} height={iconSize} />
         <div className="flex flex-col leading-tight">
           <span className="text-primary">{displayName}</span>
@@ -83,13 +81,7 @@ export function VaultIdentity({
   })();
 
   const interactiveContent = showLink ? (
-    <Link
-      href={vaultHref}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="no-underline"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <Link href={vaultHref} target="_blank" rel="noopener noreferrer" className="no-underline" onClick={(e) => e.stopPropagation()}>
       {baseContent}
     </Link>
   ) : (
@@ -102,11 +94,7 @@ export function VaultIdentity({
 
   const resolvedDetail = tooltipDetail ?? (
     <div className="flex flex-col gap-1 text-sm">
-      {showAddressInTooltip && (
-        <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">
-          {address}
-        </span>
-      )}
+      {showAddressInTooltip && <span className="rounded bg-hovered px-1 py-0.5 font-monospace text-xs opacity-70">{address}</span>}
       <span className="text-secondary">{curatorLabel}</span>
     </div>
   );
@@ -114,15 +102,7 @@ export function VaultIdentity({
   const tooltipTitle = (
     <div className="flex items-center gap-2">
       <span>{displayName}</span>
-      {asset && (
-        <TokenIcon
-          address={asset}
-          chainId={chainId}
-          width={18}
-          height={18}
-          disableTooltip
-        />
-      )}
+      {asset && <TokenIcon address={asset} chainId={chainId} width={18} height={18} disableTooltip />}
     </div>
   );
 

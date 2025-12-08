@@ -1,14 +1,6 @@
-import { type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-export function FilterSection({
-  title,
-  helper,
-  children,
-}: {
-  title: string;
-  helper?: string;
-  children: ReactNode;
-}) {
+export function FilterSection({ title, helper, children }: { title: string; helper?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col">
@@ -20,15 +12,7 @@ export function FilterSection({
   );
 }
 
-export function FilterRow({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+export function FilterRow({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-col gap-1 pr-4">

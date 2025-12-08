@@ -17,9 +17,7 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
           <FaCheckCircle className="h-12 w-12 text-green-500" />
           <h1 className="text-2xl font-bold">Success!</h1>
         </div>
-        <p className="max-w-md text-gray-600 dark:text-gray-300">
-          Your {selectedToken?.symbol} has been successfully supplied to Morpho.
-        </p>
+        <p className="max-w-md text-gray-600 dark:text-gray-300">Your {selectedToken?.symbol} has been successfully supplied to Morpho.</p>
       </div>
 
       <div className="mt-4">

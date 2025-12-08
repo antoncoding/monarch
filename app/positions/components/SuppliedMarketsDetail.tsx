@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/common';
 import { RateFormatted } from '@/components/common/RateFormatted';
@@ -7,7 +6,7 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/compo
 import { MarketIndicators } from '@/components/MarketIndicators';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
-import { MarketPosition, GroupedPosition } from '@/utils/types';
+import type { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '../utils/colors';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
@@ -33,21 +32,14 @@ function MarketRow({
   setSelectedPosition: (position: MarketPosition) => void;
   rateLabel: string;
 }) {
-
-  const suppliedAmount = Number(
-    formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals),
-  );
+  const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
 
   return (
     <tr key={position.market.uniqueKey} className="gap-1">
       <td data-label="Market" className="text-center">
         <div className="flex items-center justify-center">
-          <MarketIdBadge
-            marketId={position.market.uniqueKey}
-            chainId={position.market.morphoBlue.chain.id}
-            showNetworkIcon={false}
-          />
+          <MarketIdBadge marketId={position.market.uniqueKey} chainId={position.market.morphoBlue.chain.id} showNetworkIcon={false} />
         </div>
       </td>
       <td data-label="Market Detail" className="align-middle p-4">
@@ -68,10 +60,7 @@ function MarketRow({
       <td data-label="% of Portfolio" className="text-center">
         <div className="flex items-center">
           <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-blue-500"
-              style={{ width: `${percentageOfPortfolio}%` }}
-            />
+            <div className="h-full rounded-full bg-blue-500" style={{ width: `${percentageOfPortfolio}%` }} />
           </div>
           <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
@@ -127,11 +116,7 @@ export function SuppliedMarketsDetail({
   // Filter based on the showEmptyPositions prop
   const filteredMarkets = showEmptyPositions
     ? sortedMarkets
-    : sortedMarkets.filter(
-        (position) =>
-          Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals)) >
-          0,
-      );
+    : sortedMarkets.filter((position) => Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals)) > 0);
 
   const totalSupply = groupedPosition.totalSupply;
 
@@ -156,10 +141,7 @@ export function SuppliedMarketsDetail({
                     className="h-full opacity-70"
                     style={{
                       width: `${collateral.percentage}%`,
-                      backgroundColor:
-                        collateral.symbol === 'Others'
-                          ? '#A0AEC0'
-                          : getCollateralColor(collateral.address),
+                      backgroundColor: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
                     }}
                     title={`${collateral.symbol}: ${collateral.percentage.toFixed(2)}%`}
                   />
@@ -170,10 +152,7 @@ export function SuppliedMarketsDetail({
                   <span key={`${collateral.address}-${colIndex}`} className="mb-1 mr-2 opacity-70">
                     <span
                       style={{
-                        color:
-                          collateral.symbol === 'Others'
-                            ? '#A0AEC0'
-                            : getCollateralColor(collateral.address),
+                        color: collateral.symbol === 'Others' ? '#A0AEC0' : getCollateralColor(collateral.address),
                       }}
                     >
                       ■

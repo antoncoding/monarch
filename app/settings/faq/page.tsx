@@ -9,11 +9,7 @@ function FAQPage() {
       answer: (
         <span>
           The source code is available on{' '}
-          <Link
-            href="https://github.com/antoncoding/monarch"
-            target="_blank"
-            className="text-blue-500 hover:underline"
-          >
+          <Link href="https://github.com/antoncoding/monarch" target="_blank" className="text-blue-500 hover:underline">
             GitHub
           </Link>
           .
@@ -25,11 +21,7 @@ function FAQPage() {
       answer: (
         <span>
           Join our{' '}
-          <Link
-            href="https://t.me/+4NvIQoQVXsA2ZmJl"
-            target="_blank"
-            className="text-blue-500 hover:underline"
-          >
+          <Link href="https://t.me/+4NvIQoQVXsA2ZmJl" target="_blank" className="text-blue-500 hover:underline">
             Telegram chat
           </Link>{' '}
           for support and discussions.

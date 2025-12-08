@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
-import { Address, encodeFunctionData, maxUint256 } from 'viem';
+import { type Address, encodeFunctionData, maxUint256 } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
@@ -33,22 +33,14 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const toast = useStyledToast();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true); // Read user setting
 
-  const totalAmount = rebalanceActions.reduce(
-    (acc, action) => acc + BigInt(action.amount),
-    BigInt(0),
-  );
+  const totalAmount = rebalanceActions.reduce((acc, action) => acc + BigInt(action.amount), BigInt(0));
 
   // Hook for Morpho bundler authorization (both sig and tx)
-  const {
-    isBundlerAuthorized,
-    isAuthorizingBundler,
-    authorizeBundlerWithSignature,
-    authorizeWithTransaction,
-    refetchIsBundlerAuthorized,
-  } = useMorphoAuthorization({
-    chainId: groupedPosition.chainId,
-    authorized: bundlerAddress,
-  });
+  const { isBundlerAuthorized, isAuthorizingBundler, authorizeBundlerWithSignature, authorizeWithTransaction, refetchIsBundlerAuthorized } =
+    useMorphoAuthorization({
+      chainId: groupedPosition.chainId,
+      authorized: bundlerAddress,
+    });
 
   // Hook for Permit2 handling
   const {
@@ -135,27 +127,17 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       const batchAmount = actions.reduce((sum, action) => sum + BigInt(action.amount), BigInt(0));
       const isWithdrawMax = actions.some((action) => action.isMax);
       const shares = isWithdrawMax
-        ? groupedPosition.markets.find(
-            (m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey,
-          )?.state.supplyShares
+        ? groupedPosition.markets.find((m) => m.market.uniqueKey === actions[0].fromMarket.uniqueKey)?.state.supplyShares
         : undefined;
 
       if (isWithdrawMax && shares === undefined) {
-        throw new Error(
-          `No shares found for max withdraw from market ${actions[0].fromMarket.uniqueKey}`,
-        );
+        throw new Error(`No shares found for max withdraw from market ${actions[0].fromMarket.uniqueKey}`);
       }
 
       const market = actions[0].fromMarket;
 
       // Add checks for required market properties
-      if (
-        !market.loanToken ||
-        !market.collateralToken ||
-        !market.oracle ||
-        !market.irm ||
-        market.lltv === undefined
-      ) {
+      if (!market.loanToken || !market.collateralToken || !market.oracle || !market.irm || market.lltv === undefined) {
         throw new Error(`Market data incomplete for withdraw from ${market.uniqueKey}`);
       }
 
@@ -184,13 +166,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       const market = actions[0].toMarket;
 
       // Add checks for required market properties
-      if (
-        !market.loanToken ||
-        !market.collateralToken ||
-        !market.oracle ||
-        !market.irm ||
-        market.lltv === undefined
-      ) {
+      if (!market.loanToken || !market.collateralToken || !market.oracle || !market.irm || market.lltv === undefined) {
         throw new Error(`Market data incomplete for supply to ${market.uniqueKey}`);
       }
 
@@ -335,10 +311,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       if (error instanceof Error) {
         console.error('Error message:', error.message);
         // Attempt to log simulation failure details if present (common pattern)
-        if (
-          error.message.toLowerCase().includes('simulation failed') ||
-          error.message.toLowerCase().includes('gas estimation failed')
-        ) {
+        if (error.message.toLowerCase().includes('simulation failed') || error.message.toLowerCase().includes('gas estimation failed')) {
           console.error('Potential transaction simulation/estimation failure details:', error);
         }
       }
@@ -375,8 +348,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   ]);
 
   // Determine overall loading state
-  const isLoading =
-    isProcessing || isLoadingPermit2 || isTokenApproving || isAuthorizingBundler || isExecuting;
+  const isLoading = isProcessing || isLoadingPermit2 || isTokenApproving || isAuthorizingBundler || isExecuting;
 
   return {
     rebalanceActions,

@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Address } from 'viem';
-import { GeneralPriceFeed } from '@/constants/oracle/general-feeds';
+import type { Address } from 'viem';
+import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
-import { OracleFeed } from '@/utils/types';
+import type { OracleFeed } from '@/utils/types';
 
 type GeneralFeedTooltipProps = {
   feed: OracleFeed;
@@ -16,9 +16,7 @@ type GeneralFeedTooltipProps = {
 export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedTooltipProps) {
   const [baseAsset, quoteAsset] = feedData.pair;
 
-  const vendorIcon =
-    OracleVendorIcons[feedData.vendor as PriceFeedVendors] ||
-    OracleVendorIcons[PriceFeedVendors.Unknown];
+  const vendorIcon = OracleVendorIcons[feedData.vendor as PriceFeedVendors] || OracleVendorIcons[PriceFeedVendors.Unknown];
 
   return (
     <div className="bg-surface flex max-w-xs rounded-sm border border-gray-200/20 p-4 shadow-sm dark:border-gray-600/15">
@@ -51,20 +49,14 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
         {/* Description */}
         {feedData.description && (
           <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-            <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">
-              Description:
-            </div>
-            <div className="font-zen text-xs text-gray-600 dark:text-gray-400">
-              {feedData.description}
-            </div>
+            <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">Description:</div>
+            <div className="font-zen text-xs text-gray-600 dark:text-gray-400">{feedData.description}</div>
           </div>
         )}
 
         {/* External Links */}
         <div className="border-t border-gray-200/30 pt-3 dark:border-gray-600/20">
-          <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">
-            View on:
-          </div>
+          <div className="mb-2 font-zen text-sm font-medium text-gray-700 dark:text-gray-300">View on:</div>
           <div className="flex items-center gap-2">
             <Link
               href={getExplorerURL(feed.address as Address, chainId)}
@@ -72,13 +64,7 @@ export function GeneralFeedTooltip({ feed, feedData, chainId }: GeneralFeedToolt
               rel="noopener noreferrer"
               className="bg-hovered flex items-center gap-1 rounded-sm px-3 py-2 text-xs font-medium text-primary no-underline transition-all duration-200 hover:bg-opacity-80"
             >
-              <Image
-                src={etherscanLogo}
-                alt="Etherscan"
-                width={12}
-                height={12}
-                className="rounded-sm"
-              />
+              <Image src={etherscanLogo} alt="Etherscan" width={12} height={12} className="rounded-sm" />
               Etherscan
             </Link>
           </div>

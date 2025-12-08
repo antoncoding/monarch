@@ -45,31 +45,19 @@ export function AccountDropdown() {
       <DropdownMenu
         aria-label="Account actions"
         itemClasses={{
-          base: [
-            'gap-4 px-4 py-2 rounded-none font-zen',
-            'data-[hover=true]:bg-hovered rounded-sm',
-          ].join(' '),
+          base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
           title: 'text-sm text-primary flex-grow font-zen',
           wrapper: 'justify-between no-underline rounded-sm',
         }}
       >
-        <DropdownItem
-          key="account-info"
-          className="border-b border-primary/10 pb-4"
-          isReadOnly
-          showDivider={false}
-        >
+        <DropdownItem key="account-info" className="border-b border-primary/10 pb-4" isReadOnly showDivider={false}>
           <div className="flex w-full items-center gap-3">
             <Avatar address={address} size={32} />
             <AccountIdentity address={address} variant="badge" showActions={false} />
           </div>
         </DropdownItem>
 
-        <DropdownItem
-          key="copy"
-          onClick={handleCopyAddress}
-          endContent={<CopyIcon className="h-4 w-4" />}
-        >
+        <DropdownItem key="copy" onClick={handleCopyAddress} endContent={<CopyIcon className="h-4 w-4" />}>
           Copy Address
         </DropdownItem>
 

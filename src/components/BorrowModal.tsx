@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { LuArrowRightLeft } from "react-icons/lu";
+import { useState } from 'react';
+import { LuArrowRightLeft } from 'react-icons/lu';
 import { useAccount, useBalance } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
-import { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndBorrow } from './Borrow/AddCollateralAndBorrow';
 import { WithdrawCollateralAndRepay } from './Borrow/WithdrawCollateralAndRepay';
 import { TokenIcon } from './TokenIcon';
@@ -17,14 +17,7 @@ type BorrowModalProps = {
   position: MarketPosition | null;
 };
 
-export function BorrowModal({
-  market,
-  onOpenChange,
-  oraclePrice,
-  refetch,
-  isRefreshing = false,
-  position,
-}: BorrowModalProps): JSX.Element {
+export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefreshing = false, position }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
   const { address: account } = useAccount();
 
@@ -46,9 +39,7 @@ export function BorrowModal({
     chainId: market.morphoBlue.chain.id,
   });
 
-  const hasPosition =
-    position &&
-    (BigInt(position.state.borrowAssets) > 0n || BigInt(position.state.collateral) > 0n);
+  const hasPosition = position && (BigInt(position.state.borrowAssets) > 0n || BigInt(position.state.collateral) > 0n);
 
   const mainIcon = (
     <div className="flex -space-x-2">

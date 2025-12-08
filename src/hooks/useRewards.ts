@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Address } from 'viem';
-import { MerklChain, MerklToken } from '@/utils/merklTypes';
-import { RewardResponseType } from '@/utils/types';
+import type { Address } from 'viem';
+import type { MerklChain, MerklToken } from '@/utils/merklTypes';
+import type { RewardResponseType } from '@/utils/types';
 import { URLS } from '@/utils/urls';
 
 export type DistributionResponseType = {
@@ -47,11 +47,7 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
       const response = await fetch(url);
 
       if (!response.ok) {
-        console.error(
-          `Merkl API error for chain ${chainId}:`,
-          response.status,
-          response.statusText,
-        );
+        console.error(`Merkl API error for chain ${chainId}:`, response.status, response.statusText);
         continue;
       }
 
@@ -67,10 +63,7 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
           continue;
         }
 
-        const tokenAggregation: Record<
-          string,
-          { pending: bigint; amount: bigint; claimed: bigint }
-        > = {};
+        const tokenAggregation: Record<string, { pending: bigint; amount: bigint; claimed: bigint }> = {};
 
         for (const reward of chainData.rewards) {
           const tokenAddress = reward.token.address;
@@ -153,10 +146,7 @@ const useUserRewards = (user: string | undefined) => {
       const newDistributions = (await distributionRes.json()).data as DistributionResponseType[];
 
       // Combine Morpho and Merkl rewards
-      const combinedRewards = [
-        ...(Array.isArray(morphoRewards) ? morphoRewards : []),
-        ...merklRewards,
-      ];
+      const combinedRewards = [...(Array.isArray(morphoRewards) ? morphoRewards : []), ...merklRewards];
 
       if (Array.isArray(newDistributions)) {
         setDistributions(newDistributions);

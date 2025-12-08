@@ -1,13 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-  Tooltip,
-  Switch,
-  Button as NextUIButton,
-} from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip, Switch, Button as NextUIButton } from '@heroui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
@@ -26,21 +18,17 @@ import { useMarkets } from '@/hooks/useMarkets';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
-import {
-  getGroupedEarnings,
-  groupPositionsByLoanAsset,
-  processCollaterals,
-} from '@/utils/positions';
+import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { PositionsShowEmptyKey, PositionsShowCollateralExposureKey } from '@/utils/storageKeys';
 import {
-  MarketPosition,
-  GroupedPosition,
-  MarketPositionWithEarnings,
-  WarningWithDetail,
+  type MarketPosition,
+  type GroupedPosition,
+  type MarketPositionWithEarnings,
+  type WarningWithDetail,
   WarningCategory,
 } from '@/utils/types';
 import { RiskIndicator } from 'app/markets/components/RiskIndicator';
@@ -58,17 +46,10 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
   }
 
   // Remove duplicates based on warning code
-  const uniqueWarnings = allWarnings.filter(
-    (warning, index, array) => array.findIndex((w) => w.code === warning.code) === index,
-  );
+  const uniqueWarnings = allWarnings.filter((warning, index, array) => array.findIndex((w) => w.code === warning.code) === index);
 
   // Helper to get warnings by category and determine risk level
-  const getWarningIndicator = (
-    category: WarningCategory,
-    greenDesc: string,
-    yellowDesc: string,
-    redDesc: string,
-  ) => {
+  const getWarningIndicator = (category: WarningCategory, greenDesc: string, yellowDesc: string, redDesc: string) => {
     const categoryWarnings = uniqueWarnings.filter((w) => w.category === category);
 
     if (categoryWarnings.length === 0) {
@@ -77,14 +58,7 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
 
     if (categoryWarnings.some((w) => w.level === 'alert')) {
       const alertWarning = categoryWarnings.find((w) => w.level === 'alert');
-      return (
-        <RiskIndicator
-          level="red"
-          description={`One or more markets have: ${redDesc}`}
-          mode="complex"
-          warningDetail={alertWarning}
-        />
-      );
+      return <RiskIndicator level="red" description={`One or more markets have: ${redDesc}`} mode="complex" warningDetail={alertWarning} />;
     }
 
     return (
@@ -99,24 +73,9 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
 
   return (
     <>
-      {getWarningIndicator(
-        WarningCategory.asset,
-        'Recognized asset',
-        'Asset with warning',
-        'High-risk asset',
-      )}
-      {getWarningIndicator(
-        WarningCategory.oracle,
-        'Recognized oracles',
-        'Oracle warning',
-        'Oracle warning',
-      )}
-      {getWarningIndicator(
-        WarningCategory.debt,
-        'No bad debt',
-        'Bad debt has occurred',
-        'Bad debt higher than 1% of supply',
-      )}
+      {getWarningIndicator(WarningCategory.asset, 'Recognized asset', 'Asset with warning', 'High-risk asset')}
+      {getWarningIndicator(WarningCategory.oracle, 'Recognized oracles', 'Oracle warning', 'Oracle warning')}
+      {getWarningIndicator(WarningCategory.debt, 'No bad debt', 'Bad debt has occurred', 'Bad debt higher than 1% of supply')}
     </>
   );
 }
@@ -148,17 +107,9 @@ export function PositionsSummaryTable({
 }: PositionsSummaryTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
-  const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(
-    null,
-  );
-  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(
-    PositionsShowEmptyKey,
-    false,
-  );
-  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(
-    PositionsShowCollateralExposureKey,
-    true,
-  );
+  const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
+  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(PositionsShowEmptyKey, false);
+  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(PositionsShowCollateralExposureKey, true);
   const { address } = useAccount();
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
@@ -171,28 +122,21 @@ export function PositionsSummaryTable({
   }, [account, address]);
 
   const periodLabels: Record<EarningsPeriod, string> = {
-    'all': 'All Time',
-    'day': '1D',
-    'week': '7D',
-    'month': '30D',
+    all: 'All Time',
+    day: '1D',
+    week: '7D',
+    month: '30D',
   };
 
-  const groupedPositions = useMemo(
-    () => groupPositionsByLoanAsset(marketPositions),
-    [marketPositions],
-  );
+  const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
 
-  const processedPositions = useMemo(
-    () => processCollaterals(groupedPositions),
-    [groupedPositions],
-  );
+  const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
 
   useEffect(() => {
     if (selectedGroupedPosition) {
       const updatedPosition = processedPositions.find(
         (position) =>
-          position.loanAssetAddress === selectedGroupedPosition.loanAssetAddress &&
-          position.chainId === selectedGroupedPosition.chainId,
+          position.loanAssetAddress === selectedGroupedPosition.loanAssetAddress && position.chainId === selectedGroupedPosition.chainId,
       );
       if (updatedPosition) {
         setSelectedGroupedPosition(updatedPosition);
@@ -213,7 +157,11 @@ export function PositionsSummaryTable({
   };
 
   const handleManualRefresh = () => {
-    refetch(() => toast.info('Data updated', 'Position data updated', { icon: <span>🚀</span> }));
+    refetch(() =>
+      toast.info('Data updated', 'Position data updated', {
+        icon: <span>🚀</span>,
+      }),
+    );
   };
 
   return (
@@ -261,11 +209,7 @@ export function PositionsSummaryTable({
               <GearIcon className="h-4 w-4" />
             </NextUIButton>
           </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Position table settings"
-            className="bg-surface rounded p-2"
-            closeOnSelect={false}
-          >
+          <DropdownMenu aria-label="Position table settings" className="bg-surface rounded p-2" closeOnSelect={false}>
             <DropdownItem key="show-empty" className="flex h-auto gap-2 p-0">
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Empty Positions</span>
@@ -341,9 +285,7 @@ export function PositionsSummaryTable({
               return (
                 <React.Fragment key={rowKey}>
                   <tr className="cursor-pointer hover:bg-gray-50" onClick={() => toggleRow(rowKey)}>
-                    <td className="w-10 text-center">
-                      {isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                    </td>
+                    <td className="w-10 text-center">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</td>
                     <td className="w-10">
                       <div className="flex items-center justify-center">
                         <Image
@@ -356,9 +298,7 @@ export function PositionsSummaryTable({
                     </td>
                     <td data-label="Size">
                       <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">
-                          {formatReadable(groupedPosition.totalSupply)}
-                        </span>
+                        <span className="font-medium">{formatReadable(groupedPosition.totalSupply)}</span>
                         <span>{groupedPosition.loanAsset}</span>
                         <TokenIcon
                           address={groupedPosition.loanAssetAddress}
@@ -371,9 +311,7 @@ export function PositionsSummaryTable({
                     </td>
                     <td data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
-                        <span className="font-medium">
-                          {formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%
-                        </span>
+                        <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
                       </div>
                     </td>
                     <td data-label={`Interest Accrued (${earningsPeriod})`}>
@@ -387,11 +325,7 @@ export function PositionsSummaryTable({
                             {(() => {
                               if (earnings === 0n) return '-';
                               return (
-                                formatReadable(
-                                  Number(
-                                    formatBalance(earnings, groupedPosition.loanAssetDecimals),
-                                  ),
-                                ) +
+                                formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals))) +
                                 ' ' +
                                 groupedPosition.loanAsset
                               );
@@ -434,10 +368,7 @@ export function PositionsSummaryTable({
                           className="text-xs"
                           onPress={() => {
                             if (!isOwner) {
-                              toast.error(
-                                'No authorization',
-                                'You can only rebalance your own positions',
-                              );
+                              toast.error('No authorization', 'You can only rebalance your own positions');
                               return;
                             }
                             setSelectedGroupedPosition(groupedPosition);

@@ -1,5 +1,4 @@
-
-export const MONARCH_PRIMARY = '#f45f2d'
+export const MONARCH_PRIMARY = '#f45f2d';
 
 export const CHART_COLORS = {
   supply: {

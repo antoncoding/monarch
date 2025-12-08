@@ -1,6 +1,6 @@
 import { userPositionsQuery, userPositionForMarketQuery } from '@/graphql/morpho-api-queries';
-import { SupportedNetworks } from '@/utils/networks';
-import { MarketPosition } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { MarketPosition } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Type for the raw response from the Morpho API userPositionsQuery
@@ -48,8 +48,7 @@ export const fetchMorphoUserPositionMarkets = async (
     const positionMarkets = marketPositions
       .filter(
         (position): position is ValidMarketPosition =>
-          position.market?.uniqueKey !== undefined &&
-          position.market?.morphoBlue?.chain?.id !== undefined,
+          position.market?.uniqueKey !== undefined && position.market?.morphoBlue?.chain?.id !== undefined,
       )
       .map((position) => ({
         marketUniqueKey: position.market.uniqueKey,
@@ -58,10 +57,7 @@ export const fetchMorphoUserPositionMarkets = async (
 
     return positionMarkets;
   } catch (error) {
-    console.error(
-      `Failed to fetch position markets from Morpho API for ${userAddress} on ${network}:`,
-      error,
-    );
+    console.error(`Failed to fetch position markets from Morpho API for ${userAddress} on ${network}:`, error);
     return []; // Return empty array on error
   }
 };
@@ -75,14 +71,11 @@ export const fetchMorphoUserPositionForMarket = async (
   network: SupportedNetworks,
 ): Promise<MarketPosition | null> => {
   try {
-    const result = await morphoGraphqlFetcher<MorphoUserMarketPositionApiResponse>(
-      userPositionForMarketQuery,
-      {
-        address: userAddress.toLowerCase(),
-        chainId: network,
-        marketKey: marketUniqueKey,
-      },
-    );
+    const result = await morphoGraphqlFetcher<MorphoUserMarketPositionApiResponse>(userPositionForMarketQuery, {
+      address: userAddress.toLowerCase(),
+      chainId: network,
+      marketKey: marketUniqueKey,
+    });
 
     const marketPosition = result.data?.marketPosition;
 
@@ -98,10 +91,7 @@ export const fetchMorphoUserPositionForMarket = async (
 
     return marketPosition ?? null;
   } catch (error) {
-    console.error(
-      `Failed to fetch position for market ${marketUniqueKey} from Morpho API for ${userAddress} on ${network}:`,
-      error,
-    );
+    console.error(`Failed to fetch position for market ${marketUniqueKey} from Morpho API for ${userAddress} on ${network}:`, error);
     return null; // Return null on error
   }
 };

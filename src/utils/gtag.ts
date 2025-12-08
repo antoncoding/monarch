@@ -19,17 +19,7 @@ export const logPageview = (url: string) => {
   });
 };
 
-export const logEvent = ({
-  action,
-  category,
-  label,
-  value,
-}: {
-  action: string;
-  category: string;
-  label: string;
-  value: number;
-}) => {
+export const logEvent = ({ action, category, label, value }: { action: string; category: string; label: string; value: number }) => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
   window.gtag('event', action, {
     event_category: category,

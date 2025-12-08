@@ -10,13 +10,7 @@ type LoadingScreenProps = {
   className?: string;
 };
 
-const loadingPhrases = [
-  'Loading...',
-  'Fetching data...',
-  'Almost there...',
-  'Preparing your view...',
-  'Connecting to Morpho...',
-];
+const loadingPhrases = ['Loading...', 'Fetching data...', 'Almost there...', 'Preparing your view...', 'Connecting to Morpho...'];
 
 function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; singleMode?: boolean }) {
   const [displayText, setDisplayText] = useState('');
@@ -66,22 +60,25 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
     const typingSpeed = 40;
     const deletingSpeed = 25;
 
-    const timeout = setTimeout(() => {
-      if (!isDeleting) {
-        if (displayText.length < targetText.length) {
-          setDisplayText(targetText.slice(0, displayText.length + 1));
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting) {
+          if (displayText.length < targetText.length) {
+            setDisplayText(targetText.slice(0, displayText.length + 1));
+          } else {
+            setIsPaused(true);
+          }
         } else {
-          setIsPaused(true);
+          if (displayText.length > 0) {
+            setDisplayText(displayText.slice(0, -1));
+          } else {
+            setIsDeleting(false);
+            setPhraseIndex(getNextPhraseIndex(phraseIndex));
+          }
         }
-      } else {
-        if (displayText.length > 0) {
-          setDisplayText(displayText.slice(0, -1));
-        } else {
-          setIsDeleting(false);
-          setPhraseIndex(getNextPhraseIndex(phraseIndex));
-        }
-      }
-    }, isDeleting ? deletingSpeed : typingSpeed);
+      },
+      isDeleting ? deletingSpeed : typingSpeed,
+    );
 
     return () => clearTimeout(timeout);
   }, [displayText, phraseIndex, isDeleting, isPaused, phrases, singleMode]);
@@ -89,10 +86,7 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
   return (
     <span className="inline-flex items-center">
       <span>{displayText}</span>
-      <span
-        className="ml-0.5 inline-block"
-        style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}
-      >
+      <span className="ml-0.5 inline-block" style={{ opacity: showCursor ? 1 : 0, transition: 'opacity 0.1s' }}>
         |
       </span>
     </span>

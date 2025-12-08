@@ -8,9 +8,9 @@ import OracleVendorBadge from '@/components/OracleVendorBadge';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { APYCell } from './APYBreakdownTooltip';
-import { ColumnVisibility } from './columnVisibility';
+import type { ColumnVisibility } from './columnVisibility';
 import { MarketActionsDropdown } from './MarketActionsDropdown';
 import { ExpandedMarketDetail } from './MarketRowDetail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './MarketTableUtils';
@@ -95,21 +95,15 @@ export function MarketTableBody({
   return (
     <tbody className="table-body text-sm">
       {currentEntries.map((item, index) => {
-        const collatToShow = item.collateralAsset.symbol
-              .slice(0, 6)
-              .concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
+        const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = staredIds.includes(item.uniqueKey);
 
         return (
           <React.Fragment key={index}>
             <tr
               key={item.uniqueKey}
-              onClick={() =>
-                setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)
-              }
-              className={`hover:cursor-pointer ${
-                item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''
-              }'`}
+              onClick={() => setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)}
+              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}'`}
             >
               <td data-label="" className="z-50" style={{ minWidth: '40px' }}>
                 <button
@@ -123,9 +117,7 @@ export function MarketTableBody({
                     }
                   }}
                 >
-                  <p className="text-lg text-orange-500 group-hover:opacity-100">
-                    {isStared ? <GoStarFill /> : <GoStar />}
-                  </p>
+                  <p className="text-lg text-orange-500 group-hover:opacity-100">{isStared ? <GoStarFill /> : <GoStar />}</p>
                 </button>
               </td>
               <td data-label="ID" className="z-50" style={{ minWidth: '80px' }}>
@@ -137,19 +129,10 @@ export function MarketTableBody({
                     e.stopPropagation();
                   }}
                 >
-                  <MarketIdBadge
-                    marketId={item.uniqueKey}
-                    chainId={item.morphoBlue.chain.id}
-                    showNetworkIcon
-                  />
+                  <MarketIdBadge marketId={item.uniqueKey} chainId={item.morphoBlue.chain.id} showNetworkIcon />
                 </button>
               </td>
-              <TDAsset
-                dataLabel="Loan"
-                asset={item.loanAsset.address}
-                chainId={item.morphoBlue.chain.id}
-                symbol={item.loanAsset.symbol}
-              />
+              <TDAsset dataLabel="Loan" asset={item.loanAsset.address} chainId={item.morphoBlue.chain.id} symbol={item.loanAsset.symbol} />
               <TDAsset
                 dataLabel="Collateral"
                 asset={item.collateralAsset.address}
@@ -158,21 +141,14 @@ export function MarketTableBody({
               />
               <td data-label="Oracle" className="z-50" style={{ minWidth: '90px' }}>
                 <div className="flex justify-center">
-                  <OracleVendorBadge
-                    oracleData={item.oracle?.data}
-                    chainId={item.morphoBlue.chain.id}
-                  />
+                  <OracleVendorBadge oracleData={item.oracle?.data} chainId={item.morphoBlue.chain.id} />
                 </div>
               </td>
-              <td data-label="LLTV" className="z-50" style={{ minWidth: '60px', padding: 5}}>
+              <td data-label="LLTV" className="z-50" style={{ minWidth: '60px', padding: 5 }}>
                 {Number(item.lltv) / 1e16}%
               </td>
               {columnVisibility.trustedBy && (
-                <td
-                  data-label="Trusted By"
-                  className="z-50 text-center"
-                  style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
-                >
+                <td data-label="Trusted By" className="z-50 text-center" style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}>
                   <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />
                 </td>
               )}
@@ -210,23 +186,17 @@ export function MarketTableBody({
               )}
               {columnVisibility.borrowAPY && (
                 <td data-label={borrowRateLabel} className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
-                  <p className="text-sm">
-                    {item.state.borrowApy ? <RateFormatted value={item.state.borrowApy} /> : '—'}
-                  </p>
+                  <p className="text-sm">{item.state.borrowApy ? <RateFormatted value={item.state.borrowApy} /> : '—'}</p>
                 </td>
               )}
               {columnVisibility.rateAtTarget && (
                 <td data-label="Target Rate" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
-                  <p className="text-sm">
-                    {item.state.apyAtTarget ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}
-                  </p>
+                  <p className="text-sm">{item.state.apyAtTarget ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
                 </td>
               )}
               {columnVisibility.utilizationRate && (
                 <td data-label="Utilization" className="z-50 text-center" style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}>
-                  <p className="text-sm">
-                    {`${(item.state.utilization * 100).toFixed(2)}%`}
-                  </p>
+                  <p className="text-sm">{`${(item.state.utilization * 100).toFixed(2)}%`}</p>
                 </td>
               )}
               <td style={{ minWidth: '90px' }}>

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Switch, Tooltip } from '@heroui/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useBalance } from 'wagmi';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
@@ -19,7 +19,7 @@ import { useWrapLegacyMorpho } from '@/hooks/useWrapLegacyMorpho';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { MORPHO_LEGACY, MORPHO_TOKEN_BASE, MORPHO_TOKEN_MAINNET } from '@/utils/tokens';
-import { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
+import type { MarketRewardType, RewardAmount, AggregatedRewardType } from '@/utils/types';
 import InfoCard from './InfoCard';
 import RewardTable from './RewardTable';
 
@@ -48,10 +48,7 @@ export default function Rewards() {
   });
 
   const morphoBalance = useMemo(
-    () =>
-      (morphoBalanceMainnet?.value ?? 0n) +
-      (morphoBalanceBase?.value ?? 0n) +
-      (morphoBalanceLegacy?.value ?? 0n),
+    () => (morphoBalanceMainnet?.value ?? 0n) + (morphoBalanceBase?.value ?? 0n) + (morphoBalanceLegacy?.value ?? 0n),
     [morphoBalanceMainnet, morphoBalanceBase, morphoBalanceLegacy],
   );
 
@@ -92,28 +89,16 @@ export default function Rewards() {
           }
 
           if ((reward as MarketRewardType).for_borrow) {
-            acc[key].total.claimable += BigInt(
-              ((reward as MarketRewardType).for_borrow as RewardAmount).claimable_now,
-            );
-            acc[key].total.pendingAmount += BigInt(
-              ((reward as MarketRewardType).for_borrow as RewardAmount).claimable_next,
-            );
-            acc[key].total.claimed += BigInt(
-              ((reward as MarketRewardType).for_borrow as RewardAmount).claimed,
-            );
+            acc[key].total.claimable += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimable_now);
+            acc[key].total.pendingAmount += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimable_next);
+            acc[key].total.claimed += BigInt(((reward as MarketRewardType).for_borrow as RewardAmount).claimed);
             acc[key].programs.push(reward.type);
           }
 
           if ((reward as MarketRewardType).for_collateral) {
-            acc[key].total.claimable += BigInt(
-              ((reward as MarketRewardType).for_collateral as RewardAmount).claimable_now,
-            );
-            acc[key].total.pendingAmount += BigInt(
-              ((reward as MarketRewardType).for_collateral as RewardAmount).claimable_next,
-            );
-            acc[key].total.claimed += BigInt(
-              ((reward as MarketRewardType).for_collateral as RewardAmount).claimed,
-            );
+            acc[key].total.claimable += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimable_now);
+            acc[key].total.pendingAmount += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimable_next);
+            acc[key].total.claimed += BigInt(((reward as MarketRewardType).for_collateral as RewardAmount).claimed);
             acc[key].programs.push(reward.type);
           }
         }
@@ -140,18 +125,12 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = useMemo(
-    () => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n,
-    [morphoBalanceLegacy],
-  );
+  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n, [morphoBalanceLegacy]);
 
-  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(
-    morphoBalanceLegacy?.value ?? 0n,
-    () => {
-      // Refresh rewards data after successful wrap
-      void refresh();
-    },
-  );
+  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(morphoBalanceLegacy?.value ?? 0n, () => {
+    // Refresh rewards data after successful wrap
+    void refresh();
+  });
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -195,15 +174,8 @@ export default function Rewards() {
                 }}
               >
                 <div className="flex items-center gap-2 text-base">
-                  <span className="font-base">
-                    {formatSimple(formatBalance(morphoBalance, 18))}
-                  </span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
+                  <span className="font-base">{formatSimple(formatBalance(morphoBalance, 18))}</span>
+                  <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
                 </div>
               </InfoCard>
 
@@ -216,8 +188,7 @@ export default function Rewards() {
                         variant: 'success',
                         tooltip: {
                           title: 'Claim Available',
-                          detail:
-                            "Click 'Claim' in the rewards table below to claim your MORPHO tokens",
+                          detail: "Click 'Claim' in the rewards table below to claim your MORPHO tokens",
                         },
                       }
                     : undefined
@@ -225,12 +196,7 @@ export default function Rewards() {
               >
                 <div className="flex items-center gap-2 text-base">
                   <span>{formatSimple(formatBalance(totalClaimable, 18))}</span>
-                  <TokenIcon
-                    address={MORPHO_TOKEN_MAINNET}
-                    chainId={SupportedNetworks.Mainnet}
-                    width={18}
-                    height={18}
-                  />
+                  <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
                 </div>
               </InfoCard>
 
@@ -251,15 +217,8 @@ export default function Rewards() {
                   }}
                 >
                   <div className="flex items-center gap-2 text-base">
-                    {morphoBalanceLegacy && (
-                      <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>
-                    )}
-                    <TokenIcon
-                      address={MORPHO_TOKEN_MAINNET}
-                      chainId={SupportedNetworks.Mainnet}
-                      width={18}
-                      height={18}
-                    />
+                    {morphoBalanceLegacy && <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>}
+                    <TokenIcon address={MORPHO_TOKEN_MAINNET} chainId={SupportedNetworks.Mainnet} width={18} height={18} />
                   </div>
                 </InfoCard>
               )}
@@ -272,12 +231,7 @@ export default function Rewards() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-secondary">Show Claimed</span>
-                <Switch
-                  size="sm"
-                  isSelected={showClaimed}
-                  onValueChange={setShowClaimed}
-                  aria-label="Show claimed rewards"
-                />
+                <Switch size="sm" isSelected={showClaimed} onValueChange={setShowClaimed} aria-label="Show claimed rewards" />
               </div>
             </div>
             {loadingRewards ? (
@@ -285,22 +239,13 @@ export default function Rewards() {
             ) : rewards.length === 0 ? (
               <EmptyScreen message="No rewards" />
             ) : (
-              <RewardTable
-                account={account}
-                rewards={allRewards}
-                distributions={distributions}
-                showClaimed={showClaimed}
-              />
+              <RewardTable account={account} rewards={allRewards} distributions={distributions} showClaimed={showClaimed} />
             )}
           </section>
         </div>
       </div>
       {showProcessModal && (
-        <WrapProcessModal
-          amount={morphoBalanceLegacy?.value ?? 0n}
-          currentStep={currentStep}
-          onOpenChange={setShowProcessModal}
-        />
+        <WrapProcessModal amount={morphoBalanceLegacy?.value ?? 0n} currentStep={currentStep} onOpenChange={setShowProcessModal} />
       )}
     </div>
   );

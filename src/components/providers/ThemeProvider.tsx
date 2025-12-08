@@ -6,13 +6,7 @@ import { ToastContainer } from 'react-toastify';
 
 export function ThemeProviders({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-      themes={['light', 'dark']}
-    >
+    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange themes={['light', 'dark']}>
       <HeroUIProvider>{children}</HeroUIProvider>
       <ToastContainer
         position="bottom-right"

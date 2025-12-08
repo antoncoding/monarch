@@ -1,15 +1,12 @@
 import { useMemo } from 'react';
-import { Market, WarningWithDetail } from '@/utils/types';
+import type { Market, WarningWithDetail } from '@/utils/types';
 import { getMarketWarningsWithDetail } from '@/utils/warnings';
 
 /**
  * Hook to compute market warnings with details on-demand
  * This separates data fetching concerns from presentation logic
  */
-export const useMarketWarnings = (
-  market: Market,
-  considerWhitelist = false,
-): WarningWithDetail[] => {
+export const useMarketWarnings = (market: Market, considerWhitelist = false): WarningWithDetail[] => {
   return useMemo(() => {
     return getMarketWarningsWithDetail(market, considerWhitelist);
   }, [
@@ -27,9 +24,6 @@ export const useMarketWarnings = (
  * Utility function for computing warnings in non-React contexts
  * Use this in contexts where you can't use hooks
  */
-export const computeMarketWarnings = (
-  market: Market,
-  considerWhitelist = false,
-): WarningWithDetail[] => {
+export const computeMarketWarnings = (market: Market, considerWhitelist = false): WarningWithDetail[] => {
   return getMarketWarningsWithDetail(market, considerWhitelist);
 };

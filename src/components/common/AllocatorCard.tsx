@@ -1,5 +1,4 @@
-import React from 'react';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { AccountIdentity } from './AccountIdentity';
 
 type AllocatorCardProps = {

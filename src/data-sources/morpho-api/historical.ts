@@ -1,12 +1,6 @@
 import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
-import { SupportedNetworks } from '@/utils/networks';
-import {
-  TimeseriesOptions,
-  Market,
-  TimeseriesDataPoint,
-  MarketRates,
-  MarketVolumes,
-} from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { TimeseriesOptions, Market, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // --- Types related to Historical Data ---
@@ -40,29 +34,19 @@ export const fetchMorphoMarketHistoricalData = async (
   options: TimeseriesOptions,
 ): Promise<HistoricalDataSuccessResult | null> => {
   try {
-    const response = await morphoGraphqlFetcher<HistoricalDataGraphQLResponse>(
-      marketHistoricalDataQuery,
-      {
-        uniqueKey,
-        options,
-        chainId: network,
-      },
-    );
+    const response = await morphoGraphqlFetcher<HistoricalDataGraphQLResponse>(marketHistoricalDataQuery, {
+      uniqueKey,
+      options,
+      chainId: network,
+    });
 
     const historicalState = response?.data?.marketByUniqueKey?.historicalState;
 
     // Check if historicalState exists and has *any* relevant data points (e.g., supplyApy)
     // This check might need refinement based on what fields are essential
-    if (
-      !historicalState ||
-      Object.keys(historicalState).length === 0 ||
-      !historicalState.supplyApy
-    ) {
+    if (!historicalState || Object.keys(historicalState).length === 0 || !historicalState.supplyApy) {
       // Example check
-      console.warn(
-        'Historical state not found, empty, or missing essential data in Morpho API response for',
-        uniqueKey,
-      );
+      console.warn('Historical state not found, empty, or missing essential data in Morpho API response for', uniqueKey);
       return null;
     }
 

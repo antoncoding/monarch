@@ -1,11 +1,10 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLiquidationsContext } from '@/contexts/LiquidationsContext';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { RewardsIndicator } from 'app/markets/components/RewardsIndicator';
 
 const ICON_SIZE = 14;
@@ -17,12 +16,7 @@ type MarketIndicatorsProps = {
   hasUserPosition?: boolean;
 };
 
-export function MarketIndicators({
-  market,
-  showRisk = false,
-  isStared = false,
-  hasUserPosition = false,
-}: MarketIndicatorsProps) {
+export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
   // Check liquidation protection status on-demand (like Merkl rewards pattern)
   const { isProtectedByLiquidationBots } = useLiquidationsContext();
   const hasLiquidationProtection = isProtectedByLiquidationBots(market.uniqueKey);
@@ -42,12 +36,7 @@ export function MarketIndicators({
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
             content: 'p-0 m-0 bg-transparent shadow-sm border-none',
           }}
-          content={
-            <TooltipContent
-              icon={<FaStar size={ICON_SIZE} className="text-yellow-500" />}
-              detail="You have starred this market"
-            />
-          }
+          content={<TooltipContent icon={<FaStar size={ICON_SIZE} className="text-yellow-500" />} detail="You have starred this market" />}
         >
           <div className="flex-shrink-0">
             <FaStar size={ICON_SIZE} className="text-yellow-500" />
@@ -61,12 +50,7 @@ export function MarketIndicators({
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
             content: 'p-0 m-0 bg-transparent shadow-sm border-none',
           }}
-          content={
-            <TooltipContent
-              icon={<FaUser size={ICON_SIZE} />}
-              detail="You have supplied to this market"
-            />
-          }
+          content={<TooltipContent icon={<FaUser size={ICON_SIZE} />} detail="You have supplied to this market" />}
         >
           <div className="flex-shrink-0">
             <FaUser size={ICON_SIZE} />
@@ -136,10 +120,7 @@ export function MarketIndicators({
           }
         >
           <div className="flex-shrink-0">
-            <FiAlertCircle
-              size={ICON_SIZE}
-              className={warningLevel === 'alert' ? 'text-red-500' : 'text-yellow-500'}
-            />
+            <FiAlertCircle size={ICON_SIZE} className={warningLevel === 'alert' ? 'text-red-500' : 'text-yellow-500'} />
           </div>
         </Tooltip>
       )}

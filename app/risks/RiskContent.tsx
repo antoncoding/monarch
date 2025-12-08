@@ -11,10 +11,7 @@ const riskSections = [
       <>
         <p>When supplying directly to markets, you are responsible for:</p>
         <ul className="mt-2 list-inside list-disc">
-          <li>
-            Managing partial fund availability for withdrawal during periods of high market
-            utilization
-          </li>
+          <li>Managing partial fund availability for withdrawal during periods of high market utilization</li>
           <li>Actively monitoring and managing liquidity across different markets</li>
         </ul>
       </>
@@ -27,9 +24,7 @@ const riskSections = [
       <>
         <p>Direct market positions require you to take charge of risk management:</p>
         <ul className="mt-2 list-inside list-disc">
-          <li>
-            Rebalance between markets with different LLTVs / oracles to adjust collateral exposure
-          </li>
+          <li>Rebalance between markets with different LLTVs / oracles to adjust collateral exposure</li>
           <li>Regularly assessing and adjusting positions based on market conditions</li>
         </ul>
       </>
@@ -58,8 +53,7 @@ function RiskContent() {
         <h1 className="mb-2 text-3xl font-bold">Understanding The Risks</h1>
 
         <p className="mb-2 text-secondary">
-          This page covers advanced topics. For a comprehensive overview of Monarch, please visit
-          our{' '}
+          This page covers advanced topics. For a comprehensive overview of Monarch, please visit our{' '}
           <Link href="/" className="text-primary underline">
             home page
           </Link>
@@ -67,9 +61,8 @@ function RiskContent() {
         </p>
 
         <p className="mb-8 text-secondary">
-          When choosing direct lending over vaults, you gain more control but also take on more
-          responsibilities. The following aspects become{' '}
-          <span className="font-bold text-primary">your direct responsibility</span>:
+          When choosing direct lending over vaults, you gain more control but also take on more responsibilities. The following aspects
+          become <span className="font-bold text-primary">your direct responsibility</span>:
         </p>
 
         {riskSections.map((section) => (
@@ -81,10 +74,9 @@ function RiskContent() {
         ))}
 
         <p className="mt-6 rounded-md border-2 border-dashed border-primary p-4 font-zen text-sm text-secondary">
-          While these responsibilities require more active management, they also offer opportunities
-          for advanced users to optimize their lending strategies. Always conduct your own research
-          and ensure you're prepared to handle these responsibilities before engaging in direct
-          market lending.
+          While these responsibilities require more active management, they also offer opportunities for advanced users to optimize their
+          lending strategies. Always conduct your own research and ensure you're prepared to handle these responsibilities before engaging
+          in direct market lending.
         </p>
       </main>
     </div>

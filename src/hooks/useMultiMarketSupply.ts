@@ -1,14 +1,14 @@
 import { useCallback, useState } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { NetworkToken } from '@/types/token';
+import type { NetworkToken } from '@/types/token';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
@@ -60,17 +60,12 @@ export function useMultiMarketSupply(
 
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'multi-supply',
-    pendingText: `Supplying ${formatBalance(
-      totalAmount,
-      loanAsset?.decimals ?? 18,
-    )} ${tokenSymbol}`,
+    pendingText: `Supplying ${formatBalance(totalAmount, loanAsset?.decimals ?? 18)} ${tokenSymbol}`,
     successText: `${tokenSymbol} Supplied`,
     errorText: 'Failed to supply',
     chainId,
     pendingDescription: `Supplying to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
-    successDescription: `Successfully supplied to ${supplies.length} market${
-      supplies.length > 1 ? 's' : ''
-    }`,
+    successDescription: `Successfully supplied to ${supplies.length} market${supplies.length > 1 ? 's' : ''}`,
     onSuccess,
   });
 
@@ -189,18 +184,7 @@ export function useMultiMarketSupply(
       }
       throw error; // Re-throw to be caught by approveAndSupply
     }
-  }, [
-    account,
-    supplies,
-    totalAmount,
-    sendTransactionAsync,
-    useEth,
-    signForBundlers,
-    usePermit2Setting,
-    chainId,
-    loanAsset,
-    toast,
-  ]);
+  }, [account, supplies, totalAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, chainId, loanAsset, toast]);
 
   const approveAndSupply = useCallback(async () => {
     if (!account) {
@@ -261,17 +245,7 @@ export function useMultiMarketSupply(
       setShowProcessModal(false);
       return false;
     }
-  }, [
-    account,
-    usePermit2Setting,
-    permit2Authorized,
-    authorizePermit2,
-    isApproved,
-    approve,
-    useEth,
-    executeSupplyTransaction,
-    toast,
-  ]);
+  }, [account, usePermit2Setting, permit2Authorized, authorizePermit2, isApproved, approve, useEth, executeSupplyTransaction, toast]);
 
   return {
     approveAndSupply,

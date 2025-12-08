@@ -99,13 +99,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
             >
               <div className="flex items-center gap-2">
                 {OracleVendorIcons[oracle] ? (
-                  <Image
-                    src={OracleVendorIcons[oracle]}
-                    alt={oracle}
-                    width={16}
-                    height={16}
-                    className="rounded-full"
-                  />
+                  <Image src={OracleVendorIcons[oracle]} alt={oracle} width={16} height={16} className="rounded-full" />
                 ) : (
                   <IoHelpCircleOutline className="text-secondary" size={16} />
                 )}

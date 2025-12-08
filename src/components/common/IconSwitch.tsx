@@ -23,7 +23,7 @@ export type IconSwitchProps = {
   };
   disabled?: boolean;
   className?: string;
-} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'color'>
+} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'color'>;
 
 type SizeConfig = {
   width: number;
@@ -109,9 +109,7 @@ export function IconSwitch({
   const translate = config.width - config.thumbWidth - config.padding * 2;
 
   // Determine which icon to use
-  const IconComponent = (thumbIconOn && thumbIconOff)
-    ? (isSelected ? thumbIconOn : thumbIconOff)
-    : ThumbIcon;
+  const IconComponent = thumbIconOn && thumbIconOff ? (isSelected ? thumbIconOn : thumbIconOff) : ThumbIcon;
 
   const handleToggle = React.useCallback(() => {
     if (disabled) return;

@@ -1,6 +1,5 @@
-import React from 'react';
-import { Market } from '@/utils/types';
-import { GroupedPosition, RebalanceAction } from '@/utils/types';
+import type { Market } from '@/utils/types';
+import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { RebalanceActionRow } from './RebalanceActionRow';
 
 type RebalanceCartProps = {
@@ -10,18 +9,9 @@ type RebalanceCartProps = {
   removeRebalanceAction: (index: number) => void;
 };
 
-export function RebalanceCart({
-  rebalanceActions,
-  groupedPosition,
-  eligibleMarkets,
-  removeRebalanceAction,
-}: RebalanceCartProps) {
+export function RebalanceCart({ rebalanceActions, groupedPosition, eligibleMarkets, removeRebalanceAction }: RebalanceCartProps) {
   if (rebalanceActions.length === 0) {
-    return (
-      <p className="min-h-20 py-4 text-center text-secondary text-sm">
-        No pending actions
-      </p>
-    );
+    return <p className="min-h-20 py-4 text-center text-secondary text-sm">No pending actions</p>;
   }
 
   return (
@@ -29,16 +19,11 @@ export function RebalanceCart({
       <h3 className="text-sm text-secondary">Pending Actions ({rebalanceActions.length})</h3>
 
       {rebalanceActions.map((action, index) => {
-        const fromMarket = groupedPosition.markets.find(
-          (m) => m.market.uniqueKey === action.fromMarket.uniqueKey,
-        )?.market;
+        const fromMarket = groupedPosition.markets.find((m) => m.market.uniqueKey === action.fromMarket.uniqueKey)?.market;
         const toMarket = eligibleMarkets.find((m) => m.uniqueKey === action.toMarket.uniqueKey);
 
         return (
-          <div
-            key={index}
-            className="rounded-sm border border-gray-200 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-800/50"
-          >
+          <div key={index} className="rounded-sm border border-gray-200 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
             <RebalanceActionRow
               mode="display"
               fromMarket={fromMarket}

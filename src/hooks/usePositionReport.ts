@@ -1,13 +1,9 @@
-import { Address } from 'viem';
-import {
-  calculateEarningsFromSnapshot,
-  EarningsCalculation,
-  filterTransactionsInPeriod,
-} from '@/utils/interest';
-import { SupportedNetworks } from '@/utils/networks';
+import type { Address } from 'viem';
+import { calculateEarningsFromSnapshot, type EarningsCalculation, filterTransactionsInPeriod } from '@/utils/interest';
+import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
-import { Market, MarketPosition, UserTransaction } from '@/utils/types';
+import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from './useCustomRpc';
 import useUserTransactions from './useUserTransactions';
 
@@ -113,20 +109,8 @@ export const usePositionReport = (
 
     // Fetch start and end snapshots in parallel (batched per block number)
     const [startSnapshots, endSnapshots] = await Promise.all([
-      fetchPositionsSnapshots(
-        marketIds,
-        account,
-        selectedAsset.chainId,
-        startBlockNumber,
-        publicClient,
-      ),
-      fetchPositionsSnapshots(
-        marketIds,
-        account,
-        selectedAsset.chainId,
-        endBlockNumber,
-        publicClient,
-      ),
+      fetchPositionsSnapshots(marketIds, account, selectedAsset.chainId, startBlockNumber, publicClient),
+      fetchPositionsSnapshots(marketIds, account, selectedAsset.chainId, endBlockNumber, publicClient),
     ]);
 
     // Process positions with their snapshots
@@ -141,9 +125,7 @@ export const usePositionReport = (
         }
 
         const marketTransactions = filterTransactionsInPeriod(
-          allTransactions.filter(
-            (tx) => tx.data?.market?.uniqueKey === marketKey,
-          ),
+          allTransactions.filter((tx) => tx.data?.market?.uniqueKey === marketKey),
           startTimestamp,
           endTimestamp,
         );
@@ -171,35 +153,17 @@ export const usePositionReport = (
       })
       .filter((report): report is PositionReport => report !== null);
 
-    const totalInterestEarned = marketReports.reduce(
-      (sum, report) => sum + BigInt(report.interestEarned),
-      0n,
-    );
+    const totalInterestEarned = marketReports.reduce((sum, report) => sum + BigInt(report.interestEarned), 0n);
 
-    const totalDeposits = marketReports.reduce(
-      (sum, report) => sum + BigInt(report.totalDeposits),
-      0n,
-    );
+    const totalDeposits = marketReports.reduce((sum, report) => sum + BigInt(report.totalDeposits), 0n);
 
-    const totalWithdraws = marketReports.reduce(
-      (sum, report) => sum + BigInt(report.totalWithdraws),
-      0n,
-    );
+    const totalWithdraws = marketReports.reduce((sum, report) => sum + BigInt(report.totalWithdraws), 0n);
 
-    const startBalance = marketReports.reduce(
-      (sum, report) => sum + BigInt(report.startBalance),
-      0n,
-    );
+    const startBalance = marketReports.reduce((sum, report) => sum + BigInt(report.startBalance), 0n);
 
     const endBalance = marketReports.reduce((sum, report) => sum + BigInt(report.endBalance), 0n);
 
-    const groupedEarnings = calculateEarningsFromSnapshot(
-      endBalance,
-      startBalance,
-      allTransactions,
-      startTimestamp,
-      endTimestamp,
-    );
+    const groupedEarnings = calculateEarningsFromSnapshot(endBalance, startBalance, allTransactions, startTimestamp, endTimestamp);
 
     return {
       totalInterestEarned,

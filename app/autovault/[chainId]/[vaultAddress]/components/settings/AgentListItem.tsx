@@ -1,4 +1,4 @@
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { AgentIcon } from '@/components/AgentIcon';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { findAgent } from '@/utils/monarch-agent';

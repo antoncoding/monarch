@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Address, encodeFunctionData, erc20Abi } from 'viem';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
 import { useAccount, useChainId, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 

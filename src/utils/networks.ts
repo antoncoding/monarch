@@ -1,7 +1,7 @@
-import { Address, Chain, defineChain } from 'viem';
+import { type Address, type Chain, defineChain } from 'viem';
 import { arbitrum, base, mainnet, polygon, unichain, monad, hyperEvm as hyperEvmOld } from 'viem/chains';
 import { v2AgentsBase } from './monarch-agent';
-import { AgentMetadata } from './types';
+import type { AgentMetadata } from './types';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
@@ -12,7 +12,7 @@ export enum SupportedNetworks {
   Unichain = 130,
   Arbitrum = 42161,
   HyperEVM = 999,
-  Monad = 143
+  Monad = 143,
 }
 
 export const ALL_SUPPORTED_NETWORKS = [
@@ -22,10 +22,10 @@ export const ALL_SUPPORTED_NETWORKS = [
   SupportedNetworks.Unichain,
   SupportedNetworks.Arbitrum,
   SupportedNetworks.HyperEVM,
-  SupportedNetworks.Monad
+  SupportedNetworks.Monad,
 ];
 
-// use hyperevm as custom chain 
+// use hyperevm as custom chain
 export const hyperEvm = defineChain({
   ...hyperEvmOld,
   contracts: {
@@ -34,12 +34,11 @@ export const hyperEvm = defineChain({
       blockCreated: 13051,
     },
   },
-
-})
+});
 
 type VaultAgentConfig = {
   v2FactoryAddress: Address;
-  vaultsSubgraphEndpoint?: string // temporary Subgraph to fetch deployed vaults for users
+  vaultsSubgraphEndpoint?: string; // temporary Subgraph to fetch deployed vaults for users
   morphoRegistry: Address; // the RegistryList contract deployed by morpho!
   marketV1AdapterFactory: Address; // MorphoMarketV1AdapterFactory contract used to create adapters for markets
   adapterSubgraphEndpoint?: string;
@@ -50,8 +49,8 @@ type NetworkConfig = {
   network: SupportedNetworks;
   logo: string;
   name: string;
-  chain: Chain
-  defaultRPC: string
+  chain: Chain;
+  defaultRPC: string;
   vaultConfig?: VaultAgentConfig;
 
   // used to estimate block number from blocktime
@@ -59,13 +58,12 @@ type NetworkConfig = {
 
   // current blocknumber - this number used when trying to find blocks.
   // Make it larger if blockFinder keeps having block find block issues
-  maxBlockDelay?: number
+  maxBlockDelay?: number;
 
   explorerUrl?: string;
   nativeTokenSymbol?: string;
   wrappedNativeToken?: Address;
 };
-
 
 export const networks: NetworkConfig[] = [
   {
@@ -88,10 +86,10 @@ export const networks: NetworkConfig[] = [
     vaultConfig: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
-      vaultsSubgraphEndpoint: "https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest",
+      vaultsSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-v-2-vault-factory-base/version/latest',
       morphoRegistry: '0x5C2531Cbd2cf112Cf687da3Cd536708aDd7DB10a',
       marketV1AdapterFactory: '0x133baC94306B99f6dAD85c381a5be851d8DD717c',
-      adapterSubgraphEndpoint: "https://api.studio.thegraph.com/query/94369/morpho-adapters/version/latest"
+      adapterSubgraphEndpoint: 'https://api.studio.thegraph.com/query/94369/morpho-adapters/version/latest',
     },
     blocktime: 2,
     maxBlockDelay: 5,
@@ -155,7 +153,7 @@ export const networks: NetworkConfig[] = [
     nativeTokenSymbol: 'MON',
     wrappedNativeToken: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A',
     explorerUrl: 'https://monadscan.com',
-  }
+  },
 ];
 
 export const isSupportedChain = (chainId: number) => {
@@ -167,26 +165,26 @@ export const getNetworkConfig = (chainId: SupportedNetworks): NetworkConfig => {
 };
 
 export const getViemChain = (chainId: SupportedNetworks): Chain => {
-  return getNetworkConfig(chainId).chain
-}
+  return getNetworkConfig(chainId).chain;
+};
 
 export const getDefaultRPC = (chainId: SupportedNetworks): string => {
-  return getNetworkConfig(chainId).defaultRPC
-}
+  return getNetworkConfig(chainId).defaultRPC;
+};
 
 export const getBlocktime = (chainId: SupportedNetworks): number => {
-  return getNetworkConfig(chainId).blocktime
-}
+  return getNetworkConfig(chainId).blocktime;
+};
 
 export const getMaxBlockDelay = (chainId: SupportedNetworks): number => {
-  return getNetworkConfig(chainId).maxBlockDelay || 0
-}
+  return getNetworkConfig(chainId).maxBlockDelay || 0;
+};
 
 export const isAgentAvailable = (chainId: number): boolean => {
   const network = getNetworkConfig(chainId);
-  if (!network || !network.vaultConfig) return false
+  if (!network || !network.vaultConfig) return false;
 
-  return network.vaultConfig.vaultsSubgraphEndpoint !== undefined
+  return network.vaultConfig.vaultsSubgraphEndpoint !== undefined;
 };
 
 export const getAgentConfig = (chainId: SupportedNetworks): VaultAgentConfig | undefined => {

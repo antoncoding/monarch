@@ -21,7 +21,7 @@ export const ThemeKey = 'theme';
 export const CacheMarketPositionKeys = 'monarch_cache_market_unique_keys';
 
 // Deprecated: Use MarketsMinSupplyEnabledKey instead
-export const MarketsShowSmallMarkets = 'monarch_show_small_markets'
+export const MarketsShowSmallMarkets = 'monarch_show_small_markets';
 export const MarketsShowUnknownTokens = 'includeUnknownTokens';
 export const MarketsShowUnknownOracle = 'showUnknownOracle';
 

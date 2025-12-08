@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
-import {
-  fetchUserVaultV2AddressesAllNetworks,
-  UserVaultV2
-} from '@/data-sources/subgraph/v2-vaults';
+import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { readTotalAsset } from '@/utils/vaultAllocation';
 
 type UseUserVaultsV2Return = {
@@ -16,26 +13,19 @@ type UseUserVaultsV2Return = {
 };
 
 function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
-  return vaults.filter(vault =>
-    vault.owner &&
-    vault.asset &&
-    vault.address
-  );
+  return vaults.filter((vault) => vault.owner && vault.asset && vault.address);
 }
 
 async function fetchVaultBalances(vaults: UserVaultV2[]): Promise<UserVaultV2[]> {
   return Promise.all(
     vaults.map(async (vault) => {
-      const balance = await readTotalAsset(
-        vault.address as Address,
-        vault.networkId
-      );
+      const balance = await readTotalAsset(vault.address as Address, vault.networkId);
 
       return {
         ...vault,
         balance: balance ?? BigInt(0),
       };
-    })
+    }),
   );
 }
 
@@ -43,7 +33,7 @@ async function fetchAndProcessVaults(address: Address): Promise<UserVaultV2[]> {
   // Step 1: Fetch vault addresses from subgraph across all networks
   const vaultAddresses = await fetchUserVaultV2AddressesAllNetworks(address);
 
-  console.log('vaultAddresses', vaultAddresses)
+  console.log('vaultAddresses', vaultAddresses);
 
   if (vaultAddresses.length === 0) {
     return [];

@@ -1,17 +1,9 @@
 import { useState } from 'react';
 import { CurrentCaps } from './CurrentCaps';
 import { EditCaps } from './EditCaps';
-import { CapsTabProps } from './types';
+import type { CapsTabProps } from './types';
 
-export function CapsTab({
-  isOwner,
-  chainId,
-  vaultAsset,
-  adapterAddress,
-  existingCaps,
-  updateCaps,
-  isUpdatingCaps,
-}: CapsTabProps) {
+export function CapsTab({ isOwner, chainId, vaultAsset, adapterAddress, existingCaps, updateCaps, isUpdatingCaps }: CapsTabProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   return isEditing ? (

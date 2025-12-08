@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Tooltip } from '@heroui/react';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Badge } from '@/components/common/Badge';
@@ -42,24 +42,14 @@ function BadgeButton({
   tooltip?: TooltipInfo;
 }) {
   const ButtonComponent = (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={disabled}
-      className="disabled:cursor-not-allowed disabled:opacity-50"
-    >
+    <button type="button" onClick={handleClick} disabled={disabled} className="disabled:cursor-not-allowed disabled:opacity-50">
       <Badge variant={variant ?? 'success'}>{text}</Badge>
     </button>
   );
 
   if (tooltip) {
     return (
-      <Tooltip
-        content={
-          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
-        }
-        placement="top"
-      >
+      <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="top">
         {ButtonComponent}
       </Tooltip>
     );
@@ -81,12 +71,7 @@ function BadgeComponent({
 
   if (tooltip) {
     return (
-      <Tooltip
-        content={
-          <TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />
-        }
-        placement="top"
-      >
+      <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="top">
         <div>{BadgeElement}</div>
       </Tooltip>
     );
@@ -95,30 +80,14 @@ function BadgeComponent({
   return BadgeElement;
 }
 
-export default function InfoCard({
-  title,
-  children,
-  tooltip,
-  badge,
-  button,
-  className = '',
-}: InfoCardProps) {
+export default function InfoCard({ title, children, tooltip, badge, button, className = '' }: InfoCardProps) {
   return (
     <div className={`bg-surface w-full rounded-sm p-4 shadow-sm ${className}`}>
       <div className="flex items-center justify-between px-2 pb-2 text-sm text-secondary">
         <div className="flex items-center gap-2">
           <span className="leading-none">{title}</span>
           {tooltip && (
-            <Tooltip
-              content={
-                <TooltipContent
-                  className="max-w-[400px]"
-                  title={tooltip.title}
-                  detail={tooltip.detail}
-                />
-              }
-              placement="right"
-            >
+            <Tooltip content={<TooltipContent className="max-w-[400px]" title={tooltip.title} detail={tooltip.detail} />} placement="right">
               <div className="flex items-center">
                 <BsQuestionCircle className="cursor-help text-secondary" />
               </div>

@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PlusIcon } from '@radix-ui/react-icons';
-import { Address, parseUnits, maxUint128 } from 'viem';
+import { type Address, parseUnits, maxUint128 } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
-import { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
-import { CapData } from '@/hooks/useVaultV2Data';
+import type { CapData } from '@/hooks/useVaultV2Data';
 import { getMarketCapId, getCollateralCapId, getAdapterCapId, parseCapIdParams } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Market } from '@/utils/types';
 import { AddMarketCapModal } from './AddMarketCapModal';
 import { MarketCapsTable } from './MarketCapsTable';
 import { CollateralCapTooltip, MarketCapTooltip } from './Tooltips';
@@ -43,22 +43,15 @@ type MarketCapInfo = {
   existingCapId?: string;
 };
 
-export function EditCaps({
-  existingCaps,
-  vaultAsset,
-  chainId,
-  isOwner,
-  isUpdating,
-  adapterAddress,
-  onCancel,
-  onSave
-}: EditCapsProps) {
+export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdating, adapterAddress, onCancel, onSave }: EditCapsProps) {
   const [marketCaps, setMarketCaps] = useState<Map<string, MarketCapInfo>>(new Map());
   const [collateralCaps, setCollateralCaps] = useState<Map<string, CollateralCapInfo>>(new Map());
   const [showAddMarketModal, setShowAddMarketModal] = useState(false);
 
   const { markets, loading: marketsLoading } = useMarkets();
-  const { needSwitchChain, switchToNetwork } = useMarketNetwork({ targetChainId: chainId });
+  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
+    targetChainId: chainId,
+  });
   const { findToken } = useTokens();
 
   // Get vault asset decimals and token
@@ -72,11 +65,7 @@ export function EditCaps({
   // Filter available markets for adding
   const availableMarkets = useMemo(() => {
     if (!markets || !vaultAsset) return [];
-    return markets.filter(
-      (m) =>
-        m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase() &&
-        m.morphoBlue.chain.id === chainId,
-    );
+    return markets.filter((m) => m.loanAsset.address.toLowerCase() === vaultAsset.toLowerCase() && m.morphoBlue.chain.id === chainId);
   }, [markets, vaultAsset, chainId]);
 
   // Initialize from existing caps
@@ -94,9 +83,10 @@ export function EditCaps({
         const relativeCap = (Number(relativeCapBigInt) / 1e16).toString();
 
         const absoluteCapBigInt = BigInt(cap.absoluteCap);
-        const absoluteCap = absoluteCapBigInt === 0n || absoluteCapBigInt >= maxUint128
-          ? ''
-          : (Number(absoluteCapBigInt) / 10 ** vaultAssetDecimals).toString();
+        const absoluteCap =
+          absoluteCapBigInt === 0n || absoluteCapBigInt >= maxUint128
+            ? ''
+            : (Number(absoluteCapBigInt) / 10 ** vaultAssetDecimals).toString();
 
         collateralCapsMap.set(parsed.collateralToken.toLowerCase(), {
           collateralAddress: parsed.collateralToken,
@@ -119,9 +109,10 @@ export function EditCaps({
         const relativeCap = (Number(relativeCapBigInt) / 1e16).toString();
 
         const absoluteCapBigInt = BigInt(cap.absoluteCap);
-        const absoluteCap = absoluteCapBigInt === 0n || absoluteCapBigInt >= maxUint128
-          ? ''
-          : (Number(absoluteCapBigInt) / 10 ** vaultAssetDecimals).toString();
+        const absoluteCap =
+          absoluteCapBigInt === 0n || absoluteCapBigInt >= maxUint128
+            ? ''
+            : (Number(absoluteCapBigInt) / 10 ** vaultAssetDecimals).toString();
 
         marketCapsMap.set(market.uniqueKey.toLowerCase(), {
           market,
@@ -180,7 +171,10 @@ export function EditCaps({
       const next = new Map(prev);
       const existing = next.get(collateralAddr.toLowerCase());
       if (existing) {
-        next.set(collateralAddr.toLowerCase(), { ...existing, [field]: value });
+        next.set(collateralAddr.toLowerCase(), {
+          ...existing,
+          [field]: value,
+        });
       }
       return next;
     });
@@ -188,37 +182,39 @@ export function EditCaps({
 
   const hasChanges = useMemo(() => {
     // Check for new caps
-    const hasNewMarkets = Array.from(marketCaps.values()).some(m => !m.existingCapId);
-    const hasNewCollaterals = Array.from(collateralCaps.values()).some(c => !c.existingCapId);
+    const hasNewMarkets = Array.from(marketCaps.values()).some((m) => !m.existingCapId);
+    const hasNewCollaterals = Array.from(collateralCaps.values()).some((c) => !c.existingCapId);
 
     // Check for modified caps
-    const hasModifiedMarkets = Array.from(marketCaps.values()).some(info => {
+    const hasModifiedMarkets = Array.from(marketCaps.values()).some((info) => {
       if (!info.existingCapId) return false;
-      const existing = existingCaps?.marketCaps.find(cap => {
+      const existing = existingCaps?.marketCaps.find((cap) => {
         const parsed = parseCapIdParams(cap.idParams);
         return parsed.marketId?.toLowerCase() === info.market.uniqueKey.toLowerCase();
       });
       if (!existing) return false;
       const existingRelative = (Number(BigInt(existing.relativeCap)) / 1e16).toString();
       const existingAbsoluteBigInt = BigInt(existing.absoluteCap);
-      const existingAbsolute = existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
-        ? ''
-        : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
+      const existingAbsolute =
+        existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
+          ? ''
+          : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
       return info.relativeCap !== existingRelative || info.absoluteCap !== existingAbsolute;
     });
 
-    const hasModifiedCollaterals = Array.from(collateralCaps.values()).some(info => {
+    const hasModifiedCollaterals = Array.from(collateralCaps.values()).some((info) => {
       if (!info.existingCapId) return false;
-      const existing = existingCaps?.collateralCaps.find(cap => {
+      const existing = existingCaps?.collateralCaps.find((cap) => {
         const parsed = parseCapIdParams(cap.idParams);
         return parsed.collateralToken?.toLowerCase() === info.collateralAddress.toLowerCase();
       });
       if (!existing) return false;
       const existingRelative = (Number(BigInt(existing.relativeCap)) / 1e16).toString();
       const existingAbsoluteBigInt = BigInt(existing.absoluteCap);
-      const existingAbsolute = existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
-        ? ''
-        : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
+      const existingAbsolute =
+        existingAbsoluteBigInt === 0n || existingAbsoluteBigInt >= maxUint128
+          ? ''
+          : (Number(existingAbsoluteBigInt) / 10 ** vaultAssetDecimals).toString();
       return info.relativeCap !== existingRelative || info.absoluteCap !== existingAbsolute;
     });
 
@@ -253,16 +249,16 @@ export function EditCaps({
 
     // Add collateral caps with delta calculation (only when changed)
     for (const [, info] of collateralCaps.entries()) {
-      const newRelativeCapBigInt = info.relativeCap && info.relativeCap !== '' && parseFloat(info.relativeCap) > 0
-        ? parseUnits(info.relativeCap, 16)
-        : 0n;
+      const newRelativeCapBigInt =
+        info.relativeCap && info.relativeCap !== '' && Number.parseFloat(info.relativeCap) > 0 ? parseUnits(info.relativeCap, 16) : 0n;
 
-      const newAbsoluteCapBigInt = info.absoluteCap && info.absoluteCap !== '' && parseFloat(info.absoluteCap) > 0
-        ? parseUnits(info.absoluteCap, vaultAssetDecimals)
-        : maxUint128;
+      const newAbsoluteCapBigInt =
+        info.absoluteCap && info.absoluteCap !== '' && Number.parseFloat(info.absoluteCap) > 0
+          ? parseUnits(info.absoluteCap, vaultAssetDecimals)
+          : maxUint128;
 
       // Find existing cap to calculate delta
-      const existingCap = existingCaps?.collateralCaps.find(cap => {
+      const existingCap = existingCaps?.collateralCaps.find((cap) => {
         const parsed = parseCapIdParams(cap.idParams);
         return parsed.collateralToken?.toLowerCase() === info.collateralAddress.toLowerCase();
       });
@@ -287,16 +283,16 @@ export function EditCaps({
 
     // Add market caps with delta calculation (only when changed)
     for (const [, info] of marketCaps.entries()) {
-      const newRelativeCapBigInt = info.relativeCap && info.relativeCap !== '' && parseFloat(info.relativeCap) > 0
-        ? parseUnits(info.relativeCap, 16)
-        : 0n;
+      const newRelativeCapBigInt =
+        info.relativeCap && info.relativeCap !== '' && Number.parseFloat(info.relativeCap) > 0 ? parseUnits(info.relativeCap, 16) : 0n;
 
-      const newAbsoluteCapBigInt = info.absoluteCap && info.absoluteCap !== '' && parseFloat(info.absoluteCap) > 0
-        ? parseUnits(info.absoluteCap, vaultAssetDecimals)
-        : maxUint128;
+      const newAbsoluteCapBigInt =
+        info.absoluteCap && info.absoluteCap !== '' && Number.parseFloat(info.absoluteCap) > 0
+          ? parseUnits(info.absoluteCap, vaultAssetDecimals)
+          : maxUint128;
 
       // Find existing cap to calculate delta
-      const existingCap = existingCaps?.marketCaps.find(cap => {
+      const existingCap = existingCaps?.marketCaps.find((cap) => {
         const parsed = parseCapIdParams(cap.idParams);
         return parsed.marketId?.toLowerCase() === info.market.uniqueKey.toLowerCase();
       });
@@ -367,8 +363,8 @@ export function EditCaps({
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-warning">Adapter Not Authorized</h4>
                     <p className="text-xs text-secondary mt-1">
-                      The Morpho Market V1 adapter is not authorized to allocate funds in this vault.
-                      This will result in all funds remaining idle until the adapter cap is configured.
+                      The Morpho Market V1 adapter is not authorized to allocate funds in this vault. This will result in all funds
+                      remaining idle until the adapter cap is configured.
                     </p>
                   </div>
                 </div>
@@ -389,8 +385,9 @@ export function EditCaps({
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-warning">Adapter Partially Authorized</h4>
                     <p className="text-xs text-secondary mt-1">
-                      The Morpho Market V1 adapter is limited to {relativeCapPercent}% of vault funds.
-                      This may result in idle funds that cannot be allocated to markets. Consider setting the adapter cap to 100% with no absolute limit for optimal capital efficiency.
+                      The Morpho Market V1 adapter is limited to {relativeCapPercent}% of vault funds. This may result in idle funds that
+                      cannot be allocated to markets. Consider setting the adapter cap to 100% with no absolute limit for optimal capital
+                      efficiency.
                     </p>
                   </div>
                 </div>
@@ -422,17 +419,10 @@ export function EditCaps({
 
                 return (
                   <div key={info.collateralAddress} className="flex items-center gap-2 text-xs rounded bg-surface py-1 px-2">
-                    <TokenIcon
-                      address={info.collateralAddress}
-                      chainId={chainId}
-                      width={20}
-                      height={20}
-                    />
+                    <TokenIcon address={info.collateralAddress} chainId={chainId} width={20} height={20} />
                     <div className="flex-1 flex items-center gap-2">
                       <span className="font-medium">{info.collateralSymbol}</span>
-                      {isNew && (
-                        <Badge variant="primary">New</Badge>
-                      )}
+                      {isNew && <Badge variant="primary">New</Badge>}
                     </div>
                     <div className="flex items-center gap-1 w-32">
                       <input
@@ -441,7 +431,7 @@ export function EditCaps({
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                            const num = parseFloat(val);
+                            const num = Number.parseFloat(val);
                             if (val === '' || (num >= 0 && num <= 100)) {
                               handleUpdateCollateralCap(info.collateralAddress, 'relativeCap', val);
                             }
@@ -526,12 +516,7 @@ export function EditCaps({
 
         {/* Add Market Button */}
         <div className="flex items-center justify-center">
-          <Button
-            variant="subtle"
-            size="sm"
-            onPress={() => setShowAddMarketModal(true)}
-            isDisabled={!isOwner}
-          >
+          <Button variant="subtle" size="sm" onPress={() => setShowAddMarketModal(true)} isDisabled={!isOwner}>
             <PlusIcon className="h-4 w-4 mr-1" />
             Add Market Cap
           </Button>
@@ -544,12 +529,7 @@ export function EditCaps({
             <Button variant="subtle" size="sm" onPress={onCancel}>
               Cancel
             </Button>
-            <Button
-              variant="cta"
-              size="sm"
-              isDisabled={!hasChanges || isUpdating}
-              onPress={() => void handleSave()}
-            >
+            <Button variant="cta" size="sm" isDisabled={!hasChanges || isUpdating} onPress={() => void handleSave()}>
               {isUpdating ? (
                 <span className="flex items-center gap-2">
                   <Spinner size={12} /> Saving...

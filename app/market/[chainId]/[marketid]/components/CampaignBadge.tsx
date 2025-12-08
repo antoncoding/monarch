@@ -10,7 +10,7 @@ type CampaignBadgeProps = {
   marketId: string;
   loanTokenAddress: string;
   chainId: number;
-  whitelisted: boolean
+  whitelisted: boolean;
 };
 
 export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted }: CampaignBadgeProps) {
@@ -20,7 +20,7 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
     marketId,
     loanTokenAddress,
     chainId,
-    whitelisted
+    whitelisted,
   });
 
   if (loading || !hasActiveRewards) {
@@ -31,21 +31,13 @@ export function CampaignBadge({ marketId, loanTokenAddress, chainId, whitelisted
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setIsModalOpen(true)}
-        className="flex items-center transition-opacity hover:opacity-80"
-      >
+      <button type="button" onClick={() => setIsModalOpen(true)} className="flex items-center transition-opacity hover:opacity-80">
         <Badge variant="success" size="md" className="flex cursor-pointer items-center px-2 py-1">
           <FaGift size={15} className="mr-1" />+{totalBonus.toFixed(1)}%
         </Badge>
       </button>
 
-      <CampaignModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        campaigns={activeCampaigns}
-      />
+      <CampaignModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} campaigns={activeCampaigns} />
     </>
   );
 }

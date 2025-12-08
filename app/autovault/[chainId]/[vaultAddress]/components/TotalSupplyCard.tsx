@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { TbTrendingUp } from 'react-icons/tb';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance } from '@/utils/balance';
 import { DepositToVaultModal } from './DepositToVaultModal';
@@ -48,8 +48,7 @@ export function TotalSupplyCard({
   }, [tokenDecimals, tokenSymbol, totalAssets]);
 
   const earnings24hLabel = useMemo(() => {
-    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined)
-      return null;
+    if (vault24hEarnings === null || vault24hEarnings === undefined || tokenDecimals === undefined) return null;
 
     try {
       const earningsValue = formatBalance(vault24hEarnings, tokenDecimals);

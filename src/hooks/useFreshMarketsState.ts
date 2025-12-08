@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import morphoABI from '@/abis/morpho';
 import { getMorphoAddress } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Market } from '@/utils/types';
 
 const REFRESH_INTERVAL = 15000; // 15 seconds
 
@@ -33,7 +33,7 @@ export const useFreshMarketsState = (
     enableRefresh?: boolean;
     /** Refresh interval in ms (default: 15000) */
     refreshInterval?: number;
-  } = {}
+  } = {},
 ) => {
   const { enableRefresh = true, refreshInterval = REFRESH_INTERVAL } = options;
 
@@ -45,13 +45,22 @@ export const useFreshMarketsState = (
 
   // Create stable query key from market unique keys
   const marketKeys = useMemo(
-    () => markets?.map((m) => m.uniqueKey).sort().join(',') ?? '',
-    [markets]
+    () =>
+      markets
+        ?.map((m) => m.uniqueKey)
+        .sort()
+        .join(',') ?? '',
+    [markets],
   );
 
   const queryKey = ['fresh-markets-state', effectiveChainId, marketKeys];
 
-  const { data: snapshots, isLoading, error, refetch } = useQuery({
+  const {
+    data: snapshots,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: async () => {
       if (!markets || markets.length === 0 || !effectiveChainId || !publicClient) {
@@ -74,7 +83,7 @@ export const useFreshMarketsState = (
         allowFailure: true,
       });
 
-      console.log(`complete reading ${markets.length} market states`)
+      console.log(`complete reading ${markets.length} market states`);
 
       // Process results into snapshots map
       const snapshotsMap = new Map<string, MarketSnapshot>();
@@ -114,7 +123,9 @@ export const useFreshMarketsState = (
     if (!enableRefresh || !markets || markets.length === 0 || !effectiveChainId) return;
 
     const intervalId = setInterval(() => {
-      void queryClient.invalidateQueries({ queryKey: ['fresh-markets-state', effectiveChainId, marketKeys] });
+      void queryClient.invalidateQueries({
+        queryKey: ['fresh-markets-state', effectiveChainId, marketKeys],
+      });
     }, refreshInterval);
 
     return () => clearInterval(intervalId);

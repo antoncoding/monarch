@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCheckCircle, FaCircle } from 'react-icons/fa';
-import { LuArrowRightLeft } from "react-icons/lu";
+import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { WrapStep } from '@/hooks/useWrapLegacyMorpho';
+import type { WrapStep } from '@/hooks/useWrapLegacyMorpho';
 import { formatBalance } from '@/utils/balance';
 
 type WrapProcessModalProps = {
@@ -12,11 +12,7 @@ type WrapProcessModalProps = {
   onOpenChange: (opened: boolean) => void;
 };
 
-export function WrapProcessModal({
-  amount,
-  currentStep,
-  onOpenChange,
-}: WrapProcessModalProps): JSX.Element {
+export function WrapProcessModal({ amount, currentStep, onOpenChange }: WrapProcessModalProps): JSX.Element {
   const steps = useMemo(
     () => [
       {
@@ -53,17 +49,13 @@ export function WrapProcessModal({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ delay: index * 0.1 }}
-                className={`flex items-start gap-4 rounded-lg p-4 ${
-                  isActive ? 'bg-gray-50 dark:bg-gray-800' : ''
-                }`}
+                className={`flex items-start gap-4 rounded-lg p-4 ${isActive ? 'bg-gray-50 dark:bg-gray-800' : ''}`}
               >
                 <div className="mt-1">
                   {isPassed ? (
                     <FaCheckCircle className="text-lg text-success" />
                   ) : (
-                    <FaCircle
-                      className={`text-lg ${isActive ? 'text-primary' : 'text-gray-300'}`}
-                    />
+                    <FaCircle className={`text-lg ${isActive ? 'text-primary' : 'text-gray-300'}`} />
                   )}
                 </div>
                 <div>

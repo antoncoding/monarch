@@ -36,10 +36,7 @@ type UseMarketNetworkReturn = {
  * It checks if the user is on the correct network and provides a function
  * to switch to the correct network when needed
  */
-export function useMarketNetwork({
-  targetChainId,
-  onNetworkSwitched,
-}: UseMarketNetworkProps): UseMarketNetworkReturn {
+export function useMarketNetwork({ targetChainId, onNetworkSwitched }: UseMarketNetworkProps): UseMarketNetworkReturn {
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
   const toast = useStyledToast();

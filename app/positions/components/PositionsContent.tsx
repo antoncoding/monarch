@@ -7,7 +7,7 @@ import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useAccount } from 'wagmi';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
@@ -16,8 +16,8 @@ import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
 import { useMarkets } from '@/hooks/useMarkets';
-import useUserPositionsSummaryData, { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
-import { MarketPosition } from '@/utils/types';
+import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import type { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './onboarding/OnboardingModal';
 import { PositionsSummaryTable } from './PositionsSummaryTable';
 
@@ -94,12 +94,7 @@ export default function Positions() {
               </Button>
             </Link>
             {isOwner && (
-              <Button
-                variant="cta"
-                size="md"
-                className="font-zen"
-                onPress={() => setShowOnboardingModal(true)}
-              >
+              <Button variant="cta" size="md" className="font-zen" onPress={() => setShowOnboardingModal(true)}>
                 <FaPlus size={14} className="mr-2" />
                 New Position
               </Button>
@@ -128,10 +123,7 @@ export default function Positions() {
           />
         )}
 
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          onOpenChange={setShowOnboardingModal}
-        />
+        <OnboardingModal isOpen={showOnboardingModal} onOpenChange={setShowOnboardingModal} />
 
         {loading ? (
           <LoadingScreen message={loadingMessage} className="mt-10" />

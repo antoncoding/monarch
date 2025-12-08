@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Image from 'next/image';
-import { VaultCurator, getVaultLogo } from '@/constants/vaults/known_vaults';
+import { type VaultCurator, getVaultLogo } from '@/constants/vaults/known_vaults';
 
 type VaultIconProps = {
   curator: VaultCurator | string;
@@ -11,12 +11,7 @@ type VaultIconProps = {
   className?: string;
 };
 
-export function VaultIcon({
-  curator,
-  width = 24,
-  height = 24,
-  className = '',
-}: VaultIconProps) {
+export function VaultIcon({ curator, width = 24, height = 24, className = '' }: VaultIconProps) {
   const logoSrc = useMemo(() => getVaultLogo(curator), [curator]);
 
   return (
@@ -27,13 +22,7 @@ export function VaultIcon({
         height: `${height}px`,
       }}
     >
-      <Image
-        src={logoSrc}
-        alt={`${curator} logo`}
-        width={width}
-        height={height}
-        className="object-contain p-0.5"
-      />
+      <Image src={logoSrc} alt={`${curator} logo`} width={width} height={height} className="object-contain p-0.5" />
     </div>
   );
 }

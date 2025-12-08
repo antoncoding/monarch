@@ -1,16 +1,8 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  ReactNode,
-  useMemo,
-} from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode, useMemo } from 'react';
 import { merklApiClient, simplifyMerklCampaign } from '@/utils/merklApi';
-import { MerklCampaign, SimplifiedCampaign } from '@/utils/merklTypes';
+import type { MerklCampaign, SimplifiedCampaign } from '@/utils/merklTypes';
 
 type MerklCampaignsContextType = {
   campaigns: SimplifiedCampaign[];
@@ -38,7 +30,9 @@ export function MerklCampaignsProvider({ children }: MerklCampaignsProviderProps
       const allRawCampaigns: MerklCampaign[] = [];
 
       // Fetch both MORPHOSUPPLY and MORPHOSUPPLY_SINGLETOKEN campaigns
-      const supplyCampaigns = await merklApiClient.fetchActiveCampaigns({ type: 'MORPHOSUPPLY' });
+      const supplyCampaigns = await merklApiClient.fetchActiveCampaigns({
+        type: 'MORPHOSUPPLY',
+      });
       const singleTokenCampaigns = await merklApiClient.fetchActiveCampaigns({
         type: 'MORPHOSUPPLY_SINGLETOKEN',
       });

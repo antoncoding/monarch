@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionForMarket } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/positions';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
-import { MarketPosition } from '@/utils/types';
+import type { MarketPosition } from '@/utils/types';
 import { useMarkets } from './useMarkets';
 
 /**
@@ -20,11 +20,7 @@ import { useMarkets } from './useMarkets';
  * @param marketKey The unique key of the market.
  * @returns User position data, loading state, error state, and refetch function.
  */
-const useUserPosition = (
-  user: string | undefined,
-  chainId: SupportedNetworks | undefined,
-  marketKey: string | undefined,
-) => {
+const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | undefined, marketKey: string | undefined) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
   const { allMarkets: markets } = useMarkets();
@@ -53,19 +49,10 @@ const useUserPosition = (
       console.log(`Attempting fetchPositionSnapshot for ${user} on market ${marketKey}`);
       let snapshot = null;
       try {
-        snapshot = await fetchPositionSnapshot(
-          marketKey,
-          user as Address,
-          chainId,
-          0,
-          publicClient,
-        );
+        snapshot = await fetchPositionSnapshot(marketKey, user as Address, chainId, 0, publicClient);
         console.log(`Snapshot result for ${marketKey}:`, snapshot ? 'Exists' : 'Null');
       } catch (snapshotError) {
-        console.error(
-          `Error fetching position snapshot for ${user} on market ${marketKey}:`,
-          snapshotError,
-        );
+        console.error(`Error fetching position snapshot for ${user} on market ${marketKey}:`, snapshotError);
         // Snapshot fetch failed, will proceed to fallback fetch
       }
 
@@ -77,9 +64,7 @@ const useUserPosition = (
 
         if (market) {
           // Local market data found, construct position directly
-          console.log(
-            `Found local market data for ${marketKey}, constructing position from snapshot.`,
-          );
+          console.log(`Found local market data for ${marketKey}, constructing position from snapshot.`);
           finalPosition = {
             market: market,
             state: {
@@ -93,9 +78,7 @@ const useUserPosition = (
           };
         } else {
           // Local market data NOT found, need to fetch from fallback to get structure
-          console.warn(
-            `Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`,
-          );
+          console.warn(`Local market data not found for ${marketKey}. Fetching from fallback source to combine with snapshot.`);
           let fallbackPosition: MarketPosition | null = null;
 
           // Try Morpho API first if supported
@@ -134,9 +117,7 @@ const useUserPosition = (
             };
           } else {
             // Fallback failed even though snapshot existed
-            console.error(
-              `Snapshot exists for ${marketKey}, but fallback fetch failed. Cannot return full position.`,
-            );
+            console.error(`Snapshot exists for ${marketKey}, but fallback fetch failed. Cannot return full position.`);
             finalPosition = null;
           }
         }
@@ -167,10 +148,7 @@ const useUserPosition = (
         }
       }
 
-      console.log(
-        `Final position data for ${user} on market ${marketKey}:`,
-        finalPosition ? 'Found' : 'Not Found',
-      );
+      console.log(`Final position data for ${user} on market ${marketKey}:`, finalPosition ? 'Found' : 'Not Found');
       // If finalPosition has zero balances, it's still a valid position state from the snapshot or fallback
       return finalPosition;
     },

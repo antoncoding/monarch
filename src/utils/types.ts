@@ -1,13 +1,13 @@
-import { Address } from 'viem';
-import { SupportedNetworks } from './networks';
+import type { Address } from 'viem';
+import type { SupportedNetworks } from './networks';
 
 export type MarketParams = {
-  loanToken: Address,
-  collateralToken: Address
-  oracle: Address,
-  irm: Address
-  lltv: bigint
-}
+  loanToken: Address;
+  collateralToken: Address;
+  oracle: Address;
+  irm: Address;
+  lltv: bigint;
+};
 
 export type MarketPosition = {
   state: {
@@ -331,8 +331,8 @@ export type Market = {
     rateAtTarget: string;
   };
   realizedBadDebt: {
-    underlying: string
-  }
+    underlying: string;
+  };
   supplyingVaults?: {
     address: string;
   }[];

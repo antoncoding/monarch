@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
 import { getExplorerTxURL } from '../utils/external';
-import { SupportedNetworks } from '../utils/networks';
+import type { SupportedNetworks } from '../utils/networks';
 
 type UseTransactionWithToastProps = {
   toastId: string;
@@ -27,12 +27,7 @@ export function useTransactionWithToast({
   successDescription,
   onSuccess,
 }: UseTransactionWithToastProps) {
-  const {
-    data: hash,
-    sendTransaction,
-    error: txError,
-    sendTransactionAsync,
-  } = useSendTransaction();
+  const { data: hash, sendTransaction, error: txError, sendTransactionAsync } = useSendTransaction();
   const {
     isLoading: isConfirming,
     isSuccess: isConfirmed,
@@ -51,27 +46,18 @@ export function useTransactionWithToast({
 
   useEffect(() => {
     if (isConfirming) {
-      toast.loading(
-        <TransactionToast title={pendingText} description={pendingDescription} hash={hash} />,
-        {
-          toastId,
-          onClick,
-          closeButton: true,
-        },
-      );
+      toast.loading(<TransactionToast title={pendingText} description={pendingDescription} hash={hash} />, {
+        toastId,
+        onClick,
+        closeButton: true,
+      });
     }
   }, [isConfirming, pendingText, pendingDescription, toastId, onClick, hash]);
 
   useEffect(() => {
     if (isConfirmed) {
       toast.update(toastId, {
-        render: (
-          <TransactionToast
-            title={`${successText} 🎉`}
-            description={successDescription}
-            hash={hash}
-          />
-        ),
+        render: <TransactionToast title={`${successText} 🎉`} description={successDescription} hash={hash} />,
         type: 'success',
         isLoading: false,
         autoClose: 5000,
@@ -84,12 +70,7 @@ export function useTransactionWithToast({
     }
     if (isError || txError) {
       toast.update(toastId, {
-        render: (
-          <StyledToast
-            title={errorText}
-            message={txError ? txError.message : 'Transaction Failed'}
-          />
-        ),
+        render: <StyledToast title={errorText} message={txError ? txError.message : 'Transaction Failed'} />,
         type: 'error',
         isLoading: false,
         autoClose: 5000,
@@ -97,18 +78,7 @@ export function useTransactionWithToast({
         closeButton: true,
       });
     }
-  }, [
-    hash,
-    isConfirmed,
-    isError,
-    txError,
-    successText,
-    successDescription,
-    errorText,
-    toastId,
-    onClick,
-    onSuccess,
-  ]);
+  }, [hash, isConfirmed, isError, txError, successText, successDescription, errorText, toastId, onClick, onSuccess]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }

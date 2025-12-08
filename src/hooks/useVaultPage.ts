@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { Address, formatUnits, zeroAddress } from 'viem';
-import { SupportedNetworks } from '@/utils/networks';
+import { type Address, formatUnits, zeroAddress } from 'viem';
+import type { SupportedNetworks } from '@/utils/networks';
 import { useMorphoMarketV1Adapters } from './useMorphoMarketV1Adapters';
 import useUserPositionsSummaryData from './useUserPositionsSummaryData';
 import { useVaultAllocations } from './useVaultAllocations';
@@ -54,11 +54,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   });
 
   // Fetch market adapter
-  const {
-    morphoMarketV1Adapter,
-    loading: adapterLoading,
-    refetch: refetchAdapter,
-  } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const { morphoMarketV1Adapter, loading: adapterLoading, refetch: refetchAdapter } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
 
   // Compute derived state
   const needsAdapterDeployment = useMemo(
@@ -67,15 +63,10 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   );
 
   // Fetch adapter positions for APY calculation (only last 24h, only current chain)
-  const {
-    positions: adapterPositions,
-    isEarningsLoading: isAPYLoading,
-  } = useUserPositionsSummaryData(
-    !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress
-      ? morphoMarketV1Adapter
-      : undefined,
+  const { positions: adapterPositions, isEarningsLoading: isAPYLoading } = useUserPositionsSummaryData(
+    !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress ? morphoMarketV1Adapter : undefined,
     'day',
-    [chainId]
+    [chainId],
   );
 
   // Calculate vault APY from adapter positions (weighted average)
@@ -88,9 +79,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
 
     for (const position of adapterPositions) {
       // Normalize to human-readable decimals to avoid overflow/precision loss
-      const suppliedNorm = Number(
-        formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals)
-      );
+      const suppliedNorm = Number(formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals));
       if (suppliedNorm <= 0) continue;
 
       const apy = position.market.state.supplyApy ?? 0;
@@ -119,10 +108,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   }, [adapterPositions]);
 
   const isOwner = useMemo(
-    () =>
-      Boolean(
-        vaultData?.owner && connectedAddress && vaultData.owner.toLowerCase() === connectedAddress.toLowerCase(),
-      ),
+    () => Boolean(vaultData?.owner && connectedAddress && vaultData.owner.toLowerCase() === connectedAddress.toLowerCase()),
     [vaultData?.owner, connectedAddress],
   );
 
@@ -131,10 +117,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     [needsAdapterDeployment, vaultData?.allocators],
   );
 
-  const capsUninitialized = useMemo(
-    () => vaultData?.capsData?.needSetupCaps ?? true,
-    [vaultData?.capsData?.needSetupCaps],
-  );
+  const capsUninitialized = useMemo(() => vaultData?.capsData?.needSetupCaps ?? true, [vaultData?.capsData?.needSetupCaps]);
 
   // Fetch and parse allocations with typed structures
   const {

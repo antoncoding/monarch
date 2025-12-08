@@ -1,4 +1,3 @@
-import React from 'react';
 import { MetricPreview } from './MetricPreview';
 
 type UtilizationPreviewProps = {

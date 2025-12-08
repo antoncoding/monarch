@@ -3,7 +3,7 @@ import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useMarketWarnings } from '@/hooks/useMarketWarnings';
-import { WarningWithDetail, Market } from '@/utils/types';
+import type { WarningWithDetail, Market } from '@/utils/types';
 import { WarningCategory } from '@/utils/types';
 
 type RiskFlagProps = {
@@ -44,12 +44,7 @@ const levelToStyle = (level: 'green' | 'yellow' | 'red') => {
   }
 };
 
-export function RiskIndicator({
-  level,
-  description,
-  mode = 'simple',
-  warningDetail,
-}: RiskFlagProps) {
+export function RiskIndicator({ level, description, mode = 'simple', warningDetail }: RiskFlagProps) {
   const styles = levelToStyle(level);
   const icon = levelToIcon(level);
 

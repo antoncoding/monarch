@@ -40,7 +40,7 @@ function RebalanceAnimation() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const SLOT_COUNT = 3
+      const SLOT_COUNT = 3;
 
       // Randomly decide how many slots to change (1-3)
       const numSlotsToChange = Math.floor(Math.random() * SLOT_COUNT) + 1;
@@ -63,7 +63,7 @@ function RebalanceAnimation() {
             };
           }
           return slot;
-        })
+        }),
       );
 
       // After animation duration, update the current index
@@ -78,7 +78,7 @@ function RebalanceAnimation() {
               };
             }
             return slot;
-          })
+          }),
         );
       }, 500); // Match this with CSS transition duration
     }, 3000); // Change every 3 seconds
@@ -89,10 +89,7 @@ function RebalanceAnimation() {
   return (
     <div className="flex items-center justify-center gap-2 py-4 sm:gap-3">
       {slots.map((slot, index) => (
-        <div
-          key={index}
-          className="relative h-12 w-12 overflow-hidden rounded-md bg-surface shadow-md sm:h-14 sm:w-14"
-        >
+        <div key={index} className="relative h-12 w-12 overflow-hidden rounded-md bg-surface shadow-md sm:h-14 sm:w-14">
           {/* Current token - slides up when spinning */}
           <div
             className={`absolute inset-0 flex items-center justify-center ${

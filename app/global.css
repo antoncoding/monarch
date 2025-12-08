@@ -1,5 +1,5 @@
 /* stylelint-disable custom-property-pattern -- RainbowKit does not use kebab-case */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Zen+Kaku+Gothic+Antique&family=Zen+Kaku+Gothic+New&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Zen+Kaku+Gothic+Antique&family=Zen+Kaku+Gothic+New&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -209,8 +209,9 @@ code,
 kbd,
 samp,
 pre {
-  font-family: ui-monospace, Inter, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family:
+    ui-monospace, Inter, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
   font-feature-settings: normal;
   font-size: 14px;
   font-variation-settings: normal;

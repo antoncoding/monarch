@@ -2,9 +2,7 @@ import isClient from './isClient';
 
 // TODO ~~~~
 let perfumeLib: {
-  initPerfume: (arg0: {
-    analyticsTracker: ({ metricName, data }: { metricName: unknown; data: unknown }) => void;
-  }) => unknown;
+  initPerfume: (arg0: { analyticsTracker: ({ metricName, data }: { metricName: unknown; data: unknown }) => void }) => unknown;
   end: (stepName: string) => unknown;
   start: (stepName: string) => unknown;
   markStep: boolean | { initPerfume: () => void; '': unknown };
@@ -39,7 +37,7 @@ export const initAnalytics = function () {
 
 export const markStep = function (stepName: string) {
   if (isClient() && perfumeLib && perfumeLib.markStep) {
-    perfumeLib.end('perf.' + stepName);
-    perfumeLib.start('perf.' + stepName);
+    perfumeLib.end(`perf.${stepName}`);
+    perfumeLib.start(`perf.${stepName}`);
   }
 };

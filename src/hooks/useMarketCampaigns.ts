@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { SimplifiedCampaign } from '@/utils/merklTypes';
+import type { SimplifiedCampaign } from '@/utils/merklTypes';
 import { useMerklCampaigns } from './useMerklCampaigns';
 
 type UseMarketCampaignsReturn = {
@@ -15,24 +15,20 @@ type MarketCampaignsOptions = {
   marketId: string;
   loanTokenAddress?: string;
   chainId?: number;
-  whitelisted: boolean
+  whitelisted: boolean;
 };
 
-export function useMarketCampaigns(
-  options: MarketCampaignsOptions,
-): UseMarketCampaignsReturn {
+export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCampaignsReturn {
   const { campaigns: allCampaigns, loading, error } = useMerklCampaigns();
 
   const result = useMemo(() => {
     // Handle both string and object parameters for backward compatibility
-    const { marketId, loanTokenAddress, chainId, whitelisted } = options
+    const { marketId, loanTokenAddress, chainId, whitelisted } = options;
 
     const normalizedMarketId = marketId.toLowerCase();
 
     // Filter campaigns for this specific market
-    const directMarketCampaigns = allCampaigns.filter(
-      (campaign) => campaign.marketId.toLowerCase() === normalizedMarketId,
-    );
+    const directMarketCampaigns = allCampaigns.filter((campaign) => campaign.marketId.toLowerCase() === normalizedMarketId);
 
     // For SINGLETOKEN campaigns, also include campaigns where the loan token matches the target token
     // the market has to be whitelisted

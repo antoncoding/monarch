@@ -21,9 +21,5 @@ export function Name({ address, className = '' }: NameProps) {
   // Use font-zen for ENS names, font-monospace (smaller) for addresses
   const fontClass = ensName ? 'font-zen' : 'font-monospace text-[0.9em]';
 
-  return (
-    <span className={clsx(fontClass, className)}>
-      {ensName ?? `${address.slice(0, 6)}...${address.slice(-4)}`}
-    </span>
-  );
+  return <span className={clsx(fontClass, className)}>{ensName ?? `${address.slice(0, 6)}...${address.slice(-4)}`}</span>;
 }

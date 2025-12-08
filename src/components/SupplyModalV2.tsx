@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { LuArrowRightLeft } from "react-icons/lu";
+import { useEffect, useMemo, useState } from 'react';
+import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
-import { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { MarketDetailsBlock } from './common/MarketDetailsBlock';
 import { SupplyModalContent } from './SupplyModalContent';
 import { TokenIcon } from './TokenIcon';
@@ -54,18 +54,10 @@ export function SupplyModalV2({
   }, [mode, supplyPreviewAmount, withdrawPreviewAmount]);
 
   return (
-    <Modal
-      isOpen
-      onOpenChange={onOpenChange}
-      size="lg"
-      scrollBehavior="inside"
-      className="w-full max-w-lg"
-    >
+    <Modal isOpen onOpenChange={onOpenChange} size="lg" scrollBehavior="inside" className="w-full max-w-lg">
       <ModalHeader
         title={`${mode === 'supply' ? 'Supply' : 'Withdraw'} ${activeMarket.loanAsset.symbol}`}
-        description={
-          mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'
-        }
+        description={mode === 'supply' ? 'Supply to earn interest' : 'Withdraw your supplied assets'}
         mainIcon={
           <TokenIcon
             address={activeMarket.loanAsset.address}

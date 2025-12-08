@@ -1,4 +1,3 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { FiGift } from 'react-icons/fi';
@@ -11,15 +10,15 @@ type RewardsIndicatorProps = {
   chainId: number;
   marketId: string;
   loanTokenAddress?: string;
-  whitelisted: boolean // whitelisted by morpho
+  whitelisted: boolean; // whitelisted by morpho
 };
 
 export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelisted, size }: RewardsIndicatorProps) {
-  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({ 
-    marketId, 
-    loanTokenAddress, 
+  const { activeCampaigns, hasActiveRewards, loading } = useMarketCampaigns({
+    marketId,
+    loanTokenAddress,
     chainId,
-    whitelisted
+    whitelisted,
   });
 
   if (loading || !hasActiveRewards) {
@@ -29,10 +28,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
   // Create tooltip detail with all rewards
   const rewardsList = activeCampaigns
     .map((campaign) => {
-      const rewardType =
-        campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-          ? 'supplier'
-          : 'borrower';
+      const rewardType = campaign.type === 'MORPHOSUPPLY' || campaign.type === 'MORPHOSUPPLY_SINGLETOKEN' ? 'supplier' : 'borrower';
       return `${campaign.rewardToken.symbol} ${rewardType} reward +${campaign.apr.toFixed(2)}%`;
     })
     .join('\n');
@@ -45,9 +41,7 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
       }}
       content={
         <TooltipContent
-          icon={
-            <Image src={merklLogo} alt="Merkl" width={24} height={24} className="rounded-full" />
-          }
+          icon={<Image src={merklLogo} alt="Merkl" width={24} height={24} className="rounded-full" />}
           title="External Rewards"
           detail={rewardsList}
         />

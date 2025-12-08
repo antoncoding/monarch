@@ -1,4 +1,4 @@
-import { DatePicker, DatePickerProps } from '@heroui/react';
+import { DatePicker, type DatePickerProps } from '@heroui/react';
 
 function StyledDatePicker(props: DatePickerProps) {
   const classNames = {

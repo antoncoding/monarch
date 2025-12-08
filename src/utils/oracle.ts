@@ -1,18 +1,10 @@
-import { zeroAddress, Address } from 'viem';
-import {
-  getChainlinkOracle,
-  ChainlinkOracleEntry,
-  isChainlinkOracle,
-} from '@/constants/oracle/chainlink-data';
-import { getCompoundFeed, CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
-import { getGeneralFeed, isGeneralFeed, GeneralPriceFeed } from '@/constants/oracle/general-feeds';
-import {
-  getRedstoneOracle,
-  RedstoneOracleEntry,
-  isRedstoneOracle,
-} from '@/constants/oracle/redstone-data';
+import { zeroAddress, type Address } from 'viem';
+import { getChainlinkOracle, type ChainlinkOracleEntry, isChainlinkOracle } from '@/constants/oracle/chainlink-data';
+import { getCompoundFeed, type CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
+import { getGeneralFeed, isGeneralFeed, type GeneralPriceFeed } from '@/constants/oracle/general-feeds';
+import { getRedstoneOracle, type RedstoneOracleEntry, isRedstoneOracle } from '@/constants/oracle/redstone-data';
 import { isSupportedChain } from './networks';
-import { MorphoChainlinkOracleData, OracleFeed } from './types';
+import type { MorphoChainlinkOracleData, OracleFeed } from './types';
 
 type VendorInfo = {
   coreVendors: PriceFeedVendors[]; // Well-known vendors (Chainlink, Redstone, etc.)
@@ -102,12 +94,7 @@ export type UnknownFeedResult = {
 };
 
 // Discriminated union - ensures vendor and data types are always matched correctly
-export type FeedVendorResult =
-  | ChainlinkFeedResult
-  | CompoundFeedResult
-  | RedstoneFeedResult
-  | GeneralFeedResult
-  | UnknownFeedResult;
+export type FeedVendorResult = ChainlinkFeedResult | CompoundFeedResult | RedstoneFeedResult | GeneralFeedResult | UnknownFeedResult;
 
 /**
  * Centralized function to detect feed vendor and retrieve corresponding data
@@ -237,10 +224,7 @@ export function detectFeedVendor(feedAddress: Address | string, chainId: number)
  * @param chainId
  * @returns { base: "ETH", quote: "USD" }
  */
-function getFeedPath(
-  feed: OracleFeed | null | undefined,
-  chainId: number,
-): { base: string; quote: string } {
+function getFeedPath(feed: OracleFeed | null | undefined, chainId: number): { base: string; quote: string } {
   if (!feed || !feed.address) return { base: 'EMPTY', quote: 'EMPTY' };
 
   const data = detectFeedVendor(feed.address, chainId);
@@ -249,11 +233,7 @@ function getFeedPath(
   return { base, quote };
 }
 
-export function getOracleType(
-  oracleData: MorphoChainlinkOracleData | null | undefined,
-  oracleAddress?: string,
-  chainId?: number,
-) {
+export function getOracleType(oracleData: MorphoChainlinkOracleData | null | undefined, oracleAddress?: string, chainId?: number) {
   // Morpho API only contains oracleData if it follows the standard MorphoOracle structure with feeds
   if (!oracleData) return OracleType.Custom;
 
@@ -266,15 +246,11 @@ export function getOracleType(
     return OracleType.Standard;
 
   // Other logics to determin oracle types
-  if (oracleAddress === zeroAddress || (chainId && isSupportedChain(chainId)))
-    return OracleType.Custom;
+  if (oracleAddress === zeroAddress || (chainId && isSupportedChain(chainId))) return OracleType.Custom;
   return OracleType.Custom;
 }
 
-export function parsePriceFeedVendors(
-  oracleData: MorphoChainlinkOracleData | null | undefined,
-  chainId: number,
-): VendorInfo {
+export function parsePriceFeedVendors(oracleData: MorphoChainlinkOracleData | null | undefined, chainId: number): VendorInfo {
   if (!oracleData) {
     return {
       coreVendors: [],
@@ -287,12 +263,7 @@ export function parsePriceFeedVendors(
     };
   }
 
-  if (
-    !oracleData.baseFeedOne &&
-    !oracleData.baseFeedTwo &&
-    !oracleData.quoteFeedOne &&
-    !oracleData.quoteFeedTwo
-  ) {
+  if (!oracleData.baseFeedOne && !oracleData.baseFeedTwo && !oracleData.quoteFeedOne && !oracleData.quoteFeedTwo) {
     return {
       coreVendors: [],
       taggedVendors: [],
@@ -304,12 +275,7 @@ export function parsePriceFeedVendors(
     };
   }
 
-  const feeds = [
-    oracleData.baseFeedOne,
-    oracleData.baseFeedTwo,
-    oracleData.quoteFeedOne,
-    oracleData.quoteFeedTwo,
-  ];
+  const feeds = [oracleData.baseFeedOne, oracleData.baseFeedTwo, oracleData.quoteFeedOne, oracleData.quoteFeedTwo];
 
   const coreVendors = new Set<PriceFeedVendors>();
   const taggedVendors = new Set<string>();
@@ -409,9 +375,7 @@ export function checkFeedsPath(
   });
 
   // Check for unknown assets
-  const hasUnknownAssets = feedPaths.some(
-    ({ path }) => path.base === 'Unknown' || path.quote === 'Unknown',
-  );
+  const hasUnknownAssets = feedPaths.some(({ path }) => path.base === 'Unknown' || path.quote === 'Unknown');
 
   if (hasUnknownAssets) {
     return {
@@ -469,12 +433,8 @@ export function checkFeedsPath(
   cancelOut(numeratorCounts, denominatorCounts);
 
   // Check if remaining terms match expected collateral/loan path
-  const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter(
-    (asset) => (numeratorCounts.get(asset) ?? 0) > 0,
-  );
-  const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter(
-    (asset) => (denominatorCounts.get(asset) ?? 0) > 0,
-  );
+  const remainingNumeratorAssets = Array.from(numeratorCounts.keys()).filter((asset) => (numeratorCounts.get(asset) ?? 0) > 0);
+  const remainingDenominatorAssets = Array.from(denominatorCounts.keys()).filter((asset) => (denominatorCounts.get(asset) ?? 0) > 0);
 
   // Normalize the expected collateral and loan symbols for comparison
   const normalizedCollateralSymbol = normalizeSymbol(collateralSymbol);
@@ -500,9 +460,7 @@ export function checkFeedsPath(
   if (remainingNumeratorAssets.length === 0 && remainingDenominatorAssets.length === 0) {
     missingPath = 'All assets canceled out - no price path found';
   } else {
-    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join(
-      '*',
-    )}`;
+    const actualPath = `${remainingNumeratorAssets.join('*')}/${remainingDenominatorAssets.join('*')}`;
     missingPath = `Oracle uses ${actualPath.toUpperCase()} instead of ${expectedPath.toUpperCase()}. Depegs or divergence won't be reflected`;
   }
 
@@ -517,5 +475,5 @@ export function checkFeedsPath(
  * Helper function to get truncated asset names (max 5 chars)
  */
 export function getTruncatedAssetName(asset: string): string {
-  return asset.length > 5 ? asset.slice(0, 5) + '..' : asset;
+  return asset.length > 5 ? `${asset.slice(0, 5)}..` : asset;
 }

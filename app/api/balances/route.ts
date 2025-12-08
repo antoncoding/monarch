@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
 import { getKnownBalancesWithClient } from './evm-client';
@@ -26,20 +26,11 @@ export async function GET(req: NextRequest) {
 
     // Get supported token addresses for this chain
     const tokenAddresses = supportedTokens
-      .filter(token =>
-        token.networks.some(network => network.chain.id === chainIdNum)
-      )
-      .flatMap(token =>
-        token.networks
-          .filter(network => network.chain.id === chainIdNum)
-          .map(network => network.address)
-      );
+      .filter((token) => token.networks.some((network) => network.chain.id === chainIdNum))
+      .flatMap((token) => token.networks.filter((network) => network.chain.id === chainIdNum).map((network) => network.address));
 
     // Special handling for hyper and monad: no alchemy support
-    if (
-      chainIdNum === SupportedNetworks.HyperEVM || 
-      chainIdNum === SupportedNetworks.Monad
-    ) {
+    if (chainIdNum === SupportedNetworks.HyperEVM || chainIdNum === SupportedNetworks.Monad) {
       const tokens = await getKnownBalancesWithClient(address, tokenAddresses, chainIdNum);
       return NextResponse.json({ tokens });
     }
@@ -73,8 +64,7 @@ export async function GET(req: NextRequest) {
     };
 
     const nonZeroBalances: TokenBalance[] = balancesData.result.tokenBalances.filter(
-      (token: TokenBalance) =>
-        token.tokenBalance !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+      (token: TokenBalance) => token.tokenBalance !== '0x0000000000000000000000000000000000000000000000000000000000000000',
     );
 
     // Filter out failed metadata requests

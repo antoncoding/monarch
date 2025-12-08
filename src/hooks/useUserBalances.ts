@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { SupportedNetworks, ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
+import { type SupportedNetworks, ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
 export type TokenBalance = {
   address: string;
@@ -33,7 +33,7 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
 
   // Get networks to fetch from - either specified ones or agent-enabled networks
   const networksToFetch = useMemo(() => {
-    return options.networkIds ?? ALL_SUPPORTED_NETWORKS
+    return options.networkIds ?? ALL_SUPPORTED_NETWORKS;
   }, [options.networkIds]);
 
   const fetchBalances = useCallback(
@@ -151,6 +151,6 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
 // Helper function to fetch balances from all networks (for backward compatibility)
 export function useUserBalancesAllNetworks() {
   return useUserBalances({
-    networkIds: ALL_SUPPORTED_NETWORKS
+    networkIds: ALL_SUPPORTED_NETWORKS,
   });
 }

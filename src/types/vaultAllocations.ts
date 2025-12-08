@@ -1,5 +1,5 @@
-import { Address } from 'viem';
-import { Market } from '@/utils/types';
+import type { Address } from 'viem';
+import type { Market } from '@/utils/types';
 
 /**
  * Typed allocation structures that combine cap metadata with allocation amounts.

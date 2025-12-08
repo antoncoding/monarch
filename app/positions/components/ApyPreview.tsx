@@ -1,4 +1,3 @@
-import React from 'react';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { MetricPreview } from './MetricPreview';
 

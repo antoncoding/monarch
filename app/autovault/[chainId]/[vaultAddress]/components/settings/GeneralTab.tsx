@@ -3,7 +3,7 @@ import { Input } from '@heroui/react';
 import { Button } from '@/components/common/Button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
-import { GeneralTabProps } from './types';
+import type { GeneralTabProps } from './types';
 
 export function GeneralTab({
   isOwner,
@@ -93,8 +93,7 @@ export function GeneralTab({
             id={nameInputId}
             classNames={{
               input: 'text-sm',
-              inputWrapper:
-                'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
+              inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
             }}
           />
         </div>
@@ -115,8 +114,7 @@ export function GeneralTab({
             id={symbolInputId}
             classNames={{
               input: 'text-sm',
-              inputWrapper:
-                'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
+              inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
             }}
           />
         </div>

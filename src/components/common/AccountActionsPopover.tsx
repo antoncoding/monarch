@@ -21,10 +21,7 @@ type AccountActionsPopoverProps = {
  * - View account (positions page)
  * - View on Etherscan
  */
-export function AccountActionsPopover({
-  address,
-  children,
-}: AccountActionsPopoverProps) {
+export function AccountActionsPopover({ address, children }: AccountActionsPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const toast = useStyledToast();
 

@@ -110,17 +110,12 @@ export function AccountIdentity({
     const badgeClasses = clsx(
       'inline-flex items-center gap-1 rounded-sm bg-hovered px-2 py-1 text-xs text-secondary',
       copyable && 'cursor-pointer transition-colors hover:brightness-110',
-      href &&
-        'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
+      href && 'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
       className,
     );
 
     const badgeElement = href ? (
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      >
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
         <Link
           href={href}
           target={linkTo === 'explorer' ? '_blank' : undefined}
@@ -152,11 +147,7 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return (
-        <AccountActionsPopover address={address}>
-          {badgeElement}
-        </AccountActionsPopover>
-      );
+      return <AccountActionsPopover address={address}>{badgeElement}</AccountActionsPopover>;
     }
 
     return badgeElement;
@@ -188,17 +179,12 @@ export function AccountIdentity({
       'inline-flex items-center gap-1.5 rounded-sm px-1.5 py-1 text-xs',
       mounted && isOwner ? 'bg-green-500/10 text-green-500' : 'bg-hovered text-secondary',
       copyable && 'cursor-pointer transition-colors hover:brightness-110',
-      href &&
-        'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
+      href && 'no-underline transition-colors hover:bg-gray-300 hover:text-primary hover:no-underline dark:hover:bg-gray-700',
       className,
     );
 
     const compactElement = href ? (
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      >
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
         <Link
           href={href}
           target={linkTo === 'explorer' ? '_blank' : undefined}
@@ -230,11 +216,7 @@ export function AccountIdentity({
     );
 
     if (showActions) {
-      return (
-        <AccountActionsPopover address={address}>
-          {compactElement}
-        </AccountActionsPopover>
-      );
+      return <AccountActionsPopover address={address}>{compactElement}</AccountActionsPopover>;
     }
 
     return compactElement;
@@ -276,16 +258,12 @@ export function AccountIdentity({
 
       {/* ENS badge (only show if there's an actual ENS name) */}
       {showAddress && !vaultName && ensName && (
-        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
-          {ensName}
-        </span>
+        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">{ensName}</span>
       )}
 
       {/* Vault name badge (if it's a vault) */}
       {vaultName && (
-        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">
-          {vaultName}
-        </span>
+        <span className="inline-flex items-center rounded-sm bg-hovered px-2 py-1 font-zen text-xs text-secondary">{vaultName}</span>
       )}
 
       {/* Explorer link */}
@@ -304,19 +282,11 @@ export function AccountIdentity({
     </>
   );
 
-  const fullClasses = clsx(
-    'flex items-center gap-2',
-    copyable && 'cursor-pointer transition-colors hover:brightness-110',
-    className,
-  );
+  const fullClasses = clsx('flex items-center gap-2', copyable && 'cursor-pointer transition-colors hover:brightness-110', className);
 
   const fullElement =
     href && linkTo === 'profile' ? (
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-      >
+      <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} transition={{ type: 'spring', stiffness: 400, damping: 25 }}>
         <Link href={href} className={fullClasses}>
           {fullContent}
         </Link>
@@ -335,11 +305,7 @@ export function AccountIdentity({
     );
 
   if (showActions) {
-    return (
-      <AccountActionsPopover address={address}>
-        {fullElement}
-      </AccountActionsPopover>
-    );
+    return <AccountActionsPopover address={address}>{fullElement}</AccountActionsPopover>;
   }
 
   return fullElement;

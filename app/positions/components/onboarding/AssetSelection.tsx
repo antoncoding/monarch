@@ -11,19 +11,11 @@ import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { useOnboarding } from './OnboardingContext';
-import { TokenWithMarkets } from './types';
+import type { TokenWithMarkets } from './types';
 
 function NetworkIcon({ networkId }: { networkId: number }) {
   const url = getNetworkImg(networkId);
-  return (
-    <Image
-      src={url as string}
-      alt={`networkId-${networkId}`}
-      width={16}
-      height={16}
-      className="rounded-full"
-    />
-  );
+  return <Image src={url as string} alt={`networkId-${networkId}`} width={16} height={16} className="rounded-full" />;
 }
 
 export function AssetSelection() {
@@ -40,8 +32,7 @@ export function AssetSelection() {
       // Filter markets for this specific token and network
       const relevantMarkets = markets.filter(
         (market) =>
-          market.morphoBlue.chain.id === balance.chainId &&
-          market.loanAsset.address.toLowerCase() === balance.address.toLowerCase(),
+          market.morphoBlue.chain.id === balance.chainId && market.loanAsset.address.toLowerCase() === balance.address.toLowerCase(),
       );
 
       if (relevantMarkets.length === 0) return;
@@ -54,7 +45,7 @@ export function AssetSelection() {
       // Get network name
       const network = balance.chainId;
 
-      const token = findToken(balance.address, balance.chainId)
+      const token = findToken(balance.address, balance.chainId);
       if (!token) return;
 
       result.push({
@@ -95,9 +86,7 @@ export function AssetSelection() {
       {tokensWithMarkets.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center gap-4 rounded border border-gray-200 p-8 text-center dark:border-gray-700">
           <p className="text-lg">No assets available</p>
-          <p className="text-sm text-gray-400">
-            You need to have some assets in your wallet to supply
-          </p>
+          <p className="text-sm text-gray-400">You need to have some assets in your wallet to supply</p>
           <Link href="/markets">
             <Button color="primary" className="rounded">
               View Markets
@@ -116,22 +105,12 @@ export function AssetSelection() {
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             >
               <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 transition-transform duration-300 group-hover:scale-110 dark:bg-gray-700">
-                {token.logoURI && (
-                  <Image
-                    src={token.logoURI}
-                    alt={token.symbol}
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                )}
+                {token.logoURI && <Image src={token.logoURI} alt={token.symbol} width={32} height={32} className="rounded-full" />}
               </div>
               <div className="flex flex-1 flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium transition-colors duration-300 group-hover:text-primary">
-                      {token.symbol}
-                    </p>
+                    <p className="font-medium transition-colors duration-300 group-hover:text-primary">{token.symbol}</p>
                     <div className="badge">
                       <NetworkIcon networkId={token.network} />
                       <span>{getNetworkName(token.network)}</span>
@@ -141,13 +120,13 @@ export function AssetSelection() {
 
                 <div className="space-y-2">
                   <p className="text-sm text-gray-400 transition-opacity duration-300 group-hover:opacity-80">
-                    Balance: {formatReadable(formatUnits(BigInt(token.balance), token.decimals))}{' '}
-                    {token.symbol}
+                    Balance: {formatReadable(formatUnits(BigInt(token.balance), token.decimals))} {token.symbol}
                   </p>
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium ">
-                        {token.markets.length} market{token.markets.length !== 1 ? 's' : ''}
+                        {token.markets.length} market
+                        {token.markets.length !== 1 ? 's' : ''}
                       </p>
                       <span className="text-xs text-gray-400">•</span>
                       <p className="text-sm text-gray-400">

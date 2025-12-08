@@ -1,15 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-  useMemo,
-  useRef,
-} from 'react';
+import { createContext, useContext, type ReactNode, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
@@ -17,7 +8,7 @@ import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 // Export the type definition
 export type MarketsContextType = {
@@ -58,10 +49,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const [rawMarkets, setRawMarkets] = useState<Market[]>([]);
 
   // Global setting for showing unwhitelisted markets
-  const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage(
-    'showUnwhitelistedMarkets',
-    false,
-  );
+  const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage('showUnwhitelistedMarkets', false);
 
   // Global setting for showing full reward APY (base + external rewards)
   const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
@@ -70,13 +58,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const [isAprDisplay, setIsAprDisplay] = useLocalStorage('settings-apr-display', false);
 
   // Blacklisted markets management
-  const {
-    allBlacklistedMarketKeys,
-    addBlacklistedMarket,
-    removeBlacklistedMarket,
-    isBlacklisted,
-    isDefaultBlacklisted,
-  } = useBlacklistedMarkets();
+  const { allBlacklistedMarketKeys, addBlacklistedMarket, removeBlacklistedMarket, isBlacklisted, isDefaultBlacklisted } =
+    useBlacklistedMarkets();
 
   // Oracle data context for enriching markets
   const { getOracleData } = useOracleDataContext();
@@ -136,9 +119,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setRawMarkets(baseFiltered);
 
       // Apply blacklist filter
-      const blacklistFiltered = baseFiltered.filter(
-        (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
-      );
+      const blacklistFiltered = baseFiltered.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
 
       // Add liquidation and whitelist status using the helper
       const processed = addMarketMetadata(blacklistFiltered);
@@ -158,9 +139,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
     if (rawMarkets.length === 0) return;
 
     // Apply blacklist filter to raw markets
-    const blacklistFiltered = rawMarkets.filter(
-      (market) => !allBlacklistedMarketKeys.has(market.uniqueKey),
-    );
+    const blacklistFiltered = rawMarkets.filter((market) => !allBlacklistedMarketKeys.has(market.uniqueKey));
 
     // Add liquidation and whitelist status using the helper
     const processed = addMarketMetadata(blacklistFiltered);
@@ -183,7 +162,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       setError(null); // Reset error at the start
 
       // Define the networks to fetch markets for
-      
+
       let combinedMarkets: Market[] = [];
       let fetchErrors: unknown[] = [];
 
@@ -193,7 +172,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
           ALL_SUPPORTED_NETWORKS.map(async (network) => {
             try {
               let networkMarkets: Market[] = [];
-              let trySubgraph = false
+              let trySubgraph = false;
 
               // Try Morpho API first if supported
               if (supportsMorphoApi(network)) {
@@ -201,15 +180,12 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                   console.log(`Attempting to fetch markets via Morpho API for ${network}`);
                   networkMarkets = await fetchMorphoMarkets(network);
                 } catch (morphoError) {
-                  trySubgraph = true
-                  console.error(
-                    `Failed to fetch markets via Morpho API for ${network}:`,
-                    morphoError,
-                  );
+                  trySubgraph = true;
+                  console.error(`Failed to fetch markets via Morpho API for ${network}:`, morphoError);
                   // Continue to Subgraph fallback
                 }
               } else {
-                trySubgraph = true
+                trySubgraph = true;
               }
 
               // If Morpho API failed or not supported, try Subgraph
@@ -219,10 +195,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
                   networkMarkets = await fetchSubgraphMarkets(network);
                   console.log(`Fetched ${networkMarkets.length} markets via Subgraph for ${network}`);
                 } catch (subgraphError) {
-                  console.error(
-                    `Failed to fetch markets via Subgraph for ${network}:`,
-                    subgraphError,
-                  );
+                  console.error(`Failed to fetch markets via Subgraph for ${network}:`, subgraphError);
                 }
               }
 

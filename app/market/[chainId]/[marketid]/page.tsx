@@ -1,4 +1,4 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 import MarketContent from './content';
 
 export const metadata: Metadata = {

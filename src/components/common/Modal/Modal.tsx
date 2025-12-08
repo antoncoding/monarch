@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 import { Modal as HeroModal, ModalContent } from '@heroui/react';
 
 export type ModalVariant = 'standard' | 'compact' | 'custom';
@@ -44,11 +45,7 @@ export function Modal({
 
   const zIndexClasses = Z_INDEX_MAP[zIndex];
   const backdropStyle =
-    backdrop === 'transparent'
-      ? 'bg-transparent'
-      : backdrop === 'opaque'
-        ? 'bg-black/70'
-        : 'bg-black/70 backdrop-blur-md';
+    backdrop === 'transparent' ? 'bg-transparent' : backdrop === 'opaque' ? 'bg-black/70' : 'bg-black/70 backdrop-blur-md';
 
   return (
     <HeroModal
@@ -66,12 +63,9 @@ export function Modal({
         base: `${zIndexClasses.wrapper}`,
       }}
     >
-      <ModalContent
-        className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}
-      >
+      <ModalContent className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}>
         {/* eslint-disable-next-line @typescript-eslint/promise-function-async */}
-        {(closeModal) =>
-          typeof children === 'function' ? children(closeModal) : children}
+        {(closeModal) => (typeof children === 'function' ? children(closeModal) : children)}
       </ModalContent>
     </HeroModal>
   );

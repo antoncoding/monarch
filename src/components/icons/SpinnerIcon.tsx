@@ -1,16 +1,9 @@
-import React from 'react';
+import type React from 'react';
 
 type Props = React.SVGProps<SVGSVGElement>;
 export function SpinnerIcon(props: Props) {
   return (
-    <svg
-      stroke="currentColor"
-      fill="none"
-      strokeWidth="0"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
+    <svg stroke="currentColor" fill="none" strokeWidth="0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
         opacity="0.2"
         fillRule="evenodd"

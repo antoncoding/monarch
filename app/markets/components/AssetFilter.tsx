@@ -1,9 +1,9 @@
 'use client';
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
+import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 
 type FilterProps = {
   label: string;
@@ -65,9 +65,7 @@ export default function AssetFilter({
     }
   };
 
-  const filteredItems = items.filter((token) =>
-    token.symbol.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filteredItems = items.filter((token) => token.symbol.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     if (updateFromSearch) {
@@ -99,10 +97,7 @@ export default function AssetFilter({
           ) : selectedAssets.length > 0 ? (
             <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
               {selectedAssets.map((asset) => {
-                const token = items.find(
-                  (item) =>
-                    item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset,
-                );
+                const token = items.find((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset);
                 return token ? (
                   token.img ? (
                     <Image key={asset} src={token.img} alt={token.symbol} width={18} height={18} />
@@ -147,9 +142,7 @@ export default function AssetFilter({
                   <li
                     key={token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')}
                     className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                      selectedAssets.includes(
-                        token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
-                      )
+                      selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))
                         ? 'bg-gray-300 dark:bg-gray-700'
                         : ''
                     }`}
@@ -160,14 +153,10 @@ export default function AssetFilter({
                       }
                     }}
                     role="option"
-                    aria-selected={selectedAssets.includes(
-                      token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'),
-                    )}
+                    aria-selected={selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))}
                     tabIndex={0}
                   >
-                    <span title={token.symbol}>
-                      {token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}
-                    </span>
+                    <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
                     {token.img ? (
                       <Image src={token.img} alt={token.symbol} width={18} height={18} />
                     ) : (

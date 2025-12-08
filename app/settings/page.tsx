@@ -15,15 +15,9 @@ import { useMarkets } from '@/hooks/useMarkets';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
-    'includeUnknownTokens',
-    false,
-  );
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage('includeUnknownTokens', false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
-    'userTrustedVaults',
-    defaultTrustedVaults,
-  );
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
 
@@ -32,11 +26,7 @@ export default function SettingsPage() {
   const [mounted, setMounted] = React.useState(false);
 
   const defaultVaultKeys = React.useMemo(() => {
-    return new Set(
-      defaultTrustedVaults.map(
-        (vault) => `${vault.chainId}-${vault.address.toLowerCase()}`,
-      ),
-    );
+    return new Set(defaultTrustedVaults.map((vault) => `${vault.chainId}-${vault.address.toLowerCase()}`));
   }, []);
 
   const sortedTrustedVaults = React.useMemo(() => {
@@ -68,12 +58,12 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Use Gasless Approvals</h3>
                   <p className="text-sm text-secondary">
-                    Enable signature-based token approvals using Permit2. This bundles approvals and
-                    actions into a single transaction, saving gas.
+                    Enable signature-based token approvals using Permit2. This bundles approvals and actions into a single transaction,
+                    saving gas.
                   </p>
                   <p className="mt-2 text-xs text-secondary opacity-80">
-                    Note: If you're using a smart contract wallet (like Safe or other multisig), you
-                    may want to disable this and use standard approvals instead.
+                    Note: If you're using a smart contract wallet (like Safe or other multisig), you may want to disable this and use
+                    standard approvals instead.
                   </p>
                 </div>
                 <IconSwitch
@@ -96,22 +86,15 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Show APR Instead of APY</h3>
                   <p className="text-sm text-secondary">
-                    Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY).
-                    APR represents the simple annualized rate, while APY accounts for continuous compounding.
+                    Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY). APR represents the simple annualized
+                    rate, while APY accounts for continuous compounding.
                   </p>
                   <p className="mt-2 text-xs text-secondary opacity-80">
-                    APR is calculated as ln(1 + APY) and represents the underlying per-second rate
-                    annualized without compounding effects. This affects all rate displays including
-                    tables, charts, and statistics.
+                    APR is calculated as ln(1 + APY) and represents the underlying per-second rate annualized without compounding effects.
+                    This affects all rate displays including tables, charts, and statistics.
                   </p>
                 </div>
-                <IconSwitch
-                  selected={isAprDisplay}
-                  onChange={setIsAprDisplay}
-                  size="xs"
-                  color="primary"
-                  aria-label="Toggle APR display"
-                />
+                <IconSwitch selected={isAprDisplay} onChange={setIsAprDisplay} size="xs" color="primary" aria-label="Toggle APR display" />
               </div>
             </div>
           </div>
@@ -126,8 +109,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Show Unknown Tokens</h3>
                   <p className="text-sm text-secondary">
-                    Display tokens that aren't in our recognized token list. These will appear with
-                    a question mark icon.
+                    Display tokens that aren't in our recognized token list. These will appear with a question mark icon.
                   </p>
                 </div>
                 <IconSwitch
@@ -146,9 +128,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Show Unknown Oracles</h3>
-                  <p className="text-sm text-secondary">
-                    Display markets using oracle implementations that haven't been verified yet.
-                  </p>
+                  <p className="text-sm text-secondary">Display markets using oracle implementations that haven't been verified yet.</p>
                 </div>
                 <IconSwitch
                   selected={showUnknownOracle}
@@ -167,8 +147,8 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Show Unwhitelisted Markets</h3>
                   <p className="text-sm text-secondary">
-                    Display markets that haven't been verified or whitelisted by the Morpho team.
-                    When disabled (guardian mode), only verified markets are shown.
+                    Display markets that haven't been verified or whitelisted by the Morpho team. When disabled (guardian mode), only
+                    verified markets are shown.
                   </p>
                 </div>
                 <IconSwitch
@@ -193,15 +173,11 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Manage Trusted Vaults</h3>
                   <p className="text-sm text-secondary">
-                    Choose which vaults you trust. Only vaults marked as default trusted are selected
-                    automatically, and you can adjust the list any time.
+                    Choose which vaults you trust. Only vaults marked as default trusted are selected automatically, and you can adjust the
+                    list any time.
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => setIsTrustedVaultsModalOpen(true)}
-                >
+                <Button size="sm" variant="secondary" onPress={() => setIsTrustedVaultsModalOpen(true)}>
                   Edit
                 </Button>
               </div>
@@ -209,36 +185,35 @@ export default function SettingsPage() {
               {/* Display trusted vault icons */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap gap-2">
-                {mounted ? (
-                  <>
-                    {sortedTrustedVaults.slice(0, 12).map((vault) => (
-                      <VaultIdentity
-                        key={`${vault.address}-${vault.chainId}`}
-                        address={vault.address as `0x${string}`}
-                        chainId={vault.chainId}
-                        curator={vault.curator}
-                        vaultName={vault.name}
-                        asset={vault.asset}
-                        variant="icon"
-                        iconSize={24}
-                        showTooltip
-                        showLink
-                      />
-                    ))}
-                    {userTrustedVaults.length > 12 && (
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
-                        +{userTrustedVaults.length - 12}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex h-8 items-center text-sm text-secondary">
-                    Loading vaults...
-                  </div>
-                )}
+                  {mounted ? (
+                    <>
+                      {sortedTrustedVaults.slice(0, 12).map((vault) => (
+                        <VaultIdentity
+                          key={`${vault.address}-${vault.chainId}`}
+                          address={vault.address as `0x${string}`}
+                          chainId={vault.chainId}
+                          curator={vault.curator}
+                          vaultName={vault.name}
+                          asset={vault.asset}
+                          variant="icon"
+                          iconSize={24}
+                          showTooltip
+                          showLink
+                        />
+                      ))}
+                      {userTrustedVaults.length > 12 && (
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs text-secondary dark:bg-gray-700">
+                          +{userTrustedVaults.length - 12}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex h-8 items-center text-sm text-secondary">Loading vaults...</div>
+                  )}
                 </div>
                 <span className="text-xs text-secondary">
-                  {userTrustedVaults.length} vault{userTrustedVaults.length !== 1 ? 's' : ''} trusted
+                  {userTrustedVaults.length} vault
+                  {userTrustedVaults.length !== 1 ? 's' : ''} trusted
                 </span>
               </div>
             </div>
@@ -253,15 +228,10 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Manage Blacklisted Markets</h3>
                   <p className="text-sm text-secondary">
-                    Block specific markets from appearing in your view. Blacklisted markets are
-                    completely hidden from all lists.
+                    Block specific markets from appearing in your view. Blacklisted markets are completely hidden from all lists.
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => setIsBlacklistedMarketsModalOpen(true)}
-                >
+                <Button size="sm" variant="secondary" onPress={() => setIsBlacklistedMarketsModalOpen(true)}>
                   Edit
                 </Button>
               </div>
@@ -284,10 +254,7 @@ export default function SettingsPage() {
       />
 
       {/* Blacklisted Markets Modal */}
-      <BlacklistedMarketsModal
-        isOpen={isBlacklistedMarketsModalOpen}
-        onOpenChange={setIsBlacklistedMarketsModalOpen}
-      />
+      <BlacklistedMarketsModal isOpen={isBlacklistedMarketsModalOpen} onOpenChange={setIsBlacklistedMarketsModalOpen} />
     </div>
   );
 }

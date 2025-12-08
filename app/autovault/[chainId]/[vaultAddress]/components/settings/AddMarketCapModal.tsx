@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Address } from 'viem';
+import type { Address } from 'viem';
 
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
-import { SupportedNetworks } from '@/utils/networks';
-import { Market } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Market } from '@/utils/types';
 
 type AddMarketCapModalProps = {
   vaultAsset: Address;
@@ -18,13 +18,7 @@ type AddMarketCapModalProps = {
  * Wrapper around MarketSelectionModal for adding market caps
  * Provides cap-specific labels and context
  */
-export function AddMarketCapModal({
-  vaultAsset,
-  chainId,
-  existingMarketIds,
-  onOpenChange,
-  onAdd,
-}: AddMarketCapModalProps) {
+export function AddMarketCapModal({ vaultAsset, chainId, existingMarketIds, onOpenChange, onAdd }: AddMarketCapModalProps) {
   return (
     <MarketSelectionModal
       title="Add Market Caps"

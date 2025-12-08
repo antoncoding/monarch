@@ -1,5 +1,5 @@
-import { type PublicClient } from 'viem';
-import { SupportedNetworks, getBlocktime, getMaxBlockDelay } from './networks';
+import type { PublicClient } from 'viem';
+import { type SupportedNetworks, getBlocktime, getMaxBlockDelay } from './networks';
 
 type BlockInfo = {
   number: bigint;
@@ -28,10 +28,12 @@ export class SmartBlockFinder {
         number: block.number,
         timestamp: block.timestamp,
       };
-    } catch (error) {
+    } catch (_error) {
       // await 1 second
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      const block = await this.client.getBlock({ blockNumber: blockNumber - 1n });
+      const block = await this.client.getBlock({
+        blockNumber: blockNumber - 1n,
+      });
       return {
         number: block.number,
         timestamp: block.timestamp,

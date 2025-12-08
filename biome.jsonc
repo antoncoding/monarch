@@ -3,7 +3,8 @@
   "extends": ["ultracite/core"],
 
   "formatter": {
-    "enabled": true
+    "enabled": true,
+    "lineWidth": 140  // Increased to 140 to allow longer one-line code
   },
 
   "javascript": {

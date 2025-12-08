@@ -2,11 +2,7 @@ import { generateMetadata as buildMetadata } from '@/utils/generateMetadata';
 
 import VaultContent from './content';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ chainId: string; vaultAddress: string }>;
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ chainId: string; vaultAddress: string }> }) {
   const { chainId, vaultAddress } = await params;
 
   return buildMetadata({

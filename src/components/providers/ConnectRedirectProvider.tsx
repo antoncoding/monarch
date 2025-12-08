@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccountEffect } from 'wagmi';
 
@@ -39,9 +39,7 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
     };
   }, [handleSetRedirectPath]);
 
-  return (
-    <ConnectRedirectContext.Provider value={value}>{children}</ConnectRedirectContext.Provider>
-  );
+  return <ConnectRedirectContext.Provider value={value}>{children}</ConnectRedirectContext.Provider>;
 }
 
 export function useConnectRedirect() {

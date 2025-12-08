@@ -372,9 +372,9 @@ export const known_vaults: KnownVault[] = [
     address: '0xbeeffeA75cFC4128ebe10C8D7aE22016D215060D',
     curator: VaultCurator.Steakhouse,
     chainId: 143,
-    name: "Steakhouse High Yield AUSD",
-    asset: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a'
-  }
+    name: 'Steakhouse High Yield AUSD',
+    asset: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a',
+  },
 ];
 
 export const defaultTrustedVaults: TrustedVault[] = known_vaults

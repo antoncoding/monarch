@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { LuX } from 'react-icons/lu';
 import { formatUnits } from 'viem';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
 
@@ -32,7 +33,7 @@ export function PendingMarketCap({
 
       // Validate percentage (0-100)
       if (value !== '') {
-        const numValue = parseFloat(value);
+        const numValue = Number.parseFloat(value);
         if (numValue > 100) {
           setError('Max 100%');
         } else if (numValue < 0) {
@@ -81,11 +82,7 @@ export function PendingMarketCap({
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-secondary">
-              <OracleVendorBadge
-                oracleData={market.oracle?.data}
-                showText={false}
-                chainId={market.morphoBlue.chain.id}
-              />
+              <OracleVendorBadge oracleData={market.oracle?.data} showText={false} chainId={market.morphoBlue.chain.id} />
               <span>·</span>
               <span>{market.state?.supplyApy ? (market.state.supplyApy * 100).toFixed(2) : '0.00'}% APY</span>
             </div>

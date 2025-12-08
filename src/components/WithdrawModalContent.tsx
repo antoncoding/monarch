@@ -1,6 +1,6 @@
 // Import the necessary hooks
 import { useCallback, useState } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
@@ -10,8 +10,8 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { getMorphoAddress } from '@/utils/morpho';
-import { SupportedNetworks } from '@/utils/networks';
-import { Market, MarketPosition } from '@/utils/types';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { Market, MarketPosition } from '@/utils/types';
 import { Button } from './common';
 
 type WithdrawModalContentProps = {
@@ -22,13 +22,7 @@ type WithdrawModalContentProps = {
   onAmountChange?: (amount: bigint) => void;
 };
 
-export function WithdrawModalContent({
-  position,
-  market,
-  onClose,
-  refetch,
-  onAmountChange,
-}: WithdrawModalContentProps): JSX.Element {
+export function WithdrawModalContent({ position, market, onClose, refetch, onAmountChange }: WithdrawModalContentProps): JSX.Element {
   const toast = useStyledToast();
   const [inputError, setInputError] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
@@ -53,19 +47,13 @@ export function WithdrawModalContent({
   const { isConfirming, sendTransaction } = useTransactionWithToast({
     toastId: 'withdraw',
     pendingText: activeMarket
-      ? `Withdrawing ${formatBalance(withdrawAmount, activeMarket.loanAsset.decimals)} ${
-          activeMarket.loanAsset.symbol
-        }`
+      ? `Withdrawing ${formatBalance(withdrawAmount, activeMarket.loanAsset.decimals)} ${activeMarket.loanAsset.symbol}`
       : '',
     successText: activeMarket ? `${activeMarket.loanAsset.symbol} Withdrawn` : '',
     errorText: 'Failed to withdraw',
     chainId,
-    pendingDescription: activeMarket
-      ? `Withdrawing from market ${activeMarket.uniqueKey.slice(2, 8)}...`
-      : '',
-    successDescription: activeMarket
-      ? `Successfully withdrawn from market ${activeMarket.uniqueKey.slice(2, 8)}`
-      : '',
+    pendingDescription: activeMarket ? `Withdrawing from market ${activeMarket.uniqueKey.slice(2, 8)}...` : '',
+    successDescription: activeMarket ? `Successfully withdrawn from market ${activeMarket.uniqueKey.slice(2, 8)}` : '',
     onSuccess: () => {
       refetch();
       onClose();
@@ -144,13 +132,7 @@ export function WithdrawModalContent({
                 <span className="opacity-80">Withdraw amount</span>
                 <div className="flex flex-col items-end gap-1">
                   <p className="font-inter text-xs opacity-50">
-                    Available:{' '}
-                    {formatReadable(
-                      formatBalance(
-                        position?.state.supplyAssets ?? BigInt(0),
-                        activeMarket.loanAsset.decimals,
-                      ),
-                    )}{' '}
+                    Available: {formatReadable(formatBalance(position?.state.supplyAssets ?? BigInt(0), activeMarket.loanAsset.decimals))}{' '}
                     {activeMarket.loanAsset.symbol}
                   </p>
                 </div>
@@ -160,14 +142,7 @@ export function WithdrawModalContent({
                 <div className="relative flex-grow">
                   <Input
                     decimals={activeMarket.loanAsset.decimals}
-                    max={
-                      position
-                        ? min(
-                            BigInt(position.state.supplyAssets),
-                            BigInt(activeMarket.state.liquidityAssets),
-                          )
-                        : BigInt(0)
-                    }
+                    max={position ? min(BigInt(position.state.supplyAssets), BigInt(activeMarket.state.liquidityAssets)) : BigInt(0)}
                     setValue={handleWithdrawAmountChange}
                     setError={setInputError}
                     exceedMaxErrMessage="Insufficient Liquidity"

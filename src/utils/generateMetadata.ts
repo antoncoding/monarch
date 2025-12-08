@@ -10,9 +10,7 @@ type MetaTagsProps = {
 };
 
 const deployUrl = process.env.BOAT_DEPLOY_URL ?? process.env.VERCEL_URL;
-const defaultUrl = deployUrl
-  ? `https://${deployUrl}`
-  : `http://localhost:${process.env.PORT ?? 3000}`;
+const defaultUrl = deployUrl ? `https://${deployUrl}` : `http://localhost:${process.env.PORT ?? 3000}`;
 
 export const generateMetadata = ({
   title = 'Monarch',

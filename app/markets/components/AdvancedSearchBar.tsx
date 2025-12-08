@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect, useRef } from 'react';
+import type React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@heroui/react';
 import Image from 'next/image';
 import { AiOutlineEnter } from 'react-icons/ai';
 import { FaSearch } from 'react-icons/fa';
-import { ERC20Token, infoToKey, supportedTokens } from '@/utils/tokens';
+import { type ERC20Token, infoToKey, supportedTokens } from '@/utils/tokens';
 
 type SearchProps = {
   onSearch: (query: string) => void;
@@ -83,8 +84,7 @@ function AdvancedSearchBar({
     } else if (lastWord.includes(':')) {
       const [key, tokenQuery] = lastWord.split(':');
       const shortcutType = key as ShortcutType;
-      const tokenList =
-        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const tokenList = shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
       const tokenSuggestions = tokenList
         .filter((token) => token.symbol.toLowerCase().startsWith(tokenQuery.toLowerCase()))
         .map((token) => `${key}:${token.symbol}`);
@@ -130,13 +130,11 @@ function AdvancedSearchBar({
     } else if (suggestion.includes(':')) {
       const [type, symbol] = suggestion.split(':');
       const shortcutType = type as ShortcutType;
-      const tokenList =
-        shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
+      const tokenList = shortcutType === ShortcutType.Collateral ? uniqueCollaterals : uniqueLoanAssets;
       const token = tokenList.find((t) => t.symbol.toLowerCase() === symbol.toLowerCase());
       if (token) {
         const tokenId = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-        const currentSelection =
-          shortcutType === ShortcutType.Collateral ? selectedCollaterals : selectedLoanAssets;
+        const currentSelection = shortcutType === ShortcutType.Collateral ? selectedCollaterals : selectedLoanAssets;
         onFilterUpdate(shortcutType, [...currentSelection, tokenId]);
         setInputValue(''); // Clear the input after applying a filter
       }
@@ -199,16 +197,11 @@ function AdvancedSearchBar({
         autoComplete="off"
       />
       {showSuggestions && suggestions.length > 0 && (
-        <div
-          ref={suggestionsRef}
-          className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg"
-        >
+        <div ref={suggestionsRef} className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg">
           <ul className="max-h-60 overflow-auto">
             {suggestions.map((suggestion, index) => {
               const isTokenSuggestion = suggestion.includes(':');
-              const token = isTokenSuggestion
-                ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1])
-                : null;
+              const token = isTokenSuggestion ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1]) : null;
 
               return (
                 <li
@@ -229,18 +222,10 @@ function AdvancedSearchBar({
                   <div className="flex items-center rounded-md bg-gray-200 px-2 py-1 text-xs dark:bg-gray-700">
                     {suggestion}
                     {isTokenSuggestion && token && token.img && (
-                      <Image
-                        src={token.img}
-                        alt={suggestion.split(':')[1]}
-                        width={12}
-                        height={12}
-                        className="ml-1"
-                      />
+                      <Image src={token.img} alt={suggestion.split(':')[1]} width={12} height={12} className="ml-1" />
                     )}
                   </div>
-                  {(index === selectedSuggestion ||
-                    suggestion.startsWith('Clean query') ||
-                    suggestion.startsWith('Search ')) && (
+                  {(index === selectedSuggestion || suggestion.startsWith('Clean query') || suggestion.startsWith('Search ')) && (
                     <div className="flex items-center text-xs text-gray-500">
                       <AiOutlineEnter className="mr-1" />
                       <span>Enter</span>

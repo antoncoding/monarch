@@ -1,9 +1,9 @@
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { MarketAllocation } from '@/types/vaultAllocations';
+import type { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
 import { AllocationPieChart } from './AllocationPieChart';
@@ -16,13 +16,7 @@ type MarketViewProps = {
   chainId: SupportedNetworks;
 };
 
-export function MarketView({
-  allocations,
-  totalAllocation,
-  vaultAssetSymbol,
-  vaultAssetDecimals,
-  chainId,
-}: MarketViewProps) {
+export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vaultAssetDecimals, chainId }: MarketViewProps) {
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
 
@@ -50,16 +44,13 @@ export function MarketView({
         <tbody className="space-y-2">
           {sortedItems.map((item) => {
             const { market, allocation } = item;
-            const percentage =
-              totalAllocation > 0n ? parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
-            const displayRate = (isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy);
+            const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
+            const displayRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy;
             const supplyRate = (displayRate * 100).toFixed(2);
             const hasAllocation = allocation > 0n;
-            const totalSupply = formatReadable(
-              formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString()
-            );
+            const totalSupply = formatReadable(formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString());
             const liquidity = formatReadable(
-              formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString()
+              formatBalance(BigInt(market.state.liquidityAssets || 0), market.loanAsset.decimals).toString(),
             );
 
             return (
@@ -78,34 +69,24 @@ export function MarketView({
                 </td>
 
                 {/* APY/APR */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
-                  {supplyRate}%
-                </td>
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{supplyRate}%</td>
 
                 {/* Total Supply */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
-                  {totalSupply}
-                </td>
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{totalSupply}</td>
 
                 {/* Liquidity */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">
-                  {liquidity}
-                </td>
+                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</td>
 
                 {/* Allocation Amount */}
                 <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
-                    {hasAllocation
-                      ? `${formatAllocationAmount(allocation, vaultAssetDecimals)} ${vaultAssetSymbol}`
-                      : '-'}
+                    {hasAllocation ? `${formatAllocationAmount(allocation, vaultAssetDecimals)} ${vaultAssetSymbol}` : '-'}
                   </span>
                 </td>
 
                 {/* Allocation Percentage */}
                 <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
-                  <span className="whitespace-nowrap">
-                    {hasAllocation ? `${percentage.toFixed(2)}%` : '-'}
-                  </span>
+                  <span className="whitespace-nowrap">{hasAllocation ? `${percentage.toFixed(2)}%` : '-'}</span>
                 </td>
 
                 {/* Pie Chart */}

@@ -1,8 +1,8 @@
 import { marketHourlySnapshotsQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { TimeseriesOptions, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
-import { HistoricalDataSuccessResult } from '../morpho-api/historical';
+import type { TimeseriesOptions, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
+import type { HistoricalDataSuccessResult } from '../morpho-api/historical';
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // --- Subgraph Specific Types (Copied from useSubgraphMarketHistoricalData.ts) ---
@@ -58,7 +58,7 @@ const transformSubgraphSnapshotsToHistoricalResult = (
 
   // No need to check for !snapshots here, handled by caller
   snapshots.forEach((snapshot) => {
-    const timestamp = parseInt(snapshot.timestamp, 10);
+    const timestamp = Number.parseInt(snapshot.timestamp, 10);
     if (isNaN(timestamp)) {
       console.warn('Skipping snapshot due to invalid timestamp:', snapshot);
       return;
@@ -68,11 +68,17 @@ const transformSubgraphSnapshotsToHistoricalResult = (
     const supplyRate = snapshotRates.find((r) => r?.side === 'LENDER');
     const borrowRate = snapshotRates.find((r) => r?.side === 'BORROWER');
 
-    const supplyApyValue = supplyRate?.rate ? parseFloat(supplyRate.rate) : 0;
-    const borrowApyValue = borrowRate?.rate ? parseFloat(borrowRate.rate) : 0;
+    const supplyApyValue = supplyRate?.rate ? Number.parseFloat(supplyRate.rate) : 0;
+    const borrowApyValue = borrowRate?.rate ? Number.parseFloat(borrowRate.rate) : 0;
 
-    rates.supplyApy.push({ x: timestamp, y: !isNaN(supplyApyValue) ? supplyApyValue : 0 });
-    rates.borrowApy.push({ x: timestamp, y: !isNaN(borrowApyValue) ? borrowApyValue : 0 });
+    rates.supplyApy.push({
+      x: timestamp,
+      y: !isNaN(supplyApyValue) ? supplyApyValue : 0,
+    });
+    rates.borrowApy.push({
+      x: timestamp,
+      y: !isNaN(borrowApyValue) ? borrowApyValue : 0,
+    });
     rates.apyAtTarget.push({ x: timestamp, y: 0 });
     rates.utilization.push({ x: timestamp, y: 0 });
 
@@ -90,12 +96,8 @@ const transformSubgraphSnapshotsToHistoricalResult = (
   });
 
   // Sort data by timestamp
-  Object.values(rates).forEach((arr: TimeseriesDataPoint[]) =>
-    arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x),
-  );
-  Object.values(volumes).forEach((arr: TimeseriesDataPoint[]) =>
-    arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x),
-  );
+  Object.values(rates).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
+  Object.values(volumes).forEach((arr: TimeseriesDataPoint[]) => arr.sort((a: TimeseriesDataPoint, b: TimeseriesDataPoint) => a.x - b.x));
 
   return { rates, volumes };
 };
@@ -133,11 +135,7 @@ export const fetchSubgraphMarketHistoricalData = async (
     );
 
     // If no data or empty snapshots array, return null
-    if (
-      !response?.data ||
-      !response.data.marketHourlySnapshots ||
-      response.data.marketHourlySnapshots.length === 0
-    ) {
+    if (!response?.data || !response.data.marketHourlySnapshots || response.data.marketHourlySnapshots.length === 0) {
       console.warn(`No subgraph historical snapshots found for market ${marketId}`);
       return null;
     }

@@ -1,7 +1,7 @@
 'use client';
 import { Select, SelectItem } from '@heroui/react';
 import Image from 'next/image';
-import { SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
+import { type SupportedNetworks, getNetworkImg, isSupportedChain, networks } from '@/utils/networks';
 
 type FilterProps = {
   selectedNetwork: SupportedNetworks | null;

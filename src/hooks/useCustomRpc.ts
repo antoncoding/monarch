@@ -1,4 +1,4 @@
-import { SupportedNetworks, getDefaultRPC } from '@/utils/networks';
+import { type SupportedNetworks, getDefaultRPC } from '@/utils/networks';
 import { useLocalStorage } from './useLocalStorage';
 
 export type CustomRpcUrls = Partial<Record<SupportedNetworks, string>>;

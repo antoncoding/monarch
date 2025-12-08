@@ -6,10 +6,8 @@ export const URLS = {
 } as const;
 
 export const MONARCH_AGENT_URLS: Record<SupportedNetworks, string> = {
-  [SupportedNetworks.Base]:
-    'https://api.studio.thegraph.com/query/110397/monarch-agent-base/version/latest',
-  [SupportedNetworks.Polygon]:
-    'https://api.studio.thegraph.com/query/110397/monarch-agent-polygon/version/latest',
+  [SupportedNetworks.Base]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-base/version/latest',
+  [SupportedNetworks.Polygon]: 'https://api.studio.thegraph.com/query/110397/monarch-agent-polygon/version/latest',
 } as Record<SupportedNetworks, string>;
 
 // Helper function to get URL by chainId, returns undefined if not supported

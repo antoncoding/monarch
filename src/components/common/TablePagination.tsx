@@ -35,7 +35,7 @@ export function TablePagination({
   const endEntry = Math.min(currentPage * pageSize, totalEntries);
 
   const handleJumpToPage = () => {
-    const page = parseInt(jumpPage, 10);
+    const page = Number.parseInt(jumpPage, 10);
     if (page >= 1 && page <= totalPages) {
       onPageChange(page);
       setJumpPage('');
@@ -110,10 +110,13 @@ export function TablePagination({
         <div className="flex items-center gap-0.5">
           {pageNumbers.map((page, idx) =>
             page === 'ellipsis' ? (
-              <span key={`ellipsis-${idx}`} className={cn(
-                "flex h-8 items-center justify-center text-secondary font-zen !font-normal",
-                totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm'
-              )}>
+              <span
+                key={`ellipsis-${idx}`}
+                className={cn(
+                  'flex h-8 items-center justify-center text-secondary font-zen !font-normal',
+                  totalPages > 1000 ? 'w-10 text-xs' : 'w-8 text-sm',
+                )}
+              >
                 ...
               </span>
             ) : (
@@ -156,20 +159,11 @@ export function TablePagination({
                   content: 'p-0 m-0 bg-transparent shadow-sm border-none',
                 }}
                 content={
-                  <TooltipContent
-                    title="Jump to page"
-                    detail={`Go to a specific page (1-${totalPages})`}
-                    icon={<MagnifyingGlassIcon />}
-                  />
+                  <TooltipContent title="Jump to page" detail={`Go to a specific page (1-${totalPages})`} icon={<MagnifyingGlassIcon />} />
                 }
               >
                 <PopoverTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    disabled={isLoading}
-                    className="h-8 w-8 font-zen !font-normal"
-                  >
+                  <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8 font-zen !font-normal">
                     <MagnifyingGlassIcon className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -193,12 +187,7 @@ export function TablePagination({
                         inputWrapper: 'rounded-sm',
                       }}
                     />
-                    <Button
-                      size="sm"
-                      onClick={handleJumpToPage}
-                      disabled={!jumpPage}
-                      className="h-8 font-zen !font-normal"
-                    >
+                    <Button size="sm" onClick={handleJumpToPage} disabled={!jumpPage} className="h-8 font-zen !font-normal">
                       Go
                     </Button>
                   </div>

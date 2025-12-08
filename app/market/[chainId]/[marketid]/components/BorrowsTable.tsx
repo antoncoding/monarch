@@ -1,16 +1,8 @@
 import { useState } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-  Tooltip,
-} from '@heroui/react';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
 import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { formatUnits } from 'viem';
 import { Button } from '@/components/common';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -23,7 +15,7 @@ import { TooltipContent } from '@/components/TooltipContent';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { useMarketBorrows } from '@/hooks/useMarketBorrows';
 import { formatSimple } from '@/utils/balance';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type BorrowsTableProps = {
   chainId: number;
@@ -55,11 +47,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
   const tableKey = `borrows-table-${currentPage}`;
 
   if (error) {
-    return (
-      <p className="text-danger">
-        Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}
-      </p>
-    );
+    return <p className="text-danger">Error loading borrows: {error instanceof Error ? error.message : 'Unknown error'}</p>;
   }
 
   return (
@@ -72,13 +60,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               base: 'p-0 m-0 bg-transparent shadow-sm border-none',
               content: 'p-0 m-0 bg-transparent shadow-sm border-none',
             }}
-            content={
-              <TooltipContent
-                title="Filters"
-                detail="Filter transactions by minimum amount"
-                icon={<FiFilter size={14} />}
-              />
-            }
+            content={<TooltipContent title="Filters" detail="Filter transactions by minimum amount" icon={<FiFilter size={14} />} />}
           >
             <Button
               isIconOnly
@@ -88,10 +70,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
               aria-label="Transaction filters"
               onPress={onOpenFiltersModal}
             >
-              <FiFilter
-                size={14}
-                style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }}
-              />
+              <FiFilter size={14} style={{ color: hasActiveFilter ? MONARCH_PRIMARY : undefined }} />
             </Button>
           </Tooltip>
         </div>
@@ -130,11 +109,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             {borrows.map((borrow) => (
               <TableRow key={`borrow-${borrow.hash}-${borrow.amount.toString()}`}>
                 <TableCell>
-                  <AccountIdentity
-                    address={borrow.userAddress as Address}
-                    variant="compact"
-                    linkTo="profile"
-                  />
+                  <AccountIdentity address={borrow.userAddress as Address} variant="compact" linkTo="profile" />
                 </TableCell>
                 <TableCell>
                   <Badge variant={borrow.type === 'MarketRepay' ? 'success' : 'danger'}>

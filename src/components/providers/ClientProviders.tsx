@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { GlobalModalProvider } from '@/contexts/GlobalModalContext';
 import { LiquidationsProvider } from '@/contexts/LiquidationsContext';
 import { MarketsProvider } from '@/contexts/MarketsContext';

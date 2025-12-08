@@ -1,9 +1,9 @@
 import { maxUint128 } from 'viem';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { Badge } from '@/components/common/Badge';
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { findToken } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type MarketCapRow = {
   market: Market;
@@ -29,12 +29,10 @@ export function MarketCapsTable({
   vaultAssetSymbol,
   vaultAssetAddress,
   chainId,
-  isOwner = true
+  isOwner = true,
 }: MarketCapsTableProps) {
   // Get decimals for proper formatting
-  const vaultAssetDecimals = vaultAssetAddress && chainId
-    ? findToken(vaultAssetAddress, chainId)?.decimals ?? 18
-    : 18;
+  const vaultAssetDecimals = vaultAssetAddress && chainId ? (findToken(vaultAssetAddress, chainId)?.decimals ?? 18) : 18;
 
   const formatAbsoluteCap = (cap: string): string => {
     if (!cap || cap === '') {
@@ -48,7 +46,7 @@ export function MarketCapsTable({
       }
       const value = Number(capBigInt) / 10 ** vaultAssetDecimals;
       return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    } catch (e) {
+    } catch (_e) {
       // If we can't parse it as BigInt, return as is
       return cap;
     }
@@ -80,9 +78,7 @@ export function MarketCapsTable({
                 iconSize={20}
                 showExplorerLink
               />
-              {row.isNew && (
-                <Badge variant="primary">New</Badge>
-              )}
+              {row.isNew && <Badge variant="primary">New</Badge>}
             </div>
             {row.isEditable && row.onUpdateCap ? (
               <>
@@ -93,7 +89,7 @@ export function MarketCapsTable({
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === '' || /^\d*\.?\d*$/.test(val)) {
-                        const num = parseFloat(val);
+                        const num = Number.parseFloat(val);
                         if (val === '' || (num >= 0 && num <= 100)) {
                           row.onUpdateCap!('relativeCap', val);
                         }
@@ -140,9 +136,7 @@ export function MarketCapsTable({
             ) : (
               <>
                 <div className="w-20 text-right text-sm">{row.relativeCap}%</div>
-                <div className="w-24 text-right text-sm text-secondary">
-                  {formatAbsoluteCap(row.absoluteCap)}
-                </div>
+                <div className="w-24 text-right text-sm text-secondary">{formatAbsoluteCap(row.absoluteCap)}</div>
               </>
             )}
           </div>

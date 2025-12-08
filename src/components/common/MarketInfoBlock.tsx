@@ -1,9 +1,8 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import { MdOutlineWaterDrop } from 'react-icons/md';
 import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance, formatReadable } from '@/utils/balance';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import OracleVendorBadge from '../OracleVendorBadge';
 import { TokenIcon } from '../TokenIcon';
 
@@ -39,12 +38,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
               {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
             </span>
           ) : (
-            <OracleVendorBadge
-              showText
-              oracleData={market.oracle?.data}
-              chainId={market.morphoBlue.chain.id}
-              useTooltip={false}
-            />
+            <OracleVendorBadge showText oracleData={market.oracle?.data} chainId={market.morphoBlue.chain.id} useTooltip={false} />
           )}
         </div>
       </div>
@@ -56,11 +50,7 @@ export function MarketInfoBlock({ market, amount, className }: MarketInfoBlockPr
   );
 }
 
-export function MarketInfoBlockCompact({
-  market,
-  amount,
-  className,
-}: MarketInfoBlockProps): JSX.Element {
+export function MarketInfoBlockCompact({ market, amount, className }: MarketInfoBlockProps): JSX.Element {
   return (
     <div
       key={market.uniqueKey}
@@ -85,9 +75,7 @@ export function MarketInfoBlockCompact({
             </span>
           </div>
           <div className="mt-1 flex items-center gap-2">
-            <span className="min-w-[100px] text-xs text-secondary">
-              APY: {(market.state.supplyApy * 100).toFixed(2)}%
-            </span>
+            <span className="min-w-[100px] text-xs text-secondary">APY: {(market.state.supplyApy * 100).toFixed(2)}%</span>
             <Tooltip
               className="rounded-sm"
               content={
@@ -99,15 +87,9 @@ export function MarketInfoBlockCompact({
                     <div className="flex flex-col gap-1">
                       <div className="font-zen font-bold">Market Liquidity</div>
                       <div className="font-zen text-sm">
-                        • Available:{' '}
-                        {formatReadable(
-                          formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                        )}{' '}
+                        • Available: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}{' '}
                         {market.loanAsset.symbol}
-                        <br />• Total Supplied:{' '}
-                        {formatReadable(
-                          formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                        )}{' '}
+                        <br />• Total Supplied: {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))}{' '}
                         {market.loanAsset.symbol}
                       </div>
                     </div>
@@ -117,14 +99,8 @@ export function MarketInfoBlockCompact({
             >
               <span className="flex items-center gap-1 text-xs text-secondary">
                 <MdOutlineWaterDrop />
-                {formatReadable(
-                  formatBalance(market.state.liquidityAssets, market.loanAsset.decimals),
-                )}{' '}
-                /{' '}
-                {formatReadable(
-                  formatBalance(market.state.supplyAssets, market.loanAsset.decimals),
-                )}{' '}
-                {market.loanAsset.symbol}
+                {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))} /{' '}
+                {formatReadable(formatBalance(market.state.supplyAssets, market.loanAsset.decimals))} {market.loanAsset.symbol}
               </span>
             </Tooltip>
           </div>
@@ -135,12 +111,7 @@ export function MarketInfoBlockCompact({
           {formatBalance(amount, market.loanAsset.decimals)} {market.loanAsset.symbol}
         </span>
       ) : (
-        <OracleVendorBadge
-          showText
-          oracleData={market.oracle?.data}
-          useTooltip={false}
-          chainId={market.morphoBlue.chain.id}
-        />
+        <OracleVendorBadge showText oracleData={market.oracle?.data} useTooltip={false} chainId={market.morphoBlue.chain.id} />
       )}
     </div>
   );

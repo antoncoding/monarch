@@ -6,14 +6,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { useOnboarding } from './OnboardingContext';
 
 export function MarketSelectionOnboarding() {
-  const {
-    selectedToken,
-    selectedMarkets,
-    setSelectedMarkets,
-    canGoNext,
-    goToNextStep,
-    goToPrevStep,
-  } = useOnboarding();
+  const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep } = useOnboarding();
 
   const { getUniqueTokens } = useTokens();
 
@@ -90,12 +83,7 @@ export function MarketSelectionOnboarding() {
         <Button variant="light" onPress={goToPrevStep} className="min-w-[120px]">
           Back
         </Button>
-        <Button
-          variant="cta"
-          onPress={goToNextStep}
-          isDisabled={!canGoNext}
-          className="min-w-[120px]"
-        >
+        <Button variant="cta" onPress={goToNextStep} isDisabled={!canGoNext} className="min-w-[120px]">
           Continue
         </Button>
       </div>

@@ -24,18 +24,18 @@ export const formatBalance = (value: bigint | string, decimals: number) => {
 
 export function formatReadable(num: number | string, precision = 2): string {
   if (typeof num === 'string') {
-    const parsed = parseFloat(num);
+    const parsed = Number.parseFloat(num);
     if (isNaN(parsed)) return num;
     num = parsed;
   }
 
   try {
     if (Math.abs(num) >= 1_000_000_000) {
-      return (num / 1_000_000_000).toFixed(2) + 'B';
+      return `${(num / 1_000_000_000).toFixed(2)}B`;
     } else if (Math.abs(num) >= 1_000_000) {
-      return (num / 1_000_000).toFixed(2) + 'M';
+      return `${(num / 1_000_000).toFixed(2)}M`;
     } else if (Math.abs(num) >= 1_000) {
-      return (num / 1_000).toFixed(2) + 'K';
+      return `${(num / 1_000).toFixed(2)}K`;
     } else {
       return num.toFixed(precision);
     }

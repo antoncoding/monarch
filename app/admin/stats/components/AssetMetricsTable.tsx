@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
-import { AssetVolumeData } from '@/utils/statsUtils';
+import type { AssetVolumeData } from '@/utils/statsUtils';
 
 // Constants
 const BASE_CHAIN_ID = 8453; // Base network ID
@@ -23,13 +23,7 @@ type SortableHeaderProps = {
   onSort: (key: SortKey) => void;
 };
 
-function SortableHeader({
-  label,
-  sortKeyValue,
-  currentSortKey,
-  sortDirection,
-  onSort,
-}: SortableHeaderProps) {
+function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
     <th
       className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
@@ -39,11 +33,7 @@ function SortableHeader({
       <div className="flex items-center justify-center gap-1 hover:cursor-pointer">
         <div>{label}</div>
         {currentSortKey === sortKeyValue &&
-          (sortDirection === 'asc' ? (
-            <FiChevronUp className="h-4 w-4" />
-          ) : (
-            <FiChevronDown className="h-4 w-4" />
-          ))}
+          (sortDirection === 'asc' ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />)}
       </div>
     </th>
   );
@@ -160,24 +150,16 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                           width={20}
                           height={20}
                         />
-                        <span className="font-zen text-sm">
-                          {asset.assetSymbol ?? 'Unknown'}
-                        </span>
+                        <span className="font-zen text-sm">{asset.assetSymbol ?? 'Unknown'}</span>
                       </div>
                     </td>
                     <td data-label="Total Volume" className="z-50 text-center" style={{ minWidth: '120px' }}>
                       <span className="text-sm">
-                        {asset.totalVolumeFormatted
-                          ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${
-                              asset.assetSymbol
-                            }`
-                          : '—'}
+                        {asset.totalVolumeFormatted ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}` : '—'}
                       </span>
                     </td>
                     <td data-label="Total Transactions" className="z-50 text-center" style={{ minWidth: '100px' }}>
-                      <span className="text-sm">
-                        {(asset.supplyCount + asset.withdrawCount).toLocaleString()}
-                      </span>
+                      <span className="text-sm">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</span>
                     </td>
                     <td data-label="Supply Count" className="z-50 text-center" style={{ minWidth: '100px' }}>
                       <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>

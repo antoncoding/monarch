@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { ArrowRightIcon, Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/common';
@@ -6,7 +6,7 @@ import { MarketIdentity, MarketIdentityMode } from '@/components/MarketIdentity'
 import { TokenIcon } from '@/components/TokenIcon';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { previewMarketState } from '@/utils/morpho';
-import { GroupedPosition, Market } from '@/utils/types';
+import type { GroupedPosition, Market } from '@/utils/types';
 import { ApyPreview } from './ApyPreview';
 import { UtilizationPreview } from './UtilizationPreview';
 
@@ -62,10 +62,7 @@ export function RebalanceActionRow({
       return null;
     }
     try {
-      const amountBigInt =
-        typeof amount === 'string'
-          ? parseUnits(amount, groupedPosition.loanAssetDecimals)
-          : amount;
+      const amountBigInt = typeof amount === 'string' ? parseUnits(amount, groupedPosition.loanAssetDecimals) : amount;
 
       if (amountBigInt <= 0n) {
         return null;
@@ -78,10 +75,7 @@ export function RebalanceActionRow({
   }, [toMarket, amount, groupedPosition.loanAssetDecimals]);
 
   // Format amount for display
-  const displayAmount =
-    typeof amount === 'string'
-      ? amount
-      : formatUnits(amount, groupedPosition.loanAssetDecimals);
+  const displayAmount = typeof amount === 'string' ? amount : formatUnits(amount, groupedPosition.loanAssetDecimals);
 
   return (
     <div className="flex items-center">
@@ -96,11 +90,7 @@ export function RebalanceActionRow({
             }`}
           >
             {fromMarket ? (
-              <MarketIdentity
-                market={fromMarket}
-                chainId={fromMarket.morphoBlue.chain.id}
-                mode={MarketIdentityMode.Badge}
-              />
+              <MarketIdentity market={fromMarket} chainId={fromMarket.morphoBlue.chain.id} mode={MarketIdentityMode.Badge} />
             ) : (
               <span className="text-xs text-secondary">Select above...</span>
             )}
@@ -121,11 +111,7 @@ export function RebalanceActionRow({
                   className="bg-hovered min-w-[140px] rounded-sm border border-dashed border-gray-200 px-2 py-1.5 text-left transition-colors hover:border-primary hover:bg-primary/5 dark:border-gray-700 dark:hover:border-primary"
                 >
                   {toMarket ? (
-                    <MarketIdentity
-                      market={toMarket}
-                      chainId={toMarket.morphoBlue.chain.id}
-                      mode={MarketIdentityMode.Badge}
-                    />
+                    <MarketIdentity market={toMarket} chainId={toMarket.morphoBlue.chain.id} mode={MarketIdentityMode.Badge} />
                   ) : (
                     <span className="text-xs text-secondary">Click to select...</span>
                   )}
@@ -147,11 +133,7 @@ export function RebalanceActionRow({
             ) : (
               <div className="bg-hovered min-w-[140px] rounded-sm border border-gray-200 px-2 py-1.5 dark:border-gray-700">
                 {toMarket ? (
-                  <MarketIdentity
-                    market={toMarket}
-                    chainId={toMarket.morphoBlue.chain.id}
-                    mode={MarketIdentityMode.Badge}
-                  />
+                  <MarketIdentity market={toMarket} chainId={toMarket.morphoBlue.chain.id} mode={MarketIdentityMode.Badge} />
                 ) : (
                   <span className="text-xs text-secondary">Unknown</span>
                 )}
@@ -167,10 +149,7 @@ export function RebalanceActionRow({
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] uppercase tracking-wide text-secondary whitespace-nowrap">{rateLabel}</span>
           {toMarket ? (
-            <ApyPreview
-              currentApy={toMarket.state.supplyApy}
-              previewApy={previewState?.supplyApy ?? null}
-            />
+            <ApyPreview currentApy={toMarket.state.supplyApy} previewApy={previewState?.supplyApy ?? null} />
           ) : (
             <span className="inline-block min-w-[60px] whitespace-nowrap text-right text-sm text-foreground">--</span>
           )}
@@ -180,10 +159,7 @@ export function RebalanceActionRow({
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] uppercase tracking-wide text-secondary whitespace-nowrap">Util</span>
           {toMarket ? (
-            <UtilizationPreview
-              currentUtilization={toMarket.state.utilization}
-              previewUtilization={previewState?.utilization ?? null}
-            />
+            <UtilizationPreview currentUtilization={toMarket.state.utilization} previewUtilization={previewState?.utilization ?? null} />
           ) : (
             <span className="inline-block min-w-[60px] whitespace-nowrap text-right text-sm text-foreground">--</span>
           )}
@@ -231,13 +207,7 @@ export function RebalanceActionRow({
         </div>
 
         {mode === 'input' ? (
-          <Button
-            onPress={onAddAction}
-            variant="cta"
-            size="sm"
-            isDisabled={isAddDisabled}
-            className="h-8 w-[64px]"
-          >
+          <Button onPress={onAddAction} variant="cta" size="sm" isDisabled={isAddDisabled} className="h-8 w-[64px]">
             Add
           </Button>
         ) : (

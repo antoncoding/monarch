@@ -1,8 +1,7 @@
-import React from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { HiQuestionMarkCircle } from 'react-icons/hi';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { findAgent } from '@/utils/monarch-agent';
 import { TooltipContent } from './TooltipContent';
 
@@ -40,10 +39,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
           if (fallback) fallback.style.display = 'flex';
         }}
       />
-      <div
-        className="hidden items-center justify-center"
-        style={{ width, height }}
-      >
+      <div className="hidden items-center justify-center" style={{ width, height }}>
         <HiQuestionMarkCircle className="text-secondary" style={{ width, height }} />
       </div>
     </>
@@ -55,13 +51,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
         base: 'p-0 m-0 bg-transparent shadow-sm border-none',
         content: 'p-0 m-0 bg-transparent shadow-sm border-none',
       }}
-      content={
-        <TooltipContent
-          title={agent.name}
-          detail={agent.strategyDescription}
-          icon={icon}
-        />
-      }
+      content={<TooltipContent title={agent.name} detail={agent.strategyDescription} icon={icon} />}
     >
       <div className="flex items-center justify-center rounded-full bg-hovered/50">
         <Image
@@ -77,10 +67,7 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
             if (fallback) fallback.style.display = 'flex';
           }}
         />
-        <div
-          className="hidden items-center justify-center"
-          style={{ width, height }}
-        >
+        <div className="hidden items-center justify-center" style={{ width, height }}>
           <HiQuestionMarkCircle className="text-secondary" style={{ width, height }} />
         </div>
       </div>

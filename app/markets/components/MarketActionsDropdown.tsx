@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { TbArrowUp } from 'react-icons/tb';
 import { Button } from '@/components/common/Button';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './BlacklistConfirmationModal';
 
 type MarketActionsDropdownProps = {
@@ -57,97 +58,74 @@ export function MarketActionsDropdown({
   };
 
   return (
-    <div
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      role="button"
-      tabIndex={-1}
-    >
+    <div onClick={handleClick} onKeyDown={handleKeyDown} role="button" tabIndex={-1}>
       <Dropdown className="rounded-sm">
         <DropdownTrigger>
-          <Button
-            size="xs"
-            variant="interactive"
-            className="text-xs"
-            isIconOnly
-          >
+          <Button size="xs" variant="interactive" className="text-xs" isIconOnly>
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
         </DropdownTrigger>
-      <DropdownMenu
-        aria-label="Market actions"
-        itemClasses={{
-          base: [
-            'gap-4 px-4 py-2 rounded-none font-zen',
-            'data-[hover=true]:bg-hovered rounded-sm',
-          ].join(' '),
-          title: 'text-sm text-primary flex-grow font-zen',
-          wrapper: 'justify-between no-underline rounded-sm',
-        }}
-      >
-        <DropdownItem
-          key="supply"
-          onClick={() => {
-            setSelectedMarket(market);
-            setShowSupplyModal(true);
+        <DropdownMenu
+          aria-label="Market actions"
+          itemClasses={{
+            base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
+            title: 'text-sm text-primary flex-grow font-zen',
+            wrapper: 'justify-between no-underline rounded-sm',
           }}
-          startContent={<TbArrowUp className="h-4 w-4" />}
         >
-          Supply
-        </DropdownItem>
+          <DropdownItem
+            key="supply"
+            onClick={() => {
+              setSelectedMarket(market);
+              setShowSupplyModal(true);
+            }}
+            startContent={<TbArrowUp className="h-4 w-4" />}
+          >
+            Supply
+          </DropdownItem>
 
-        <DropdownItem
-          key="view"
-          onClick={() => {
-            onMarketClick(market);
-          }}
-          startContent={<GoGraph className="h-4 w-4" />}
-        >
-          View Market
-        </DropdownItem>
+          <DropdownItem
+            key="view"
+            onClick={() => {
+              onMarketClick(market);
+            }}
+            startContent={<GoGraph className="h-4 w-4" />}
+          >
+            View Market
+          </DropdownItem>
 
-        <DropdownItem
-          key="star"
-          onClick={() => {
-            if (isStared) {
-              unstarMarket(market.uniqueKey);
-            } else {
-              starMarket(market.uniqueKey);
-            }
-          }}
-          startContent={
-            isStared ? (
-              <GoStarFill className="h-4 w-4" />
-            ) : (
-              <GoStar className="h-4 w-4" />
-            )
-          }
-        >
-          {isStared ? 'Unstar' : 'Star'}
-        </DropdownItem>
+          <DropdownItem
+            key="star"
+            onClick={() => {
+              if (isStared) {
+                unstarMarket(market.uniqueKey);
+              } else {
+                starMarket(market.uniqueKey);
+              }
+            }}
+            startContent={isStared ? <GoStarFill className="h-4 w-4" /> : <GoStar className="h-4 w-4" />}
+          >
+            {isStared ? 'Unstar' : 'Star'}
+          </DropdownItem>
 
-        <DropdownItem
-          key="blacklist"
-          onClick={handleBlacklistClick}
-          startContent={<AiOutlineStop className="h-4 w-4" />}
-          className={
-            isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-          }
-          isDisabled={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket}
-        >
-          {isBlacklisted?.(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+          <DropdownItem
+            key="blacklist"
+            onClick={handleBlacklistClick}
+            startContent={<AiOutlineStop className="h-4 w-4" />}
+            className={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket ? 'opacity-50 cursor-not-allowed' : ''}
+            isDisabled={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket}
+          >
+            {isBlacklisted?.(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
+          </DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
 
-    <BlacklistConfirmationModal
-      isOpen={isConfirmModalOpen}
-      onOpenChange={setIsConfirmModalOpen}
-      onConfirm={handleConfirmBlacklist}
-      market={market}
-    />
+      <BlacklistConfirmationModal
+        isOpen={isConfirmModalOpen}
+        onOpenChange={setIsConfirmModalOpen}
+        onConfirm={handleConfirmBlacklist}
+        market={market}
+      />
     </div>
   );
 }

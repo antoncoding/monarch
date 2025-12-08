@@ -3,12 +3,8 @@
 import { writeFileSync } from 'fs';
 import { join } from 'path';
 import { oraclesQuery } from '../src/graphql/morpho-api-queries';
-import { ALL_SUPPORTED_NETWORKS } from "../src/utils/networks"
-import {
-  MorphoChainlinkOracleData,
-  OracleItem,
-  OraclesQueryResponse,
-} from '../src/utils/types';
+import { ALL_SUPPORTED_NETWORKS } from '../src/utils/networks';
+import type { MorphoChainlinkOracleData, OracleItem, OraclesQueryResponse } from '../src/utils/types';
 import { URLS } from '../src/utils/urls';
 
 // Cached oracle entry for storage
@@ -51,9 +47,7 @@ const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`  ❌ Response body:`, errorText);
-        throw new Error(
-          `Failed to fetch oracles for chain ${chainId}: ${response.status} ${response.statusText}\nBody: ${errorText}`,
-        );
+        throw new Error(`Failed to fetch oracles for chain ${chainId}: ${response.status} ${response.statusText}\nBody: ${errorText}`);
       }
 
       const result = (await response.json()) as OraclesQueryResponse;
@@ -77,9 +71,7 @@ const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
 
       allOracles.push(...items);
 
-      console.log(
-        `  ✅ Fetched ${items.length} oracles (skip: ${skip}, total so far: ${allOracles.length})`,
-      );
+      console.log(`  ✅ Fetched ${items.length} oracles (skip: ${skip}, total so far: ${allOracles.length})`);
 
       // Check if we've fetched all
       if (items.length < pageSize) {
@@ -140,13 +132,7 @@ const main = async (): Promise<void> => {
     }
 
     // Write to oracle-cache.json
-    const outputPath = join(
-      process.cwd(),
-      'src',
-      'constants',
-      'oracle',
-      'oracle-cache.json',
-    );
+    const outputPath = join(process.cwd(), 'src', 'constants', 'oracle', 'oracle-cache.json');
 
     console.log(`\n${'='.repeat(60)}`);
     console.log(`\n💾 Writing oracle cache to file...`);

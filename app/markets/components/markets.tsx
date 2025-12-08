@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useDisclosure, Tooltip } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { Chain } from '@rainbow-me/rainbowkit';
+import type { Chain } from '@rainbow-me/rainbowkit';
 import { useRouter } from 'next/navigation';
-import { CgCompress } from "react-icons/cg";
+import { CgCompress } from 'react-icons/cg';
 import { FiSettings } from 'react-icons/fi';
 import { RiExpandHorizontalLine } from 'react-icons/ri';
 
@@ -26,15 +26,15 @@ import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
-import { SupportedNetworks } from '@/utils/networks';
-import { PriceFeedVendors } from '@/utils/oracle';
+import type { SupportedNetworks } from '@/utils/networks';
+import type { PriceFeedVendors } from '@/utils/oracle';
 import * as keys from '@/utils/storageKeys';
-import { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
+import type { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './AdvancedSearchBar';
 import AssetFilter from './AssetFilter';
-import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from './columnVisibility';
+import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './columnVisibility';
 import { SortColumn } from './constants';
 import MarketSettingsModal from './MarketSettingsModal';
 import MarketsTable from './marketsTable';
@@ -47,11 +47,7 @@ type MarketContentProps = {
   initialLoanAssets: string[];
 };
 
-export default function Markets({
-  initialNetwork,
-  initialCollaterals,
-  initialLoanAssets,
-}: MarketContentProps) {
+export default function Markets({ initialNetwork, initialCollaterals, initialLoanAssets }: MarketContentProps) {
   const router = useRouter();
 
   const toast = useStyledToast();
@@ -72,20 +68,14 @@ export default function Markets({
   // The context automatically reapplies the filter when blacklist changes
   const addBlacklistedMarket = addBlacklistedMarketBase;
 
-  const {
-    isOpen: isSettingsModalOpen,
-    onOpen: onSettingsModalOpen,
-    onOpenChange: onSettingsModalOpenChange,
-  } = useDisclosure();
+  const { isOpen: isSettingsModalOpen, onOpen: onSettingsModalOpen, onOpenChange: onSettingsModalOpenChange } = useDisclosure();
 
   // Initialize state with server-parsed values
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
   const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(initialLoanAssets);
   const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(initialNetwork);
 
-  const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>(
-    [],
-  );
+  const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
 
   const [sortColumn, setSortColumn] = useLocalStorage(keys.MarketSortColumnKey, SortColumn.Supply);
@@ -100,46 +90,27 @@ export default function Markets({
 
   const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
 
-  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } =
-    usePagination();
+  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } = usePagination();
 
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(
-    keys.MarketsShowUnknownTokens,
-    false,
-  );
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
 
   const { allTokens, findToken } = useTokens();
 
   // USD Filter values
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
-    keys.MarketsUsdMinSupplyKey,
-    DEFAULT_MIN_SUPPLY_USD.toString(),
-  );
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
   const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
-    keys.MarketsUsdMinLiquidityKey,
-    DEFAULT_MIN_LIQUIDITY_USD.toString(),
-  );
+  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(keys.MarketsUsdMinLiquidityKey, DEFAULT_MIN_LIQUIDITY_USD.toString());
 
   // USD Filter enabled states
   const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
     keys.MarketsMinSupplyEnabledKey,
     true, // Default to enabled for backward compatibility
   );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(
-    keys.MarketsMinBorrowEnabledKey,
-    false,
-  );
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(
-    keys.MarketsMinLiquidityEnabledKey,
-    false,
-  );
+  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(keys.MarketsMinBorrowEnabledKey, false);
+  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(keys.MarketsMinLiquidityEnabledKey, false);
 
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
-    keys.MarketsTrustedVaultsOnlyKey,
-    false,
-  );
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(keys.MarketsTrustedVaultsOnlyKey, false);
 
   // Column visibility state
   const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
@@ -147,10 +118,7 @@ export default function Markets({
     DEFAULT_COLUMN_VISIBILITY,
   );
 
-  const columnVisibility = useMemo(
-    () => ({ ...DEFAULT_COLUMN_VISIBILITY, ...columnVisibilityState }),
-    [columnVisibilityState],
-  );
+  const columnVisibility = useMemo(() => ({ ...DEFAULT_COLUMN_VISIBILITY, ...columnVisibilityState }), [columnVisibilityState]);
 
   const setColumnVisibility = useCallback(
     (visibility: ColumnVisibility) => {
@@ -160,10 +128,7 @@ export default function Markets({
   );
 
   // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
-  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(
-    keys.MarketsTableViewModeKey,
-    'compact',
-  );
+  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(keys.MarketsTableViewModeKey, 'compact');
 
   // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);
@@ -181,16 +146,11 @@ export default function Markets({
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
-    'userTrustedVaults',
-    defaultTrustedVaults,
-  );
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
   const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = useState(false);
 
   const trustedVaultKeys = useMemo(() => {
-    return new Set(
-      userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)),
-    );
+    return new Set(userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
   }, [userTrustedVaults]);
 
   const hasTrustedVault = useCallback(
@@ -233,7 +193,12 @@ export default function Markets({
     if (!rawMarkets) return;
 
     const processTokens = (
-      tokenInfoList: { address: string; chainId: number; symbol: string; decimals: number }[],
+      tokenInfoList: {
+        address: string;
+        chainId: number;
+        symbol: string;
+        decimals: number;
+      }[],
     ) => {
       if (!includeUnknownTokens) return allTokens;
 
@@ -242,11 +207,7 @@ export default function Markets({
         (acc, token) => {
           if (
             !allTokens.some((known) =>
-              known.networks.some(
-                (n) =>
-                  n.address.toLowerCase() === token.address.toLowerCase() &&
-                  n.chain.id === token.chainId,
-              ),
+              known.networks.some((n) => n.address.toLowerCase() === token.address.toLowerCase() && n.chain.id === token.chainId),
             )
           ) {
             if (!acc[token.symbol]) {
@@ -322,9 +283,18 @@ export default function Markets({
       selectedLoanAssets,
       selectedOracles,
       usdFilters: {
-        minSupply: { enabled: minSupplyEnabled, threshold: usdFilters.minSupply },
-        minBorrow: { enabled: minBorrowEnabled, threshold: usdFilters.minBorrow },
-        minLiquidity: { enabled: minLiquidityEnabled, threshold: usdFilters.minLiquidity },
+        minSupply: {
+          enabled: minSupplyEnabled,
+          threshold: usdFilters.minSupply,
+        },
+        minBorrow: {
+          enabled: minBorrowEnabled,
+          threshold: usdFilters.minBorrow,
+        },
+        minLiquidity: {
+          enabled: minLiquidityEnabled,
+          threshold: usdFilters.minLiquidity,
+        },
       },
       findToken,
       searchQuery,
@@ -339,11 +309,7 @@ export default function Markets({
     if (sortColumn === SortColumn.Starred) {
       sorted = sortMarkets(filtered, createStarredSort(staredIds), 1);
     } else if (sortColumn === SortColumn.TrustedBy) {
-      sorted = sortMarkets(
-        filtered,
-        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
-        sortDirection as 1 | -1,
-      );
+      sorted = sortMarkets(filtered, (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)), sortDirection as 1 | -1);
     } else {
       const sortPropertyMap: Record<SortColumn, string> = {
         [SortColumn.Starred]: 'uniqueKey',
@@ -495,9 +461,7 @@ export default function Markets({
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        {showSupplyModal && selectedMarket && (
-          <SupplyModalV2 market={selectedMarket} onOpenChange={setShowSupplyModal} />
-        )}
+        {showSupplyModal && selectedMarket && <SupplyModalV2 market={selectedMarket} onOpenChange={setShowSupplyModal} />}
 
         <MarketSettingsModal
           isOpen={isSettingsModalOpen}
@@ -561,10 +525,7 @@ export default function Markets({
                 updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
               />
 
-              <OracleFilter
-                selectedOracles={selectedOracles}
-                setSelectedOracles={setSelectedOracles}
-              />
+              <OracleFilter selectedOracles={selectedOracles} setSelectedOracles={setSelectedOracles} />
             </div>
           </div>
 
@@ -621,15 +582,13 @@ export default function Markets({
                 }}
                 content={
                   <TooltipContent
-                    icon={
-                      effectiveTableViewMode === 'compact' ? (
-                        <RiExpandHorizontalLine size={14} />
-                      ) : (
-                        <CgCompress size={14} />
-                      )
-                    }
+                    icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
                     title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-                    detail={effectiveTableViewMode === 'compact' ? 'Expand table to full width, useful when more columns are enabled.' : 'Restore compact table view'}
+                    detail={
+                      effectiveTableViewMode === 'compact'
+                        ? 'Expand table to full width, useful when more columns are enabled.'
+                        : 'Restore compact table view'
+                    }
                   />
                 }
               >
@@ -641,11 +600,7 @@ export default function Markets({
                   className="text-secondary min-w-0 px-2"
                   onPress={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
                 >
-                  {effectiveTableViewMode === 'compact' ? (
-                    <RiExpandHorizontalLine size={16} />
-                  ) : (
-                    <CgCompress size={16} />
-                  )}
+                  {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={16} /> : <CgCompress size={16} />}
                 </Button>
               </Tooltip>
             </div>
@@ -674,13 +629,9 @@ export default function Markets({
 
       {/* Table Section - centered when expanded, full width when compact */}
       <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
-
         {loading ? (
           <div className={effectiveTableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
-            <LoadingScreen
-              message="Loading Morpho Blue Markets..."
-              className="min-h-[300px] w-full"
-            />
+            <LoadingScreen message="Loading Morpho Blue Markets..." className="min-h-[300px] w-full" />
           </div>
         ) : rawMarkets == null ? (
           <div className="flex justify-center"> No data </div>
@@ -713,16 +664,15 @@ export default function Markets({
               <EmptyScreen
                 message="No markets found with the current filters"
                 hint={
-                  (selectedCollaterals.length > 0 || selectedLoanAssets.length > 0) &&
-                  !includeUnknownTokens
+                  (selectedCollaterals.length > 0 || selectedLoanAssets.length > 0) && !includeUnknownTokens
                     ? "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters."
                     : selectedOracles.length > 0 && !showUnknownOracle
-                    ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
-                    : trustedVaultsOnly
-                    ? 'Disable the Trusted Vaults filter or update your trusted list in Settings.'
-                    : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
-                    ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
-                    : 'Try adjusting your filters or search query to see more results.'
+                      ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
+                      : trustedVaultsOnly
+                        ? 'Disable the Trusted Vaults filter or update your trusted list in Settings.'
+                        : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
+                          ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
+                          : 'Try adjusting your filters or search query to see more results.'
                 }
               />
             )}
@@ -736,5 +686,5 @@ export default function Markets({
         setUserTrustedVaults={setUserTrustedVaults}
       />
     </>
-    );
+  );
 }

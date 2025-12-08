@@ -1,7 +1,7 @@
 import { Market as BlueMarket, MarketParams as BlueMarketParams } from '@morpho-org/blue-sdk';
-import { Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
+import { type Address, decodeAbiParameters, encodeAbiParameters, keccak256, parseAbiParameters, zeroAddress } from 'viem';
 import { SupportedNetworks } from './networks';
-import { Market, MarketParams, UserTxTypes } from './types';
+import { type Market, type MarketParams, UserTxTypes } from './types';
 // appended to the end of datahash to identify a monarch tx
 export const MONARCH_TX_IDENTIFIER = 'beef';
 
@@ -42,7 +42,7 @@ export const getBundlerV2 = (chain: SupportedNetworks) => {
     case SupportedNetworks.HyperEVM:
       return '0x5738366B9348f22607294007e75114922dF2a16A'; // ChainAgnosticBundlerV2 we deployed
     case SupportedNetworks.Monad:
-      return '0x5738366B9348f22607294007e75114922dF2a16A'
+      return '0x5738366B9348f22607294007e75114922dF2a16A';
     default:
       return zeroAddress;
   }
@@ -91,7 +91,7 @@ export function getMorphoGenesisDate(chainId: number): Date {
     case SupportedNetworks.Base:
       return new Date('2024-05-03T13:40:43.000Z');
     case SupportedNetworks.Polygon:
-      return new Date('2025-01-20T02:03:12.000Z');;
+      return new Date('2025-01-20T02:03:12.000Z');
     case SupportedNetworks.Unichain:
       return new Date('2025-02-18T02:03:6.000Z');
     case SupportedNetworks.Arbitrum:
@@ -99,7 +99,7 @@ export function getMorphoGenesisDate(chainId: number): Date {
     case SupportedNetworks.HyperEVM:
       return new Date('2025-04-03T04:52:00.000Z');
     case SupportedNetworks.Monad:
-        return new Date('2025-10-28T10:40:00.000Z');
+      return new Date('2025-10-28T10:40:00.000Z');
     default:
       return MAINNET_GENESIS_DATE; // default to mainnet
   }
@@ -109,30 +109,29 @@ export function getMorphoGenesisDate(chainId: number): Date {
 // Cap ID Utilities for Morpho Market Adapters
 // ============================================================================
 
-
-export function getAdapterCapId(adapterAddress: Address): {params: string, id: string} {
-  // Solidity 
+export function getAdapterCapId(adapterAddress: Address): {
+  params: string;
+  id: string;
+} {
+  // Solidity
   // adapterId = keccak256(abi.encode("this", address(this)));
-  const params = encodeAbiParameters(
-    [{ type: 'string' }, { type: 'address' }],
-    ["this", adapterAddress]
-  )
+  const params = encodeAbiParameters([{ type: 'string' }, { type: 'address' }], ['this', adapterAddress]);
 
-  return { params, id: keccak256(params)}
+  return { params, id: keccak256(params) };
 }
 
-export function getCollateralCapId(collateralToken: Address): {params: string, id: string} {
+export function getCollateralCapId(collateralToken: Address): {
+  params: string;
+  id: string;
+} {
   // Solidity
   // id = keccak256(abi.encode("collateralToken", marketParams.collateralToken));
-  const params = encodeAbiParameters(
-    [{ type: 'string' }, { type: 'address' }],
-    ["collateralToken", collateralToken]
-  )
+  const params = encodeAbiParameters([{ type: 'string' }, { type: 'address' }], ['collateralToken', collateralToken]);
 
-  return { params, id: keccak256(params)}
+  return { params, id: keccak256(params) };
 }
 
-export function getMarketCapId(adopterAddress: Address, marketParams: MarketParams): {params: string, id: string} {
+export function getMarketCapId(adopterAddress: Address, marketParams: MarketParams): { params: string; id: string } {
   // Solidity
   // id = keccak256(abi.encode("this/marketParams", address(this), marketParams));
   const encoded = encodeAbiParameters(
@@ -146,9 +145,9 @@ export function getMarketCapId(adopterAddress: Address, marketParams: MarketPara
           { type: 'address', name: 'collateralToken' },
           { type: 'address', name: 'oracle' },
           { type: 'address', name: 'irm' },
-          { type: 'uint256', name: 'lltv' }
-        ]
-      }
+          { type: 'uint256', name: 'lltv' },
+        ],
+      },
     ],
     [
       'this/marketParams',
@@ -158,13 +157,13 @@ export function getMarketCapId(adopterAddress: Address, marketParams: MarketPara
         collateralToken: marketParams.collateralToken,
         oracle: marketParams.oracle,
         irm: marketParams.irm,
-        lltv: marketParams.lltv
-      }
-    ]
-  )
-  const id = keccak256(encoded)
+        lltv: marketParams.lltv,
+      },
+    ],
+  );
+  const id = keccak256(encoded);
 
-  return { params: encoded, id }
+  return { params: encoded, id };
 }
 
 /**
@@ -184,10 +183,7 @@ export function parseCapIdParams(idParams: string): {
     // First, try to decode as adapter cap: (string, address)
     // Pattern: ("this", adapterAddress)
     try {
-      const decoded = decodeAbiParameters(
-        [{ type: 'string' }, { type: 'address' }],
-        idParams as `0x${string}`
-      );
+      const decoded = decodeAbiParameters([{ type: 'string' }, { type: 'address' }], idParams as `0x${string}`);
 
       if (decoded[0] === 'this') {
         return {
@@ -209,22 +205,19 @@ export function parseCapIdParams(idParams: string): {
     // Try to decode as market cap: (string, address, marketParams)
     // Pattern: ("this/marketParams", adapterAddress, marketParams)
     try {
-      const marketParamsType = parseAbiParameters('(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)');
+      const marketParamsType = parseAbiParameters(
+        '(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)',
+      );
       const marketParamsComponents = parseAbiParameters(
         '(address loanToken, address collateralToken, address oracle, address irm, uint256 lltv)',
       );
 
       const decoded = decodeAbiParameters(
-        [
-          { type: 'string' },
-          { type: 'address' },
-          { type: 'tuple', components: marketParamsComponents },
-        ],
+        [{ type: 'string' }, { type: 'address' }, { type: 'tuple', components: marketParamsComponents }],
         idParams as `0x${string}`,
       );
 
       if (decoded[0] === 'this/marketParams') {
-
         const marketParamsBlock = decoded[2] as [any];
 
         const marketParams = marketParamsBlock[0] as any as MarketParams;

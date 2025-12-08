@@ -40,7 +40,6 @@ type CleanRedstoneEntry = {
 const BASE_URL =
   'https://raw.githubusercontent.com/redstone-finance/redstone-oracles-monorepo/main/packages/relayer-remote-config/main/relayer-manifests-multi-feed';
 
-
 const ENDPOINTS = {
   mainnet: 'ethereumMultiFeed.json',
   base: 'baseMultiFeed.json',
@@ -48,7 +47,7 @@ const ENDPOINTS = {
   arbitrum: 'arbitrumOneMultiFeed.json',
   hyperevm: 'hyperevmMultiFeed.json',
   monad: 'monadMultiFeed.json',
-  unichain: 'unichainMultiFeed.json'
+  unichain: 'unichainMultiFeed.json',
 } as const;
 
 /**
@@ -66,7 +65,7 @@ const ENDPOINTS = {
 const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
   // BTC derivative tokens -> BTC underlying
   lbtc: 'btc',
-  
+
   // ETH derivative tokens -> ETH underlying
   susde: 'usde',
 
@@ -77,7 +76,7 @@ const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
   pufeth: 'eth',
   wsteth: 'eth',
   rseth: 'eth',
-  
+
   // HYPE derivative tokens -> HYPE underlying
   sthype: 'hype',
   mhype: 'hype',
@@ -151,11 +150,8 @@ const cleanRedstoneEntry = (
 ): CleanRedstoneEntry => {
   // Use override values if they exist, otherwise use global values
   const heartbeatMs =
-    feedData.updateTriggersOverrides?.timeSinceLastUpdateInMilliseconds ??
-    config.updateTriggers.timeSinceLastUpdateInMilliseconds;
-  const threshold =
-    feedData.updateTriggersOverrides?.deviationPercentage ??
-    config.updateTriggers.deviationPercentage;
+    feedData.updateTriggersOverrides?.timeSinceLastUpdateInMilliseconds ?? config.updateTriggers.timeSinceLastUpdateInMilliseconds;
+  const threshold = feedData.updateTriggersOverrides?.deviationPercentage ?? config.updateTriggers.deviationPercentage;
 
   const fundamental = isFundamental(feedName);
 
@@ -169,9 +165,7 @@ const cleanRedstoneEntry = (
   };
 };
 
-const fetchAndProcessData = async (
-  network: keyof typeof ENDPOINTS,
-): Promise<CleanRedstoneEntry[]> => {
+const fetchAndProcessData = async (network: keyof typeof ENDPOINTS): Promise<CleanRedstoneEntry[]> => {
   console.log(`Fetching ${network} Redstone oracle data...`);
 
   try {
@@ -186,9 +180,7 @@ const fetchAndProcessData = async (
 
     console.log(`Found ${Object.keys(priceFeeds).length} price feeds for ${network}`);
 
-    const cleanEntries = Object.entries(priceFeeds).map(([feedName, feedData]) =>
-      cleanRedstoneEntry(feedName, feedData, rawConfig),
-    );
+    const cleanEntries = Object.entries(priceFeeds).map(([feedName, feedData]) => cleanRedstoneEntry(feedName, feedData, rawConfig));
 
     return cleanEntries;
   } catch (error) {
@@ -198,14 +190,7 @@ const fetchAndProcessData = async (
 };
 
 const writeJsonFile = (filename: string, data: CleanRedstoneEntry[]): void => {
-  const outputPath = join(
-    process.cwd(),
-    'src',
-    'constants',
-    'oracle',
-    'redstone-data',
-    `${filename}.json`,
-  );
+  const outputPath = join(process.cwd(), 'src', 'constants', 'oracle', 'redstone-data', `${filename}.json`);
   writeFileSync(outputPath, JSON.stringify(data, null, 2));
   console.log(`Written ${data.length} entries to ${filename}.json`);
 };

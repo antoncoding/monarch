@@ -1,5 +1,5 @@
-import { useCallback, useState, Dispatch, SetStateAction } from 'react';
-import { Address, encodeFunctionData } from 'viem';
+import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
+import { type Address, encodeFunctionData } from 'viem';
 import { useAccount, useBalance } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
@@ -10,7 +10,7 @@ import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
 
 export type SupplyStepType = 'approve' | 'signing' | 'supplying';
@@ -94,16 +94,14 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   });
 
   const refetch = useCallback(() => {
-    void refetchToken()
-    void refetchETH()
-  }, [refetchETH, refetchToken])
+    void refetchToken();
+    void refetchETH();
+  }, [refetchETH, refetchToken]);
 
   // Transaction handler
   const { isConfirming: supplyPending, sendTransactionAsync } = useTransactionWithToast({
     toastId: 'supply',
-    pendingText: `Supplying ${formatBalance(supplyAmount, market.loanAsset.decimals)} ${
-      market.loanAsset.symbol
-    }`,
+    pendingText: `Supplying ${formatBalance(supplyAmount, market.loanAsset.decimals)} ${market.loanAsset.symbol}`,
     successText: `${market.loanAsset.symbol} Supplied`,
     errorText: 'Failed to supply',
     chainId,
@@ -212,22 +210,12 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       setShowProcessModal(false);
 
       return true;
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       setShowProcessModal(false);
       toast.error('Supply Failed', 'Supply to market failed or cancelled');
       return false;
     }
-  }, [
-    account,
-    market,
-    supplyAmount,
-    sendTransactionAsync,
-    useEth,
-    signForBundlers,
-    usePermit2Setting,
-    toast,
-    batchAddUserMarkets,
-  ]);
+  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, toast, batchAddUserMarkets]);
 
   // Approve and supply handler
   const approveAndSupply = useCallback(async () => {
@@ -302,16 +290,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       console.error('Error in approveAndSupply:', error);
       setShowProcessModal(false);
     }
-  }, [
-    account,
-    authorizePermit2,
-    executeSupplyTransaction,
-    useEth,
-    usePermit2Setting,
-    isApproved,
-    approve,
-    toast,
-  ]);
+  }, [account, authorizePermit2, executeSupplyTransaction, useEth, usePermit2Setting, isApproved, approve, toast]);
 
   // Sign and supply handler
   const signAndSupply = useCallback(async () => {

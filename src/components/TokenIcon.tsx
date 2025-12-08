@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
@@ -39,15 +39,7 @@ export function TokenIcon({
   // If we have a token with an image, use that
   if (token?.img) {
     const img = (
-      <Image
-        className="rounded-full"
-        src={token.img}
-        alt={token.symbol}
-        width={width}
-        height={height}
-        style={{ opacity }}
-        unoptimized
-      />
+      <Image className="rounded-full" src={token.img} alt={token.symbol} width={width} height={height} style={{ opacity }} unoptimized />
     );
 
     const title = customTooltipTitle ?? token.symbol;

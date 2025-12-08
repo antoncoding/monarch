@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@heroui/react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import Image from 'next/image';
@@ -11,8 +11,8 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { fetchAllStatistics } from '@/services/statsService';
 import { SupportedNetworks, getNetworkImg, getNetworkName, getViemChain } from '@/utils/networks';
-import { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
-import { ERC20Token, UnknownERC20Token, TokenSource } from '@/utils/tokens';
+import type { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
+import type { ERC20Token, UnknownERC20Token, TokenSource } from '@/utils/tokens';
 import { findToken as findTokenStatic } from '@/utils/tokens';
 import { AssetMetricsTable } from './components/AssetMetricsTable';
 import { StatsOverviewCards } from './components/StatsOverviewCards';
@@ -62,11 +62,7 @@ export default function StatsPage() {
     const loadStats = async () => {
       setIsLoading(true);
       try {
-        console.log(
-          `Fetching statistics for timeframe: ${timeframe}, network: ${
-            getNetworkName(selectedNetwork) ?? 'Unknown'
-          }`,
-        );
+        console.log(`Fetching statistics for timeframe: ${timeframe}, network: ${getNetworkName(selectedNetwork) ?? 'Unknown'}`);
         const startTime = performance.now();
 
         // Get API endpoint for the selected network
@@ -280,12 +276,10 @@ export default function StatsPage() {
                   {selectedLoanAssets.length === 0
                     ? 'All loan assets'
                     : selectedLoanAssets.length === 1
-                      ? uniqueLoanAssets.find((asset) => {
-                          const assetKey = asset.networks
-                            .map((n) => `${n.address}-${n.chain.id}`)
-                            .join('|');
+                      ? (uniqueLoanAssets.find((asset) => {
+                          const assetKey = asset.networks.map((n) => `${n.address}-${n.chain.id}`).join('|');
                           return selectedLoanAssets.includes(assetKey);
-                        })?.symbol ?? 'Selected'
+                        })?.symbol ?? 'Selected')
                       : `${selectedLoanAssets.length} selected`}
                 </Button>
               </DropdownTrigger>
@@ -300,9 +294,7 @@ export default function StatsPage() {
                 className="font-zen"
               >
                 {uniqueLoanAssets.map((asset) => {
-                  const assetKey = asset.networks
-                    .map((n) => `${n.address}-${n.chain.id}`)
-                    .join('|');
+                  const assetKey = asset.networks.map((n) => `${n.address}-${n.chain.id}`).join('|');
                   const firstNetwork = asset.networks[0];
 
                   return (

@@ -1,21 +1,14 @@
 import { useMemo, useState } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableColumn,
-  TableRow,
-  TableCell,
-} from '@heroui/react';
+import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import moment from 'moment';
-import { Address, formatUnits } from 'viem';
+import { type Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Spinner } from '@/components/common/Spinner';
 import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
-import { Market, MarketLiquidationTransaction } from '@/utils/types';
+import type { Market, MarketLiquidationTransaction } from '@/utils/types';
 
 type LiquidationsTableProps = {
   chainId: number;
@@ -26,11 +19,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
 
-  const {
-    data: liquidations,
-    isLoading,
-    error,
-  } = useMarketLiquidations(market?.uniqueKey, chainId);
+  const { data: liquidations, isLoading, error } = useMarketLiquidations(market?.uniqueKey, chainId);
 
   const totalCount = (liquidations ?? []).length;
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -47,11 +36,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   const tableKey = `liquidations-table-${currentPage}`;
 
   if (error) {
-    return (
-      <p className="text-danger">
-        Error loading liquidations: {error instanceof Error ? error.message : 'Unknown error'}
-      </p>
-    );
+    return <p className="text-danger">Error loading liquidations: {error instanceof Error ? error.message : 'Unknown error'}</p>;
   }
 
   return (
@@ -74,97 +59,91 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
             table: 'bg-surface',
           }}
         >
-        <TableHeader>
-          <TableColumn>LIQUIDATOR</TableColumn>
-          <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-          <TableColumn align="end">
-            SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})
-          </TableColumn>
-          <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-          <TableColumn>TIME</TableColumn>
-          <TableColumn className="font-mono" align="end">
-            TRANSACTION
-          </TableColumn>
-        </TableHeader>
-        <TableBody
-          className="font-zen"
-          emptyContent={isLoading ? 'Loading...' : 'No liquidations found for this market'}
-          isLoading={isLoading}
-        >
-          {paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
-            const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
-            const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
+          <TableHeader>
+            <TableColumn>LIQUIDATOR</TableColumn>
+            <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
+            <TableColumn align="end">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableColumn>
+            <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
+            <TableColumn>TIME</TableColumn>
+            <TableColumn className="font-mono" align="end">
+              TRANSACTION
+            </TableColumn>
+          </TableHeader>
+          <TableBody
+            className="font-zen"
+            emptyContent={isLoading ? 'Loading...' : 'No liquidations found for this market'}
+            isLoading={isLoading}
+          >
+            {paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
+              const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
+              const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
-            return (
-              <TableRow key={liquidation.hash}>
-                <TableCell>
-                  {isLiquidatorAddress ? (
-                    <AccountIdentity
-                      address={liquidation.liquidator as Address}
-                      variant="compact"
-                      linkTo="profile"
-                    />
-                  ) : (
-                    <span>{liquidation.liquidator}</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
-                  {market?.loanAsset?.symbol && (
-                    <span className="ml-1 inline-flex items-center">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
-                      />
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
-                  {market?.collateralAsset?.symbol && (
-                    <span className="ml-1 inline-flex items-center">
-                      <TokenIcon
-                        address={market.collateralAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.collateralAsset.symbol}
-                        width={16}
-                        height={16}
-                      />
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {hasBadDebt ? (
-                    <>
-                      {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
-                      {market?.loanAsset?.symbol && (
-                        <span className="ml-1 inline-flex items-center">
-                          <TokenIcon
-                            address={market.loanAsset.address}
-                            chainId={market.morphoBlue.chain.id}
-                            symbol={market.loanAsset.symbol}
-                            width={16}
-                            height={16}
-                          />
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    ' - '
-                  )}
-                </TableCell>
-                <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-                <TableCell className="text-right">
-                  <TransactionIdentity txHash={liquidation.hash} chainId={chainId} />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+              return (
+                <TableRow key={liquidation.hash}>
+                  <TableCell>
+                    {isLiquidatorAddress ? (
+                      <AccountIdentity address={liquidation.liquidator as Address} variant="compact" linkTo="profile" />
+                    ) : (
+                      <span>{liquidation.liquidator}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
+                    {market?.loanAsset?.symbol && (
+                      <span className="ml-1 inline-flex items-center">
+                        <TokenIcon
+                          address={market.loanAsset.address}
+                          chainId={market.morphoBlue.chain.id}
+                          symbol={market.loanAsset.symbol}
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
+                    {market?.collateralAsset?.symbol && (
+                      <span className="ml-1 inline-flex items-center">
+                        <TokenIcon
+                          address={market.collateralAsset.address}
+                          chainId={market.morphoBlue.chain.id}
+                          symbol={market.collateralAsset.symbol}
+                          width={16}
+                          height={16}
+                        />
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {hasBadDebt ? (
+                      <>
+                        {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
+                        {market?.loanAsset?.symbol && (
+                          <span className="ml-1 inline-flex items-center">
+                            <TokenIcon
+                              address={market.loanAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      ' - '
+                    )}
+                  </TableCell>
+                  <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
+                  <TableCell className="text-right">
+                    <TransactionIdentity txHash={liquidation.hash} chainId={chainId} />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       </div>
 
       {totalCount > 0 && (

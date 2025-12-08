@@ -1,4 +1,4 @@
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { URLS } from '@/utils/urls';
 
 // Re-use the query structure from the original hook
@@ -53,9 +53,7 @@ type QueryResult = {
   errors?: any[]; // Add optional errors field
 };
 
-export const fetchMorphoApiLiquidatedMarketKeys = async (
-  network: SupportedNetworks,
-): Promise<Set<string>> => {
+export const fetchMorphoApiLiquidatedMarketKeys = async (network: SupportedNetworks): Promise<Set<string>> => {
   const liquidatedKeys = new Set<string>();
   let skip = 0;
   const pageSize = 1000;
@@ -112,8 +110,6 @@ export const fetchMorphoApiLiquidatedMarketKeys = async (
     throw error; // Re-throw the error to be handled by the calling hook
   }
 
-  console.log(
-    `Fetched ${liquidatedKeys.size} liquidated market keys via Morpho API for ${network}.`,
-  );
+  console.log(`Fetched ${liquidatedKeys.size} liquidated market keys via Morpho API for ${network}.`);
   return liquidatedKeys;
 };

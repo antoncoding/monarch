@@ -1,7 +1,7 @@
 import { marketDetailQuery, marketsQuery } from '@/graphql/morpho-api-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 type MarketGraphQLResponse = {
@@ -36,10 +36,7 @@ const processMarketData = (market: Market): Market => {
 };
 
 // Fetcher for market details from Morpho API
-export const fetchMorphoMarket = async (
-  uniqueKey: string,
-  network: SupportedNetworks,
-): Promise<Market> => {
+export const fetchMorphoMarket = async (uniqueKey: string, network: SupportedNetworks): Promise<Market> => {
   const response = await morphoGraphqlFetcher<MarketGraphQLResponse>(marketDetailQuery, {
     uniqueKey,
     chainId: network,
@@ -78,9 +75,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
       const response = await morphoGraphqlFetcher<MarketsGraphQLResponse>(marketsQuery, variables);
 
       if (!response.data || !response.data.markets) {
-        console.warn(
-          `Market data not found in Morpho API response for network ${network} at skip ${skip}.`,
-        );
+        console.warn(`Market data not found in Morpho API response for network ${network} at skip ${skip}.`);
         break;
       }
 
@@ -99,9 +94,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
       totalCount = pageInfo.countTotal;
       skip += pageInfo.count;
 
-      console.log(
-        `Query ${queryCount}: Fetched ${pageInfo.count} markets, total so far: ${allMarkets.length}/${totalCount}`,
-      );
+      console.log(`Query ${queryCount}: Fetched ${pageInfo.count} markets, total so far: ${allMarkets.length}/${totalCount}`);
 
       // Safety break if pageInfo.count is 0 to prevent infinite loop
       if (pageInfo.count === 0 && skip < totalCount) {
@@ -110,9 +103,7 @@ export const fetchMorphoMarkets = async (network: SupportedNetworks): Promise<Ma
       }
     } while (skip < totalCount);
 
-    console.log(
-      `Completed fetching all markets for network ${network}. Total queries: ${queryCount}, Total markets: ${allMarkets.length}`,
-    );
+    console.log(`Completed fetching all markets for network ${network}. Total queries: ${queryCount}, Total markets: ${allMarkets.length}`);
 
     // final filter: remove scam markets
     return allMarkets.filter(

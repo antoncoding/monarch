@@ -17,12 +17,7 @@ export const ListItem = forwardRef(function ListItem(
   return (
     <div className="inline-flex items-center justify-start gap-8">
       <NavigationMenu.Link asChild className="flex items-center justify-start gap-1">
-        <a
-          href={href}
-          className={clsx('font-zen text-base font-normal text-white no-underline')}
-          ref={ref}
-          target={target}
-        >
+        <a href={href} className={clsx('font-zen text-base font-normal text-white no-underline')} ref={ref} target={target}>
           {children}
         </a>
       </NavigationMenu.Link>

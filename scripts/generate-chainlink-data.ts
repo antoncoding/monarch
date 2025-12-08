@@ -65,9 +65,7 @@ const cleanOracleEntry = (entry: RawOracleEntry): CleanOracleEntry => {
   };
 };
 
-const fetchAndProcessData = async (
-  network: keyof typeof ENDPOINTS,
-): Promise<CleanOracleEntry[]> => {
+const fetchAndProcessData = async (network: keyof typeof ENDPOINTS): Promise<CleanOracleEntry[]> => {
   console.log(`Fetching ${network} oracle data...`);
 
   try {
@@ -87,14 +85,7 @@ const fetchAndProcessData = async (
 };
 
 const writeJsonFile = (filename: string, data: CleanOracleEntry[]): void => {
-  const outputPath = join(
-    process.cwd(),
-    'src',
-    'constants',
-    'oracle',
-    'chainlink-data',
-    `${filename}.json`,
-  );
+  const outputPath = join(process.cwd(), 'src', 'constants', 'oracle', 'chainlink-data', `${filename}.json`);
   writeFileSync(outputPath, JSON.stringify(data, null, 2));
   console.log(`Written ${data.length} entries to ${filename}.json`);
 };

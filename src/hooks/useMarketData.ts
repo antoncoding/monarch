@@ -5,14 +5,11 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { fetchMarketSnapshot } from '@/utils/positions';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
-export const useMarketData = (
-  uniqueKey: string | undefined,
-  network: SupportedNetworks | undefined,
-) => {
+export const useMarketData = (uniqueKey: string | undefined, network: SupportedNetworks | undefined) => {
   const queryKey = ['marketData', uniqueKey, network];
   const publicClient = usePublicClient({ chainId: network });
   const { getOracleData } = useOracleDataContext();
@@ -83,9 +80,7 @@ export const useMarketData = (
         };
       } else if (!finalMarket) {
         // Both data sources failed
-        console.error(
-          `Failed to fetch market data for ${uniqueKey} via both Morpho API and Subgraph.`,
-        );
+        console.error(`Failed to fetch market data for ${uniqueKey} via both Morpho API and Subgraph.`);
         finalMarket = null;
       } else if (!snapshot) {
         // Snapshot failed but data source succeeded - just use data source

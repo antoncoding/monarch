@@ -1,7 +1,7 @@
 import { marketLiquidationsAndBadDebtQuery } from '@/graphql/morpho-subgraph-queries';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
-import { MarketLiquidationTransaction } from '@/utils/types'; // Import simplified type
+import type { MarketLiquidationTransaction } from '@/utils/types'; // Import simplified type
 import { subgraphGraphqlFetcher } from './fetchers';
 
 // Types specific to the Subgraph response items
@@ -51,11 +51,7 @@ export const fetchSubgraphMarketLiquidations = async (
   const variables = { marketId };
 
   try {
-    const result = await subgraphGraphqlFetcher<SubgraphLiquidationsResponse>(
-      subgraphUrl,
-      marketLiquidationsAndBadDebtQuery,
-      variables,
-    );
+    const result = await subgraphGraphqlFetcher<SubgraphLiquidationsResponse>(subgraphUrl, marketLiquidationsAndBadDebtQuery, variables);
 
     const liquidates = result.data?.liquidates ?? [];
     const badDebtItems = result.data?.badDebtRealizations ?? [];
@@ -70,7 +66,7 @@ export const fetchSubgraphMarketLiquidations = async (
     return liquidates.map((liq) => ({
       type: 'MarketLiquidation',
       hash: liq.hash,
-      timestamp: typeof liq.timestamp === 'string' ? parseInt(liq.timestamp, 10) : liq.timestamp,
+      timestamp: typeof liq.timestamp === 'string' ? Number.parseInt(liq.timestamp, 10) : liq.timestamp,
       // Subgraph query doesn't provide liquidator, use empty string or default
       liquidator: liq.liquidator.id,
       repaidAssets: liq.repaid, // Loan asset repaid
@@ -79,10 +75,7 @@ export const fetchSubgraphMarketLiquidations = async (
       badDebtAssets: badDebtMap.get(liq.id) ?? '0', // Default to '0' if no bad debt entry
     }));
   } catch (error) {
-    console.error(
-      `Error fetching or processing Subgraph market liquidations for ${marketId}:`,
-      error,
-    );
+    console.error(`Error fetching or processing Subgraph market liquidations for ${marketId}:`, error);
     if (error instanceof Error) {
       throw error;
     }

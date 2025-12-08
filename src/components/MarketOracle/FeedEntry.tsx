@@ -3,14 +3,9 @@ import { Tooltip } from '@heroui/react';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
-import { Address } from 'viem';
-import {
-  detectFeedVendor,
-  getTruncatedAssetName,
-  PriceFeedVendors,
-  OracleVendorIcons,
-} from '@/utils/oracle';
-import { OracleFeed } from '@/utils/types';
+import type { Address } from 'viem';
+import { detectFeedVendor, getTruncatedAssetName, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import type { OracleFeed } from '@/utils/types';
 import { ChainlinkFeedTooltip } from './ChainlinkFeedTooltip';
 import { CompoundFeedTooltip } from './CompoundFeedTooltip';
 import { GeneralFeedTooltip } from './GeneralFeedTooltip';
@@ -89,13 +84,9 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
         {showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">
-            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">
-              {baseAsset}
-            </span>
+            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{baseAsset}</span>
             <IoIosSwap className="flex-shrink-0 text-xs text-gray-500" size={10} />
-            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">
-              {quoteAsset}
-            </span>
+            <span className="max-w-[2.5rem] truncate whitespace-nowrap text-xs font-medium">{quoteAsset}</span>
           </div>
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-1">

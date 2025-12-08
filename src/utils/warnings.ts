@@ -1,7 +1,7 @@
-import { Market, MarketWarning } from '@/utils/types';
+import type { Market, MarketWarning } from '@/utils/types';
 import { monarchWhitelistedMarkets } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
-import { WarningCategory, WarningWithDetail } from './types';
+import { WarningCategory, type WarningWithDetail } from './types';
 
 // Subgraph Warnings
 
@@ -68,7 +68,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
     description: 'This market has some unrealized bad debt',
     category: WarningCategory.debt,
   },
-  
+
   {
     code: 'not_whitelisted',
     level: 'alert',
@@ -84,8 +84,7 @@ const morphoOfficialWarnings: WarningWithDetail[] = [
   {
     code: 'unsafe_vault_as_collateral_asset',
     level: 'alert',
-    description:
-      'Market is using a MetaMorpho vault as collateral asset which has at least one minor warning',
+    description: 'Market is using a MetaMorpho vault as collateral asset which has at least one minor warning',
     category: WarningCategory.asset,
   },
 ];
@@ -104,7 +103,7 @@ const BAD_DEBT: WarningWithDetail = {
   level: 'warning',
   description: 'This market has some realized bad debt (>10 BPS of total supply)',
   category: WarningCategory.debt,
-}
+};
 
 const UNRECOGNIZED_ORACLE: WarningWithDetail = {
   code: 'unrecognized_oracle',
@@ -139,16 +138,11 @@ const UNRECOGNIZED_FEEDS: WarningWithDetail = {
 const UNRECOGNIZED_FEEDS_TAGGED: WarningWithDetail = {
   code: 'unknown feeds tagged',
   level: 'warning',
-  description:
-    'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
+  description: 'This market oracle has feeds that were tagged by Morpho but not verified by Monarch',
   category: WarningCategory.oracle,
 };
 
-
-export const getMarketWarningsWithDetail = (
-  market: Market,
-  considerWhitelist = false,
-) => {
+export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = false) => {
   const result = [];
 
   const allDetails = [...morphoOfficialWarnings, ...subgraphWarnings];
@@ -191,11 +185,7 @@ export const getMarketWarningsWithDetail = (
   }
 
   // Append our own oracle warnings
-  const oracleType = getOracleType(
-    market.oracle?.data,
-    market.oracleAddress,
-    market.morphoBlue.chain.id,
-  );
+  const oracleType = getOracleType(market.oracle?.data, market.oracleAddress, market.morphoBlue.chain.id);
   if (oracleType === OracleType.Custom) result.push(UNRECOGNIZED_ORACLE);
 
   // if any of the feeds are not null but also not recognized, return appropriate feed warning

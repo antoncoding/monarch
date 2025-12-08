@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
 import { calculateEarningsFromSnapshot } from '@/utils/interest';
 import { SupportedNetworks } from '@/utils/networks';
-import { fetchPositionsSnapshots, PositionSnapshot } from '@/utils/positions';
+import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
-import { MarketPositionWithEarnings } from '@/utils/types';
+import type { MarketPositionWithEarnings } from '@/utils/types';
 import useUserPositions, { positionKeys } from './useUserPositions';
 import useUserTransactions from './useUserTransactions';
 
@@ -41,17 +41,12 @@ const getPeriodTimestamp = (period: EarningsPeriod): number => {
 };
 
 // Fetch block number for a specific period across chains
-const fetchPeriodBlockNumbers = async (
-  period: EarningsPeriod,
-  chainIds?: SupportedNetworks[]
-): Promise<Record<number, number>> => {
+const fetchPeriodBlockNumbers = async (period: EarningsPeriod, chainIds?: SupportedNetworks[]): Promise<Record<number, number>> => {
   if (period === 'all') return {};
 
   const timestamp = getPeriodTimestamp(period);
 
-  const allNetworks = Object.values(SupportedNetworks).filter(
-    (chainId): chainId is SupportedNetworks => typeof chainId === 'number'
-  );
+  const allNetworks = Object.values(SupportedNetworks).filter((chainId): chainId is SupportedNetworks => typeof chainId === 'number');
   const networksToFetch = chainIds ?? allNetworks;
 
   const blockNumbers: Record<number, number> = {};
@@ -62,23 +57,14 @@ const fetchPeriodBlockNumbers = async (
       if (result) {
         blockNumbers[chainId] = result.blockNumber;
       }
-    })
+    }),
   );
 
   return blockNumbers;
 };
 
-const useUserPositionsSummaryData = (
-  user: string | undefined,
-  period: EarningsPeriod = 'all',
-  chainIds?: SupportedNetworks[]
-) => {
-  const {
-    data: positions,
-    loading: positionsLoading,
-    isRefetching,
-    positionsError,
-  } = useUserPositions(user, true, chainIds);
+const useUserPositionsSummaryData = (user: string | undefined, period: EarningsPeriod = 'all', chainIds?: SupportedNetworks[]) => {
+  const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(user, true, chainIds);
 
   const { fetchTransactions } = useUserTransactions();
   const queryClient = useQueryClient();
@@ -86,8 +72,12 @@ const useUserPositionsSummaryData = (
 
   // Create stable key for positions
   const positionsKey = useMemo(
-    () => positions?.map(p => `${p.market.uniqueKey}-${p.market.morphoBlue.chain.id}`).sort().join(',') ?? '',
-    [positions]
+    () =>
+      positions
+        ?.map((p) => `${p.market.uniqueKey}-${p.market.morphoBlue.chain.id}`)
+        .sort()
+        .join(',') ?? '',
+    [positions],
   );
 
   // Query for block numbers for the selected period
@@ -123,23 +113,14 @@ const useUserPositionsSummaryData = (
           const blockNumber = periodBlockNumbers[chainId];
           if (!blockNumber) return;
 
-          const client = getClient(
-            chainId as SupportedNetworks,
-            customRpcUrls[chainId as SupportedNetworks]
-          );
+          const client = getClient(chainId as SupportedNetworks, customRpcUrls[chainId as SupportedNetworks]);
 
-          const snapshots = await fetchPositionsSnapshots(
-            marketIds,
-            user as Address,
-            chainId,
-            blockNumber,
-            client
-          );
+          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainId, blockNumber, client);
 
           snapshots.forEach((snapshot, marketId) => {
             allSnapshots.set(marketId.toLowerCase(), snapshot);
           });
-        })
+        }),
       );
 
       return allSnapshots;
@@ -156,11 +137,11 @@ const useUserPositionsSummaryData = (
       if (!positions || !user) return [];
 
       // Deduplicate chain IDs to avoid fetching same network multiple times
-      const uniqueChainIds = chainIds ?? [...new Set(positions.map(p => p.market.morphoBlue.chain.id as SupportedNetworks))];
+      const uniqueChainIds = chainIds ?? [...new Set(positions.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks))];
 
       const result = await fetchTransactions({
         userAddress: [user],
-        marketUniqueKeys: positions.map(p => p.market.uniqueKey),
+        marketUniqueKeys: positions.map((p) => p.market.uniqueKey),
         chainIds: uniqueChainIds,
       });
 
@@ -178,13 +159,13 @@ const useUserPositionsSummaryData = (
     // Don't calculate if transactions haven't loaded yet - return positions with 0 earnings
     // This prevents incorrect calculations when withdraws/deposits aren't counted
     if (!allTransactions) {
-      return positions.map(p => ({ ...p, earned: '0' }));
+      return positions.map((p) => ({ ...p, earned: '0' }));
     }
 
     // Don't calculate if snapshots haven't loaded yet for non-'all' periods
     // Without the starting balance, earnings calculation will be incorrect
     if (period !== 'all' && !periodSnapshots) {
-      return positions.map(p => ({ ...p, earned: '0' }));
+      return positions.map((p) => ({ ...p, earned: '0' }));
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -200,18 +181,10 @@ const useUserPositionsSummaryData = (
       const pastBalance = pastSnapshot ? BigInt(pastSnapshot.supplyAssets) : 0n;
 
       // Filter transactions for this market (case-insensitive comparison)
-      const marketTxs = (allTransactions ?? []).filter(
-        (tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower
-      );
+      const marketTxs = (allTransactions ?? []).filter((tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower);
 
       // Calculate earnings
-      const earnings = calculateEarningsFromSnapshot(
-        currentBalance,
-        pastBalance,
-        marketTxs,
-        startTimestamp,
-        now
-      );
+      const earnings = calculateEarningsFromSnapshot(currentBalance, pastBalance, marketTxs, startTimestamp, now);
 
       return {
         ...position,
@@ -223,12 +196,20 @@ const useUserPositionsSummaryData = (
   const refetch = async (onSuccess?: () => void) => {
     try {
       // Invalidate positions
-      await queryClient.invalidateQueries({ queryKey: positionKeys.initialData(user ?? '') });
-      await queryClient.invalidateQueries({ queryKey: ['enhanced-positions', user] });
+      await queryClient.invalidateQueries({
+        queryKey: positionKeys.initialData(user ?? ''),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ['enhanced-positions', user],
+      });
       // Invalidate snapshots
-      await queryClient.invalidateQueries({ queryKey: ['period-snapshots', user] });
+      await queryClient.invalidateQueries({
+        queryKey: ['period-snapshots', user],
+      });
       // Invalidate transactions
-      await queryClient.invalidateQueries({ queryKey: ['user-transactions-summary', user] });
+      await queryClient.invalidateQueries({
+        queryKey: ['user-transactions-summary', user],
+      });
 
       onSuccess?.();
     } catch (refetchError) {

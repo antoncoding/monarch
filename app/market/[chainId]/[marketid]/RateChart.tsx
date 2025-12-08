@@ -1,26 +1,17 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/react';
 import { Progress } from '@heroui/react';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { convertApyToApr } from '@/utils/rateMath';
-import { MarketRates } from '@/utils/types';
-import { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
+import type { MarketRates } from '@/utils/types';
+import type { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
 
 type RateChartProps = {
   historicalData: MarketRates | undefined;
@@ -31,14 +22,7 @@ type RateChartProps = {
   handleTimeframeChange: (timeframe: '1d' | '7d' | '30d') => void;
 };
 
-function RateChart({
-  historicalData,
-  market,
-  isLoading,
-  selectedTimeframe,
-  selectedTimeRange,
-  handleTimeframeChange,
-}: RateChartProps) {
+function RateChart({ historicalData, market, isLoading, selectedTimeframe, selectedTimeRange, handleTimeframeChange }: RateChartProps) {
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
 
@@ -55,8 +39,8 @@ function RateChart({
     return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
       // Convert values to APR if display mode is enabled
       const supplyVal = isAprDisplay ? convertApyToApr(point.y) : point.y;
-      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y || 0) : (borrowApy[index]?.y || 0);
-      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y || 0) : (apyAtTarget[index]?.y || 0);
+      const borrowVal = isAprDisplay ? convertApyToApr(borrowApy[index]?.y || 0) : borrowApy[index]?.y || 0;
+      const targetVal = isAprDisplay ? convertApyToApr(apyAtTarget[index]?.y || 0) : apyAtTarget[index]?.y || 0;
 
       return {
         x: point.x,
@@ -77,9 +61,7 @@ function RateChart({
   const getAverageApyValue = (type: 'supply' | 'borrow') => {
     if (!historicalData) return 0;
     const data = type === 'supply' ? historicalData.supplyApy : historicalData.borrowApy;
-    const avgApy = data.length > 0
-      ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length
-      : 0;
+    const avgApy = data.length > 0 ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length : 0;
     return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
 
@@ -90,12 +72,8 @@ function RateChart({
 
   const getAverageapyAtTargetValue = () => {
     if (!historicalData?.apyAtTarget || historicalData.apyAtTarget.length === 0) return 0;
-    const avgApy = (
-      historicalData.apyAtTarget.reduce(
-        (sum: number, point: TimeseriesDataPoint) => sum + point.y,
-        0,
-      ) / historicalData.apyAtTarget.length
-    );
+    const avgApy =
+      historicalData.apyAtTarget.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / historicalData.apyAtTarget.length;
     return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
 
@@ -106,19 +84,22 @@ function RateChart({
   const getAverageUtilizationRate = () => {
     if (!historicalData?.utilization || historicalData.utilization.length === 0) return 0;
     return (
-      historicalData.utilization.reduce(
-        (sum: number, point: TimeseriesDataPoint) => sum + point.y,
-        0,
-      ) / historicalData.utilization.length
+      historicalData.utilization.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / historicalData.utilization.length
     );
   };
 
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
     if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 86400) {
-      return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
     }
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return date.toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   const timeframeOptions = [
@@ -208,9 +189,7 @@ function RateChart({
                     formatter={(value, entry) => (
                       <span
                         style={{
-                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines]
-                            ? undefined
-                            : '#999',
+                          color: visibleLines[(entry as any).dataKey as keyof typeof visibleLines] ? undefined : '#999',
                         }}
                       >
                         {value}
@@ -272,28 +251,21 @@ function RateChart({
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Supply APY:</span>
-                  <span className="font-zen text-sm">
-                    {formatPercentage(getCurrentApyValue('supply'))}
-                  </span>
+                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('supply'))}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Borrow APY:</span>
-                  <span className="font-zen text-sm">
-                    {formatPercentage(getCurrentApyValue('borrow'))}
-                  </span>
+                  <span className="font-zen text-sm">{formatPercentage(getCurrentApyValue('borrow'))}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Rate at U Target:</span>
-                  <span className="font-zen text-sm">
-                    {formatPercentage(getCurrentapyAtTargetValue())}
-                  </span>
+                  <span className="font-zen text-sm">{formatPercentage(getCurrentapyAtTargetValue())}</span>
                 </div>
               </div>
 
               <div>
                 <h3 className="mb-1 text-lg font-semibold">
-                  Historical Averages{' '}
-                  <span className="font-normal text-gray-500">({selectedTimeframe})</span>
+                  Historical Averages <span className="font-normal text-gray-500">({selectedTimeframe})</span>
                 </h3>
                 {isLoading ? (
                   <div className="flex min-h-48 justify-center text-primary">
@@ -303,27 +275,19 @@ function RateChart({
                   <>
                     <div className="flex items-center justify-between">
                       <span>Utilization Rate:</span>
-                      <span className="font-zen text-sm">
-                        {formatPercentage(getAverageUtilizationRate())}
-                      </span>
+                      <span className="font-zen text-sm">{formatPercentage(getAverageUtilizationRate())}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Supply APY:</span>
-                      <span className="font-zen text-sm">
-                        {formatPercentage(getAverageApyValue('supply'))}
-                      </span>
+                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('supply'))}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Borrow APY:</span>
-                      <span className="font-zen text-sm">
-                        {formatPercentage(getAverageApyValue('borrow'))}
-                      </span>
+                      <span className="font-zen text-sm">{formatPercentage(getAverageApyValue('borrow'))}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span>Rate at U Target:</span>
-                      <span className="font-zen text-sm">
-                        {formatPercentage(getAverageapyAtTargetValue())}
-                      </span>
+                      <span className="font-zen text-sm">{formatPercentage(getAverageapyAtTargetValue())}</span>
                     </div>
                   </>
                 )}

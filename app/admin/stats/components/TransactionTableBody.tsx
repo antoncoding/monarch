@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -7,10 +6,10 @@ import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
-import { SupportedNetworks } from '@/utils/networks';
+import type { SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { findToken } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 
 type TransactionOperation = {
   txId: string;
@@ -53,12 +52,7 @@ const formatTimeAgo = (timestamp: string): string => {
   return `${diffInYears}y ago`;
 };
 
-const formatAmount = (
-  amount: string,
-  side: 'Supply' | 'Withdraw',
-  loanAddress: string,
-  chainId: number,
-): string => {
+const formatAmount = (amount: string, side: 'Supply' | 'Withdraw', loanAddress: string, chainId: number): string => {
   if (!amount || amount === '0') return '—';
 
   const token = findToken(loanAddress, chainId);
@@ -70,42 +64,24 @@ const formatAmount = (
   return `${sign}${formatReadable(Number(formatted))} ${symbol}`;
 };
 
-export function TransactionTableBody({
-  operations,
-  selectedNetwork,
-}: TransactionTableBodyProps) {
-
+export function TransactionTableBody({ operations, selectedNetwork }: TransactionTableBodyProps) {
   return (
     <tbody className="table-body text-sm">
       {operations.map((op) => {
-        const marketPath = op.market
-          ? `/market/${selectedNetwork}/${op.market.uniqueKey}`
-          : null;
+        const marketPath = op.market ? `/market/${selectedNetwork}/${op.market.uniqueKey}` : null;
 
         return (
           <tr key={op.txId} className="hover:bg-hovered">
             {/* User Address */}
             <td data-label="User" className="z-50" style={{ minWidth: '120px' }}>
-              <AccountIdentity
-                address={op.user as `0x${string}`}
-                variant="badge"
-                linkTo="profile"
-              />
+              <AccountIdentity address={op.user as `0x${string}`} variant="badge" linkTo="profile" />
             </td>
 
             {/* Loan Asset */}
             <td data-label="Loan Asset" className="z-50" style={{ minWidth: '100px' }}>
               <div className="flex items-center gap-1.5">
-                <TokenIcon
-                  address={op.loanAddress}
-                  chainId={selectedNetwork}
-                  symbol={op.loanSymbol}
-                  width={16}
-                  height={16}
-                />
-                <span className="text-sm whitespace-nowrap">
-                  {getTruncatedAssetName(op.loanSymbol)}
-                </span>
+                <TokenIcon address={op.loanAddress} chainId={selectedNetwork} symbol={op.loanSymbol} width={16} height={16} />
+                <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(op.loanSymbol)}</span>
               </div>
             </td>
 
@@ -115,7 +91,12 @@ export function TransactionTableBody({
                 <Link href={marketPath} className="no-underline hover:no-underline">
                   <div className="flex items-center gap-2">
                     <MarketIdBadge marketId={op.market.uniqueKey} chainId={op.market.morphoBlue.chain.id} showLink={false} />
-                    <MarketIdentity market={op.market} focus={MarketIdentityFocus.Collateral} chainId={op.market.morphoBlue.chain.id} mode={MarketIdentityMode.Minimum} />
+                    <MarketIdentity
+                      market={op.market}
+                      focus={MarketIdentityFocus.Collateral}
+                      chainId={op.market.morphoBlue.chain.id}
+                      mode={MarketIdentityMode.Minimum}
+                    />
                   </div>
                 </Link>
               ) : (
@@ -136,9 +117,7 @@ export function TransactionTableBody({
 
             {/* Amount */}
             <td data-label="Amount" className="z-50" style={{ minWidth: '120px' }}>
-              <span className="text-sm">
-                {formatAmount(op.amount, op.side, op.loanAddress, selectedNetwork)}
-              </span>
+              <span className="text-sm">{formatAmount(op.amount, op.side, op.loanAddress, selectedNetwork)}</span>
             </td>
 
             {/* Transaction Hash */}
@@ -148,9 +127,7 @@ export function TransactionTableBody({
 
             {/* Time */}
             <td data-label="Time" className="z-50" style={{ minWidth: '90px' }}>
-              <span className="text-xs text-secondary whitespace-nowrap">
-                {formatTimeAgo(op.timestamp)}
-              </span>
+              <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(op.timestamp)}</span>
             </td>
           </tr>
         );

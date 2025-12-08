@@ -1,4 +1,4 @@
-import { Chain, base, mainnet, polygon, unichain, arbitrum, monad } from 'viem/chains';
+import { type Chain, base, mainnet, polygon, unichain, arbitrum, monad } from 'viem/chains';
 import { getWrappedNativeToken, hyperEvm } from './networks';
 
 export type TokenSource = 'local' | 'external' | 'unknown';
@@ -56,10 +56,19 @@ const supportedTokens = [
       { chain: mainnet, address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48' },
       { chain: base, address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
       { chain: polygon, address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' },
-      { chain: unichain, address: '0x078d782b760474a361dda0af3839290b0ef57ad6' },
-      { chain: arbitrum, address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831' },
-      { chain: hyperEvm, address: '0xb88339cb7199b77e23db6e890353e22632ba630f' },
-      { chain: monad, address: '0x754704bc059f8c67012fed69bc8a327a5aafb603' }
+      {
+        chain: unichain,
+        address: '0x078d782b760474a361dda0af3839290b0ef57ad6',
+      },
+      {
+        chain: arbitrum,
+        address: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+      },
+      {
+        chain: hyperEvm,
+        address: '0xb88339cb7199b77e23db6e890353e22632ba630f',
+      },
+      { chain: monad, address: '0x754704bc059f8c67012fed69bc8a327a5aafb603' },
     ],
     peg: TokenPeg.USD,
   },
@@ -163,7 +172,7 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
-      { chain: monad, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' }
+      { chain: monad, address: '0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a' },
     ],
     protocol: {
       name: 'Agora',
@@ -185,9 +194,7 @@ const supportedTokens = [
     symbol: 'USDS',
     img: require('../imgs/tokens/usds.svg') as string,
     decimals: 18,
-    networks: [
-      { chain: mainnet, address: '0xdC035D45d973E3EC169d2276DDab16f1e407384F' },
-    ],
+    networks: [{ chain: mainnet, address: '0xdC035D45d973E3EC169d2276DDab16f1e407384F' }],
     peg: TokenPeg.USD,
   },
   {
@@ -228,13 +235,19 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2' },
       { chain: base, address: '0x4200000000000000000000000000000000000006' },
-      { chain: unichain, address: '0x4200000000000000000000000000000000000006' },
-      { chain: arbitrum, address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1' },
+      {
+        chain: unichain,
+        address: '0x4200000000000000000000000000000000000006',
+      },
+      {
+        chain: arbitrum,
+        address: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
+      },
       // wrapped eth on polygon, defined here as it will not be interpreted as "WETH Contract"
       // which is determined by isWETH function
       // This is solely for displaying and linking to eth.
       { chain: polygon, address: '0x7ceb23fd6bc0add59e62ac25578270cff1b9f619' },
-      { chain: monad, address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242' }
+      { chain: monad, address: '0xEE8c0E9f1BFFb4Eb878d8f15f368A02a35481242' },
     ],
     peg: TokenPeg.ETH,
   },
@@ -257,9 +270,15 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0' },
       { chain: base, address: '0xc1cba3fcea344f92d9239c08c0568f6f2f0ee452' },
-      { chain: arbitrum, address: '0x5979D7b546E38E414F7E9822514be443A4800529' },
+      {
+        chain: arbitrum,
+        address: '0x5979D7b546E38E414F7E9822514be443A4800529',
+      },
       { chain: monad, address: '0x10Aeaf63194db8d453d4D85a06E5eFE1dd0b5417' },
-      { chain: unichain, address: '0xc02fe7317d4eb8753a02c35fe019786854a92001' },
+      {
+        chain: unichain,
+        address: '0xc02fe7317d4eb8753a02c35fe019786854a92001',
+      },
     ],
     peg: TokenPeg.ETH,
   },
@@ -304,9 +323,15 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599' },
       { chain: polygon, address: '0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6' },
-      { chain: unichain, address: '0x927B51f251480a681271180DA4de28D44EC4AfB8' },
-      { chain: arbitrum, address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f' },
-      { chain: monad, address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c' }
+      {
+        chain: unichain,
+        address: '0x927B51f251480a681271180DA4de28D44EC4AfB8',
+      },
+      {
+        chain: arbitrum,
+        address: '0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f',
+      },
+      { chain: monad, address: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c' },
     ],
     peg: TokenPeg.BTC,
   },
@@ -350,7 +375,10 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0xA1290d69c65A6Fe4DF752f95823fae25cB99e5A7' },
-      { chain: unichain, address: '0xc3eACf0612346366Db554C991D7858716db09f58' }
+      {
+        chain: unichain,
+        address: '0xc3eACf0612346366Db554C991D7858716db09f58',
+      },
     ],
     peg: TokenPeg.ETH,
   },
@@ -367,7 +395,10 @@ const supportedTokens = [
     networks: [
       { chain: mainnet, address: '0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee' },
       { chain: base, address: '0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A' },
-      { chain: unichain, address: '0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7' }
+      {
+        chain: unichain,
+        address: '0x7DCC39B4d1C53CB31e1aBc0e358b43987FEF80f7',
+      },
     ],
     peg: TokenPeg.ETH,
   },
@@ -422,8 +453,11 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0xbf5495Efe5DB9ce00f80364C8B423567e58d2110' },
-      { chain: base, address: '0x2416092f143378750bb29b79eD961ab195CcEea5'},
-      { chain: unichain, address: '0x2416092f143378750bb29b79eD961ab195CcEea5' }
+      { chain: base, address: '0x2416092f143378750bb29b79eD961ab195CcEea5' },
+      {
+        chain: unichain,
+        address: '0x2416092f143378750bb29b79eD961ab195CcEea5',
+      },
     ],
     peg: TokenPeg.ETH,
   },
@@ -473,7 +507,12 @@ const supportedTokens = [
     symbol: 'syrupUSDC',
     img: require('../imgs/tokens/syrupUSDC.svg') as string,
     decimals: 18,
-    networks: [{ chain: arbitrum, address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5' }],
+    networks: [
+      {
+        chain: arbitrum,
+        address: '0x41CA7586cC1311807B4605fBB748a3B8862b42b5',
+      },
+    ],
     peg: TokenPeg.USD,
   },
   {
@@ -503,7 +542,10 @@ const supportedTokens = [
     decimals: 18,
     networks: [
       { chain: mainnet, address: '0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984' },
-      { chain: unichain, address: '0x8f187aa05619a017077f5308904739877ce9ea21' },
+      {
+        chain: unichain,
+        address: '0x8f187aa05619a017077f5308904739877ce9ea21',
+      },
     ],
   },
   {
@@ -590,7 +632,12 @@ const supportedTokens = [
     symbol: 'ARB',
     img: require('../imgs/tokens/arb.png') as string,
     decimals: 18,
-    networks: [{ chain: arbitrum, address: '0x912CE59144191C1204E64559FE8253a0e49E6548' }],
+    networks: [
+      {
+        chain: arbitrum,
+        address: '0x912CE59144191C1204E64559FE8253a0e49E6548',
+      },
+    ],
   },
   // hyperEvm
   {
@@ -598,9 +645,15 @@ const supportedTokens = [
     img: require('../imgs/tokens/usdt0.png') as string,
     decimals: 18,
     networks: [
-      { chain: hyperEvm, address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb' },
+      {
+        chain: hyperEvm,
+        address: '0xb8ce59fc3717ada4c02eadf9682a9e934f625ebb',
+      },
       { chain: monad, address: '0xe7cd86e13AC4309349F30B3435a9d337750fC82D' },
-      { chain: unichain, address: '0x9151434b16b9763660705744891fA906F660EcC5' }
+      {
+        chain: unichain,
+        address: '0x9151434b16b9763660705744891fA906F660EcC5',
+      },
     ],
     peg: TokenPeg.USD,
   },
@@ -608,53 +661,93 @@ const supportedTokens = [
     symbol: 'WHYPE',
     img: require('../imgs/tokens/whype.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0x5555555555555555555555555555555555555555' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x5555555555555555555555555555555555555555',
+      },
+    ],
   },
   {
     symbol: 'UETH',
     img: require('../imgs/tokens/ueth.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0xBe6727B535545C67d5cAa73dEa54865B92CF7907' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0xBe6727B535545C67d5cAa73dEa54865B92CF7907',
+      },
+    ],
     peg: TokenPeg.ETH,
   },
   {
     symbol: 'UBTC',
     img: require('../imgs/tokens/ubtc.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463',
+      },
+    ],
     peg: TokenPeg.BTC,
   },
   {
     symbol: 'wstHYPE',
     img: require('../imgs/tokens/wsthype.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0x94e8396e0869c9f2200760af0621afd240e1cf38' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x94e8396e0869c9f2200760af0621afd240e1cf38',
+      },
+    ],
   },
   {
     symbol: 'kHYPE',
     img: require('../imgs/tokens/khype.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0xfd739d4e423301ce9385c1fb8850539d657c296d' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0xfd739d4e423301ce9385c1fb8850539d657c296d',
+      },
+    ],
   },
   {
     symbol: 'hbUSDT',
     img: require('../imgs/tokens/hbusdt.svg') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x5e105266db42f78fa814322bce7f388b4c2e61eb',
+      },
+    ],
     peg: TokenPeg.USD,
   },
   {
     symbol: 'USH',
     img: require('../imgs/tokens/ush.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0x8ff0dd9f9c40a0d76ef1bcfaf5f98c1610c74bd8' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0x8ff0dd9f9c40a0d76ef1bcfaf5f98c1610c74bd8',
+      },
+    ],
     peg: TokenPeg.USD,
   },
   {
     symbol: 'USDHL',
     img: require('../imgs/tokens/usdhl.png') as string,
     decimals: 18,
-    networks: [{ chain: hyperEvm, address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5' }],
+    networks: [
+      {
+        chain: hyperEvm,
+        address: '0xb50a96253abdf803d85efcdce07ad8becbc52bd5',
+      },
+    ],
     peg: TokenPeg.USD,
   },
   // End of hyperEvm
@@ -692,10 +785,7 @@ const supportedTokens = [
 
 const findToken = (address: string, chainId: number) => {
   return supportedTokens.find((token) =>
-    token.networks.some(
-      (network) =>
-        network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
-    ),
+    token.networks.some((network) => network.address.toLowerCase() === address.toLowerCase() && network.chain.id === chainId),
   );
 };
 
@@ -707,20 +797,14 @@ const findTokenWithKey = (key: string) => {
   // key: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48-1|0x833589fcd6edb6e08f4c7c32d4f71b54bda02913-8453'
   const subKeys = key.split('|');
   return supportedTokens.find((token) => {
-    return token.networks.some(
-      (network) => infoToKey(network.address, network.chain.id) === subKeys[0].toLowerCase(),
-    );
+    return token.networks.some((network) => infoToKey(network.address, network.chain.id) === subKeys[0].toLowerCase());
   });
 };
 
 const getUniqueTokens = (tokenList: { address: string; chainId: number }[]) => {
   return supportedTokens.filter((token) => {
     return tokenList.find((item) =>
-      token.networks.find(
-        (network) =>
-          network.address.toLowerCase() === item.address.toLowerCase() &&
-          network.chain.id === item.chainId,
-      ),
+      token.networks.find((network) => network.address.toLowerCase() === item.address.toLowerCase() && network.chain.id === item.chainId),
     );
   });
 };
@@ -732,10 +816,7 @@ const isWrappedNativeToken = (address: string, chainId: number) => {
 };
 
 // Scam tokens
-const blacklistTokens = [
-  '0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd',
-  '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83',
-];
+const blacklistTokens = ['0xda1c2c3c8fad503662e41e324fc644dc2c5e0ccd', '0x8413d2a624a9fa8b6d3ec7b22cf7f62e55d6bc83'];
 
 export {
   supportedTokens,

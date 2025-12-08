@@ -104,10 +104,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     (address: string, chainId: number) => {
       if (!address || !chainId) return undefined;
       return allTokens.find((token) =>
-        token.networks.some(
-          (network) =>
-            network.address?.toLowerCase() === address.toLowerCase() && network.chain.id === chainId,
-        ),
+        token.networks.some((network) => network.address?.toLowerCase() === address.toLowerCase() && network.chain.id === chainId),
       );
     },
     [allTokens],
@@ -118,9 +115,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
       return allTokens.filter((token) => {
         return tokenList.find((item) =>
           token.networks.find(
-            (network) =>
-              network.address.toLowerCase() === item.address.toLowerCase() &&
-              network.chain.id === item.chainId,
+            (network) => network.address.toLowerCase() === item.address.toLowerCase() && network.chain.id === item.chainId,
           ),
         );
       });
@@ -128,10 +123,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     [allTokens],
   );
 
-  const value = useMemo(
-    () => ({ allTokens, findToken, getUniqueTokens }),
-    [allTokens, findToken, getUniqueTokens],
-  );
+  const value = useMemo(() => ({ allTokens, findToken, getUniqueTokens }), [allTokens, findToken, getUniqueTokens]);
 
   return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;
 }

@@ -38,15 +38,7 @@ const levelToIcon = (level: string) => {
  * @param description
  * @param level success info warning alert
  */
-export function Info({
-  description,
-  level,
-  title,
-}: {
-  description: string;
-  level: string;
-  title?: string;
-}) {
+export function Info({ description, level, title }: { description: string; level: string; title?: string }) {
   return (
     <div className={`flex items-center rounded-sm ${levelToCellColor(level)} p-4 opacity-80`}>
       {levelToIcon(level)}

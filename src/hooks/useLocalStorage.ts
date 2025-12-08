@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import storage from 'local-storage-fallback';
 
-export function useLocalStorage<T>(
-  key: string,
-  initialValue: T,
-): readonly [T, (value: T | ((val: T) => T)) => void] {
+export function useLocalStorage<T>(key: string, initialValue: T): readonly [T, (value: T | ((val: T) => T)) => void] {
   // State to store our value
   // Always use initialValue during SSR and before hydration
   const [storedValue, setStoredValue] = useState<T>(initialValue);

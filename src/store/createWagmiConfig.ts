@@ -8,13 +8,12 @@ import {
   injectedWallet,
   trustWallet,
   ledgerWallet,
-  walletConnectWallet
+  walletConnectWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum, monad } from 'wagmi/chains';
-import { CustomRpcUrls } from '@/hooks/useCustomRpc';
+import type { CustomRpcUrls } from '@/hooks/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
-
 
 const wallets =
   typeof window !== 'undefined'
@@ -27,7 +26,7 @@ const wallets =
         injectedWallet,
         trustWallet,
         ledgerWallet,
-        walletConnectWallet
+        walletConnectWallet,
       ]
     : [injectedWallet];
 
@@ -47,12 +46,12 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
 
   // Use custom RPC URLs if provided, otherwise fall back to defaults
   const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? getDefaultRPC(SupportedNetworks.Mainnet);
-  const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base)
-  const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? getDefaultRPC(SupportedNetworks.Polygon)
-  const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? getDefaultRPC(SupportedNetworks.Unichain)
-  const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? getDefaultRPC(SupportedNetworks.Arbitrum)
-  const rpcHyperEVM = customRpcUrls[SupportedNetworks.HyperEVM] ?? getDefaultRPC(SupportedNetworks.HyperEVM)
-  const rpcMonad = customRpcUrls[SupportedNetworks.Monad] ?? getDefaultRPC(SupportedNetworks.Monad)
+  const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base);
+  const rpcPolygon = customRpcUrls[SupportedNetworks.Polygon] ?? getDefaultRPC(SupportedNetworks.Polygon);
+  const rpcUnichain = customRpcUrls[SupportedNetworks.Unichain] ?? getDefaultRPC(SupportedNetworks.Unichain);
+  const rpcArbitrum = customRpcUrls[SupportedNetworks.Arbitrum] ?? getDefaultRPC(SupportedNetworks.Arbitrum);
+  const rpcHyperEVM = customRpcUrls[SupportedNetworks.HyperEVM] ?? getDefaultRPC(SupportedNetworks.HyperEVM);
+  const rpcMonad = customRpcUrls[SupportedNetworks.Monad] ?? getDefaultRPC(SupportedNetworks.Monad);
 
   return createConfig({
     ssr: true,
@@ -64,7 +63,7 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
       [unichain.id]: http(rpcUnichain),
       [arbitrum.id]: http(rpcArbitrum),
       [hyperEvm.id]: http(rpcHyperEVM),
-      [monad.id]: http(rpcMonad)
+      [monad.id]: http(rpcMonad),
     },
     connectors: [...connectors],
   });

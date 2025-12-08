@@ -9,15 +9,7 @@ export function StyledToast({ title, message }: { title: string; message?: strin
   );
 }
 
-export function TransactionToast({
-  title,
-  description,
-  hash,
-}: {
-  title: string;
-  hash?: string;
-  description?: string;
-}) {
+export function TransactionToast({ title, description, hash }: { title: string; hash?: string; description?: string }) {
   return (
     <div className="p-2 font-zen">
       <div className="text">{title}</div>

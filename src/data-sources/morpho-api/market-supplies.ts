@@ -1,5 +1,5 @@
 import { marketSuppliesQuery } from '@/graphql/morpho-api-queries';
-import { PaginatedMarketActivityTransactions } from '@/utils/types';
+import type { PaginatedMarketActivityTransactions } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers'; // Import shared fetcher
 
 // Type specifically for the raw Morpho API response structure within this module
@@ -54,10 +54,7 @@ export const fetchMorphoMarketSupplies = async (
 
   try {
     // Use the shared fetcher
-    const result = await morphoGraphqlFetcher<MorphoAPISuppliesResponse>(
-      marketSuppliesQuery,
-      variables,
-    );
+    const result = await morphoGraphqlFetcher<MorphoAPISuppliesResponse>(marketSuppliesQuery, variables);
 
     // Fetcher handles network and basic GraphQL errors
     const items = result.data?.transactions?.items ?? [];
@@ -79,10 +76,7 @@ export const fetchMorphoMarketSupplies = async (
     };
   } catch (error) {
     // Catch errors from the fetcher or during processing
-    console.error(
-      `Error fetching or processing Morpho API market supplies for ${marketId}:`,
-      error,
-    );
+    console.error(`Error fetching or processing Morpho API market supplies for ${marketId}:`, error);
     // Re-throw the error to be handled by the calling hook
     if (error instanceof Error) {
       throw error;

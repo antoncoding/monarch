@@ -25,11 +25,7 @@ initAnalytics();
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${zen.variable} ${inter.variable} ${monospace.variable}`}
-    >
+    <html lang="en" suppressHydrationWarning className={`${zen.variable} ${inter.variable} ${monospace.variable}`}>
       <body suppressHydrationWarning>
         <ThemeProviders>
           <QueryProvider>

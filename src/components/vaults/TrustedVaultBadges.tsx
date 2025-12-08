@@ -3,7 +3,7 @@
 import { Tooltip } from '@heroui/react';
 import { TooltipContent } from '@/components/TooltipContent';
 import { VaultIdentity } from '@/components/vaults/VaultIdentity';
-import { type TrustedVault } from '@/constants/vaults/known_vaults';
+import type { TrustedVault } from '@/constants/vaults/known_vaults';
 
 type MoreVaultsBadgeProps = {
   vaults: TrustedVault[];
@@ -86,9 +86,7 @@ export function TrustedByCell({ vaults, badgeSize = 22 }: TrustedByCellProps) {
           />
         </div>
       ))}
-      {vaults.length > preview.length && (
-        <MoreVaultsBadge vaults={vaults.slice(preview.length)} badgeSize={badgeSize} />
-      )}
+      {vaults.length > preview.length && <MoreVaultsBadge vaults={vaults.slice(preview.length)} badgeSize={badgeSize} />}
     </div>
   );
 }

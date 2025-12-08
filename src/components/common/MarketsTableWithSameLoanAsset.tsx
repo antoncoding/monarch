@@ -24,11 +24,11 @@ import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
-import * as keys from "@/utils/storageKeys"
-import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
-import { Market } from '@/utils/types';
+import * as keys from '@/utils/storageKeys';
+import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
+import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import { DEFAULT_COLUMN_VISIBILITY, ColumnVisibility } from 'app/markets/components/columnVisibility';
+import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from 'app/markets/components/columnVisibility';
 import MarketSettingsModal from 'app/markets/components/MarketSettingsModal';
 import { MarketIdBadge } from '../MarketIdBadge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '../MarketIdentity';
@@ -78,10 +78,7 @@ enum SortColumn {
   UtilizationRate = 9,
 }
 
-function getTrustedVaultsForMarket(
-  market: Market,
-  trustedVaultMap: Map<string, TrustedVault>,
-): TrustedVault[] {
+function getTrustedVaultsForMarket(market: Market, trustedVaultMap: Map<string, TrustedVault>): TrustedVault[] {
   if (!market.supplyingVaults?.length) {
     return [];
   }
@@ -133,8 +130,7 @@ function HTSortable({
     >
       <div className="flex items-center justify-center gap-1">
         <div>{label}</div>
-        {isSorting &&
-          (sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon />)}
+        {isSorting && (sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon />)}
       </div>
     </th>
   );
@@ -184,9 +180,7 @@ function CollateralFilter({
     setIsOpen(false);
   };
 
-  const filteredItems = availableCollaterals.filter((token) =>
-    token.symbol.toLowerCase().includes(query.toLowerCase()),
-  );
+  const filteredItems = availableCollaterals.filter((token) => token.symbol.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="relative z-30 w-full" ref={dropdownRef}>
@@ -258,9 +252,7 @@ function CollateralFilter({
                     <li
                       key={tokenKey}
                       className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-xs hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                        selectedCollaterals.includes(tokenKey)
-                          ? 'bg-gray-300 dark:bg-gray-700'
-                          : ''
+                        selectedCollaterals.includes(tokenKey) ? 'bg-gray-300 dark:bg-gray-700' : ''
                       }`}
                       onClick={() => selectOption(token)}
                       onKeyDown={(e) => {
@@ -272,9 +264,7 @@ function CollateralFilter({
                       aria-selected={selectedCollaterals.includes(tokenKey)}
                       tabIndex={0}
                     >
-                      <span title={token.symbol}>
-                        {token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}
-                      </span>
+                      <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
                       {token.img ? (
                         <Image src={token.img} alt={token.symbol} width={14} height={14} />
                       ) : (
@@ -402,13 +392,7 @@ function OracleFilterComponent({
             >
               <div className="flex items-center gap-2">
                 {OracleVendorIcons[oracle] ? (
-                  <Image
-                    src={OracleVendorIcons[oracle]}
-                    alt={oracle}
-                    width={14}
-                    height={14}
-                    className="rounded-full"
-                  />
+                  <Image src={OracleVendorIcons[oracle]} alt={oracle} width={14} height={14} className="rounded-full" />
                 ) : (
                   <IoHelpCircleOutline className="text-secondary" size={14} />
                 )}
@@ -453,9 +437,7 @@ function MarketRow({
 
   return (
     <tr
-      className={`cursor-pointer transition-colors hover:bg-surface-dark ${
-        isSelected ? 'bg-primary/5' : ''
-      }`}
+      className={`cursor-pointer transition-colors hover:bg-surface-dark ${isSelected ? 'bg-primary/5' : ''}`}
       onClick={(e) => {
         // Don't toggle if clicking on input
         if ((e.target as HTMLElement).tagName !== 'INPUT') {
@@ -472,7 +454,7 @@ function MarketRow({
               isDisabled={disabled}
               className="h-6 w-4 cursor-pointer rounded border-gray-300 text-primary"
               onSelect={(e) => e.stopPropagation()}
-              size='sm'
+              size="sm"
             />
           </div>
         </td>
@@ -499,23 +481,17 @@ function MarketRow({
       )}
       {columnVisibility.totalSupply && (
         <td data-label="Total Supply" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
-          <p className="text-xs">
-            {formatAmountDisplay(market.state.supplyAssets, market.loanAsset.decimals)}
-          </p>
+          <p className="text-xs">{formatAmountDisplay(market.state.supplyAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.totalBorrow && (
         <td data-label="Total Borrow" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
-          <p className="text-xs">
-            {formatAmountDisplay(market.state.borrowAssets, market.loanAsset.decimals)}
-          </p>
+          <p className="text-xs">{formatAmountDisplay(market.state.borrowAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.liquidity && (
         <td data-label="Liquidity" className="z-50 py-1 text-center" style={{ minWidth: '120px' }}>
-          <p className="text-xs">
-            {formatAmountDisplay(market.state.liquidityAssets, market.loanAsset.decimals)}
-          </p>
+          <p className="text-xs">{formatAmountDisplay(market.state.liquidityAssets, market.loanAsset.decimals)}</p>
         </td>
       )}
       {columnVisibility.supplyAPY && (
@@ -526,7 +502,7 @@ function MarketRow({
                 ? `${((isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy) * 100).toFixed(2)}`
                 : '—'}
             </p>
-            {market.state.supplyApy && <span className='text-xs ml-0.5'> % </span>}
+            {market.state.supplyApy && <span className="text-xs ml-0.5"> % </span>}
           </div>
         </td>
       )}
@@ -550,9 +526,7 @@ function MarketRow({
       )}
       {columnVisibility.utilizationRate && (
         <td data-label="Utilization" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
-          <p className="text-sm">
-            {`${(market.state.utilization * 100).toFixed(2)}%`}
-          </p>
+          <p className="text-sm">{`${(market.state.utilization * 100).toFixed(2)}%`}</p>
         </td>
       )}
       <td data-label="Indicators" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
@@ -613,20 +587,11 @@ export function MarketsTableWithSameLoanAsset({
   const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(
-    keys.MarketsUsdMinSupplyKey,
-    DEFAULT_MIN_SUPPLY_USD.toString(),
-  );
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
   const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
-    keys.MarketsUsdMinLiquidityKey,
-    DEFAULT_MIN_LIQUIDITY_USD.toString(),
-  );
+  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(keys.MarketsUsdMinLiquidityKey, DEFAULT_MIN_LIQUIDITY_USD.toString());
 
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(
-    keys.MarketsTrustedVaultsOnlyKey,
-    false,
-  );
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(keys.MarketsTrustedVaultsOnlyKey, false);
 
   const trustedVaultMap = useMemo(() => {
     return buildTrustedVaultMap(userTrustedVaults);
@@ -649,14 +614,8 @@ export function MarketsTableWithSameLoanAsset({
     keys.MarketsMinSupplyEnabledKey,
     true, // Default to enabled for backward compatibility
   );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(
-    keys.MarketsMinBorrowEnabledKey,
-    false,
-  );
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(
-    keys.MarketsMinLiquidityEnabledKey,
-    false,
-  );
+  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(keys.MarketsMinBorrowEnabledKey, false);
+  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(keys.MarketsMinLiquidityEnabledKey, false);
 
   // Column visibility state
   const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
@@ -700,9 +659,7 @@ export function MarketsTableWithSameLoanAsset({
   const availableCollaterals = useMemo(() => {
     if (uniqueCollateralTokens) {
       return [...uniqueCollateralTokens].sort(
-        (a, b) =>
-          (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
-          a.symbol.localeCompare(b.symbol),
+        (a, b) => (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) || a.symbol.localeCompare(b.symbol),
       );
     }
 
@@ -728,10 +685,12 @@ export function MarketsTableWithSameLoanAsset({
             symbol: m.market.collateralAsset.symbol ?? 'Unknown',
             img: undefined,
             decimals: m.market.collateralAsset.decimals ?? 18,
-            networks: [{
-              address: m.market.collateralAsset.address,
-              chain: getViemChain(m.market.morphoBlue.chain.id),
-            }],
+            networks: [
+              {
+                address: m.market.collateralAsset.address,
+                chain: getViemChain(m.market.morphoBlue.chain.id),
+              },
+            ],
             isUnknown: true,
             source: 'unknown',
           };
@@ -741,9 +700,7 @@ export function MarketsTableWithSameLoanAsset({
     });
 
     return Array.from(tokenMap.values()).sort(
-      (a, b) =>
-        (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) ||
-        a.symbol.localeCompare(b.symbol),
+      (a, b) => (a.source === 'local' ? 0 : 1) - (b.source === 'local' ? 0 : 1) || a.symbol.localeCompare(b.symbol),
     );
   }, [markets, uniqueCollateralTokens, findToken]);
 
@@ -774,9 +731,18 @@ export function MarketsTableWithSameLoanAsset({
       selectedCollaterals: collateralFilter,
       selectedOracles: oracleFilter,
       usdFilters: {
-        minSupply: { enabled: minSupplyEnabled, threshold: usdFilters.minSupply },
-        minBorrow: { enabled: minBorrowEnabled, threshold: usdFilters.minBorrow },
-        minLiquidity: { enabled: minLiquidityEnabled, threshold: usdFilters.minLiquidity },
+        minSupply: {
+          enabled: minSupplyEnabled,
+          threshold: usdFilters.minSupply,
+        },
+        minBorrow: {
+          enabled: minBorrowEnabled,
+          threshold: usdFilters.minBorrow,
+        },
+        minLiquidity: {
+          enabled: minLiquidityEnabled,
+          threshold: usdFilters.minLiquidity,
+        },
       },
       findToken,
       searchQuery,
@@ -807,11 +773,7 @@ export function MarketsTableWithSameLoanAsset({
 
     const propertyPath = sortPropertyMap[sortColumn];
     if (sortColumn === SortColumn.TrustedBy) {
-      filtered = sortMarkets(
-        filtered,
-        (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)),
-        sortDirection,
-      );
+      filtered = sortMarkets(filtered, (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)), sortDirection);
     } else if (propertyPath && sortColumn !== SortColumn.Risk) {
       filtered = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection);
     }
@@ -851,7 +813,8 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
-  const emptyStateColumns = (showSelectColumn ? 7 : 6) +
+  const emptyStateColumns =
+    (showSelectColumn ? 7 : 6) +
     (columnVisibility.trustedBy ? 1 : 0) +
     (columnVisibility.totalSupply ? 1 : 0) +
     (columnVisibility.totalBorrow ? 1 : 0) +
@@ -878,10 +841,7 @@ export function MarketsTableWithSameLoanAsset({
       {showCart && selectedMarkets.length > 0 && (
         <div className="space-y-2">
           {selectedMarkets.map(({ market }) => (
-            <div
-              key={market.uniqueKey}
-              className="bg-hovered rounded transition-colors"
-            >
+            <div key={market.uniqueKey} className="bg-hovered rounded transition-colors">
               <div className="flex items-center justify-between p-2">
                 <MarketIdentity
                   market={market}
@@ -950,12 +910,7 @@ export function MarketsTableWithSameLoanAsset({
             onOpenSettings={() => setShowSettingsModal(true)}
           />
           {showSettings && (
-            <Button
-              variant="light"
-              size="sm"
-              onPress={() => setShowSettingsModal(true)}
-              className="min-w-0 px-2"
-            >
+            <Button variant="light" size="sm" onPress={() => setShowSettingsModal(true)} className="min-w-0 px-2">
               <GearIcon className="h-4 w-4" />
             </Button>
           )}
@@ -969,11 +924,7 @@ export function MarketsTableWithSameLoanAsset({
           setSelectedCollaterals={setCollateralFilter}
           availableCollaterals={availableCollaterals}
         />
-        <OracleFilterComponent
-          selectedOracles={oracleFilter}
-          setSelectedOracles={setOracleFilter}
-          availableOracles={availableOracles}
-        />
+        <OracleFilterComponent selectedOracles={oracleFilter} setSelectedOracles={setOracleFilter} availableOracles={availableOracles} />
       </div>
 
       {/* Table */}
@@ -981,8 +932,28 @@ export function MarketsTableWithSameLoanAsset({
         <table className="responsive rounded-md font-zen text-sm">
           <thead className="table-header">
             <tr>
-              {showSelectColumn && <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Select</th>}
-              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem', paddingTop: '1rem', paddingBottom: '1rem' }}>Id</th>
+              {showSelectColumn && (
+                <th
+                  className="text-center font-normal px-2 py-2"
+                  style={{
+                    padding: '0.5rem',
+                    paddingTop: '1rem',
+                    paddingBottom: '1rem',
+                  }}
+                >
+                  Select
+                </th>
+              )}
+              <th
+                className="text-center font-normal px-2 py-2"
+                style={{
+                  padding: '0.5rem',
+                  paddingTop: '1rem',
+                  paddingBottom: '1rem',
+                }}
+              >
+                Id
+              </th>
               <HTSortable
                 label="Market"
                 column={SortColumn.COLLATSYMBOL}
@@ -1062,7 +1033,9 @@ export function MarketsTableWithSameLoanAsset({
                   onSort={handleSort}
                 />
               )}
-              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>Indicators</th>
+              <th className="text-center font-normal px-2 py-2" style={{ padding: '0.5rem' }}>
+                Indicators
+              </th>
             </tr>
           </thead>
           <tbody>

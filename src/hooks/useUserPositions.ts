@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Address } from 'viem';
+import type { Address } from 'viem';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoUserPositionMarkets } from '@/data-sources/morpho-api/positions';
 import { fetchSubgraphUserPositionMarkets } from '@/data-sources/subgraph/positions';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
-import { Market } from '@/utils/types';
+import type { Market } from '@/utils/types';
 import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
 import { useCustomRpc } from './useCustomRpc';
 import { useMarkets } from './useMarkets';
@@ -52,13 +52,8 @@ export const positionKeys = {
 // --- Helper Fetch Function --- //
 
 // Fetches market keys ONLY from API/Subgraph sources
-const fetchSourceMarketKeys = async (
-  user: string,
-  chainIds?: SupportedNetworks[]
-): Promise<PositionMarket[]> => {
-  const allSupportedNetworks = Object.values(SupportedNetworks).filter(
-    (value) => typeof value === 'number',
-  ) as SupportedNetworks[];
+const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[]): Promise<PositionMarket[]> => {
+  const allSupportedNetworks = Object.values(SupportedNetworks).filter((value) => typeof value === 'number') as SupportedNetworks[];
 
   // Filter to specific chains if provided
   const networksToFetch = chainIds ?? allSupportedNetworks;
@@ -73,10 +68,7 @@ const fetchSourceMarketKeys = async (
           console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
           markets = await fetchMorphoUserPositionMarkets(user, network);
         } catch (morphoError) {
-          console.error(
-            `Failed to fetch positions via Morpho API for network ${network}:`,
-            morphoError,
-          );
+          console.error(`Failed to fetch positions via Morpho API for network ${network}:`, morphoError);
           // Continue to Subgraph fallback
         }
       }
@@ -87,10 +79,7 @@ const fetchSourceMarketKeys = async (
           console.log(`Attempting to fetch positions via Subgraph for network ${network}`);
           markets = await fetchSubgraphUserPositionMarkets(user, network);
         } catch (subgraphError) {
-          console.error(
-            `Failed to fetch positions via Subgraph for network ${network}:`,
-            subgraphError,
-          );
+          console.error(`Failed to fetch positions via Subgraph for network ${network}:`, subgraphError);
           return [];
         }
       }
@@ -111,11 +100,7 @@ const fetchSourceMarketKeys = async (
 
 // --- Main Hook --- //
 
-const useUserPositions = (
-  user: string | undefined,
-  showEmpty = false,
-  chainIds?: SupportedNetworks[]
-) => {
+const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?: SupportedNetworks[]) => {
   const queryClient = useQueryClient();
   const { allMarkets } = useMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
@@ -167,8 +152,7 @@ const useUserPositions = (
   } = useQuery<EnhancedMarketPosition[]>({
     queryKey: positionKeys.enhanced(user, initialData),
     queryFn: async () => {
-      if (!initialData || !user)
-        throw new Error('Assertion failed: initialData/user should be defined here.');
+      if (!initialData || !user) throw new Error('Assertion failed: initialData/user should be defined here.');
 
       console.log('fetching enhanced positions with market keys');
 
@@ -192,23 +176,14 @@ const useUserPositions = (
       const allSnapshots = new Map<string, PositionSnapshot>();
       await Promise.all(
         Array.from(marketsByChain.entries()).map(async ([chainId, markets]) => {
-          const publicClient = getClient(
-            chainId as SupportedNetworks,
-            customRpcUrls[chainId as SupportedNetworks] ?? undefined,
-          );
+          const publicClient = getClient(chainId as SupportedNetworks, customRpcUrls[chainId as SupportedNetworks] ?? undefined);
           if (!publicClient) {
             console.error(`[Positions] No public client available for chain ${chainId}`);
             return;
           }
 
           const marketIds = markets.map((m) => m.marketUniqueKey);
-          const snapshots = await fetchPositionsSnapshots(
-            marketIds,
-            user as Address,
-            chainId,
-            0,
-            publicClient,
-          );
+          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainId, 0, publicClient);
 
           // Merge into allSnapshots
           snapshots.forEach((snapshot, marketId) => {
@@ -261,8 +236,12 @@ const useUserPositions = (
   const refetch = useCallback(
     async (onSuccess?: () => void) => {
       try {
-        await queryClient.invalidateQueries({ queryKey: positionKeys.initialData(user ?? '') });
-        await queryClient.invalidateQueries({ queryKey: ['enhanced-positions', user] });
+        await queryClient.invalidateQueries({
+          queryKey: positionKeys.initialData(user ?? ''),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: ['enhanced-positions', user],
+        });
         onSuccess?.();
       } catch (error) {
         console.error('[Positions] Error during manual refetch:', error);

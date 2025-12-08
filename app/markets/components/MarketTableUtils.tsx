@@ -2,7 +2,7 @@ import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-ic
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
-import { SortColumn } from './constants';
+import type { SortColumn } from './constants';
 
 type HTSortableProps = {
   label: string | React.ReactNode;
@@ -13,14 +13,7 @@ type HTSortableProps = {
   showDirection?: boolean;
 };
 
-export function HTSortable({
-  label,
-  sortColumn,
-  titleOnclick,
-  sortDirection,
-  targetColumn,
-  showDirection = true,
-}: HTSortableProps) {
+export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, targetColumn, showDirection = true }: HTSortableProps) {
   const sortingCurrent = sortColumn === targetColumn;
 
   return (
@@ -31,24 +24,13 @@ export function HTSortable({
     >
       <div className="flex items-center justify-center gap-1 font-normal hover:cursor-pointer whitespace-nowrap">
         <div>{label}</div>
-        {showDirection &&
-          (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}
+        {showDirection && (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}
       </div>
     </th>
   );
 }
 
-export function TDAsset({
-  asset,
-  chainId,
-  symbol,
-  dataLabel,
-}: {
-  asset: string;
-  chainId: number;
-  symbol: string;
-  dataLabel?: string;
-}) {
+export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
   return (
     <td data-label={dataLabel ?? symbol} className="z-50" style={{ minWidth: '9px' }}>
       <div className="flex items-center justify-center gap-1 whitespace-nowrap">
@@ -59,9 +41,7 @@ export function TDAsset({
           target="_blank"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-sm whitespace-nowrap">
-            {symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol}
-          </p>
+          <p className="text-sm whitespace-nowrap">{symbol.length > 5 ? `${symbol.slice(0, 5)}...` : symbol}</p>
           <p className="opacity-0 group-hover:opacity-100">
             <ExternalLinkIcon className="h-3 w-3" />
           </p>
@@ -86,10 +66,8 @@ export function TDTotalSupplyOrBorrow({
 }) {
   return (
     <td data-label={dataLabel} className="z-50" style={{ minWidth: '120px' }}>
-      <p className="z-50">${formatReadable(Number(assetsUSD)) + '   '} </p>
-      <p className="z-50 opacity-70">
-        {formatReadable(formatBalance(assets, decimals)) + ' ' + symbol}
-      </p>
+      <p className="z-50">${`${formatReadable(Number(assetsUSD))}   `} </p>
+      <p className="z-50 opacity-70">{`${formatReadable(formatBalance(assets, decimals))} ${symbol}`}</p>
     </td>
   );
 }

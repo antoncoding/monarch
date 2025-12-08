@@ -28,11 +28,7 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
           <div key={step.id} className="flex items-center">
             <div
               className={`h-[6px] w-8 gap-2 rounded transition-colors duration-300 ${
-                isCurrent
-                  ? 'bg-primary'
-                  : isPast
-                  ? 'bg-primary bg-opacity-50'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                isCurrent ? 'bg-primary' : isPast ? 'bg-primary bg-opacity-50' : 'bg-gray-200 dark:bg-gray-700'
               }`}
             />
           </div>
@@ -49,14 +45,7 @@ export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onO
   const CurrentStepComponent = StepComponents[step];
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      size="3xl"
-      scrollBehavior="inside"
-      backdrop="blur"
-      className="bg-surface"
-    >
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="3xl" scrollBehavior="inside" backdrop="blur" className="bg-surface">
       <ModalHeader
         title={ONBOARDING_STEPS[currentStepIndex].title}
         description={ONBOARDING_STEPS[currentStepIndex].description}

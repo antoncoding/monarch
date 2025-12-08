@@ -87,9 +87,7 @@ export function Navbar() {
           <NavbarLink href="/markets">Markets</NavbarLink>
           {mounted ? (
             <>
-              <NavbarLink href={address ? `/positions/${address}` : '/positions'}>
-                Portfolio
-              </NavbarLink>
+              <NavbarLink href={address ? `/positions/${address}` : '/positions'}>Portfolio</NavbarLink>
               {/* <NavbarLink href="/autovault" matchKey="/autovault">
                 Autovault
               </NavbarLink> */}
@@ -124,22 +122,14 @@ export function Navbar() {
                 )}
               >
                 More
-                <ChevronDownIcon
-                  className={clsx(
-                    'h-4 w-4 transition-transform duration-200 ease-in-out',
-                    isMoreOpen && 'rotate-180',
-                  )}
-                />
+                <ChevronDownIcon className={clsx('h-4 w-4 transition-transform duration-200 ease-in-out', isMoreOpen && 'rotate-180')} />
               </button>
             </DropdownTrigger>
             <DropdownMenu
               aria-label="More links"
               className="bg-surface min-w-[180px] rounded-sm border-none shadow-none"
               itemClasses={{
-                base: [
-                  'gap-4 px-4 py-2 rounded-none font-zen',
-                  'data-[hover=true]:bg-hovered rounded-sm',
-                ].join(' '),
+                base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
                 title: 'text-sm text-primary flex-grow font-zen',
                 wrapper: 'justify-between no-underline rounded-sm',
               }}
@@ -167,19 +157,12 @@ export function Navbar() {
               </DropdownItem>
               <DropdownItem
                 key="theme"
-                endContent={
-                  mounted &&
-                  (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)
-                }
+                endContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
                 onClick={toggleTheme}
               >
                 {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
               </DropdownItem>
-              <DropdownItem
-                key="settings"
-                endContent={<FiSettings className="h-4 w-4" />}
-                onClick={() => router.push('/settings')}
-              >
+              <DropdownItem key="settings" endContent={<FiSettings className="h-4 w-4" />} onClick={() => router.push('/settings')}>
                 Settings
               </DropdownItem>
             </DropdownMenu>

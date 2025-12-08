@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { Input, Divider } from '@heroui/react';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/common';
@@ -14,15 +14,7 @@ type TransactionFiltersModalProps = {
   loanAssetSymbol: string;
 };
 
-function SettingItem({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: React.ReactNode;
-}) {
+function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex flex-grow flex-col gap-1 pr-3">
@@ -60,13 +52,7 @@ export default function TransactionFiltersModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      backdrop="blur"
-      size="xl"
-      zIndex="settings"
-    >
+    <Modal isOpen={isOpen} onOpenChange={onOpenChange} backdrop="blur" size="xl" zIndex="settings">
       {(onClose) => (
         <>
           <ModalHeader

@@ -12,7 +12,7 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
-import { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition } from '@/utils/types';
 import { APYBreakdownTooltip } from 'app/markets/components/APYBreakdownTooltip';
 
 type PositionStatsProps = {
@@ -25,33 +25,16 @@ type PositionStatsProps = {
 };
 
 function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
-  return isSelected ? (
-    <FiUser className={className} />
-  ) : (
-    <HiOutlineGlobeAsiaAustralia className={className} />
-  );
+  return isSelected ? <FiUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
 }
 
 const hasPosition = (position: MarketPosition) => {
-  return (
-    position.state.borrowAssets !== '0' ||
-    position.state.collateral !== '0' ||
-    position.state.supplyAssets !== '0'
-  );
+  return position.state.borrowAssets !== '0' || position.state.collateral !== '0' || position.state.supplyAssets !== '0';
 };
 
-export function PositionStats({
-  market,
-  userPosition,
-  positionLoading,
-  cardStyle,
-  onRefresh,
-  isRefreshing = false,
-}: PositionStatsProps) {
+export function PositionStats({ market, userPosition, positionLoading, cardStyle, onRefresh, isRefreshing = false }: PositionStatsProps) {
   // Default to user view if they have a position, otherwise global
-  const [viewMode, setViewMode] = useState<'global' | 'user'>(
-    userPosition && hasPosition(userPosition) ? 'user' : 'global',
-  );
+  const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition && hasPosition(userPosition) ? 'user' : 'global');
 
   const { showFullRewardAPY, isAprDisplay } = useMarkets();
   const { label: rateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -60,7 +43,7 @@ export function PositionStats({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
     chainId: market.morphoBlue.chain.id,
-    whitelisted: market.whitelisted
+    whitelisted: market.whitelisted,
   });
 
   const toggleView = () => {
@@ -94,10 +77,7 @@ export function PositionStats({
                 height={16}
               />
               <span>
-                {formatBalance(
-                  BigInt(userPosition.state.supplyAssets || 0),
-                  market.loanAsset.decimals,
-                ).toString()}{' '}
+                {formatBalance(BigInt(userPosition.state.supplyAssets || 0), market.loanAsset.decimals).toString()}{' '}
                 {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
@@ -113,10 +93,7 @@ export function PositionStats({
                 height={16}
               />
               <span>
-                {formatBalance(
-                  BigInt(userPosition.state.borrowAssets || 0),
-                  market.loanAsset.decimals,
-                ).toString()}{' '}
+                {formatBalance(BigInt(userPosition.state.borrowAssets || 0), market.loanAsset.decimals).toString()}{' '}
                 {getTruncatedAssetName(market.loanAsset.symbol)}
               </span>
             </div>
@@ -132,10 +109,7 @@ export function PositionStats({
                 height={16}
               />
               <span>
-                {formatBalance(
-                  BigInt(userPosition.state.collateral || 0),
-                  market.collateralAsset.decimals,
-                ).toString()}{' '}
+                {formatBalance(BigInt(userPosition.state.collateral || 0), market.collateralAsset.decimals).toString()}{' '}
                 {getTruncatedAssetName(market.collateralAsset.symbol)}
               </span>
             </div>
@@ -152,9 +126,7 @@ export function PositionStats({
     const baseSupplyRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) * 100 : baseSupplyAPY;
     const baseBorrowRate = isAprDisplay ? convertApyToApr(market.state.borrowApy) * 100 : baseBorrowAPY;
 
-    const extraRewards = hasActiveRewards
-      ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0)
-      : 0;
+    const extraRewards = hasActiveRewards ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0) : 0;
     const fullSupplyRate = baseSupplyRate + extraRewards;
     const displaySupplyRate = showFullRewardAPY && hasActiveRewards ? fullSupplyRate : baseSupplyRate;
 
@@ -171,12 +143,7 @@ export function PositionStats({
               height={16}
             />
             <span>
-              {formatReadable(
-                formatBalance(
-                  BigInt(market.state.supplyAssets || 0),
-                  market.loanAsset.decimals,
-                ).toString(),
-              )}{' '}
+              {formatReadable(formatBalance(BigInt(market.state.supplyAssets || 0), market.loanAsset.decimals).toString())}{' '}
               {market.loanAsset.symbol}
             </span>
           </div>
@@ -192,12 +159,7 @@ export function PositionStats({
               height={16}
             />
             <span>
-              {formatReadable(
-                formatBalance(
-                  BigInt(market.state.borrowAssets || 0),
-                  market.loanAsset.decimals,
-                ).toString(),
-              )}{' '}
+              {formatReadable(formatBalance(BigInt(market.state.borrowAssets || 0), market.loanAsset.decimals).toString())}{' '}
               {getTruncatedAssetName(market.loanAsset.symbol)}
             </span>
           </div>
@@ -206,16 +168,9 @@ export function PositionStats({
           <span>{rateLabel}:</span>
           <div className="flex items-center gap-2">
             {hasActiveRewards ? (
-              <APYBreakdownTooltip
-                baseAPY={baseSupplyAPY}
-                activeCampaigns={activeCampaigns}
-              >
+              <APYBreakdownTooltip baseAPY={baseSupplyAPY} activeCampaigns={activeCampaigns}>
                 <span className="cursor-help">
-                  {baseSupplyRate.toFixed(2)}%
-                  <span className="text-green-600 dark:text-green-400">
-                    {' '}
-                    (+{extraRewards.toFixed(2)}%)
-                  </span>
+                  {baseSupplyRate.toFixed(2)}%<span className="text-green-600 dark:text-green-400"> (+{extraRewards.toFixed(2)}%)</span>
                 </span>
               </APYBreakdownTooltip>
             ) : (

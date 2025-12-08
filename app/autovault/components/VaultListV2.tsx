@@ -5,7 +5,7 @@ import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
-import { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
+import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
@@ -41,9 +41,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
           <span className="text-2xl">🏛️</span>
         </div>
         <h3 className="text-lg font-semibold mb-2">No Vaults Found</h3>
-        <p className="text-secondary max-w-sm mx-auto">
-          You haven't deployed any autovaults yet. Create your first one to get started!
-        </p>
+        <p className="text-secondary max-w-sm mx-auto">You haven't deployed any autovaults yet. Create your first one to get started!</p>
       </div>
     );
   }
@@ -69,8 +67,8 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
               const networkImg = getNetworkImg(vault.networkId);
 
               const collaterals = vault.caps
-                .map(cap => parseCapIdParams(cap.idParams).collateralToken)
-                .filter(collat => collat !== undefined)
+                .map((cap) => parseCapIdParams(cap.idParams).collateralToken)
+                .filter((collat) => collat !== undefined);
 
               return (
                 <tr key={vault.address}>
@@ -86,43 +84,29 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   <td data-label="Asset">
                     <div className="flex items-center justify-center gap-2">
                       <span className="font-medium">
-                        {vault.balance && token ?
-                          formatReadable(formatUnits(BigInt(vault.balance), token.decimals))
-                          : '0'}
+                        {vault.balance && token ? formatReadable(formatUnits(BigInt(vault.balance), token.decimals)) : '0'}
                       </span>
                       <span>{token?.symbol ?? 'USDC'}</span>
-                      <TokenIcon
-                        address={vault.asset}
-                        chainId={vault.networkId}
-                        width={16}
-                        height={16}
-                      />
+                      <TokenIcon address={vault.asset} chainId={vault.networkId} width={16} height={16} />
                     </div>
                   </td>
 
                   {/* APY/APR */}
                   <td data-label={rateLabel}>
                     <span className="font-zen text-sm">
-                      {vault.avgApy != null
-                        ? ((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2) + '%'
-                        : '—'}
+                      {vault.avgApy != null ? `${((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2)}%` : '—'}
                     </span>
                   </td>
 
                   {/* Collaterals */}
                   <td data-label="Collaterals">
-                    <span className="flex flex-wrap gap-1.5 justify-center">{
-                    collaterals.map((tokenAddress) => (
-                      <div key={tokenAddress} className="flex items-center">
-                        <TokenIcon
-                          address={tokenAddress}
-                          chainId={vault.networkId}
-                          width={20}
-                          height={20}
-                        />
-                      </div>
-                    ))
-                    }</span>
+                    <span className="flex flex-wrap gap-1.5 justify-center">
+                      {collaterals.map((tokenAddress) => (
+                        <div key={tokenAddress} className="flex items-center">
+                          <TokenIcon address={tokenAddress} chainId={vault.networkId} width={20} height={20} />
+                        </div>
+                      ))}
+                    </span>
                   </td>
 
                   {/* Action */}
