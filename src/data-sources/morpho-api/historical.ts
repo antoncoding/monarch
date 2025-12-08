@@ -1,7 +1,6 @@
 import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { Market, MarketRates, MarketVolumes } from '@/utils/types';
-export type { TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types';
+import type { Market, MarketRates, MarketVolumes, TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Adjust the response structure type: historicalState contains rates/volumes directly

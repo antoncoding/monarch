@@ -4,20 +4,21 @@
   "private": true,
   "scripts": {
     "build": "rm -rf .next && next build",
-    "check": "pnpm lint:check && pnpm stylelint:check",
+    "check": "pnpm lint:check && pnpm typecheck && pnpm stylelint:check",
     "dev": "next dev",
     "format": "biome format --write .",
     "generate:chainlink": "tsx scripts/generate-chainlink-data.ts",
     "generate:redstone": "tsx scripts/generate-redstone-data.ts",
     "generate:oracle": "tsx scripts/generate-oracle-cache.ts",
     "lint": "biome check --write .",
-    "lint:check": "biome check .",
+    "lint:check": "biome check . && pnpm typecheck",
     "start": "next start",
     "stylelint": "stylelint '**/*.css' --fix",
     "stylelint:check": "stylelint '**/*.css'",
     "test": "jest .",
     "test:coverage": "jest . --coverage",
-    "test:coverage:open": "pnpm test:coverage && open coverage/lcov-report/index.html"
+    "test:coverage:open": "pnpm test:coverage && open coverage/lcov-report/index.html",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@coinbase/wallet-sdk": "^3.9.1",

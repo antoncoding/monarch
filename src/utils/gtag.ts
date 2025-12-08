@@ -3,7 +3,7 @@ import isClient from './isClient';
 export const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID ?? '';
 
 type WindowWithGtag = Window & {
-  gtag: any;
+  gtag?: any;
 };
 
 export const logPageview = (url: string) => {
