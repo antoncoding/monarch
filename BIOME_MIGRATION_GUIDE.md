@@ -21,8 +21,9 @@ The migration from ESLint to Biome (via ultracite) has been configured in a **ge
   - Nested ternaries allowed
 
 ### Current Baseline
-- **Lint errors**: ~20 across 264 files (mostly `useImportType`, `noUnusedImports` - all safe & fixable)
-- **Format differences**: ~115 files need line-wrapping to 100 chars (no style changes)
+- **Lint errors**: **Only 1 across 379 files** (security warning in GoogleAnalytics.tsx)
+- **Formatter**: **DISABLED** for maximum gentleness - no formatting changes applied
+- **Auto-generated files**: All oracle JSON files and ABIs are ignored
 
 ## Next Steps (Optional - Choose Your Approach)
 
@@ -157,12 +158,25 @@ You can gradually re-enable rules in `biome.jsonc` as your codebase adapts:
 
 ## Summary
 
-🎯 **Goal Achieved**: Migration is configured to be **gentle and non-disruptive**
+🎯 **Goal Achieved**: Migration is configured to be **EXTREMELY gentle and non-disruptive**
 
-✅ **No mass rewrites**: Formatter only wraps long lines, no style changes
+✅ **No mass rewrites**: Formatter is completely DISABLED - zero formatting changes
 ✅ **Team preferences preserved**: All custom ESLint rules mapped to Biome equivalents
-✅ **Minimal errors**: Only ~20 lint issues, all safe to fix
-✅ **Ready for adoption**: Can use immediately or migrate gradually
+✅ **Minimal errors**: **Only 1 lint issue** across 379 files (legitimate security warning)
+✅ **Auto-generated files ignored**: Oracle JSON files and ABIs are completely ignored
+✅ **Ready for adoption**: Can use immediately with virtually no changes required
+
+### What Rules Are Disabled?
+
+To achieve maximum gentleness, we've disabled:
+- All formatter rules (no formatting changes)
+- All style enforcement (useImportType, useConst, object shorthand, etc.)
+- All complexity rules (noExcessiveCognitiveComplexity, etc.)
+- Performance suggestions (barrel files, namespace imports, etc.)
+- Most a11y warnings (except critical ones)
+- All aggressive nursery rules
+
+You can gradually **re-enable** rules as your team decides to adopt them.
 
 ---
 

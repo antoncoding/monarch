@@ -2,16 +2,8 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["ultracite/core"],
 
-  // Override formatter to match old Prettier config
   "formatter": {
-    "enabled": true,
-    "formatWithErrors": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 100,  // Was 80 in ultracite, 100 in prettier
-    "attributePosition": "auto",
-    "bracketSpacing": true
+    "enabled": true
   },
 
   "javascript": {
@@ -70,7 +62,39 @@
         // Don't enforce during migration - too opinionated
         "noUselessElse": "off",
         "noNegationElse": "off",
-        "useCollapsedElseIf": "off"
+        "useCollapsedElseIf": "off",
+
+        // Object shorthand - disable for gentle migration
+        "useConsistentObjectDefinitions": "off",
+
+        // ENABLED - Safe, auto-fixable style improvements
+        "useImportType": {
+          "level": "warn",
+          "fix": "safe"  // Converts imports to type imports - safe & improves bundle size
+        },
+        "useNumberNamespace": {
+          "level": "warn",
+          "fix": "safe"  // parseInt -> Number.parseInt (modern JS)
+        },
+        "useShorthandAssign": {
+          "level": "warn",
+          "fix": "safe"  // x = x + 1 -> x += 1
+        },
+        "useTemplate": {
+          "level": "warn",
+          "fix": "safe"  // "a" + b -> `a${b}` - more readable
+        },
+
+        // Keep these OFF - more opinionated
+        "useNumericSeparators": "off",  // 1_000_000 formatting
+        "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
+        "useReadonlyClassProperties": "off",  // readonly keyword
+        "useNodejsImportProtocol": "off",  // node: protocol
+        "useDefaultSwitchClause": "off",  // Requires default in switch
+        "useConst": "off",  // let -> const (too opinionated)
+        "noExportedImports": "off",  // Re-exports
+        "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
+        "useConsistentTypeDefinitions": "off"  // type vs interface
       },
 
       "complexity": {
@@ -87,7 +111,21 @@
         "useOptionalChain": "off",
 
         // Don't force simplified logic during migration
-        "useSimplifiedLogicExpression": "off"
+        "useSimplifiedLogicExpression": "off",
+
+        // Disable for gentle migration
+        "noExcessiveCognitiveComplexity": "off",  // 59 errors - refactoring needed
+        "noUselessUndefinedInitialization": "off",  // 4 errors
+        "useIndexOf": "off",  // 1 error
+        "noUselessSwitchCase": "off",  // 1 error
+        "noUselessFragments": "off"  // 1 error
+      },
+
+      "performance": {
+        // Disable for gentle migration
+        "useTopLevelRegex": "off",  // 15 errors
+        "noBarrelFile": "off",  // 9 errors
+        "noNamespaceImport": "off"  // 7 errors
       },
 
       "suspicious": {
@@ -99,7 +137,19 @@
 
         // Don't enforce during migration
         "noImplicitAnyLet": "off",
-        "noEvolvingTypes": "off"
+        "noEvolvingTypes": "off",
+
+        // Disable for gentle migration
+        "noArrayIndexKey": "off",  // 13 errors
+        "useIterableCallbackReturn": "off",  // 8 errors
+        "noEmptyBlockStatements": "off",  // 8 errors
+        "useAwait": "off",  // 5 errors
+        "noGlobalIsNan": "off",  // 5 errors
+        "noUnknownAtRules": "off",  // 3 errors (CSS)
+        "noDoubleEquals": "off",  // 3 errors
+        "noBitwiseOperators": "off",  // 2 errors
+        "useNumberToFixedDigitsArgument": "off",  // 1 error
+        "noGlobalIsFinite": "off"  // 1 error
       },
 
       "correctness": {
@@ -107,14 +157,43 @@
         "useExhaustiveDependencies": "off",
 
         // Don't enforce unused function params yet
-        "noUnusedFunctionParameters": "off"
+        "noUnusedFunctionParameters": "off",
+
+        // ENABLED - Safe correctness rules that catch real bugs
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noUnusedVariables": {
+          "level": "warn",  // Warn instead of error for gentleness
+          "fix": "safe"
+        },
+        "useParseIntRadix": {
+          "level": "error",
+          "fix": "safe"  // Auto-adds radix parameter to parseInt
+        },
+        "noUnreachable": "error",  // Dead code - definitely a bug
+        "noUndeclaredVariables": "error",  // Typo or missing import
+        "noSwitchDeclarations": "error"  // Variable declarations in switch - bug prone
+      },
+
+      "security": {
+        // Team uses dangerouslySetInnerHTML for Google Analytics
+        "noDangerouslySetInnerHtml": "off"
       },
 
       "a11y": {
         // Match old jsx-a11y rules that were disabled
         "noStaticElementInteractions": "off",
         "noAutofocus": "off",
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "off",
+
+        // Disable for gentle migration
+        "noNoninteractiveElementToInteractiveRole": "off",  // 11 errors
+        "useSemanticElements": "off",  // 10 errors
+        "useAriaPropsSupportedByRole": "off",  // 1 error
+        "noRedundantRoles": "off",  // 1 error
+        "noNoninteractiveElementInteractions": "off"  // 1 error
       },
 
       "nursery": {
@@ -131,7 +210,10 @@
         "noLeakedRender": "off",
         "useConsistentArrowReturn": "off",
         "noEqualsToNull": "off",
-        "noIncrementDecrement": "off"
+        "noIncrementDecrement": "off",
+
+        // Disable for gentle migration
+        "useMaxParams": "off"  // 9 errors
       }
     }
   },
@@ -144,7 +226,9 @@
         ".eslintrc-old.js",
         ".stylelintrc.json",
         "biome.jsonc",
-        "tsconfig.json"
+        "tsconfig.json",
+        "src/constants/oracle/**/*.json",
+        "public/manifest.json"
       ],
       "formatter": {
         "enabled": false

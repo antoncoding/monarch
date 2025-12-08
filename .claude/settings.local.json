@@ -33,7 +33,8 @@
       "Bash(pnpm list:*)",
       "Bash(pnpm why:*)",
       "Bash(npx biome:*)",
-      "Bash(timeout 60 npx biome check:*)"
+      "Bash(timeout 60 npx biome check:*)",
+      "WebFetch(domain:biomejs.dev)"
     ],
     "deny": []
   }
