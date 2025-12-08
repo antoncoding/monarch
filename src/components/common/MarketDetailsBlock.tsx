@@ -199,7 +199,7 @@ export function MarketDetailsBlock({
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <p className="font-zen text-sm opacity-50">
-                        {mode === 'supply' ? 'Supply' : 'Borrow'} APY:
+                        {mode === 'supply' ? 'Supply' : 'Borrow'} {rateLabel}:
                       </p>
                       {previewState !== null ? (
                         <p className="text-right text-sm font-bold">

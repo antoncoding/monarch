@@ -103,8 +103,9 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                   {/* APY/APR */}
                   <td data-label={rateLabel}>
                     <span className="font-zen text-sm">
-                      {vault.avgApy &&
-                        ((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2) + '%'}
+                      {vault.avgApy != null
+                        ? ((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2) + '%'
+                        : '—'}
                     </span>
                   </td>
 

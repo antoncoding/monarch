@@ -24,12 +24,14 @@ function MarketRow({
   setShowWithdrawModal,
   setShowSupplyModal,
   setSelectedPosition,
+  rateLabel,
 }: {
   position: MarketPosition;
   totalSupply: number;
   setShowWithdrawModal: (show: boolean) => void;
   setShowSupplyModal: (show: boolean) => void;
   setSelectedPosition: (position: MarketPosition) => void;
+  rateLabel: string;
 }) {
 
   const suppliedAmount = Number(
@@ -57,7 +59,7 @@ function MarketRow({
           wide
         />
       </td>
-      <td data-label="APY" className="text-center">
+      <td data-label={rateLabel} className="text-center">
         <RateFormatted value={position.market.state.supplyApy} />
       </td>
       <td data-label="Supplied" className="text-center">
@@ -206,6 +208,7 @@ export function SuppliedMarketsDetail({
                 setShowWithdrawModal={setShowWithdrawModal}
                 setShowSupplyModal={setShowSupplyModal}
                 setSelectedPosition={setSelectedPosition}
+                rateLabel={rateLabel}
               />
             ))}
           </tbody>

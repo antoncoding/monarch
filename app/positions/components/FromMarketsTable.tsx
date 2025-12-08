@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Pagination } from '@heroui/react';
 import { Button } from '@/components/common/Button';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
+import { convertApyToApr } from '@/utils/rateMath';
 import { MarketPosition } from '@/utils/types';
 
 type PositionWithPendingDelta = MarketPosition & { pendingDelta: number };
@@ -24,6 +27,8 @@ export function FromMarketsTable({
   onSelectMax,
 }: FromMarketsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
 
   const totalPages = Math.ceil(positions.length / PER_PAGE);
   const paginatedPositions = positions.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
@@ -58,7 +63,7 @@ export function FromMarketsTable({
               <thead className="table-header bg-gray-50 dark:bg-gray-800">
                 <tr>
                   <th className="px-4 py-2 text-left">Market</th>
-                  <th className="px-4 py-2 text-right">APY</th>
+                  <th className="px-4 py-2 text-right">{rateLabel}</th>
                   <th className="px-4 py-2 text-right">Util</th>
                   <th className="px-4 py-2 text-left">Supplied Amount</th>
                 </tr>
@@ -106,14 +111,26 @@ export function FromMarketsTable({
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">
-                              {formatReadable(position.market.state.supplyApy * 100)}%
+                              {formatReadable(
+                                (isAprDisplay
+                                  ? convertApyToApr(position.market.state.supplyApy)
+                                  : position.market.state.supplyApy) * 100
+                              )}%
                             </span>
                             {' → '}
-                            <span>{formatReadable(apyPreview.supplyApy * 100)}%</span>
+                            <span>
+                              {formatReadable(
+                                (isAprDisplay ? convertApyToApr(apyPreview.supplyApy) : apyPreview.supplyApy) * 100
+                              )}%
+                            </span>
                           </span>
                         ) : (
                           <span className="whitespace-nowrap text-sm text-foreground">
-                            {formatReadable(position.market.state.supplyApy * 100)}%
+                            {formatReadable(
+                              (isAprDisplay
+                                ? convertApyToApr(position.market.state.supplyApy)
+                                : position.market.state.supplyApy) * 100
+                            )}%
                           </span>
                         )}
                       </td>

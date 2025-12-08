@@ -23,9 +23,12 @@ import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
+import { convertApyToApr } from '@/utils/rateMath';
 import { getNetworkImg } from '@/utils/networks';
 import {
   getGroupedEarnings,
@@ -157,6 +160,8 @@ export function PositionsSummaryTable({
     true,
   );
   const { address } = useAccount();
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
 
   const toast = useStyledToast();
 
@@ -300,7 +305,7 @@ export function PositionsSummaryTable({
               <th className="w-10" />
               <th className="w-10">Network</th>
               <th className="text-center">Size</th>
-              <th className="text-center">APY (now)</th>
+              <th className="text-center">{rateLabel} (now)</th>
               <th className="text-center">
                 <span className="inline-flex items-center gap-1">
                   Interest Accrued ({earningsPeriod})
@@ -364,9 +369,11 @@ export function PositionsSummaryTable({
                         />
                       </div>
                     </td>
-                    <td data-label="APY (now)">
+                    <td data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
-                        <span className="font-medium">{formatReadable(avgApy * 100)}%</span>
+                        <span className="font-medium">
+                          {formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%
+                        </span>
                       </div>
                     </td>
                     <td data-label={`Interest Accrued (${earningsPeriod})`}>
