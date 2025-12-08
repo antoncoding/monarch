@@ -586,6 +586,12 @@ const supportedTokens = [
     decimals: 18,
     networks: [{ chain: base, address: '0x4c5d8A75F3762c1561D96f177694f67378705E98' }],
   },
+  {
+    symbol: 'ARB',
+    img: require('../imgs/tokens/arb.png') as string,
+    decimals: 18,
+    networks: [{ chain: arbitrum, address: '0x912CE59144191C1204E64559FE8253a0e49E6548' }],
+  },
   // hyperEvm
   {
     symbol: 'USD₮0',
@@ -617,12 +623,6 @@ const supportedTokens = [
     decimals: 18,
     networks: [{ chain: hyperEvm, address: '0x9FDBdA0A5e284c32744D2f17Ee5c74B284993463' }],
     peg: TokenPeg.BTC,
-  },
-  {
-    symbol: 'ARB',
-    img: require('../imgs/tokens/arb.png') as string,
-    decimals: 18,
-    networks: [{ chain: arbitrum, address: '0x912CE59144191C1204E64559FE8253a0e49E6548' }],
   },
   {
     symbol: 'wstHYPE',
