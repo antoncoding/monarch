@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { MetricPreview } from './MetricPreview';
 
 type ApyPreviewProps = {
@@ -7,9 +8,10 @@ type ApyPreviewProps = {
 };
 
 /**
- * APY preview component.
- * Thin wrapper around MetricPreview for APY-specific usage.
+ * APY/APR preview component.
+ * Thin wrapper around MetricPreview for rate-specific usage.
  */
 export function ApyPreview({ currentApy, previewApy }: ApyPreviewProps) {
-  return <MetricPreview currentValue={currentApy} previewValue={previewApy} label="APY" />;
+  const { short: rateLabel } = useRateLabel();
+  return <MetricPreview currentValue={currentApy} previewValue={previewApy} label={rateLabel} />;
 }

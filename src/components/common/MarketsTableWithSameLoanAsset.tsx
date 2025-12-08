@@ -17,11 +17,13 @@ import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constant
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { convertApyToApr } from '@/utils/rateMath';
 import * as keys from "@/utils/storageKeys"
 import { ERC20Token, UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import { Market } from '@/utils/types';
@@ -427,6 +429,9 @@ function MarketRow({
   showSelectColumn,
   columnVisibility,
   trustedVaultMap,
+  supplyRateLabel,
+  borrowRateLabel,
+  isAprDisplay,
 }: {
   marketWithSelection: MarketWithSelection;
   onToggle: () => void;
@@ -434,6 +439,9 @@ function MarketRow({
   showSelectColumn: boolean;
   columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
+  supplyRateLabel: string;
+  borrowRateLabel: string;
+  isAprDisplay: boolean;
 }) {
   const { market, isSelected } = marketWithSelection;
   const trustedVaults = useMemo(() => {
@@ -511,26 +519,32 @@ function MarketRow({
         </td>
       )}
       {columnVisibility.supplyAPY && (
-        <td data-label="Supply APY" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+        <td data-label={supplyRateLabel} className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
           <div className="flex items-center justify-center">
             <p className="text-sm">
-              {market.state.supplyApy ? `${(market.state.supplyApy * 100).toFixed(2)}` : '—'}
+              {market.state.supplyApy
+                ? `${((isAprDisplay ? convertApyToApr(market.state.supplyApy) : market.state.supplyApy) * 100).toFixed(2)}`
+                : '—'}
             </p>
             {market.state.supplyApy && <span className='text-xs ml-0.5'> % </span>}
           </div>
         </td>
       )}
       {columnVisibility.borrowAPY && (
-        <td data-label="Borrow APY" className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
+        <td data-label={borrowRateLabel} className="z-50 py-1 text-center" style={{ minWidth: '100px' }}>
           <p className="text-sm">
-            {market.state.borrowApy ? `${(market.state.borrowApy * 100).toFixed(2)}%` : '—'}
+            {market.state.borrowApy
+              ? `${((isAprDisplay ? convertApyToApr(market.state.borrowApy) : market.state.borrowApy) * 100).toFixed(2)}%`
+              : '—'}
           </p>
         </td>
       )}
       {columnVisibility.rateAtTarget && (
         <td data-label="Target Rate" className="z-50 py-1 text-center" style={{ minWidth: '110px' }}>
           <p className="text-sm">
-            {market.state.apyAtTarget ? `${(market.state.apyAtTarget * 100).toFixed(2)}%` : '—'}
+            {market.state.apyAtTarget
+              ? `${((isAprDisplay ? convertApyToApr(market.state.apyAtTarget) : market.state.apyAtTarget) * 100).toFixed(2)}%`
+              : '—'}
           </p>
         </td>
       )}
@@ -559,8 +573,10 @@ export function MarketsTableWithSameLoanAsset({
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay } = useMarkets();
   const { findToken } = useTokens();
+  const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
+  const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
   // Extract just the Market objects for fresh fetching
   const marketsList = useMemo(() => markets.map((m) => m.market), [markets]);
@@ -1012,7 +1028,7 @@ export function MarketsTableWithSameLoanAsset({
               )}
               {columnVisibility.supplyAPY && (
                 <HTSortable
-                  label="Supply APY"
+                  label={supplyRateLabel}
                   column={SortColumn.APY}
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
@@ -1021,7 +1037,7 @@ export function MarketsTableWithSameLoanAsset({
               )}
               {columnVisibility.borrowAPY && (
                 <HTSortable
-                  label="Borrow APY"
+                  label={borrowRateLabel}
                   column={SortColumn.BorrowAPY}
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
@@ -1066,6 +1082,9 @@ export function MarketsTableWithSameLoanAsset({
                   showSelectColumn={showSelectColumn}
                   columnVisibility={columnVisibility}
                   trustedVaultMap={trustedVaultMap}
+                  supplyRateLabel={supplyRateLabel}
+                  borrowRateLabel={borrowRateLabel}
+                  isAprDisplay={isAprDisplay}
                 />
               ))
             )}

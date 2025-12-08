@@ -4,6 +4,7 @@ import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/common';
 import { MarketIdentity, MarketIdentityMode } from '@/components/MarketIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { previewMarketState } from '@/utils/morpho';
 import { GroupedPosition, Market } from '@/utils/types';
 import { ApyPreview } from './ApyPreview';
@@ -53,6 +54,8 @@ export function RebalanceActionRow({
   isAddDisabled = false,
   onRemoveAction,
 }: RebalanceActionRowProps) {
+  const { short: rateLabel } = useRateLabel();
+
   // Calculate preview state for the "to" market
   const previewState = useMemo(() => {
     if (!toMarket || !amount) {
@@ -158,11 +161,11 @@ export function RebalanceActionRow({
         </div>
       </div>
 
-      {/* Column 2: APY & Utilization Preview - 25% */}
+      {/* Column 2: APY/APR & Utilization Preview - 25% */}
       <div className="flex w-[25%] items-center gap-4 text-xs">
-        {/* Market APY */}
+        {/* Market APY/APR */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] uppercase tracking-wide text-secondary whitespace-nowrap">APY</span>
+          <span className="text-[10px] uppercase tracking-wide text-secondary whitespace-nowrap">{rateLabel}</span>
           {toMarket ? (
             <ApyPreview
               currentApy={toMarket.state.supplyApy}

@@ -25,7 +25,7 @@ export default function SettingsPage() {
     defaultTrustedVaults,
   );
 
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useMarkets();
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
 
   const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
   const [isBlacklistedMarketsModalOpen, setIsBlacklistedMarketsModalOpen] = React.useState(false);
@@ -82,6 +82,35 @@ export default function SettingsPage() {
                   size="xs"
                   color="primary"
                   aria-label="Toggle gasless approvals"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Display Settings Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <h2 className="text font-monospace text-secondary">Display Settings</h2>
+
+            <div className="bg-surface rounded p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Show APR Instead of APY</h3>
+                  <p className="text-sm text-secondary">
+                    Display Annual Percentage Rate (APR) instead of Annual Percentage Yield (APY).
+                    APR represents the simple annualized rate, while APY accounts for continuous compounding.
+                  </p>
+                  <p className="mt-2 text-xs text-secondary opacity-80">
+                    APR is calculated as ln(1 + APY) and represents the underlying per-second rate
+                    annualized without compounding effects. This affects all rate displays including
+                    tables, charts, and statistics.
+                  </p>
+                </div>
+                <IconSwitch
+                  selected={isAprDisplay}
+                  onChange={setIsAprDisplay}
+                  size="xs"
+                  color="primary"
+                  aria-label="Toggle APR display"
                 />
               </div>
             </div>

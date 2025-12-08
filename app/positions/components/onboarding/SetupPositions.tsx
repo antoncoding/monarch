@@ -10,6 +10,7 @@ import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
@@ -18,6 +19,7 @@ import { useOnboarding } from './OnboardingContext';
 
 export function SetupPositions() {
   const toast = useStyledToast();
+  const { short: rateLabel } = useRateLabel();
   const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep, balances } = useOnboarding();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
@@ -291,7 +293,7 @@ export function SetupPositions() {
           <thead className="table-header">
             <tr>
               <th className="font-normal">Market</th>
-              <th className="font-normal">APY</th>
+              <th className="font-normal">{rateLabel}</th>
               <th className="font-normal">Distribution</th>
             </tr>
           </thead>
@@ -316,8 +318,8 @@ export function SetupPositions() {
                     />
                   </td>
 
-                  {/* APY */}
-                  <td data-label="APY">
+                  {/* APY/APR */}
+                  <td data-label={rateLabel}>
                     <APYCell market={market} />
                   </td>
 

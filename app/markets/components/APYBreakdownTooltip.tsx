@@ -3,13 +3,14 @@ import { Tooltip } from '@heroui/react';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useRateLabel } from '@/hooks/useRateLabel';
 import { SimplifiedCampaign } from '@/utils/merklTypes';
+import { convertApyToApr } from '@/utils/rateMath';
 import { Market } from '@/utils/types';
 
 type APYBreakdownTooltipProps = {
   baseAPY: number;
   activeCampaigns: SimplifiedCampaign[];
-  fullAPY: number;
   children: React.ReactNode;
 };
 
@@ -20,16 +21,26 @@ type APYCellProps = {
 export function APYBreakdownTooltip({
   baseAPY,
   activeCampaigns,
-  fullAPY,
   children,
 }: APYBreakdownTooltipProps) {
+  const { isAprDisplay } = useMarkets();
+  const { short: rateLabel } = useRateLabel();
+
+  // Convert base rate if APR display is enabled
+  // Note: baseAPY is already a percentage (not decimal), so we need to convert it
+  const baseRateValue = isAprDisplay ? convertApyToApr(baseAPY / 100) * 100 : baseAPY;
+
+  // Calculate total: base (converted if needed) + rewards (already APR)
+  const rewardTotal = activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0);
+  const totalRate = baseRateValue + rewardTotal;
+
   const content = (
     <div className="bg-surface flex flex-col rounded-sm p-4 lg:min-w-[200px]">
-      <div className="mb-2 px-1 font-bold text-primary">APY Breakdown</div>
+      <div className="mb-2 px-1 font-bold text-primary">{rateLabel} Breakdown</div>
       <div className="space-y-3 p-1">
         <div className="flex items-center justify-between text-xs">
-          <span>Base APY</span>
-          <span className="ml-6">{baseAPY.toFixed(2)}%</span>
+          <span>Base {rateLabel}</span>
+          <span className="ml-6">{baseRateValue.toFixed(2)}%</span>
         </div>
         {activeCampaigns.map((campaign, index) => (
           <div key={index} className="flex items-center justify-between text-xs">
@@ -49,7 +60,7 @@ export function APYBreakdownTooltip({
         <div className="mt-3 border-t border-gray-200 pt-3 dark:border-gray-600">
           <div className="flex items-center justify-between text-xs">
             <span>Total</span>
-            <span className="ml-6">{fullAPY.toFixed(2)}%</span>
+            <span className="ml-6">{totalRate.toFixed(2)}%</span>
           </div>
         </div>
       </div>
@@ -70,7 +81,7 @@ export function APYBreakdownTooltip({
 }
 
 export function APYCell({ market }: APYCellProps) {
-  const { showFullRewardAPY } = useMarkets();
+  const { showFullRewardAPY, isAprDisplay } = useMarkets();
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,
@@ -82,17 +93,22 @@ export function APYCell({ market }: APYCellProps) {
   const extraRewards = hasActiveRewards
     ? activeCampaigns.reduce((sum, campaign) => sum + campaign.apr, 0)
     : 0;
-  const fullAPY = baseAPY + extraRewards;
 
-  const displayAPY = showFullRewardAPY && hasActiveRewards ? fullAPY : baseAPY;
+  // Convert base rate if APR display is enabled
+  const baseRate = isAprDisplay ? convertApyToApr(market.state.supplyApy) * 100 : baseAPY;
+
+  // Full rate includes base (converted if needed) + rewards
+  const fullRate = baseRate + extraRewards;
+
+  const displayRate = showFullRewardAPY && hasActiveRewards ? fullRate : baseRate;
 
   if (hasActiveRewards) {
     return (
-      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns} fullAPY={fullAPY}>
-        <span className="cursor-help">{displayAPY.toFixed(2)}%</span>
+      <APYBreakdownTooltip baseAPY={baseAPY} activeCampaigns={activeCampaigns}>
+        <span className="cursor-help">{displayRate.toFixed(2)}%</span>
       </APYBreakdownTooltip>
     );
   }
 
-  return <span>{displayAPY.toFixed(2)}%</span>;
+  return <span>{displayRate.toFixed(2)}%</span>;
 }
