@@ -54,7 +54,7 @@ const formatNumber = (value: bigint, decimals: number) => {
 };
 
 const formatDays = (seconds: number) => {
-  const days = seconds / 86400;
+  const days = seconds / 86_400;
   // If it's a whole number, return it as is
   if (Math.floor(days) === days) {
     return days.toString();

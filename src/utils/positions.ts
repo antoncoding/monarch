@@ -175,7 +175,7 @@ export async function fetchPositionsSnapshots(
 
     return result;
   } catch (error) {
-    console.error(`Error fetching position snapshots:`, {
+    console.error('Error fetching position snapshots:', {
       marketIds,
       userAddress,
       blockNumber,
@@ -253,7 +253,7 @@ export async function fetchMarketSnapshot(
       liquidityAssets: liquidityAssets.toString(),
     };
   } catch (error) {
-    console.error(`Error reading market:`, {
+    console.error('Error reading market:', {
       marketId,
       chainId,
       blockNumber,

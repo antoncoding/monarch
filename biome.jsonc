@@ -89,14 +89,14 @@
 
         // Keep these OFF - more opinionated
         "useNumericSeparators": "off",  // 1_000_000 formatting
-        "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
-        "useReadonlyClassProperties": "off",  // readonly keyword
+        // "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
+        // "useReadonlyClassProperties": "off",  // readonly keyword
         "useNodejsImportProtocol": "off",  // node: protocol
         "useDefaultSwitchClause": "off",  // Requires default in switch
-        "useConst": "off",  // let -> const (too opinionated)
-        "noExportedImports": "off",  // Re-exports
-        "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
-        "useConsistentTypeDefinitions": "off"  // type vs interface
+        "noExportedImports": "off",  // Too opinionated - team uses import then export pattern
+        "useConsistentTypeDefinitions": "off"  // Conflicts with global interface declaration merging
+        // "useConst": "off",  // let -> const (too opinionated)
+        // "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
       },
 
       "complexity": {

@@ -50,7 +50,7 @@ export function useRepayTransaction({
     user: account as `0x${string}`,
     spender: getBundlerV2(market.morphoBlue.chain.id),
     token: market.loanAsset.address as `0x${string}`,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
     tokenSymbol: market.loanAsset.symbol,
     amount: repayAmountToApprove,

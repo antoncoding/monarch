@@ -48,7 +48,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
           finalMarket = await fetchMorphoMarket(uniqueKey, network);
         }
       } catch (morphoError) {
-        console.error(`Failed to fetch market data via Morpho API:`, morphoError);
+        console.error('Failed to fetch market data via Morpho API:', morphoError);
         // Continue to Subgraph fallback
       }
 
@@ -58,7 +58,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
           console.log(`Attempting to fetch market data via Subgraph for ${uniqueKey}`);
           finalMarket = await fetchSubgraphMarket(uniqueKey, network);
         } catch (subgraphError) {
-          console.error(`Failed to fetch market data via Subgraph:`, subgraphError);
+          console.error('Failed to fetch market data via Subgraph:', subgraphError);
           finalMarket = null;
         }
       }

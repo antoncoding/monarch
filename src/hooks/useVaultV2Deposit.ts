@@ -83,7 +83,7 @@ export function useVaultV2Deposit({
     user: account as Address,
     spender: getBundlerV2(chainId),
     token: assetAddress,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId,
     tokenSymbol: assetSymbol,
     amount: depositAmount,

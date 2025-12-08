@@ -45,7 +45,7 @@ export const useMarketBorrows = (
           console.log(`Attempting to fetch borrows via Morpho API for ${marketId} (page ${targetPage})`);
           result = await fetchMorphoMarketBorrows(marketId, minAssets, pageSize, targetSkip);
         } catch (morphoError) {
-          console.error(`Failed to fetch borrows via Morpho API:`, morphoError);
+          console.error('Failed to fetch borrows via Morpho API:', morphoError);
         }
       }
 
@@ -55,7 +55,7 @@ export const useMarketBorrows = (
           console.log(`Attempting to fetch borrows via Subgraph for ${marketId} (page ${targetPage})`);
           result = await fetchSubgraphMarketBorrows(marketId, loanAssetId, network, minAssets, pageSize, targetSkip);
         } catch (subgraphError) {
-          console.error(`Failed to fetch borrows via Subgraph:`, subgraphError);
+          console.error('Failed to fetch borrows via Subgraph:', subgraphError);
           throw subgraphError;
         }
       }

@@ -228,7 +228,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       return validPositions;
     },
     enabled: !!initialData && !!user,
-    staleTime: 30000,
+    staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });
 

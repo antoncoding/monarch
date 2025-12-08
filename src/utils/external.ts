@@ -1,7 +1,7 @@
 import { getNetworkName, SupportedNetworks, getExplorerUrl } from './networks';
 
 const getMorphoNetworkSlug = (chainId: number): string | undefined => {
-  let network = getNetworkName(chainId)?.toLowerCase();
+  const network = getNetworkName(chainId)?.toLowerCase();
   if (chainId === SupportedNetworks.HyperEVM) {
     return 'hyperevm';
   } else if (chainId === SupportedNetworks.Mainnet) {

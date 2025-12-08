@@ -45,7 +45,7 @@ export function useMultiMarketSupply(
     user: account as `0x${string}`,
     spender: getBundlerV2(chainId ?? SupportedNetworks.Mainnet),
     token: loanAsset?.address as `0x${string}`,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId,
     tokenSymbol,
     amount: totalAmount,

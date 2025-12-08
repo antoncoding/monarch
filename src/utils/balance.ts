@@ -34,8 +34,8 @@ export function formatReadable(num: number | string, precision = 2): string {
       return `${(num / 1_000_000_000).toFixed(2)}B`;
     } else if (Math.abs(num) >= 1_000_000) {
       return `${(num / 1_000_000).toFixed(2)}M`;
-    } else if (Math.abs(num) >= 1_000) {
-      return `${(num / 1_000).toFixed(2)}K`;
+    } else if (Math.abs(num) >= 1000) {
+      return `${(num / 1000).toFixed(2)}K`;
     } else {
       return num.toFixed(precision);
     }

@@ -25,7 +25,7 @@ export function RebalanceProcessModal({
       {
         key: 'approve_permit2',
         label: 'Authorize Permit2',
-        detail: `Approve the Permit2 contract if this is your first time using it.`,
+        detail: 'Approve the Permit2 contract if this is your first time using it.',
       },
       {
         key: 'authorize_bundler_sig',

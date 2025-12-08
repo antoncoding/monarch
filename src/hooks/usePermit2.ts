@@ -25,7 +25,7 @@ type Props = {
  * @param refetchInterval Interval in milliseconds to refetch the contract data
  * @returns JsonMetadata
  */
-export function usePermit2({ user, chainId = 1, token, spender, refetchInterval = 10000, amount }: Props) {
+export function usePermit2({ user, chainId = 1, token, spender, refetchInterval = 10_000, amount }: Props) {
   const {
     allowance: allowanceToPermit2,
     approveInfinite: authorizePermit2,

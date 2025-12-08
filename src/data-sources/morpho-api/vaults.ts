@@ -2,7 +2,7 @@ import { allVaultsQuery } from '@/graphql/vault-queries';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Constants for Morpho vault fetching
-const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42161, 130];
+const MORPHO_SUPPORTED_CHAIN_IDS = [1, 8453, 999, 137, 42_161, 130];
 const MAX_VAULTS_LIMIT = 500;
 
 // Type for vault from Morpho API

@@ -46,7 +46,7 @@ const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`  ❌ Response body:`, errorText);
+        console.error('  ❌ Response body:', errorText);
         throw new Error(`Failed to fetch oracles for chain ${chainId}: ${response.status} ${response.statusText}\nBody: ${errorText}`);
       }
 
@@ -59,7 +59,7 @@ const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
 
       if (!result.data) {
         console.error(`  ❌ No data field in response for chain ${chainId}`);
-        console.error(`  Full response:`, JSON.stringify(result, null, 2));
+        console.error('  Full response:', JSON.stringify(result, null, 2));
         break;
       }
 
@@ -90,7 +90,7 @@ const fetchOraclesForChain = async (chainId: number): Promise<OracleItem[]> => {
       console.error(`   Message: ${error.message}`);
       console.error(`   Stack: ${error.stack}`);
     } else {
-      console.error(`   Error:`, error);
+      console.error('   Error:', error);
     }
     return []; // Return empty array on error, don't crash the whole script
   }
@@ -135,11 +135,11 @@ const main = async (): Promise<void> => {
     const outputPath = join(process.cwd(), 'src', 'constants', 'oracle', 'oracle-cache.json');
 
     console.log(`\n${'='.repeat(60)}`);
-    console.log(`\n💾 Writing oracle cache to file...`);
+    console.log('\n💾 Writing oracle cache to file...');
 
     writeFileSync(outputPath, JSON.stringify(allCachedOracles, null, 2));
 
-    console.log(`\n✅ Successfully generated oracle cache!`);
+    console.log('\n✅ Successfully generated oracle cache!');
     console.log(`   📁 Total oracles cached: ${allCachedOracles.length}`);
     console.log(`   📂 Output: ${outputPath}`);
 
@@ -150,14 +150,14 @@ const main = async (): Promise<void> => {
       console.log(`   Chain ${chainId}: ${count} oracles`);
     });
 
-    console.log(`\n🎉 Done!\n`);
+    console.log('\n🎉 Done!\n');
   } catch (error) {
     console.error('\n❌ Fatal error generating oracle cache:');
     if (error instanceof Error) {
       console.error(`   Message: ${error.message}`);
-      console.error(`   Stack:`, error.stack);
+      console.error('   Stack:', error.stack);
     } else {
-      console.error(`   Error:`, error);
+      console.error('   Error:', error);
     }
     process.exit(1);
   }

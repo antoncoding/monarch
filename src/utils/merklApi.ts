@@ -3,7 +3,7 @@ import type { MerklCampaignsResponse, MerklApiParams, MerklCampaign, SimplifiedC
 const MERKL_API_BASE_URL = 'https://api.merkl.xyz/v4';
 
 export class MerklApiClient {
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(baseUrl: string = MERKL_API_BASE_URL) {
     this.baseUrl = baseUrl;

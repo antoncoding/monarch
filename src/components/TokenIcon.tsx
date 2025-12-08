@@ -54,7 +54,7 @@ export function TokenIcon({
 
     const tokenSource = token.isFactoryToken
       ? `This token is auto-detected from ${token.protocol?.name}`
-      : `This token is recognized by Monarch`;
+      : 'This token is recognized by Monarch';
 
     const explorerUrl = showExplorerLink ? `${getExplorerUrl(chainId)}/address/${address}` : null;
 
