@@ -1,11 +1,8 @@
 import { marketHistoricalDataQuery } from '@/graphql/morpho-api-queries';
 import type { SupportedNetworks } from '@/utils/networks';
-import type { TimeseriesOptions, Market, TimeseriesDataPoint, MarketRates, MarketVolumes } from '@/utils/types';
+import type { Market, MarketRates, MarketVolumes } from '@/utils/types';
+export type { TimeseriesOptions, TimeseriesDataPoint } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
-
-// --- Types related to Historical Data ---
-// Re-exported from types.ts for clarity or define locally if not exported
-export type { TimeseriesDataPoint, TimeseriesOptions };
 
 // Adjust the response structure type: historicalState contains rates/volumes directly
 type MarketWithHistoricalState = Market & {

@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
-import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds';
+import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds/types';
 import etherscanLogo from '@/imgs/etherscan.png';
 import { getExplorerURL } from '@/utils/external';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';

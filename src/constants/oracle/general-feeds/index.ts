@@ -26,5 +26,3 @@ export function getGeneralFeed(feedAddress: Address | string, chainId: number): 
   const address = feedAddress.toLowerCase();
   return generalPriceFeeds.find((feed) => feed.address.toLowerCase() === address && feed.chainId === chainId);
 }
-
-export type { GeneralPriceFeed };

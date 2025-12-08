@@ -89,14 +89,8 @@
 
         // Keep these OFF - more opinionated
         "useNumericSeparators": "off",  // 1_000_000 formatting
-        // "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
-        // "useReadonlyClassProperties": "off",  // readonly keyword
         "useNodejsImportProtocol": "off",  // node: protocol
-        "useDefaultSwitchClause": "off",  // Requires default in switch
-        "noExportedImports": "off",  // Too opinionated - team uses import then export pattern
-        "useConsistentTypeDefinitions": "off"  // Conflicts with global interface declaration merging
-        // "useConst": "off",  // let -> const (too opinionated)
-        // "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
+        "useDefaultSwitchClause": "off"  // Requires default in switch
       },
 
       "complexity": {
@@ -118,9 +112,7 @@
         // Disable for gentle migration
         "noExcessiveCognitiveComplexity": "off",  // 59 errors - refactoring needed
         "noUselessUndefinedInitialization": "off",  // 4 errors
-        "useIndexOf": "off",  // 1 error
-        "noUselessSwitchCase": "off",  // 1 error
-        "noUselessFragments": "off"  // 1 error
+        "useIndexOf": "off"  // 1 error
       },
 
       "performance": {

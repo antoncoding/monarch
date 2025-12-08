@@ -327,19 +327,17 @@ function VolumeChart({
                     <Spinner size={24} />
                   </div>
                 ) : (
-                  <>
-                    {['supply', 'borrow', 'liquidity'].map((type) => (
-                      <div
-                        key={type}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="capitalize">{type}:</span>
-                        <span className="font-zen text-sm">
-                          {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
-                        </span>
-                      </div>
-                    ))}
-                  </>
+                  ['supply', 'borrow', 'liquidity'].map((type) => (
+                    <div
+                      key={type}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="capitalize">{type}:</span>
+                      <span className="font-zen text-sm">
+                        {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
+                      </span>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
