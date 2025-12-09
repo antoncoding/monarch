@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Checkbox } from '@heroui/react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PiButterflyDuotone } from 'react-icons/pi';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -14,7 +13,7 @@ export default function RiskNotificationModal() {
 
   useEffect(() => {
     const hasReadRisks = localStorage.getItem('hasReadRisks');
-    if (hasReadRisks !== 'true' && pathname !== '/risks') {
+    if (hasReadRisks !== 'true' && pathname !== '/') {
       setIsOpen(true);
     }
   }, [pathname]);
@@ -26,7 +25,7 @@ export default function RiskNotificationModal() {
     }
   };
 
-  if (pathname === '/risks' || pathname === '/') {
+  if (pathname === '/') {
     return null;
   }
 
@@ -48,9 +47,7 @@ export default function RiskNotificationModal() {
         <p className="mb-4">
           Monarch enables direct lending to Morpho Blue markets, giving you maximum flexibility and control over your lending positions.
         </p>
-        <p className="mb-2">
-          With direct lending, you have the freedom to:
-        </p>
+        <p className="mb-2">With direct lending, you have the freedom to:</p>
         <ul className="mb-4 ml-6 list-disc">
           <li>Choose exactly which markets to lend to based on your risk preferences</li>
           <li>Rebalance positions between markets to optimize yields and liquidity</li>
@@ -58,15 +55,8 @@ export default function RiskNotificationModal() {
         </ul>
 
         <p className="mb-4">
-          This flexibility comes with additional responsibilities. For a detailed explanation of what to consider when managing direct lending positions, please visit our{' '}
-          <Link
-            href="/risks"
-            target="_blank"
-            className="text-primary underline"
-          >
-            risk information page
-          </Link>
-          .
+          This flexibility comes with the responsibility to actively manage your positions, monitor market conditions, and make informed
+          decisions about rebalancing.
         </p>
         <div className="mt-4">
           <Checkbox
@@ -75,9 +65,7 @@ export default function RiskNotificationModal() {
             className="gap-2"
             size="sm"
           >
-            <span className="text-zen text-sm text-secondary">
-              I understand the risks
-            </span>
+            <span className="text-zen text-sm text-secondary">I understand that direct lending requires active management</span>
           </Checkbox>
         </div>
       </ModalBody>
