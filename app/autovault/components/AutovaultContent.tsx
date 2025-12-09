@@ -60,7 +60,7 @@ export default function AutovaultContent() {
           </div>
           <div className="flex gap-4">
             <Button
-              variant={hasExistingVaults ? 'secondary' : 'cta'}
+              variant={hasExistingVaults ? 'surface' : 'primary'}
               size="md"
               className="font-zen"
               onClick={handleCreateVault}
