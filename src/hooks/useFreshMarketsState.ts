@@ -6,7 +6,7 @@ import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
-const REFRESH_INTERVAL = 15000; // 15 seconds
+const REFRESH_INTERVAL = 15_000; // 15 seconds
 
 type MarketSnapshot = {
   totalSupplyAssets: string;
@@ -114,7 +114,7 @@ export const useFreshMarketsState = (
     },
     enabled: !!markets && markets.length > 0 && !!effectiveChainId && !!publicClient,
     staleTime: 0, // Always fetch fresh when requested
-    gcTime: 20000, // Keep in cache for 20 seconds
+    gcTime: 20_000, // Keep in cache for 20 seconds
     refetchOnWindowFocus: false,
   });
 

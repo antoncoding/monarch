@@ -132,7 +132,7 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
-  let warnings: MarketWarning[] = []; // Initialize warnings
+  const warnings: MarketWarning[] = []; // Initialize warnings
 
   // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
@@ -197,7 +197,7 @@ const transformSubgraphMarketToMarket = (
       utilization: utilization,
       supplyApy: supplyApy,
       borrowApy: borrowApy,
-      fee: safeParseFloat(fee) / 10000, // Subgraph fee is likely basis points (needs verification)
+      fee: safeParseFloat(fee) / 10_000, // Subgraph fee is likely basis points (needs verification)
       timestamp: timestamp,
 
       // AdaptiveCurveIRM APY if utilization was at target

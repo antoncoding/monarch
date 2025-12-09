@@ -21,7 +21,7 @@ type Props = {
  * @param refetchInterval Interval in milliseconds to refetch the contract data
  * @returns JsonMetadata
  */
-export function useAllowance({ user, spender, chainId = 1, token, refetchInterval = 10000, tokenSymbol }: Props) {
+export function useAllowance({ user, spender, chainId = 1, token, refetchInterval = 10_000, tokenSymbol }: Props) {
   const { chain } = useAccount();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
 

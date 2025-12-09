@@ -89,7 +89,7 @@ export const fetchTransactionsByTimeRange = async (
     } else {
       // Log some details about the first transaction to verify structure
       const sampleTx = allTransactions[0];
-      console.log(`Sample transaction:`, {
+      console.log('Sample transaction:', {
         id: sampleTx.id,
         timestamp: sampleTx.timestamp,
         supplyCount: sampleTx.supplyCount,
@@ -152,7 +152,7 @@ export const fetchAssetMetrics = async (
 
     console.log(`Processing ${transactions.length} transactions for asset metrics`);
     if (transactions.length > 0) {
-      console.log(`Sample transaction structure:`, {
+      console.log('Sample transaction structure:', {
         id: transactions[0].id,
         timestamp: transactions[0].timestamp,
         supplyCount: transactions[0].supplyCount,

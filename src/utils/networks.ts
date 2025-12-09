@@ -10,7 +10,7 @@ export enum SupportedNetworks {
   Base = 8453,
   Polygon = 137,
   Unichain = 130,
-  Arbitrum = 42161,
+  Arbitrum = 42_161,
   HyperEVM = 999,
   Monad = 143,
 }
@@ -31,7 +31,7 @@ export const hyperEvm = defineChain({
   contracts: {
     multicall3: {
       address: '0xcA11bde05977b3631167028862bE2a173976CA11',
-      blockCreated: 13051,
+      blockCreated: 13_051,
     },
   },
 });

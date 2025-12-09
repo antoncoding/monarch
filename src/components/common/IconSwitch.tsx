@@ -1,6 +1,5 @@
 'use client';
-
-import * as React from 'react';
+import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PiButterflyDuotone } from 'react-icons/pi';
 
@@ -100,7 +99,7 @@ export function IconSwitch({
   className,
   ...rest
 }: IconSwitchProps) {
-  const [internalSelected, setInternalSelected] = React.useState(defaultSelected);
+  const [internalSelected, setInternalSelected] = useState(defaultSelected);
 
   const isControlled = controlledSelected !== undefined;
   const isSelected = isControlled ? controlledSelected : internalSelected;
@@ -111,7 +110,7 @@ export function IconSwitch({
   // Determine which icon to use
   const IconComponent = thumbIconOn && thumbIconOff ? (isSelected ? thumbIconOn : thumbIconOff) : ThumbIcon;
 
-  const handleToggle = React.useCallback(() => {
+  const handleToggle = useCallback(() => {
     if (disabled) return;
 
     const newValue = !isSelected;
@@ -121,7 +120,7 @@ export function IconSwitch({
     onChange?.(newValue);
   }, [disabled, isControlled, isSelected, onChange]);
 
-  const handleKeyDown = React.useCallback(
+  const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>) => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();

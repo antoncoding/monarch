@@ -52,7 +52,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     user: account as Address,
     spender: bundlerAddress,
     token: groupedPosition.loanAssetAddress as Address,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId: groupedPosition.chainId,
     tokenSymbol: groupedPosition.loanAsset,
     amount: totalAmount,

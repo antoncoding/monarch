@@ -21,7 +21,7 @@ const useLiquidations = () => {
     // Define the networks to check for liquidations
 
     const combinedLiquidatedKeys = new Set<string>();
-    let fetchErrors: unknown[] = [];
+    const fetchErrors: unknown[] = [];
 
     try {
       await Promise.all(
@@ -36,7 +36,7 @@ const useLiquidations = () => {
                 console.log(`Attempting to fetch liquidated markets via Morpho API for ${network}`);
                 networkLiquidatedKeys = await fetchMorphoApiLiquidatedMarketKeys(network);
               } catch (morphoError) {
-                console.error(`Failed to fetch liquidated markets via Morpho API:`, morphoError);
+                console.error('Failed to fetch liquidated markets via Morpho API:', morphoError);
                 // Continue to Subgraph fallback
                 networkLiquidatedKeys = new Set();
                 trySubgraph = true;
@@ -52,7 +52,7 @@ const useLiquidations = () => {
                 console.log(`Attempting to fetch liquidated markets via Subgraph for ${network}`);
                 networkLiquidatedKeys = await fetchSubgraphLiquidatedMarketKeys(network);
               } catch (subgraphError) {
-                console.error(`Failed to fetch liquidated markets via Subgraph:`, subgraphError);
+                console.error('Failed to fetch liquidated markets via Subgraph:', subgraphError);
                 throw subgraphError; // Throw to be caught by outer catch
               }
             }

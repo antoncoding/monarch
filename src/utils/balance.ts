@@ -22,7 +22,9 @@ export const formatBalance = (value: bigint | string, decimals: number) => {
   return Number(value) / 10 ** decimals;
 };
 
-export function formatReadable(num: number | string, precision = 2): string {
+export function formatReadable(_num: number | string, precision = 2): string {
+  let num = _num;
+
   if (typeof num === 'string') {
     const parsed = Number.parseFloat(num);
     if (isNaN(parsed)) return num;
@@ -32,13 +34,14 @@ export function formatReadable(num: number | string, precision = 2): string {
   try {
     if (Math.abs(num) >= 1_000_000_000) {
       return `${(num / 1_000_000_000).toFixed(2)}B`;
-    } else if (Math.abs(num) >= 1_000_000) {
-      return `${(num / 1_000_000).toFixed(2)}M`;
-    } else if (Math.abs(num) >= 1_000) {
-      return `${(num / 1_000).toFixed(2)}K`;
-    } else {
-      return num.toFixed(precision);
     }
+    if (Math.abs(num) >= 1_000_000) {
+      return `${(num / 1_000_000).toFixed(2)}M`;
+    }
+    if (Math.abs(num) >= 1000) {
+      return `${(num / 1000).toFixed(2)}K`;
+    }
+    return num.toFixed(precision);
   } catch (e) {
     console.log('Error formatting number', e, typeof num);
     return num.toString();

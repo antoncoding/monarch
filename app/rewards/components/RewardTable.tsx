@@ -44,8 +44,8 @@ export default function RewardTable({ rewards, distributions, account, showClaim
     successText: 'Reward Claimed!',
     errorText: 'Failed to claim rewards',
     chainId,
-    pendingDescription: `Claiming rewards`,
-    successDescription: `Successfully claimed rewards`,
+    pendingDescription: 'Claiming rewards',
+    successDescription: 'Successfully claimed rewards',
   });
 
   const filteredRewardTokens = useMemo(

@@ -41,13 +41,9 @@
 
         // Team preference - allow some flexibility
         "useConsistentCurlyBraces": "off",
-        "noParameterAssign": "off",
 
         // Keep filenamingConvention disabled during migration
         "useFilenamingConvention": "off",
-
-        // Don't force default exports
-        "noDefaultExport": "off",
 
         // Team uses enums
         "noEnum": "off",
@@ -58,13 +54,7 @@
         // Team allows non-null assertions when needed
         "noNonNullAssertion": "off",
 
-        // Allow parameter properties (TS)
-        "noParameterProperties": "off",
-
         // Don't enforce during migration - too opinionated
-        "noUselessElse": "off",
-        "noNegationElse": "off",
-        "useCollapsedElseIf": "off",
 
         // Object shorthand - disable for gentle migration
         "useConsistentObjectDefinitions": "off",
@@ -74,29 +64,10 @@
           "level": "warn",
           "fix": "safe"  // Converts imports to type imports - safe & improves bundle size
         },
-        "useNumberNamespace": {
-          "level": "warn",
-          "fix": "safe"  // parseInt -> Number.parseInt (modern JS)
-        },
-        "useShorthandAssign": {
-          "level": "warn",
-          "fix": "safe"  // x = x + 1 -> x += 1
-        },
-        "useTemplate": {
-          "level": "warn",
-          "fix": "safe"  // "a" + b -> `a${b}` - more readable
-        },
 
         // Keep these OFF - more opinionated
         "useNumericSeparators": "off",  // 1_000_000 formatting
-        "noUnusedTemplateLiteral": "off",  // Template literals without interpolation
-        "useReadonlyClassProperties": "off",  // readonly keyword
         "useNodejsImportProtocol": "off",  // node: protocol
-        "useDefaultSwitchClause": "off",  // Requires default in switch
-        "useConst": "off",  // let -> const (too opinionated)
-        "noExportedImports": "off",  // Re-exports
-        "useAtIndex": "off",  // arr.at(-1) instead of arr[arr.length-1]
-        "useConsistentTypeDefinitions": "off"  // type vs interface
       },
 
       "complexity": {
@@ -118,16 +89,13 @@
         // Disable for gentle migration
         "noExcessiveCognitiveComplexity": "off",  // 59 errors - refactoring needed
         "noUselessUndefinedInitialization": "off",  // 4 errors
-        "useIndexOf": "off",  // 1 error
-        "noUselessSwitchCase": "off",  // 1 error
-        "noUselessFragments": "off"  // 1 error
+        "useIndexOf": "off"  // 1 error
       },
 
       "performance": {
         // Disable for gentle migration
         "useTopLevelRegex": "off",  // 15 errors
         "noBarrelFile": "off",  // 9 errors
-        "noNamespaceImport": "off"  // 7 errors
       },
 
       "suspicious": {
@@ -200,10 +168,8 @@
 
       "nursery": {
         // Disable aggressive nursery rules during migration
-        "noShadow": "off",
+        // "noShadow": "off",
         "noUselessUndefined": "off",
-        "useFind": "off",
-        "useSpread": "off",
 
         // Keep sorted classes off initially
         "useSortedClasses": "off",

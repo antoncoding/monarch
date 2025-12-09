@@ -79,7 +79,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     user: account as `0x${string}`,
     spender: getBundlerV2(market.morphoBlue.chain.id),
     token: market.loanAsset.address as `0x${string}`,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
     tokenSymbol: market.loanAsset.symbol,
     amount: supplyAmount,
@@ -261,7 +261,9 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       }
 
       // Standard ERC20 flow
-      if (!isApproved) {
+      if (isApproved) {
+        setCurrentStep('supplying');
+      } else {
         try {
           await approve();
           setCurrentStep('supplying');
@@ -281,8 +283,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
           }
           throw error;
         }
-      } else {
-        setCurrentStep('supplying');
       }
 
       await executeSupplyTransaction();

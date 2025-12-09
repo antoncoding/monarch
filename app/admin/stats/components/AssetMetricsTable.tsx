@@ -78,9 +78,8 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
 
       if (sortDirection === 'asc') {
         return valueA < valueB ? -1 : valueA > valueB ? 1 : 0;
-      } else {
-        return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
       }
+      return valueA > valueB ? -1 : valueA < valueB ? 1 : 0;
     });
   }, [processedData, sortKey, sortDirection]);
 

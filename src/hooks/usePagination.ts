@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import storage from 'local-storage-fallback';
-import { MarketEntriesPerPageKey } from '@/utils/storageKeys';
+import { storageKeys } from '@/utils/storageKeys';
 
 export function usePagination(initialEntriesPerPage = 6) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -11,7 +11,7 @@ export function usePagination(initialEntriesPerPage = 6) {
   }, [setCurrentPage]);
 
   useEffect(() => {
-    const storedEntriesPerPage = storage.getItem(MarketEntriesPerPageKey);
+    const storedEntriesPerPage = storage.getItem(storageKeys.MarketEntriesPerPageKey);
     if (storedEntriesPerPage) {
       setEntriesPerPage(Number.parseInt(storedEntriesPerPage, 10));
     }
@@ -19,7 +19,7 @@ export function usePagination(initialEntriesPerPage = 6) {
 
   const handleEntriesPerPageChange = (value: number) => {
     setEntriesPerPage(value);
-    storage.setItem(MarketEntriesPerPageKey, value.toString());
+    storage.setItem(storageKeys.MarketEntriesPerPageKey, value.toString());
     setCurrentPage(1); // Reset to first page
   };
 

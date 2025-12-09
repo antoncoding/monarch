@@ -13,7 +13,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       // From ClientProviders - good for caching and UX
-      staleTime: 30000, // 30 seconds
+      staleTime: 30_000, // 30 seconds
       refetchOnWindowFocus: false,
 
       retry: (failureCount, error) => {
@@ -24,7 +24,7 @@ const queryClient = new QueryClient({
         // Retry up to 2 times for other errors
         return failureCount < 2;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
 
       throwOnError: false,
     },

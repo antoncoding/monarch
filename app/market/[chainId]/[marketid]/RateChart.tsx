@@ -90,7 +90,7 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
 
   const formatTime = (unixTime: number) => {
     const date = new Date(unixTime * 1000);
-    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 86400) {
+    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 86_400) {
       return date.toLocaleTimeString(undefined, {
         hour: '2-digit',
         minute: '2-digit',

@@ -7,11 +7,11 @@ type BlockInfo = {
 };
 
 export class SmartBlockFinder {
-  private client: PublicClient;
+  private readonly client: PublicClient;
 
-  private averageBlockTime: number;
+  private readonly averageBlockTime: number;
 
-  private latestBlockDelay: number;
+  private readonly latestBlockDelay: number;
 
   private readonly TOLERANCE_SECONDS = 10;
 

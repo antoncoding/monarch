@@ -57,7 +57,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     user: account as `0x${string}`,
     spender: bundlerAddress,
     token: market.collateralAsset.address as `0x${string}`,
-    refetchInterval: 10000,
+    refetchInterval: 10_000,
     chainId: market.morphoBlue.chain.id,
     tokenSymbol: market.collateralAsset.symbol,
     amount: collateralAmount,

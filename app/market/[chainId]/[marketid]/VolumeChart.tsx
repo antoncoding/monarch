@@ -35,9 +35,8 @@ function VolumeChart({
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
       return `$${formatReadable(value)}`;
-    } else {
-      return formatReadable(value);
     }
+    return formatReadable(value);
   };
 
   const formatTime = (unixTime: number) => {
@@ -100,7 +99,9 @@ function VolumeChart({
     if (!data || data.length === 0) return { current: 0, netChange: 0, netChangePercentage: 0 };
 
     const current =
-      volumeView === 'USD' ? data[data.length - 1].y : Number(formatUnits(BigInt(data[data.length - 1].y), market.loanAsset.decimals));
+      volumeView === 'USD'
+        ? (data.at(-1) as TimeseriesDataPoint).y
+        : Number(formatUnits(BigInt((data.at(-1) as TimeseriesDataPoint).y), market.loanAsset.decimals));
     const start = volumeView === 'USD' ? data[0].y : Number(formatUnits(BigInt(data[0].y), market.loanAsset.decimals));
     const netChange = current - start;
     const netChangePercentage = start !== 0 ? (netChange / start) * 100 : 0;
@@ -328,19 +329,17 @@ function VolumeChart({
                     <Spinner size={24} />
                   </div>
                 ) : (
-                  <>
-                    {['supply', 'borrow', 'liquidity'].map((type) => (
-                      <div
-                        key={type}
-                        className="flex items-center justify-between"
-                      >
-                        <span className="capitalize">{type}:</span>
-                        <span className="font-zen text-sm">
-                          {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
-                        </span>
-                      </div>
-                    ))}
-                  </>
+                  ['supply', 'borrow', 'liquidity'].map((type) => (
+                    <div
+                      key={type}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="capitalize">{type}:</span>
+                      <span className="font-zen text-sm">
+                        {formatValue(getAverageVolumeStats(type as 'supply' | 'borrow' | 'liquidity'))}
+                      </span>
+                    </div>
+                  ))
                 )}
               </div>
             </div>

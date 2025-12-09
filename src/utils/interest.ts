@@ -9,7 +9,7 @@ export type EarningsCalculation = {
   apy: number;
 };
 
-const ONE_YEAR = 86400 * 365;
+const ONE_YEAR = 86_400 * 365;
 
 export function calculateEarningsFromSnapshot(
   endingBalance: bigint,

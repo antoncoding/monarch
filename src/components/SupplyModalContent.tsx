@@ -80,11 +80,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
       )}
       {!showProcessModal && (
         <div className="flex flex-col">
-          {!isConnected ? (
-            <div className="flex justify-center py-4">
-              <AccountConnect />
-            </div>
-          ) : (
+          {isConnected ? (
             <>
               {/* Supply Input Section */}
               <div className="mt-12 space-y-4">
@@ -180,6 +176,10 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                 </div>
               </div>
             </>
+          ) : (
+            <div className="flex justify-center py-4">
+              <AccountConnect />
+            </div>
           )}
         </div>
       )}

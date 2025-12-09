@@ -102,9 +102,7 @@ export function WithdrawCollateralAndRepay({
 
   // Calculate current and new LTV whenever relevant values change
   useEffect(() => {
-    if (!currentPosition) {
-      setCurrentLTV(BigInt(0));
-    } else {
+    if (currentPosition) {
       // Calculate current LTV from position data using oracle price
       const currentCollateralValue = (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
@@ -115,6 +113,8 @@ export function WithdrawCollateralAndRepay({
       } else {
         setCurrentLTV(BigInt(0));
       }
+    } else {
+      setCurrentLTV(BigInt(0));
     }
   }, [currentPosition, oraclePrice]);
 
@@ -301,47 +301,49 @@ export function WithdrawCollateralAndRepay({
             className="flex justify-end"
             style={{ zIndex: 1 }}
           >
-            {!isConnected ? (
+            {isConnected ? (
+              needSwitchChain ? (
+                <Button
+                  onPress={switchToNetwork}
+                  className="min-w-32"
+                  variant="solid"
+                >
+                  Switch Chain
+                </Button>
+              ) : (
+                <Button
+                  isDisabled={
+                    !isConnected ||
+                    repayPending ||
+                    withdrawInputError !== null ||
+                    repayInputError !== null ||
+                    (withdrawAmount === BigInt(0) && repayAssets === BigInt(0)) ||
+                    newLTV >= lltv ||
+                    isLoadingPermit2
+                  }
+                  onPress={() => {
+                    if (!isApproved && !permit2Authorized) {
+                      void approveAndRepay();
+                    } else {
+                      void signAndRepay();
+                    }
+                  }}
+                  className="min-w-32"
+                  variant="cta"
+                >
+                  {isLoadingPermit2
+                    ? 'Loading...'
+                    : !isApproved && !permit2Authorized
+                      ? 'Approve & Repay'
+                      : withdrawAmount > 0
+                        ? 'Withdraw & Repay'
+                        : 'Repay'}
+                </Button>
+              )
+            ) : (
               <div>
                 <AccountConnect />
               </div>
-            ) : needSwitchChain ? (
-              <Button
-                onPress={switchToNetwork}
-                className="min-w-32"
-                variant="solid"
-              >
-                Switch Chain
-              </Button>
-            ) : (
-              <Button
-                isDisabled={
-                  !isConnected ||
-                  repayPending ||
-                  withdrawInputError !== null ||
-                  repayInputError !== null ||
-                  (withdrawAmount === BigInt(0) && repayAssets === BigInt(0)) ||
-                  newLTV >= lltv ||
-                  isLoadingPermit2
-                }
-                onPress={() => {
-                  if (!isApproved && !permit2Authorized) {
-                    void approveAndRepay();
-                  } else {
-                    void signAndRepay();
-                  }
-                }}
-                className="min-w-32"
-                variant="cta"
-              >
-                {isLoadingPermit2
-                  ? 'Loading...'
-                  : !isApproved && !permit2Authorized
-                    ? 'Approve & Repay'
-                    : withdrawAmount > 0
-                      ? 'Withdraw & Repay'
-                      : 'Repay'}
-              </Button>
             )}
           </div>
           {(withdrawAmount > 0n || repayAssets > 0n) && (

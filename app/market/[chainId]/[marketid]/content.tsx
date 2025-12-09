@@ -55,7 +55,6 @@ const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions =
       // Use DAY interval for longer ranges if desired, adjust as needed
       interval = 'DAY';
       break;
-    case '7d':
     default:
       startTimestamp = endTimestamp - WEEK_IN_SECONDS;
       break;

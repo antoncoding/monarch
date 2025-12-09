@@ -171,6 +171,9 @@ export const fetchSubgraphUserPositionForMarket = async (
             console.warn(`Subgraph position side 'BORROWER' doesn't match loan asset for market ${marketUniqueKey}`);
           }
           break;
+        default:
+          console.warn(`Unknown position side '${pos.side}' for market ${marketUniqueKey}`);
+          break;
       }
     });
 

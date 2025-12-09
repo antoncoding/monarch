@@ -80,9 +80,7 @@ export function AddCollateralAndBorrow({
 
   // Calculate current and new LTV whenever relevant values change
   useEffect(() => {
-    if (!currentPosition) {
-      setCurrentLTV(BigInt(0));
-    } else {
+    if (currentPosition) {
       // Calculate current LTV from position data using oracle price
       const currentCollateralValue = (BigInt(currentPosition.state.collateral) * oraclePrice) / BigInt(10 ** 36);
       const currentBorrowValue = BigInt(currentPosition.state.borrowAssets || 0);
@@ -93,6 +91,8 @@ export function AddCollateralAndBorrow({
       } else {
         setCurrentLTV(BigInt(0));
       }
+    } else {
+      setCurrentLTV(BigInt(0));
     }
   }, [currentPosition, oraclePrice]);
 
@@ -312,52 +312,54 @@ export function AddCollateralAndBorrow({
           {/* Action Button */}
           <div className="mt-4">
             <div className="flex justify-end">
-              {!isConnected ? (
+              {isConnected ? (
+                needSwitchChain ? (
+                  <Button
+                    onPress={switchToNetwork}
+                    className="min-w-32"
+                    variant="solid"
+                  >
+                    Switch Chain
+                  </Button>
+                ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
+                  <Button
+                    isDisabled={
+                      !isConnected ||
+                      isLoadingPermit2 ||
+                      borrowPending ||
+                      collateralInputError !== null ||
+                      borrowInputError !== null ||
+                      collateralAmount === BigInt(0) ||
+                      borrowAmount === BigInt(0) ||
+                      newLTV >= lltv
+                    }
+                    onPress={() => void approveAndBorrow()}
+                    className="min-w-32"
+                    variant="cta"
+                  >
+                    Approve and Borrow
+                  </Button>
+                ) : (
+                  <Button
+                    isDisabled={
+                      !isConnected ||
+                      borrowPending ||
+                      collateralInputError !== null ||
+                      borrowInputError !== null ||
+                      (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
+                      newLTV >= lltv
+                    }
+                    onPress={() => void signAndBorrow()}
+                    className="min-w-32"
+                    variant="cta"
+                  >
+                    {collateralAmount > 0n && borrowAmount == 0n ? 'Add Collateral' : 'Borrow'}
+                  </Button>
+                )
+              ) : (
                 <div>
                   <AccountConnect />
                 </div>
-              ) : needSwitchChain ? (
-                <Button
-                  onPress={switchToNetwork}
-                  className="min-w-32"
-                  variant="solid"
-                >
-                  Switch Chain
-                </Button>
-              ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-                <Button
-                  isDisabled={
-                    !isConnected ||
-                    isLoadingPermit2 ||
-                    borrowPending ||
-                    collateralInputError !== null ||
-                    borrowInputError !== null ||
-                    collateralAmount === BigInt(0) ||
-                    borrowAmount === BigInt(0) ||
-                    newLTV >= lltv
-                  }
-                  onPress={() => void approveAndBorrow()}
-                  className="min-w-32"
-                  variant="cta"
-                >
-                  Approve and Borrow
-                </Button>
-              ) : (
-                <Button
-                  isDisabled={
-                    !isConnected ||
-                    borrowPending ||
-                    collateralInputError !== null ||
-                    borrowInputError !== null ||
-                    (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
-                    newLTV >= lltv
-                  }
-                  onPress={() => void signAndBorrow()}
-                  className="min-w-32"
-                  variant="cta"
-                >
-                  {collateralAmount > 0n && borrowAmount == 0n ? 'Add Collateral' : 'Borrow'}
-                </Button>
               )}
             </div>
             {(borrowAmount > 0n || collateralAmount > 0n) && (

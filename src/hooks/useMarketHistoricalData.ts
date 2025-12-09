@@ -32,7 +32,7 @@ export const useMarketHistoricalData = (
           console.log(`Attempting to fetch historical data via Morpho API for ${uniqueKey}`);
           historicalData = await fetchMorphoMarketHistoricalData(uniqueKey, network, options);
         } catch (morphoError) {
-          console.error(`Failed to fetch historical data via Morpho API:`, morphoError);
+          console.error('Failed to fetch historical data via Morpho API:', morphoError);
           // Continue to Subgraph fallback
         }
       }
@@ -43,7 +43,7 @@ export const useMarketHistoricalData = (
           console.log(`Attempting to fetch historical data via Subgraph for ${uniqueKey}`);
           historicalData = await fetchSubgraphMarketHistoricalData(uniqueKey, network, options);
         } catch (subgraphError) {
-          console.error(`Failed to fetch historical data via Subgraph:`, subgraphError);
+          console.error('Failed to fetch historical data via Subgraph:', subgraphError);
           historicalData = null;
         }
       }

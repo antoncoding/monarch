@@ -47,10 +47,9 @@ export function SupplyModalV2({
     if (mode === 'supply') {
       // Supply mode: positive delta if amount is valid
       return supplyPreviewAmount && supplyPreviewAmount > 0n ? supplyPreviewAmount : undefined;
-    } else {
-      // Withdraw mode: negative delta (withdrawal) if amount is valid
-      return withdrawPreviewAmount && withdrawPreviewAmount > 0n ? -withdrawPreviewAmount : undefined;
     }
+    // Withdraw mode: negative delta (withdrawal) if amount is valid
+    return withdrawPreviewAmount && withdrawPreviewAmount > 0n ? -withdrawPreviewAmount : undefined;
   }, [mode, supplyPreviewAmount, withdrawPreviewAmount]);
 
   return (

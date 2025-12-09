@@ -73,11 +73,11 @@ const transformSubgraphSnapshotsToHistoricalResult = (
 
     rates.supplyApy.push({
       x: timestamp,
-      y: !isNaN(supplyApyValue) ? supplyApyValue : 0,
+      y: isNaN(supplyApyValue) ? 0 : supplyApyValue,
     });
     rates.borrowApy.push({
       x: timestamp,
-      y: !isNaN(borrowApyValue) ? borrowApyValue : 0,
+      y: isNaN(borrowApyValue) ? 0 : borrowApyValue,
     });
     rates.apyAtTarget.push({ x: timestamp, y: 0 });
     rates.utilization.push({ x: timestamp, y: 0 });

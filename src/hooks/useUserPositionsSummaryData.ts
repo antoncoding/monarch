@@ -26,7 +26,7 @@ export const earningsKeys = {
 // Helper to get timestamp for a period
 const getPeriodTimestamp = (period: EarningsPeriod): number => {
   const now = Math.floor(Date.now() / 1000);
-  const DAY = 86400;
+  const DAY = 86_400;
 
   switch (period) {
     case 'all':
@@ -37,6 +37,8 @@ const getPeriodTimestamp = (period: EarningsPeriod): number => {
       return now - 7 * DAY;
     case 'month':
       return now - 30 * DAY;
+    default:
+      return 0;
   }
 };
 
@@ -126,7 +128,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       return allSnapshots;
     },
     enabled: !!positions && !!user && (period === 'all' || !!periodBlockNumbers),
-    staleTime: 30000,
+    staleTime: 30_000,
     gcTime: 5 * 60 * 1000,
   });
 
@@ -148,7 +150,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       return result?.items ?? [];
     },
     enabled: !!positions && !!user,
-    staleTime: 60000, // 1 minute
+    staleTime: 60_000, // 1 minute
     gcTime: 5 * 60 * 1000,
   });
 

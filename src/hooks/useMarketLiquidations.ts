@@ -30,7 +30,7 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
           console.log(`Attempting to fetch liquidations via Morpho API for ${marketId}`);
           liquidations = await fetchMorphoMarketLiquidations(marketId);
         } catch (morphoError) {
-          console.error(`Failed to fetch liquidations via Morpho API:`, morphoError);
+          console.error('Failed to fetch liquidations via Morpho API:', morphoError);
           // Continue to Subgraph fallback
         }
       }
@@ -41,7 +41,7 @@ export const useMarketLiquidations = (marketId: string | undefined, network: Sup
           console.log(`Attempting to fetch liquidations via Subgraph for ${marketId}`);
           liquidations = await fetchSubgraphMarketLiquidations(marketId, network);
         } catch (subgraphError) {
-          console.error(`Failed to fetch liquidations via Subgraph:`, subgraphError);
+          console.error('Failed to fetch liquidations via Subgraph:', subgraphError);
           liquidations = null;
         }
       }

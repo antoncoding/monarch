@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import storage from 'local-storage-fallback';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import * as keys from '@/utils/storageKeys';
+import { storageKeys } from '@/utils/storageKeys';
 
 const getInitialStaredMarkets = (): string[] => {
   try {
-    const item = storage.getItem(keys.MarketFavoritesKey) ?? '[]';
+    const item = storage.getItem(storageKeys.MarketFavoritesKey) ?? '[]';
     return JSON.parse(item) as string[];
   } catch (error) {
     console.error('Error parsing stared markets from localStorage', error);
@@ -23,7 +23,7 @@ export const useStaredMarkets = () => {
 
       const newStaredIds = [...staredIds, id];
       setStaredIds(newStaredIds);
-      storage.setItem(keys.MarketFavoritesKey, JSON.stringify(newStaredIds));
+      storage.setItem(storageKeys.MarketFavoritesKey, JSON.stringify(newStaredIds));
       toastSuccess('Market starred', 'Market added to favorites');
     },
     [staredIds, toastSuccess],
@@ -35,7 +35,7 @@ export const useStaredMarkets = () => {
 
       const newStaredIds = staredIds.filter((i) => i !== id);
       setStaredIds(newStaredIds);
-      storage.setItem(keys.MarketFavoritesKey, JSON.stringify(newStaredIds));
+      storage.setItem(storageKeys.MarketFavoritesKey, JSON.stringify(newStaredIds));
       toastSuccess('Market unstarred', 'Market removed from favorites');
     },
     [staredIds, toastSuccess],

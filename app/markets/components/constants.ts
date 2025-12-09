@@ -17,18 +17,18 @@ export enum SortColumn {
 
 export const GAS_COSTS = {
   // direct supply through bundler, no approval
-  BUNDLER_SUPPLY: 180000,
+  BUNDLER_SUPPLY: 180_000,
 
   // An additional supply through the bundler, already approved
-  SINGLE_SUPPLY: 80000,
+  SINGLE_SUPPLY: 80_000,
 
-  SINGLE_WITHDRAW: 100000,
+  SINGLE_WITHDRAW: 100_000,
 
   // single withdraw + supply
-  BUNDLER_REBALANCE: 240000,
+  BUNDLER_REBALANCE: 240_000,
 
   // directly borrow from Morpho Blue
-  DIRECT_WITHDRAW: 100000,
+  DIRECT_WITHDRAW: 100_000,
 };
 
 // additional multiplier for buffer gas. Rabby uses 1.5

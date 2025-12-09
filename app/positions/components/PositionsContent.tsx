@@ -157,7 +157,22 @@ export default function Positions() {
             message={loadingMessage}
             className="mt-10"
           />
-        ) : !hasSuppliedMarkets ? (
+        ) : hasSuppliedMarkets ? (
+          <div className="mt-4">
+            <PositionsSummaryTable
+              account={account}
+              marketPositions={marketPositions}
+              setShowWithdrawModal={setShowWithdrawModal}
+              setShowSupplyModal={setShowSupplyModal}
+              setSelectedPosition={setSelectedPosition}
+              refetch={() => void refetch()}
+              isRefetching={isRefetching}
+              isLoadingEarnings={isEarningsLoading}
+              earningsPeriod={earningsPeriod}
+              setEarningsPeriod={setEarningsPeriod}
+            />
+          </div>
+        ) : (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
               <Button
@@ -176,21 +191,6 @@ export default function Positions() {
                 className="mt-2"
               />
             </div>
-          </div>
-        ) : (
-          <div className="mt-4">
-            <PositionsSummaryTable
-              account={account}
-              marketPositions={marketPositions}
-              setShowWithdrawModal={setShowWithdrawModal}
-              setShowSupplyModal={setShowSupplyModal}
-              setSelectedPosition={setSelectedPosition}
-              refetch={() => void refetch()}
-              isRefetching={isRefetching}
-              isLoadingEarnings={isEarningsLoading}
-              earningsPeriod={earningsPeriod}
-              setEarningsPeriod={setEarningsPeriod}
-            />
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import storage from 'local-storage-fallback';
-import { CacheMarketPositionKeys } from '../utils/storageKeys';
+import { storageKeys } from '../utils/storageKeys';
 
 type MarketIdentifier = {
   marketUniqueKey: string;
@@ -15,7 +15,7 @@ export function useUserMarketsCache(address: string | undefined) {
   // Load cache from localStorage
   const loadCache = useCallback((): UserMarketsCache => {
     try {
-      const cached = storage.getItem(CacheMarketPositionKeys);
+      const cached = storage.getItem(storageKeys.CacheMarketPositionKeys);
       if (cached) {
         return JSON.parse(cached) as UserMarketsCache;
       }
@@ -28,7 +28,7 @@ export function useUserMarketsCache(address: string | undefined) {
   // Save cache to localStorage
   const saveCache = useCallback((cache: UserMarketsCache) => {
     try {
-      storage.setItem(CacheMarketPositionKeys, JSON.stringify(cache));
+      storage.setItem(storageKeys.CacheMarketPositionKeys, JSON.stringify(cache));
     } catch (error) {
       console.error('Failed to save markets cache:', error);
     }

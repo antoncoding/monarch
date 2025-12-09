@@ -1,7 +1,8 @@
 import { zeroAddress, type Address } from 'viem';
 import { getChainlinkOracle, type ChainlinkOracleEntry, isChainlinkOracle } from '@/constants/oracle/chainlink-data';
 import { getCompoundFeed, type CompoundFeedEntry, isCompoundFeed } from '@/constants/oracle/compound';
-import { getGeneralFeed, isGeneralFeed, type GeneralPriceFeed } from '@/constants/oracle/general-feeds';
+import { getGeneralFeed, isGeneralFeed } from '@/constants/oracle/general-feeds';
+import type { GeneralPriceFeed } from '@/constants/oracle/general-feeds/types';
 import { getRedstoneOracle, type RedstoneOracleEntry, isRedstoneOracle } from '@/constants/oracle/redstone-data';
 import { isSupportedChain } from './networks';
 import type { MorphoChainlinkOracleData, OracleFeed } from './types';

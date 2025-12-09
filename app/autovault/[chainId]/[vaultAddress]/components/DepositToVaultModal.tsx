@@ -87,11 +87,7 @@ export function DepositToVaultModal({
           onClose={onClose}
         />
         <ModalBody className="gap-6">
-          {!isConnected ? (
-            <div className="flex justify-center py-4">
-              <AccountConnect />
-            </div>
-          ) : (
+          {isConnected ? (
             <div className="space-y-4">
               <div>
                 <div className="flex items-center justify-between">
@@ -134,6 +130,10 @@ export function DepositToVaultModal({
                   )}
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="flex justify-center py-4">
+              <AccountConnect />
             </div>
           )}
         </ModalBody>

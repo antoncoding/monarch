@@ -87,7 +87,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
               console.log(`Attempting to fetch position via Morpho API for ${marketKey}`);
               fallbackPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
             } catch (morphoError) {
-              console.error(`Failed to fetch position via Morpho API:`, morphoError);
+              console.error('Failed to fetch position via Morpho API:', morphoError);
               // Continue to Subgraph fallback
             }
           }
@@ -98,7 +98,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
               console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
               fallbackPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
             } catch (subgraphError) {
-              console.error(`Failed to fetch position via Subgraph:`, subgraphError);
+              console.error('Failed to fetch position via Subgraph:', subgraphError);
               fallbackPosition = null;
             }
           }
@@ -131,7 +131,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
             console.log(`Attempting to fetch position via Morpho API for ${marketKey}`);
             finalPosition = await fetchMorphoUserPositionForMarket(marketKey, user, chainId);
           } catch (morphoError) {
-            console.error(`Failed to fetch position via Morpho API:`, morphoError);
+            console.error('Failed to fetch position via Morpho API:', morphoError);
             // Continue to Subgraph fallback
           }
         }
@@ -142,7 +142,7 @@ const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | 
             console.log(`Attempting to fetch position via Subgraph for ${marketKey}`);
             finalPosition = await fetchSubgraphUserPositionForMarket(marketKey, user, chainId);
           } catch (subgraphError) {
-            console.error(`Failed to fetch position via Subgraph:`, subgraphError);
+            console.error('Failed to fetch position via Subgraph:', subgraphError);
             finalPosition = null;
           }
         }

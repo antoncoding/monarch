@@ -98,10 +98,10 @@ const FUNDAMENTAL_TO_UNDERLYING_MAPPING: Record<string, string> = {
  * For STANDARD feeds: Returns token/usd pair (e.g., "btc/usd")
  *
  * @param feedName - The raw feed name from Redstone config
- * @param isFundamental - Whether this is a fundamental (contract rate) feed
+ * @param isFundamentalFeed - Whether this is a fundamental (contract rate) feed
  * @returns The normalized path in format "base/quote"
  */
-const generatePath = (feedName: string, isFundamental: boolean): string => {
+const generatePath = (feedName: string, isFundamentalFeed: boolean): string => {
   // Check if the feed already contains a pair (e.g., "eBTC/WBTC" or "stHYPE/HYPE")
   if (feedName.includes('/')) {
     return feedName.toLowerCase();
@@ -117,7 +117,7 @@ const generatePath = (feedName: string, isFundamental: boolean): string => {
 
   const baseNameLower = baseName.toLowerCase();
 
-  if (isFundamental) {
+  if (isFundamentalFeed) {
     // For FUNDAMENTAL feeds, find the underlying asset the derivative tracks
     // e.g., wstETH (derivative) tracks its exchange rate to ETH (underlying)
     const underlyingAsset = FUNDAMENTAL_TO_UNDERLYING_MAPPING[baseNameLower];

@@ -57,8 +57,6 @@ export async function GET(request: NextRequest) {
         blockNumber: Number(block.number),
         timestamp: Number(block.timestamp),
       });
-    } else {
-      console.log('etherscanBlock is null', timestamp, chainId);
     }
 
     if (!client) {

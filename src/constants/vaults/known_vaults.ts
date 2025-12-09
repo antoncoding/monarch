@@ -84,7 +84,7 @@ export const known_vaults: KnownVault[] = [
   {
     address: '0x64A651D825FC70Ebba88f2E1BAD90be9A496C4b9',
     curator: VaultCurator.Avantgarde,
-    chainId: 42161,
+    chainId: 42_161,
     name: 'Avantgarde USDC Core Arbitrum',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   },
@@ -119,7 +119,7 @@ export const known_vaults: KnownVault[] = [
   {
     address: '0x7e97fa6893871A2751B5fE961978DCCb2c201E65',
     curator: VaultCurator.Gauntlet,
-    chainId: 42161,
+    chainId: 42_161,
     name: 'Gauntlet USDC Core',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   },
@@ -224,7 +224,7 @@ export const known_vaults: KnownVault[] = [
   {
     address: '0x5c0C306Aaa9F877de636f4d5822cA9F2E81563BA',
     curator: VaultCurator.Steakhouse,
-    chainId: 42161,
+    chainId: 42_161,
     name: 'Steakhouse High Yield USDC',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   },
@@ -287,14 +287,14 @@ export const known_vaults: KnownVault[] = [
   {
     address: '0x87DEAE530841A9671326C9D5B9f91bdB11F3162c',
     curator: VaultCurator.Yearn,
-    chainId: 42161,
+    chainId: 42_161,
     name: 'Yearn OG USDC',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   },
   {
     address: '0x36b69949d60d06ECcC14DE0Ae63f4E00cc2cd8B9',
     curator: VaultCurator.Yearn,
-    chainId: 42161,
+    chainId: 42_161,
     name: 'Yearn Degen USDC',
     asset: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
   },

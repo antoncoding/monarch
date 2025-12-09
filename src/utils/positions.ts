@@ -175,7 +175,7 @@ export async function fetchPositionsSnapshots(
 
     return result;
   } catch (error) {
-    console.error(`Error fetching position snapshots:`, {
+    console.error('Error fetching position snapshots:', {
       marketIds,
       userAddress,
       blockNumber,
@@ -225,12 +225,6 @@ export async function fetchMarketSnapshot(
   try {
     const isNow = !blockNumber || blockNumber === 0;
 
-    if (!isNow) {
-      console.log(`Get market snapshot ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
-    } else {
-      console.log(`Get market snapshot ${marketId.slice(0, 6)} at current block`);
-    }
-
     // Get the market data
     const marketArray = (await client.readContract({
       address: getMorphoAddress(chainId as SupportedNetworks),
@@ -253,7 +247,7 @@ export async function fetchMarketSnapshot(
       liquidityAssets: liquidityAssets.toString(),
     };
   } catch (error) {
-    console.error(`Error reading market:`, {
+    console.error('Error reading market:', {
       marketId,
       chainId,
       blockNumber,

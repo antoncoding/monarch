@@ -163,8 +163,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
 
       // Define the networks to fetch markets for
 
-      let combinedMarkets: Market[] = [];
-      let fetchErrors: unknown[] = [];
+      const combinedMarkets: Market[] = [];
+      const fetchErrors: unknown[] = [];
 
       try {
         // Fetch markets for each network based on its data source
