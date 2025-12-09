@@ -48,6 +48,12 @@ export const modal = createAppKit({
   projectId,
   networks,
   metadata,
+  features: {
+    socials: [],
+    email: false,
+    emailShowWallets: false,
+    analytics: true,
+  },
   themeMode: 'light',
   themeVariables: {
     '--w3m-accent': '#f45f2d',

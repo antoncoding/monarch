@@ -39,7 +39,8 @@
       "Bash(npm view:*)",
       "Bash(pnpm remove:*)",
       "Bash(timeout 60 npx tsc:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "WebFetch(domain:medium.com)"
     ],
     "deny": []
   }
