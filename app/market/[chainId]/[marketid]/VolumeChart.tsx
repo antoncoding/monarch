@@ -35,9 +35,8 @@ function VolumeChart({
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
       return `$${formatReadable(value)}`;
-    } else {
-      return formatReadable(value);
     }
+    return formatReadable(value);
   };
 
   const formatTime = (unixTime: number) => {

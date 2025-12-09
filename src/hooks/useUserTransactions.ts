@@ -99,10 +99,9 @@ const useUserTransactions = () => {
                 },
                 error: null,
               };
-            } else {
-              networkError = morphoResponse.error;
-              console.warn(`Error from Morpho API for network ${network}:`, networkError);
             }
+            networkError = morphoResponse.error;
+            console.warn(`Error from Morpho API for network ${network}:`, networkError);
           } catch (morphoError) {
             console.error(`Failed to fetch from Morpho API for network ${network}:`, morphoError);
             networkError = `Failed to fetch from Morpho API: ${(morphoError as Error)?.message || 'Unknown error'}`;
@@ -131,10 +130,9 @@ const useUserTransactions = () => {
                 },
                 error: null,
               };
-            } else {
-              networkError = subgraphResponse.error;
-              console.warn(`Error from Subgraph for network ${network}:`, networkError);
             }
+            networkError = subgraphResponse.error;
+            console.warn(`Error from Subgraph for network ${network}:`, networkError);
           } catch (subgraphError) {
             console.error(`Failed to fetch from Subgraph for network ${network}:`, subgraphError);
             networkError = `Failed to fetch from Subgraph: ${(subgraphError as Error)?.message || 'Unknown error'}`;

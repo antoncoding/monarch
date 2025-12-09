@@ -4,7 +4,8 @@ const getMorphoNetworkSlug = (chainId: number): string | undefined => {
   const network = getNetworkName(chainId)?.toLowerCase();
   if (chainId === SupportedNetworks.HyperEVM) {
     return 'hyperevm';
-  } else if (chainId === SupportedNetworks.Mainnet) {
+  }
+  if (chainId === SupportedNetworks.Mainnet) {
     return 'ethereum';
   }
   return network;

@@ -41,7 +41,6 @@
 
         // Team preference - allow some flexibility
         "useConsistentCurlyBraces": "off",
-        // "noParameterAssign": "off",
 
         // Keep filenamingConvention disabled during migration
         "useFilenamingConvention": "off",
@@ -55,11 +54,8 @@
         // Team allows non-null assertions when needed
         "noNonNullAssertion": "off",
 
-        // Allow parameter properties (TS)
-        "noParameterProperties": "off",
-
         // Don't enforce during migration - too opinionated
-        "noUselessElse": "off",
+        // "noUselessElse": "off",
         "noNegationElse": "off",
         "useCollapsedElseIf": "off",
 
