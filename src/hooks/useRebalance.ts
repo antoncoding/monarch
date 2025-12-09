@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { type Address, encodeFunctionData, maxUint256 } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
@@ -28,7 +28,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const [isProcessing, setIsProcessing] = useState(false); // Renamed from isConfirming for clarity
   const [currentStep, setCurrentStep] = useState<RebalanceStepType>('idle');
 
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
   const toast = useStyledToast();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true); // Read user setting

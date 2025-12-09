@@ -5,7 +5,8 @@ import { Switch, Tooltip } from '@heroui/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';
-import { useBalance } from 'wagmi';
+import { useReadContract } from 'wagmi';
+import { erc20Abi } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
@@ -29,26 +30,32 @@ export default function Rewards() {
 
   const [showClaimed, setShowClaimed] = useState(false);
 
-  const { data: morphoBalanceMainnet } = useBalance({
-    token: MORPHO_TOKEN_MAINNET,
-    address: account as Address,
+  const { data: morphoBalanceMainnet } = useReadContract({
+    address: MORPHO_TOKEN_MAINNET,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: [account as Address],
     chainId: SupportedNetworks.Mainnet,
   });
 
-  const { data: morphoBalanceBase } = useBalance({
-    token: MORPHO_TOKEN_BASE,
-    address: account as Address,
+  const { data: morphoBalanceBase } = useReadContract({
+    address: MORPHO_TOKEN_BASE,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: [account as Address],
     chainId: SupportedNetworks.Base,
   });
 
-  const { data: morphoBalanceLegacy } = useBalance({
-    token: MORPHO_LEGACY,
-    address: account as Address,
+  const { data: morphoBalanceLegacy } = useReadContract({
+    address: MORPHO_LEGACY,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: [account as Address],
     chainId: SupportedNetworks.Mainnet,
   });
 
   const morphoBalance = useMemo(
-    () => (morphoBalanceMainnet?.value ?? 0n) + (morphoBalanceBase?.value ?? 0n) + (morphoBalanceLegacy?.value ?? 0n),
+    () => (morphoBalanceMainnet ?? 0n) + (morphoBalanceBase ?? 0n) + (morphoBalanceLegacy ?? 0n),
     [morphoBalanceMainnet, morphoBalanceBase, morphoBalanceLegacy],
   );
 
@@ -125,9 +132,9 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy.value !== 0n, [morphoBalanceLegacy]);
+  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
 
-  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(morphoBalanceLegacy?.value ?? 0n, () => {
+  const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap
     void refresh();
   });
@@ -231,7 +238,7 @@ export default function Rewards() {
                   }}
                 >
                   <div className="flex items-center gap-2 text-base">
-                    {morphoBalanceLegacy && <span>{formatSimple(formatBalance(morphoBalanceLegacy?.value, 18))}</span>}
+                    {morphoBalanceLegacy && <span>{formatSimple(formatBalance(morphoBalanceLegacy, 18))}</span>}
                     <TokenIcon
                       address={MORPHO_TOKEN_MAINNET}
                       chainId={SupportedNetworks.Mainnet}
@@ -275,7 +282,7 @@ export default function Rewards() {
       </div>
       {showProcessModal && (
         <WrapProcessModal
-          amount={morphoBalanceLegacy?.value ?? 0n}
+          amount={morphoBalanceLegacy ?? 0n}
           currentStep={currentStep}
           onOpenChange={setShowProcessModal}
         />

@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { ArrowRightIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { isAddress } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 import { useStyledToast } from '@/hooks/useStyledToast';
 
 export default function SearchOrConnect({ path }: { path: string }) {
-  const { address } = useAccount();
+  const { address } = useConnection();
   const toast = useStyledToast();
   const [inputAddress, setInputAddress] = useState<string>('');
 

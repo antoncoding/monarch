@@ -1,49 +1,13 @@
-import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import {
-  metaMaskWallet,
-  rainbowWallet,
-  coinbaseWallet,
-  rabbyWallet,
-  argentWallet,
-  injectedWallet,
-  trustWallet,
-  ledgerWallet,
-  walletConnectWallet,
-} from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import { base, mainnet, polygon, unichain, arbitrum, monad } from 'wagmi/chains';
+import { arbitrum, base, mainnet, monad, polygon, unichain } from 'wagmi/chains';
 import type { CustomRpcUrls } from '@/hooks/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
-const wallets =
-  typeof window !== 'undefined'
-    ? [
-        rabbyWallet,
-        metaMaskWallet,
-        rainbowWallet,
-        coinbaseWallet,
-        argentWallet,
-        injectedWallet,
-        trustWallet,
-        ledgerWallet,
-        walletConnectWallet,
-      ]
-    : [injectedWallet];
-
-export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrls = {}) {
-  const connectors = connectorsForWallets(
-    [
-      {
-        groupName: 'Recommended Wallet',
-        wallets,
-      },
-    ],
-    {
-      appName: 'Monarch Lend',
-      projectId,
-    },
-  );
-
+/**
+ * Creates a Wagmi config
+ * This config is used when custom RPC URLs are provided
+ */
+export function createWagmiConfig(customRpcUrls: CustomRpcUrls = {}) {
   // Use custom RPC URLs if provided, otherwise fall back to defaults
   const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? getDefaultRPC(SupportedNetworks.Mainnet);
   const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base);
@@ -65,6 +29,5 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
       [hyperEvm.id]: http(rpcHyperEVM),
       [monad.id]: http(rpcMonad),
     },
-    connectors: [...connectors],
   });
 }

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -23,7 +23,7 @@ type SupplyModalContentProps = {
 
 export function SupplyModalContent({ onClose, market, refetch, onAmountChange }: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   const onSuccess = useCallback(() => {
     onClose();

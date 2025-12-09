@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { FaCircle } from 'react-icons/fa';
 import { LuExternalLink, LuCopy } from 'react-icons/lu';
-import { useAccount, useEnsName } from 'wagmi';
+import { useConnection, useEnsName } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountActionsPopover } from '@/components/common/AccountActionsPopover';
 import { Name } from '@/components/common/Name';
@@ -48,7 +48,7 @@ export function AccountIdentity({
   showActions = true,
   className,
 }: AccountIdentityProps) {
-  const { address: connectedAddress, isConnected } = useAccount();
+  const { address: connectedAddress, isConnected } = useConnection();
   const [mounted, setMounted] = useState(false);
   const toast = useStyledToast();
   const { vaultName, shortAddress } = useAddressLabel(address);

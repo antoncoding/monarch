@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { toast } from 'react-toastify';
 import { type Address, encodeFunctionData } from 'viem';
-import { useAccount, useSwitchChain } from 'wagmi';
+import { useConnection, useSwitchChain } from 'wagmi';
 
 import wrapperABI from '@/abis/morpho-wrapper';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -15,7 +15,7 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
   const [currentStep, setCurrentStep] = useState<WrapStep>('approve');
   const [showProcessModal, setShowProcessModal] = useState(false);
 
-  const { address: account, chainId } = useAccount();
+  const { address: account, chainId } = useConnection();
   const { switchChainAsync } = useSwitchChain();
 
   const { isApproved, approve } = useERC20Approval({

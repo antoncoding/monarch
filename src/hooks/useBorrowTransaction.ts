@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
@@ -35,7 +35,7 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [useEth, setUseEth] = useState<boolean>(false);
 
-  const { address: account, chainId } = useAccount();
+  const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
   const bundlerAddress = getBundlerV2(market.morphoBlue.chain.id);

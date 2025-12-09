@@ -1,6 +1,6 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
-import { useAccount, useBalance } from 'wagmi';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+import { useConnection, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -63,14 +63,17 @@ export function useVaultV2Deposit({
   const [currentStep, setCurrentStep] = useState<VaultDepositStepType>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const toast = useStyledToast();
 
   // Get token balance
-  const { data: tokenBalance } = useBalance({
-    token: assetAddress,
-    address: account,
+  const { data: tokenBalance } = useReadContract({
+    address: assetAddress,
+    args: [account as `0x${string}`],
+    functionName: 'balanceOf',
+    abi: erc20Abi,
     chainId,
+    query: { enabled: !!account },
   });
 
   // Handle Permit2 authorization - authorize bundler to use Permit2 on behalf of user
@@ -294,7 +297,7 @@ export function useVaultV2Deposit({
     currentStep,
 
     // Balance data
-    tokenBalance: tokenBalance?.value,
+    tokenBalance: tokenBalance,
 
     // Transaction state
     isApproved,

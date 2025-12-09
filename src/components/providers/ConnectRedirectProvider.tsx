@@ -1,6 +1,6 @@
 import { type ReactNode, createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccountEffect } from 'wagmi';
+import { useConnectionEffect } from 'wagmi';
 
 import { useStyledToast } from '@/hooks/useStyledToast';
 
@@ -16,7 +16,7 @@ export function ConnectRedirectProvider({ children }: { children: ReactNode }) {
 
   const toast = useStyledToast();
 
-  useAccountEffect({
+  useConnectionEffect({
     onConnect: ({ address, isReconnected }) => {
       if (redirectPath && !isReconnected) {
         router.push(`/${redirectPath}/${address}`);

@@ -9,7 +9,7 @@ import { BsQuestionCircle } from 'react-icons/bs';
 import { IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
@@ -126,7 +126,7 @@ export function PositionsSummaryTable({
     storageKeys.PositionsShowCollateralExposureKey,
     true,
   );
-  const { address } = useAccount();
+  const { address } = useConnection();
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
 

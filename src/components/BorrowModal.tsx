@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
-import { useAccount, useBalance } from 'wagmi';
+import { useConnection, useReadContract, useBalance } from 'wagmi';
+import { erc20Abi } from 'viem';
 import { Button } from '@/components/common/Button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -19,19 +20,29 @@ type BorrowModalProps = {
 
 export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefreshing = false, position }: BorrowModalProps): JSX.Element {
   const [mode, setMode] = useState<'borrow' | 'repay'>('borrow');
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
 
   // Get token balances
-  const { data: loanTokenBalance } = useBalance({
-    token: market.loanAsset.address as `0x${string}`,
-    address: account,
+  const { data: loanTokenBalance } = useReadContract({
+    address: market.loanAsset.address as `0x${string}`,
+    args: [account as `0x${string}`],
+    functionName: 'balanceOf',
+    abi: erc20Abi,
     chainId: market.morphoBlue.chain.id,
+    query: {
+      enabled: !!account,
+    },
   });
 
-  const { data: collateralTokenBalance } = useBalance({
-    token: market.collateralAsset.address as `0x${string}`,
-    address: account,
+  const { data: collateralTokenBalance } = useReadContract({
+    address: market.collateralAsset.address as `0x${string}`,
+    args: [account as `0x${string}`],
+    functionName: 'balanceOf',
+    abi: erc20Abi,
     chainId: market.morphoBlue.chain.id,
+    query: {
+      enabled: !!account,
+    },
   });
 
   const { data: ethBalance } = useBalance({
@@ -97,7 +108,7 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
           <AddCollateralAndBorrow
             market={market}
             currentPosition={position}
-            collateralTokenBalance={collateralTokenBalance?.value}
+            collateralTokenBalance={collateralTokenBalance}
             ethBalance={ethBalance?.value}
             oraclePrice={oraclePrice}
             onSuccess={refetch}
@@ -107,8 +118,8 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
           <WithdrawCollateralAndRepay
             market={market}
             currentPosition={position}
-            loanTokenBalance={loanTokenBalance?.value}
-            collateralTokenBalance={collateralTokenBalance?.value}
+            loanTokenBalance={loanTokenBalance}
+            collateralTokenBalance={collateralTokenBalance}
             ethBalance={ethBalance?.value}
             oraclePrice={oraclePrice}
             onSuccess={refetch}

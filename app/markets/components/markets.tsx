@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useDisclosure, Tooltip } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import type { Chain } from '@rainbow-me/rainbowkit';
+import type { Chain } from 'viem';
 import { useRouter } from 'next/navigation';
 import { CgCompress } from 'react-icons/cg';
 import { FiSettings } from 'react-icons/fi';

@@ -27,6 +27,17 @@ const nextConfig = {
       },
     ],
   },
+  // temp fix for reown package issue: https://github.com/MetaMask/metamask-sdk/issues/1376
+  webpack: (config) => {
+    config.resolve.fallback = {
+      fs: false,
+      net: false,
+      tls: false,
+      '@react-native-async-storage/async-storage': false,
+    };
+
+    return config;
+  },
 };
 
 module.exports = nextConfig;

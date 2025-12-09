@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { fetchMultipleVaultV2DetailsAcrossNetworks } from '@/data-sources/morpho-api/v2-vaults';
 import { fetchUserVaultV2AddressesAllNetworks, type UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { readTotalAsset } from '@/utils/vaultAllocation';
@@ -52,7 +52,7 @@ async function fetchAndProcessVaults(address: Address): Promise<UserVaultV2[]> {
 }
 
 export function useUserVaultsV2(): UseUserVaultsV2Return {
-  const { address } = useAccount();
+  const { address } = useConnection();
   const [vaults, setVaults] = useState<UserVaultV2[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
