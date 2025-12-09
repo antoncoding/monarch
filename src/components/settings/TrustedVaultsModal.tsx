@@ -5,7 +5,7 @@ import { Divider, Input, Spinner } from '@heroui/react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { IoWarningOutline } from 'react-icons/io5';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { NetworkIcon } from '@/components/common/NetworkIcon';
@@ -163,15 +163,15 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
               <div className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
-                  variant="flat"
-                  onPress={handleSelectAll}
+                  variant="ghost"
+                  onClick={handleSelectAll}
                 >
                   Select All
                 </Button>
                 <Button
                   size="sm"
-                  variant="flat"
-                  onPress={handleDeselectAll}
+                  variant="ghost"
+                  onClick={handleDeselectAll}
                 >
                   Deselect All
                 </Button>
@@ -286,8 +286,8 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="secondary"
-              onPress={onClose}
+              variant="default"
+              onClick={onClose}
               size="sm"
             >
               Close

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import type { Address } from 'viem';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
@@ -141,17 +141,17 @@ export function MarketSelectionModal({
             </p>
             <div className="flex items-center gap-2">
               <Button
-                variant="subtle"
+                variant="default"
                 size="sm"
-                onPress={() => onOpenChange(false)}
+                onClick={() => onOpenChange(false)}
               >
                 Cancel
               </Button>
               <Button
-                variant="cta"
+                variant="primary"
                 size="sm"
-                isDisabled={selectedCount === 0}
-                onPress={handleConfirm}
+                disabled={selectedCount === 0}
+                onClick={handleConfirm}
               >
                 {buttonText}
               </Button>
@@ -160,9 +160,9 @@ export function MarketSelectionModal({
         ) : (
           <div className="flex w-full justify-end">
             <Button
-              variant="subtle"
+              variant="default"
               size="sm"
-              onPress={() => onOpenChange(false)}
+              onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>

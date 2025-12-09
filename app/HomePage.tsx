@@ -7,7 +7,7 @@ import { useTheme } from 'next-themes';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiArrowDownLine, RiExternalLinkLine } from 'react-icons/ri';
 import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
 import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../src/components/imgs/logo.png';
@@ -227,7 +227,7 @@ function HomePage() {
                   variant="default"
                   className="flex w-auto min-w-[200px] items-center justify-center gap-2 px-8 py-3 font-zen sm:px-10 sm:py-4"
                   size="lg"
-                  onPress={() => scrollToSection('section-1')}
+                  onClick={() => scrollToSection('section-1')}
                 >
                   Learn More
                   <RiArrowDownLine className="h-5 w-5" />
@@ -237,7 +237,7 @@ function HomePage() {
                   className="block no-underline"
                 >
                   <Button
-                    variant="cta"
+                    variant="primary"
                     className="w-auto min-w-[200px] px-8 py-3 font-zen sm:px-10 sm:py-4"
                     size="lg"
                   >
@@ -293,7 +293,7 @@ function HomePage() {
                     className="inline-block no-underline"
                   >
                     <Button
-                      variant="secondary"
+                      variant="default"
                       size="lg"
                       className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
                     >
@@ -302,10 +302,10 @@ function HomePage() {
                     </Button>
                   </a>
                   <Button
-                    variant="cta"
+                    variant="primary"
                     size="lg"
                     className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
-                    onPress={() => scrollToSection('section-2')}
+                    onClick={() => scrollToSection('section-2')}
                   >
                     Continue
                     <RiArrowDownLine className="h-5 w-5" />
@@ -356,7 +356,7 @@ function HomePage() {
                     className="inline-block no-underline"
                   >
                     <Button
-                      variant="secondary"
+                      variant="default"
                       size="lg"
                       className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
                     >
@@ -365,10 +365,10 @@ function HomePage() {
                     </Button>
                   </a>
                   <Button
-                    variant="cta"
+                    variant="primary"
                     size="lg"
                     className="font-zen flex w-auto min-w-[280px] items-center justify-center gap-2"
-                    onPress={() => scrollToSection('section-3')}
+                    onClick={() => scrollToSection('section-3')}
                   >
                     Why Monarch
                     <RiArrowDownLine className="h-5 w-5" />
@@ -440,10 +440,10 @@ function HomePage() {
               {/* CTA Buttons - Centered */}
               <div className="mx-auto flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                 <Button
-                  variant="secondary"
+                  variant="default"
                   size="lg"
                   className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50"
-                  isDisabled
+                  disabled
                 >
                   Auto Vault <Badge variant="success"> Coming Soon </Badge>
                 </Button>
@@ -452,7 +452,7 @@ function HomePage() {
                   className="block no-underline"
                 >
                   <Button
-                    variant="cta"
+                    variant="primary"
                     size="lg"
                     className="w-auto min-w-[200px] font-zen"
                   >
@@ -520,7 +520,7 @@ function HomePage() {
 
               <div className="mt-12">
                 <Link href="/autovault">
-                  <Button variant="cta" size="lg" className="px-12 py-4 font-zen">
+                  <Button variant="primary" size="lg" className="px-12 py-4 font-zen">
                     Create Auto Vault
                   </Button>
                 </Link>

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { DistributionResponseType } from '@/hooks/useRewards';
@@ -194,19 +194,19 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                             rel="noopener noreferrer"
                           >
                             <Button
-                              variant="interactive"
+                              variant="surface"
                               size="sm"
-                              isDisabled={tokenReward.total.claimable === BigInt(0)}
+                              disabled={tokenReward.total.claimable === BigInt(0)}
                             >
                               Claim on Merkl
                             </Button>
                           </Link>
                         ) : (
                           <Button
-                            variant="interactive"
+                            variant="surface"
                             size="sm"
-                            isDisabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
-                            onPress={() => {
+                            disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
+                            onClick={() => {
                               void (async () => {
                                 if (!account) {
                                   toast.error('No account connected', 'Please connect your wallet to continue.');

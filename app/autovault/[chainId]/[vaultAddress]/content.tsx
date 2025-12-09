@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation';
 import { IoRefreshOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
@@ -125,7 +125,7 @@ export default function VaultContent() {
             <h2 className="mb-4 text-xl">Vault data unavailable</h2>
             <p className="mb-6 text-secondary">We could not load this autovault right now. Please retry in a few minutes.</p>
             <Link href="/autovault">
-              <Button variant="cta">Back to Autovaults</Button>
+              <Button variant="primary">Back to Autovaults</Button>
             </Link>
           </div>
         </div>
@@ -151,10 +151,10 @@ export default function VaultContent() {
                 linkTo="explorer"
               />
               <Button
-                variant="light"
+                variant="default"
                 size="sm"
-                onPress={handleRefreshVault}
-                isDisabled={vault.vaultDataLoading}
+                onClick={handleRefreshVault}
+                disabled={vault.vaultDataLoading}
                 className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
               >
                 <IoRefreshOutline className="mr-2 h-4 w-4" />
@@ -162,9 +162,9 @@ export default function VaultContent() {
               </Button>
               {vault.isOwner && (
                 <Button
-                  variant="subtle"
+                  variant="default"
                   size="sm"
-                  onPress={() => {
+                  onClick={() => {
                     setSettingsTab('general');
                     setShowSettings(true);
                   }}
@@ -187,11 +187,11 @@ export default function VaultContent() {
                 </p>
               </div>
               <Button
-                variant="cta"
+                variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onPress={() => setShowInitializationModal(true)}
-                isDisabled={vault.isLoading}
+                onClick={() => setShowInitializationModal(true)}
+                disabled={vault.isLoading}
               >
                 Start setup
               </Button>
@@ -205,10 +205,10 @@ export default function VaultContent() {
                 <p className="text-sm text-secondary">Add an agent to enable automated allocation and rebalancing.</p>
               </div>
               <Button
-                variant="cta"
+                variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onPress={() => {
+                onClick={() => {
                   setSettingsTab('agents');
                   setShowSettings(true);
                 }}
@@ -227,10 +227,10 @@ export default function VaultContent() {
                 </p>
               </div>
               <Button
-                variant="cta"
+                variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onPress={() => {
+                onClick={() => {
                   setSettingsTab('caps');
                   setShowSettings(true);
                 }}

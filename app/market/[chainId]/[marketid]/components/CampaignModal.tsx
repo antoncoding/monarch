@@ -3,7 +3,7 @@
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { getMerklCampaignURL } from '@/utils/external';
 import type { SimplifiedCampaign } from '@/utils/merklTypes';
@@ -60,7 +60,7 @@ function CampaignRow({ campaign }: { campaign: SimplifiedCampaign }) {
           rel="noopener noreferrer"
         >
           <Button
-            variant="light"
+            variant="ghost"
             size="sm"
             className="text-xs"
           >

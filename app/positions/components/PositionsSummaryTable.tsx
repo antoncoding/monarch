@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip, Switch, Button as NextUIButton } from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip, Switch } from '@heroui/react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
@@ -10,7 +10,7 @@ import { IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -186,12 +186,12 @@ export function PositionsSummaryTable({
         <Dropdown>
           <DropdownTrigger>
             <Button
-              variant="light"
+              variant="ghost"
               size="sm"
-              className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="font-zen text-secondary min-w-fit"
             >
               <IoChevronDownOutline className="mr-2 h-4 w-4" />
-              {earningsPeriod}
+              {periodLabels[earningsPeriod]}
             </Button>
           </DropdownTrigger>
           <DropdownMenu
@@ -204,26 +204,39 @@ export function PositionsSummaryTable({
             ))}
           </DropdownMenu>
         </Dropdown>
-        <Button
-          variant="light"
-          size="sm"
-          onPress={handleManualRefresh}
-          disabled={isRefetching}
-          className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+        <Tooltip
+          classNames={{
+            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+          }}
+          content={
+            <TooltipContent
+              title="Refresh"
+              detail="Fetch latest position data"
+            />
+          }
         >
-          <ReloadIcon className={`mr-2 h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+          <span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isRefetching}
+              className="text-secondary min-w-0 px-2"
+            >
+              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+            </Button>
+          </span>
+        </Tooltip>
         <Dropdown>
           <DropdownTrigger>
-            <NextUIButton
-              isIconOnly
-              variant="light"
+            <Button
+              variant="ghost"
               size="sm"
-              className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              className="text-secondary min-w-0 px-2"
             >
-              <GearIcon className="h-4 w-4" />
-            </NextUIButton>
+              <GearIcon className="h-3 w-3" />
+            </Button>
           </DropdownTrigger>
           <DropdownMenu
             aria-label="Position table settings"
@@ -406,9 +419,9 @@ export function PositionsSummaryTable({
                       <div className="flex items-center justify-center">
                         <Button
                           size="sm"
-                          variant="interactive"
+                          variant="surface"
                           className="text-xs"
-                          onPress={() => {
+                          onClick={() => {
                             if (!isOwner) {
                               toast.error('No authorization', 'You can only rebalance your own positions');
                               return;

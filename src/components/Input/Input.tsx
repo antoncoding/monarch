@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 
 import { parseUnits } from 'viem';
 import { formatBalance } from '@/utils/balance';
-import { Button } from '../common';
+import { Button } from '@/components/ui/button';
 
 type InputProps = {
   decimals: number;
@@ -113,7 +113,7 @@ export default function Input({
           <Button
             size="xs"
             onClick={handleDismissError}
-            variant="secondary"
+            variant="default"
           >
             Ignore
           </Button>

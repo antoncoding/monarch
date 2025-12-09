@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -183,10 +183,10 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
         onClose={handleClose}
         actions={
           <Button
-            variant="secondary"
+            variant="default"
             size="sm"
-            onPress={handleResetAll}
-            isDisabled={Object.keys(customRpcUrls).length === 0}
+            onClick={handleResetAll}
+            disabled={Object.keys(customRpcUrls).length === 0}
           >
             Reset All
           </Button>
@@ -261,10 +261,10 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
                     }`}
                   />
                   <Button
-                    variant="cta"
+                    variant="primary"
                     size="sm"
-                    onPress={() => void handleSave()}
-                    isDisabled={isValidating}
+                    onClick={() => void handleSave()}
+                    disabled={isValidating}
                     className="absolute right-1 top-1/2 flex min-w-[60px] -translate-y-1/2 transform items-center justify-center"
                   >
                     {isValidating ? (
@@ -284,9 +284,9 @@ function RpcModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void })
               {isUsingCustomRpc(selectedNetwork) && (
                 <div className="flex justify-center">
                   <Button
-                    variant="secondary"
+                    variant="default"
                     size="sm"
-                    onPress={handleReset}
+                    onClick={handleReset}
                   >
                     Reset to Default
                   </Button>
@@ -329,9 +329,9 @@ export function AdvancedRpcSettings() {
             </div>
 
             <Button
-              variant="interactive"
+              variant="surface"
               size="sm"
-              onPress={() => setIsModalOpen(true)}
+              onClick={() => setIsModalOpen(true)}
             >
               Edit
             </Button>

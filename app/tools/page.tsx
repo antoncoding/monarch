@@ -3,7 +3,7 @@
 import React from 'react';
 import { isAddress } from 'viem';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { useMorphoAuthorization } from '@/hooks/useMorphoAuthorization';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -153,18 +153,18 @@ export default function ToolsPage() {
                   {/* Action Buttons */}
                   {isAuthorized === true ? (
                     <Button
-                      variant="secondary"
-                      onPress={handleRevoke}
-                      isDisabled={!isValidAddress || !addressInput || isAuthorizing}
+                      variant="default"
+                      onClick={handleRevoke}
+                      disabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
                       {isAuthorizing ? 'Revoking...' : needsSwitchChain ? 'Switch Network' : 'Revoke'}
                     </Button>
                   ) : (
                     <Button
-                      variant="cta"
-                      onPress={handleAuthorize}
-                      isDisabled={!isValidAddress || !addressInput || isAuthorizing}
+                      variant="primary"
+                      onClick={handleAuthorize}
+                      disabled={!isValidAddress || !addressInput || isAuthorizing}
                       className="flex-shrink-0"
                     >
                       {isAuthorizing ? 'Authorizing...' : needsSwitchChain ? 'Switch Network' : 'Authorize'}

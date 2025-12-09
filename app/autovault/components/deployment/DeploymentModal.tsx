@@ -106,9 +106,9 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
 
               <div className="flex justify-end pt-2">
                 <Button
-                  variant="cta"
-                  onPress={needSwitchChain ? switchToNetwork : () => void createVault()}
-                  isDisabled={
+                  variant="primary"
+                  onClick={needSwitchChain ? switchToNetwork : () => void createVault()}
+                  disabled={
                     !selectedTokenAndNetwork ||
                     isDeploying ||
                     balancesLoading ||

@@ -1,5 +1,5 @@
 import { FaCheckCircle } from 'react-icons/fa';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { useOnboarding } from './OnboardingContext';
 
 export function SuccessPage({ onClose }: { onClose: () => void }) {
@@ -22,9 +22,9 @@ export function SuccessPage({ onClose }: { onClose: () => void }) {
 
       <div className="mt-4">
         <Button
-          variant="cta"
+          variant="primary"
           className="min-w-[120px]"
-          onPress={handleFinished}
+          onClick={handleFinished}
         >
           Close
         </Button>

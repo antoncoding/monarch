@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import Input from '@/components/Input/Input';
@@ -315,15 +315,15 @@ export function AddCollateralAndBorrow({
               {isConnected ? (
                 needSwitchChain ? (
                   <Button
-                    onPress={switchToNetwork}
+                    onClick={switchToNetwork}
                     className="min-w-32"
-                    variant="solid"
+                    variant="surface"
                   >
                     Switch Chain
                   </Button>
                 ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
                   <Button
-                    isDisabled={
+                    disabled={
                       !isConnected ||
                       isLoadingPermit2 ||
                       borrowPending ||
@@ -333,15 +333,15 @@ export function AddCollateralAndBorrow({
                       borrowAmount === BigInt(0) ||
                       newLTV >= lltv
                     }
-                    onPress={() => void approveAndBorrow()}
+                    onClick={() => void approveAndBorrow()}
                     className="min-w-32"
-                    variant="cta"
+                    variant="primary"
                   >
                     Approve and Borrow
                   </Button>
                 ) : (
                   <Button
-                    isDisabled={
+                    disabled={
                       !isConnected ||
                       borrowPending ||
                       collateralInputError !== null ||
@@ -349,9 +349,9 @@ export function AddCollateralAndBorrow({
                       (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
                       newLTV >= lltv
                     }
-                    onPress={() => void signAndBorrow()}
+                    onClick={() => void signAndBorrow()}
                     className="min-w-32"
-                    variant="cta"
+                    variant="primary"
                   >
                     {collateralAmount > 0n && borrowAmount == 0n ? 'Add Collateral' : 'Borrow'}
                   </Button>

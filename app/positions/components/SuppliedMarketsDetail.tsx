@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { RateFormatted } from '@/components/common/RateFormatted';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
@@ -106,8 +106,8 @@ function MarketRow({
         <div className="flex items-center justify-center gap-2">
           <Button
             size="sm"
-            variant="interactive"
-            onPress={() => {
+            variant="surface"
+            onClick={() => {
               setSelectedPosition(position);
               setShowWithdrawModal(true);
             }}
@@ -116,8 +116,8 @@ function MarketRow({
           </Button>
           <Button
             size="sm"
-            variant="interactive"
-            onPress={() => {
+            variant="surface"
+            onClick={() => {
               setSelectedPosition(position);
               setShowSupplyModal(true);
             }}

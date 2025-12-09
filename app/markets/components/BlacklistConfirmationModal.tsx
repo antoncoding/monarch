@@ -1,7 +1,7 @@
 'use client';
 
 import { IoWarningOutline } from 'react-icons/io5';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity } from '@/components/MarketIdentity';
 import type { Market } from '@/utils/types';
@@ -60,16 +60,16 @@ export function BlacklistConfirmationModal({ isOpen, onOpenChange, onConfirm, ma
       </ModalBody>
       <ModalFooter className="border-t border-primary/10">
         <Button
-          variant="secondary"
+          variant="default"
           size="md"
-          onPress={() => onOpenChange(false)}
+          onClick={() => onOpenChange(false)}
         >
           Cancel
         </Button>
         <Button
-          variant="cta"
+          variant="primary"
           size="md"
-          onPress={handleConfirm}
+          onClick={handleConfirm}
         >
           Blacklist Market
         </Button>

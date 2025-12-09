@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button, Checkbox } from '@heroui/react';
+import { Checkbox } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { PiButterflyDuotone } from 'react-icons/pi';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -72,8 +73,8 @@ export default function RiskNotificationModal() {
       <ModalFooter>
         <Button
           className="bg-monarch-orange text-white"
-          onPress={handleConfirm}
-          isDisabled={!isChecked}
+          onClick={handleConfirm}
+          disabled={!isChecked}
         >
           Confirm and Proceed
         </Button>

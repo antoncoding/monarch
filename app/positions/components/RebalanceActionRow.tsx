@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { ArrowRightIcon, Cross2Icon, TrashIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { MarketIdentity, MarketIdentityMode } from '@/components/MarketIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -226,10 +226,10 @@ export function RebalanceActionRow({
 
         {mode === 'input' ? (
           <Button
-            onPress={onAddAction}
-            variant="cta"
+            onClick={onAddAction}
+            variant="primary"
             size="sm"
-            isDisabled={isAddDisabled}
+            disabled={isAddDisabled}
             className="h-8 w-[64px]"
           >
             Add

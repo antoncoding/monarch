@@ -11,7 +11,7 @@ import { formatBalance } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
-import { Button } from './common';
+import { Button } from '@/components/ui/button';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
 type SupplyModalContentProps = {
@@ -147,27 +147,27 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
 
                     {needSwitchChain ? (
                       <Button
-                        onPress={switchToNetwork}
+                        onClick={switchToNetwork}
                         className="ml-2 min-w-32"
-                        variant="secondary"
+                        variant="default"
                       >
                         Switch Chain
                       </Button>
                     ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
                       <Button
                         disabled={!isConnected || isLoadingPermit2 || supplyPending}
-                        onPress={() => void approveAndSupply()}
+                        onClick={() => void approveAndSupply()}
                         className="ml-2 min-w-32"
-                        variant="cta"
+                        variant="primary"
                       >
                         Supply
                       </Button>
                     ) : (
                       <Button
                         disabled={!isConnected || supplyPending || inputError !== null || !supplyAmount}
-                        onPress={() => void signAndSupply()}
+                        onClick={() => void signAndSupply()}
                         className="ml-2 min-w-32"
-                        variant="cta"
+                        variant="primary"
                       >
                         Supply
                       </Button>

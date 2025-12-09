@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@heroui/react';
+import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import Image from 'next/image';
-import { FiChevronDown } from 'react-icons/fi';
 import ButtonGroup from '@/components/ButtonGroup';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -182,11 +181,8 @@ export default function StatsPage() {
           {/* Network selector */}
           <Dropdown>
             <DropdownTrigger>
-              <Button
-                variant="flat"
-                endContent={<FiChevronDown className="text-small" />}
-                className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
-                startContent={
+              <Button className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
+                <div className="flex gap-2">
                   <div className="flex items-center">
                     {selectedNetworkImg && (
                       <Image
@@ -198,9 +194,8 @@ export default function StatsPage() {
                       />
                     )}
                   </div>
-                }
-              >
-                {getNetworkName(selectedNetwork) ?? 'Network'}
+                  <div>{getNetworkName(selectedNetwork)}</div>
+                </div>
               </Button>
             </DropdownTrigger>
             <DropdownMenu
@@ -271,11 +266,7 @@ export default function StatsPage() {
             {/* Loan Asset Filter */}
             <Dropdown>
               <DropdownTrigger>
-                <Button
-                  variant="flat"
-                  endContent={<FiChevronDown className="text-small" />}
-                  className="bg-surface min-w-[160px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
-                >
+                <Button className="bg-surface min-w-[160px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
                   {selectedLoanAssets.length === 0
                     ? 'All loan assets'
                     : selectedLoanAssets.length === 1
@@ -324,11 +315,7 @@ export default function StatsPage() {
             {/* Side Filter */}
             <Dropdown>
               <DropdownTrigger>
-                <Button
-                  variant="flat"
-                  endContent={<FiChevronDown className="text-small" />}
-                  className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200"
-                >
+                <Button className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
                   {selectedSides.length === 0
                     ? 'All sides'
                     : selectedSides.length === 1

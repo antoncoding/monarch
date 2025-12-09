@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Divider, Tooltip, useDisclosure } from '@heroui/react';
 import { FiFilter } from 'react-icons/fi';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { FilterRow, FilterSection } from '@/components/common/FilterComponents';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -90,12 +90,11 @@ export function SuppliedAssetFilterCompactSwitch({
         }
       >
         <Button
-          isIconOnly
-          variant="light"
+          variant="ghost"
           size="sm"
           className="min-w-0 px-2 text-secondary"
           aria-label="Market filters"
-          onPress={onOpen}
+          onClick={onOpen}
         >
           <FiFilter
             size={14}
@@ -213,16 +212,16 @@ export function SuppliedAssetFilterCompactSwitch({
             </ModalBody>
             <ModalFooter className="justify-between">
               <Button
-                variant="flat"
+                variant="ghost"
                 size="sm"
-                onPress={handleCustomize}
+                onClick={handleCustomize}
               >
                 Customize Filters
               </Button>
               <Button
                 color="primary"
                 size="sm"
-                onPress={close}
+                onClick={close}
               >
                 Done
               </Button>

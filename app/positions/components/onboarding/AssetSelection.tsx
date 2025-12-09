@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';

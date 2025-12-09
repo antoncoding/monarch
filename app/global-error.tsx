@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -15,7 +15,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
             An unexpected error occurred. Please try again. If the issue persists, it may be due to a transient data source outage.
           </p>
           <pre className="max-w-xl overflow-auto rounded bg-content3 p-4 text-left text-xs">{error?.message ?? 'Unknown error'}</pre>
-          <Button onPress={reset}>Try again</Button>
+          <Button onClick={reset}>Try again</Button>
         </div>
       </body>
     </html>

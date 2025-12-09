@@ -4,7 +4,7 @@
 
 Use these shared components instead of raw HTML elements:
 
-- `Button`: Import from `@/components/common/Button` for all clickable actions
+- `Button`: Import from `@/components/ui/button` for all clickable actions
 - `Modal`: For **all** modal dialogs (always import from `@/components/common/Modal`)
 - `Card`: For contained content sections
 
@@ -31,7 +31,7 @@ Import the primitives from our shared entry point (and nowhere else):
 
 ```tsx
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 ```
 
 ### Global Modal Context
@@ -79,8 +79,8 @@ Use this pattern for primary workflows, settings, and management interfaces:
   </ModalBody>
 
   <ModalFooter>
-    <Button variant="secondary" onPress={onClose}>Cancel</Button>
-    <Button variant="cta" onPress={handleConfirm}>Confirm</Button>
+    <Button variant="secondary" onClick={onClose}>Cancel</Button>
+    <Button variant="cta" onClick={handleConfirm}>Confirm</Button>
   </ModalFooter>
 </Modal>
 ```
@@ -115,7 +115,7 @@ import { TokenIcon } from '@/components/TokenIcon';
   title="Rebalance Position"
   description="Manage your positions"
   actions={
-    <Button variant="light" size="sm" onPress={handleRefresh}>
+    <Button variant="light" size="sm" onClick={handleRefresh}>
       <RefreshIcon /> Refresh
     </Button>
   }
@@ -153,8 +153,8 @@ Use this pattern for filters, confirmations, and quick actions:
   </ModalBody>
 
   <ModalFooter>
-    <Button variant="secondary" size="sm" onPress={onClose}>Cancel</Button>
-    <Button variant="cta" size="sm" onPress={handleApply}>Apply</Button>
+    <Button variant="secondary" size="sm" onClick={onClose}>Cancel</Button>
+    <Button variant="cta" size="sm" onClick={handleApply}>Apply</Button>
   </ModalFooter>
 </Modal>
 ```
@@ -282,65 +282,69 @@ For custom modals using `framer-motion`, apply `font-zen` to the outer container
 ### Button Component
 
 ```typescript
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 ```
 
 #### Button Variants
 
-- `default`: Standard surface-colored button
+Our button system uses 4 simple, purpose-driven variants:
 
-  - Use for: Navigation buttons, "Back", "Cancel" actions
-  - Example: "Back to Markets", "Cancel"
+**default** - For buttons on background areas
+- Uses `bg-surface` color
+- Use for: Navigation buttons, actions on main background
+- Example: "Back to Markets", top-level page actions
 
-- `cta`: Primary call-to-action with orange background
+**primary** - For important actions
+- Uses `bg-primary` color (primary theme color, NOT orange)
+- Use for: Main CTAs, confirmations, primary flows
+- Example: "New Position", "Execute Rebalance", "Supply", "Withdraw"
 
-  - Use for: Main actions, confirmations, primary flows
-  - Example: "Launch App", "Execute Rebalance", "Start Lending"
+**surface** - For buttons on surface-colored backgrounds
+- Uses `bg-hovered` color  - Subtle, doesn't stand out too much
+- Use for: Actions in cards, modals, table rows
+- Example: "Claim" button in tables, dropdown triggers, actions in cards
 
-- `interactive`: Subtle background with strong hover effect (background → primary)
-
-  - Use for: Table row actions, interactive elements
-  - Example: "Claim", "Supply", "Withdraw" in tables
-
-- `secondary`: Subtle background (hovered color) without hover transform
-
-  - Use for: Secondary actions, less prominent options
-  - Example: "Remove" in tables, "Cancel" in modals
-
-- `ghost`: Most subtle variant with minimal visual impact
-  - Use for: Tertiary actions, subtle navigation
-  - Example: "Refresh" buttons, utility actions
+**ghost** - For icon buttons and minimal actions
+- Transparent background with subtle hover
+- Use for: Icon-only buttons, utility actions, settings
+- Example: Refresh icons, settings icons, filter toggles
 
 #### Examples
 
 ```tsx
-// Primary CTA
-<Button variant="cta" size="lg" className="font-zen">
-  Launch App
+// Primary - Important action
+<Button variant="primary" size="md" className="font-zen">
+  New Position
 </Button>
 
-// Table Action
-<Button variant="interactive" size="sm">
+// Surface - Action in a table/card (subtle)
+<Button variant="surface" size="sm">
   Claim
 </Button>
 
-// Navigation
+// Default - Navigation on background
 <Button variant="default" size="md">
   <ChevronLeftIcon className="mr-2" />
   Back to Markets
 </Button>
 
-// Secondary Action
-<Button variant="secondary" size="md">
-  Cancel
-</Button>
-
-// Utility Action
-<Button variant="subtle" size="sm">
-  <RefreshIcon className="mr-2" />
-  Refresh
-</Button>
+// Ghost - Icon-only button with tooltip (always wrap in span for HeroUI Tooltip)
+<Tooltip
+  classNames={{
+    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+  }}
+  content={<TooltipContent title="Refresh" detail="Fetch latest data" />}
+>
+  <span>
+    <Button variant="ghost" size="sm" className="text-secondary min-w-0 px-2">
+      <RefreshIcon className="h-3 w-3" />
+    </Button>
+  </span>
+</Tooltip>
 ```
+
+**Important Note**: When wrapping Button in HeroUI Tooltip, always wrap the Button in a `<span>` to prevent ResizeObserver errors.
 
 ### Toggle Controls
 
@@ -819,7 +823,7 @@ For simple text inputs, use native HTML input with consistent styling:
   <Button
     variant="cta"
     size="sm"
-    onPress={handleAction}
+    onClick={handleAction}
     className="absolute right-1 top-1/2 -translate-y-1/2 transform"
   >
     Save

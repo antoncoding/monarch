@@ -1,7 +1,7 @@
 import type React from 'react';
 import { Input, Divider } from '@heroui/react';
 import { FiSliders } from 'react-icons/fi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 
 type TransactionFiltersModalProps = {
@@ -110,8 +110,8 @@ export default function TransactionFiltersModal({
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="light"
-              onPress={onClose}
+              variant="ghost"
+              onClick={onClose}
             >
               Close
             </Button>

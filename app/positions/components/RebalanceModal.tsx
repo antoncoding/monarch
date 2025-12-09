@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { parseUnits, formatUnits } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
@@ -313,16 +313,16 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         </ModalBody>
         <ModalFooter className="mx-2">
           <Button
-            variant="secondary"
-            onPress={() => onOpenChange(false)}
+            variant="default"
+            onClick={() => onOpenChange(false)}
             className="rounded-sm p-4 px-10 font-zen text-secondary duration-200 ease-in-out hover:scale-105"
           >
             Cancel
           </Button>
           <Button
-            variant="cta"
-            onPress={() => void handleExecuteRebalance()}
-            isDisabled={isProcessing || rebalanceActions.length === 0}
+            variant="primary"
+            onClick={() => void handleExecuteRebalance()}
+            disabled={isProcessing || rebalanceActions.length === 0}
             isLoading={isProcessing}
             className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
           >

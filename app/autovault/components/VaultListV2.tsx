@@ -134,7 +134,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                     <div className="flex justify-center">
                       <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.address}`}>
                         <Button
-                          variant="interactive"
+                          variant="surface"
                           size="sm"
                         >
                           Manage
