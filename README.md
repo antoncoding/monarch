@@ -1,86 +1,68 @@
 <div align="center">
-  <h1 > Monarch </h1>
+  <h1>Monarch</h1>
   <img height=80 src="./imgs/logo.png"/>
-  <h5 align="center"> Customized lending on Morpho Blue.</h5>
+  <h5>Customized lending on Morpho Blue</h5>
 
-  <!-- move badges here -->
   <img src="https://img.shields.io/github/license/antoncoding/monarch?style=flat-square" alt="LICENSE" />
   <img src="https://img.shields.io/badge/code_style-biome-js?style=flat-square" alt="style" />
   <img src="https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square" alt="GitHub top language" />
-  
+
   <br/>
   <br/>
 </div>
 
-## Overview
+Monarch is an open, verifiable interface for Morpho Blue markets. Interact directly with battle-tested Morpho contracts while maintaining full control and visibility over your lending positions.
 
-Monarch is an open, verifiable interface for Morpho markets that allows you to navigate the Morpho ecosystem safely without any intermediaries. Interact directly with battle-tested Morpho contracts while maintaining full control and visibility over your lending positions.
+## Key Features
 
-## Core Features
+- **Direct Market Operations**: Supply, withdraw, borrow, and repay with real-time APY previews
+- **Smart Rebalancing**: Move positions between markets with batched transactions
+- **Market Analytics**: Track history, rate changes, and volume with comprehensive data
+- **Oracle Integration**: Deep dive into Chainlink, Compound, and Redstone price feeds
+- **AutoVaults** (Beta): Create and manage automated lending strategies
 
-* **Direct Market Operations**: Supply, withdraw, borrow, and repay to Morpho markets directly with transaction previews showing post-action APY changes
-
-* **Smart Rebalancing**: Move positions seamlessly between markets—from one to many or many to one—with batched transactions for gas efficiency
-
-* **Market History & Analysis**: Search market history, track rate changes, analyze volume graphs, and make informed decisions with comprehensive market data
-
-* **Oracle Breakdown**: Deep dive into Chainlink, Compound, and Redstone oracles with detailed information on oracle types, deviation thresholds, and price feed configurations
-
-* **AutoVaults** (Beta): Set up your own Morpho vaults and automate your lending strategies with customizable parameters.
-
-## Security
-
-This project has **no additional contract dependencies** beyond the heavily tested contracts deployed by the Morpho team:
-
-- **Morpho Blue**: Core lending protocol - [Source Code](https://github.com/morpho-org/morpho-blue/tree/main/src)
-- **Morpho Bundler V2**: Batched transaction execution - [Source Code](https://github.com/morpho-org/morpho-blue-bundlers/blob/main/src/chain-agnostic/ChainAgnosticBundlerV2.sol)
-- **Morpho Vaults V2**: For Autovault users - [Source Code](https://github.com/morpho-org/vault-v2)
-
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm (recommended package manager)
+- pnpm 9.15+
 
-### Installation
+### Installation & Development
 
 ```bash
 # Install dependencies
 pnpm install
-```
 
-### Development
-
-```bash
 # Start development server
 pnpm dev
 ```
 
-The app will be available at `http://localhost:3000`
+Visit `http://localhost:3000` to see the app.
 
 ### Building
 
 ```bash
 # Build for production
 pnpm build
-```
 
-### Code Quality
-
-This project uses [Biome](https://biomejs.dev/) with the [Ultracite](https://github.com/lvce-editor/ultracite) preset for linting and formatting:
-
-```bash
 # Check code quality
 pnpm lint:check
 
-# Auto-fix issues
+# Auto-fix linting issues
 pnpm lint
 ```
 
-See [CLAUDE.md](./.claude/CLAUDE.md) for detailed code standards.
+## Documentation
 
-### Styling
+- **[Architecture Guide](./docs/ARCHITECTURE.md)** - Tech stack, data fetching patterns, and developer guide
+- **[Styling Guide](./docs/Styling.md)** - UI component patterns and design system
+- **[Code Standards](./.claude/CLAUDE.md)** - Code quality guidelines (Biome/Ultracite)
 
-See [docs/Styling.md](./docs/Styling.md) for comprehensive UI component and styling guidelines
+## Security
+
+This project has **no additional contract dependencies** beyond official Morpho contracts:
+
+- [Morpho Blue](https://github.com/morpho-org/morpho-blue) - Core lending protocol
+- [Morpho Bundler V2](https://github.com/morpho-org/morpho-blue-bundlers) - Transaction batching
+- [Morpho Vaults V2](https://github.com/morpho-org/vault-v2) - Infrastructure for Auto Vaults
