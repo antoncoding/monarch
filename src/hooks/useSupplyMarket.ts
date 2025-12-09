@@ -65,7 +65,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     chainId: market.morphoBlue.chain.id,
     query: {
       enabled: !!account,
-    }
+    },
   });
 
   // Get ETH balance

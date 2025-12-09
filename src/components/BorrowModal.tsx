@@ -31,7 +31,7 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
     chainId: market.morphoBlue.chain.id,
     query: {
       enabled: !!account,
-    }
+    },
   });
 
   const { data: collateralTokenBalance } = useReadContract({
@@ -42,7 +42,7 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
     chainId: market.morphoBlue.chain.id,
     query: {
       enabled: !!account,
-    }
+    },
   });
 
   const { data: ethBalance } = useBalance({

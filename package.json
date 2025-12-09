@@ -5,7 +5,7 @@
   "scripts": {
     "build": "rm -rf .next && next build",
     "check": "pnpm lint:check && pnpm typecheck",
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "format": "biome format --write .",
     "generate:chainlink": "tsx scripts/generate-chainlink-data.ts",
     "generate:redstone": "tsx scripts/generate-redstone-data.ts",
