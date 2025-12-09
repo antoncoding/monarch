@@ -704,6 +704,43 @@ import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 - Tables/Lists/Cards, Data display → Use `MarketIdentity`
 - Modal flows during a transaction, with expandable details → Use `MarketDetailsBlock`
 
+**TransactionIdentity** (`@/components/common/TransactionIdentity`)
+- Use to display transaction hashes with explorer links
+- Consistent monospace badge styling with external link icon
+- Supports full or truncated hash display
+- Always opens in new tab with security attributes
+
+```tsx
+import { TransactionIdentity } from '@/components/common/TransactionIdentity';
+
+// Standard usage (truncated hash)
+<TransactionIdentity
+  txHash="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+  chainId={1}
+/>
+
+// Full hash display
+<TransactionIdentity
+  txHash="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+  chainId={1}
+  showFullHash={true}
+/>
+
+// With custom styling
+<TransactionIdentity
+  txHash={txHash}
+  chainId={chainId}
+  className="ml-2"
+/>
+```
+
+**Styling:**
+- Uses `font-monospace text-[0.65rem]` for hash display
+- Badge with `bg-hovered rounded-sm px-2 py-1`
+- Hover: `hover:bg-gray-300 hover:text-primary dark:hover:bg-gray-700`
+- External link icon (3x3) aligned with text
+- Click event stops propagation to prevent row/parent click handlers
+
 **MarketIdBadge** (`@/components/MarketIdBadge`)
 - Use to display a short market ID badge with optional network icon and warning indicator
 - Consistent styling across all tables
