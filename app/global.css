@@ -57,9 +57,9 @@
 /* Border radius and other theme variables */
 @theme {
   /* Border radius - restore Tailwind v3 defaults for backward compatibility */
-  --radius-sm: 0.125rem;  /* rounded-sm = 2px (v3 default, used for buttons/inputs/filters) */
-  --radius-md: 0.375rem;  /* rounded-md = 6px (same in v3/v4) */
-  --radius-lg: 0.5rem;    /* rounded-lg = 8px (same in v3/v4) */
+  --radius-sm: 0.125rem; /* rounded-sm = 2px (v3 default, used for buttons/inputs/filters) */
+  --radius-md: 0.375rem; /* rounded-md = 6px (same in v3/v4) */
+  --radius-lg: 0.5rem; /* rounded-lg = 8px (same in v3/v4) */
 
   /* Font weights from tailwind.config.ts */
   --font-weight-normal: 400;
@@ -102,7 +102,10 @@
   }
 
   .bg-gradient-conic {
-    background-image: conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops));
+    background-image: conic-gradient(
+      from 180deg at 50% 50%,
+      var(--tw-gradient-stops)
+    );
   }
 
   .bg-gradient-2 {
