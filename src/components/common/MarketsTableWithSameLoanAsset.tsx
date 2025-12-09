@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
 import { LuX } from 'react-icons/lu';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import { TablePagination } from '@/components/common/TablePagination';
 import { useTokens } from '@/components/providers/TokenProvider';
@@ -491,7 +491,7 @@ function MarketRow({
             <Checkbox
               isSelected={isSelected}
               onValueChange={onToggle}
-              isDisabled={disabled}
+              disabled={disabled}
               className="h-6 w-4 cursor-pointer rounded border-gray-300 text-primary"
               onSelect={(e) => e.stopPropagation()}
               size="sm"
@@ -1005,9 +1005,9 @@ export function MarketsTableWithSameLoanAsset({
           />
           {showSettings && (
             <Button
-              variant="light"
+              variant="ghost"
               size="sm"
-              onPress={() => setShowSettingsModal(true)}
+              onClick={() => setShowSettingsModal(true)}
               className="min-w-0 px-2"
             >
               <GearIcon className="h-4 w-4" />

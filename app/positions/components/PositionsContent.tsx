@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { Tooltip } from '@heroui/react';
 import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
@@ -10,11 +11,12 @@ import { toast } from 'react-toastify';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/Status/EmptyScreen';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { SupplyModalV2 } from '@/components/SupplyModalV2';
+import { TooltipContent } from '@/components/TooltipContent';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import type { MarketPosition } from '@/utils/types';
@@ -111,10 +113,10 @@ export default function Positions() {
             </Link>
             {isOwner && (
               <Button
-                variant="cta"
+                variant="primary"
                 size="md"
                 className="font-zen"
-                onPress={() => setShowOnboardingModal(true)}
+                onClick={() => setShowOnboardingModal(true)}
               >
                 <FaPlus
                   size={14}
@@ -175,15 +177,29 @@ export default function Positions() {
         ) : (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
-              <Button
-                variant="light"
-                size="sm"
-                onPress={handleRefetch}
-                className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+              <Tooltip
+                classNames={{
+                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                }}
+                content={
+                  <TooltipContent
+                    title="Refresh"
+                    detail="Fetch latest data"
+                  />
+                }
               >
-                <IoRefreshOutline className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
+                <span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRefetch}
+                    className="text-secondary min-w-0 px-2"
+                  >
+                    <IoRefreshOutline className="h-3 w-3" />
+                  </Button>
+                </span>
+              </Tooltip>
             </div>
             <div className="flex justify-center">
               <EmptyScreen

@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { Divider } from '@heroui/react';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { MdBlockFlipped } from 'react-icons/md';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/contexts/MarketsContext';
@@ -124,9 +124,9 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                           </div>
                           <Button
                             size="sm"
-                            variant="secondary"
-                            onPress={() => removeBlacklistedMarket(market.uniqueKey)}
-                            isDisabled={isDefault}
+                            variant="default"
+                            onClick={() => removeBlacklistedMarket(market.uniqueKey)}
+                            disabled={isDefault}
                             className="shrink-0"
                           >
                             <FiX className="h-4 w-4" />
@@ -192,8 +192,8 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                           </div>
                           <Button
                             size="sm"
-                            variant="secondary"
-                            onPress={() => addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id)}
+                            variant="default"
+                            onClick={() => addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id)}
                             className="shrink-0"
                           >
                             <FiPlus className="h-4 w-4" />
@@ -208,9 +208,9 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                     <div className="mt-4 flex items-center justify-center gap-2">
                       <Button
                         size="sm"
-                        variant="secondary"
-                        onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        isDisabled={currentPage === 1}
+                        variant="default"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
                       >
                         Previous
                       </Button>
@@ -219,9 +219,9 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                       </span>
                       <Button
                         size="sm"
-                        variant="secondary"
-                        onPress={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        isDisabled={currentPage === totalPages}
+                        variant="default"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
                       >
                         Next
                       </Button>
@@ -233,8 +233,8 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="secondary"
-              onPress={onClose}
+              variant="default"
+              onClick={onClose}
               size="sm"
             >
               Close

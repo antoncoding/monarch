@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/components/common/MarketsTableWithSameLoanAsset';
 import type { MarketWithSelection } from '@/components/common/MarketsTableWithSameLoanAsset';
 import { useTokens } from '@/components/providers/TokenProvider';
@@ -39,8 +39,8 @@ export function MarketSelectionOnboarding() {
       <div className="flex h-full flex-col items-center justify-center">
         <p className="text-gray-400">No token selected. Please go back and select a token.</p>
         <Button
-          variant="light"
-          onPress={goToPrevStep}
+          variant="ghost"
+          onClick={goToPrevStep}
           className="mt-4 min-w-[120px]"
         >
           Back
@@ -85,16 +85,16 @@ export function MarketSelectionOnboarding() {
       {/* Navigation - ALWAYS VISIBLE */}
       <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
         <Button
-          variant="light"
-          onPress={goToPrevStep}
+          variant="ghost"
+          onClick={goToPrevStep}
           className="min-w-[120px]"
         >
           Back
         </Button>
         <Button
-          variant="cta"
-          onPress={goToNextStep}
-          isDisabled={!canGoNext}
+          variant="primary"
+          onClick={goToNextStep}
+          disabled={!canGoNext}
           className="min-w-[120px]"
         >
           Continue

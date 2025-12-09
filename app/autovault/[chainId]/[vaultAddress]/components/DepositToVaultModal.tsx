@@ -2,7 +2,7 @@
 
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -111,19 +111,19 @@ export function DepositToVaultModal({
 
                   {!permit2Authorized || (!usePermit2Setting && !isApproved) ? (
                     <Button
-                      isDisabled={!isConnected || isLoadingPermit2 || depositPending}
-                      onPress={() => void approveAndDeposit()}
+                      disabled={!isConnected || isLoadingPermit2 || depositPending}
+                      onClick={() => void approveAndDeposit()}
                       className="ml-2 min-w-32"
-                      variant="cta"
+                      variant="primary"
                     >
                       Deposit
                     </Button>
                   ) : (
                     <Button
-                      isDisabled={!isConnected || depositPending || inputError !== null || !depositAmount}
-                      onPress={() => void signAndDeposit()}
+                      disabled={!isConnected || depositPending || inputError !== null || !depositAmount}
+                      onClick={() => void signAndDeposit()}
                       className="ml-2 min-w-32"
-                      variant="cta"
+                      variant="primary"
                     >
                       Deposit
                     </Button>

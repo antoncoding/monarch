@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pagination } from '@heroui/react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -146,17 +146,15 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                           </div>
                           <Button
                             size="sm"
-                            variant="flat"
+                            variant="surface"
                             className="h-5 min-w-0 px-2 text-xs"
-                            isDisabled={maxTransferableAmount <= 0n}
-                            onPress={() => {
+                            disabled={maxTransferableAmount <= 0n}
+                            onClick={(e: React.MouseEvent) => {
+                              e.stopPropagation();
                               onSelectMarket(position.market.uniqueKey);
                               if (onSelectMax && maxTransferableAmount > 0n) {
                                 onSelectMax(position.market.uniqueKey, Number(maxTransferableAmount));
                               }
-                            }}
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
                             }}
                           >
                             Max

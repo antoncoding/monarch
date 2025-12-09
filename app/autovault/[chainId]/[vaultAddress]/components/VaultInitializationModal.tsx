@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { type Address, zeroAddress } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -296,11 +296,11 @@ export function VaultInitializationModal({
     if (stepIndex === 0) {
       return (
         <Button
-          variant="cta"
+          variant="primary"
           size="sm"
           className="min-w-[150px]"
-          isDisabled={!canDeploy || isDeploying}
-          onPress={() => void handleDeploy()}
+          disabled={!canDeploy || isDeploying}
+          onClick={() => void handleDeploy()}
         >
           {isDeploying ? (
             <span className="flex items-center gap-2">
@@ -317,11 +317,11 @@ export function VaultInitializationModal({
     if (stepIndex === 1) {
       return (
         <Button
-          variant="cta"
+          variant="primary"
           size="sm"
           className="min-w-[150px]"
-          isDisabled={!canProceedFromAdapterCap}
-          onPress={() => setStepIndex(2)}
+          disabled={!canProceedFromAdapterCap}
+          onClick={() => setStepIndex(2)}
         >
           Next: Finalize setup
         </Button>
@@ -332,11 +332,11 @@ export function VaultInitializationModal({
     if (stepIndex === 2) {
       return (
         <Button
-          variant="cta"
+          variant="primary"
           size="sm"
           className="min-w-[170px]"
-          isDisabled={!canProceedToAgents}
-          onPress={() => setStepIndex(3)}
+          disabled={!canProceedToAgents}
+          onClick={() => setStepIndex(3)}
         >
           Next: Choose agent
         </Button>
@@ -350,17 +350,17 @@ export function VaultInitializationModal({
           variant="ghost"
           size="sm"
           className="min-w-[120px]"
-          onPress={() => void handleCompleteInitialization()}
-          isDisabled={isInitializing}
+          onClick={() => void handleCompleteInitialization()}
+          disabled={isInitializing}
         >
           Skip for now
         </Button>
         <Button
-          variant="cta"
+          variant="primary"
           size="sm"
           className="min-w-[170px]"
-          isDisabled={isInitializing}
-          onPress={() => void handleCompleteInitialization()}
+          disabled={isInitializing}
+          onClick={() => void handleCompleteInitialization()}
         >
           {isInitializing ? (
             <span className="flex items-center gap-2">
@@ -424,7 +424,7 @@ export function VaultInitializationModal({
           <Button
             variant="ghost"
             size="sm"
-            onPress={() => setStepIndex((prev) => Math.max(prev - 1, 0))}
+            onClick={() => setStepIndex((prev) => Math.max(prev - 1, 0))}
           >
             Back
           </Button>

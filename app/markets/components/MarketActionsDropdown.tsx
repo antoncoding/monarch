@@ -7,7 +7,7 @@ import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { TbArrowUp } from 'react-icons/tb';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './BlacklistConfirmationModal';
 
@@ -68,9 +68,8 @@ export function MarketActionsDropdown({
         <DropdownTrigger>
           <Button
             size="xs"
-            variant="interactive"
+            variant="surface"
             className="text-xs"
-            isIconOnly
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>

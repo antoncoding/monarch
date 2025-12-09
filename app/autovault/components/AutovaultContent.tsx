@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
@@ -60,10 +60,10 @@ export default function AutovaultContent() {
           </div>
           <div className="flex gap-4">
             <Button
-              variant={hasExistingVaults ? 'secondary' : 'cta'}
+              variant={hasExistingVaults ? 'surface' : 'primary'}
               size="md"
               className="font-zen"
-              onPress={handleCreateVault}
+              onClick={handleCreateVault}
             >
               <FaPlus
                 size={14}

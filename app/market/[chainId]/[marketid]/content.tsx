@@ -11,7 +11,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits, parseUnits } from 'viem';
 import { useConnection } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import Header from '@/components/layout/header/Header';
 import { OracleTypeInfo } from '@/components/MarketOracle';
@@ -217,7 +217,7 @@ function MarketContent() {
         {/* navigation buttons */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Button
-            onPress={handleBackToMarkets}
+            onClick={handleBackToMarkets}
             size="md"
             className="w-auto"
           >
@@ -228,13 +228,13 @@ function MarketContent() {
 
           <div className="flex flex-wrap gap-2">
             <Button
-              onPress={() => setShowSupplyModal(true)}
+              onClick={() => setShowSupplyModal(true)}
               className="flex-1 sm:flex-none"
             >
               Supply
             </Button>
             <Button
-              onPress={() => setShowBorrowModal(true)}
+              onClick={() => setShowBorrowModal(true)}
               className="flex-1 sm:flex-none"
             >
               Borrow
@@ -242,7 +242,7 @@ function MarketContent() {
             <Button
               size="md"
               className="w-full sm:w-auto"
-              onPress={() => {
+              onClick={() => {
                 void window.open(getMarketURL(market.uniqueKey, market.morphoBlue.chain.id), '_blank');
               }}
             >

@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { v2AgentsBase } from '@/utils/monarch-agent';
@@ -100,10 +100,10 @@ export function AgentsTab({
           </div>
           {!isEditingAllocators && (
             <Button
-              variant="interactive"
+              variant="surface"
               size="sm"
-              onPress={() => setIsEditingAllocators(true)}
-              isDisabled={!isOwner}
+              onClick={() => setIsEditingAllocators(true)}
+              disabled={!isOwner}
             >
               {allocators.length === 0 ? 'Add allocators' : 'Edit'}
             </Button>
@@ -123,10 +123,10 @@ export function AgentsTab({
                   >
                     <AgentListItem address={address as Address} />
                     <Button
-                      variant="secondary"
+                      variant="default"
                       size="sm"
-                      onPress={() => void handleRemoveAllocator(address as Address)}
-                      isDisabled={isUpdatingAllocator && allocatorToRemove === (address as Address)}
+                      onClick={() => void handleRemoveAllocator(address as Address)}
+                      disabled={isUpdatingAllocator && allocatorToRemove === (address as Address)}
                     >
                       {isUpdatingAllocator && allocatorToRemove === (address as Address) ? (
                         <span className="flex items-center gap-2">
@@ -156,10 +156,10 @@ export function AgentsTab({
                       <p className="ml-8 text-xs text-secondary">{agent.strategyDescription}</p>
                     </div>
                     <Button
-                      variant="interactive"
+                      variant="surface"
                       size="sm"
-                      onPress={() => void handleAddAllocator(agent.address as Address)}
-                      isDisabled={isUpdatingAllocator && allocatorToAdd === (agent.address as Address)}
+                      onClick={() => void handleAddAllocator(agent.address as Address)}
+                      disabled={isUpdatingAllocator && allocatorToAdd === (agent.address as Address)}
                     >
                       {isUpdatingAllocator && allocatorToAdd === (agent.address as Address) ? (
                         <span className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export function AgentsTab({
               <Button
                 variant="ghost"
                 size="sm"
-                onPress={() => setIsEditingAllocators(false)}
+                onClick={() => setIsEditingAllocators(false)}
               >
                 Done
               </Button>

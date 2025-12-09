@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { useConnection } from 'wagmi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -304,15 +304,15 @@ export function WithdrawCollateralAndRepay({
             {isConnected ? (
               needSwitchChain ? (
                 <Button
-                  onPress={switchToNetwork}
+                  onClick={switchToNetwork}
                   className="min-w-32"
-                  variant="solid"
+                  variant="surface"
                 >
                   Switch Chain
                 </Button>
               ) : (
                 <Button
-                  isDisabled={
+                  disabled={
                     !isConnected ||
                     repayPending ||
                     withdrawInputError !== null ||
@@ -321,7 +321,7 @@ export function WithdrawCollateralAndRepay({
                     newLTV >= lltv ||
                     isLoadingPermit2
                   }
-                  onPress={() => {
+                  onClick={() => {
                     if (!isApproved && !permit2Authorized) {
                       void approveAndRepay();
                     } else {
@@ -329,7 +329,7 @@ export function WithdrawCollateralAndRepay({
                     }
                   }}
                   className="min-w-32"
-                  variant="cta"
+                  variant="primary"
                 >
                   {isLoadingPermit2
                     ? 'Loading...'

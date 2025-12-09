@@ -1,7 +1,7 @@
 import React from 'react';
 import { Input, Divider } from '@heroui/react';
 import { FiSliders } from 'react-icons/fi';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TrustedByCell } from '@/components/vaults/TrustedVaultBadges';
@@ -215,8 +215,8 @@ export default function MarketSettingsModal({
                       </div>
                       <Button
                         size="sm"
-                        variant="flat"
-                        onPress={onOpenTrustedVaultsModal}
+                        variant="ghost"
+                        onClick={onOpenTrustedVaultsModal}
                         className="flex-shrink-0"
                       >
                         Manage
@@ -251,7 +251,7 @@ export default function MarketSettingsModal({
                   />
                   <Button
                     size="sm"
-                    onPress={handleCustomEntriesSubmit}
+                    onClick={handleCustomEntriesSubmit}
                   >
                     Update
                   </Button>
@@ -261,8 +261,8 @@ export default function MarketSettingsModal({
           </ModalBody>
           <ModalFooter>
             <Button
-              variant="light"
-              onPress={onClose}
+              variant="ghost"
+              onClick={onClose}
             >
               Close
             </Button>

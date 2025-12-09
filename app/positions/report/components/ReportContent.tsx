@@ -5,7 +5,7 @@ import type { DateValue } from '@heroui/react';
 import { parseDate, getLocalTimeZone, today, parseAbsoluteToLocal, type ZonedDateTime, now } from '@internationalized/date';
 import { useDateFormatter } from '@react-aria/i18n';
 import type { Address } from 'viem';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import DatePicker from '@/components/common/DatePicker';
 import { Spinner } from '@/components/common/Spinner';
 import Header from '@/components/layout/header/Header';
@@ -213,9 +213,9 @@ export default function ReportContent({ account }: { account: Address }) {
                 onClick={() => {
                   void handleGenerateReport();
                 }}
-                isDisabled={!selectedAsset || isGenerating || isReportCurrent || !!startDateError || !!endDateError}
+                disabled={!selectedAsset || isGenerating || isReportCurrent || !!startDateError || !!endDateError}
                 className="inline-flex h-14 min-w-[120px] items-center gap-2"
-                variant="cta"
+                variant="primary"
               >
                 {isGenerating ? (
                   <Spinner

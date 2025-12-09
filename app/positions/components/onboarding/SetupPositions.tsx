@@ -3,7 +3,7 @@ import { Slider } from '@heroui/react';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
@@ -373,17 +373,17 @@ export function SetupPositions() {
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
         <Button
-          variant="light"
+          variant="ghost"
           className="min-w-[120px]"
-          onPress={goToPrevStep}
+          onClick={goToPrevStep}
         >
           Back
         </Button>
         <Button
-          variant="cta"
-          isDisabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
+          variant="primary"
+          disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onPress={() => void handleSupply()}
+          onClick={() => void handleSupply()}
           className="min-w-[120px]"
         >
           Execute

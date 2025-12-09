@@ -44,7 +44,7 @@ function PaginationLink({ className, isActive, size = 'icon', children, ...props
       aria-current={isActive ? 'page' : undefined}
       className={cn(
         buttonVariants({
-          variant: isActive ? 'outline' : 'ghost',
+          variant: isActive ? 'surface' : 'ghost',
           size,
         }),
         className,

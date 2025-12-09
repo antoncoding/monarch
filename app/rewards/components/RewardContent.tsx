@@ -132,7 +132,7 @@ export default function Rewards() {
 
   const canClaim = useMemo(() => totalClaimable > 0n, [totalClaimable]);
 
-  const showLegacy = useMemo(() => morphoBalanceLegacy && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
+  const showLegacy = useMemo(() => morphoBalanceLegacy !== undefined && morphoBalanceLegacy !== 0n, [morphoBalanceLegacy]);
 
   const { wrap, currentStep, showProcessModal, setShowProcessModal } = useWrapLegacyMorpho(morphoBalanceLegacy ?? 0n, () => {
     // Refresh rewards data after successful wrap

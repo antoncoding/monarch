@@ -8,7 +8,7 @@ import { CgCompress } from 'react-icons/cg';
 import { FiSettings } from 'react-icons/fi';
 import { RiExpandHorizontalLine } from 'react-icons/ri';
 
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { SuppliedAssetFilterCompactSwitch } from '@/components/common/SuppliedAssetFilterCompactSwitch';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
@@ -577,16 +577,17 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 />
               }
             >
-              <Button
-                disabled={loading || isRefetching}
-                variant="light"
-                size="sm"
-                className="text-secondary min-w-0 px-2"
-                onPress={handleRefresh}
-                isIconOnly
-              >
-                <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-              </Button>
+              <span>
+                <Button
+                  disabled={loading || isRefetching}
+                  variant="ghost"
+                  size="icon"
+                  className="text-secondary"
+                  onClick={handleRefresh}
+                >
+                  <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
+                </Button>
+              </span>
             </Tooltip>
 
             {/* Hide expand/compact toggle on mobile */}
@@ -608,16 +609,17 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                   />
                 }
               >
-                <Button
-                  isIconOnly
-                  aria-label="Toggle table width"
-                  variant="light"
-                  size="sm"
-                  className="text-secondary min-w-0 px-2"
-                  onPress={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
-                >
-                  {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={16} /> : <CgCompress size={16} />}
-                </Button>
+                <span>
+                  <Button
+                    aria-label="Toggle table width"
+                    variant="ghost"
+                    size="icon"
+                    className="text-secondary"
+                    onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                  >
+                    {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
+                  </Button>
+                </span>
               </Tooltip>
             </div>
 
@@ -633,16 +635,17 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 />
               }
             >
-              <Button
-                isIconOnly
-                aria-label="Market Preferences"
-                variant="light"
-                size="sm"
-                className="text-secondary min-w-0 px-2"
-                onPress={onSettingsModalOpen}
-              >
-                <FiSettings size={12} />
-              </Button>
+              <span>
+                <Button
+                  aria-label="Market Preferences"
+                  variant="ghost"
+                  size="icon"
+                  className="text-secondary"
+                  onClick={onSettingsModalOpen}
+                >
+                  <FiSettings />
+                </Button>
+              </span>
             </Tooltip>
           </div>
         </div>

@@ -4,7 +4,7 @@ import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Badge } from '@/components/common/Badge';
 import { Spinner } from '@/components/common/Spinner';
@@ -69,12 +69,11 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             }
           >
             <Button
-              isIconOnly
-              variant="light"
+              variant="ghost"
               size="sm"
               className="min-w-0 px-2 text-secondary"
               aria-label="Transaction filters"
-              onPress={onOpenFiltersModal}
+              onClick={onOpenFiltersModal}
             >
               <FiFilter
                 size={14}

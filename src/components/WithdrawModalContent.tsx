@@ -12,7 +12,7 @@ import { formatBalance, formatReadable, min } from '@/utils/balance';
 import { getMorphoAddress } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market, MarketPosition } from '@/utils/types';
-import { Button } from './common';
+import { Button } from '@/components/ui/button';
 
 type WithdrawModalContentProps = {
   position?: MarketPosition | null;
@@ -147,18 +147,18 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
                 </div>
                 {needSwitchChain ? (
                   <Button
-                    onPress={switchToNetwork}
+                    onClick={switchToNetwork}
                     className="ml-2 min-w-32"
-                    variant="secondary"
+                    variant="default"
                   >
                     Switch Chain
                   </Button>
                 ) : (
                   <Button
-                    isDisabled={!isConnected || isConfirming || !withdrawAmount}
-                    onPress={() => void withdraw()}
+                    disabled={!isConnected || isConfirming || !withdrawAmount}
+                    onClick={() => void withdraw()}
                     className="ml-2 min-w-32"
-                    variant="cta"
+                    variant="primary"
                   >
                     Withdraw
                   </Button>

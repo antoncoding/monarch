@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/common/IconSwitch';
 import Header from '@/components/layout/header/Header';
 import { BlacklistedMarketsModal } from '@/components/settings/BlacklistedMarketsModal';
@@ -185,8 +185,8 @@ export default function SettingsPage() {
                 </div>
                 <Button
                   size="sm"
-                  variant="secondary"
-                  onPress={() => setIsTrustedVaultsModalOpen(true)}
+                  variant="default"
+                  onClick={() => setIsTrustedVaultsModalOpen(true)}
                 >
                   Edit
                 </Button>
@@ -243,8 +243,8 @@ export default function SettingsPage() {
                 </div>
                 <Button
                   size="sm"
-                  variant="secondary"
-                  onPress={() => setIsBlacklistedMarketsModalOpen(true)}
+                  variant="default"
+                  onClick={() => setIsBlacklistedMarketsModalOpen(true)}
                 >
                   Edit
                 </Button>

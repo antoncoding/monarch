@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@heroui/react';
 import { FaCube } from 'react-icons/fa';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
@@ -106,9 +106,9 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
 
               <div className="flex justify-end pt-2">
                 <Button
-                  variant="cta"
-                  onPress={needSwitchChain ? switchToNetwork : () => void createVault()}
-                  isDisabled={
+                  variant="primary"
+                  onClick={needSwitchChain ? switchToNetwork : () => void createVault()}
+                  disabled={
                     !selectedTokenAndNetwork ||
                     isDeploying ||
                     balancesLoading ||

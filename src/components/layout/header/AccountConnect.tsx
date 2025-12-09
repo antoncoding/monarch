@@ -1,7 +1,7 @@
 import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { useConnectRedirect } from '@/components/providers/ConnectRedirectProvider';
 import { AccountDropdown } from './AccountDropdown';
 
@@ -41,9 +41,9 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
         </div>
       ) : (
         <Button
-          onPress={handleConnect}
+          onClick={handleConnect}
           type="button"
-          variant="cta"
+          variant="primary"
         >
           Connect
         </Button>

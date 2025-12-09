@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { Input } from '@heroui/react';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { GeneralTabProps } from './types';
@@ -88,11 +88,10 @@ export function GeneralTab({
           <Input
             size="sm"
             radius="sm"
-            variant="flat"
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             placeholder={defaultName}
-            isDisabled={!isOwner}
+            disabled={!isOwner}
             id={nameInputId}
             classNames={{
               input: 'text-sm',
@@ -111,12 +110,11 @@ export function GeneralTab({
           <Input
             size="sm"
             radius="sm"
-            variant="flat"
             value={symbolInput}
             onChange={(event) => setSymbolInput(event.target.value)}
             placeholder={defaultSymbol}
             maxLength={16}
-            isDisabled={!isOwner}
+            disabled={!isOwner}
             id={symbolInputId}
             classNames={{
               input: 'text-sm',
@@ -129,10 +127,10 @@ export function GeneralTab({
 
         <Button
           className="ml-auto"
-          variant="interactive"
+          variant="surface"
           size="sm"
-          isDisabled={!metadataChanged || updatingMetadata || !isOwner}
-          onPress={() => void handleMetadataSubmit()}
+          disabled={!metadataChanged || updatingMetadata || !isOwner}
+          onClick={() => void handleMetadataSubmit()}
         >
           {updatingMetadata ? (
             <span className="flex items-center gap-2">

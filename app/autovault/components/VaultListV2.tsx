@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -134,7 +134,7 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                     <div className="flex justify-center">
                       <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.address}`}>
                         <Button
-                          variant="interactive"
+                          variant="surface"
                           size="sm"
                         >
                           Manage

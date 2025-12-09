@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
 import { erc20Abi } from 'viem';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import type { Market, MarketPosition } from '@/utils/types';
 import { AddCollateralAndBorrow } from './Borrow/AddCollateralAndBorrow';
@@ -92,9 +92,9 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
         actions={
           hasPosition ? (
             <Button
-              variant="light"
+              variant="ghost"
               size="sm"
-              onPress={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
+              onClick={() => setMode(mode === 'borrow' ? 'repay' : 'borrow')}
               className="flex items-center gap-1.5"
             >
               <LuArrowRightLeft className="h-3 w-3 rotate-90" />

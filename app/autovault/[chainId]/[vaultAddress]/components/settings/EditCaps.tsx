@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { type Address, parseUnits, maxUint128 } from 'viem';
 import { Badge } from '@/components/common/Badge';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/common/Spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -525,10 +525,10 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
         {/* Add Market Button */}
         <div className="flex items-center justify-center">
           <Button
-            variant="subtle"
+            variant="default"
             size="sm"
-            onPress={() => setShowAddMarketModal(true)}
-            isDisabled={!isOwner}
+            onClick={() => setShowAddMarketModal(true)}
+            disabled={!isOwner}
           >
             <PlusIcon className="h-4 w-4 mr-1" />
             Add Market Cap
@@ -540,17 +540,17 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
           <div />
           <div className="flex items-center gap-2">
             <Button
-              variant="subtle"
+              variant="default"
               size="sm"
-              onPress={onCancel}
+              onClick={onCancel}
             >
               Cancel
             </Button>
             <Button
-              variant="cta"
+              variant="primary"
               size="sm"
-              isDisabled={!hasChanges || isUpdating}
-              onPress={() => void handleSave()}
+              disabled={!hasChanges || isUpdating}
+              onClick={() => void handleSave()}
             >
               {isUpdating ? (
                 <span className="flex items-center gap-2">

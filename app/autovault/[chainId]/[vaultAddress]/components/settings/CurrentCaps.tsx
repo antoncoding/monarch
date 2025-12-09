@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { type Address, maxUint128 } from 'viem';
-import { Button } from '@/components/common/Button';
+import { Button } from '@/components/ui/button';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -138,9 +138,9 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
         <div className="flex items-center gap-2">
           {isOwner && (
             <Button
-              variant="subtle"
+              variant="default"
               size="sm"
-              onPress={onStartEdit}
+              onClick={onStartEdit}
             >
               {hasAnyCaps ? 'Edit caps' : 'Add caps'}
             </Button>
