@@ -69,12 +69,10 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
             setIsDeleting(false);
             setPhraseIndex(getNextPhraseIndex(phraseIndex));
           }
+        } else if (displayText.length < targetText.length) {
+          setDisplayText(targetText.slice(0, displayText.length + 1));
         } else {
-          if (displayText.length < targetText.length) {
-            setDisplayText(targetText.slice(0, displayText.length + 1));
-          } else {
-            setIsPaused(true);
-          }
+          setIsPaused(true);
         }
       },
       isDeleting ? deletingSpeed : typingSpeed,

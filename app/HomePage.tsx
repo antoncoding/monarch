@@ -111,14 +111,12 @@ function CustomTypingAnimation() {
             setIsDeleting(false);
             setPhraseIndex(getNextPhraseIndex(phraseIndex));
           }
-        } else {
+        } else if (displayText.length < targetText.length) {
           // Typing
-          if (displayText.length < targetText.length) {
-            setDisplayText(targetText.slice(0, displayText.length + 1));
-          } else {
-            // Finished typing, pause
-            setIsPaused(true);
-          }
+          setDisplayText(targetText.slice(0, displayText.length + 1));
+        } else {
+          // Finished typing, pause
+          setIsPaused(true);
         }
       },
       isDeleting ? deletingSpeed : typingSpeed,
