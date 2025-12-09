@@ -1,8 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { WagmiProvider } from 'wagmi';
+import { wagmiAdapter } from '@/config/appkit';
 import { createWagmiConfig } from '@/store/createWagmiConfig';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
 import { CustomRpcProvider, useCustomRpcContext } from './components/providers/CustomRpcProvider';
@@ -17,35 +17,17 @@ if (!projectId) {
   throw new Error('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set');
 }
 
-const staticWagmiConfig = createWagmiConfig(projectId);
-
 function WagmiConfigProvider({ children }: Props) {
   const { customRpcUrls } = useCustomRpcContext();
 
-  // Only use dynamic config when custom RPCs are explicitly set
+  // Use wagmiAdapter config by default, or create custom config if custom RPCs are set
+  // This dual-config approach allows AppKit modal to work while respecting custom RPCs
   const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : staticWagmiConfig;
+  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : wagmiAdapter.wagmiConfig;
 
   return (
-    <WagmiProvider
-      config={wagmiConfig}
-      reconnectOnMount
-    >
-      <RainbowKitProvider
-        theme={{
-          lightMode: lightTheme({
-            accentColor: '#f45f2d',
-            borderRadius: 'small',
-          }),
-          darkMode: darkTheme({
-            accentColor: '#f45f2d',
-            borderRadius: 'small',
-          }),
-        }}
-        modalSize="compact"
-      >
-        <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
-      </RainbowKitProvider>
+    <WagmiProvider config={wagmiConfig} reconnectOnMount>
+      <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
     </WagmiProvider>
   );
 }
