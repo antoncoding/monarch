@@ -1,59 +1,38 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
-import { createWagmiConfig } from '@/store/createWagmiConfig';
+import { WagmiProvider, cookieToInitialState } from 'wagmi';
+import { wagmiAdapter } from '@/config/appkit';
 import { ConnectRedirectProvider } from './components/providers/ConnectRedirectProvider';
-import { CustomRpcProvider, useCustomRpcContext } from './components/providers/CustomRpcProvider';
+import { CustomRpcProvider } from './components/providers/CustomRpcProvider';
+import { AppKitThemeSync } from './components/providers/AppKitThemeSync';
 
-type Props = { children: ReactNode };
+type Props = {
+  children: ReactNode;
+  cookies?: string;
+};
 
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
-if (!projectId) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WagmiProvider disabled.');
-  }
-  throw new Error('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set');
-}
-
-const staticWagmiConfig = createWagmiConfig(projectId);
-
-function WagmiConfigProvider({ children }: Props) {
-  const { customRpcUrls } = useCustomRpcContext();
-
-  // Only use dynamic config when custom RPCs are explicitly set
-  const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : staticWagmiConfig;
+function WagmiConfigProvider({ children, cookies }: Props) {
+  // Always use the wagmiAdapter config to maintain connection state with AppKit modal
+  // Custom RPC override is handled via WagmiAdapter's transport configuration
+  const initialState = cookies ? cookieToInitialState(wagmiAdapter.wagmiConfig, cookies) : undefined;
 
   return (
     <WagmiProvider
-      config={wagmiConfig}
+      config={wagmiAdapter.wagmiConfig}
+      initialState={initialState}
       reconnectOnMount
     >
-      <RainbowKitProvider
-        theme={{
-          lightMode: lightTheme({
-            accentColor: '#f45f2d',
-            borderRadius: 'small',
-          }),
-          darkMode: darkTheme({
-            accentColor: '#f45f2d',
-            borderRadius: 'small',
-          }),
-        }}
-        modalSize="compact"
-      >
-        <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
-      </RainbowKitProvider>
+      <AppKitThemeSync />
+      <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
     </WagmiProvider>
   );
 }
 
-function OnchainProviders({ children }: Props) {
+function OnchainProviders({ children, cookies }: Props) {
   return (
     <CustomRpcProvider>
-      <WagmiConfigProvider>{children}</WagmiConfigProvider>
+      <WagmiConfigProvider cookies={cookies}>{children}</WagmiConfigProvider>
     </CustomRpcProvider>
   );
 }

@@ -34,7 +34,12 @@
       "Bash(pnpm why:*)",
       "Bash(npx biome:*)",
       "Bash(timeout 60 npx biome check:*)",
-      "WebFetch(domain:biomejs.dev)"
+      "WebFetch(domain:biomejs.dev)",
+      "WebFetch(domain:docs.reown.com)",
+      "Bash(npm view:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(timeout 60 npx tsc:*)",
+      "Bash(tee:*)"
     ],
     "deny": []
   }
