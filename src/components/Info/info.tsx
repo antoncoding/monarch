@@ -60,11 +60,13 @@ const levelToIcon = (level: string) => {
  */
 export function Info({ description, level, title }: { description: string; level: string; title?: string }) {
   return (
-    <div className={`flex items-center rounded-sm ${levelToCellColor(level)} p-4 opacity-80`}>
+    <div className={`flex max-w-full items-start gap-2 rounded-sm ${levelToCellColor(level)} p-3 opacity-80`}>
       {levelToIcon(level)}
-      <div>
-        <h2 className="font-bold">{title}</h2>
-        <p>{description}</p>
+      <div className="min-w-0 flex-1">
+        {title && <h2 className="font-bold">{title}</h2>}
+        <p className="text-sm leading-tight hyphens-auto" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+          {description}
+        </p>
       </div>
     </div>
   );

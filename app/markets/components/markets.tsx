@@ -581,11 +581,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 <Button
                   disabled={loading || isRefetching}
                   variant="ghost"
-                  size="sm"
-                  className="text-secondary min-w-0 px-2"
+                  size="icon"
+                  className="text-secondary"
                   onClick={handleRefresh}
                 >
-                  <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+                  <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
                 </Button>
               </span>
             </Tooltip>
@@ -613,11 +613,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                   <Button
                     aria-label="Toggle table width"
                     variant="ghost"
-                    size="sm"
-                    className="text-secondary min-w-0 px-2"
+                    size="icon"
+                    className="text-secondary"
                     onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
                   >
-                    {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={16} /> : <CgCompress size={16} />}
+                    {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
                   </Button>
                 </span>
               </Tooltip>
@@ -639,11 +639,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 <Button
                   aria-label="Market Preferences"
                   variant="ghost"
-                  size="sm"
-                  className="text-secondary min-w-0 px-2"
+                  size="icon"
+                  className="text-secondary"
                   onClick={onSettingsModalOpen}
                 >
-                  <FiSettings size={12} />
+                  <FiSettings />
                 </Button>
               </span>
             </Tooltip>

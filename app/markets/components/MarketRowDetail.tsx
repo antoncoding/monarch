@@ -9,7 +9,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
   const warningsWithDetail = useMarketWarnings(market, true);
 
   return (
-    <div className="flex w-full flex-col gap-2 p-4 lg:flex-row">
+    <div className="flex w-full flex-col gap-4 lg:flex-row lg:gap-6">
       <div className="lg:w-1/3">
         <div className="mb-1 flex items-start justify-between text-base">
           <p className="mb-2 font-zen">Oracle Info</p>
@@ -46,7 +46,7 @@ export function ExpandedMarketDetail({ market }: { market: Market }) {
           <p className="mb-2 font-zen">Warnings</p>
         </div>
 
-        <div className="w-full gap-2 ">
+        <div className="flex flex-col gap-2">
           {warningsWithDetail.map((warning) => {
             return (
               <Info
