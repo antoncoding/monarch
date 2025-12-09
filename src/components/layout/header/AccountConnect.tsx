@@ -1,5 +1,5 @@
 import { useAppKit } from '@reown/appkit/react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/common';
 import { useConnectRedirect } from '@/components/providers/ConnectRedirectProvider';
@@ -10,7 +10,7 @@ import { AccountDropdown } from './AccountDropdown';
  */
 function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
   const { open } = useAppKit();
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const { setRedirectPath } = useConnectRedirect();
   const [mounted, setMounted] = useState(false);
 

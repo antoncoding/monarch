@@ -1,7 +1,8 @@
 'use client';
 
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { createStorage, cookieStorage, type Storage } from 'wagmi';
+import { createStorage, type Storage } from 'wagmi';
+import localStorage from 'local-storage-fallback';
 import { createAppKit } from '@reown/appkit/react';
 import { arbitrum, base, mainnet, polygon, type AppKitNetwork } from '@reown/appkit/networks';
 import { monad, unichain } from 'wagmi/chains';
@@ -38,7 +39,7 @@ const metadata = {
 
 // Create Wagmi Adapter with SSR support
 export const wagmiAdapter = new WagmiAdapter({
-  storage: createStorage({ storage: cookieStorage }) as any as Storage,
+  storage: createStorage({ storage: localStorage }) as any as Storage,
   ssr: true,
   networks,
   projectId,
