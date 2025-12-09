@@ -291,21 +291,26 @@ Our button system uses 4 simple, purpose-driven variants:
 
 **default** - For buttons on background areas
 - Uses `bg-surface` color
+- Hover: Darkens slightly and increases opacity
 - Use for: Navigation buttons, actions on main background
 - Example: "Back to Markets", top-level page actions
 
 **primary** - For important actions
 - Uses `bg-primary` color (primary theme color, NOT orange)
+- Hover: Increases shadow and opacity, slight scale down on click
 - Use for: Main CTAs, confirmations, primary flows
 - Example: "New Position", "Execute Rebalance", "Supply", "Withdraw"
 
 **surface** - For buttons on surface-colored backgrounds
-- Uses `bg-hovered` color  - Subtle, doesn't stand out too much
+- Uses `bg-hovered` color - Subtle, doesn't stand out too much
+- Hover: `bg-default-200`, Active: `bg-default-300` (gentle color progression)
 - Use for: Actions in cards, modals, table rows
 - Example: "Claim" button in tables, dropdown triggers, actions in cards
 
 **ghost** - For icon buttons and minimal actions
-- Transparent background with subtle hover
+- Transparent background with responsive hover states
+- Icon buttons: Scale up slightly on hover, visible background feedback
+- Size-specific hover styles for optimal feedback
 - Use for: Icon-only buttons, utility actions, settings
 - Example: Refresh icons, settings icons, filter toggles
 
@@ -337,12 +342,31 @@ Our button system uses 4 simple, purpose-driven variants:
   content={<TooltipContent title="Refresh" detail="Fetch latest data" />}
 >
   <span>
-    <Button variant="ghost" size="sm" className="text-secondary min-w-0 px-2">
-      <RefreshIcon className="h-3 w-3" />
+    <Button variant="ghost" size="icon" className="text-secondary">
+      <RefreshIcon />
     </Button>
   </span>
 </Tooltip>
 ```
+
+#### Button Sizes
+
+- `xs`: Extra small (h-6, 40px min-width) - Rare use
+- `sm`: Small (h-8, 64px min-width) - Common for compact actions
+- `md`/`default`: Medium (h-10, 80px min-width) - Standard size
+- `lg`: Large (h-12, 96px min-width) - Important CTAs
+- `icon`: Icon-only (h-8 w-8, 14px icons) - Use for icon buttons
+
+#### Button Hover Effects
+
+All buttons have subtle hover refinements:
+- **Opacity**: Buttons start at 95% opacity and become 100% on hover for a refined look
+- **Color transitions**: Smooth 200ms transitions for all state changes
+- **Scale feedback**: Active state provides tactile press feedback
+- **Ghost buttons**: Size-specific hover behaviors for optimal UX
+  - Icon size: Scales to 105% on hover, darker background
+  - Small size: Scales to 102% on hover, medium background
+  - Medium/Large: Scales to 101% on hover, lighter background
 
 **Important Note**: When wrapping Button in HeroUI Tooltip, always wrap the Button in a `<span>` to prevent ResizeObserver errors.
 

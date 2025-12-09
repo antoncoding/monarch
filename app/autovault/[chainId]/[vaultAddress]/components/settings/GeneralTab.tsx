@@ -88,7 +88,6 @@ export function GeneralTab({
           <Input
             size="sm"
             radius="sm"
-            variant="ghost"
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             placeholder={defaultName}
@@ -111,7 +110,6 @@ export function GeneralTab({
           <Input
             size="sm"
             radius="sm"
-            variant="ghost"
             value={symbolInput}
             onChange={(event) => setSymbolInput(event.target.value)}
             placeholder={defaultSymbol}

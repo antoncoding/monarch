@@ -348,7 +348,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                         </div>
                         <Chip
                           size="sm"
-                          variant="ghost"
+                          variant="light"
                           className="bg-default-100 text-xs"
                           radius="sm"
                         >
