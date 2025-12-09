@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
@@ -11,7 +11,7 @@ import { DeploymentModal } from './deployment/DeploymentModal';
 import { VaultListV2 } from './VaultListV2';
 
 export default function AutovaultContent() {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
 
   const { vaults, loading: vaultsLoading } = useUserVaultsV2();

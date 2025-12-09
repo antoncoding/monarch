@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { IoRefreshOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import Header from '@/components/layout/header/Header';
@@ -28,7 +28,7 @@ export default function VaultContent() {
     vaultAddress: string;
   }>();
   const vaultAddressValue = vaultAddress as Address;
-  const { address } = useAccount();
+  const { address } = useConnection();
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {

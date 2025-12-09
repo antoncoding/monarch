@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
@@ -32,7 +32,7 @@ export function useRepayTransaction({
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { address: account, chainId } = useAccount();
+  const { address: account, chainId } = useConnection();
   const toast = useStyledToast();
 
   const useRepayByShares = repayShares > 0n;

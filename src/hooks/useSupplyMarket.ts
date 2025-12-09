@@ -1,6 +1,6 @@
 import { useCallback, useState, type Dispatch, type SetStateAction } from 'react';
-import { type Address, encodeFunctionData } from 'viem';
-import { useAccount, useBalance } from 'wagmi';
+import { type Address, encodeFunctionData, erc20Abi } from 'viem';
+import { useConnection, useBalance, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -52,14 +52,16 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const [currentStep, setCurrentStep] = useState<SupplyStepType>('approve');
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { address: account, chainId } = useAccount();
+  const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);
   const toast = useStyledToast();
 
   // Get token balance
-  const { data: tokenBalance, refetch: refetchToken } = useBalance({
-    token: market.loanAsset.address as `0x${string}`,
-    address: account,
+  const { data: tokenBalance, refetch: refetchToken } = useReadContract({
+    address: market.loanAsset.address as `0x${string}`,
+    args: [account as `0x${string}`],
+    abi: erc20Abi,
+    functionName: 'balanceOf',
     chainId: market.morphoBlue.chain.id,
   });
 
@@ -331,7 +333,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     currentStep,
 
     // Balance data
-    tokenBalance: tokenBalance?.value,
+    tokenBalance: tokenBalance,
     ethBalance: ethBalance?.value,
     refetch: refetch,
 

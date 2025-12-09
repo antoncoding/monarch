@@ -8,7 +8,7 @@ import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { Button } from '@/components/common/Button';
 import Header from '@/components/layout/header/Header';
@@ -29,7 +29,7 @@ export default function Positions() {
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
 
   const { account } = useParams<{ account: string }>();
-  const { address } = useAccount();
+  const { address } = useConnection();
 
   const [mounted, setMounted] = useState(false);
 

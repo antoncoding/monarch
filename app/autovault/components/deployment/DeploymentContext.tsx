@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { useCreateVault } from '@/hooks/useCreateVault';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -39,7 +39,7 @@ const DeploymentContext = createContext<DeploymentContextType | null>(null);
 export function DeploymentProvider({ children }: { children: React.ReactNode }) {
   const [selectedTokenAndNetwork, setSelectedTokenAndNetwork] = useState<SelectedTokenAndNetwork | null>(null);
 
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
 
   // Network switching logic
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({

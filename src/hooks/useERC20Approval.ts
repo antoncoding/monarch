@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, erc20Abi } from 'viem';
-import { useAccount, useChainId, useReadContract } from 'wagmi';
+import { useConnection, useChainId, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 export function useERC20Approval({
@@ -16,7 +16,7 @@ export function useERC20Approval({
   tokenSymbol: string;
   chainId?: number;
 }) {
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const currentChain = useChainId();
 
   const chainIdToUse = chainId ?? currentChain;

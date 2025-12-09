@@ -1,7 +1,7 @@
 // Import the necessary hooks
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import morphoAbi from '@/abis/morpho';
 import Input from '@/components/Input/Input';
 import AccountConnect from '@/components/layout/header/AccountConnect';
@@ -35,7 +35,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     },
     [onAmountChange],
   );
-  const { address: account, isConnected, chainId } = useAccount();
+  const { address: account, isConnected, chainId } = useConnection();
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;

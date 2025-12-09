@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import Input from '@/components/Input/Input';
@@ -44,7 +44,7 @@ export function WithdrawCollateralAndRepay({
   const [withdrawInputError, setWithdrawInputError] = useState<string | null>(null);
   const [repayInputError, setRepayInputError] = useState<string | null>(null);
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);

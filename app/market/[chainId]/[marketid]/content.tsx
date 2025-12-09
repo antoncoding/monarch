@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { formatUnits, parseUnits } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/common';
 import { Spinner } from '@/components/common/Spinner';
@@ -110,7 +110,7 @@ function MarketContent() {
     chainId: market?.morphoBlue.chain.id,
   });
 
-  const { address } = useAccount();
+  const { address } = useConnection();
 
   const {
     position: userPosition,

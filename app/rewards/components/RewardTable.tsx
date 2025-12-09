@@ -5,7 +5,7 @@ import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from 
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common/Button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
@@ -26,7 +26,7 @@ type RewardTableProps = {
 };
 
 export default function RewardTable({ rewards, distributions, account, showClaimed }: RewardTableProps) {
-  const { chainId } = useAccount();
+  const { chainId } = useConnection();
   const toast = useStyledToast();
   const [targetChainId, setTargetChainId] = useState<number>(chainId ?? SupportedNetworks.Mainnet);
 

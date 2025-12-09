@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import type { Address } from 'abitype';
 import { encodeFunctionData, erc20Abi, maxUint256, zeroAddress } from 'viem';
 import type { Chain } from 'viem/chains';
-import { useAccount, useReadContract } from 'wagmi';
+import { useConnection, useReadContract } from 'wagmi';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
 type Props = {
@@ -22,7 +22,7 @@ type Props = {
  * @returns JsonMetadata
  */
 export function useAllowance({ user, spender, chainId = 1, token, refetchInterval = 10_000, tokenSymbol }: Props) {
-  const { chain } = useAccount();
+  const { chain } = useConnection();
   const chainIdFromArgumentOrConnectedWallet = chainId ?? chain?.id;
 
   const { data } = useReadContract({

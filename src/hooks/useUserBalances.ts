@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { type SupportedNetworks, ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
@@ -24,7 +24,7 @@ type UseUserBalancesOptions = {
 };
 
 export function useUserBalances(options: UseUserBalancesOptions = {}) {
-  const { address } = useAccount();
+  const { address } = useConnection();
   const [balances, setBalances] = useState<TokenBalance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

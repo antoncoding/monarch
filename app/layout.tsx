@@ -1,6 +1,5 @@
 import './global.css';
 
-import { cookies } from 'next/headers';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
@@ -24,10 +23,7 @@ export const metadata: Metadata = {
 // so we can track page views and early events
 initAnalytics();
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const cookieString = cookieStore.toString();
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
@@ -37,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body suppressHydrationWarning>
         <ThemeProviders>
           <QueryProvider>
-            <OnchainProviders cookies={cookieString}>
+            <OnchainProviders>
               <VaultRegistryProvider>
                 <ClientProviders>
                   {children}

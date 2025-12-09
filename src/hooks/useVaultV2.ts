@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
-import { useAccount, useChainId, useReadContract } from 'wagmi';
+import { useConnection, useChainId, useReadContract } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -17,7 +17,7 @@ export function useVaultV2({
 }) {
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
 
   const { data: curator } = useReadContract({
     address: vaultAddress,

@@ -12,7 +12,7 @@ import { FaRegMoon } from 'react-icons/fa';
 import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -69,7 +69,7 @@ export function NavbarTitle() {
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
-  const { address } = useAccount();
+  const { address } = useConnection();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import { useChainId, useSwitchChain } from 'wagmi';
+import { useChainId } from 'wagmi';
+import { switchChain } from 'wagmi/actions'
 import { useStyledToast } from '@/hooks/useStyledToast';
 
 type UseMarketNetworkProps = {
@@ -38,7 +39,6 @@ type UseMarketNetworkReturn = {
  */
 export function useMarketNetwork({ targetChainId, onNetworkSwitched }: UseMarketNetworkProps): UseMarketNetworkReturn {
   const chainId = useChainId();
-  const { switchChain } = useSwitchChain();
   const toast = useStyledToast();
 
   // Check if chain switch is needed
@@ -55,7 +55,7 @@ export function useMarketNetwork({ targetChainId, onNetworkSwitched }: UseMarket
         console.error('Failed to switch networks:', error);
       }
     }
-  }, [targetChainId, needSwitchChain, switchChain, toast]);
+  }, [targetChainId, needSwitchChain, toast]);
 
   return {
     needSwitchChain,

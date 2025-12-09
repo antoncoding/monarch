@@ -4,14 +4,14 @@ import { useCallback } from 'react';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
-import { useAccount, useDisconnect } from 'wagmi';
+import { useConnection, useDisconnect } from 'wagmi';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 
 export function AccountDropdown() {
-  const { address, chainId } = useAccount();
+  const { address, chainId } = useConnection();
   const { disconnect } = useDisconnect();
 
   const toast = useStyledToast();

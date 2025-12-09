@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, zeroAddress } from 'viem';
-import { useAccount, useChainId } from 'wagmi';
+import { useConnection, useChainId } from 'wagmi';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { getMorphoAddress } from '@/utils/morpho';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
@@ -17,7 +17,7 @@ export function useDeployMorphoMarketV1Adapter({
   chainId?: SupportedNetworks | number;
   morphoAddress?: Address;
 }) {
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const connectedChainId = useChainId();
   const resolvedChainId = (chainId ?? connectedChainId) as SupportedNetworks;
 

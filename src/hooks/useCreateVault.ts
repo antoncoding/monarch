@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData, keccak256, toBytes } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -22,7 +22,7 @@ export type UseCreateVaultReturn = {
 export function useCreateVault(chainId: number): UseCreateVaultReturn {
   const [currentStep, setCurrentStep] = useState<CreateVaultStepType>('deploy');
 
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const toast = useStyledToast();
 
   // Get agent config for this network

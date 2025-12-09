@@ -8,5 +8,7 @@ import '@testing-library/jest-dom';
 
 import { TextEncoder, TextDecoder } from 'util';
 
+// @ts-expect-error - TextEncoder types don't match perfectly but work at runtime
 global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder as typeof global.TextDecoder;
+// @ts-expect-error - TextDecoder types don't match perfectly but work at runtime
+global.TextDecoder = TextDecoder;

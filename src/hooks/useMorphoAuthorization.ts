@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData, parseSignature } from 'viem';
-import { useAccount, useReadContract, useSignTypedData } from 'wagmi';
+import { useConnection, useReadContract, useSignTypedData } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import morphoAbi from '@/abis/morpho';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -13,7 +13,7 @@ type UseMorphoAuthorizationProps = {
 };
 
 export const useMorphoAuthorization = ({ chainId, authorized }: UseMorphoAuthorizationProps) => {
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const { signTypedDataAsync } = useSignTypedData();
   const toast = useStyledToast();
   const [isAuthorizing, setIsAuthorizing] = useState(false);

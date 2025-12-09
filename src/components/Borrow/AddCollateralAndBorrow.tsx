@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
@@ -44,7 +44,7 @@ export function AddCollateralAndBorrow({
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);

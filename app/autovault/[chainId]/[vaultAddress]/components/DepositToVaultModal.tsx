@@ -1,7 +1,7 @@
 'use client';
 
 import type { Address } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { Button } from '@/components/common';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import Input from '@/components/Input/Input';
@@ -33,7 +33,7 @@ export function DepositToVaultModal({
   onClose,
   onSuccess,
 }: DepositToVaultModalProps): JSX.Element {
-  const { isConnected } = useAccount();
+  const { isConnected } = useConnection();
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
   const {

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { type Address, encodeFunctionData } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { usePermit2 } from '@/hooks/usePermit2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
@@ -29,7 +29,7 @@ export function useMultiMarketSupply(
   const [showProcessModal, setShowProcessModal] = useState(false);
   const toast = useStyledToast();
 
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const chainId = loanAsset?.network;
   const tokenSymbol = loanAsset?.symbol;
   const totalAmount = supplies.reduce((sum, supply) => sum + supply.amount, 0n);
