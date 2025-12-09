@@ -1,15 +1,4 @@
 import { connectorsForWallets } from '@rainbow-me/rainbowkit';
-import {
-  metaMaskWallet,
-  rainbowWallet,
-  coinbaseWallet,
-  rabbyWallet,
-  argentWallet,
-  injectedWallet,
-  trustWallet,
-  ledgerWallet,
-  walletConnectWallet,
-} from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum, monad } from 'wagmi/chains';
 import type { CustomRpcUrls } from '@/hooks/useCustomRpc';

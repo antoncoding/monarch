@@ -27,6 +27,16 @@ const nextConfig = {
       },
     ],
   },
+  webpack: (config) => {
+    config.resolve.fallback = {
+      fs: false,
+      net: false,
+      tls: false,
+      '@react-native-async-storage/async-storage': false,
+    };
+
+    return config
+  }
 };
 
 module.exports = nextConfig;
