@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { type Address, zeroAddress } from 'viem';
-import { Button } from '@/components/common';
+import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { AllocatorCard } from '@/components/common/AllocatorCard';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
