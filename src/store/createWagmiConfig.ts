@@ -1,6 +1,5 @@
 import { createConfig, http } from 'wagmi';
 import { base, mainnet, polygon, unichain, arbitrum, monad } from 'wagmi/chains';
-import { coinbaseWallet } from 'wagmi/connectors';
 import type { CustomRpcUrls } from '@/hooks/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
@@ -30,11 +29,5 @@ export function createWagmiConfig(customRpcUrls: CustomRpcUrls = {}) {
       [hyperEvm.id]: http(rpcHyperEVM),
       [monad.id]: http(rpcMonad),
     },
-    connectors: [
-      coinbaseWallet({
-        appName: 'Monarch Lend',
-        appLogoUrl: '/logo.png',
-      }),
-    ],
   });
 }

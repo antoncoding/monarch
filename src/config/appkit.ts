@@ -4,7 +4,6 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { createAppKit } from '@reown/appkit/react';
 import { mainnet, base, polygon, arbitrum, type AppKitNetwork } from '@reown/appkit/networks';
 import { unichain, monad } from 'wagmi/chains';
-import { coinbaseWallet } from 'wagmi/connectors';
 import { hyperEvm } from '@/utils/networks';
 
 // Get project ID from environment
@@ -41,12 +40,6 @@ export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   networks,
   projectId,
-  connectors: [
-    coinbaseWallet({
-      appName: metadata.name,
-      appLogoUrl: metadata.icons[0],
-    }),
-  ],
 });
 
 // Create AppKit modal instance
