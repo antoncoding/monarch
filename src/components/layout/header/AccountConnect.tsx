@@ -40,7 +40,11 @@ function AccountConnect({ onConnectPath }: { onConnectPath?: string }) {
           <AccountDropdown />
         </div>
       ) : (
-        <Button onPress={handleConnect} type="button" variant="cta">
+        <Button
+          onPress={handleConnect}
+          type="button"
+          variant="cta"
+        >
           Connect
         </Button>
       )}

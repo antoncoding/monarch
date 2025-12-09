@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useChainId, useConfig } from 'wagmi';
-import { switchChain } from 'wagmi/actions'
+import { switchChain } from 'wagmi/actions';
 import { useStyledToast } from '@/hooks/useStyledToast';
 
 type UseMarketNetworkProps = {

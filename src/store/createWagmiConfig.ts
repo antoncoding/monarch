@@ -1,14 +1,13 @@
-import { coinbaseWallet, injected, walletConnect } from 'wagmi/connectors';
 import { createConfig, http } from 'wagmi';
 import { arbitrum, base, mainnet, monad, polygon, unichain } from 'wagmi/chains';
 import type { CustomRpcUrls } from '@/hooks/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
 /**
- * Creates a Wagmi config with vanilla connectors (no RainbowKit)
+ * Creates a Wagmi config
  * This config is used when custom RPC URLs are provided
  */
-export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrls = {}) {
+export function createWagmiConfig(customRpcUrls: CustomRpcUrls = {}) {
   // Use custom RPC URLs if provided, otherwise fall back to defaults
   const rpcMainnet = customRpcUrls[SupportedNetworks.Mainnet] ?? getDefaultRPC(SupportedNetworks.Mainnet);
   const rpcBase = customRpcUrls[SupportedNetworks.Base] ?? getDefaultRPC(SupportedNetworks.Base);
@@ -30,10 +29,5 @@ export function createWagmiConfig(projectId: string, customRpcUrls: CustomRpcUrl
       [hyperEvm.id]: http(rpcHyperEVM),
       [monad.id]: http(rpcMonad),
     },
-    connectors: [
-      injected(),
-      walletConnect({ projectId }),
-      coinbaseWallet({ appName: 'Monarch' }),
-    ],
   });
 }

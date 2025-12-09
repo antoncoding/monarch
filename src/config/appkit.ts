@@ -1,19 +1,20 @@
 'use client';
 
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import { createStorage, cookieStorage, type Storage } from 'wagmi';
 import { createAppKit } from '@reown/appkit/react';
 import { arbitrum, base, mainnet, polygon, type AppKitNetwork } from '@reown/appkit/networks';
 import { monad, unichain } from 'wagmi/chains';
 import { hyperEvm } from '@/utils/networks';
 
 // Get project ID from environment
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
+const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID ?? '';
 
 if (!projectId) {
   if (process.env.NODE_ENV !== 'production') {
-    console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set');
+    console.warn('NEXT_PUBLIC_REOWN_PROJECT_ID is not set');
   }
-  throw new Error('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set');
+  throw new Error('NEXT_PUBLIC_REOWN_PROJECT_ID is not set');
 }
 
 // Cast custom chains to AppKitNetwork for type compatibility
@@ -22,15 +23,10 @@ const customMonad = monad as unknown as AppKitNetwork;
 const customHyperEvm = hyperEvm as unknown as AppKitNetwork;
 
 // Define networks for AppKit (non-empty tuple type required)
-export const networks = [
-  mainnet,
-  base,
-  polygon,
-  arbitrum,
-  customUnichain,
-  customHyperEvm,
-  customMonad,
-] as [AppKitNetwork, ...AppKitNetwork[]];
+export const networks = [mainnet, base, polygon, arbitrum, customUnichain, customHyperEvm, customMonad] as [
+  AppKitNetwork,
+  ...AppKitNetwork[],
+];
 
 // Metadata for the app
 const metadata = {
@@ -42,6 +38,7 @@ const metadata = {
 
 // Create Wagmi Adapter with SSR support
 export const wagmiAdapter = new WagmiAdapter({
+  storage: createStorage({ storage: cookieStorage }) as any as Storage,
   ssr: true,
   networks,
   projectId,

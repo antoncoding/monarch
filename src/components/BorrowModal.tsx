@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { useConnection, useReadContract, useBalance } from 'wagmi';
-import { erc20Abi } from 'viem'
+import { erc20Abi } from 'viem';
 import { Button } from '@/components/common/Button';
 import { Modal, ModalHeader, ModalBody } from '@/components/common/Modal';
 import type { Market, MarketPosition } from '@/utils/types';
@@ -33,7 +33,7 @@ export function BorrowModal({ market, onOpenChange, oraclePrice, refetch, isRefr
 
   const { data: collateralTokenBalance } = useReadContract({
     address: market.collateralAsset.address as `0x${string}`,
-    args: [account as `0x${string}`], 
+    args: [account as `0x${string}`],
     functionName: 'balanceOf',
     abi: erc20Abi,
     chainId: market.morphoBlue.chain.id,

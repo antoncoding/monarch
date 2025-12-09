@@ -9,24 +9,19 @@ import { CustomRpcProvider, useCustomRpcContext } from './components/providers/C
 
 type Props = { children: ReactNode };
 
-const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ?? '';
-if (!projectId) {
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set; WagmiProvider disabled.');
-  }
-  throw new Error('NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is not set');
-}
-
 function WagmiConfigProvider({ children }: Props) {
   const { customRpcUrls } = useCustomRpcContext();
 
   // Use wagmiAdapter config by default, or create custom config if custom RPCs are set
   // This dual-config approach allows AppKit modal to work while respecting custom RPCs
   const hasCustomRpcs = Object.keys(customRpcUrls).length > 0;
-  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(projectId, customRpcUrls) : wagmiAdapter.wagmiConfig;
+  const wagmiConfig = hasCustomRpcs ? createWagmiConfig(customRpcUrls) : wagmiAdapter.wagmiConfig;
 
   return (
-    <WagmiProvider config={wagmiConfig} reconnectOnMount>
+    <WagmiProvider
+      config={wagmiConfig}
+      reconnectOnMount
+    >
       <ConnectRedirectProvider>{children}</ConnectRedirectProvider>
     </WagmiProvider>
   );

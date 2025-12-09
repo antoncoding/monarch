@@ -35,8 +35,8 @@ const nextConfig = {
       '@react-native-async-storage/async-storage': false,
     };
 
-    return config
-  }
+    return config;
+  },
 };
 
 module.exports = nextConfig;
