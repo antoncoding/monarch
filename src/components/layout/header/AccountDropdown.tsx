@@ -5,6 +5,7 @@ import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/r
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import { useConnection, useDisconnect } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -13,7 +14,7 @@ import { getExplorerURL } from '@/utils/external';
 export function AccountDropdown() {
   const { address, chainId } = useConnection();
   const { disconnect } = useDisconnect();
-
+  const { open } = useAppKit();
   const toast = useStyledToast();
 
   const handleDisconnectWallet = useCallback(() => {
@@ -28,19 +29,24 @@ export function AccountDropdown() {
     }
   }, [address, toast]);
 
+  const handleOpenModal = useCallback(() => {
+    open();
+  }, [open]);
+
   if (!address) return null;
 
   return (
     <Dropdown className="rounded-sm">
       <DropdownTrigger>
-        <div
+        <button
+          type="button"
           className={clsx(
             'flex h-8 w-8 cursor-pointer items-center justify-center',
             'transition-all duration-150 ease-in-out hover:-translate-y-[2px]',
           )}
         >
           <Avatar address={address} />
-        </div>
+        </button>
       </DropdownTrigger>
       <DropdownMenu
         aria-label="Account actions"
@@ -52,8 +58,8 @@ export function AccountDropdown() {
       >
         <DropdownItem
           key="account-info"
-          className="border-b border-primary/10 pb-4"
-          isReadOnly
+          className="border-b border-primary/10 pb-4 cursor-pointer"
+          onClick={handleOpenModal}
           showDivider={false}
         >
           <div className="flex w-full items-center gap-3">
