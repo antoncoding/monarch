@@ -34,13 +34,15 @@ export const usePositionReport = (
   account: Address,
   selectedAsset: { address: string; chainId: number } | null,
   startDate?: Date,
-  endDate?: Date,
+  _endDate?: Date,
 ) => {
   const { fetchTransactions } = useUserTransactions();
 
   const { customRpcUrls } = useCustomRpc();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
+    let endDate = _endDate;
+
     if (!startDate || !endDate || !selectedAsset) return null;
 
     if (endDate.getTime() > Date.now()) {

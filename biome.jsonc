@@ -41,13 +41,10 @@
 
         // Team preference - allow some flexibility
         "useConsistentCurlyBraces": "off",
-        "noParameterAssign": "off",
+        // "noParameterAssign": "off",
 
         // Keep filenamingConvention disabled during migration
         "useFilenamingConvention": "off",
-
-        // Don't force default exports
-        "noDefaultExport": "off",
 
         // Team uses enums
         "noEnum": "off",

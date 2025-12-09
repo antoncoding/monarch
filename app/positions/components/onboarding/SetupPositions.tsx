@@ -93,7 +93,9 @@ export function SetupPositions() {
   );
 
   const handlePercentageChange = useCallback(
-    (marketKey: string, newPercentage: number) => {
+    (marketKey: string, _newPercentage: number) => {
+      let newPercentage = _newPercentage;
+
       // If the input is invalid (NaN), set it to 0
       if (Number.isNaN(newPercentage)) {
         newPercentage = 0;
