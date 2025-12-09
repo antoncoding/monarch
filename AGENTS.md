@@ -9,7 +9,7 @@ Next.js routes live under `app/`. Shared logic and reusable UI sit in `src/`, wi
 - `pnpm build` — produce a clean production bundle after clearing `.next`.
 - `pnpm start` — serve the production build locally for release validation.
 - `pnpm check` — run formatting, ESLint, and Stylelint together.
-- `pnpm lint` / `pnpm stylelint` — target React or CSS changes individually.
+- `pnpm lint` — target React or CSS changes individually.
 - `pnpm test` — execute Jest suites with the configured setup.
 
 ## Coding Style & Naming Conventions

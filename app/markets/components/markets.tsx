@@ -28,7 +28,7 @@ import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } fro
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
-import * as keys from '@/utils/storageKeys';
+import { storageKeys } from '@/utils/storageKeys';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 
@@ -78,8 +78,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
 
-  const [sortColumn, setSortColumn] = useLocalStorage(keys.MarketSortColumnKey, SortColumn.Supply);
-  const [sortDirection, setSortDirection] = useLocalStorage(keys.MarketSortDirectionKey, -1);
+  const [sortColumn, setSortColumn] = useLocalStorage(storageKeys.MarketSortColumnKey, SortColumn.Supply);
+  const [sortDirection, setSortDirection] = useLocalStorage(storageKeys.MarketSortDirectionKey, -1);
 
   const [showSupplyModal, setShowSupplyModal] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
@@ -92,29 +92,32 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } = usePagination();
 
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(keys.MarketsShowUnknownTokens, false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(keys.MarketsShowUnknownOracle, false);
+  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(storageKeys.MarketsShowUnknownTokens, false);
+  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(storageKeys.MarketsShowUnknownOracle, false);
 
   const { allTokens, findToken } = useTokens();
 
   // USD Filter values
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(keys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
-  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(keys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(keys.MarketsUsdMinLiquidityKey, DEFAULT_MIN_LIQUIDITY_USD.toString());
+  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(storageKeys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
+  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(storageKeys.MarketsUsdMinBorrowKey, '');
+  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
+    storageKeys.MarketsUsdMinLiquidityKey,
+    DEFAULT_MIN_LIQUIDITY_USD.toString(),
+  );
 
   // USD Filter enabled states
   const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
-    keys.MarketsMinSupplyEnabledKey,
+    storageKeys.MarketsMinSupplyEnabledKey,
     true, // Default to enabled for backward compatibility
   );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(keys.MarketsMinBorrowEnabledKey, false);
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(keys.MarketsMinLiquidityEnabledKey, false);
+  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(storageKeys.MarketsMinBorrowEnabledKey, false);
+  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(storageKeys.MarketsMinLiquidityEnabledKey, false);
 
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(keys.MarketsTrustedVaultsOnlyKey, false);
+  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(storageKeys.MarketsTrustedVaultsOnlyKey, false);
 
   // Column visibility state
   const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
-    keys.MarketsColumnVisibilityKey,
+    storageKeys.MarketsColumnVisibilityKey,
     DEFAULT_COLUMN_VISIBILITY,
   );
 
@@ -128,7 +131,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   );
 
   // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
-  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(keys.MarketsTableViewModeKey, 'compact');
+  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(storageKeys.MarketsTableViewModeKey, 'compact');
 
   // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);

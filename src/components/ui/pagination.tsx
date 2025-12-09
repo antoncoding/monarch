@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { forwardRef } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, DotsHorizontalIcon } from '@radix-ui/react-icons';
 import { type ButtonProps, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
 }
 Pagination.displayName = 'Pagination';
 
-const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(({ className, ...props }, ref) => (
+const PaginationContent = forwardRef<HTMLUListElement, React.ComponentProps<'ul'>>(({ className, ...props }, ref) => (
   <ul
     ref={ref}
     className={cn('flex flex-row items-center gap-1', className)}
@@ -24,7 +24,7 @@ const PaginationContent = React.forwardRef<HTMLUListElement, React.ComponentProp
 ));
 PaginationContent.displayName = 'PaginationContent';
 
-const PaginationItem = React.forwardRef<HTMLLIElement, React.ComponentProps<'li'>>(({ className, ...props }, ref) => (
+const PaginationItem = forwardRef<HTMLLIElement, React.ComponentProps<'li'>>(({ className, ...props }, ref) => (
   <li
     ref={ref}
     className={cn('', className)}

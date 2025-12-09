@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import * as NavigationMenu from '@radix-ui/react-navigation-menu';
+import { Link } from '@radix-ui/react-navigation-menu';
 import { clsx } from 'clsx';
 
 export const ListItem = forwardRef(function ListItemComponent(
@@ -16,7 +16,7 @@ export const ListItem = forwardRef(function ListItemComponent(
 ) {
   return (
     <div className="inline-flex items-center justify-start gap-8">
-      <NavigationMenu.Link
+      <Link
         asChild
         className="flex items-center justify-start gap-1"
       >
@@ -28,7 +28,7 @@ export const ListItem = forwardRef(function ListItemComponent(
         >
           {children}
         </a>
-      </NavigationMenu.Link>
+      </Link>
     </div>
   );
 });

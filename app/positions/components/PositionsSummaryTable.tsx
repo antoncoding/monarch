@@ -23,7 +23,7 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
-import { PositionsShowEmptyKey, PositionsShowCollateralExposureKey } from '@/utils/storageKeys';
+import { storageKeys } from '@/utils/storageKeys';
 import {
   type MarketPosition,
   type GroupedPosition,
@@ -121,8 +121,11 @@ export function PositionsSummaryTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
-  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(PositionsShowEmptyKey, false);
-  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(PositionsShowCollateralExposureKey, true);
+  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(storageKeys.PositionsShowEmptyKey, false);
+  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(
+    storageKeys.PositionsShowCollateralExposureKey,
+    true,
+  );
   const { address } = useAccount();
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();

@@ -96,7 +96,6 @@
         // Disable for gentle migration
         "useTopLevelRegex": "off",  // 15 errors
         "noBarrelFile": "off",  // 9 errors
-        "noNamespaceImport": "off"  // 7 errors
       },
 
       "suspicious": {
