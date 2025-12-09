@@ -16,7 +16,7 @@ const buttonVariants = cva(
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow active:scale-[0.98]',
 
         // For buttons on surface-colored backgrounds (cards, modals, tables)
-        surface: 'bg-hovered text-foreground hover:bg-hovered/80 active:scale-[0.98]',
+        surface: 'bg-hovered text-foreground hover:bg-default-200 active:bg-default-300 active:scale-[0.98]',
 
         // For icon buttons and minimal actions (hover styles in compoundVariants below)
         ghost: 'bg-transparent text-foreground',

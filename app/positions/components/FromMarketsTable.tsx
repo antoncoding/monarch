@@ -146,7 +146,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                           </div>
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="surface"
                             className="h-5 min-w-0 px-2 text-xs"
                             disabled={maxTransferableAmount <= 0n}
                             onClick={(e: React.MouseEvent) => {

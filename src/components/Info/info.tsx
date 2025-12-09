@@ -64,7 +64,10 @@ export function Info({ description, level, title }: { description: string; level
       {levelToIcon(level)}
       <div className="min-w-0 flex-1">
         {title && <h2 className="font-bold">{title}</h2>}
-        <p className="text-sm leading-tight hyphens-auto" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
+        <p
+          className="text-sm leading-tight hyphens-auto"
+          style={{ wordBreak: 'break-word', overflowWrap: 'anywhere' }}
+        >
           {description}
         </p>
       </div>
