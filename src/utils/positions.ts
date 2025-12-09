@@ -225,12 +225,6 @@ export async function fetchMarketSnapshot(
   try {
     const isNow = !blockNumber || blockNumber === 0;
 
-    if (!isNow) {
-      console.log(`Get market snapshot ${marketId.slice(0, 6)} at blockNumber ${blockNumber}`);
-    } else {
-      console.log(`Get market snapshot ${marketId.slice(0, 6)} at current block`);
-    }
-
     // Get the market data
     const marketArray = (await client.readContract({
       address: getMorphoAddress(chainId as SupportedNetworks),

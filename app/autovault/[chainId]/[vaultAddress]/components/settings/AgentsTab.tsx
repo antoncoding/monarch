@@ -110,23 +110,7 @@ export function AgentsTab({
           )}
         </div>
 
-        {!isEditingAllocators ? (
-          // Read-only view
-          allocators.length === 0 ? (
-            <p className="text-sm text-secondary">No allocators assigned</p>
-          ) : (
-            <div className="space-y-2">
-              {allocators.map((address) => (
-                <div
-                  key={address}
-                  className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
-                >
-                  <AgentListItem address={address as Address} />
-                </div>
-              ))}
-            </div>
-          )
-        ) : (
+        {isEditingAllocators ? (
           // Edit mode
           <div className="space-y-4">
             {allocators.length > 0 && (
@@ -201,6 +185,20 @@ export function AgentsTab({
                 Done
               </Button>
             </div>
+          </div>
+        ) : // Read-only view
+        allocators.length === 0 ? (
+          <p className="text-sm text-secondary">No allocators assigned</p>
+        ) : (
+          <div className="space-y-2">
+            {allocators.map((address) => (
+              <div
+                key={address}
+                className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
+              >
+                <AgentListItem address={address as Address} />
+              </div>
+            ))}
           </div>
         )}
       </div>

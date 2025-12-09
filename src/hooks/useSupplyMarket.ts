@@ -261,7 +261,9 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       }
 
       // Standard ERC20 flow
-      if (!isApproved) {
+      if (isApproved) {
+        setCurrentStep('supplying');
+      } else {
         try {
           await approve();
           setCurrentStep('supplying');
@@ -281,8 +283,6 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
           }
           throw error;
         }
-      } else {
-        setCurrentStep('supplying');
       }
 
       await executeSupplyTransaction();

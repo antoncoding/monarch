@@ -62,18 +62,18 @@ function TypingAnimation({ phrases, singleMode = false }: { phrases: string[]; s
 
     const timeout = setTimeout(
       () => {
-        if (!isDeleting) {
-          if (displayText.length < targetText.length) {
-            setDisplayText(targetText.slice(0, displayText.length + 1));
-          } else {
-            setIsPaused(true);
-          }
-        } else {
+        if (isDeleting) {
           if (displayText.length > 0) {
             setDisplayText(displayText.slice(0, -1));
           } else {
             setIsDeleting(false);
             setPhraseIndex(getNextPhraseIndex(phraseIndex));
+          }
+        } else {
+          if (displayText.length < targetText.length) {
+            setDisplayText(targetText.slice(0, displayText.length + 1));
+          } else {
+            setIsPaused(true);
           }
         }
       },

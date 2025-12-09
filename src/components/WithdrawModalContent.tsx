@@ -119,11 +119,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
 
   return (
     <div className="flex flex-col">
-      {!isConnected ? (
-        <div className="flex justify-center py-4">
-          <AccountConnect />
-        </div>
-      ) : (
+      {isConnected ? (
         <>
           {/* Withdraw Input Section */}
           <div className="mt-12 space-y-4">
@@ -171,6 +167,10 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
             </div>
           </div>
         </>
+      ) : (
+        <div className="flex justify-center py-4">
+          <AccountConnect />
+        </div>
       )}
     </div>
   );

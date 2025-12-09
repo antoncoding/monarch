@@ -148,12 +148,7 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
         </div>
       </div>
 
-      {!hasAnyCaps ? (
-        <div className="rounded bg-hovered/30 p-6 text-center">
-          <p className="text-sm text-secondary">No caps configured yet</p>
-          <p className="mt-1 text-xs text-secondary">Set caps to control how agents allocate funds across markets</p>
-        </div>
-      ) : (
+      {hasAnyCaps ? (
         <div className="space-y-4">
           {/* Collateral Caps */}
           {collateralCapsWithMarkets.length > 0 && (
@@ -305,6 +300,11 @@ export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vault
                 </div>
               );
             })()}
+        </div>
+      ) : (
+        <div className="rounded bg-hovered/30 p-6 text-center">
+          <p className="text-sm text-secondary">No caps configured yet</p>
+          <p className="mt-1 text-xs text-secondary">Set caps to control how agents allocate funds across markets</p>
         </div>
       )}
     </div>

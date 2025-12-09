@@ -102,15 +102,7 @@ function CustomTypingAnimation() {
 
     const timeout = setTimeout(
       () => {
-        if (!isDeleting) {
-          // Typing
-          if (displayText.length < targetText.length) {
-            setDisplayText(targetText.slice(0, displayText.length + 1));
-          } else {
-            // Finished typing, pause
-            setIsPaused(true);
-          }
-        } else {
+        if (isDeleting) {
           // Deleting
           if (displayText.length > deleteToLength) {
             setDisplayText(displayText.slice(0, -1));
@@ -118,6 +110,14 @@ function CustomTypingAnimation() {
             // Finished deleting, move to next phrase
             setIsDeleting(false);
             setPhraseIndex(getNextPhraseIndex(phraseIndex));
+          }
+        } else {
+          // Typing
+          if (displayText.length < targetText.length) {
+            setDisplayText(targetText.slice(0, displayText.length + 1));
+          } else {
+            // Finished typing, pause
+            setIsPaused(true);
           }
         }
       },

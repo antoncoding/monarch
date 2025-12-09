@@ -55,8 +55,7 @@
         "noNonNullAssertion": "off",
 
         // Don't enforce during migration - too opinionated
-        // "noUselessElse": "off",
-        "noNegationElse": "off",
+        // "noNegationElse": "off",
         "useCollapsedElseIf": "off",
 
         // Object shorthand - disable for gentle migration

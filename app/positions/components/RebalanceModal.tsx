@@ -89,7 +89,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     const toMarket = eligibleMarkets.find((m) => m.uniqueKey === selectedToMarketUniqueKey);
 
     if (!fromMarket || !toMarket) {
-      const errorMessage = `Invalid ${!fromMarket ? '"From" Market' : ''}${!toMarket ? '"To" Market' : ''}`;
+      const errorMessage = `Invalid ${fromMarket ? '' : '"From" Market'}${toMarket ? '' : '"To" Market'}`;
 
       toast.error('Invalid market selection', errorMessage);
       return null;
