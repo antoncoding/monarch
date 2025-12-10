@@ -5,21 +5,24 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-200 ease-in-out border-0 outline-0 ring-0 focus:border-0 focus:outline-0 focus:ring-0 active:border-0 active:outline-0 active:ring-0 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 opacity-95 hover:opacity-100',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all duration-200 ease-in-out border-0 outline-0 ring-0 focus:border-0 focus:outline-0 focus:ring-0 active:border-0 active:outline-0 active:ring-0 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         // For buttons on background areas
-        default: 'bg-surface text-foreground hover:bg-surface/80 shadow-sm hover:shadow active:scale-[0.98]',
+        default:
+          'bg-surface text-foreground hover:bg-surface/70 hover:brightness-95 shadow-sm hover:shadow-md active:scale-[0.98] active:brightness-90',
 
         // Primary action button
-        primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow active:scale-[0.98]',
+        primary:
+          'bg-primary text-primary-foreground hover:bg-primary/85 hover:brightness-105 shadow-sm hover:shadow-md active:scale-[0.98] active:brightness-95',
 
         // For buttons on surface-colored backgrounds (cards, modals, tables)
-        surface: 'bg-hovered text-foreground hover:bg-default-200 active:bg-default-300 active:scale-[0.98]',
+        surface:
+          'bg-hovered text-foreground hover:bg-default-200 hover:brightness-98 active:bg-default-300 active:scale-[0.98] active:brightness-95',
 
         // For icon buttons and minimal actions (hover styles in compoundVariants below)
-        ghost: 'bg-transparent text-foreground',
+        ghost: 'bg-transparent text-foreground hover:brightness-95',
       },
       size: {
         xs: 'h-6 px-1.5 py-1 text-xs min-w-[40px]',
@@ -54,26 +57,28 @@ const buttonVariants = cva(
         isLoading: true,
         className: 'gap-2 [&>span]:opacity-0 [&>svg]:opacity-0 [&>*:not(.loading-spinner)]:opacity-0',
       },
-      // Ghost button hover effects - darker backgrounds for better feedback
+      // Ghost button hover effects - subtle background changes with brightness adjustments
       {
         variant: 'ghost',
         size: 'icon',
-        className: 'hover:bg-surface/70 active:bg-surface hover:scale-105 active:scale-100',
+        className: 'hover:bg-surface/60 hover:brightness-98 active:bg-surface/80 active:brightness-95 hover:scale-105 active:scale-100',
       },
       {
         variant: 'ghost',
         size: 'sm',
-        className: 'hover:bg-surface/50 active:bg-surface/70 hover:scale-[1.02] active:scale-100',
+        className: 'hover:bg-surface/40 hover:brightness-98 active:bg-surface/60 active:brightness-95 hover:scale-[1.02] active:scale-100',
       },
       {
         variant: 'ghost',
         size: 'md',
-        className: 'hover:bg-default-100 active:bg-default-200 hover:scale-[1.01] active:scale-100',
+        className:
+          'hover:bg-default-100 hover:brightness-98 active:bg-default-200 active:brightness-95 hover:scale-[1.01] active:scale-100',
       },
       {
         variant: 'ghost',
         size: 'lg',
-        className: 'hover:bg-default-100 active:bg-default-200 hover:scale-[1.01] active:scale-100',
+        className:
+          'hover:bg-default-100 hover:brightness-98 active:bg-default-200 active:brightness-95 hover:scale-[1.01] active:scale-100',
       },
     ],
   },
