@@ -46,7 +46,7 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
   const tableKey = `supplies-table-${currentPage}`;
 
   return (
-    <div className="mt-8">
+    <div>
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-lg text-secondary">Supply & Withdraw</h4>
         <div className="flex items-center gap-2">

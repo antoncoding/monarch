@@ -51,7 +51,7 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
   }
 
   return (
-    <div className="mt-8">
+    <div>
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-lg text-secondary">Borrow & Repay</h4>
         <div className="flex items-center gap-2">

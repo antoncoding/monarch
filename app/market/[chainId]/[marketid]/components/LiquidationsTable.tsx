@@ -40,7 +40,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
   }
 
   return (
-    <div className="mt-8">
+    <div>
       <h4 className="mb-4 text-lg text-secondary">Liquidations</h4>
 
       <div className="relative">

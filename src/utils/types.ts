@@ -427,3 +427,16 @@ export type MarketLiquidationTransaction = {
   seizedAssets: string;
   badDebtAssets: string;
 };
+
+// Type for Market Supplier (current position state, not historical transactions)
+// Only stores shares - assets can be calculated from shares using market state
+export type MarketSupplier = {
+  userAddress: string;
+  supplyShares: string;
+};
+
+// Paginated result type for market suppliers
+export type PaginatedMarketSuppliers = {
+  items: MarketSupplier[];
+  totalCount: number;
+};

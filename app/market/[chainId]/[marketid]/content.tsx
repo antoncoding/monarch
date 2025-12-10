@@ -4,14 +4,15 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/react';
-import { ExternalLinkIcon, ChevronLeftIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { formatUnits, parseUnits } from 'viem';
 import { useConnection } from 'wagmi';
 import { BorrowModal } from '@/components/BorrowModal';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/common/Spinner';
 import Header from '@/components/layout/header/Header';
 import { OracleTypeInfo } from '@/components/MarketOracle';
@@ -33,6 +34,8 @@ import { CampaignBadge } from './components/CampaignBadge';
 import { LiquidationsTable } from './components/LiquidationsTable';
 import { PositionStats } from './components/PositionStats';
 import { SuppliesTable } from './components/SuppliesTable';
+import { SuppliersTable } from './components/SuppliersTable';
+import SupplierFiltersModal from './components/SupplierFiltersModal';
 import TransactionFiltersModal from './components/TransactionFiltersModal';
 import RateChart from './RateChart';
 import VolumeChart from './VolumeChart';
@@ -63,10 +66,8 @@ const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions =
 };
 
 function MarketContent() {
-  // 1. Get URL params and router first
+  // 1. Get URL params first
   const { marketid, chainId } = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
@@ -82,6 +83,8 @@ function MarketContent() {
   const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('Asset');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
+  const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
+  const [minSupplierShares, setMinSupplierShares] = useState('0');
 
   // 4. Data fetching hooks - use unified time range
   const {
@@ -148,6 +151,30 @@ function MarketContent() {
     }
   }, [minBorrowAmount, market]);
 
+  // Convert user-specified asset amount to shares for filtering
+  // Formula: effectiveMinShares = (minAssetAmount × totalSupplyShares) / totalSupplyAssets
+  const scaledMinSupplierShares = useMemo(() => {
+    if (!market || !minSupplierShares || minSupplierShares === '0' || minSupplierShares === '') {
+      return '0';
+    }
+    try {
+      const minAssetAmount = parseUnits(minSupplierShares, market.loanAsset.decimals);
+      const totalSupplyAssets = BigInt(market.state.supplyAssets);
+      const totalSupplyShares = BigInt(market.state.supplyShares);
+
+      // If no supply yet, return 0
+      if (totalSupplyAssets === 0n) {
+        return '0';
+      }
+
+      // Convert asset amount to shares
+      const effectiveMinShares = (minAssetAmount * totalSupplyShares) / totalSupplyAssets;
+      return effectiveMinShares.toString();
+    } catch {
+      return '0';
+    }
+  }, [minSupplierShares, market]);
+
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -173,13 +200,6 @@ function MarketContent() {
     setSelectedTimeRange(calculateTimeRange(timeframe));
     // No explicit refetch needed, change in selectedTimeRange (part of queryKey) triggers it
   }, []);
-
-  const handleBackToMarkets = useCallback(() => {
-    const currentParams = searchParams.toString();
-    const marketsPath = '/markets';
-    const targetPath = currentParams ? `${marketsPath}?${currentParams}` : marketsPath;
-    router.push(targetPath);
-  }, [router, searchParams]);
 
   // 7. Early returns for loading/error states
   if (isMarketLoading) {
@@ -213,18 +233,20 @@ function MarketContent() {
   return (
     <>
       <Header />
-      <div className="mx-auto max-w-7xl px-6 py-8 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
-        {/* navigation buttons */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button
-            onClick={handleBackToMarkets}
-            size="md"
-            className="w-auto"
-          >
-            <ChevronLeftIcon className="mr-2" />
-            <span className="hidden sm:inline">Back to Markets</span>
-            <span className="sm:hidden">Back</span>
-          </Button>
+      <div className="mx-auto max-w-7xl px-6 py-4 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
+        {/* Market title and actions */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold">
+              {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
+            </h1>
+            <CampaignBadge
+              marketId={marketid as string}
+              loanTokenAddress={market.loanAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              whitelisted={market.whitelisted}
+            />
+          </div>
 
           <div className="flex flex-wrap gap-2">
             <Button
@@ -292,19 +314,17 @@ function MarketContent() {
           />
         )}
 
-        <div className="mb-8 flex items-center justify-center gap-3">
-          <h1 className="text-3xl">
-            {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
-          </h1>
-          <CampaignBadge
-            marketId={marketid as string}
-            loanTokenAddress={market.loanAsset.address}
-            chainId={market.morphoBlue.chain.id}
-            whitelisted={market.whitelisted}
+        {showSupplierFiltersModal && (
+          <SupplierFiltersModal
+            isOpen={showSupplierFiltersModal}
+            onOpenChange={setShowSupplierFiltersModal}
+            minShares={minSupplierShares}
+            onMinSharesChange={setMinSupplierShares}
+            loanAssetSymbol={market.loanAsset.symbol}
           />
-        </div>
+        )}
 
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <Card className={cardStyle}>
             <CardHeader className="flex items-center justify-between text-xl">
               <span>Basic Info</span>
@@ -426,48 +446,73 @@ function MarketContent() {
           />
         </div>
 
-        <h4 className="pt-4 text-2xl">Volume</h4>
-        <VolumeChart
-          historicalData={historicalData?.volumes}
-          market={market}
-          selectedTimeRange={selectedTimeRange}
-          isLoading={isHistoricalLoading}
-          volumeView={volumeView}
-          selectedTimeframe={selectedTimeframe}
-          handleTimeframeChange={handleTimeframeChange}
-          setVolumeView={setVolumeView}
-        />
+        {/* Tabs Section */}
+        <Tabs
+          defaultValue="statistics"
+          className="mt-8 w-full"
+        >
+          <TabsList>
+            <TabsTrigger value="statistics">Statistics</TabsTrigger>
+            <TabsTrigger value="activities">Activities</TabsTrigger>
+            <TabsTrigger value="positions">Positions</TabsTrigger>
+          </TabsList>
 
-        <h4 className="pt-4 text-2xl">Rates</h4>
-        <RateChart
-          historicalData={historicalData?.rates}
-          market={market}
-          selectedTimeRange={selectedTimeRange}
-          isLoading={isHistoricalLoading}
-          selectedTimeframe={selectedTimeframe}
-          handleTimeframeChange={handleTimeframeChange}
-        />
+          <TabsContent value="statistics">
+            <h4 className="mb-4 text-lg text-secondary">Volume</h4>
+            <VolumeChart
+              historicalData={historicalData?.volumes}
+              market={market}
+              selectedTimeRange={selectedTimeRange}
+              isLoading={isHistoricalLoading}
+              volumeView={volumeView}
+              selectedTimeframe={selectedTimeframe}
+              handleTimeframeChange={handleTimeframeChange}
+              setVolumeView={setVolumeView}
+            />
 
-        <h4 className="pt-4 text-2xl">Activities</h4>
+            <h4 className="mb-4 mt-8 text-lg text-secondary">Rates</h4>
+            <RateChart
+              historicalData={historicalData?.rates}
+              market={market}
+              selectedTimeRange={selectedTimeRange}
+              isLoading={isHistoricalLoading}
+              selectedTimeframe={selectedTimeframe}
+              handleTimeframeChange={handleTimeframeChange}
+            />
+          </TabsContent>
 
-        {/* divider */}
-        <div className="my-4 h-[2px] w-full bg-gray-200 dark:bg-gray-800" />
-        <SuppliesTable
-          chainId={network}
-          market={market}
-          minAssets={scaledMinSupplyAmount}
-          onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
-        />
-        <BorrowsTable
-          chainId={network}
-          market={market}
-          minAssets={scaledMinBorrowAmount}
-          onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
-        />
-        <LiquidationsTable
-          chainId={network}
-          market={market}
-        />
+          <TabsContent value="activities">
+            <SuppliesTable
+              chainId={network}
+              market={market}
+              minAssets={scaledMinSupplyAmount}
+              onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+            />
+            <div className="mt-6">
+              <BorrowsTable
+                chainId={network}
+                market={market}
+                minAssets={scaledMinBorrowAmount}
+                onOpenFiltersModal={() => setShowTransactionFiltersModal(true)}
+              />
+            </div>
+            <div className="mt-6">
+              <LiquidationsTable
+                chainId={network}
+                market={market}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="positions">
+            <SuppliersTable
+              chainId={network}
+              market={market}
+              minShares={scaledMinSupplierShares}
+              onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </>
   );

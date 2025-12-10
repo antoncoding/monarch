@@ -402,3 +402,23 @@ export const subgraphUserTransactionsQuery = `
     }
   }
 `;
+
+export const marketPositionsQuery = `
+  query getMarketPositions($market: String!, $minShares: BigInt!, $first: Int!, $skip: Int!) {
+    positions(
+      where: {
+        shares_gt: $minShares
+        market: $market
+      }
+      orderBy: shares
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      shares
+      account {
+        id
+      }
+    }
+  }
+`;

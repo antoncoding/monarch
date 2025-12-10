@@ -485,7 +485,37 @@ export const marketBorrowsQuery = `
         limit
         skip
       }
-    }   
+    }
+  }
+`;
+
+export const marketSuppliersQuery = `
+  query getMarketSuppliers($uniqueKey: String!, $chainId: Int!, $minShares: BigInt, $first: Int, $skip: Int) {
+    marketPositions (where: {
+      marketUniqueKey_in: [$uniqueKey],
+      supplyShares_gte: $minShares,
+      chainId_in: [$chainId]
+    },
+    orderBy: SupplyShares,
+    orderDirection: Desc,
+    first: $first,
+    skip: $skip
+    ) {
+      items {
+        state {
+          supplyShares
+        }
+        user {
+          address
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }
   }
 `;
 
