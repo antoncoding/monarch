@@ -29,7 +29,9 @@ import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import type { TimeseriesOptions } from '@/utils/types';
+import { BorrowersTable } from './components/BorrowersTable';
 import { BorrowsTable } from './components/BorrowsTable';
+import BorrowerFiltersModal from './components/BorrowerFiltersModal';
 import { CampaignBadge } from './components/CampaignBadge';
 import { LiquidationsTable } from './components/LiquidationsTable';
 import { PositionStats } from './components/PositionStats';
@@ -85,6 +87,8 @@ function MarketContent() {
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
   const [minSupplierShares, setMinSupplierShares] = useState('0');
+  const [showBorrowerFiltersModal, setShowBorrowerFiltersModal] = useState(false);
+  const [minBorrowerShares, setMinBorrowerShares] = useState('0');
 
   // 4. Data fetching hooks - use unified time range
   const {
@@ -151,7 +155,7 @@ function MarketContent() {
     }
   }, [minBorrowAmount, market]);
 
-  // Convert user-specified asset amount to shares for filtering
+  // Convert user-specified asset amount to shares for filtering suppliers
   // Formula: effectiveMinShares = (minAssetAmount × totalSupplyShares) / totalSupplyAssets
   const scaledMinSupplierShares = useMemo(() => {
     if (!market || !minSupplierShares || minSupplierShares === '0' || minSupplierShares === '') {
@@ -174,6 +178,30 @@ function MarketContent() {
       return '0';
     }
   }, [minSupplierShares, market]);
+
+  // Convert user-specified asset amount to shares for filtering borrowers
+  // Formula: effectiveMinShares = (minAssetAmount × totalBorrowShares) / totalBorrowAssets
+  const scaledMinBorrowerShares = useMemo(() => {
+    if (!market || !minBorrowerShares || minBorrowerShares === '0' || minBorrowerShares === '') {
+      return '0';
+    }
+    try {
+      const minAssetAmount = parseUnits(minBorrowerShares, market.loanAsset.decimals);
+      const totalBorrowAssets = BigInt(market.state.borrowAssets);
+      const totalBorrowShares = BigInt(market.state.borrowShares);
+
+      // If no borrows yet, return 0
+      if (totalBorrowAssets === 0n) {
+        return '0';
+      }
+
+      // Convert asset amount to shares
+      const effectiveMinShares = (minAssetAmount * totalBorrowShares) / totalBorrowAssets;
+      return effectiveMinShares.toString();
+    } catch {
+      return '0';
+    }
+  }, [minBorrowerShares, market]);
 
   // Unified refetch function for both market and user position
   const handleRefreshAll = useCallback(async () => {
@@ -320,6 +348,16 @@ function MarketContent() {
             onOpenChange={setShowSupplierFiltersModal}
             minShares={minSupplierShares}
             onMinSharesChange={setMinSupplierShares}
+            loanAssetSymbol={market.loanAsset.symbol}
+          />
+        )}
+
+        {showBorrowerFiltersModal && (
+          <BorrowerFiltersModal
+            isOpen={showBorrowerFiltersModal}
+            onOpenChange={setShowBorrowerFiltersModal}
+            minShares={minBorrowerShares}
+            onMinSharesChange={setMinBorrowerShares}
             loanAssetSymbol={market.loanAsset.symbol}
           />
         )}
@@ -511,6 +549,15 @@ function MarketContent() {
               minShares={scaledMinSupplierShares}
               onOpenFiltersModal={() => setShowSupplierFiltersModal(true)}
             />
+            <div className="mt-6">
+              <BorrowersTable
+                chainId={network}
+                market={market}
+                minShares={scaledMinBorrowerShares}
+                oraclePrice={oraclePrice}
+                onOpenFiltersModal={() => setShowBorrowerFiltersModal(true)}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -519,6 +519,38 @@ export const marketSuppliersQuery = `
   }
 `;
 
+// Query for fetching market borrowers from Morpho API
+export const marketBorrowersQuery = `
+  query getMarketBorrowers($uniqueKey: String!, $chainId: Int!, $minShares: BigInt, $first: Int, $skip: Int) {
+    marketPositions (where: {
+      marketUniqueKey_in: [$uniqueKey],
+      borrowShares_gte: $minShares,
+      chainId_in: [$chainId]
+    },
+    orderBy: BorrowShares,
+    orderDirection: Desc,
+    first: $first,
+    skip: $skip
+    ) {
+      items {
+        state {
+          borrowAssets
+          collateral
+        }
+        user {
+          address
+        }
+      }
+      pageInfo {
+        countTotal
+        count
+        limit
+        skip
+      }
+    }
+  }
+`;
+
 // Query for VaultV2 details from Morpho API
 export const vaultV2Query = `
   query VaultV2Query($addresses: [String!], $chainId: Int!) {
