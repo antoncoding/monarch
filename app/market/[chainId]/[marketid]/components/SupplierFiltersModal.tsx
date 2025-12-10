@@ -1,8 +1,8 @@
-import type React from 'react';
 import { Input } from '@heroui/react';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
+import { SettingItem, createNumericInputHandler } from './shared-filter-utils';
 
 type SupplierFiltersModalProps = {
   isOpen: boolean;
@@ -12,18 +12,6 @@ type SupplierFiltersModalProps = {
   loanAssetSymbol: string;
 };
 
-function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="flex flex-grow flex-col gap-1 pr-3">
-        <h4 className="font-zen text-base font-medium text-primary">{title}</h4>
-        <p className="font-zen text-xs text-secondary">{description}</p>
-      </div>
-      <div className="flex-shrink-0 pt-1">{children}</div>
-    </div>
-  );
-}
-
 export default function SupplierFiltersModal({
   isOpen,
   onOpenChange,
@@ -31,13 +19,7 @@ export default function SupplierFiltersModal({
   onMinSharesChange,
   loanAssetSymbol,
 }: SupplierFiltersModalProps) {
-  const handleSharesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value } = e.target;
-    // Allow decimals and empty string
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      onMinSharesChange(value);
-    }
-  };
+  const handleSharesChange = createNumericInputHandler(onMinSharesChange);
 
   return (
     <Modal

@@ -43,7 +43,7 @@ export const useMarketBorrowers = (
       if (supportsMorphoApi(network)) {
         try {
           console.log(`Attempting to fetch borrowers via Morpho API for ${marketId} (page ${targetPage})`);
-          result = await fetchMorphoMarketBorrowers(marketId, network, minShares, pageSize, targetSkip);
+          result = await fetchMorphoMarketBorrowers(marketId, Number(network), minShares, pageSize, targetSkip);
         } catch (morphoError) {
           console.error('Failed to fetch borrowers via Morpho API:', morphoError);
         }
