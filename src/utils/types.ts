@@ -427,3 +427,30 @@ export type MarketLiquidationTransaction = {
   seizedAssets: string;
   badDebtAssets: string;
 };
+
+// Type for Market Supplier (current position state, not historical transactions)
+// Only stores shares - assets can be calculated from shares using market state
+export type MarketSupplier = {
+  userAddress: string;
+  supplyShares: string;
+};
+
+// Paginated result type for market suppliers
+export type PaginatedMarketSuppliers = {
+  items: MarketSupplier[];
+  totalCount: number;
+};
+
+// Type for Market Borrower (current position state, not historical transactions)
+// Stores borrowAssets and collateral - shares can be calculated if needed
+export type MarketBorrower = {
+  userAddress: string;
+  borrowAssets: string;
+  collateral: string;
+};
+
+// Paginated result type for market borrowers
+export type PaginatedMarketBorrowers = {
+  items: MarketBorrower[];
+  totalCount: number;
+};

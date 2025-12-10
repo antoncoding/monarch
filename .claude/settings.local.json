@@ -42,7 +42,8 @@
       "Bash(tee:*)",
       "WebFetch(domain:medium.com)",
       "Bash(pnpm info:*)",
-      "Bash(for file in )"
+      "Bash(for file in )",
+      "Bash(timeout 30 npx tsc:*)"
     ],
     "deny": []
   }

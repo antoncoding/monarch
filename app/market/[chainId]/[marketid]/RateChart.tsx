@@ -109,7 +109,7 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
   ];
 
   return (
-    <Card className="bg-surface my-4 rounded p-4 shadow-sm">
+    <Card className="bg-surface rounded p-4 shadow-sm">
       <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
         <span />
         <ButtonGroup
