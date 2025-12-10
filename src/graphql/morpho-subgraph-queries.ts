@@ -422,3 +422,60 @@ export const marketPositionsQuery = `
     }
   }
 `;
+
+// Query for market suppliers (positions with side: SUPPLIER, isCollateral: false)
+export const marketSuppliersQuery = `
+  query getMarketSuppliers($market: String!, $minShares: BigInt!, $first: Int!, $skip: Int!) {
+    positions(
+      where: {
+        shares_gt: $minShares
+        side: SUPPLIER
+        isCollateral: false
+        market: $market
+      }
+      orderBy: shares
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      shares
+      account {
+        id
+      }
+    }
+  }
+`;
+
+// Query for market borrowers (positions with side: BORROWER) including collateral and market totals for conversion
+export const marketBorrowersQuery = `
+  query getMarketBorrowers($market: String!, $minShares: BigInt!, $first: Int!, $skip: Int!) {
+    market(id: $market) {
+      totalBorrow
+      totalBorrowShares
+    }
+    positions(
+      where: {
+        shares_gt: $minShares
+        side: BORROWER
+        market: $market
+      }
+      orderBy: shares
+      orderDirection: desc
+      first: $first
+      skip: $skip
+    ) {
+      shares
+      account {
+        id
+        positions(
+          where: {
+            side: COLLATERAL
+            market: $market
+          }
+        ) {
+          balance
+        }
+      }
+    }
+  }
+`;

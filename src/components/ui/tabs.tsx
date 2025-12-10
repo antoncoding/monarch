@@ -5,21 +5,16 @@ import { cn } from '@/lib/utils';
 
 const Tabs = Root;
 
-const TabsList = forwardRef<ElementRef<typeof List>, ComponentPropsWithoutRef<typeof List>>(
-  ({ className, ...props }, ref) => (
-    <List
-      ref={ref}
-      className={cn('inline-flex h-10 justify-start border-b border-border w-full', className)}
-      {...props}
-    />
-  ),
-);
+const TabsList = forwardRef<ElementRef<typeof List>, ComponentPropsWithoutRef<typeof List>>(({ className, ...props }, ref) => (
+  <List
+    ref={ref}
+    className={cn('inline-flex h-10 justify-start border-b border-border w-full', className)}
+    {...props}
+  />
+));
 TabsList.displayName = List.displayName;
 
-const TabsTrigger = forwardRef<
-  ElementRef<typeof Trigger>,
-  ComponentPropsWithoutRef<typeof Trigger>
->(({ className, ...props }, ref) => (
+const TabsTrigger = forwardRef<ElementRef<typeof Trigger>, ComponentPropsWithoutRef<typeof Trigger>>(({ className, ...props }, ref) => (
   <Trigger
     ref={ref}
     className={cn(
@@ -33,10 +28,7 @@ const TabsTrigger = forwardRef<
 ));
 TabsTrigger.displayName = Trigger.displayName;
 
-const TabsContent = forwardRef<
-  ElementRef<typeof Content>,
-  ComponentPropsWithoutRef<typeof Content>
->(({ className, ...props }, ref) => (
+const TabsContent = forwardRef<ElementRef<typeof Content>, ComponentPropsWithoutRef<typeof Content>>(({ className, ...props }, ref) => (
   <Content
     ref={ref}
     className={cn(
