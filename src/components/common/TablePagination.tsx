@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input, Popover, PopoverTrigger, PopoverContent, Tooltip } from '@heroui/react';
 import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { TooltipContent } from '@/components/TooltipContent';
@@ -27,6 +27,45 @@ export function TablePagination({
   const [jumpPage, setJumpPage] = useState('');
   const [isJumpOpen, setIsJumpOpen] = useState(false);
 
+  // Track the visible window of page numbers to keep pagination stable
+  const [visibleWindow, setVisibleWindow] = useState(() => {
+    const windowSize = 3;
+    const start = Math.max(2, Math.min(currentPage - 1, totalPages - windowSize));
+    const end = Math.min(totalPages - 1, start + windowSize - 1);
+    return { start, end };
+  });
+
+  // Update visible window only when necessary (when current page goes outside window)
+  useEffect(() => {
+    if (totalPages <= 7) return; // Show all pages, no windowing needed
+
+    const windowSize = 3; // Number of middle pages to show
+    const { start, end } = visibleWindow;
+
+    // Only slide the window if current page goes OUTSIDE the visible range
+    if (currentPage >= 2 && currentPage <= totalPages - 1) {
+      let newStart = start;
+      let newEnd = end;
+
+      // Current page is before the window - slide left to include it
+      if (currentPage < start) {
+        newStart = Math.max(2, currentPage);
+        newEnd = Math.min(totalPages - 1, newStart + windowSize - 1);
+        newStart = Math.max(2, newEnd - windowSize + 1);
+      }
+      // Current page is after the window - slide right to include it
+      else if (currentPage > end) {
+        newEnd = Math.min(totalPages - 1, currentPage);
+        newStart = Math.max(2, newEnd - windowSize + 1);
+      }
+
+      if (newStart !== start || newEnd !== end) {
+        setVisibleWindow({ start: newStart, end: newEnd });
+      }
+    }
+  }, [currentPage, totalPages, visibleWindow]);
+
+  // Early return after all hooks
   if (totalPages === 0) {
     return null;
   }
@@ -49,10 +88,9 @@ export function TablePagination({
     }
   };
 
-  // Generate smart page numbers with ellipsis
+  // Generate smart page numbers with ellipsis using stable window
   const getPageNumbers = () => {
     const pages: (number | 'ellipsis')[] = [];
-    const delta = 1; // Number of pages to show on each side of current
 
     if (totalPages <= 7) {
       // Show all pages if 7 or fewer
@@ -63,16 +101,15 @@ export function TablePagination({
       // Always show first page
       pages.push(1);
 
-      // Calculate range around current page
-      const start = Math.max(2, currentPage - delta);
-      const end = Math.min(totalPages - 1, currentPage + delta);
+      // Use the stable visible window
+      const { start, end } = visibleWindow;
 
       // Add ellipsis after first page if needed
       if (start > 2) {
         pages.push('ellipsis');
       }
 
-      // Add pages around current
+      // Add pages in the visible window
       for (let i = start; i <= end; i++) {
         pages.push(i);
       }
