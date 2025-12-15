@@ -126,57 +126,60 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
             <TableBody>
               {borrowersWithLTV.length === 0 && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-400">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-400"
+                  >
                     No borrowers found for this market
                   </TableCell>
                 </TableRow>
               ) : (
                 borrowersWithLTV.map((borrower) => {
-              const totalBorrow = BigInt(market.state.borrowAssets);
-              const borrowerAssets = BigInt(borrower.borrowAssets);
-              const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
-              const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
+                  const totalBorrow = BigInt(market.state.borrowAssets);
+                  const borrowerAssets = BigInt(borrower.borrowAssets);
+                  const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
+                  const percentDisplay = percentOfBorrow < 0.01 && percentOfBorrow > 0 ? '<0.01%' : `${percentOfBorrow.toFixed(2)}%`;
 
-              return (
-                <TableRow key={`borrower-${borrower.userAddress}`}>
-                  <TableCell>
-                    <AccountIdentity
-                      address={borrower.userAddress as Address}
-                      variant="compact"
-                      linkTo="profile"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatSimple(Number(formatUnits(BigInt(borrower.borrowAssets), market.loanAsset.decimals)))}
-                    {market?.loanAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={16}
-                          height={16}
+                  return (
+                    <TableRow key={`borrower-${borrower.userAddress}`}>
+                      <TableCell>
+                        <AccountIdentity
+                          address={borrower.userAddress as Address}
+                          variant="compact"
+                          linkTo="profile"
                         />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatSimple(Number(formatUnits(BigInt(borrower.collateral), market.collateralAsset.decimals)))}
-                    {market?.collateralAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.collateralAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.collateralAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{borrower.ltv.toFixed(2)}%</TableCell>
-                  <TableCell className="text-right">{percentDisplay}</TableCell>
-                </TableRow>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatSimple(Number(formatUnits(BigInt(borrower.borrowAssets), market.loanAsset.decimals)))}
+                        {market?.loanAsset?.symbol && (
+                          <span className="ml-1 inline-flex items-center">
+                            <TokenIcon
+                              address={market.loanAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatSimple(Number(formatUnits(BigInt(borrower.collateral), market.collateralAsset.decimals)))}
+                        {market?.collateralAsset?.symbol && (
+                          <span className="ml-1 inline-flex items-center">
+                            <TokenIcon
+                              address={market.collateralAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.collateralAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{borrower.ltv.toFixed(2)}%</TableCell>
+                      <TableCell className="text-right">{percentDisplay}</TableCell>
+                    </TableRow>
                   );
                 })
               )}

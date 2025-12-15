@@ -69,60 +69,33 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
             <TableBody>
               {paginatedLiquidations.length === 0 && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-400">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-gray-400"
+                  >
                     No liquidations found for this market
                   </TableCell>
                 </TableRow>
               ) : (
                 paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
-              const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
-              const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
+                  const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
+                  const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
-              return (
-                <TableRow key={liquidation.hash}>
-                  <TableCell>
-                    {isLiquidatorAddress ? (
-                      <AccountIdentity
-                        address={liquidation.liquidator as Address}
-                        variant="compact"
-                        linkTo="profile"
-                      />
-                    ) : (
-                      <span>{liquidation.liquidator}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
-                    {market?.loanAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
-                    {market?.collateralAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.collateralAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.collateralAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {hasBadDebt ? (
-                      <>
-                        {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
+                  return (
+                    <TableRow key={liquidation.hash}>
+                      <TableCell>
+                        {isLiquidatorAddress ? (
+                          <AccountIdentity
+                            address={liquidation.liquidator as Address}
+                            variant="compact"
+                            linkTo="profile"
+                          />
+                        ) : (
+                          <span>{liquidation.liquidator}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
                         {market?.loanAsset?.symbol && (
                           <span className="ml-1 inline-flex items-center">
                             <TokenIcon
@@ -134,22 +107,52 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                             />
                           </span>
                         )}
-                      </>
-                    ) : (
-                      ' - '
-                    )}
-                  </TableCell>
-                  <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-                  <TableCell className="text-right">
-                    <TransactionIdentity
-                      txHash={liquidation.hash}
-                      chainId={chainId}
-                    />
-                  </TableCell>
-                </TableRow>
-                );
-              })
-            )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
+                        {market?.collateralAsset?.symbol && (
+                          <span className="ml-1 inline-flex items-center">
+                            <TokenIcon
+                              address={market.collateralAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.collateralAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {hasBadDebt ? (
+                          <>
+                            {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
+                            {market?.loanAsset?.symbol && (
+                              <span className="ml-1 inline-flex items-center">
+                                <TokenIcon
+                                  address={market.loanAsset.address}
+                                  chainId={market.morphoBlue.chain.id}
+                                  symbol={market.loanAsset.symbol}
+                                  width={16}
+                                  height={16}
+                                />
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          ' - '
+                        )}
+                      </TableCell>
+                      <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
+                      <TableCell className="text-right">
+                        <TransactionIdentity
+                          txHash={liquidation.hash}
+                          chainId={chainId}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </div>

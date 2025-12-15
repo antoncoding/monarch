@@ -4,11 +4,6 @@ type SortDirection = 'asc' | 'desc';
 
 type SortFn<T> = (a: T, b: T) => number;
 
-type SortConfig<T> = {
-  key: string;
-  fn: SortFn<T>;
-};
-
 type UseTableSortProps<T> = {
   data: T[];
   sortFns: Record<string, SortFn<T>>;

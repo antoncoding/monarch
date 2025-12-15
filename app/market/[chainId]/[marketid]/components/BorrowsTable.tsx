@@ -110,47 +110,50 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
             <TableBody>
               {borrows.length === 0 && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-400">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-400"
+                  >
                     No borrow activities found for this market
                   </TableCell>
                 </TableRow>
               ) : (
                 borrows.map((borrow) => (
-              <TableRow key={`borrow-${borrow.hash}-${borrow.amount.toString()}`}>
-                <TableCell>
-                  <AccountIdentity
-                    address={borrow.userAddress as Address}
-                    variant="compact"
-                    linkTo="profile"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Badge variant={borrow.type === 'MarketRepay' ? 'success' : 'danger'}>
-                    {borrow.type === 'MarketBorrow' ? 'Borrow' : 'Repay'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatSimple(Number(formatUnits(BigInt(borrow.amount), market.loanAsset.decimals)))}
-                  {market?.loanAsset?.symbol && (
-                    <span className="ml-1 inline-flex items-center">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
+                  <TableRow key={`borrow-${borrow.hash}-${borrow.amount.toString()}`}>
+                    <TableCell>
+                      <AccountIdentity
+                        address={borrow.userAddress as Address}
+                        variant="compact"
+                        linkTo="profile"
                       />
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>{moment.unix(borrow.timestamp).fromNow()}</TableCell>
-                <TableCell className="text-right">
-                  <TransactionIdentity
-                    txHash={borrow.hash}
-                    chainId={chainId}
-                  />
-                </TableCell>
-              </TableRow>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={borrow.type === 'MarketRepay' ? 'success' : 'danger'}>
+                        {borrow.type === 'MarketBorrow' ? 'Borrow' : 'Repay'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatSimple(Number(formatUnits(BigInt(borrow.amount), market.loanAsset.decimals)))}
+                      {market?.loanAsset?.symbol && (
+                        <span className="ml-1 inline-flex items-center">
+                          <TokenIcon
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            symbol={market.loanAsset.symbol}
+                            width={16}
+                            height={16}
+                          />
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{moment.unix(borrow.timestamp).fromNow()}</TableCell>
+                    <TableCell className="text-right">
+                      <TransactionIdentity
+                        txHash={borrow.hash}
+                        chainId={chainId}
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>

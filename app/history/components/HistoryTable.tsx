@@ -268,7 +268,10 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
               <TableBody>
                 {history.filter((tx) => tx.data.market !== undefined).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-gray-400">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-gray-400"
+                    >
                       No transactions found
                     </TableCell>
                   </TableRow>
@@ -276,112 +279,113 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                   history
                     .filter((tx) => tx.data.market !== undefined)
                     .map((tx, index) => {
-                // safely cast here because we only fetch txs for unique id in "markets"
-                const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
+                      // safely cast here because we only fetch txs for unique id in "markets"
+                      const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
-                const networkImg = getNetworkImg(market.morphoBlue.chain.id);
-                const networkName = getNetworkName(market.morphoBlue.chain.id);
-                const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-                const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
+                      const networkImg = getNetworkImg(market.morphoBlue.chain.id);
+                      const networkName = getNetworkName(market.morphoBlue.chain.id);
+                      const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
+                      const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
 
-                // Find the rebalancer info for the specific network of the transaction
-                const networkRebalancerInfo = rebalancerInfos.find((info) => info.network === market.morphoBlue.chain.id);
-                // Check if the transaction hash exists in the transactions of the found rebalancer info
-                const isAgent = networkRebalancerInfo?.transactions.some((agentTx) => agentTx.transactionHash === tx.hash);
+                      // Find the rebalancer info for the specific network of the transaction
+                      const networkRebalancerInfo = rebalancerInfos.find((info) => info.network === market.morphoBlue.chain.id);
+                      // Check if the transaction hash exists in the transactions of the found rebalancer info
+                      const isAgent = networkRebalancerInfo?.transactions.some((agentTx) => agentTx.transactionHash === tx.hash);
 
-                return (
-                  <TableRow key={index.toFixed()}>
-                    {/* Network & Asset */}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <TokenIcon
-                            address={market.loanAsset.address}
-                            chainId={market.morphoBlue.chain.id}
-                            symbol={market.loanAsset.symbol}
-                            width={20}
-                            height={20}
-                          />
-                          <span className="text-default-600">{market.loanAsset.symbol}</span>
-                        </div>
-                        <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                          {networkImg && (
-                            <Image
-                              src={networkImg}
-                              alt="network"
-                              width="16"
-                              height="16"
-                              className="rounded-full"
-                            />
-                          )}
-                          <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
-                        </div>
-                      </div>
-                    </TableCell>
+                      return (
+                        <TableRow key={index.toFixed()}>
+                          {/* Network & Asset */}
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1">
+                                <TokenIcon
+                                  address={market.loanAsset.address}
+                                  chainId={market.morphoBlue.chain.id}
+                                  symbol={market.loanAsset.symbol}
+                                  width={20}
+                                  height={20}
+                                />
+                                <span className="text-default-600">{market.loanAsset.symbol}</span>
+                              </div>
+                              <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                                {networkImg && (
+                                  <Image
+                                    src={networkImg}
+                                    alt="network"
+                                    width="16"
+                                    height="16"
+                                    className="rounded-full"
+                                  />
+                                )}
+                                <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
+                              </div>
+                            </div>
+                          </TableCell>
 
-                    {/* Market Details */}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-                          className="font-monospace text-xs hover:underline"
-                        >
-                          {market.uniqueKey.slice(2, 8)}
-                        </Link>
-                        <div className="flex items-center gap-1">
-                          <TokenIcon
-                            address={market.collateralAsset.address}
-                            chainId={market.morphoBlue.chain.id}
-                            symbol={market.collateralAsset.symbol}
-                            width={16}
-                            height={16}
-                          />
-                          <span className="text-sm text-default-500">{market.collateralAsset.symbol}</span>
-                        </div>
-                        <Chip
-                          size="sm"
-                          variant="light"
-                          className="bg-default-100 text-xs"
-                          radius="sm"
-                        >
-                          {formatReadable(lltv)}%
-                        </Chip>
-                      </div>
-                    </TableCell>
+                          {/* Market Details */}
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Link
+                                href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                                className="font-monospace text-xs hover:underline"
+                              >
+                                {market.uniqueKey.slice(2, 8)}
+                              </Link>
+                              <div className="flex items-center gap-1">
+                                <TokenIcon
+                                  address={market.collateralAsset.address}
+                                  chainId={market.morphoBlue.chain.id}
+                                  symbol={market.collateralAsset.symbol}
+                                  width={16}
+                                  height={16}
+                                />
+                                <span className="text-sm text-default-500">{market.collateralAsset.symbol}</span>
+                              </div>
+                              <Chip
+                                size="sm"
+                                variant="light"
+                                className="bg-default-100 text-xs"
+                                radius="sm"
+                              >
+                                {formatReadable(lltv)}%
+                              </Chip>
+                            </div>
+                          </TableCell>
 
-                    {/* Action & Amount */}
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="font-medium">{actionTypeToText(tx.type)}</span>
-                        <span className={tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'}>
-                          {sign}
-                          {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))} {market.loanAsset.symbol}
-                        </span>
-                        {isAgent && (
-                          <Badge size="sm">
-                            <RiRobot2Line />
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
+                          {/* Action & Amount */}
+                          <TableCell>
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-medium">{actionTypeToText(tx.type)}</span>
+                              <span className={tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'}>
+                                {sign}
+                                {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))}{' '}
+                                {market.loanAsset.symbol}
+                              </span>
+                              {isAgent && (
+                                <Badge size="sm">
+                                  <RiRobot2Line />
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
 
-                    {/* Time */}
-                    <TableCell>
-                      <div className="flex justify-center text-sm text-default-500">{moment.unix(tx.timestamp).fromNow()}</div>
-                    </TableCell>
+                          {/* Time */}
+                          <TableCell>
+                            <div className="flex justify-center text-sm text-default-500">{moment.unix(tx.timestamp).fromNow()}</div>
+                          </TableCell>
 
-                    {/* Transaction */}
-                    <TableCell>
-                      <div className="flex justify-center">
-                        <TransactionIdentity
-                          txHash={tx.hash}
-                          chainId={market.morphoBlue.chain.id}
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                    );
-                  })
+                          {/* Transaction */}
+                          <TableCell>
+                            <div className="flex justify-center">
+                              <TransactionIdentity
+                                txHash={tx.hash}
+                                chainId={market.morphoBlue.chain.id}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                 )}
               </TableBody>
             </Table>

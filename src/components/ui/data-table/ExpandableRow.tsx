@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TableRow, TableCell } from '../table';
 

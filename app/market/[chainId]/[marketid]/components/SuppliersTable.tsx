@@ -117,42 +117,45 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
             <TableBody>
               {suppliersWithAssets.length === 0 && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-gray-400">
+                  <TableCell
+                    colSpan={3}
+                    className="text-center text-gray-400"
+                  >
                     No suppliers found for this market
                   </TableCell>
                 </TableRow>
               ) : (
                 suppliersWithAssets.map((supplier) => {
-              const totalSupply = BigInt(market.state.supplyAssets);
-              const supplierAssets = BigInt(supplier.supplyAssets);
-              const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
-              const percentDisplay = percentOfSupply < 0.01 && percentOfSupply > 0 ? '<0.01%' : `${percentOfSupply.toFixed(2)}%`;
+                  const totalSupply = BigInt(market.state.supplyAssets);
+                  const supplierAssets = BigInt(supplier.supplyAssets);
+                  const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
+                  const percentDisplay = percentOfSupply < 0.01 && percentOfSupply > 0 ? '<0.01%' : `${percentOfSupply.toFixed(2)}%`;
 
-              return (
-                <TableRow key={`supplier-${supplier.userAddress}`}>
-                  <TableCell>
-                    <AccountIdentity
-                      address={supplier.userAddress as Address}
-                      variant="compact"
-                      linkTo="profile"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}
-                    {market?.loanAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={16}
-                          height={16}
+                  return (
+                    <TableRow key={`supplier-${supplier.userAddress}`}>
+                      <TableCell>
+                        <AccountIdentity
+                          address={supplier.userAddress as Address}
+                          variant="compact"
+                          linkTo="profile"
                         />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{percentDisplay}</TableCell>
-                </TableRow>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}
+                        {market?.loanAsset?.symbol && (
+                          <span className="ml-1 inline-flex items-center">
+                            <TokenIcon
+                              address={market.loanAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">{percentDisplay}</TableCell>
+                    </TableRow>
                   );
                 })
               )}

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type * as React from 'react';
 import { ArrowDownIcon, ArrowUpIcon } from '@radix-ui/react-icons';
 import { TableHead } from '../table';
 
@@ -12,15 +12,7 @@ type SortableHeadProps = {
   className?: string;
 };
 
-export function SortableHead({
-  label,
-  sortKey,
-  currentSortKey,
-  direction,
-  onSort,
-  showDirection = true,
-  className,
-}: SortableHeadProps) {
+export function SortableHead({ label, sortKey, currentSortKey, direction, onSort, showDirection = true, className }: SortableHeadProps) {
   const isSorting = currentSortKey === sortKey;
 
   return (

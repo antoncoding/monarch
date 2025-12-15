@@ -105,47 +105,50 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
             <TableBody>
               {supplies.length === 0 && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-400">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-400"
+                  >
                     No supply activities found for this market
                   </TableCell>
                 </TableRow>
               ) : (
                 supplies.map((supply) => (
-              <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
-                <TableCell>
-                  <AccountIdentity
-                    address={supply.userAddress as Address}
-                    variant="compact"
-                    linkTo="profile"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Badge variant={supply.type === 'MarketSupply' ? 'success' : 'danger'}>
-                    {supply.type === 'MarketSupply' ? 'Supply' : 'Withdraw'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}
-                  {market?.loanAsset?.symbol && (
-                    <span className="ml-1 inline-flex items-center">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
+                  <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
+                    <TableCell>
+                      <AccountIdentity
+                        address={supply.userAddress as Address}
+                        variant="compact"
+                        linkTo="profile"
                       />
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>{moment.unix(supply.timestamp).fromNow()}</TableCell>
-                <TableCell className="text-right">
-                  <TransactionIdentity
-                    txHash={supply.hash}
-                    chainId={chainId}
-                  />
-                </TableCell>
-              </TableRow>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={supply.type === 'MarketSupply' ? 'success' : 'danger'}>
+                        {supply.type === 'MarketSupply' ? 'Supply' : 'Withdraw'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}
+                      {market?.loanAsset?.symbol && (
+                        <span className="ml-1 inline-flex items-center">
+                          <TokenIcon
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            symbol={market.loanAsset.symbol}
+                            width={16}
+                            height={16}
+                          />
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{moment.unix(supply.timestamp).fromNow()}</TableCell>
+                    <TableCell className="text-right">
+                      <TransactionIdentity
+                        txHash={supply.hash}
+                        chainId={chainId}
+                      />
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
             </TableBody>
