@@ -26,13 +26,7 @@ import RewardTable from './RewardTable';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
-  const { 
-    rewards, 
-    distributions, 
-    merklRewardsWithProofs, 
-    loading: loadingRewards, 
-    refresh 
-  } = useUserRewards(account);
+  const { rewards, distributions, merklRewardsWithProofs, loading: loadingRewards, refresh } = useUserRewards(account);
 
   const { data: morphoBalanceMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,

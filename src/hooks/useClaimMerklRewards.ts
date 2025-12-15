@@ -27,8 +27,7 @@ export function useClaimMerklRewards() {
 
   const claimRewards = useCallback(
     async (rewards: MerklRewardWithProofs[]): Promise<ClaimResult> => {
-
-      console.log('test', rewards)
+      console.log('test', rewards);
 
       if (!address) {
         return {
@@ -109,11 +108,11 @@ export function useClaimMerklRewards() {
           status: 'success',
           txHash: hash,
         };
-      } catch (err) {
+      } catch (_err) {
         setClaimStatus('error');
         return {
           status: 'error',
-          error: new Error("Claiming failed or canceled, please try again later")
+          error: new Error('Claiming failed or canceled, please try again later'),
         };
       }
     },

@@ -185,10 +185,7 @@ const useUserRewards = (user: string | undefined) => {
 
     try {
       setLoading(true);
-      const [morphoRewardsData, merklRewardsData] = await Promise.all([
-        fetchMorphoRewards(user),
-        fetchMerklRewards(user),
-      ]);
+      const [morphoRewardsData, merklRewardsData] = await Promise.all([fetchMorphoRewards(user), fetchMerklRewards(user)]);
 
       // Combine Morpho and Merkl rewards
       const combinedRewards = [...morphoRewardsData.rewards, ...merklRewardsData.rewards];

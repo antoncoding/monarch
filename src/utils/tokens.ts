@@ -751,6 +751,19 @@ const supportedTokens = [
     peg: TokenPeg.USD,
   },
   // End of hyperEvm
+
+  // Monad
+  {
+    symbol: 'WMON',
+    img: require('../imgs/chains/monad.svg') as string,
+    decimals: 18,
+    networks: [
+      {
+        address: '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A', // not used in "reward" as MORPHO_ARBITRUM just yet
+        chain: monad,
+      },
+    ],
+  },
   {
     symbol: 'MORPHO',
     img: require('../imgs/tokens/morpho.svg') as string,
