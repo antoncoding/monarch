@@ -128,7 +128,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                       <TableCell className="text-sm">
                         {hasBadDebt ? (
                           <div className="flex items-center justify-end gap-1">
-                            <span>{formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}</span>
+                            <span>{formatSimple(Number(formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)))}</span>
                             {market?.loanAsset?.symbol && (
                               <TokenIcon
                                 address={market.loanAsset.address}

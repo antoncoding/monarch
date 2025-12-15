@@ -15,8 +15,8 @@ import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
-import { getAssetURL, getMerklCampaignURL } from '@/utils/external';
-import { getNetworkImg } from '@/utils/networks';
+import { getMerklCampaignURL } from '@/utils/external';
+import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import type { AggregatedRewardType } from '@/utils/types';
 
@@ -178,40 +178,36 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
                 const rewardKey = `${tokenReward.asset.address.toLowerCase()}-${tokenReward.asset.chain_id}`;
                 const isThisRewardClaiming = claimingRewardKey === rewardKey;
 
+                const networkImg = getNetworkImg(tokenReward.asset.chain_id);
+                const networkName = getNetworkName(tokenReward.asset.chain_id);
+
                 return (
                   <TableRow key={index}>
                     <TableCell>
-                      <Link
-                        href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 no-underline hover:opacity-80 text-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
+                      <div className="flex items-center gap-1">
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
                           width={16}
                           height={16}
                         />
-                        <span>{matchedToken.symbol}</span>
-                      </Link>
+                        <span className="text-sm">{matchedToken.symbol}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center justify-center">
-                        {getNetworkImg(tokenReward.asset.chain_id) ? (
-                          <Image
-                            src={getNetworkImg(tokenReward.asset.chain_id) as string}
-                            alt={`Chain ${tokenReward.asset.chain_id}`}
-                            width={20}
-                            height={20}
-                          />
-                        ) : (
-                          <div
-                            className="rounded-full bg-gray-300 dark:bg-gray-700"
-                            style={{ width: 20, height: 20 }}
-                          />
-                        )}
+                        <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
+                          {networkImg && (
+                            <Image
+                              src={networkImg}
+                              alt="network"
+                              width="16"
+                              height="16"
+                              className="rounded-full"
+                            />
+                          )}
+                          <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">
