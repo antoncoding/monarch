@@ -1,58 +1,53 @@
-import type { MerklCampaignsResponse, MerklApiParams, MerklCampaign, SimplifiedCampaign } from './merklTypes';
+import { MerklApi } from '@merkl/api';
+import type { MerklCampaign, SimplifiedCampaign, MerklApiParams } from './merklTypes';
 
-const MERKL_API_BASE_URL = 'https://api.merkl.xyz/v4';
+const MERKL_API_BASE_URL = 'https://api.merkl.xyz';
 
-export class MerklApiClient {
-  private readonly baseUrl: string;
+// Initialize the Merkl SDK singleton
+export const merklClient = MerklApi(MERKL_API_BASE_URL);
 
-  constructor(baseUrl: string = MERKL_API_BASE_URL) {
-    this.baseUrl = baseUrl;
-  }
+// Helper function to fetch campaigns using the SDK with Adapter pattern
+export async function fetchCampaigns(params: MerklApiParams = {}): Promise<MerklCampaign[]> {
+  try {
+    const queryParams: Record<string, unknown> = {};
 
-  private buildUrl(endpoint: string, params: MerklApiParams = {}): string {
-    const url = new URL(`${this.baseUrl}${endpoint}`);
+    if (params.type) queryParams.type = params.type;
+    if (params.chainId !== undefined) queryParams.chainId = params.chainId;
+    if (params.items !== undefined) queryParams.items = params.items;
+    if (params.page !== undefined) queryParams.page = params.page;
+    if (params.startTimestamp !== undefined) queryParams.startTimestamp = params.startTimestamp;
+    if (params.endTimestamp !== undefined) queryParams.endTimestamp = params.endTimestamp;
 
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, value.toString());
-      }
+    const { data, error, status } = await merklClient.v4.campaigns.get({
+      query: queryParams,
     });
 
-    return url.toString();
-  }
-
-  async fetchCampaigns(params: MerklApiParams = {}): Promise<MerklCampaignsResponse> {
-    const url = this.buildUrl('/campaigns', params);
-
-    try {
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Merkl API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as MerklCampaignsResponse;
-      return data;
-    } catch (error) {
-      console.error('Error fetching Merkl campaigns:', error);
-      throw error;
+    if (error ?? status !== 200) {
+      throw new Error(`Merkl API error: ${status} ${error}`);
     }
-  }
 
-  async fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaignsResponse> {
-    const now = Math.floor(Date.now() / 1000);
-
-    // Single API call with reasonable limit, no pagination loop
-    return this.fetchCampaigns({
-      ...params,
-      items: 100, // Get up to 100 campaigns in one call
-      page: 0,
-      startTimestamp: 0,
-      endTimestamp: now,
-    });
+    // The SDK returns data that's compatible with our MerklCampaign type
+    return data as unknown as MerklCampaign[];
+  } catch (err) {
+    console.error('Error fetching Merkl campaigns:', err);
+    throw err;
   }
 }
 
+// Helper function to fetch active campaigns
+export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaign[]> {
+  const now = Math.floor(Date.now() / 1000);
+
+  return fetchCampaigns({
+    ...params,
+    items: 100,
+    page: 0,
+    startTimestamp: 0,
+    endTimestamp: now,
+  });
+}
+
+// Adapter function to convert SDK campaign to SimplifiedCampaign
 export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampaign {
   const now = Math.floor(Date.now() / 1000);
   const isActive = campaign.startTimestamp <= now && campaign.endTimestamp > now;
@@ -96,5 +91,3 @@ export function simplifyMerklCampaign(campaign: MerklCampaign): SimplifiedCampai
 
   return baseResult;
 }
-
-export const merklApiClient = new MerklApiClient();

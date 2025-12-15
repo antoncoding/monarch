@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Address } from 'viem';
-import type { MerklChain, MerklToken } from '@/utils/merklTypes';
+import { merklClient } from '@/utils/merklApi';
 import type { RewardResponseType } from '@/utils/types';
 import { URLS } from '@/utils/urls';
+import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
 export type DistributionResponseType = {
   user: Address;
@@ -21,37 +22,43 @@ export type DistributionResponseType = {
   tx_data: string;
 };
 
-type MerklReward = {
-  distributionChainId: number;
-  root: string;
-  recipient: string;
+// Extended reward type with claiming data
+export type MerklRewardWithProofs = {
+  tokenAddress: Address;
+  chainId: number;
   amount: string;
   claimed: string;
   pending: string;
   proofs: string[];
-  token: Pick<MerklToken, 'address' | 'symbol' | 'decimals' | 'price'>;
+  symbol: string;
+  decimals: number;
 };
 
-type MerklApiResponse = {
-  chain: MerklChain;
-  rewards: MerklReward[];
-}[];
-
-async function fetchMerklRewards(userAddress: string): Promise<RewardResponseType[]> {
+async function fetchMerklRewards(
+  userAddress: string,
+): Promise<{ rewards: RewardResponseType[]; rewardsWithProofs: MerklRewardWithProofs[] }> {
   try {
     const rewardsList: RewardResponseType[] = [];
-    const chainIds = [1, 8453]; // Mainnet and Base
+    const rewardsWithProofsList: MerklRewardWithProofs[] = [];
 
-    for (const chainId of chainIds) {
-      const url = `https://api.merkl.xyz/v4/users/${userAddress}/rewards?chainId=${chainId}&reloadChainId=${chainId}&test=false&claimableOnly=false&breakdownPage=0&type=TOKEN`;
-      const response = await fetch(url);
+    // Scan all supported networks for Merkl rewards
+    for (const chainId of ALL_SUPPORTED_NETWORKS) {
+      // Use Merkl SDK to fetch rewards with proofs
+      const { data, error, status } = await merklClient.v4.users({ address: userAddress }).rewards.get({
+        query: {
+          chainId: [chainId.toString()],
+          reloadChainId: chainId,
+          test: false,
+          claimableOnly: false,
+          breakdownPage: 0,
+          type: 'TOKEN',
+        },
+      });
 
-      if (!response.ok) {
-        console.error(`Merkl API error for chain ${chainId}:`, response.status, response.statusText);
+      if (error ?? status !== 200) {
+        console.error(`Merkl API error for chain ${chainId}:`, status, error);
         continue;
       }
-
-      const data = (await response.json()) as MerklApiResponse;
 
       if (!Array.isArray(data) || data.length === 0) {
         console.warn(`No rewards data for chain ${chainId}`);
@@ -63,7 +70,10 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
           continue;
         }
 
-        const tokenAggregation: Record<string, { pending: bigint; amount: bigint; claimed: bigint }> = {};
+        const tokenAggregation: Record<
+          string,
+          { pending: bigint; amount: bigint; claimed: bigint; proofs: string[]; symbol: string; decimals: number }
+        > = {};
 
         for (const reward of chainData.rewards) {
           const tokenAddress = reward.token.address;
@@ -73,11 +83,14 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
               pending: 0n,
               amount: 0n,
               claimed: 0n,
+              proofs: reward.proofs ?? [],
+              symbol: reward.token.symbol,
+              decimals: reward.token.decimals,
             };
           }
 
-          const amount = BigInt(reward.amount || '0');
-          const claimed = BigInt(reward.claimed || '0');
+          const amount = BigInt(reward.amount ?? '0');
+          const claimed = BigInt(reward.claimed ?? '0');
           const pending = amount > claimed ? amount - claimed : 0n;
 
           tokenAggregation[tokenAddress].pending += pending;
@@ -86,6 +99,7 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
         }
 
         for (const [tokenAddress, amounts] of Object.entries(tokenAggregation)) {
+          // Add to UI rewards list
           rewardsList.push({
             type: 'uniform-reward',
             asset: {
@@ -102,13 +116,57 @@ async function fetchMerklRewards(userAddress: string): Promise<RewardResponseTyp
             },
             program_id: 'merkl',
           });
+
+          // Add to proofs list for claiming
+          rewardsWithProofsList.push({
+            tokenAddress: tokenAddress as Address,
+            chainId: chainData.chain.id,
+            amount: amounts.amount.toString(),
+            claimed: amounts.claimed.toString(),
+            pending: amounts.pending.toString(),
+            proofs: amounts.proofs,
+            symbol: amounts.symbol,
+            decimals: amounts.decimals,
+          });
         }
       }
     }
-    return rewardsList;
+    return { rewards: rewardsList, rewardsWithProofs: rewardsWithProofsList };
   } catch (error) {
     console.error('Error fetching Merkl rewards:', error);
-    return [];
+    return { rewards: [], rewardsWithProofs: [] };
+  }
+}
+
+async function fetchMorphoRewards(
+  userAddress: string,
+): Promise<{ rewards: RewardResponseType[]; distributions: DistributionResponseType[] }> {
+  try {
+    const [totalRewardsRes, distributionRes] = await Promise.all([
+      fetch(`${URLS.MORPHO_REWARDS_API}/users/${userAddress}/rewards`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+      fetch(`${URLS.MORPHO_REWARDS_API}/users/${userAddress}/distributions`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    ]);
+
+    const morphoRewards = (await totalRewardsRes.json()).data as RewardResponseType[];
+    const distributions = (await distributionRes.json()).data as DistributionResponseType[];
+
+    return {
+      rewards: Array.isArray(morphoRewards) ? morphoRewards : [],
+      distributions: Array.isArray(distributions) ? distributions : [],
+    };
+  } catch (error) {
+    console.error('Error fetching Morpho rewards:', error);
+    return { rewards: [], distributions: [] };
   }
 }
 
@@ -116,6 +174,7 @@ const useUserRewards = (user: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [rewards, setRewards] = useState<RewardResponseType[]>([]);
   const [distributions, setDistributions] = useState<DistributionResponseType[]>([]);
+  const [merklRewardsWithProofs, setMerklRewardsWithProofs] = useState<MerklRewardWithProofs[]>([]);
   const [error, setError] = useState<unknown | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -126,37 +185,23 @@ const useUserRewards = (user: string | undefined) => {
 
     try {
       setLoading(true);
-      const [totalRewardsRes, distributionRes, merklRewards] = await Promise.all([
-        fetch(`${URLS.MORPHO_REWARDS_API}/users/${user}/rewards`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${URLS.MORPHO_REWARDS_API}/users/${user}/distributions`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
+      const [morphoRewardsData, merklRewardsData] = await Promise.all([
+        fetchMorphoRewards(user),
         fetchMerklRewards(user),
       ]);
 
-      const morphoRewards = (await totalRewardsRes.json()).data as RewardResponseType[];
-      const newDistributions = (await distributionRes.json()).data as DistributionResponseType[];
-
       // Combine Morpho and Merkl rewards
-      const combinedRewards = [...(Array.isArray(morphoRewards) ? morphoRewards : []), ...merklRewards];
+      const combinedRewards = [...morphoRewardsData.rewards, ...merklRewardsData.rewards];
 
-      if (Array.isArray(newDistributions)) {
-        setDistributions(newDistributions);
-      }
+      setDistributions(morphoRewardsData.distributions);
       setRewards(combinedRewards);
+      setMerklRewardsWithProofs(merklRewardsData.rewardsWithProofs);
       setError(null);
     } catch (err) {
       setError(err);
       setRewards([]);
       setDistributions([]);
+      setMerklRewardsWithProofs([]);
     } finally {
       setLoading(false);
     }
@@ -169,6 +214,7 @@ const useUserRewards = (user: string | undefined) => {
   return {
     rewards,
     distributions,
+    merklRewardsWithProofs,
     loading,
     error,
     refresh: fetchData,

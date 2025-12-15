@@ -1,19 +1,21 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
+import { useCallback, useMemo, useState } from 'react';
+import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
+import { useConnection, useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { TokenIcon } from '@/components/TokenIcon';
-import type { DistributionResponseType } from '@/hooks/useRewards';
+import { useMerklCampaigns } from '@/contexts/MerklCampaignsContext';
+import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/useRewards';
+import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
-import { getAssetURL } from '@/utils/external';
+import { getAssetURL, getMerklCampaignURL } from '@/utils/external';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import type { AggregatedRewardType } from '@/utils/types';
@@ -22,12 +24,21 @@ type RewardTableProps = {
   account: string;
   rewards: AggregatedRewardType[];
   distributions: DistributionResponseType[];
-  showClaimed: boolean;
+  merklRewardsWithProofs: MerklRewardWithProofs[];
 };
 
-export default function RewardTable({ rewards, distributions, account, showClaimed }: RewardTableProps) {
+type SortColumn = 'asset' | 'chain' | null;
+type SortDirection = 'asc' | 'desc';
+
+export default function RewardTable({ rewards, distributions, merklRewardsWithProofs, account }: RewardTableProps) {
   const { chainId } = useConnection();
+  const currentChainId = useChainId();
   const toast = useStyledToast();
+  const { campaigns } = useMerklCampaigns();
+  const [claimingRewardKey, setClaimingRewardKey] = useState<string | null>(null);
+  const { mutateAsync: switchChainAsync } = useSwitchChain();
+  const [sortColumn, setSortColumn] = useState<SortColumn>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
@@ -39,21 +50,46 @@ export default function RewardTable({ rewards, distributions, account, showClaim
     successDescription: 'Successfully claimed rewards',
   });
 
-  const filteredRewardTokens = useMemo(
-    () =>
-      rewards.filter((tokenReward) => {
-        if (showClaimed) return true;
+  // Initialize Merkl claiming hook
+  const { claimSingleReward, claimStatus } = useClaimMerklRewards();
 
-        // if showClaimed is not turned on, only show tokens that are claimable or have pending
-        if (tokenReward.total.claimable === 0n && tokenReward.total.pendingAmount === 0n) return false;
+  const handleSort = useCallback((column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  }, [sortColumn, sortDirection]);
 
-        return true;
-      }),
-    [rewards, showClaimed],
-  );
+  const filteredRewardTokens = useMemo(() => {
+    const filtered = rewards.filter((tokenReward) => {
+      // Only show tokens with claimable rewards
+      return tokenReward.total.claimable > 0n;
+    });
+
+    // Sort if sortColumn is set
+    if (!sortColumn) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortColumn === 'asset') {
+        const aToken = findToken(a.asset.address, a.asset.chain_id);
+        const bToken = findToken(b.asset.address, b.asset.chain_id);
+        const aSymbol = aToken?.symbol ?? 'Unknown';
+        const bSymbol = bToken?.symbol ?? 'Unknown';
+        comparison = aSymbol.localeCompare(bSymbol);
+      } else if (sortColumn === 'chain') {
+        comparison = a.asset.chain_id - b.asset.chain_id;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [rewards, sortColumn, sortDirection]);
 
   const handleClaim = useCallback(
-    (distribution: DistributionResponseType | undefined) => {
+    async (distribution: DistributionResponseType | undefined) => {
       if (!account) {
         toast.error('No account connected', 'Please connect your wallet to continue.');
         return;
@@ -62,37 +98,103 @@ export default function RewardTable({ rewards, distributions, account, showClaim
         toast.error('No claim data', 'No claim data found for this reward please try again later.');
         return;
       }
-      sendTransaction({
-        account: account as Address,
-        to: distribution.distributor.address as Address,
-        data: distribution.tx_data as `0x${string}`,
-        chainId: distribution.distributor.chain_id,
-      });
+
+      try {
+        // Check if we need to switch chains
+        if (currentChainId !== distribution.distributor.chain_id) {
+          await switchChainAsync({ chainId: distribution.distributor.chain_id });
+        }
+
+        // Send the transaction
+        sendTransaction({
+          account: account as Address,
+          to: distribution.distributor.address as Address,
+          data: distribution.tx_data as `0x${string}`,
+          chainId: distribution.distributor.chain_id,
+        });
+      } catch (error) {
+        // User rejected chain switch or other error
+        if (error instanceof Error && !error.message.includes('User rejected')) {
+          toast.error('Claim Failed', error.message);
+        }
+      }
     },
-    [account, toast, sendTransaction],
+    [account, currentChainId, switchChainAsync, toast, sendTransaction],
+  );
+
+  const handleMerklClaim = useCallback(
+    async (tokenAddress: string, tokenChainId: number) => {
+      if (!account) {
+        toast.error('No account connected', 'Please connect your wallet to continue.');
+        return;
+      }
+
+      const rewardKey = `${tokenAddress.toLowerCase()}-${tokenChainId}`;
+      setClaimingRewardKey(rewardKey);
+
+      try {
+        // Find the reward for this specific token and chain
+        const rewardToClaim = merklRewardsWithProofs.find(
+          (r) => r.tokenAddress.toLowerCase() === tokenAddress.toLowerCase() && r.chainId === tokenChainId,
+        );
+
+        if (!rewardToClaim) {
+          toast.error('No claim data', 'No Merkl claim data found for this reward. Please try again later.');
+          return;
+        }
+
+        // Check if there's anything to claim
+        const claimableAmount = BigInt(rewardToClaim.amount) - BigInt(rewardToClaim.claimed);
+        if (claimableAmount <= 0n) {
+          toast.error('Nothing to claim', 'No claimable rewards available for this token.');
+          return;
+        }
+
+        const result = await claimSingleReward(rewardToClaim);
+
+        if (result.status === 'success') {
+          toast.success('Merkl Reward Claimed!', `Successfully claimed ${rewardToClaim.symbol} rewards.`);
+        } else if (result.status === 'error' && result.error) {
+          toast.error('Claim Failed', result.error.message);
+        }
+      } catch (err) {
+        toast.error('Claim Failed', err instanceof Error ? err.message : 'Unknown error occurred');
+      } finally {
+        setClaimingRewardKey(null);
+      }
+    },
+    [account, merklRewardsWithProofs, claimSingleReward, toast],
   );
 
   return (
-    <div className="mt-4 gap-8">
-      <div className="bg-surface mb-6 mt-2">
-        <Table
-          aria-label="Rewards Table"
-          classNames={{
-            th: 'bg-surface text-center',
-            td: 'text-center',
-            wrapper: 'rounded-none shadow-none bg-surface',
-          }}
-        >
-          <TableHeader>
-            <TableColumn align="center">Asset</TableColumn>
-            <TableColumn align="center">Chain</TableColumn>
-            <TableColumn align="center">Claimable</TableColumn>
-            <TableColumn align="center">Pending</TableColumn>
-            <TableColumn align="center">Claimed</TableColumn>
-            <TableColumn align="center">Total</TableColumn>
-            <TableColumn align="end">Action</TableColumn>
-          </TableHeader>
-          <TableBody>
+    <div>
+      <Table
+        classNames={{
+          wrapper: 'bg-surface shadow-sm rounded',
+          table: 'bg-surface',
+        }}
+        aria-label="Rewards table"
+      >
+        <TableHeader>
+          <TableColumn
+            allowsSorting
+            onClick={() => handleSort('asset')}
+            className="cursor-pointer"
+          >
+            ASSET {sortColumn === 'asset' && (sortDirection === 'asc' ? '↑' : '↓')}
+          </TableColumn>
+          <TableColumn
+            allowsSorting
+            onClick={() => handleSort('chain')}
+            className="cursor-pointer"
+          >
+            CHAIN {sortColumn === 'chain' && (sortDirection === 'asc' ? '↑' : '↓')}
+          </TableColumn>
+          <TableColumn>CLAIMABLE</TableColumn>
+          <TableColumn>CAMPAIGN</TableColumn>
+          <TableColumn align="end">ACTIONS</TableColumn>
+        </TableHeader>
+        <TableBody className="font-zen">
             {filteredRewardTokens
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
@@ -103,8 +205,6 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                   decimals: 18,
                 };
 
-                const total = tokenReward.total.claimable + tokenReward.total.pendingAmount + tokenReward.total.claimed;
-
                 const distribution = distributions.find(
                   (d) =>
                     d.asset.address.toLowerCase() === tokenReward.asset.address.toLowerCase() &&
@@ -113,20 +213,28 @@ export default function RewardTable({ rewards, distributions, account, showClaim
 
                 const isMerklReward = tokenReward.programs.includes('merkl');
 
+                // Find matching campaign for this reward
+                const matchedCampaign = campaigns.find(
+                  (c) =>
+                    c.rewardToken.address.toLowerCase() === tokenReward.asset.address.toLowerCase() &&
+                    c.chainId === tokenReward.asset.chain_id,
+                );
+
+                // Create unique key for tracking claim status
+                const rewardKey = `${tokenReward.asset.address.toLowerCase()}-${tokenReward.asset.chain_id}`;
+                const isThisRewardClaiming = claimingRewardKey === rewardKey;
+
                 return (
-                  <TableRow
-                    key={index}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
+                  <TableRow key={index}>
                     <TableCell>
                       <Link
                         href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 no-underline hover:opacity-80"
+                        className="flex items-center gap-2 no-underline hover:opacity-80"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <p>{matchedToken.symbol}</p>
+                        <span>{matchedToken.symbol}</span>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
@@ -136,25 +244,23 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center">
-                        {getNetworkImg(tokenReward.asset.chain_id) ? (
-                          <Image
-                            src={getNetworkImg(tokenReward.asset.chain_id) as string}
-                            alt={`Chain ${tokenReward.asset.chain_id}`}
-                            width={20}
-                            height={20}
-                          />
-                        ) : (
-                          <div
-                            className="rounded-full bg-gray-300 dark:bg-gray-700"
-                            style={{ width: 20, height: 20 }}
-                          />
-                        )}
-                      </div>
+                      {getNetworkImg(tokenReward.asset.chain_id) ? (
+                        <Image
+                          src={getNetworkImg(tokenReward.asset.chain_id) as string}
+                          alt={`Chain ${tokenReward.asset.chain_id}`}
+                          width={20}
+                          height={20}
+                        />
+                      ) : (
+                        <div
+                          className="rounded-full bg-gray-300 dark:bg-gray-700"
+                          style={{ width: 20, height: 20 }}
+                        />
+                      )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <p>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</p>
+                      <div className="flex items-center gap-2">
+                        <span>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</span>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
@@ -164,73 +270,57 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <p>{formatSimple(formatBalance(tokenReward.total.pendingAmount, matchedToken.decimals))}</p>
-                        <TokenIcon
-                          address={tokenReward.asset.address}
-                          chainId={tokenReward.asset.chain_id}
-                          width={16}
-                          height={16}
-                        />
-                      </div>
+                      {matchedCampaign ? (
+                        <Link
+                          href={getMerklCampaignURL(
+                            matchedCampaign.chainId,
+                            matchedCampaign.type,
+                            matchedCampaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+                              ? matchedCampaign.targetToken?.address ?? matchedCampaign.campaignId
+                              : matchedCampaign.marketId.slice(0, 42),
+                          )}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:opacity-80"
+                        >
+                          Details
+                          <ExternalLinkIcon className="h-3 w-3" />
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <p>{formatSimple(formatBalance(tokenReward.total.claimed, matchedToken.decimals))}</p>
-                        <TokenIcon
-                          address={tokenReward.asset.address}
-                          chainId={tokenReward.asset.chain_id}
-                          width={16}
-                          height={16}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <p>{formatSimple(formatBalance(total, matchedToken.decimals))}</p>
-                        <TokenIcon
-                          address={tokenReward.asset.address}
-                          chainId={tokenReward.asset.chain_id}
-                          width={16}
-                          height={16}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell align="center">
-                      <div className="flex justify-center">
-                        {isMerklReward ? (
-                          <Link
-                            href={`https://app.merkl.xyz/users/${account}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button
-                              variant="surface"
-                              size="sm"
-                              disabled={tokenReward.total.claimable === BigInt(0)}
-                            >
-                              Claim on Merkl
-                            </Button>
-                          </Link>
-                        ) : (
-                          <ExecuteTransactionButton
-                            targetChainId={distribution?.distributor.chain_id ?? 1}
-                            onClick={() => handleClaim(distribution)}
-                            variant="surface"
-                            size="sm"
-                            disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
-                          >
-                            Claim
-                          </ExecuteTransactionButton>
-                        )}
-                      </div>
+                    <TableCell className="text-right">
+                      {isMerklReward ? (
+                        <Button
+                          onClick={() => handleMerklClaim(tokenReward.asset.address, tokenReward.asset.chain_id)}
+                          variant="surface"
+                          size="sm"
+                          disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
+                          isLoading={isThisRewardClaiming}
+                        >
+                          {isThisRewardClaiming && claimStatus === 'switching'
+                            ? 'Switching...'
+                            : isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')
+                              ? 'Claiming...'
+                              : 'Claim'}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleClaim(distribution)}
+                          variant="surface"
+                          size="sm"
+                          disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
+                        >
+                          Claim
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
               })}
-          </TableBody>
-        </Table>
-      </div>
+        </TableBody>
+      </Table>
     </div>
   );
 }
