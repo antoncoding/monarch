@@ -27,8 +27,6 @@ export function useClaimMerklRewards() {
 
   const claimRewards = useCallback(
     async (rewards: MerklRewardWithProofs[]): Promise<ClaimResult> => {
-      console.log('test', rewards);
-
       if (!address) {
         return {
           status: 'error',

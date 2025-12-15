@@ -19,7 +19,10 @@ export async function fetchCampaigns(params: MerklApiParams = {}): Promise<Merkl
     if (params.endTimestamp !== undefined) queryParams.endTimestamp = params.endTimestamp;
 
     const { data, error, status } = await merklClient.v4.campaigns.get({
-      query: queryParams,
+      query: {
+        ...queryParams,
+        mainProtocolId: 'morpho',
+      },
     });
 
     if (error ?? status !== 200) {
@@ -34,17 +37,34 @@ export async function fetchCampaigns(params: MerklApiParams = {}): Promise<Merkl
   }
 }
 
-// Helper function to fetch active campaigns
+// Helper function to fetch active campaigns with full pagination
 export async function fetchActiveCampaigns(params: Omit<MerklApiParams, 'startTimestamp' | 'endTimestamp'> = {}): Promise<MerklCampaign[]> {
   const now = Math.floor(Date.now() / 1000);
+  const pageSize = params.items ?? 100; // Use provided items or default to 100
+  const allCampaigns: MerklCampaign[] = [];
+  let currentPage = 0;
+  let hasMore = true;
 
-  return fetchCampaigns({
-    ...params,
-    items: 100,
-    page: 0,
-    startTimestamp: 0,
-    endTimestamp: now,
-  });
+  while (hasMore) {
+    const batch = await fetchCampaigns({
+      ...params,
+      items: pageSize,
+      page: currentPage,
+      startTimestamp: 0,
+      endTimestamp: now,
+    });
+
+    allCampaigns.push(...batch);
+
+    // If we got fewer results than pageSize, we've reached the end
+    if (batch.length < pageSize) {
+      hasMore = false;
+    } else {
+      currentPage++;
+    }
+  }
+
+  return allCampaigns;
 }
 
 // Adapter function to convert SDK campaign to SimplifiedCampaign
