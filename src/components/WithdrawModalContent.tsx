@@ -33,7 +33,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     },
     [onAmountChange],
   );
-  const { address: account, isConnected, chainId } = useConnection();
+  const { address: account, chainId } = useConnection();
 
   // Prefer the market prop (which has fresh state) over position.market
   const activeMarket = market ?? position?.market;
@@ -103,6 +103,10 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
     });
   }, [account, activeMarket, position, withdrawAmount, sendTransaction, toast]);
 
+  const handleWithdraw = useCallback(() => {
+    void withdraw();
+  }, [withdraw]);
+
   if (!activeMarket) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
@@ -140,7 +144,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
 
             <ExecuteTransactionButton
               targetChainId={activeMarket.morphoBlue.chain.id}
-              onClick={() => void withdraw()}
+              onClick={handleWithdraw}
               isLoading={isConfirming}
               disabled={!withdrawAmount}
               variant="primary"

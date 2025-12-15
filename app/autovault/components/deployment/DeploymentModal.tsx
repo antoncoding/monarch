@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@heroui/react';
 import { FaCube } from 'react-icons/fa';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
@@ -52,6 +52,10 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
       setAckExistingVault(false);
     }
   }, [isOpen]);
+
+  const handleCreateVault = useCallback(() => {
+    void createVault();
+  }, [createVault]);
 
   return (
     <Modal
@@ -107,13 +111,8 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
               <div className="flex justify-end pt-2">
                 <ExecuteTransactionButton
                   targetChainId={selectedTokenAndNetwork?.networkId ?? 1}
-                  onClick={() => void createVault()}
-                  disabled={
-                    !selectedTokenAndNetwork ||
-                    balancesLoading ||
-                    marketsLoading ||
-                    (userAlreadyHasVault && !ackExistingVault)
-                  }
+                  onClick={handleCreateVault}
+                  disabled={!selectedTokenAndNetwork || balancesLoading || marketsLoading || (userAlreadyHasVault && !ackExistingVault)}
                   isLoading={isDeploying}
                   variant="primary"
                   className="min-w-[140px]"

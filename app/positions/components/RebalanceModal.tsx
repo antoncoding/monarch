@@ -194,22 +194,24 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     resetSelections,
   ]);
 
-  const handleExecuteRebalance = useCallback(async () => {
-    setShowProcessModal(true);
-    try {
-      const result = await executeRebalance();
-      // Explicitly refetch AFTER successful execution
+  const handleExecuteRebalance = useCallback(() => {
+    void (async () => {
+      setShowProcessModal(true);
+      try {
+        const result = await executeRebalance();
+        // Explicitly refetch AFTER successful execution
 
-      if (result === true) {
-        refetch(() => {
-          toast.info('Data refreshed', 'Position data updated after rebalance.');
-        });
+        if (result === true) {
+          refetch(() => {
+            toast.info('Data refreshed', 'Position data updated after rebalance.');
+          });
+        }
+      } catch (error) {
+        console.error('Error during rebalance:', error);
+      } finally {
+        setShowProcessModal(false);
       }
-    } catch (error) {
-      console.error('Error during rebalance:', error);
-    } finally {
-      setShowProcessModal(false);
-    }
+    })();
   }, [executeRebalance, toast, refetch]);
 
   const handleManualRefresh = () => {
@@ -304,7 +306,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           </Button>
           <ExecuteTransactionButton
             targetChainId={groupedPosition.chainId}
-            onClick={() => void handleExecuteRebalance()}
+            onClick={handleExecuteRebalance}
             disabled={rebalanceActions.length === 0}
             isLoading={isProcessing}
             variant="primary"

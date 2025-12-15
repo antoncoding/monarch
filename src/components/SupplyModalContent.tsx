@@ -57,6 +57,15 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
     [setSupplyAmount, onAmountChange],
   );
 
+  // Handle supply execution
+  const handleSupply = useCallback(() => {
+    if ((!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved)) {
+      void approveAndSupply();
+    } else {
+      void signAndSupply();
+    }
+  }, [permit2Authorized, useEth, usePermit2Setting, isApproved, approveAndSupply, signAndSupply]);
+
   return (
     <>
       {showProcessModal && (
@@ -136,7 +145,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
 
                 <ExecuteTransactionButton
                   targetChainId={market.morphoBlue.chain.id}
-                  onClick={() => void ((!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? approveAndSupply() : signAndSupply())}
+                  onClick={handleSupply}
                   isLoading={isLoadingPermit2 || supplyPending}
                   disabled={inputError !== null || !supplyAmount}
                   variant="primary"

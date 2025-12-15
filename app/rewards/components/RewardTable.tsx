@@ -1,20 +1,20 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { TokenIcon } from '@/components/TokenIcon';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import type { DistributionResponseType } from '@/hooks/useRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance, formatSimple } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
-import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import type { AggregatedRewardType } from '@/utils/types';
 
@@ -28,15 +28,6 @@ type RewardTableProps = {
 export default function RewardTable({ rewards, distributions, account, showClaimed }: RewardTableProps) {
   const { chainId } = useConnection();
   const toast = useStyledToast();
-  const [targetChainId, setTargetChainId] = useState<number>(chainId ?? SupportedNetworks.Mainnet);
-
-  // Use our custom hook for network switching
-  const { switchToNetwork } = useMarketNetwork({
-    targetChainId,
-    onNetworkSwitched: () => {
-      // Additional actions after network switch if needed
-    },
-  });
 
   const { sendTransaction } = useTransactionWithToast({
     toastId: 'claim',
@@ -59,6 +50,26 @@ export default function RewardTable({ rewards, distributions, account, showClaim
         return true;
       }),
     [rewards, showClaimed],
+  );
+
+  const handleClaim = useCallback(
+    (distribution: DistributionResponseType | undefined) => {
+      if (!account) {
+        toast.error('No account connected', 'Please connect your wallet to continue.');
+        return;
+      }
+      if (!distribution) {
+        toast.error('No claim data', 'No claim data found for this reward please try again later.');
+        return;
+      }
+      sendTransaction({
+        account: account as Address,
+        to: distribution.distributor.address as Address,
+        data: distribution.tx_data as `0x${string}`,
+        chainId: distribution.distributor.chain_id,
+      });
+    },
+    [account, toast, sendTransaction],
   );
 
   return (
@@ -202,39 +213,15 @@ export default function RewardTable({ rewards, distributions, account, showClaim
                             </Button>
                           </Link>
                         ) : (
-                          <Button
+                          <ExecuteTransactionButton
+                            targetChainId={distribution?.distributor.chain_id ?? 1}
+                            onClick={() => handleClaim(distribution)}
                             variant="surface"
                             size="sm"
                             disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
-                            onClick={() => {
-                              void (async () => {
-                                if (!account) {
-                                  toast.error('No account connected', 'Please connect your wallet to continue.');
-                                  return;
-                                }
-                                if (!distribution) {
-                                  toast.error('No claim data', 'No claim data found for this reward please try again later.');
-                                  return;
-                                }
-                                if (chainId !== distribution.distributor.chain_id) {
-                                  // Set the target chain ID and switch
-                                  setTargetChainId(distribution.distributor.chain_id);
-                                  switchToNetwork();
-                                  // Wait for network switch
-                                  await new Promise((resolve) => setTimeout(resolve, 1000));
-                                }
-                                sendTransaction({
-                                  account: account as Address,
-                                  to: distribution.distributor.address as Address,
-                                  data: distribution.tx_data as `0x${string}`,
-                                  chainId: distribution.distributor.chain_id,
-                                  // allow estimating gas
-                                });
-                              })();
-                            }}
                           >
                             Claim
-                          </Button>
+                          </ExecuteTransactionButton>
                         )}
                       </div>
                     </TableCell>

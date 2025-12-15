@@ -68,6 +68,14 @@ export function WithdrawCollateralAndRepay({
     onSuccess,
   });
 
+  const handleRepay = useCallback(() => {
+    if (!isApproved && !permit2Authorized) {
+      void approveAndRepay();
+    } else {
+      void signAndRepay();
+    }
+  }, [isApproved, permit2Authorized, approveAndRepay, signAndRepay]);
+
   // if max is clicked, set the repayShares to max shares
   const setShareToMax = useCallback(() => {
     if (currentPosition) {
@@ -233,55 +241,54 @@ export function WithdrawCollateralAndRepay({
         </div>
 
         <div className="mt-12 space-y-4">
-            {/* Withdraw Input Section */}
-            <div className="mb-1">
-              <div className="flex items-center justify-between">
-                <p className="font-inter text-sm">Withdraw Collateral</p>
-                <p className="font-inter text-xs opacity-50">
-                  Available: {formatBalance(BigInt(currentPosition?.state.collateral ?? 0), market.collateralAsset.decimals)}{' '}
-                  {market.collateralAsset.symbol}
-                </p>
-              </div>
-
-              <div className="mb-4 flex items-start justify-between">
-                <div className="relative flex-grow">
-                  <Input
-                    decimals={market.collateralAsset.decimals}
-                    max={BigInt(currentPosition?.state.collateral ?? 0)}
-                    setValue={setWithdrawAmount}
-                    setError={setWithdrawInputError}
-                    exceedMaxErrMessage="Exceeds current collateral"
-                  />
-                  {withdrawInputError && <p className="p-1 text-sm text-red-500">{withdrawInputError}</p>}
-                </div>
-              </div>
+          {/* Withdraw Input Section */}
+          <div className="mb-1">
+            <div className="flex items-center justify-between">
+              <p className="font-inter text-sm">Withdraw Collateral</p>
+              <p className="font-inter text-xs opacity-50">
+                Available: {formatBalance(BigInt(currentPosition?.state.collateral ?? 0), market.collateralAsset.decimals)}{' '}
+                {market.collateralAsset.symbol}
+              </p>
             </div>
 
-            {/* Repay Input Section */}
-            <div className="mb-1">
-              <div className="flex items-center justify-between">
-                <p className="font-inter text-sm">Repay Loan</p>
-                <p className="font-inter text-xs opacity-50">
-                  Debt: {formatBalance(BigInt(currentPosition?.state.borrowAssets ?? 0), market.loanAsset.decimals)}{' '}
-                  {market.loanAsset.symbol}
-                </p>
-              </div>
-
-              <div className="mb-4 flex items-start justify-between">
-                <div className="relative flex-grow">
-                  <Input
-                    decimals={market.loanAsset.decimals}
-                    max={maxToRepay}
-                    setValue={setRepayAssets}
-                    setError={setRepayInputError}
-                    exceedMaxErrMessage="Exceeds current debt or insufficient balance"
-                    onMaxClick={setShareToMax}
-                  />
-                  {repayInputError && <p className="p-1 text-sm text-red-500">{repayInputError}</p>}
-                </div>
+            <div className="mb-4 flex items-start justify-between">
+              <div className="relative flex-grow">
+                <Input
+                  decimals={market.collateralAsset.decimals}
+                  max={BigInt(currentPosition?.state.collateral ?? 0)}
+                  setValue={setWithdrawAmount}
+                  setError={setWithdrawInputError}
+                  exceedMaxErrMessage="Exceeds current collateral"
+                />
+                {withdrawInputError && <p className="p-1 text-sm text-red-500">{withdrawInputError}</p>}
               </div>
             </div>
           </div>
+
+          {/* Repay Input Section */}
+          <div className="mb-1">
+            <div className="flex items-center justify-between">
+              <p className="font-inter text-sm">Repay Loan</p>
+              <p className="font-inter text-xs opacity-50">
+                Debt: {formatBalance(BigInt(currentPosition?.state.borrowAssets ?? 0), market.loanAsset.decimals)} {market.loanAsset.symbol}
+              </p>
+            </div>
+
+            <div className="mb-4 flex items-start justify-between">
+              <div className="relative flex-grow">
+                <Input
+                  decimals={market.loanAsset.decimals}
+                  max={maxToRepay}
+                  setValue={setRepayAssets}
+                  setError={setRepayInputError}
+                  exceedMaxErrMessage="Exceeds current debt or insufficient balance"
+                  onMaxClick={setShareToMax}
+                />
+                {repayInputError && <p className="p-1 text-sm text-red-500">{repayInputError}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Action Button */}
         <div className="mt-4">
@@ -291,7 +298,7 @@ export function WithdrawCollateralAndRepay({
           >
             <ExecuteTransactionButton
               targetChainId={market.morphoBlue.chain.id}
-              onClick={() => void (!isApproved && !permit2Authorized ? approveAndRepay() : signAndRepay())}
+              onClick={handleRepay}
               isLoading={repayPending || isLoadingPermit2}
               disabled={
                 withdrawInputError !== null ||
