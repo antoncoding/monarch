@@ -262,7 +262,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                 <TableHead className="text-left">Market Details</TableHead>
                 <TableHead className="text-center">Action & Amount</TableHead>
                 <TableHead className="text-center">Time</TableHead>
-                <TableHead className="text-center">Transaction</TableHead>
+                <TableHead className="text-right">Transaction</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="table-body-compact">
@@ -305,7 +305,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                                 width={16}
                                 height={16}
                               />
-                              <span className="text-default-600">{market.loanAsset.symbol}</span>
+                              <span className="text-default-600 text-sm">{market.loanAsset.symbol}</span>
                             </div>
                             <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
                               {networkImg && (
@@ -376,7 +376,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
                         {/* Transaction */}
                         <TableCell>
-                          <div className="flex justify-center">
+                          <div className="flex justify-end">
                             <TransactionIdentity
                               txHash={tx.hash}
                               chainId={market.morphoBlue.chain.id}

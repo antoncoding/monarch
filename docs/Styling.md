@@ -467,230 +467,58 @@ Add an action link (like explorer) in the top-right corner:
 
 ### Table Component
 
-**Table** (`@/components/ui/table`)
-- Unified table component system for all tables in the app
-- Provides consistent styling, alignment, and spacing
-- Built on shadcn/ui primitives with custom Monarch styling via global CSS
-
-**IMPORTANT**: Always use the Table components instead of raw HTML `<table>` tags. All styling is automatically applied via element selectors in `app/global.css`, not inline styles or className props.
+**Always use Table components from `@/components/ui/table`** - never use raw HTML `<table>` tags.
 
 **Components:**
-- `Table`: The main table wrapper (renders `<table>`)
-- `TableHeader`: Table header section (renders `<thead>`)
-- `TableBody`: Table body section (renders `<tbody>`)
-- `TableRow`: Table row (renders `<tr>`)
-- `TableHead`: Header cell (renders `<th>`)
-- `TableCell`: Body cell (renders `<td>`)
-
-**Basic Structure:**
-
 ```tsx
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-
-<div className="bg-surface shadow-sm rounded overflow-hidden">
-  <Table>
-    <TableHeader>
-      <TableRow>
-        <TableHead className="text-left">Name</TableHead>
-        <TableHead className="text-right">Amount</TableHead>
-        <TableHead className="text-right">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <TableRow>
-        <TableCell>John Doe</TableCell>
-        <TableCell className="text-right">$100</TableCell>
-        <TableCell className="text-right">
-          <Button size="sm">View</Button>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
-</div>
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { TablePagination } from '@/components/common/TablePagination';
 ```
 
-**Styling Rules:**
-
-1. **Wrapper**: Always wrap tables in `<div className="bg-surface shadow-sm rounded overflow-hidden">`
-2. **Alignment**: Use Tailwind classes for alignment - they override the global CSS:
-   - `text-left`: Left-align (default for most content)
-   - `text-right`: Right-align (use for amounts, numbers, actions)
-   - `text-center`: Center-align (rarely used)
-3. **Headers and cells must match alignment**: If a column is `text-right`, both the header and cells should use `text-right`
-4. **Compact variant**: Add `table-body-compact` className to `<TableBody>` for reduced padding
-
-**Compact Variant:**
-
-Use the compact variant for simpler tables with less complex data (activity tables, transaction lists):
-
+**Basic Usage:**
 ```tsx
-<TableBody className="table-body-compact">
-  <TableRow>
-    <TableCell>...</TableCell>
-  </TableRow>
-</TableBody>
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead className="text-left">Name</TableHead>
+      <TableHead className="text-right">Amount</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody className="table-body-compact">
+    <TableRow>
+      <TableCell>John</TableCell>
+      <TableCell className="text-right">$100</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+
+{/* Pagination - always use TablePagination */}
+<TablePagination
+  currentPage={page}
+  totalPages={totalPages}
+  totalEntries={items.length}
+  pageSize={10}
+  onPageChange={setPage}
+  isLoading={loading}
+/>
 ```
 
-**Differences:**
-- Standard: 1rem padding (markets table, positions table)
-- Compact: 0.625rem padding (supplies, borrows, liquidations, rewards)
+**Key Rules:**
 
-**Aligning Amount Columns:**
+1. **Variants**: Use `table-body-compact` on `<TableBody>` for activity/transaction tables (adds 6px cushion vs standard padding)
+2. **Alignment**: Headers and cells must match - use `text-left`, `text-right`, or `text-center`
+3. **Amount Columns**: Use flexbox with `justify-end` for right-aligned token icons, and use `font-sm` for text:
+   ```tsx
+   <TableCell>
+     <div className="flex items-center justify-end gap-1 font-sm">
+       <span>{amount}</span>
+       <TokenIcon width={16} height={16} />
+     </div>
+   </TableCell>
+   ```
+4. **Pagination**: Always use `TablePagination` component (not HeroUI `Pagination`)
 
-For columns with amounts and token icons, use flexbox to ensure icons align vertically:
-
-```tsx
-// ✅ Correct - icons align at the right edge
-<TableCell className="text-sm">
-  <div className="flex items-center justify-end gap-1">
-    <span>1,234.56</span>
-    <TokenIcon address={tokenAddress} chainId={chainId} width={16} height={16} />
-  </div>
-</TableCell>
-
-// ❌ Incorrect - icons won't align
-<TableCell className="text-right text-sm">
-  1,234.56
-  <span className="ml-1">
-    <TokenIcon ... />
-  </span>
-</TableCell>
-```
-
-**Common Patterns:**
-
-**1. Address Column (First Column)**
-
-```tsx
-<TableHead className="text-left">ACCOUNT</TableHead>
-...
-<TableCell>
-  <AccountIdentity
-    address={address}
-    variant="compact"
-    linkTo="profile"
-  />
-</TableCell>
-```
-
-**2. Amount Column (Right-Aligned)**
-
-```tsx
-<TableHead className="text-right">AMOUNT</TableHead>
-...
-<TableCell className="text-sm">
-  <div className="flex items-center justify-end gap-1">
-    <span>{formatSimple(amount)}</span>
-    <TokenIcon address={token} chainId={chainId} width={16} height={16} />
-  </div>
-</TableCell>
-```
-
-**3. Percentage/Number Column (Right-Aligned)**
-
-```tsx
-<TableHead className="text-right">APY</TableHead>
-...
-<TableCell className="text-right text-sm">12.34%</TableCell>
-```
-
-**4. Timestamp Column (Smaller Font, Grey)**
-
-```tsx
-<TableHead className="text-left">TIME</TableHead>
-...
-<TableCell className="text-sm text-gray-500">
-  {moment.unix(timestamp).fromNow()}
-</TableCell>
-```
-
-**5. Transaction Hash Column**
-
-```tsx
-<TableHead className="text-right">TRANSACTION</TableHead>
-...
-<TableCell className="text-right text-sm text-gray-500">
-  <TransactionIdentity txHash={hash} chainId={chainId} />
-</TableCell>
-```
-
-**Complete Example (Activity Table):**
-
-```tsx
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { AccountIdentity } from '@/components/common/AccountIdentity';
-import { TransactionIdentity } from '@/components/common/TransactionIdentity';
-import { TokenIcon } from '@/components/TokenIcon';
-import moment from 'moment';
-
-<div className="bg-surface shadow-sm rounded overflow-hidden">
-  <Table aria-label="Supply and withdraw activities">
-    <TableHeader>
-      <TableRow>
-        <TableHead className="text-left">ACCOUNT</TableHead>
-        <TableHead className="text-left">TYPE</TableHead>
-        <TableHead className="text-right">AMOUNT</TableHead>
-        <TableHead className="text-left">TIME</TableHead>
-        <TableHead className="text-right">TRANSACTION</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody className="table-body-compact">
-      {items.map((item) => (
-        <TableRow key={item.id}>
-          <TableCell>
-            <AccountIdentity
-              address={item.userAddress}
-              variant="compact"
-              linkTo="profile"
-            />
-          </TableCell>
-          <TableCell>
-            <Badge variant={item.type === 'supply' ? 'success' : 'danger'}>
-              {item.type}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-sm">
-            <div className="flex items-center justify-end gap-1">
-              <span>{formatSimple(item.amount)}</span>
-              <TokenIcon
-                address={item.tokenAddress}
-                chainId={chainId}
-                width={16}
-                height={16}
-              />
-            </div>
-          </TableCell>
-          <TableCell className="text-sm text-gray-500">
-            {moment.unix(item.timestamp).fromNow()}
-          </TableCell>
-          <TableCell className="text-right text-sm text-gray-500">
-            <TransactionIdentity txHash={item.hash} chainId={chainId} />
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-</div>
-```
-
-**Global CSS Styling:**
-
-All table styling is automatically applied via element selectors in `app/global.css`:
-
-- `thead`: Background, font size, and color for all table headers
-- `thead th`: Padding for header cells (1rem all around)
-- `tbody`: Background and border for all table bodies
-- `tbody td`: Padding for body cells (1rem all around)
-- `.table-body-compact td`: Reduced padding variant (0.625rem) - apply to `<TableBody>`
-- `tbody tr:hover`: Hover effect with orange left border
-- `.table-body-focused`: Active/expanded row styling - apply to `<TableRow>`
-
-**DO NOT**:
-- Add inline styles or hardcoded Tailwind padding/alignment to Table components
-- Override global CSS in individual components
-- Use plain HTML `<table>` tags instead of Table components
-- Mix alignment between headers and cells (always match them)
-- Apply `className="table-header"` or `className="table-body"` - these are applied automatically via CSS
+**Styling:** All styling applied via `app/global.css` - don't add inline styles or override padding.
 
 ### TablePagination Component
 
