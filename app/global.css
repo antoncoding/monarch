@@ -327,11 +327,11 @@ tbody td {
   padding-right: 1rem;
 }
 
-tbody tr:not(.no-hover-effect tr, .no-hover-effect tr) {
+tbody tr:not(.no-hover-effect tr) {
   border-left: 2px solid transparent;
 }
 
-tbody tr:not(.no-hover-effect tr, .no-hover-effect tr):hover {
+tbody tr:not(.no-hover-effect tr):hover {
   background-color: var(--palette-bg-hovered);
   border-left: 2px solid var(--palette-orange);
 }

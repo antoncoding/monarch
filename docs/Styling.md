@@ -507,10 +507,10 @@ import { TablePagination } from '@/components/common/TablePagination';
 
 1. **Variants**: Use `table-body-compact` on `<TableBody>` for activity/transaction tables (adds 6px cushion vs standard padding)
 2. **Alignment**: Headers and cells must match - use `text-left`, `text-right`, or `text-center`
-3. **Amount Columns**: Use flexbox with `justify-end` for right-aligned token icons, and use `font-sm` for text:
+3. **Amount Columns**: Use flexbox with `justify-end` for right-aligned token icons, and use `text-sm` for text:
    ```tsx
    <TableCell>
-     <div className="flex items-center justify-end gap-1 font-sm">
+     <div className="flex items-center justify-end gap-1 text-sm">
        <span>{amount}</span>
        <TokenIcon width={16} height={16} />
      </div>

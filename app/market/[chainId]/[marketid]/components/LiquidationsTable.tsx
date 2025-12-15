@@ -8,6 +8,7 @@ import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
+import { formatSimple } from '@/utils/balance';
 import type { Market, MarketLiquidationTransaction } from '@/utils/types';
 
 type LiquidationsTableProps = {
@@ -96,7 +97,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                       </TableCell>
                       <TableCell className="text-sm">
                         <div className="flex items-center justify-end gap-1">
-                          <span>{formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}</span>
+                          <span>{formatSimple(Number(formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)))}</span>
                           {market?.loanAsset?.symbol && (
                             <TokenIcon
                               address={market.loanAsset.address}
@@ -110,7 +111,9 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                       </TableCell>
                       <TableCell className="text-sm">
                         <div className="flex items-center justify-end gap-1">
-                          <span>{formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}</span>
+                          <span>
+                            {formatSimple(Number(formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)))}
+                          </span>
                           {market?.collateralAsset?.symbol && (
                             <TokenIcon
                               address={market.collateralAsset.address}

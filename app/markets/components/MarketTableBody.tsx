@@ -104,7 +104,7 @@ export function MarketTableBody({
             <TableRow
               key={item.uniqueKey}
               onClick={() => setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)}
-              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}'`}
+              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}`}
             >
               <TableCell
                 data-label=""

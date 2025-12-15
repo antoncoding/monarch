@@ -393,7 +393,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
             <TablePagination
               currentPage={currentPage}
               totalPages={totalPages}
-              totalEntries={history.filter((tx) => tx.data.market !== undefined).length}
+              totalEntries={totalPages * pageSize}
               pageSize={pageSize}
               onPageChange={setCurrentPage}
               isLoading={loading}

@@ -15,7 +15,7 @@ Table.displayName = 'Table';
 const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={className}
+    className={cn(className)}
     {...props}
   />
 ));
@@ -24,7 +24,7 @@ TableHeader.displayName = 'TableHeader';
 const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
   <tbody
     ref={ref}
-    className={className}
+    className={cn(className)}
     {...props}
   />
 ));
@@ -42,7 +42,7 @@ TableFooter.displayName = 'TableFooter';
 const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(({ className, ...props }, ref) => (
   <tr
     ref={ref}
-    className={className}
+    className={cn(className)}
     {...props}
   />
 ));
@@ -60,7 +60,7 @@ TableHead.displayName = 'TableHead';
 const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={className}
+    className={cn(className)}
     {...props}
   />
 ));
