@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
@@ -87,32 +88,29 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-          aria-label="Supply and withdraw activities"
-        >
-          <TableHeader>
-            <TableColumn>ACCOUNT</TableColumn>
-            <TableColumn>TYPE</TableColumn>
-            <TableColumn align="end">AMOUNT</TableColumn>
-            <TableColumn>TIME</TableColumn>
-            <TableColumn
-              className="font-mono"
-              align="end"
-            >
-              TRANSACTION
-            </TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No supply activities found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Supply and withdraw activities"
           >
-            {supplies.map((supply) => (
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">ACCOUNT</TableHead>
+                <TableHead className="text-left">TYPE</TableHead>
+                <TableHead className="text-right">AMOUNT</TableHead>
+                <TableHead className="text-left">TIME</TableHead>
+                <TableHead className="text-right font-mono">TRANSACTION</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {supplies.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-400">
+                    No supply activities found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                supplies.map((supply) => (
               <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
                 <TableCell>
                   <AccountIdentity
@@ -148,9 +146,11 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                   />
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

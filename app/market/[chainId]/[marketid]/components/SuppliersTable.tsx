@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
@@ -101,25 +102,27 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-          aria-label="Market suppliers"
-        >
-          <TableHeader>
-            <TableColumn>ACCOUNT</TableColumn>
-            <TableColumn align="end">SUPPLIED</TableColumn>
-            <TableColumn align="end">% OF SUPPLY</TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No suppliers found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Market suppliers"
           >
-            {suppliersWithAssets.map((supplier) => {
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">ACCOUNT</TableHead>
+                <TableHead className="text-right">SUPPLIED</TableHead>
+                <TableHead className="text-right">% OF SUPPLY</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {suppliersWithAssets.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-gray-400">
+                    No suppliers found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                suppliersWithAssets.map((supplier) => {
               const totalSupply = BigInt(market.state.supplyAssets);
               const supplierAssets = BigInt(supplier.supplyAssets);
               const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
@@ -150,10 +153,12 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                   </TableCell>
                   <TableCell className="text-right">{percentDisplay}</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

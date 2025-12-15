@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
@@ -108,27 +109,29 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-          aria-label="Market borrowers"
-        >
-          <TableHeader>
-            <TableColumn>ACCOUNT</TableColumn>
-            <TableColumn align="end">BORROWED</TableColumn>
-            <TableColumn align="end">COLLATERAL</TableColumn>
-            <TableColumn align="end">LTV</TableColumn>
-            <TableColumn align="end">% OF BORROW</TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No borrowers found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Market borrowers"
           >
-            {borrowersWithLTV.map((borrower) => {
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">ACCOUNT</TableHead>
+                <TableHead className="text-right">BORROWED</TableHead>
+                <TableHead className="text-right">COLLATERAL</TableHead>
+                <TableHead className="text-right">LTV</TableHead>
+                <TableHead className="text-right">% OF BORROW</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {borrowersWithLTV.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-400">
+                    No borrowers found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                borrowersWithLTV.map((borrower) => {
               const totalBorrow = BigInt(market.state.borrowAssets);
               const borrowerAssets = BigInt(borrower.borrowAssets);
               const percentOfBorrow = totalBorrow > 0n ? (Number(borrowerAssets) / Number(totalBorrow)) * 100 : 0;
@@ -174,10 +177,12 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
                   <TableCell className="text-right">{borrower.ltv.toFixed(2)}%</TableCell>
                   <TableCell className="text-right">{percentDisplay}</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

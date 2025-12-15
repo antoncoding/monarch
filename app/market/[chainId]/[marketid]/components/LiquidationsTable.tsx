@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { type Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -51,33 +51,30 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          aria-label="Liquidations history"
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-        >
-          <TableHeader>
-            <TableColumn>LIQUIDATOR</TableColumn>
-            <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-            <TableColumn align="end">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableColumn>
-            <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-            <TableColumn>TIME</TableColumn>
-            <TableColumn
-              className="font-mono"
-              align="end"
-            >
-              TRANSACTION
-            </TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No liquidations found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Liquidations history"
           >
-            {paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">LIQUIDATOR</TableHead>
+                <TableHead className="text-right">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
+                <TableHead className="text-right">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableHead>
+                <TableHead className="text-right">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
+                <TableHead className="text-left">TIME</TableHead>
+                <TableHead className="text-right font-mono">TRANSACTION</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedLiquidations.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-gray-400">
+                    No liquidations found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
               const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
               const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
@@ -150,10 +147,12 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                     />
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                );
+              })
+            )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

@@ -303,43 +303,7 @@ h1 {
   padding-bottom: 0.5rem;
 }
 
-.table-header {
-  background-color: var(--color-background-secondary);
-  font-size: 0.8em;
-  color: grey;
-}
-
-.table-header th {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  text-align: center;
-}
-
-.table-body {
-  background-color: var(--color-background-secondary);
-  border-left: 2px solid var(--color-background-secondary);
-}
-
-.table-body td {
-  padding: 1rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  text-align: center;
-}
-
-.table-body tr:not(.no-hover-effect tr, .no-hover-effect tr) {
-  border-left: 2px solid transparent;
-}
-
-.table-body tr:not(.no-hover-effect tr, .no-hover-effect tr):hover {
-  background-color: var(--palette-bg-hovered);
-  border-left: 2px solid var(--palette-orange);
-}
-
-.table-body-focused {
-  background-color: var(--palette-bg-hovered);
-  border-left: 2px solid var(--palette-orange) !important;
-}
+/* Table styles have been moved to src/components/ui/table.tsx */
 
 svg {
   display: block;

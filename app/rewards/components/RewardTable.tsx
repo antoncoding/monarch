@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
@@ -137,24 +137,21 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
 
   return (
     <div className="pb-4">
-      <Table
-        classNames={{
-          wrapper: 'bg-surface shadow-sm rounded',
-          table: 'bg-surface',
-        }}
-        aria-label="Rewards table"
-      >
-        <TableHeader>
-          <TableColumn>ASSET</TableColumn>
-          <TableColumn>CHAIN</TableColumn>
-          <TableColumn>CLAIMABLE</TableColumn>
-          <TableColumn>CAMPAIGN</TableColumn>
-          <TableColumn align="end">ACTIONS</TableColumn>
-        </TableHeader>
-        <TableBody className="font-zen">
-          {filteredRewardTokens
-            .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
-            .map((tokenReward, index) => {
+      <div className="bg-surface shadow-sm rounded overflow-hidden">
+        <Table aria-label="Rewards table">
+          <TableHeader>
+            <TableRow>
+              <TableHead>ASSET</TableHead>
+              <TableHead>CHAIN</TableHead>
+              <TableHead>CLAIMABLE</TableHead>
+              <TableHead>CAMPAIGN</TableHead>
+              <TableHead className="text-right">ACTIONS</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredRewardTokens
+              .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
+              .map((tokenReward, index) => {
               // try find the reward token, default to 18 decimals for unknown tokens
               const matchedToken = findToken(tokenReward.asset.address, tokenReward.asset.chain_id) ?? {
                 symbol: 'Unknown',
@@ -274,10 +271,11 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
                     )}
                   </TableCell>
                 </TableRow>
-              );
-            })}
-        </TableBody>
-      </Table>
+                );
+              })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

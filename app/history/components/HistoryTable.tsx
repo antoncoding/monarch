@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Chip, Link, Pagination, Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
+import { Chip, Link, Pagination } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
 import Image from 'next/image';
@@ -252,38 +253,29 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
       {!isInitialized || loading ? (
         <LoadingScreen message="Loading transactions..." />
       ) : (
-        <Table
-          classNames={{
-            th: 'bg-surface',
-            wrapper: 'rounded-none shadow-none bg-surface p-6',
-          }}
-          bottomContent={
-            totalPages > 1 ? (
-              <div className="flex w-full justify-center">
-                <Pagination
-                  className="text-black"
-                  isCompact
-                  showControls
-                  color="default"
-                  page={currentPage}
-                  total={totalPages}
-                  onChange={setCurrentPage}
-                />
-              </div>
-            ) : null
-          }
-        >
-          <TableHeader className="table-header">
-            <TableColumn className="text-left">Asset & Network</TableColumn>
-            <TableColumn className="text-left">Market Details</TableColumn>
-            <TableColumn className="text-center">Action & Amount</TableColumn>
-            <TableColumn className="text-center">Time</TableColumn>
-            <TableColumn className="text-center">Transaction</TableColumn>
-          </TableHeader>
-          <TableBody emptyContent="No transactions found">
-            {history
-              .filter((tx) => tx.data.market !== undefined)
-              .map((tx, index) => {
+        <>
+          <div className="bg-surface shadow-sm rounded overflow-hidden p-6">
+            <Table>
+              <TableHeader className="table-header">
+                <TableRow>
+                  <TableHead className="text-left">Asset & Network</TableHead>
+                  <TableHead className="text-left">Market Details</TableHead>
+                  <TableHead className="text-center">Action & Amount</TableHead>
+                  <TableHead className="text-center">Time</TableHead>
+                  <TableHead className="text-center">Transaction</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.filter((tx) => tx.data.market !== undefined).length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-gray-400">
+                      No transactions found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  history
+                    .filter((tx) => tx.data.market !== undefined)
+                    .map((tx, index) => {
                 // safely cast here because we only fetch txs for unique id in "markets"
                 const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
@@ -388,10 +380,26 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                       </div>
                     </TableCell>
                   </TableRow>
-                );
-              })}
-          </TableBody>
-        </Table>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {totalPages > 1 && (
+            <div className="flex w-full justify-center mt-4">
+              <Pagination
+                className="text-black"
+                isCompact
+                showControls
+                color="default"
+                page={currentPage}
+                total={totalPages}
+                onChange={setCurrentPage}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
