@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Chip, Link, Pagination } from '@heroui/react';
+import { Chip, Link } from '@heroui/react';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 import { Badge } from '@/components/common/Badge';
+import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import LoadingScreen from '@/components/Status/LoadingScreen';
 import { TokenIcon } from '@/components/TokenIcon';
@@ -301,8 +302,8 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                                 address={market.loanAsset.address}
                                 chainId={market.morphoBlue.chain.id}
                                 symbol={market.loanAsset.symbol}
-                                width={20}
-                                height={20}
+                                width={16}
+                                height={16}
                               />
                               <span className="text-default-600">{market.loanAsset.symbol}</span>
                             </div>
@@ -353,7 +354,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
                         {/* Action & Amount */}
                         <TableCell>
-                          <div className="flex items-center justify-center gap-2 font-sm">
+                          <div className="flex items-center justify-center gap-2 text-sm">
                             <span className="">{actionTypeToText(tx.type)}</span>
                             <span className={tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'}>
                               {sign}
@@ -389,17 +390,14 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
             </TableBody>
           </Table>
           {totalPages > 1 && (
-            <div className="flex w-full justify-center mt-4">
-              <Pagination
-                className="text-black"
-                isCompact
-                showControls
-                color="default"
-                page={currentPage}
-                total={totalPages}
-                onChange={setCurrentPage}
-              />
-            </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalEntries={history.filter((tx) => tx.data.market !== undefined).length}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+              isLoading={loading}
+            />
           )}
         </>
       )}

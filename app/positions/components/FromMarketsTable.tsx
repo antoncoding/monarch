@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pagination } from '@heroui/react';
 import { Button } from '@/components/ui/button';
+import { TablePagination } from '@/components/common/TablePagination';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -169,15 +170,13 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center">
-              <Pagination
-                total={totalPages}
-                page={currentPage}
-                onChange={setCurrentPage}
-                color="primary"
-                size="sm"
-              />
-            </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalEntries={positions.length}
+              pageSize={PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}

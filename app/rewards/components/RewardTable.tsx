@@ -216,7 +216,6 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
                     </TableCell>
                     <TableCell className="text-sm">
                       <div className="flex items-center justify-end gap-1">
-                        
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}

@@ -69,7 +69,9 @@ function MarketsTable({
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
   const containerClassName = ['flex flex-col gap-2 pb-4', className].filter((value): value is string => Boolean(value)).join(' ');
-  const tableWrapperClassName = ['bg-surface shadow-sm rounded overflow-hidden', wrapperClassName].filter((value): value is string => Boolean(value)).join(' ');
+  const tableWrapperClassName = ['bg-surface shadow-sm rounded overflow-hidden', wrapperClassName]
+    .filter((value): value is string => Boolean(value))
+    .join(' ');
   const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
 
   return (
