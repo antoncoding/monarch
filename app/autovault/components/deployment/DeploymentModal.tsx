@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Checkbox } from '@heroui/react';
 import { FaCube } from 'react-icons/fa';
-import { Button } from '@/components/ui/button';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { useMarkets } from '@/contexts/MarketsContext';
@@ -23,7 +23,7 @@ type DeploymentModalContentProps = {
 };
 
 function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: DeploymentModalContentProps) {
-  const { selectedTokenAndNetwork, needSwitchChain, switchToNetwork, createVault, isDeploying } = useDeployment();
+  const { selectedTokenAndNetwork, createVault, isDeploying } = useDeployment();
 
   // Load balances and tokens at modal level
   const { balances, loading: balancesLoading } = useUserBalances({
@@ -105,16 +105,17 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
               )}
 
               <div className="flex justify-end pt-2">
-                <Button
-                  variant="primary"
-                  onClick={needSwitchChain ? switchToNetwork : () => void createVault()}
+                <ExecuteTransactionButton
+                  targetChainId={selectedTokenAndNetwork?.networkId ?? 1}
+                  onClick={() => void createVault()}
                   disabled={
                     !selectedTokenAndNetwork ||
-                    isDeploying ||
                     balancesLoading ||
                     marketsLoading ||
                     (userAlreadyHasVault && !ackExistingVault)
                   }
+                  isLoading={isDeploying}
+                  variant="primary"
                   className="min-w-[140px]"
                 >
                   {isDeploying ? (
@@ -124,14 +125,12 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
                     </div>
                   ) : balancesLoading || marketsLoading ? (
                     'Loading...'
-                  ) : needSwitchChain && selectedTokenAndNetwork ? (
-                    `Switch to ${getNetworkName(selectedTokenAndNetwork.networkId)}`
                   ) : selectedTokenAndNetwork ? (
                     'Deploy Vault'
                   ) : (
                     'Select Asset & Network'
                   )}
-                </Button>
+                </ExecuteTransactionButton>
               </div>
             </div>
           </div>
