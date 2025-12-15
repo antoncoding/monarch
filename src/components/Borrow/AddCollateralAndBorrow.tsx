@@ -291,13 +291,14 @@ export function AddCollateralAndBorrow({
               </div>
 
               <div className="mb-4 flex items-start justify-between">
-                <div className="relative flex-grow">
+                <div className="relative grow">
                   <Input
                     decimals={market.loanAsset.decimals}
                     setValue={setBorrowAmount}
                     setError={setBorrowInputError}
                     exceedMaxErrMessage="Exceeds available liquidity"
                     value={borrowAmount}
+                    max={BigInt(market.state.liquidityAssets)}
                   />
                   {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
                 </div>

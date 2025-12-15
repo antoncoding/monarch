@@ -7,9 +7,6 @@ import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 
 type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> & {
-  /**
-   * The target chain ID that the transaction needs to execute on
-   */
   targetChainId: number;
 
   /**
@@ -17,9 +14,6 @@ type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> &
    */
   onClick: () => void;
 
-  /**
-   * Whether the transaction is currently loading/pending
-   */
   isLoading?: boolean;
 
   /**
@@ -35,7 +29,6 @@ type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> &
 
   /**
    * Optional custom text for the switch chain state
-   * @default "Switch to [Network Name]"
    */
   switchChainText?: string;
 };

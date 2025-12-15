@@ -196,6 +196,55 @@ const vault = getVaultByAddress(vaultAddress, chainId);
 
 ---
 
+## Transaction Pattern
+
+**ExecuteTransactionButton** handles wallet connection + chain switching automatically.
+
+**Standard Pattern**:
+```typescript
+// 1. Transaction hook (approval + execution logic)
+const { approveAndExecute, signAndExecute, isLoading } = useXTransaction({ ... });
+
+// 2. Named callback with useCallback
+const handleExecute = useCallback(() => {
+  if (!isApproved) {
+    void approveAndExecute();
+  } else {
+    void signAndExecute();
+  }
+}, [isApproved, approveAndExecute, signAndExecute]);
+
+// 3. ExecuteTransactionButton (handles connection/chain switching)
+<ExecuteTransactionButton
+  targetChainId={chainId}
+  onClick={handleExecute}
+  isLoading={isLoading}
+  disabled={!amount}
+>
+  Execute
+</ExecuteTransactionButton>
+```
+
+**Dynamic Button Text**:
+```typescript
+const getButtonText = () => {
+  if (isDeploying) return 'Deploying...';
+  if (!ready) return 'Select Item';
+  return 'Execute';
+};
+
+<ExecuteTransactionButton onClick={handleExecute}>
+  {getButtonText()}
+</ExecuteTransactionButton>
+```
+
+**Rules**:
+- Always use `useCallback` for onClick handlers
+- Never put complex logic directly in `onClick`
+- Button shows "Connect Wallet" / "Switch Chain" / action text automatically
+
+---
+
 ## Key Directories
 
 ```
