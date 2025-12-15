@@ -1,3 +1,4 @@
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/TokenIcon';
 import type { CollateralAllocation } from '@/types/vaultAllocations';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -22,26 +23,26 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full font-zen">
-        <thead>
-          <tr className="text-xs text-secondary">
-            <th className="pb-3 text-left font-normal">Collateral</th>
-            <th className="pb-3 text-right font-normal">Amount</th>
-            <th className="pb-3 text-right font-normal">Allocation</th>
-            <th className="pb-3 text-center font-normal w-10" />
-          </tr>
-        </thead>
-        <tbody className="space-y-2">
+      <Table className="w-full font-zen">
+        <TableHeader>
+          <TableRow className="text-xs text-secondary">
+            <TableHead className="pb-3 text-left font-normal">Collateral</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Amount</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Allocation</TableHead>
+            <TableHead className="pb-3 text-center font-normal w-10" />
+          </TableRow>
+        </TableHeader>
+        <TableBody className="space-y-2">
           {sortedItems.map((item) => {
             const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
             const hasAllocation = item.allocation > 0n;
 
             return (
-              <tr
+              <TableRow
                 key={item.collateralAddress.toLowerCase()}
                 className="rounded bg-hovered/20"
               >
-                <td className="p-3 rounded-l">
+                <TableCell className="p-3 rounded-l">
                   <div className="flex items-center gap-3">
                     <TokenIcon
                       address={item.collateralAddress}
@@ -51,28 +52,28 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
                     />
                     <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
                   </div>
-                </td>
-                <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
+                </TableCell>
+                <TableCell className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
                     {hasAllocation ? `${formatAllocationAmount(item.allocation, vaultAssetDecimals)} ${vaultAssetSymbol}` : '-'}
                   </span>
-                </td>
-                <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
+                </TableCell>
+                <TableCell className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">{hasAllocation ? `${percentage.toFixed(2)}%` : '-'}</span>
-                </td>
-                <td className="p-3 rounded-r w-10">
+                </TableCell>
+                <TableCell className="p-3 rounded-r w-10">
                   <div className="flex justify-center">
                     <AllocationPieChart
                       percentage={percentage}
                       size={20}
                     />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

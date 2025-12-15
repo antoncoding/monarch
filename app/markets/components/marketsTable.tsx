@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
+import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/common/TablePagination';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -68,15 +69,15 @@ function MarketsTable({
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
   const containerClassName = ['flex flex-col gap-2 pb-4', className].filter((value): value is string => Boolean(value)).join(' ');
-  const tableWrapperClassName = ['overflow-x-auto', wrapperClassName].filter((value): value is string => Boolean(value)).join(' ');
-  const tableClassNames = ['responsive rounded-md font-zen', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
+  const tableWrapperClassName = ['bg-surface shadow-sm rounded overflow-hidden', wrapperClassName].filter((value): value is string => Boolean(value)).join(' ');
+  const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
 
   return (
     <div className={containerClassName}>
       <div className={tableWrapperClassName}>
-        <table className={tableClassNames}>
-          <thead className="table-header">
-            <tr>
+        <Table className={tableClassNames}>
+          <TableHeader>
+            <TableRow>
               <HTSortable
                 label={sortColumn === 0 ? <FaStar /> : <FaRegStar />}
                 sortColumn={sortColumn}
@@ -85,7 +86,7 @@ function MarketsTable({
                 targetColumn={SortColumn.Starred}
                 showDirection={false}
               />
-              <th className="font-normal px-2 py-2 whitespace-nowrap"> Id </th>
+              <TableHead className="font-normal px-2 py-2 whitespace-nowrap"> Id </TableHead>
               <HTSortable
                 label="Loan"
                 sortColumn={sortColumn}
@@ -100,7 +101,7 @@ function MarketsTable({
                 sortDirection={sortDirection}
                 targetColumn={SortColumn.CollateralAsset}
               />
-              <th className="font-normal px-2 py-2 whitespace-nowrap">Oracle</th>
+              <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Oracle</TableHead>
               <HTSortable
                 label="LLTV"
                 sortColumn={sortColumn}
@@ -180,29 +181,29 @@ function MarketsTable({
                   targetColumn={SortColumn.UtilizationRate}
                 />
               )}
-              <th
+              <TableHead
                 className="font-normal px-2 py-2 whitespace-nowrap"
                 style={{ padding: '0.35rem 0.8rem' }}
               >
                 {' '}
                 Risk{' '}
-              </th>
-              <th
+              </TableHead>
+              <TableHead
                 className="font-normal px-2 py-2 whitespace-nowrap"
                 style={{ padding: '0.35rem 0.8rem' }}
               >
                 {' '}
                 Indicators{' '}
-              </th>
-              <th
+              </TableHead>
+              <TableHead
                 className="font-normal px-2 py-2 whitespace-nowrap"
                 style={{ padding: '0.35rem 0.8rem' }}
               >
                 {' '}
                 Actions{' '}
-              </th>
-            </tr>
-          </thead>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
           <MarketTableBody
             currentEntries={currentEntries}
             staredIds={staredIds}
@@ -218,7 +219,7 @@ function MarketsTable({
             addBlacklistedMarket={addBlacklistedMarket}
             isBlacklisted={isBlacklisted}
           />
-        </table>
+        </Table>
       </div>
       <TablePagination
         totalPages={totalPages}

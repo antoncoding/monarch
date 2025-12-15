@@ -303,7 +303,50 @@ h1 {
   padding-bottom: 0.5rem;
 }
 
-/* Table styles have been moved to src/components/ui/table.tsx */
+/* Table styles - applied automatically to thead and tbody */
+thead {
+  background-color: var(--color-background-secondary);
+  font-size: 0.8em;
+  color: grey;
+}
+
+thead th {
+  padding: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+tbody {
+  background-color: var(--color-background-secondary);
+  border-left: 2px solid var(--color-background-secondary);
+}
+
+tbody td {
+  padding: 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+tbody tr:not(.no-hover-effect tr, .no-hover-effect tr) {
+  border-left: 2px solid transparent;
+}
+
+tbody tr:not(.no-hover-effect tr, .no-hover-effect tr):hover {
+  background-color: var(--palette-bg-hovered);
+  border-left: 2px solid var(--palette-orange);
+}
+
+.table-body-focused {
+  background-color: var(--palette-bg-hovered);
+  border-left: 2px solid var(--palette-orange) !important;
+}
+
+/* Compact table variant - less padding for simpler tables */
+.table-body-compact td {
+  padding: 0.625rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
 
 svg {
   display: block;

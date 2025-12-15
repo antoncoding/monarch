@@ -141,14 +141,14 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
         <Table aria-label="Rewards table">
           <TableHeader>
             <TableRow>
-              <TableHead>ASSET</TableHead>
-              <TableHead>CHAIN</TableHead>
-              <TableHead>CLAIMABLE</TableHead>
-              <TableHead>CAMPAIGN</TableHead>
+              <TableHead className="text-left">ASSET</TableHead>
+              <TableHead className="text-center">CHAIN</TableHead>
+              <TableHead className="text-right">CLAIMABLE</TableHead>
+              <TableHead className="text-center">CAMPAIGN</TableHead>
               <TableHead className="text-right">ACTIONS</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="table-body-compact">
             {filteredRewardTokens
               .filter((tokenReward) => tokenReward !== null && tokenReward !== undefined)
               .map((tokenReward, index) => {
@@ -185,90 +185,97 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
                         href={getAssetURL(tokenReward.asset.address, tokenReward.asset.chain_id)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 no-underline hover:opacity-80"
+                        className="flex items-center gap-2 no-underline hover:opacity-80 text-sm"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <span>{matchedToken.symbol}</span>
-                        <TokenIcon
-                          address={tokenReward.asset.address}
-                          chainId={tokenReward.asset.chain_id}
-                          width={20}
-                          height={20}
-                        />
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      {getNetworkImg(tokenReward.asset.chain_id) ? (
-                        <Image
-                          src={getNetworkImg(tokenReward.asset.chain_id) as string}
-                          alt={`Chain ${tokenReward.asset.chain_id}`}
-                          width={20}
-                          height={20}
-                        />
-                      ) : (
-                        <div
-                          className="rounded-full bg-gray-300 dark:bg-gray-700"
-                          style={{ width: 20, height: 20 }}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</span>
                         <TokenIcon
                           address={tokenReward.asset.address}
                           chainId={tokenReward.asset.chain_id}
                           width={16}
                           height={16}
                         />
+                        <span>{matchedToken.symbol}</span>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        {getNetworkImg(tokenReward.asset.chain_id) ? (
+                          <Image
+                            src={getNetworkImg(tokenReward.asset.chain_id) as string}
+                            alt={`Chain ${tokenReward.asset.chain_id}`}
+                            width={20}
+                            height={20}
+                          />
+                        ) : (
+                          <div
+                            className="rounded-full bg-gray-300 dark:bg-gray-700"
+                            style={{ width: 20, height: 20 }}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div className="flex items-center justify-end gap-1">
+                        
+                        <TokenIcon
+                          address={tokenReward.asset.address}
+                          chainId={tokenReward.asset.chain_id}
+                          width={16}
+                          height={16}
+                        />
+                        <span>{formatSimple(formatBalance(tokenReward.total.claimable, matchedToken.decimals))}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      {matchedCampaign ? (
-                        <Link
-                          href={getMerklCampaignURL(
-                            matchedCampaign.chainId,
-                            matchedCampaign.type,
-                            matchedCampaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
-                              ? (matchedCampaign.targetToken?.address ?? matchedCampaign.campaignId)
-                              : matchedCampaign.marketId.slice(0, 42),
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm hover:opacity-80 no-underline"
-                        >
-                          Details
-                          <ExternalLinkIcon className="h-3 w-3" />
-                        </Link>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
+                      <div className="flex items-center justify-center">
+                        {matchedCampaign ? (
+                          <Link
+                            href={getMerklCampaignURL(
+                              matchedCampaign.chainId,
+                              matchedCampaign.type,
+                              matchedCampaign.type === 'MORPHOSUPPLY_SINGLETOKEN'
+                                ? (matchedCampaign.targetToken?.address ?? matchedCampaign.campaignId)
+                                : matchedCampaign.marketId.slice(0, 42),
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm hover:opacity-80 no-underline"
+                          >
+                            view
+                            <ExternalLinkIcon className="h-3 w-3" />
+                          </Link>
+                        ) : (
+                          <span className="text-sm text-gray-400">-</span>
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {isMerklReward ? (
-                        <Button
-                          onClick={() => handleMerklClaim(tokenReward.asset.address, tokenReward.asset.chain_id)}
-                          variant="surface"
-                          size="sm"
-                          disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
-                          isLoading={isThisRewardClaiming}
-                        >
-                          {isThisRewardClaiming && claimStatus === 'switching'
-                            ? 'Switching...'
-                            : isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')
-                              ? 'Claiming...'
-                              : 'Claim'}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleClaim(distribution)}
-                          variant="surface"
-                          size="sm"
-                          disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
-                        >
-                          Claim
-                        </Button>
-                      )}
+                    <TableCell>
+                      <div className="flex items-center justify-end">
+                        {isMerklReward ? (
+                          <Button
+                            onClick={() => handleMerklClaim(tokenReward.asset.address, tokenReward.asset.chain_id)}
+                            variant="surface"
+                            size="sm"
+                            disabled={tokenReward.total.claimable === BigInt(0) || isThisRewardClaiming}
+                            isLoading={isThisRewardClaiming}
+                          >
+                            {isThisRewardClaiming && claimStatus === 'switching'
+                              ? 'Switching...'
+                              : isThisRewardClaiming && (claimStatus === 'pending' || claimStatus === 'preparing')
+                                ? 'Claiming...'
+                                : 'Claim'}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleClaim(distribution)}
+                            variant="surface"
+                            size="sm"
+                            disabled={tokenReward.total.claimable === BigInt(0) || distribution === undefined}
+                          >
+                            Claim
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

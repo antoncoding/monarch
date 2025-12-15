@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/common/TablePagination';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Transaction } from '@/utils/statsUtils';
@@ -41,7 +42,7 @@ type SortableHeaderProps = {
 
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
-    <th
+    <TableHead
       className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
       onClick={() => onSort(sortKeyValue)}
       style={{ padding: '0.5rem' }}
@@ -51,7 +52,7 @@ function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, on
         {currentSortKey === sortKeyValue &&
           (sortDirection === 'asc' ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />)}
       </div>
-    </th>
+    </TableHead>
   );
 }
 
@@ -196,13 +197,13 @@ export function TransactionsTable({
           <div className="py-8 text-center text-gray-400">No transaction data available</div>
         ) : (
           <>
-            <table className="responsive rounded-md font-zen w-full min-w-full">
-              <thead className="table-header">
-                <tr>
-                  <th className="font-normal px-2 py-2 whitespace-nowrap">User</th>
-                  <th className="font-normal px-2 py-2 whitespace-nowrap">Loan Asset</th>
-                  <th className="font-normal px-2 py-2 whitespace-nowrap">Market</th>
-                  <th className="font-normal px-2 py-2 whitespace-nowrap">Side</th>
+            <Table className="responsive rounded-md font-zen w-full min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">User</TableHead>
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Loan Asset</TableHead>
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Market</TableHead>
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Side</TableHead>
                   <SortableHeader
                     label="Amount"
                     sortKeyValue="amount"
@@ -210,7 +211,7 @@ export function TransactionsTable({
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   />
-                  <th className="font-normal px-2 py-2 whitespace-nowrap">Tx Hash</th>
+                  <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Tx Hash</TableHead>
                   <SortableHeader
                     label="Time"
                     sortKeyValue="timestamp"
@@ -218,13 +219,13 @@ export function TransactionsTable({
                     sortDirection={sortDirection}
                     onSort={handleSort}
                   />
-                </tr>
-              </thead>
+                </TableRow>
+              </TableHeader>
               <TransactionTableBody
                 operations={currentEntries}
                 selectedNetwork={selectedNetwork}
               />
-            </table>
+            </Table>
             <div className="p-4">
               <TablePagination
                 totalPages={totalPages}

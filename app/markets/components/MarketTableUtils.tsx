@@ -1,4 +1,5 @@
 import { ArrowDownIcon, ArrowUpIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
+import { TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getAssetURL } from '@/utils/external';
@@ -17,7 +18,7 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
   const sortingCurrent = sortColumn === targetColumn;
 
   return (
-    <th
+    <TableHead
       className={`px-2 py-1 ${sortingCurrent ? 'text-primary' : ''}`}
       onClick={() => titleOnclick(targetColumn)}
       style={{ padding: '0.5rem' }}
@@ -26,13 +27,13 @@ export function HTSortable({ label, sortColumn, titleOnclick, sortDirection, tar
         <div>{label}</div>
         {showDirection && (sortingCurrent ? sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon /> : null)}
       </div>
-    </th>
+    </TableHead>
   );
 }
 
 export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; chainId: number; symbol: string; dataLabel?: string }) {
   return (
-    <td
+    <TableCell
       data-label={dataLabel ?? symbol}
       className="z-50"
       style={{ minWidth: '9px' }}
@@ -57,7 +58,7 @@ export function TDAsset({ asset, chainId, symbol, dataLabel }: { asset: string; 
           </p>
         </a>
       </div>
-    </td>
+    </TableCell>
   );
 }
 
@@ -75,13 +76,13 @@ export function TDTotalSupplyOrBorrow({
   symbol: string;
 }) {
   return (
-    <td
+    <TableCell
       data-label={dataLabel}
       className="z-50"
       style={{ minWidth: '120px' }}
     >
       <p className="z-50">${`${formatReadable(Number(assetsUSD))}   `} </p>
       <p className="z-50 opacity-70">{`${formatReadable(formatBalance(assets, decimals))} ${symbol}`}</p>
-    </td>
+    </TableCell>
   );
 }

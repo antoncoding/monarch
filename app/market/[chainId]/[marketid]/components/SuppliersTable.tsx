@@ -114,7 +114,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                 <TableHead className="text-right">% OF SUPPLY</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="table-body-compact">
               {suppliersWithAssets.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
@@ -140,10 +140,10 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                           linkTo="profile"
                         />
                       </TableCell>
-                      <TableCell className="text-right">
-                        {formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}
-                        {market?.loanAsset?.symbol && (
-                          <span className="ml-1 inline-flex items-center">
+                      <TableCell className="text-sm">
+                        <div className="flex items-center justify-end gap-1">
+                          <span>{formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}</span>
+                          {market?.loanAsset?.symbol && (
                             <TokenIcon
                               address={market.loanAsset.address}
                               chainId={market.morphoBlue.chain.id}
@@ -151,10 +151,10 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
                               width={16}
                               height={16}
                             />
-                          </span>
-                        )}
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-right">{percentDisplay}</TableCell>
+                      <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
                     </TableRow>
                   );
                 })

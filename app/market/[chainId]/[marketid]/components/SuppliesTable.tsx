@@ -99,10 +99,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                 <TableHead className="text-left">TYPE</TableHead>
                 <TableHead className="text-right">AMOUNT</TableHead>
                 <TableHead className="text-left">TIME</TableHead>
-                <TableHead className="text-right font-mono">TRANSACTION</TableHead>
+                <TableHead className="text-right">TRANSACTION</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="table-body-compact">
               {supplies.length === 0 && !isLoading ? (
                 <TableRow>
                   <TableCell
@@ -127,10 +127,10 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                         {supply.type === 'MarketSupply' ? 'Supply' : 'Withdraw'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                      {formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}
-                      {market?.loanAsset?.symbol && (
-                        <span className="ml-1 inline-flex items-center">
+                    <TableCell className="text-sm">
+                      <div className="flex items-center justify-end gap-1">
+                        <span>{formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}</span>
+                        {market?.loanAsset?.symbol && (
                           <TokenIcon
                             address={market.loanAsset.address}
                             chainId={market.morphoBlue.chain.id}
@@ -138,11 +138,11 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
                             width={16}
                             height={16}
                           />
-                        </span>
-                      )}
+                        )}
+                      </div>
                     </TableCell>
-                    <TableCell>{moment.unix(supply.timestamp).fromNow()}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-sm text-gray-500">{moment.unix(supply.timestamp).fromNow()}</TableCell>
+                    <TableCell className="text-right text-sm text-gray-500">
                       <TransactionIdentity
                         txHash={supply.hash}
                         chainId={chainId}

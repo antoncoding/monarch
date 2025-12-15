@@ -1,3 +1,4 @@
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -29,19 +30,19 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full font-zen">
-        <thead>
-          <tr className="text-xs text-secondary">
-            <th className="pb-3 text-left font-normal">Market</th>
-            <th className="pb-3 text-right font-normal">{rateLabel}</th>
-            <th className="pb-3 text-right font-normal">Total Supply</th>
-            <th className="pb-3 text-right font-normal">Liquidity</th>
-            <th className="pb-3 text-right font-normal">Amount</th>
-            <th className="pb-3 text-right font-normal">Allocation</th>
-            <th className="pb-3 text-center font-normal w-10" />
-          </tr>
-        </thead>
-        <tbody className="space-y-2">
+      <Table className="w-full font-zen">
+        <TableHeader>
+          <TableRow className="text-xs text-secondary">
+            <TableHead className="pb-3 text-left font-normal">Market</TableHead>
+            <TableHead className="pb-3 text-right font-normal">{rateLabel}</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Total Supply</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Liquidity</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Amount</TableHead>
+            <TableHead className="pb-3 text-right font-normal">Allocation</TableHead>
+            <TableHead className="pb-3 text-center font-normal w-10" />
+          </TableRow>
+        </TableHeader>
+        <TableBody className="space-y-2">
           {sortedItems.map((item) => {
             const { market, allocation } = item;
             const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(allocation, totalAllocation)) : 0;
@@ -54,12 +55,12 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
             );
 
             return (
-              <tr
+              <TableRow
                 key={market.uniqueKey}
                 className="rounded bg-hovered/20"
               >
                 {/* Market Info Column */}
-                <td className="p-3 rounded-l">
+                <TableCell className="p-3 rounded-l">
                   <MarketIdentity
                     market={market}
                     chainId={chainId}
@@ -69,43 +70,43 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
                     iconSize={20}
                     showExplorerLink
                   />
-                </td>
+                </TableCell>
 
                 {/* APY/APR */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{supplyRate}%</td>
+                <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{supplyRate}%</TableCell>
 
                 {/* Total Supply */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{totalSupply}</td>
+                <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{totalSupply}</TableCell>
 
                 {/* Liquidity */}
-                <td className="p-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</td>
+                <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
 
                 {/* Allocation Amount */}
-                <td className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
+                <TableCell className={`p-3 text-right text-sm ${hasAllocation ? '' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">
                     {hasAllocation ? `${formatAllocationAmount(allocation, vaultAssetDecimals)} ${vaultAssetSymbol}` : '-'}
                   </span>
-                </td>
+                </TableCell>
 
                 {/* Allocation Percentage */}
-                <td className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
+                <TableCell className={`p-3 text-right text-sm ${hasAllocation ? 'text-primary' : 'text-secondary'}`}>
                   <span className="whitespace-nowrap">{hasAllocation ? `${percentage.toFixed(2)}%` : '-'}</span>
-                </td>
+                </TableCell>
 
                 {/* Pie Chart */}
-                <td className="p-3 rounded-r w-10">
+                <TableCell className="p-3 rounded-r w-10">
                   <div className="flex justify-center">
                     <AllocationPieChart
                       percentage={percentage}
                       size={20}
                     />
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

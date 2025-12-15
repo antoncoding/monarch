@@ -51,17 +51,17 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
       <h2 className="text-lg">Your Vaults</h2>
 
       <div className="w-full overflow-x-auto">
-        <table className="responsive w-full rounded font-zen">
-          <thead className="table-header">
-            <tr>
-              <th className="font-normal">ID</th>
-              <th className="font-normal">Asset</th>
-              <th className="font-normal">{rateLabel}</th>
-              <th className="font-normal">Collaterals</th>
-              <th className="font-normal">Action</th>
-            </tr>
-          </thead>
-          <tbody className="table-body text-sm">
+        <Table className="responsive w-full rounded font-zen">
+          <TableHeader className="">
+            <TableRow>
+              <TableHead className="font-normal">ID</TableHead>
+              <TableHead className="font-normal">Asset</TableHead>
+              <TableHead className="font-normal">{rateLabel}</TableHead>
+              <TableHead className="font-normal">Collaterals</TableHead>
+              <TableHead className="font-normal">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="text-sm">
             {vaults.map((vault) => {
               const token = findToken(vault.asset, vault.networkId);
               const networkImg = getNetworkImg(vault.networkId);
@@ -71,9 +71,9 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                 .filter((collat) => collat !== undefined);
 
               return (
-                <tr key={vault.address}>
+                <TableRow key={vault.address}>
                   {/* ID */}
-                  <td data-label="ID">
+                  <TableCell data-label="ID">
                     <div className="flex items-center justify-center gap-1 font-monospace text-xs">
                       {networkImg && (
                         <Image
@@ -85,10 +85,10 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                       )}
                       <span>{vault.address.slice(2, 8)}</span>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Asset */}
-                  <td data-label="Asset">
+                  <TableCell data-label="Asset">
                     <div className="flex items-center justify-center gap-2">
                       <span className="font-medium">
                         {vault.balance && token ? formatReadable(formatUnits(BigInt(vault.balance), token.decimals)) : '0'}
@@ -101,17 +101,17 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                         height={16}
                       />
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* APY/APR */}
-                  <td data-label={rateLabel}>
+                  <TableCell data-label={rateLabel}>
                     <span className="font-zen text-sm">
                       {vault.avgApy != null ? `${((isAprDisplay ? convertApyToApr(vault.avgApy) : vault.avgApy) * 100).toFixed(2)}%` : '—'}
                     </span>
-                  </td>
+                  </TableCell>
 
                   {/* Collaterals */}
-                  <td data-label="Collaterals">
+                  <TableCell data-label="Collaterals">
                     <span className="flex flex-wrap gap-1.5 justify-center">
                       {collaterals.map((tokenAddress) => (
                         <div
@@ -127,10 +127,10 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                         </div>
                       ))}
                     </span>
-                  </td>
+                  </TableCell>
 
                   {/* Action */}
-                  <td data-label="Action">
+                  <TableCell data-label="Action">
                     <div className="flex justify-center">
                       <Link href={`/autovault/${vault.networkId ?? SupportedNetworks.Base}/${vault.address}`}>
                         <Button
@@ -141,12 +141,12 @@ export function VaultListV2({ vaults, loading }: VaultListV2Props) {
                         </Button>
                       </Link>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
