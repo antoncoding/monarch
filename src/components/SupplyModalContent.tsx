@@ -1,17 +1,14 @@
 import { useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useConnection } from 'wagmi';
 import Input from '@/components/Input/Input';
-import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
 import { formatBalance } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
-import { Button } from '@/components/ui/button';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { SupplyProcessModal } from './SupplyProcessModal';
 
 type SupplyModalContentProps = {
@@ -23,7 +20,6 @@ type SupplyModalContentProps = {
 
 export function SupplyModalContent({ onClose, market, refetch, onAmountChange }: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-  const { isConnected } = useConnection();
 
   const onSuccess = useCallback(() => {
     onClose();
@@ -61,10 +57,14 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
     [setSupplyAmount, onAmountChange],
   );
 
-  // Use the market network hook to handle network switching
-  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
-    targetChainId: market.morphoBlue.chain.id,
-  });
+  // Handle supply execution
+  const handleSupply = useCallback(() => {
+    if ((!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved)) {
+      void approveAndSupply();
+    } else {
+      void signAndSupply();
+    }
+  }, [permit2Authorized, useEth, usePermit2Setting, isApproved, approveAndSupply, signAndSupply]);
 
   return (
     <>
@@ -80,107 +80,82 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
       )}
       {!showProcessModal && (
         <div className="flex flex-col">
-          {isConnected ? (
-            <>
-              {/* Supply Input Section */}
-              <div className="mt-12 space-y-4">
-                {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
-                  <div className="flex items-center justify-end gap-2">
-                    <div className="font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
-                    <Switch
-                      size="sm"
-                      isSelected={useEth}
-                      onValueChange={setUseEth}
-                      classNames={{
-                        wrapper: 'w-9 h-4 mr-0',
-                        thumb: 'w-3 h-3',
-                      }}
-                    />
-                  </div>
-                )}
+          {/* Supply Input Section */}
+          <div className="mt-12 space-y-4">
+            {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
+              <div className="flex items-center justify-end gap-2">
+                <div className="font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
+                <Switch
+                  size="sm"
+                  isSelected={useEth}
+                  onValueChange={setUseEth}
+                  classNames={{
+                    wrapper: 'w-9 h-4 mr-0',
+                    thumb: 'w-3 h-3',
+                  }}
+                />
+              </div>
+            )}
 
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="opacity-80">Supply amount</span>
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-inter text-xs opacity-50">
-                        Balance:{' '}
-                        {useEth
-                          ? formatBalance(ethBalance ?? BigInt(0), 18)
-                          : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
-                        {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => void refetchBalance()}
-                        className="opacity-50 transition hover:opacity-100"
-                        aria-label="Refetch balance"
-                      >
-                        <ReloadIcon className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex items-start justify-between">
-                    <div className="relative flex-grow">
-                      <Input
-                        decimals={market.loanAsset.decimals}
-                        max={useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0))}
-                        setValue={handleSupplyAmountChange}
-                        setError={(error: string | null) => {
-                          if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
-                            setInputError(error);
-                          } else {
-                            setInputError(null);
-                          }
-                        }}
-                        exceedMaxErrMessage={
-                          supplyAmount && supplyAmount > (useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0)))
-                            ? 'Insufficient Balance'
-                            : undefined
-                        }
-                      />
-                      {inputError && !inputError.includes("You don't have any supplied assets") && (
-                        <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
-                      )}
-                    </div>
-
-                    {needSwitchChain ? (
-                      <Button
-                        onClick={switchToNetwork}
-                        className="ml-2 min-w-32"
-                        variant="default"
-                      >
-                        Switch Chain
-                      </Button>
-                    ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-                      <Button
-                        disabled={!isConnected || isLoadingPermit2 || supplyPending}
-                        onClick={() => void approveAndSupply()}
-                        className="ml-2 min-w-32"
-                        variant="primary"
-                      >
-                        Supply
-                      </Button>
-                    ) : (
-                      <Button
-                        disabled={!isConnected || supplyPending || inputError !== null || !supplyAmount}
-                        onClick={() => void signAndSupply()}
-                        className="ml-2 min-w-32"
-                        variant="primary"
-                      >
-                        Supply
-                      </Button>
-                    )}
-                  </div>
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="opacity-80">Supply amount</span>
+                <div className="flex items-center gap-1.5">
+                  <p className="font-inter text-xs opacity-50">
+                    Balance:{' '}
+                    {useEth
+                      ? formatBalance(ethBalance ?? BigInt(0), 18)
+                      : formatBalance(tokenBalance ?? BigInt(0), market.loanAsset.decimals)}{' '}
+                    {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void refetchBalance()}
+                    className="opacity-50 transition hover:opacity-100"
+                    aria-label="Refetch balance"
+                  >
+                    <ReloadIcon className="h-3 w-3" />
+                  </button>
                 </div>
               </div>
-            </>
-          ) : (
-            <div className="flex justify-center py-4">
-              <AccountConnect />
+
+              <div className="mt-2 flex items-start justify-between">
+                <div className="relative flex-grow">
+                  <Input
+                    decimals={market.loanAsset.decimals}
+                    max={useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0))}
+                    setValue={handleSupplyAmountChange}
+                    setError={(error: string | null) => {
+                      if (typeof error === 'string' && !error.includes("You don't have any supplied assets")) {
+                        setInputError(error);
+                      } else {
+                        setInputError(null);
+                      }
+                    }}
+                    exceedMaxErrMessage={
+                      supplyAmount && supplyAmount > (useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0)))
+                        ? 'Insufficient Balance'
+                        : undefined
+                    }
+                  />
+                  {inputError && !inputError.includes("You don't have any supplied assets") && (
+                    <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
+                  )}
+                </div>
+
+                <ExecuteTransactionButton
+                  targetChainId={market.morphoBlue.chain.id}
+                  onClick={handleSupply}
+                  isLoading={isLoadingPermit2 || supplyPending}
+                  disabled={inputError !== null || !supplyAmount}
+                  variant="primary"
+                  className="ml-2 min-w-32"
+                >
+                  Supply
+                </ExecuteTransactionButton>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </>

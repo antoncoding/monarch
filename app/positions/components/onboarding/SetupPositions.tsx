@@ -4,11 +4,11 @@ import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/ui/button';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { SupplyProcessModal } from '@/components/SupplyProcessModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -30,11 +30,6 @@ export function SetupPositions() {
   const [lockedAmounts, setLockedAmounts] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [isSupplying, setIsSupplying] = useState(false);
-
-  // Use our custom hook for network switching
-  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
-    targetChainId: selectedToken?.network ?? SupportedNetworks.Base,
-  });
 
   // Compute token balance and decimals
   const tokenBalance = useMemo(() => {
@@ -190,32 +185,24 @@ export function SetupPositions() {
     goToNextStep,
   );
 
-  const handleSupply = async () => {
-    if (isSupplying) {
-      toast.info('Loading', 'Supplying in progress');
-      return;
-    }
-
-    if (needSwitchChain && selectedToken) {
-      try {
-        switchToNetwork();
-        // Wait for network switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (_switchError) {
-        toast.error('Failed to switch network', 'Please try again');
+  const handleSupply = useCallback(() => {
+    void (async () => {
+      if (isSupplying) {
+        toast.info('Loading', 'Supplying in progress');
         return;
       }
-    }
-    setIsSupplying(true);
 
-    try {
-      // trigger the tx. goToNextStep() be called as a `onSuccess` callback
-      await approveAndSupply();
-    } catch (_supplyError) {
-    } finally {
-      setIsSupplying(false);
-    }
-  };
+      setIsSupplying(true);
+
+      try {
+        // trigger the tx. goToNextStep() be called as a `onSuccess` callback
+        await approveAndSupply();
+      } catch (_supplyError) {
+      } finally {
+        setIsSupplying(false);
+      }
+    })();
+  }, [isSupplying, toast, approveAndSupply]);
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;
@@ -379,15 +366,16 @@ export function SetupPositions() {
         >
           Back
         </Button>
-        <Button
-          variant="primary"
+        <ExecuteTransactionButton
+          targetChainId={selectedToken?.network ?? SupportedNetworks.Base}
+          onClick={handleSupply}
           disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
           isLoading={supplyPending || isLoadingPermit2}
-          onClick={() => void handleSupply()}
+          variant="primary"
           className="min-w-[120px]"
         >
           Execute
-        </Button>
+        </ExecuteTransactionButton>
       </div>
     </div>
   );

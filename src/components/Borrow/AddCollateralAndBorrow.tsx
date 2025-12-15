@@ -1,21 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Switch } from '@heroui/react';
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { useConnection } from 'wagmi';
-import { Button } from '@/components/ui/button';
 import { LTVWarning } from '@/components/common/LTVWarning';
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 import Input from '@/components/Input/Input';
-import AccountConnect from '@/components/layout/header/AccountConnect';
 import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market, MarketPosition } from '@/utils/types';
 import { BorrowProcessModal } from '../BorrowProcessModal';
 import { TokenIcon } from '../TokenIcon';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { getLTVColor, getLTVProgressColor } from './helpers';
 
 type BorrowLogicProps = {
@@ -44,19 +41,12 @@ export function AddCollateralAndBorrow({
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
 
-  const { isConnected } = useConnection();
-
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);
 
   // Calculate current and new LTV
   const [currentLTV, setCurrentLTV] = useState<bigint>(BigInt(0));
   const [newLTV, setNewLTV] = useState<bigint>(BigInt(0));
-
-  // Use the market network hook for chain switching
-  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
-    targetChainId: market.morphoBlue.chain.id,
-  });
 
   // Use the new hook for borrow transaction logic
   const {
@@ -77,6 +67,14 @@ export function AddCollateralAndBorrow({
     borrowAmount,
     onSuccess,
   });
+
+  const handleBorrow = useCallback(() => {
+    if ((!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved)) {
+      void approveAndBorrow();
+    } else {
+      void signAndBorrow();
+    }
+  }, [permit2Authorized, useEth, usePermit2Setting, isApproved, approveAndBorrow, signAndBorrow]);
 
   // Calculate current and new LTV whenever relevant values change
   useEffect(() => {
@@ -238,129 +236,94 @@ export function AddCollateralAndBorrow({
             />
           </div>
 
-          {isConnected && (
-            <div className="mt-12 space-y-4">
-              {/* Collateral Input Section */}
-              <div className="mb-1">
-                <div className="flex items-center justify-between">
-                  <p className="font text-sm">Add Collateral</p>
-                  <p className="font text-xs opacity-50">
-                    Balance:{' '}
-                    {useEth
-                      ? formatBalance(ethBalance ? ethBalance : '0', 18)
-                      : formatBalance(collateralTokenBalance ? collateralTokenBalance : '0', market.collateralAsset.decimals)}{' '}
-                    {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
-                  </p>
-                </div>
-
-                {isWrappedNativeToken(market.collateralAsset.address, market.morphoBlue.chain.id) && (
-                  <div className="mb-2 mt-1 flex items-center justify-end">
-                    <div className="mr-2 font text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
-                    <Switch
-                      size="sm"
-                      isSelected={useEth}
-                      onValueChange={setUseEth}
-                      classNames={{
-                        wrapper: 'w-9 h-4 mr-0',
-                        thumb: 'w-3 h-3',
-                      }}
-                    />
-                  </div>
-                )}
-
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="relative flex-grow">
-                    <Input
-                      decimals={market.collateralAsset.decimals}
-                      max={useEth ? ethBalance : collateralTokenBalance}
-                      setValue={setCollateralAmount}
-                      setError={setCollateralInputError}
-                      exceedMaxErrMessage="Insufficient Balance"
-                      value={collateralAmount}
-                    />
-                    {collateralInputError && <p className="p-1 text-sm text-red-500">{collateralInputError}</p>}
-                  </div>
-                </div>
+          <div className="mt-12 space-y-4">
+            {/* Collateral Input Section */}
+            <div className="mb-1">
+              <div className="flex items-center justify-between">
+                <p className="font text-sm">Add Collateral</p>
+                <p className="font text-xs opacity-50">
+                  Balance:{' '}
+                  {useEth
+                    ? formatBalance(ethBalance ? ethBalance : '0', 18)
+                    : formatBalance(collateralTokenBalance ? collateralTokenBalance : '0', market.collateralAsset.decimals)}{' '}
+                  {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.collateralAsset.symbol}
+                </p>
               </div>
 
-              {/* Borrow Input Section */}
-              <div className="mb-1">
-                <div className="flex items-center justify-between">
-                  <p className="font text-sm">Borrow </p>
-                  <p className="font text-xs opacity-50">
-                    Available: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}{' '}
-                    {market.loanAsset.symbol}
-                  </p>
+              {isWrappedNativeToken(market.collateralAsset.address, market.morphoBlue.chain.id) && (
+                <div className="mb-2 mt-1 flex items-center justify-end">
+                  <div className="mr-2 font text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
+                  <Switch
+                    size="sm"
+                    isSelected={useEth}
+                    onValueChange={setUseEth}
+                    classNames={{
+                      wrapper: 'w-9 h-4 mr-0',
+                      thumb: 'w-3 h-3',
+                    }}
+                  />
                 </div>
+              )}
 
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="relative flex-grow">
-                    <Input
-                      decimals={market.loanAsset.decimals}
-                      setValue={setBorrowAmount}
-                      setError={setBorrowInputError}
-                      exceedMaxErrMessage="Exceeds available liquidity"
-                      value={borrowAmount}
-                    />
-                    {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
-                  </div>
+              <div className="mb-4 flex items-start justify-between">
+                <div className="relative flex-grow">
+                  <Input
+                    decimals={market.collateralAsset.decimals}
+                    max={useEth ? ethBalance : collateralTokenBalance}
+                    setValue={setCollateralAmount}
+                    setError={setCollateralInputError}
+                    exceedMaxErrMessage="Insufficient Balance"
+                    value={collateralAmount}
+                  />
+                  {collateralInputError && <p className="p-1 text-sm text-red-500">{collateralInputError}</p>}
                 </div>
               </div>
             </div>
-          )}
+
+            {/* Borrow Input Section */}
+            <div className="mb-1">
+              <div className="flex items-center justify-between">
+                <p className="font text-sm">Borrow </p>
+                <p className="font text-xs opacity-50">
+                  Available: {formatReadable(formatBalance(market.state.liquidityAssets, market.loanAsset.decimals))}{' '}
+                  {market.loanAsset.symbol}
+                </p>
+              </div>
+
+              <div className="mb-4 flex items-start justify-between">
+                <div className="relative grow">
+                  <Input
+                    decimals={market.loanAsset.decimals}
+                    setValue={setBorrowAmount}
+                    setError={setBorrowInputError}
+                    exceedMaxErrMessage="Exceeds available liquidity"
+                    value={borrowAmount}
+                    max={BigInt(market.state.liquidityAssets)}
+                  />
+                  {borrowInputError && <p className="p-1 text-sm text-red-500">{borrowInputError}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Action Button */}
           <div className="mt-4">
             <div className="flex justify-end">
-              {isConnected ? (
-                needSwitchChain ? (
-                  <Button
-                    onClick={switchToNetwork}
-                    className="min-w-32"
-                    variant="surface"
-                  >
-                    Switch Chain
-                  </Button>
-                ) : (!permit2Authorized && !useEth) || (!usePermit2Setting && !isApproved) ? (
-                  <Button
-                    disabled={
-                      !isConnected ||
-                      isLoadingPermit2 ||
-                      borrowPending ||
-                      collateralInputError !== null ||
-                      borrowInputError !== null ||
-                      collateralAmount === BigInt(0) ||
-                      borrowAmount === BigInt(0) ||
-                      newLTV >= lltv
-                    }
-                    onClick={() => void approveAndBorrow()}
-                    className="min-w-32"
-                    variant="primary"
-                  >
-                    Approve and Borrow
-                  </Button>
-                ) : (
-                  <Button
-                    disabled={
-                      !isConnected ||
-                      borrowPending ||
-                      collateralInputError !== null ||
-                      borrowInputError !== null ||
-                      (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
-                      newLTV >= lltv
-                    }
-                    onClick={() => void signAndBorrow()}
-                    className="min-w-32"
-                    variant="primary"
-                  >
-                    {collateralAmount > 0n && borrowAmount == 0n ? 'Add Collateral' : 'Borrow'}
-                  </Button>
-                )
-              ) : (
-                <div>
-                  <AccountConnect />
-                </div>
-              )}
+              <ExecuteTransactionButton
+                targetChainId={market.morphoBlue.chain.id}
+                onClick={handleBorrow}
+                isLoading={isLoadingPermit2 || borrowPending}
+                disabled={
+                  collateralInputError !== null ||
+                  borrowInputError !== null ||
+                  (collateralAmount === BigInt(0) && borrowAmount === BigInt(0)) ||
+                  newLTV >= lltv
+                }
+                variant="primary"
+                className="min-w-32"
+              >
+                {collateralAmount > 0n && borrowAmount === 0n ? 'Add Collateral' : 'Borrow'}
+              </ExecuteTransactionButton>
             </div>
             {(borrowAmount > 0n || collateralAmount > 0n) && (
               <>

@@ -6,8 +6,8 @@ import { MarketSelectionModal } from '@/components/common/MarketSelectionModal';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/common/Spinner';
 import { TokenIcon } from '@/components/TokenIcon';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -110,7 +110,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
       return false;
     }
     return true;
-  }, [selectedFromMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, getPendingDelta, toast]);
+  }, [selectedFromMarketUniqueKey, amount, groupedPosition.loanAssetDecimals, getPendingDelta, toast, groupedPosition.markets]);
 
   const createAction = useCallback((fromMarket: Market, toMarket: Market, actionAmount: bigint, isMax: boolean): RebalanceAction => {
     return {
@@ -194,40 +194,25 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     resetSelections,
   ]);
 
-  // Use the market network hook for chain switching with direct chainId
-  const { needSwitchChain, switchToNetwork } = useMarketNetwork({
-    targetChainId: groupedPosition.chainId,
-  });
-
-  const handleExecuteRebalance = useCallback(async () => {
-    if (needSwitchChain) {
+  const handleExecuteRebalance = useCallback(() => {
+    void (async () => {
+      setShowProcessModal(true);
       try {
-        // Call our switchToNetwork function
-        switchToNetwork();
-        // Wait a bit for the network switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      } catch (_error) {
-        toast.error('Something went wrong', 'Failed to switch network. Please try again');
-        return;
-      }
-    }
+        const result = await executeRebalance();
+        // Explicitly refetch AFTER successful execution
 
-    setShowProcessModal(true);
-    try {
-      const result = await executeRebalance();
-      // Explicitly refetch AFTER successful execution
-
-      if (result == true) {
-        refetch(() => {
-          toast.info('Data refreshed', 'Position data updated after rebalance.');
-        });
+        if (result === true) {
+          refetch(() => {
+            toast.info('Data refreshed', 'Position data updated after rebalance.');
+          });
+        }
+      } catch (error) {
+        console.error('Error during rebalance:', error);
+      } finally {
+        setShowProcessModal(false);
       }
-    } catch (error) {
-      console.error('Error during rebalance:', error);
-    } finally {
-      setShowProcessModal(false);
-    }
-  }, [executeRebalance, needSwitchChain, switchToNetwork, toast, refetch]);
+    })();
+  }, [executeRebalance, toast, refetch]);
 
   const handleManualRefresh = () => {
     refetch(() => {
@@ -319,15 +304,16 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           >
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={() => void handleExecuteRebalance()}
-            disabled={isProcessing || rebalanceActions.length === 0}
+          <ExecuteTransactionButton
+            targetChainId={groupedPosition.chainId}
+            onClick={handleExecuteRebalance}
+            disabled={rebalanceActions.length === 0}
             isLoading={isProcessing}
+            variant="primary"
             className="rounded-sm p-4 px-10 font-zen text-white duration-200 ease-in-out hover:scale-105 disabled:opacity-50"
           >
-            {needSwitchChain ? 'Switch Network & Execute' : 'Execute Rebalance'}
-          </Button>
+            Execute Rebalance
+          </ExecuteTransactionButton>
         </ModalFooter>
       </Modal>
       {showProcessModal && (
