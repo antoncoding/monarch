@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Switch, Tooltip } from '@heroui/react';
+import { useMemo } from 'react';
+import { Tooltip } from '@heroui/react';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';
@@ -26,9 +26,7 @@ import RewardTable from './RewardTable';
 
 export default function Rewards() {
   const { account } = useParams<{ account: string }>();
-  const { rewards, distributions, loading: loadingRewards, refresh } = useUserRewards(account);
-
-  const [showClaimed, setShowClaimed] = useState(false);
+  const { rewards, distributions, merklRewardsWithProofs, loading: loadingRewards, refresh } = useUserRewards(account);
 
   const { data: morphoBalanceMainnet } = useReadContract({
     address: MORPHO_TOKEN_MAINNET,
@@ -86,7 +84,7 @@ export default function Rewards() {
             acc[key].programs.push(reward.type);
           }
         } else if (reward.type === 'market-reward' || reward.type === 'vault-reward') {
-          // go through all posible keys of rewad object: for_supply, for_borrow, for_collateral}
+          // go through all possible keys of reward object: for_supply, for_borrow, for_collateral}
 
           if (reward.for_supply) {
             acc[key].total.claimable += BigInt(reward.for_supply.claimable_now);
@@ -255,15 +253,6 @@ export default function Rewards() {
               <div className="flex items-center gap-2">
                 <h2 className="font-zen text-xl"> All Rewards </h2>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-secondary">Show Claimed</span>
-                <Switch
-                  size="sm"
-                  isSelected={showClaimed}
-                  onValueChange={setShowClaimed}
-                  aria-label="Show claimed rewards"
-                />
-              </div>
             </div>
             {loadingRewards ? (
               <LoadingScreen message="Loading Rewards..." />
@@ -274,7 +263,7 @@ export default function Rewards() {
                 account={account}
                 rewards={allRewards}
                 distributions={distributions}
-                showClaimed={showClaimed}
+                merklRewardsWithProofs={merklRewardsWithProofs}
               />
             )}
           </section>

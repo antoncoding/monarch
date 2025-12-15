@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode, useMemo } from 'react';
-import { merklApiClient, simplifyMerklCampaign } from '@/utils/merklApi';
-import type { MerklCampaign, SimplifiedCampaign } from '@/utils/merklTypes';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode, useMemo } from 'react';
+import { fetchActiveCampaigns, simplifyMerklCampaign } from '@/utils/merklApi';
+import type { SimplifiedCampaign } from '@/utils/merklTypes';
 
 type MerklCampaignsContextType = {
   campaigns: SimplifiedCampaign[];
@@ -21,33 +21,26 @@ export function MerklCampaignsProvider({ children }: MerklCampaignsProviderProps
   const [campaigns, setCampaigns] = useState<SimplifiedCampaign[]>([]);
   const [loading, setLoading] = useState(true); // Start as true like MarketsContext
   const [error, setError] = useState<string | null>(null);
+  const hasInitialized = useRef(false);
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const allRawCampaigns: MerklCampaign[] = [];
+      // Fetch both MORPHOSUPPLY and MORPHOSUPPLY_SINGLETOKEN campaigns using SDK
+      const [supplyCampaigns, singleTokenCampaigns] = await Promise.all([
+        fetchActiveCampaigns({ type: 'MORPHOSUPPLY' }),
+        fetchActiveCampaigns({ type: 'MORPHOSUPPLY_SINGLETOKEN' }),
+      ]);
 
-      // Fetch both MORPHOSUPPLY and MORPHOSUPPLY_SINGLETOKEN campaigns
-      const supplyCampaigns = await merklApiClient.fetchActiveCampaigns({
-        type: 'MORPHOSUPPLY',
-      });
-      const singleTokenCampaigns = await merklApiClient.fetchActiveCampaigns({
-        type: 'MORPHOSUPPLY_SINGLETOKEN',
-      });
-      allRawCampaigns.push(...supplyCampaigns, ...singleTokenCampaigns);
+      const allRawCampaigns = [...supplyCampaigns, ...singleTokenCampaigns];
 
-      // Convert to simplified campaigns and normalize market IDs
-      const simplifiedCampaigns = allRawCampaigns.map((campaign) => {
-        const simplified = simplifyMerklCampaign(campaign);
-        return {
-          ...simplified,
-          marketId: simplified.marketId.toLowerCase(), // Normalize to lowercase
-        };
-      });
+      // Convert to simplified campaigns
+      const simplifiedCampaigns = allRawCampaigns.map((campaign) => simplifyMerklCampaign(campaign));
 
       setCampaigns(simplifiedCampaigns);
+      hasInitialized.current = true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch campaigns';
       setError(errorMessage);
@@ -58,11 +51,11 @@ export function MerklCampaignsProvider({ children }: MerklCampaignsProviderProps
   }, []); // Empty deps like MarketsContext
 
   useEffect(() => {
-    // Simple condition like MarketsContext - run if we have no campaigns
-    if (campaigns.length === 0) {
+    // Only fetch once on mount
+    if (!hasInitialized.current) {
       void fetchCampaigns().catch(console.error);
     }
-  }, [fetchCampaigns, campaigns.length]);
+  }, [fetchCampaigns]);
 
   const refetch = useCallback(async () => {
     await fetchCampaigns();
