@@ -71,7 +71,7 @@ export function MarketInfoBlockCompact({ market, amount, className }: MarketInfo
         />
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="font-sm min-w-[100px]">{market.collateralAsset.symbol}</span>
+            <span className="text-sm min-w-[100px]">{market.collateralAsset.symbol}</span>
             <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
               {formatUnits(BigInt(market.lltv), 16)}% LTV
             </span>

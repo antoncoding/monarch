@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoStarFill, GoStar } from 'react-icons/go';
+import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/common/RateFormatted';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIndicators } from '@/components/MarketIndicators';
@@ -93,19 +94,19 @@ export function MarketTableBody({
   };
 
   return (
-    <tbody className="table-body text-sm">
+    <TableBody className="text-sm">
       {currentEntries.map((item, index) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
         const isStared = staredIds.includes(item.uniqueKey);
 
         return (
           <React.Fragment key={index}>
-            <tr
+            <TableRow
               key={item.uniqueKey}
               onClick={() => setExpandedRowId(item.uniqueKey === expandedRowId ? null : item.uniqueKey)}
-              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}'`}
+              className={`hover:cursor-pointer ${item.uniqueKey === expandedRowId ? 'table-body-focused ' : ''}`}
             >
-              <td
+              <TableCell
                 data-label=""
                 className="z-50"
                 style={{ minWidth: '40px' }}
@@ -123,8 +124,8 @@ export function MarketTableBody({
                 >
                   <p className="text-lg text-orange-500 group-hover:opacity-100">{isStared ? <GoStarFill /> : <GoStar />}</p>
                 </button>
-              </td>
-              <td
+              </TableCell>
+              <TableCell
                 data-label="ID"
                 className="z-50"
                 style={{ minWidth: '80px' }}
@@ -143,7 +144,7 @@ export function MarketTableBody({
                     showNetworkIcon
                   />
                 </button>
-              </td>
+              </TableCell>
               <TDAsset
                 dataLabel="Loan"
                 asset={item.loanAsset.address}
@@ -156,7 +157,7 @@ export function MarketTableBody({
                 chainId={item.morphoBlue.chain.id}
                 symbol={collatToShow}
               />
-              <td
+              <TableCell
                 data-label="Oracle"
                 className="z-50"
                 style={{ minWidth: '90px' }}
@@ -167,22 +168,22 @@ export function MarketTableBody({
                     chainId={item.morphoBlue.chain.id}
                   />
                 </div>
-              </td>
-              <td
+              </TableCell>
+              <TableCell
                 data-label="LLTV"
                 className="z-50"
                 style={{ minWidth: '60px', padding: 5 }}
               >
                 {Number(item.lltv) / 1e16}%
-              </td>
+              </TableCell>
               {columnVisibility.trustedBy && (
-                <td
+                <TableCell
                   data-label="Trusted By"
                   className="z-50 text-center"
                   style={{ minWidth: '110px', paddingLeft: 6, paddingRight: 6 }}
                 >
                   <TrustedByCell vaults={getTrustedVaultsForMarket(item)} />
-                </td>
+                </TableCell>
               )}
               {columnVisibility.totalSupply && (
                 <TDTotalSupplyOrBorrow
@@ -212,48 +213,48 @@ export function MarketTableBody({
                 />
               )}
               {columnVisibility.supplyAPY && (
-                <td
+                <TableCell
                   data-label={supplyRateLabel}
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <APYCell market={item} />
-                </td>
+                </TableCell>
               )}
               {columnVisibility.borrowAPY && (
-                <td
+                <TableCell
                   data-label={borrowRateLabel}
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">{item.state.borrowApy ? <RateFormatted value={item.state.borrowApy} /> : '—'}</p>
-                </td>
+                </TableCell>
               )}
               {columnVisibility.rateAtTarget && (
-                <td
+                <TableCell
                   data-label="Target Rate"
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">{item.state.apyAtTarget ? <RateFormatted value={item.state.apyAtTarget} /> : '—'}</p>
-                </td>
+                </TableCell>
               )}
               {columnVisibility.utilizationRate && (
-                <td
+                <TableCell
                   data-label="Utilization"
                   className="z-50 text-center"
                   style={{ minWidth: '85px', paddingLeft: 3, paddingRight: 3 }}
                 >
                   <p className="text-sm">{`${(item.state.utilization * 100).toFixed(2)}%`}</p>
-                </td>
+                </TableCell>
               )}
-              <td style={{ minWidth: '90px' }}>
+              <TableCell style={{ minWidth: '90px' }}>
                 <div className="flex items-center justify-center gap-1">
                   <MarketAssetIndicator market={item} />
                   <MarketOracleIndicator market={item} />
                   <MarketDebtIndicator market={item} />
                 </div>
-              </td>
-              <td
+              </TableCell>
+              <TableCell
                 data-label="Indicators"
                 className="z-50"
                 style={{ maxWidth: '40px', padding: 0 }}
@@ -262,8 +263,8 @@ export function MarketTableBody({
                   market={item}
                   showRisk={false}
                 />
-              </td>
-              <td
+              </TableCell>
+              <TableCell
                 data-label="Actions"
                 className="justify-center px-4 py-3"
               >
@@ -280,12 +281,12 @@ export function MarketTableBody({
                     isBlacklisted={isBlacklisted}
                   />
                 </div>
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
             <AnimatePresence>
               {expandedRowId === item.uniqueKey && (
-                <tr className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
-                  <td
+                <TableRow className={`${item.uniqueKey === expandedRowId ? 'table-body-focused' : ''}`}>
+                  <TableCell
                     className="collaps-viewer bg-hovered p-0"
                     colSpan={visibleColumnsCount}
                   >
@@ -301,13 +302,13 @@ export function MarketTableBody({
                         <ExpandedMarketDetail market={item} />
                       </div>
                     </motion.div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
             </AnimatePresence>
           </React.Fragment>
         );
       })}
-    </tbody>
+    </TableBody>
   );
 }

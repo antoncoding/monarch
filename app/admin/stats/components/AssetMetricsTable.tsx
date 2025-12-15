@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { TokenIcon } from '@/components/TokenIcon';
 import { formatReadable } from '@/utils/balance';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
@@ -25,7 +26,7 @@ type SortableHeaderProps = {
 
 function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, onSort }: SortableHeaderProps) {
   return (
-    <th
+    <TableHead
       className={`px-2 py-2 font-normal whitespace-nowrap ${currentSortKey === sortKeyValue ? 'text-primary' : ''}`}
       onClick={() => onSort(sortKeyValue)}
       style={{ padding: '0.5rem' }}
@@ -35,7 +36,7 @@ function SortableHeader({ label, sortKeyValue, currentSortKey, sortDirection, on
         {currentSortKey === sortKeyValue &&
           (sortDirection === 'asc' ? <FiChevronUp className="h-4 w-4" /> : <FiChevronDown className="h-4 w-4" />)}
       </div>
-    </th>
+    </TableHead>
   );
 }
 
@@ -92,10 +93,10 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
         {processedData.length === 0 ? (
           <div className="py-8 text-center text-gray-400">No asset data available</div>
         ) : (
-          <table className="responsive rounded-md font-zen w-full min-w-full">
-            <thead className="table-header">
-              <tr>
-                <th className="font-normal px-2 py-2 whitespace-nowrap">Asset</th>
+          <Table className="responsive rounded-md font-zen w-full min-w-full">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Asset</TableHead>
                 <SortableHeader
                   label="Total Volume"
                   sortKeyValue="totalVolume"
@@ -131,19 +132,19 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                   sortDirection={sortDirection}
                   onSort={handleSort}
                 />
-              </tr>
-            </thead>
-            <tbody className="table-body text-sm">
+              </TableRow>
+            </TableHeader>
+            <TableBody className="text-sm">
               {sortedData.map((asset) => {
                 // Use a determined chainId for display purposes
                 const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
 
                 return (
-                  <tr
+                  <TableRow
                     key={`${asset.assetAddress}-${asset.chainId}`}
                     className="hover:bg-hovered"
                   >
-                    <td
+                    <TableCell
                       data-label="Asset"
                       className="z-50"
                       style={{ minWidth: '120px' }}
@@ -158,8 +159,8 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                         />
                         <span className="font-zen text-sm">{asset.assetSymbol ?? 'Unknown'}</span>
                       </div>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Total Volume"
                       className="z-50 text-center"
                       style={{ minWidth: '120px' }}
@@ -167,40 +168,40 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
                       <span className="text-sm">
                         {asset.totalVolumeFormatted ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}` : '—'}
                       </span>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Total Transactions"
                       className="z-50 text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</span>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Supply Count"
                       className="z-50 text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Withdraw Count"
                       className="z-50 text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Unique Users"
                       className="z-50 text-center"
                       style={{ minWidth: '100px' }}
                     >
                       <span className="text-sm">{asset.uniqueUsers.toLocaleString()}</span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

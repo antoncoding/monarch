@@ -465,6 +465,61 @@ Add an action link (like explorer) in the top-right corner:
 - Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
 - Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
 
+### Table Component
+
+**Always use Table components from `@/components/ui/table`** - never use raw HTML `<table>` tags.
+
+**Components:**
+```tsx
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { TablePagination } from '@/components/common/TablePagination';
+```
+
+**Basic Usage:**
+```tsx
+<Table>
+  <TableHeader>
+    <TableRow>
+      <TableHead className="text-left">Name</TableHead>
+      <TableHead className="text-right">Amount</TableHead>
+    </TableRow>
+  </TableHeader>
+  <TableBody className="table-body-compact">
+    <TableRow>
+      <TableCell>John</TableCell>
+      <TableCell className="text-right">$100</TableCell>
+    </TableRow>
+  </TableBody>
+</Table>
+
+{/* Pagination - always use TablePagination */}
+<TablePagination
+  currentPage={page}
+  totalPages={totalPages}
+  totalEntries={items.length}
+  pageSize={10}
+  onPageChange={setPage}
+  isLoading={loading}
+/>
+```
+
+**Key Rules:**
+
+1. **Variants**: Use `table-body-compact` on `<TableBody>` for activity/transaction tables (adds 6px cushion vs standard padding)
+2. **Alignment**: Headers and cells must match - use `text-left`, `text-right`, or `text-center`
+3. **Amount Columns**: Use flexbox with `justify-end` for right-aligned token icons, and use `text-sm` for text:
+   ```tsx
+   <TableCell>
+     <div className="flex items-center justify-end gap-1 text-sm">
+       <span>{amount}</span>
+       <TokenIcon width={16} height={16} />
+     </div>
+   </TableCell>
+   ```
+4. **Pagination**: Always use `TablePagination` component (not HeroUI `Pagination`)
+
+**Styling:** All styling applied via `app/global.css` - don't add inline styles or override padding.
+
 ### TablePagination Component
 
 **TablePagination** (`@/components/common/TablePagination`)

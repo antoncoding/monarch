@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { formatUnits } from 'viem';
+import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
@@ -66,17 +67,17 @@ const formatAmount = (amount: string, side: 'Supply' | 'Withdraw', loanAddress: 
 
 export function TransactionTableBody({ operations, selectedNetwork }: TransactionTableBodyProps) {
   return (
-    <tbody className="table-body text-sm">
+    <TableBody className="text-sm">
       {operations.map((op) => {
         const marketPath = op.market ? `/market/${selectedNetwork}/${op.market.uniqueKey}` : null;
 
         return (
-          <tr
+          <TableRow
             key={op.txId}
             className="hover:bg-hovered"
           >
             {/* User Address */}
-            <td
+            <TableCell
               data-label="User"
               className="z-50"
               style={{ minWidth: '120px' }}
@@ -86,10 +87,10 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
                 variant="badge"
                 linkTo="profile"
               />
-            </td>
+            </TableCell>
 
             {/* Loan Asset */}
-            <td
+            <TableCell
               data-label="Loan Asset"
               className="z-50"
               style={{ minWidth: '100px' }}
@@ -104,10 +105,10 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
                 />
                 <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(op.loanSymbol)}</span>
               </div>
-            </td>
+            </TableCell>
 
             {/* Market */}
-            <td
+            <TableCell
               data-label="Market"
               className="z-50"
               style={{ minWidth: '200px' }}
@@ -134,10 +135,10 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
               ) : (
                 <span className="text-xs text-secondary">—</span>
               )}
-            </td>
+            </TableCell>
 
             {/* Side */}
-            <td
+            <TableCell
               data-label="Side"
               className="z-50 text-center"
               style={{ minWidth: '80px' }}
@@ -149,19 +150,19 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
               >
                 {op.side}
               </span>
-            </td>
+            </TableCell>
 
             {/* Amount */}
-            <td
+            <TableCell
               data-label="Amount"
               className="z-50"
               style={{ minWidth: '120px' }}
             >
               <span className="text-sm">{formatAmount(op.amount, op.side, op.loanAddress, selectedNetwork)}</span>
-            </td>
+            </TableCell>
 
             {/* Transaction Hash */}
-            <td
+            <TableCell
               data-label="Tx Hash"
               className="z-50"
               style={{ minWidth: '120px' }}
@@ -170,19 +171,19 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
                 txHash={op.txHash}
                 chainId={selectedNetwork}
               />
-            </td>
+            </TableCell>
 
             {/* Time */}
-            <td
+            <TableCell
               data-label="Time"
               className="z-50"
               style={{ minWidth: '90px' }}
             >
               <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(op.timestamp)}</span>
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         );
       })}
-    </tbody>
+    </TableBody>
   );
 }

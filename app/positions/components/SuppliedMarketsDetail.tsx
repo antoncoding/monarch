@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/common/RateFormatted';
 import { MarketIdBadge } from '@/components/MarketIdBadge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/components/MarketIdentity';
@@ -36,11 +37,11 @@ function MarketRow({
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
 
   return (
-    <tr
+    <TableRow
       key={position.market.uniqueKey}
       className="gap-1"
     >
-      <td
+      <TableCell
         data-label="Market"
         className="text-center"
       >
@@ -51,8 +52,8 @@ function MarketRow({
             showNetworkIcon={false}
           />
         </div>
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label="Market Detail"
         className="align-middle p-4"
       >
@@ -63,20 +64,20 @@ function MarketRow({
           chainId={position.market.morphoBlue.chain.id}
           wide
         />
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label={rateLabel}
         className="text-center"
       >
         <RateFormatted value={position.market.state.supplyApy} />
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label="Supplied"
         className="text-center"
       >
         {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label="% of Portfolio"
         className="text-center"
       >
@@ -89,8 +90,8 @@ function MarketRow({
           </div>
           <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
         </div>
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label="Indicators"
         className="text-center"
       >
@@ -98,8 +99,8 @@ function MarketRow({
           market={position.market}
           showRisk
         />
-      </td>
-      <td
+      </TableCell>
+      <TableCell
         data-label="Actions"
         className="justify-center px-4 py-3"
       >
@@ -125,8 +126,8 @@ function MarketRow({
             Supply
           </Button>
         </div>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -203,19 +204,19 @@ export function SuppliedMarketsDetail({
         )}
 
         {/* Markets Table - Always visible */}
-        <table className="no-hover-effect w-full font-zen">
-          <thead className="table-header">
-            <tr>
-              <th>Market</th>
-              <th> Collateral & Parameters </th>
-              <th>{rateLabel}</th>
-              <th>Supplied</th>
-              <th>% of Portfolio</th>
-              <th>Indicators</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody className="table-body text-xs">
+        <Table className="no-hover-effect w-full font-zen">
+          <TableHeader className="">
+            <TableRow>
+              <TableHead>Market</TableHead>
+              <TableHead> Collateral & Parameters </TableHead>
+              <TableHead>{rateLabel}</TableHead>
+              <TableHead>Supplied</TableHead>
+              <TableHead>% of Portfolio</TableHead>
+              <TableHead>Indicators</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="text-xs">
             {filteredMarkets.map((position) => (
               <MarketRow
                 key={position.market.uniqueKey}
@@ -227,8 +228,8 @@ export function SuppliedMarketsDetail({
                 rateLabel={rateLabel}
               />
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </motion.div>
   );

@@ -1033,7 +1033,7 @@ export function MarketsTableWithSameLoanAsset({
       {/* Table */}
       <div className="w-full overflow-x-auto">
         <table className="responsive rounded-md font-zen text-sm">
-          <thead className="table-header">
+          <thead className="">
             <tr>
               {showSelectColumn && (
                 <th

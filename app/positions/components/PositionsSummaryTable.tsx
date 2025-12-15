@@ -10,6 +10,7 @@ import { IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/TokenIcon';
 import { TooltipContent } from '@/components/TooltipContent';
@@ -281,15 +282,15 @@ export function PositionsSummaryTable({
           </DropdownMenu>
         </Dropdown>
       </div>
-      <div className="bg-surface overflow-hidden rounded">
-        <table className="responsive w-full min-w-[640px] font-zen">
-          <thead className="table-header">
-            <tr className="w-full justify-center text-secondary">
-              <th className="w-10" />
-              <th className="w-10">Network</th>
-              <th className="text-center">Size</th>
-              <th className="text-center">{rateLabel} (now)</th>
-              <th className="text-center">
+      <div className="bg-surface overflow-hidden rounded shadow-sm">
+        <Table className="responsive w-full min-w-[640px]">
+          <TableHeader>
+            <TableRow className="w-full justify-center text-secondary">
+              <TableHead className="w-10" />
+              <TableHead className="w-10">Network</TableHead>
+              <TableHead>Size</TableHead>
+              <TableHead>{rateLabel} (now)</TableHead>
+              <TableHead>
                 <span className="inline-flex items-center gap-1">
                   Interest Accrued ({earningsPeriod})
                   <Tooltip
@@ -310,13 +311,13 @@ export function PositionsSummaryTable({
                     </div>
                   </Tooltip>
                 </span>
-              </th>
-              <th className="text-center">Collateral</th>
-              <th className="text-center">Warnings</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="table-body text-sm">
+              </TableHead>
+              <TableHead>Collateral</TableHead>
+              <TableHead>Warnings</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="text-sm">
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
               const isExpanded = expandedRows.has(rowKey);
@@ -326,12 +327,12 @@ export function PositionsSummaryTable({
 
               return (
                 <React.Fragment key={rowKey}>
-                  <tr
+                  <TableRow
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleRow(rowKey)}
                   >
-                    <td className="w-10 text-center">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</td>
-                    <td className="w-10">
+                    <TableCell className="w-10 text-center">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</TableCell>
+                    <TableCell className="w-10">
                       <div className="flex items-center justify-center">
                         <Image
                           src={getNetworkImg(groupedPosition.chainId) ?? ''}
@@ -340,8 +341,8 @@ export function PositionsSummaryTable({
                           height={24}
                         />
                       </div>
-                    </td>
-                    <td data-label="Size">
+                    </TableCell>
+                    <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">{formatReadable(groupedPosition.totalSupply)}</span>
                         <span>{groupedPosition.loanAsset}</span>
@@ -353,13 +354,13 @@ export function PositionsSummaryTable({
                           height={16}
                         />
                       </div>
-                    </td>
-                    <td data-label={`${rateLabel} (now)`}>
+                    </TableCell>
+                    <TableCell data-label={`${rateLabel} (now)`}>
                       <div className="flex items-center justify-center">
                         <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
                       </div>
-                    </td>
-                    <td data-label={`Interest Accrued (${earningsPeriod})`}>
+                    </TableCell>
+                    <TableCell data-label={`Interest Accrued (${earningsPeriod})`}>
                       <div className="flex items-center justify-center gap-2">
                         {isLoadingEarnings ? (
                           <div className="flex items-center justify-center">
@@ -382,8 +383,8 @@ export function PositionsSummaryTable({
                           </span>
                         )}
                       </div>
-                    </td>
-                    <td data-label="Collateral">
+                    </TableCell>
+                    <TableCell data-label="Collateral">
                       <div className="flex items-center justify-center gap-1">
                         {groupedPosition.collaterals.length > 0 ? (
                           groupedPosition.collaterals
@@ -403,16 +404,16 @@ export function PositionsSummaryTable({
                           <span className="text-sm text-gray-500">No known collaterals</span>
                         )}
                       </div>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Warnings"
                       className="align-middle"
                     >
                       <div className="flex items-center justify-center gap-1">
                         <AggregatedRiskIndicators groupedPosition={groupedPosition} />
                       </div>
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       data-label="Actions"
                       className="justify-center px-4 py-3"
                     >
@@ -434,12 +435,12 @@ export function PositionsSummaryTable({
                           Rebalance
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                   <AnimatePresence>
                     {expandedRows.has(rowKey) && (
-                      <tr className="bg-surface">
-                        <td
+                      <TableRow className="bg-surface">
+                        <TableCell
                           colSpan={10}
                           className="bg-surface"
                         >
@@ -459,15 +460,15 @@ export function PositionsSummaryTable({
                               showCollateralExposure={showCollateralExposure}
                             />
                           </motion.div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                   </AnimatePresence>
                 </React.Fragment>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
       {showRebalanceModal && selectedGroupedPosition && (
         <RebalanceModal

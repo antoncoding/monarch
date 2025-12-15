@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { type Address, formatUnits } from 'viem';
 import { AccountIdentity } from '@/components/common/AccountIdentity';
@@ -8,6 +8,7 @@ import { TablePagination } from '@/components/common/TablePagination';
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 import { TokenIcon } from '@/components/TokenIcon';
 import { useMarketLiquidations } from '@/hooks/useMarketLiquidations';
+import { formatSimple } from '@/utils/balance';
 import type { Market, MarketLiquidationTransaction } from '@/utils/types';
 
 type LiquidationsTableProps = {
@@ -51,83 +52,53 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          aria-label="Liquidations history"
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-        >
-          <TableHeader>
-            <TableColumn>LIQUIDATOR</TableColumn>
-            <TableColumn align="end">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-            <TableColumn align="end">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableColumn>
-            <TableColumn align="end">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableColumn>
-            <TableColumn>TIME</TableColumn>
-            <TableColumn
-              className="font-mono"
-              align="end"
-            >
-              TRANSACTION
-            </TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No liquidations found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Liquidations history"
           >
-            {paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
-              const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
-              const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">LIQUIDATOR</TableHead>
+                <TableHead className="text-right">REPAID ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
+                <TableHead className="text-right">SEIZED ({market?.collateralAsset?.symbol ?? 'Collateral'})</TableHead>
+                <TableHead className="text-right">BAD DEBT ({market?.loanAsset?.symbol ?? 'Loan'})</TableHead>
+                <TableHead className="text-left">TIME</TableHead>
+                <TableHead className="text-right">TRANSACTION</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="table-body-compact">
+              {paginatedLiquidations.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-gray-400"
+                  >
+                    No liquidations found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedLiquidations.map((liquidation: MarketLiquidationTransaction) => {
+                  const hasBadDebt = BigInt(liquidation.badDebtAssets) !== BigInt(0);
+                  const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
-              return (
-                <TableRow key={liquidation.hash}>
-                  <TableCell>
-                    {isLiquidatorAddress ? (
-                      <AccountIdentity
-                        address={liquidation.liquidator as Address}
-                        variant="compact"
-                        linkTo="profile"
-                      />
-                    ) : (
-                      <span>{liquidation.liquidator}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)}
-                    {market?.loanAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)}
-                    {market?.collateralAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.collateralAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.collateralAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {hasBadDebt ? (
-                      <>
-                        {formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)}
-                        {market?.loanAsset?.symbol && (
-                          <span className="ml-1 inline-flex items-center">
+                  return (
+                    <TableRow key={liquidation.hash}>
+                      <TableCell>
+                        {isLiquidatorAddress ? (
+                          <AccountIdentity
+                            address={liquidation.liquidator as Address}
+                            variant="compact"
+                            linkTo="profile"
+                          />
+                        ) : (
+                          <span>{liquidation.liquidator}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center justify-end gap-1">
+                          <span>{formatSimple(Number(formatUnits(BigInt(liquidation.repaidAssets), market.loanAsset.decimals)))}</span>
+                          {market?.loanAsset?.symbol && (
                             <TokenIcon
                               address={market.loanAsset.address}
                               chainId={market.morphoBlue.chain.id}
@@ -135,25 +106,57 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                               width={16}
                               height={16}
                             />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center justify-end gap-1">
+                          <span>
+                            {formatSimple(Number(formatUnits(BigInt(liquidation.seizedAssets), market.collateralAsset.decimals)))}
                           </span>
+                          {market?.collateralAsset?.symbol && (
+                            <TokenIcon
+                              address={market.collateralAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.collateralAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {hasBadDebt ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <span>{formatSimple(Number(formatUnits(BigInt(liquidation.badDebtAssets), market.loanAsset.decimals)))}</span>
+                            {market?.loanAsset?.symbol && (
+                              <TokenIcon
+                                address={market.loanAsset.address}
+                                chainId={market.morphoBlue.chain.id}
+                                symbol={market.loanAsset.symbol}
+                                width={16}
+                                height={16}
+                              />
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end">-</div>
                         )}
-                      </>
-                    ) : (
-                      ' - '
-                    )}
-                  </TableCell>
-                  <TableCell>{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
-                  <TableCell className="text-right">
-                    <TransactionIdentity
-                      txHash={liquidation.hash}
-                      chainId={chainId}
-                    />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">{moment.unix(liquidation.timestamp).fromNow()}</TableCell>
+                      <TableCell className="text-right text-sm text-gray-500">
+                        <TransactionIdentity
+                          txHash={liquidation.hash}
+                          chainId={chainId}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

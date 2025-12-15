@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { DateValue } from '@heroui/react';
-import { Table, TableHeader, TableBody, TableColumn, TableRow, TableCell } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { getLocalTimeZone } from '@internationalized/date';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import { useDateFormatter } from '@react-aria/i18n';
@@ -262,19 +262,15 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
 
                       {/* Transactions Table */}
                       {marketReport.transactions.length > 0 && (
-                        <div className="bg-surface">
-                          <Table
-                            aria-label="Market transactions"
-                            classNames={{
-                              th: 'bg-surface',
-                              wrapper: 'rounded-none shadow-none bg-surface',
-                            }}
-                          >
+                        <div className="bg-surface rounded-none shadow-none">
+                          <Table aria-label="Market transactions">
                             <TableHeader>
-                              <TableColumn>TYPE</TableColumn>
-                              <TableColumn>DATE</TableColumn>
-                              <TableColumn>AMOUNT</TableColumn>
-                              <TableColumn>TX</TableColumn>
+                              <TableRow>
+                                <TableHead>TYPE</TableHead>
+                                <TableHead>DATE</TableHead>
+                                <TableHead>AMOUNT</TableHead>
+                                <TableHead>TX</TableHead>
+                              </TableRow>
                             </TableHeader>
                             <TableBody>
                               {marketReport.transactions.map((tx) => (

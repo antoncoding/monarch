@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { formatUnits } from 'viem';
@@ -101,59 +102,66 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-          aria-label="Market suppliers"
-        >
-          <TableHeader>
-            <TableColumn>ACCOUNT</TableColumn>
-            <TableColumn align="end">SUPPLIED</TableColumn>
-            <TableColumn align="end">% OF SUPPLY</TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No suppliers found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Market suppliers"
           >
-            {suppliersWithAssets.map((supplier) => {
-              const totalSupply = BigInt(market.state.supplyAssets);
-              const supplierAssets = BigInt(supplier.supplyAssets);
-              const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
-              const percentDisplay = percentOfSupply < 0.01 && percentOfSupply > 0 ? '<0.01%' : `${percentOfSupply.toFixed(2)}%`;
-
-              return (
-                <TableRow key={`supplier-${supplier.userAddress}`}>
-                  <TableCell>
-                    <AccountIdentity
-                      address={supplier.userAddress as Address}
-                      variant="compact"
-                      linkTo="profile"
-                    />
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">ACCOUNT</TableHead>
+                <TableHead className="text-right">SUPPLIED</TableHead>
+                <TableHead className="text-right">% OF SUPPLY</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="table-body-compact">
+              {suppliersWithAssets.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    className="text-center text-gray-400"
+                  >
+                    No suppliers found for this market
                   </TableCell>
-                  <TableCell className="text-right">
-                    {formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}
-                    {market?.loanAsset?.symbol && (
-                      <span className="ml-1 inline-flex items-center">
-                        <TokenIcon
-                          address={market.loanAsset.address}
-                          chainId={market.morphoBlue.chain.id}
-                          symbol={market.loanAsset.symbol}
-                          width={16}
-                          height={16}
-                        />
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">{percentDisplay}</TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              ) : (
+                suppliersWithAssets.map((supplier) => {
+                  const totalSupply = BigInt(market.state.supplyAssets);
+                  const supplierAssets = BigInt(supplier.supplyAssets);
+                  const percentOfSupply = totalSupply > 0n ? (Number(supplierAssets) / Number(totalSupply)) * 100 : 0;
+                  const percentDisplay = percentOfSupply < 0.01 && percentOfSupply > 0 ? '<0.01%' : `${percentOfSupply.toFixed(2)}%`;
+
+                  return (
+                    <TableRow key={`supplier-${supplier.userAddress}`}>
+                      <TableCell>
+                        <AccountIdentity
+                          address={supplier.userAddress as Address}
+                          variant="compact"
+                          linkTo="profile"
+                        />
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center justify-end gap-1">
+                          <span>{formatSimple(Number(formatUnits(BigInt(supplier.supplyAssets), market.loanAsset.decimals)))}</span>
+                          {market?.loanAsset?.symbol && (
+                            <TokenIcon
+                              address={market.loanAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">{percentDisplay}</TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (

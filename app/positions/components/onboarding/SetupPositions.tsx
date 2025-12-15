@@ -4,6 +4,7 @@ import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
 import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
@@ -252,26 +253,26 @@ export function SetupPositions() {
 
       {/* Markets Distribution */}
       <div className="mt-6 h-96 overflow-y-auto">
-        <table className="responsive w-full rounded-md font-zen">
-          <thead className="table-header">
-            <tr>
-              <th className="font-normal">Market</th>
-              <th className="font-normal">{rateLabel}</th>
-              <th className="font-normal">Distribution</th>
-            </tr>
-          </thead>
-          <tbody className="table-body text-sm">
+        <Table className="responsive w-full rounded-md font-zen">
+          <TableHeader className="">
+            <TableRow>
+              <TableHead className="font-normal">Market</TableHead>
+              <TableHead className="font-normal">{rateLabel}</TableHead>
+              <TableHead className="font-normal">Distribution</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="text-sm">
             {selectedMarkets.map((market) => {
               const currentPercentage = percentages[market.uniqueKey] ?? 0;
               const isLocked = lockedAmounts.has(market.uniqueKey);
 
               return (
-                <tr
+                <TableRow
                   key={market.uniqueKey}
                   className="hover:bg-hovered"
                 >
                   {/* Market Identity */}
-                  <td
+                  <TableCell
                     data-label="Market"
                     className="z-50"
                     style={{ width: '280px' }}
@@ -286,15 +287,15 @@ export function SetupPositions() {
                       iconSize={18}
                       showExplorerLink
                     />
-                  </td>
+                  </TableCell>
 
                   {/* APY/APR */}
-                  <td data-label={rateLabel}>
+                  <TableCell data-label={rateLabel}>
                     <APYCell market={market} />
-                  </td>
+                  </TableCell>
 
                   {/* Distribution Controls */}
-                  <td
+                  <TableCell
                     data-label="Distribution"
                     className="z-50"
                   >
@@ -335,12 +336,12 @@ export function SetupPositions() {
                         </button>
                       </div>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {error && <div className="mt-4 text-sm text-red-500">{error}</div>}

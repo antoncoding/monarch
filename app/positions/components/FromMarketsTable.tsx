@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Pagination } from '@heroui/react';
 import { Button } from '@/components/ui/button';
+import { TablePagination } from '@/components/common/TablePagination';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
@@ -48,22 +49,22 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
       ) : (
         <>
           <div className="w-full overflow-x-auto">
-            <table className="w-full table-fixed rounded-sm font-zen text-sm">
+            <Table className="w-full table-fixed rounded-sm font-zen text-sm">
               <colgroup>
                 <col className="w-auto" />
                 <col className="w-[120px]" />
                 <col className="w-[120px]" />
                 <col className="w-[220px]" />
               </colgroup>
-              <thead className="table-header bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-4 py-2 text-left">Market</th>
-                  <th className="px-4 py-2 text-right">{rateLabel}</th>
-                  <th className="px-4 py-2 text-right">Util</th>
-                  <th className="px-4 py-2 text-left">Supplied Amount</th>
-                </tr>
-              </thead>
-              <tbody>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-4 py-2 text-left">Market</TableHead>
+                  <TableHead className="px-4 py-2 text-right">{rateLabel}</TableHead>
+                  <TableHead className="px-4 py-2 text-right">Util</TableHead>
+                  <TableHead className="px-4 py-2 text-left">Supplied Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {paginatedPositions.map((position) => {
                   const userConfirmedSupply = BigInt(position.state.supplyAssets);
                   const pendingDeltaBigInt = BigInt(position.pendingDelta);
@@ -77,14 +78,14 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                   const isSelected = position.market.uniqueKey === selectedMarketUniqueKey;
                   const apyPreview = getApyPreview(position);
                   return (
-                    <tr
+                    <TableRow
                       key={position.market.uniqueKey}
                       onClick={() => onSelectMarket(position.market.uniqueKey)}
                       className={`cursor-pointer border-b border-l-2 border-l-transparent border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 ${
                         isSelected ? 'bg-primary/5 border-l-primary' : ''
                       }`}
                     >
-                      <td className="px-4 py-2">
+                      <TableCell className="px-4 py-2">
                         <div className="flex items-center justify-start">
                           <MarketIdentity
                             market={position.market}
@@ -98,8 +99,8 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                             showExplorerLink={false}
                           />
                         </div>
-                      </td>
-                      <td className="px-4 py-2 text-right">
+                      </TableCell>
+                      <TableCell className="px-4 py-2 text-right">
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">
@@ -121,8 +122,8 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                             %
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-2 text-right">
+                      </TableCell>
+                      <TableCell className="px-4 py-2 text-right">
                         {apyPreview ? (
                           <span className="whitespace-nowrap text-sm text-foreground">
                             <span className="line-through opacity-50">{formatReadable(position.market.state.utilization * 100)}%</span>
@@ -134,8 +135,8 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                             {formatReadable(position.market.state.utilization * 100)}%
                           </span>
                         )}
-                      </td>
-                      <td className="px-4 py-2">
+                      </TableCell>
+                      <TableCell className="px-4 py-2">
                         <div className="flex items-center gap-2 justify-end">
                           <div>
                             {formatReadable(
@@ -160,24 +161,22 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                             Max
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center">
-              <Pagination
-                total={totalPages}
-                page={currentPage}
-                onChange={setCurrentPage}
-                color="primary"
-                size="sm"
-              />
-            </div>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalEntries={positions.length}
+              pageSize={PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
           )}
         </>
       )}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
@@ -87,70 +88,72 @@ export function SuppliesTable({ chainId, market, minAssets, onOpenFiltersModal }
           </div>
         )}
 
-        <Table
-          key={tableKey}
-          classNames={{
-            wrapper: 'bg-surface shadow-sm rounded',
-            table: 'bg-surface',
-          }}
-          aria-label="Supply and withdraw activities"
-        >
-          <TableHeader>
-            <TableColumn>ACCOUNT</TableColumn>
-            <TableColumn>TYPE</TableColumn>
-            <TableColumn align="end">AMOUNT</TableColumn>
-            <TableColumn>TIME</TableColumn>
-            <TableColumn
-              className="font-mono"
-              align="end"
-            >
-              TRANSACTION
-            </TableColumn>
-          </TableHeader>
-          <TableBody
-            className="font-zen"
-            emptyContent={isLoading ? 'Loading...' : 'No supply activities found for this market'}
-            isLoading={isLoading}
+        <div className="bg-surface shadow-sm rounded overflow-hidden">
+          <Table
+            key={tableKey}
+            aria-label="Supply and withdraw activities"
           >
-            {supplies.map((supply) => (
-              <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
-                <TableCell>
-                  <AccountIdentity
-                    address={supply.userAddress as Address}
-                    variant="compact"
-                    linkTo="profile"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Badge variant={supply.type === 'MarketSupply' ? 'success' : 'danger'}>
-                    {supply.type === 'MarketSupply' ? 'Supply' : 'Withdraw'}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}
-                  {market?.loanAsset?.symbol && (
-                    <span className="ml-1 inline-flex items-center">
-                      <TokenIcon
-                        address={market.loanAsset.address}
-                        chainId={market.morphoBlue.chain.id}
-                        symbol={market.loanAsset.symbol}
-                        width={16}
-                        height={16}
-                      />
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>{moment.unix(supply.timestamp).fromNow()}</TableCell>
-                <TableCell className="text-right">
-                  <TransactionIdentity
-                    txHash={supply.hash}
-                    chainId={chainId}
-                  />
-                </TableCell>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left">ACCOUNT</TableHead>
+                <TableHead className="text-left">TYPE</TableHead>
+                <TableHead className="text-right">AMOUNT</TableHead>
+                <TableHead className="text-left">TIME</TableHead>
+                <TableHead className="text-right">TRANSACTION</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="table-body-compact">
+              {supplies.length === 0 && !isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-400"
+                  >
+                    No supply activities found for this market
+                  </TableCell>
+                </TableRow>
+              ) : (
+                supplies.map((supply) => (
+                  <TableRow key={`supply-${supply.hash}-${supply.amount.toString()}`}>
+                    <TableCell>
+                      <AccountIdentity
+                        address={supply.userAddress as Address}
+                        variant="compact"
+                        linkTo="profile"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={supply.type === 'MarketSupply' ? 'success' : 'danger'}>
+                        {supply.type === 'MarketSupply' ? 'Supply' : 'Withdraw'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      <div className="flex items-center justify-end gap-1">
+                        <span>{formatSimple(Number(formatUnits(BigInt(supply.amount), market.loanAsset.decimals)))}</span>
+                        {market?.loanAsset?.symbol && (
+                          <TokenIcon
+                            address={market.loanAsset.address}
+                            chainId={market.morphoBlue.chain.id}
+                            symbol={market.loanAsset.symbol}
+                            width={16}
+                            height={16}
+                          />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">{moment.unix(supply.timestamp).fromNow()}</TableCell>
+                    <TableCell className="text-right text-sm text-gray-500">
+                      <TransactionIdentity
+                        txHash={supply.hash}
+                        chainId={chainId}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {totalCount > 0 && (
