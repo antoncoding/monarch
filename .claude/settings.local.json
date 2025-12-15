@@ -43,7 +43,10 @@
       "WebFetch(domain:medium.com)",
       "Bash(pnpm info:*)",
       "Bash(for file in )",
-      "Bash(timeout 30 npx tsc:*)"
+      "Bash(timeout 30 npx tsc:*)",
+      "Bash(for file in \"src/components/WithdrawModalContent.tsx\" \"src/components/Borrow/WithdrawCollateralAndRepay.tsx\" \"app/positions/components/RebalanceModal.tsx\" \"app/autovault/components/deployment/DeploymentModal.tsx\" \"app/autovault/[chainId]/[vaultAddress]/components/DepositToVaultModal.tsx\")",
+      "Bash(do echo \"=== $file ===\" git show \"fix/permit-and-deposit-switch-chain:$file\")",
+      "Bash(git diff:*)"
     ],
     "deny": []
   }

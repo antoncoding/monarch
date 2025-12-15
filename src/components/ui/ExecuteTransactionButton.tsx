@@ -6,6 +6,12 @@ import { Spinner } from '@/components/common/Spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 
+/**
+ * UI delay after chain switch to allow wagmi state to update
+ * Prevents button flicker during network transition
+ */
+const CHAIN_SWITCH_UI_DELAY_MS = 500;
+
 type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> & {
   targetChainId: number;
 
@@ -85,8 +91,8 @@ export function ExecuteTransactionButton({
     setIsSwitching(true);
     try {
       switchToNetwork();
-      // Wait a bit for the switch to complete
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Wait for wagmi state to update after chain switch
+      await new Promise((resolve) => setTimeout(resolve, CHAIN_SWITCH_UI_DELAY_MS));
     } finally {
       setIsSwitching(false);
     }
@@ -96,8 +102,9 @@ export function ExecuteTransactionButton({
   if (!isConnected) {
     return (
       <Button
+        // no disabled cuz always allow connect
         onClick={handleConnect}
-        variant="default"
+        variant={variant}
         {...buttonProps}
       >
         {connectText}
@@ -110,8 +117,9 @@ export function ExecuteTransactionButton({
     return (
       <Button
         onClick={() => void handleSwitchChain()}
-        variant="default"
-        disabled={disabled || isSwitching}
+        variant={variant}
+        // always allow clicking switch chain unless it's switching
+        disabled={isSwitching}
         isLoading={isSwitching}
         {...buttonProps}
       >
