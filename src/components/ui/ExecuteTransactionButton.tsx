@@ -128,7 +128,7 @@ export function ExecuteTransactionButton({
             Switching...
           </div>
         ) : (
-          switchChainText ?? defaultSwitchText
+          (switchChainText ?? defaultSwitchText)
         )}
       </Button>
     );
