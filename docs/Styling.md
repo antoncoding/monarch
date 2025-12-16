@@ -226,10 +226,6 @@ For section headers within modal content, use consistent styling:
 ```tsx
 // ✅ Correct
 <h3 className="text-base font-normal text-primary">Section Title</h3>
-
-// ❌ Incorrect
-<h3 className="text-sm font-medium text-primary">Section Title</h3>
-<h3 className="text-base font-semibold text-primary">Section Title</h3>
 ```
 
 ### Custom Modals (Non-HeroUI)

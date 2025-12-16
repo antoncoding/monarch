@@ -27,7 +27,6 @@ export function MarketIdBadge({ marketId, chainId, showNetworkIcon = false, show
         <Link
           className="group flex items-center justify-center no-underline hover:underline"
           href={`/market/${chainId}/${marketId}`}
-          isExternal
         >
           <span className="rounded bg-gray-100 px-1 py-0.5 text-xs font-monospace opacity-70 dark:bg-gray-800">{displayId}</span>
         </Link>
