@@ -5,6 +5,14 @@ import type { AgentMetadata } from './types';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 
+/**
+ * Helper function to get RPC URL with fallback logic.
+ * Prioritizes specific network RPC URL, falls back to Alchemy if available.
+ */
+const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain: string): string => {
+  return specificRpcUrl ?? (alchemyKey ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : '');
+};
+
 export enum SupportedNetworks {
   Mainnet = 1,
   Base = 8453,
@@ -71,7 +79,7 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/eth.svg') as string,
     name: 'Mainnet',
     chain: mainnet,
-    defaultRPC: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ETHEREUM_RPC, 'eth-mainnet'),
     blocktime: 12,
     maxBlockDelay: 0,
     explorerUrl: 'https://etherscan.io',
@@ -82,7 +90,7 @@ export const networks: NetworkConfig[] = [
     logo: require('../imgs/chains/base.webp') as string,
     name: 'Base',
     chain: base,
-    defaultRPC: `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_BASE_RPC, 'base-mainnet'),
     vaultConfig: {
       v2FactoryAddress: '0x4501125508079A99ebBebCE205DeC9593C2b5857',
       strategies: v2AgentsBase,
@@ -101,7 +109,7 @@ export const networks: NetworkConfig[] = [
     chain: polygon,
     logo: require('../imgs/chains/polygon.png') as string,
     name: 'Polygon',
-    defaultRPC: `https://polygon-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_POLYGON_RPC, 'polygon-mainnet'),
     blocktime: 2,
     maxBlockDelay: 20,
     explorerUrl: 'https://polygonscan.com',
@@ -112,7 +120,7 @@ export const networks: NetworkConfig[] = [
     network: SupportedNetworks.Unichain,
     chain: unichain,
     logo: require('../imgs/chains/unichain.svg') as string,
-    defaultRPC: `https://unichain-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_UNICHAIN_RPC, 'unichain-mainnet'),
     name: 'Unichain',
     blocktime: 1,
     maxBlockDelay: 10,
@@ -124,7 +132,7 @@ export const networks: NetworkConfig[] = [
     chain: arbitrum,
     logo: require('../imgs/chains/arbitrum.png') as string,
     name: 'Arbitrum',
-    defaultRPC: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_ARBITRUM_RPC, 'arb-mainnet'),
     blocktime: 2,
     maxBlockDelay: 2,
     explorerUrl: 'https://arbiscan.io',
@@ -135,7 +143,7 @@ export const networks: NetworkConfig[] = [
     chain: hyperEvm,
     logo: require('../imgs/chains/hyperevm.png') as string,
     name: 'HyperEVM',
-    defaultRPC: `https://hyperliquid-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_HYPEREVM_RPC, 'hyperliquid-mainnet'),
     blocktime: 2,
     maxBlockDelay: 5,
     nativeTokenSymbol: 'WHYPE',
@@ -147,7 +155,7 @@ export const networks: NetworkConfig[] = [
     chain: monad,
     logo: require('../imgs/chains/monad.svg') as string,
     name: 'Monad',
-    defaultRPC: `https://monad-mainnet.g.alchemy.com/v2/${alchemyKey}`,
+    defaultRPC: getRpcUrl(process.env.NEXT_PUBLIC_MONAD_RPC, 'monad-mainnet'),
     blocktime: 1,
     maxBlockDelay: 5,
     nativeTokenSymbol: 'MON',
