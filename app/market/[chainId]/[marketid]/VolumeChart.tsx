@@ -299,7 +299,7 @@ function VolumeChart({
           <div>
             <div className="space-y-4">
               <div>
-                <h3 className="mb-1 text-lg font-semibold">Current Volumes</h3>
+                <h3 className="mb-1 text-lg">Current Volumes</h3>
                 {['supply', 'borrow', 'liquidity'].map((type) => {
                   const stats = getCurrentVolumeStats(type as 'supply' | 'borrow' | 'liquidity');
                   return (
@@ -321,7 +321,7 @@ function VolumeChart({
               </div>
 
               <div>
-                <h3 className="mb-1 text-lg font-semibold">
+                <h3 className="mb-1 text-lg ">
                   Historical Averages <span className="font-normal text-gray-500">({selectedTimeframe})</span>
                 </h3>
                 {isLoading ? (

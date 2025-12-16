@@ -4,13 +4,25 @@ import { v2AgentsBase } from './monarch-agent';
 import type { AgentMetadata } from './types';
 
 const alchemyKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
+const rpcPriority = process.env.NEXT_PUBLIC_RPC_PRIORITY;
 
 /**
- * Helper function to get RPC URL with fallback logic.
- * Prioritizes specific network RPC URL, falls back to Alchemy if available.
+ * Helper function to get RPC URL with fallback logic. Priority behavior:
+ * - If NEXT_PUBLIC_RPC_PRIORITY === 'ALCHEMY': Use Alchemy first, fall back to specific RPC
+ * - Otherwise (default): Use specific network RPC first, fall back to Alchemy
  */
 const getRpcUrl = (specificRpcUrl: string | undefined, alchemySubdomain: string): string => {
-  return specificRpcUrl ?? (alchemyKey ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : '');
+  // Sanitize empty strings to undefined for correct fallback behavior
+  const targetRpc = specificRpcUrl || undefined;
+  const alchemyUrl = alchemyKey ? `https://${alchemySubdomain}.g.alchemy.com/v2/${alchemyKey}` : undefined;
+
+  if (rpcPriority === 'ALCHEMY') {
+    // Prioritize Alchemy when explicitly set
+    return alchemyUrl ?? targetRpc ?? '';
+  }
+
+  // Default: prioritize specific network RPC
+  return targetRpc ?? alchemyUrl ?? '';
 };
 
 export enum SupportedNetworks {
