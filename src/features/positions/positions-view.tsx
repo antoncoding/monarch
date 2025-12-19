@@ -21,7 +21,7 @@ import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import type { MarketPosition } from '@/utils/types';
 import { OnboardingModal } from './components/onboarding/onboarding-modal';
-import { PositionsSummaryTable } from '../positions-summary-table';
+import { PositionsSummaryTable } from './components/positions-summary-table';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);

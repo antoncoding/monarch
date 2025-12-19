@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import HistoryContent from '../components/HistoryContent';
+import HistoryContent from '@/features/history/history-view';
 
 export const metadata: Metadata = {
   title: 'Transaction History | Monarch',

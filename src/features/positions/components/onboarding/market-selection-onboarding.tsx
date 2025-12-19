@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/features/markets/components/markets-table-same-loan';
 import type { MarketWithSelection } from '@/features/markets/components/markets-table-same-loan';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { useOnboarding } from './OnboardingContext';
+import { useOnboarding } from './onboarding-context';
 
 export function MarketSelectionOnboarding() {
   const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep } = useOnboarding();

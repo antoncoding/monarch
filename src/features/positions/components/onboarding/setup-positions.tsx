@@ -16,7 +16,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatBalance } from '@/utils/balance';
 import { SupportedNetworks } from '@/utils/networks';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
-import { useOnboarding } from './OnboardingContext';
+import { useOnboarding } from './onboarding-context';
 
 export function SetupPositions() {
   const toast = useStyledToast();

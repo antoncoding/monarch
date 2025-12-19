@@ -10,7 +10,7 @@ import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { useOnboarding } from './OnboardingContext';
+import { useOnboarding } from './onboarding-context';
 import type { TokenWithMarkets } from './types';
 
 function NetworkIcon({ networkId }: { networkId: number }) {

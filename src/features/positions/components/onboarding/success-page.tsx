@@ -1,6 +1,6 @@
 import { FaCheckCircle } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
-import { useOnboarding } from './OnboardingContext';
+import { useOnboarding } from './onboarding-context';
 
 export function SuccessPage({ onClose }: { onClose: () => void }) {
   const { selectedToken, resetOnboarding } = useOnboarding();

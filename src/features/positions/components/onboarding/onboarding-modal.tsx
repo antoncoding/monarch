@@ -1,12 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCompass } from 'react-icons/fa';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
-import { AssetSelection } from './AssetSelection';
-import { MarketSelectionOnboarding } from './MarketSelectionOnboarding';
-import { useOnboarding } from './OnboardingContext';
-import { ONBOARDING_STEPS } from './OnboardingContext';
-import { SetupPositions } from './SetupPositions';
-import { SuccessPage } from './SuccessPage';
+import { AssetSelection } from './asset-selection';
+import { MarketSelectionOnboarding } from './market-selection-onboarding';
+import { useOnboarding, ONBOARDING_STEPS } from './onboarding-context';
+import { SetupPositions } from './setup-positions';
+import { SuccessPage } from './success-page';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
