@@ -9,8 +9,8 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, type SupportedNetworks } from '@/utils/networks';
-import { DeploymentProvider, useDeployment } from './DeploymentContext';
-import { TokenSelection } from './TokenSelection';
+import { DeploymentProvider, useDeployment } from '@/features/autovault/components/deployment/deployment-context';
+import { TokenSelection } from './token-selection';
 
 const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.filter((network) => isAgentAvailable(network));
 

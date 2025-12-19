@@ -8,7 +8,7 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { CapData } from '@/hooks/useVaultV2Data';
 import type { SupportedNetworks } from '@/utils/networks';
-import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from './settings';
+import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from '../settings';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },

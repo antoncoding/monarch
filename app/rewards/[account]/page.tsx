@@ -1,6 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
 
-import Content from '../components/RewardContent';
+import Content from '@/features/rewards/rewards-view';
 
 export const metadata = generateMetadata({
   title: 'Rewards | Monarch',

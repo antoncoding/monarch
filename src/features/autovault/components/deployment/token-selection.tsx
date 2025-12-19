@@ -12,7 +12,7 @@ import type { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
-import { useDeployment, type SelectedToken } from './DeploymentContext';
+import { useDeployment, type SelectedToken } from '@/features/autovault/components/deployment/deployment-context';
 
 type TokenNetwork = {
   symbol: string;

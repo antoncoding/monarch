@@ -3,7 +3,7 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import type { CollateralAllocation } from '@/types/vaultAllocations';
 import type { SupportedNetworks } from '@/utils/networks';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
-import { AllocationPieChart } from './AllocationPieChart';
+import { AllocationPieChart } from './allocation-pie-chart';
 
 type CollateralViewProps = {
   allocations: CollateralAllocation[];

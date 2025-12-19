@@ -7,7 +7,7 @@ import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import { convertApyToApr } from '@/utils/rateMath';
 import { formatAllocationAmount, calculateAllocationPercent } from '@/utils/vaultAllocation';
-import { AllocationPieChart } from './AllocationPieChart';
+import { AllocationPieChart } from './allocation-pie-chart';
 
 type MarketViewProps = {
   allocations: MarketAllocation[];

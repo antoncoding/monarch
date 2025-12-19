@@ -5,8 +5,8 @@ import { MdOutlineAccountBalance } from 'react-icons/md';
 import { Spinner } from '@/components/ui/spinner';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import type { SupportedNetworks } from '@/utils/networks';
-import { CollateralView } from './allocations/collateral-view';
-import { MarketView } from './allocations/market-view';
+import { CollateralView } from './allocations/allocations/collateral-view';
+import { MarketView } from './allocations/allocations/market-view';
 
 type VaultMarketAllocationsProps = {
   totalAssets?: bigint;
