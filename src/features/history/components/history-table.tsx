@@ -10,7 +10,7 @@ import { formatUnits } from 'viem';
 import { Badge } from '@/components/ui/badge';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
-import LoadingScreen from '@/components/Status/LoadingScreen';
+import LoadingScreen from '@/components/status/loading-screen';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';

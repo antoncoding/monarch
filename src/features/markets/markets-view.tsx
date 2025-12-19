@@ -13,8 +13,8 @@ import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/component
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
-import EmptyScreen from '@/components/Status/EmptyScreen';
-import LoadingScreen from '@/components/Status/LoadingScreen';
+import EmptyScreen from '@/components/status/empty-screen';
+import LoadingScreen from '@/components/status/loading-screen';
 import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';

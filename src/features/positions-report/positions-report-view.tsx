@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import DatePicker from '@/components/shared/date-picker';
 import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
-import LoadingScreen from '@/components/Status/LoadingScreen';
+import LoadingScreen from '@/components/status/loading-screen';
 import { usePositionReport } from '@/hooks/usePositionReport';
 import type { ReportSummary } from '@/hooks/usePositionReport';
 import useUserPositions from '@/hooks/useUserPositions';
