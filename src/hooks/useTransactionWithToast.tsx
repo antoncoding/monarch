@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
-import { StyledToast, TransactionToast } from '@/components/common/StyledToast';
+import { StyledToast, TransactionToast } from '@/components/ui/styled-toast';
 import { getExplorerTxURL } from '../utils/external';
 import type { SupportedNetworks } from '../utils/networks';
 

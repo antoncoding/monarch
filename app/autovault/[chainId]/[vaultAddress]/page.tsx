@@ -1,6 +1,6 @@
 import { generateMetadata as buildMetadata } from '@/utils/generateMetadata';
 
-import VaultContent from './content';
+import VaultContent from '../../../../src/features/autovault/vault-view';
 
 export async function generateMetadata({ params }: { params: Promise<{ chainId: string; vaultAddress: string }> }) {
   const { chainId, vaultAddress } = await params;

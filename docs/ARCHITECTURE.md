@@ -245,29 +245,210 @@ const getButtonText = () => {
 
 ---
 
+## Component Architecture
+
+Monarch follows a **feature-based architecture** optimized for Next.js 15 App Router best practices.
+
+### Core Principles
+
+**1. `app/` is for Routing, `src/` is for Logic**
+
+The `app/` directory is a thin routing layer. Each `page.tsx` file:
+- Exports metadata for SEO
+- Handles URL parameters (server-side)
+- Renders a single "View" component from `src/features/`
+
+**Example** (`app/markets/page.tsx`):
+```typescript
+import { MarketsView } from '@/features/markets/markets-view';
+
+export const metadata = { title: 'Markets' };
+
+export default function Page() {
+  return <MarketsView />;
+}
+```
+
+**2. Features Group Related Logic**
+
+Each feature in `src/features/` contains:
+- Main view component (`{feature}-view.tsx`)
+- Supporting components (`components/`)
+- Feature-specific hooks (`hooks/`)
+- Feature-specific utilities (`utils/`)
+
+**3. Clear Component Hierarchy**
+
+```
+src/components/
+├── ui/           # Design system primitives (Button, Badge, Spinner)
+├── shared/       # Cross-feature, business-agnostic components
+├── layout/       # Layout wrappers (Header, Footer)
+└── providers/    # Context providers
+```
+
+### Feature Structure
+
+Each feature follows this pattern:
+
+```
+src/features/{feature-name}/
+├── {feature-name}-view.tsx    # Main orchestrator (replaces old "Content")
+├── components/                 # Feature-specific components
+│   ├── filters/               # Grouped by responsibility
+│   ├── table/
+│   └── {component}.tsx
+├── hooks/                     # Feature-specific hooks (optional)
+└── utils/                     # Feature-specific utilities (optional)
+```
+
+**Current Features**:
+- `markets/` - Market listing, filtering, settings
+- `market-detail/` - Individual market pages (borrowers, suppliers, transactions)
+- `positions/` - User positions, rebalancing, onboarding
+- `positions-report/` - Position reporting
+- `autovault/` - Vault listing, deployment, vault detail pages
+- `rewards/` - Rewards tracking
+- `history/` - Transaction history
+- `admin/` - Admin dashboard
+
+### Global Modals
+
+Modals triggered from multiple places live in `src/modals/`:
+
+```
+src/modals/
+├── supply/                    # Supply & withdraw flow
+├── borrow/                    # Borrow & repay flow
+├── settings/                  # Settings modals
+├── wrap-process-modal.tsx
+└── risk-notification-modal.tsx
+```
+
+### Component Guidelines
+
+**When to use `src/components/ui/`**:
+- Zero business logic
+- Purely presentational (Button, Badge, Table)
+- Shadcn/Radix primitives
+
+**When to use `src/components/shared/`**:
+- Reusable across multiple features
+- Business-agnostic (TokenIcon, AccountIdentity, TablePagination)
+- No domain-specific logic
+
+**When to use `src/features/{feature}/components/`**:
+- Feature-specific component
+- Contains domain logic for that feature
+- Used only within that feature's pages
+
+**When to use `src/modals/`**:
+- Modal triggered from multiple locations
+- Global state-managed modals
+- Complex multi-step flows (supply, borrow)
+
+---
+
 ## Key Directories
 
 ```
-/app                    # Next.js pages (App Router)
+/app                          # Next.js App Router (Routing Layer)
+  /markets
+    page.tsx                  # Metadata + renders MarketsView
+  /positions
+    page.tsx
+    [account]/page.tsx
+  /autovault
+    page.tsx
+    [chainId]/[vaultAddress]
+      page.tsx
+
 /src
-  /components           # React components
-    /providers          # Context providers
-  /config               # Configuration
-    dataSources.ts      # Network → data source mapping
-  /constants            # Static data
-    /oracle             # Cached oracle feeds (JSON)
-  /contexts             # React contexts (global state)
-  /data-sources         # Data fetching logic
-    /morpho-api         # Primary source
-    /subgraph           # Fallback source
-  /graphql              # GraphQL queries
-  /hooks                # Custom React hooks
-  /utils                # Utilities
-    tokens.ts           # Token whitelist/blacklist
-    merklApi.ts         # Merkl rewards integration
-    networks.ts         # Supported networks + default RPCs
-    subgraph-urls.ts    # Subgraph endpoints
-/scripts                # Build scripts
+  /components                 # Reusable UI components
+    /ui/                      # Design system primitives
+      button.tsx
+      table.tsx
+      badge.tsx
+      spinner.tsx
+      ...
+    /shared/                  # Business-agnostic patterns
+      token-icon.tsx
+      account-identity.tsx
+      table-pagination.tsx
+      ...
+    /layout/                  # Layout components
+      header/
+    /providers/               # Context providers
+      ClientProviders.tsx
+      TokenProvider.tsx
+
+  /features/                  # Domain-specific logic (Feature-Based)
+    /markets/
+      markets-view.tsx        # Main view component
+      /components/
+        /filters/             # Asset, Network, Oracle filters
+        /table/               # Table components
+        /oracle/              # Oracle-related components
+        market-identity.tsx
+        market-settings-modal.tsx
+        ...
+    /positions/
+      positions-view.tsx
+      /components/
+        /rebalance/
+        /preview/
+        /onboarding/
+        positions-summary-table.tsx
+        ...
+    /autovault/
+      autovault-view.tsx
+      /components/
+        /deployment/
+        /vault-detail/
+          /allocations/
+          /modals/
+          /settings/
+        vault-identity.tsx
+        ...
+    /market-detail/           # Individual market pages
+    /positions-report/
+    /rewards/
+    /history/
+    /admin/
+
+  /modals/                    # Global modals
+    /supply/
+      supply-modal.tsx
+      supply-process-modal.tsx
+      withdraw-modal-content.tsx
+    /borrow/
+      borrow-modal.tsx
+      borrow-process-modal.tsx
+      /components/
+    /settings/
+      blacklisted-markets-modal.tsx
+      trusted-vaults-modal.tsx
+      custom-rpc-settings.tsx
+    wrap-process-modal.tsx
+    risk-notification-modal.tsx
+
+  /config/                    # Configuration
+    dataSources.ts            # Network → data source mapping
+  /constants/                 # Static data
+    /oracle/                  # Cached oracle feeds (JSON)
+  /contexts/                  # React contexts (global state)
+  /data-sources/              # Data fetching logic
+    /morpho-api/              # Primary source
+    /subgraph/                # Fallback source
+  /graphql/                   # GraphQL queries
+  /hooks/                     # Custom React hooks (60+ files)
+  /utils/                     # Utilities
+    tokens.ts                 # Token whitelist/blacklist
+    merklApi.ts               # Merkl rewards integration
+    networks.ts               # Supported networks + default RPCs
+    subgraph-urls.ts          # Subgraph endpoints
+
+/scripts/                     # Build scripts
   generate-oracle-cache.ts
   generate-chainlink-data.ts
   generate-redstone-data.ts
@@ -276,6 +457,56 @@ const getButtonText = () => {
 ---
 
 ## Common Tasks
+
+### Adding a New Page/Feature
+
+1. **Create the page route** in `app/{feature}/page.tsx`:
+   ```typescript
+   import { FeatureView } from '@/features/{feature}/{feature}-view';
+
+   export const metadata = { title: 'Feature Name' };
+
+   export default function Page() {
+     return <FeatureView />;
+   }
+   ```
+
+2. **Create the feature directory** in `src/features/{feature}/`:
+   ```
+   src/features/{feature}/
+   ├── {feature}-view.tsx     # Main view component
+   └── components/             # Feature-specific components
+   ```
+
+3. **Build the view component** (`{feature}-view.tsx`):
+   - Add `'use client'` if using hooks/state
+   - Import shared components from `@/components/shared/`
+   - Import UI primitives from `@/components/ui/`
+   - Keep feature logic self-contained
+
+### Adding a New Component
+
+**Ask yourself**: Where does this component belong?
+
+1. **Is it a pure UI primitive?** → `src/components/ui/`
+   - No business logic
+   - Highly reusable (Button, Input, Card)
+   - Example: `button.tsx`, `badge.tsx`
+
+2. **Is it reusable across features but not a primitive?** → `src/components/shared/`
+   - Business-agnostic
+   - Used in 2+ features
+   - Example: `token-icon.tsx`, `account-identity.tsx`
+
+3. **Is it specific to one feature?** → `src/features/{feature}/components/`
+   - Contains domain logic
+   - Only used in one feature
+   - Example: `markets/components/market-identity.tsx`
+
+4. **Is it a global modal?** → `src/modals/`
+   - Triggered from multiple places
+   - Multi-step flows
+   - Example: `supply/supply-modal.tsx`
 
 ### Adding a New Token
 
@@ -296,7 +527,7 @@ const getButtonText = () => {
 ```bash
 pnpm generate:oracle       # Refresh all oracles
 pnpm generate:chainlink    # Refresh Chainlink feeds
-pnpm generate:redstone     # Refresh Redstone feeds
+pnpm generate:redstone     # Redstone feeds
 ```
 
 Commit updated JSON files in `src/constants/oracle/`

@@ -1,6 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
 import { SupportedNetworks } from '@/utils/networks';
-import MarketContent from './components/markets';
+import MarketContent from '@/features/markets/markets-view';
 
 export const metadata = generateMetadata({
   title: 'Markets | Monarch',

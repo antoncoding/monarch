@@ -4,18 +4,18 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import Image from 'next/image';
-import ButtonGroup from '@/components/ButtonGroup';
-import { Spinner } from '@/components/common/Spinner';
-import { TokenIcon } from '@/components/TokenIcon';
+import ButtonGroup from '@/components/ui/button-group';
+import { Spinner } from '@/components/ui/spinner';
+import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { fetchAllStatistics } from '@/services/statsService';
 import { SupportedNetworks, getNetworkImg, getNetworkName, getViemChain } from '@/utils/networks';
 import type { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
 import type { ERC20Token, UnknownERC20Token, TokenSource } from '@/utils/tokens';
 import { findToken as findTokenStatic } from '@/utils/tokens';
-import { AssetMetricsTable } from './components/AssetMetricsTable';
-import { StatsOverviewCards } from './components/StatsOverviewCards';
-import { TransactionsTable } from './components/TransactionsTable';
+import { AssetMetricsTable } from '@/features/admin/components/asset-metrics-table';
+import { StatsOverviewCards } from '@/features/admin/components/stats-overview-cards';
+import { TransactionsTable } from '@/features/admin/components/transactions-table';
 
 const getAPIEndpoint = (network: SupportedNetworks) => {
   switch (network) {

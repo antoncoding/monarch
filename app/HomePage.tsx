@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiArrowDownLine, RiExternalLinkLine } from 'react-icons/ri';
 import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
-import { Badge } from '@/components/common/Badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';

@@ -1,6 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
 
-import Content from '../components/PositionsContent';
+import Content from '@/features/positions/positions-view';
 
 export const metadata = generateMetadata({
   title: 'Portfolio | Monarch',
@@ -9,6 +9,6 @@ export const metadata = generateMetadata({
   pathname: '',
 });
 
-export default function MarketPage() {
+export default function PositionPage() {
   return <Content />;
 }

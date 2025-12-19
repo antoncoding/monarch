@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 import { useConnection, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 import { Avatar } from '@/components/Avatar/Avatar';
-import { AccountIdentity } from '@/components/common/AccountIdentity';
+import { AccountIdentity } from '@/components/shared/account-identity';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 

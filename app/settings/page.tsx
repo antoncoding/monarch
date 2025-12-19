@@ -3,12 +3,12 @@
 import React from 'react';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
-import { IconSwitch } from '@/components/common/IconSwitch';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import Header from '@/components/layout/header/Header';
-import { BlacklistedMarketsModal } from '@/components/settings/BlacklistedMarketsModal';
-import { AdvancedRpcSettings } from '@/components/settings/CustomRpcSettings';
-import TrustedVaultsModal from '@/components/settings/TrustedVaultsModal';
-import { VaultIdentity } from '@/components/vaults/VaultIdentity';
+import { BlacklistedMarketsModal } from '@/modals/settings/blacklisted-markets-modal';
+import { AdvancedRpcSettings } from '@/modals/settings/custom-rpc-settings';
+import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
+import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';

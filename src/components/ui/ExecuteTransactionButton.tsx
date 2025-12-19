@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button, type ButtonProps } from '@/components/ui/button';
-import { Spinner } from '@/components/common/Spinner';
+import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { getNetworkName } from '@/utils/networks';
 

@@ -8,7 +8,7 @@ import Header from '@/components/layout/header/Header';
 import { useMorphoAuthorization } from '@/hooks/useMorphoAuthorization';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getNetworkName, type SupportedNetworks } from '@/utils/networks';
-import NetworkFilter from 'app/markets/components/NetworkFilter';
+import NetworkFilter from '@/features/markets/components/filters/network-filter';
 
 export default function ToolsPage() {
   const currentChainId = useChainId();

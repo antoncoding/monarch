@@ -11,7 +11,7 @@ import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';
-import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
+import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
 
 export type SupplyStepType = 'approve' | 'signing' | 'supplying';
 
