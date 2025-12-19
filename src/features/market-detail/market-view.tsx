@@ -39,8 +39,8 @@ import { SuppliesTable } from '@/features/market-detail/components/supplies-tabl
 import { SuppliersTable } from '@/features/market-detail/components/suppliers-table';
 import SupplierFiltersModal from '@/features/market-detail/components/filters/supplier-filters-modal';
 import TransactionFiltersModal from '@/features/market-detail/components/filters/transaction-filters-modal';
-import RateChart from './RateChart';
-import VolumeChart from './VolumeChart';
+import RateChart from '../../../app/market/[chainId]/[marketid]/RateChart';
+import VolumeChart from '../../../app/market/[chainId]/[marketid]/VolumeChart';
 
 const NOW = Math.floor(Date.now() / 1000);
 const DAY_IN_SECONDS = 24 * 60 * 60;

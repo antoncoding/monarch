@@ -10,7 +10,7 @@ import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 import { VaultListV2 } from './components/vault-list';
 
-export default function AutovaultContent() {
+export default function AutovaultListContent() {
   const { isConnected } = useConnection();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
 

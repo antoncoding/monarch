@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import MarketContent from './content';
+import MarketContent from '../../../../src/features/market-detail/content';
 
 export const metadata: Metadata = {
   title: 'Market Details | Morpho Blue',
