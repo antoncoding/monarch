@@ -196,7 +196,8 @@
         "biome.jsonc",
         "tsconfig.json",
         "src/constants/oracle/**/*.json",
-        "public/manifest.json"
+        "public/manifest.json",
+        "src/components/ui/*.tsx"
       ],
       "formatter": {
         "enabled": false

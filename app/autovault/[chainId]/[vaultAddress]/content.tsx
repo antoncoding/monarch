@@ -9,18 +9,18 @@ import { IoRefreshOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { AccountIdentity } from '@/components/common/AccountIdentity';
+import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
-import { TotalSupplyCard } from './components/TotalSupplyCard';
-import { VaultAllocatorCard } from './components/VaultAllocatorCard';
-import { VaultCollateralsCard } from './components/VaultCollateralsCard';
-import { VaultInitializationModal } from './components/VaultInitializationModal';
-import { VaultMarketAllocations } from './components/VaultMarketAllocations';
-import { VaultSettingsModal } from './components/VaultSettingsModal';
-import { VaultSummaryMetrics } from './components/VaultSummaryMetrics';
+import { TotalSupplyCard } from '@/features/autovault/components/vault-detail/total-supply-card';
+import { VaultAllocatorCard } from '@/features/autovault/components/vault-detail/vault-allocator-card';
+import { VaultCollateralsCard } from '@/features/autovault/components/vault-detail/vault-collaterals-card';
+import { VaultInitializationModal } from '@/features/autovault/components/vault-detail/modals/vault-initialization-modal';
+import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
+import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
+import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{

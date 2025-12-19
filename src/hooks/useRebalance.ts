@@ -5,7 +5,7 @@ import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
-import { GAS_COSTS, GAS_MULTIPLIER } from 'app/markets/components/constants';
+import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { useMorphoAuthorization } from './useMorphoAuthorization';

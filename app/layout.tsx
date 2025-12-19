@@ -3,7 +3,7 @@ import './global.css';
 import GoogleAnalytics from '@/components/GoogleAnalytics/GoogleAnalytics';
 import { ClientProviders } from '@/components/providers/ClientProviders';
 import { QueryProvider } from '@/components/providers/QueryProvider';
-import RiskNotificationModal from '@/components/RiskNotificationModal';
+import RiskNotificationModal from '@/modals/risk-notification-modal';
 import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 import OnchainProviders from '@/OnchainProviders';
 
