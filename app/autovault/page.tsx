@@ -1,6 +1,6 @@
 import { generateMetadata } from '@/utils/generateMetadata';
 
-import AutovaultContent from '@/features/autovault/autovault-view';
+import AutovaultContent from '@/features/autovault/vault-list-view';
 
 export const metadata = generateMetadata({
   title: 'Autovault | Monarch',
