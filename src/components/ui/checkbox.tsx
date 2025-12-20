@@ -14,8 +14,10 @@ const Checkbox = React.forwardRef<
   React.ElementRef<typeof CheckboxPrimitive.Root>,
   CheckboxProps
 >(({ className, variant = "default", label, id, ...props }, ref) => {
+  // Always call useId unconditionally (Rules of Hooks)
+  const generatedId = React.useId()
   // Auto-generate ID if label is provided but no ID is given
-  const checkboxId = id ?? (label ? React.useId() : undefined)
+  const checkboxId = id ?? (label ? generatedId : undefined)
 
   const checkbox = (
     <CheckboxPrimitive.Root
