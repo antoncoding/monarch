@@ -1,4 +1,4 @@
-import { Input } from '@heroui/react';
+import { Input } from '@/components/ui/input';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';

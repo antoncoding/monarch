@@ -1,8 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@heroui/react';
-import { Progress } from '@heroui/react';
+import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';

@@ -1,6 +1,9 @@
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import { Modal as HeroModal, ModalContent } from '@heroui/react';
+import { useCallback } from 'react';
+import { Root, Portal, Overlay, Content, Title } from '@radix-ui/react-dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
+import { cn } from '@/utils/components';
 
 export type ModalVariant = 'standard' | 'compact' | 'custom';
 export type ModalZIndex = 'base' | 'process' | 'selection' | 'settings' | 'custom';
@@ -9,6 +12,7 @@ type ModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode | ((onClose: () => void) => React.ReactNode);
+  title?: string;
   zIndex?: ModalZIndex;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full';
   isDismissable?: boolean;
@@ -26,10 +30,23 @@ const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = 
   custom: { wrapper: '', backdrop: '' },
 };
 
+const SIZE_MAP: Record<NonNullable<ModalProps['size']>, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
+  '5xl': 'max-w-5xl',
+  full: 'max-w-full',
+};
+
 export function Modal({
   isOpen,
   onOpenChange,
   children,
+  title = 'Dialog',
   zIndex = 'base',
   size = 'xl',
   isDismissable = true,
@@ -38,35 +55,64 @@ export function Modal({
   backdrop = 'blur',
   className = '',
 }: ModalProps) {
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    setPortalContainer(document.body);
-  }, []);
-
   const zIndexClasses = Z_INDEX_MAP[zIndex];
   const backdropStyle =
     backdrop === 'transparent' ? 'bg-transparent' : backdrop === 'opaque' ? 'bg-black/70' : 'bg-black/70 backdrop-blur-md';
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open && !isDismissable) return;
+      onOpenChange(open);
+    },
+    [isDismissable, onOpenChange],
+  );
+
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
   return (
-    <HeroModal
-      isOpen={isOpen}
-      onOpenChange={onOpenChange}
-      size={size}
-      isDismissable={isDismissable}
-      hideCloseButton={hideCloseButton}
-      scrollBehavior={scrollBehavior}
-      backdrop={backdrop}
-      portalContainer={portalContainer ?? undefined}
-      classNames={{
-        wrapper: `${zIndexClasses.wrapper} pointer-events-auto`,
-        backdrop: `${zIndexClasses.backdrop} ${backdropStyle}`,
-        base: `${zIndexClasses.wrapper}`,
-      }}
-    >
-      <ModalContent className={`relative z-[5] font-zen rounded-sm border border-white/10 bg-surface text-primary shadow-2xl ${className}`}>
-        {/* eslint-disable-next-line @typescript-eslint/promise-function-async */}
-        {(closeModal) => (typeof children === 'function' ? children(closeModal) : children)}
-      </ModalContent>
-    </HeroModal>
+    <Root open={isOpen} onOpenChange={handleOpenChange} modal>
+      <Portal>
+        <Overlay
+          className={cn(
+            'fixed inset-0 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+            zIndexClasses.backdrop,
+            backdropStyle,
+          )}
+        />
+        <Content
+          className={cn(
+            'fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw]',
+            'rounded-sm border border-white/10 bg-surface text-primary shadow-2xl font-zen',
+            'focus:outline-none',
+            'data-[state=open]:animate-in data-[state=closed]:animate-out',
+            'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+            'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+            'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]',
+            'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
+            zIndexClasses.wrapper,
+            SIZE_MAP[size],
+            scrollBehavior === 'inside' && 'max-h-[85vh] overflow-y-auto',
+            className,
+          )}
+          onPointerDownOutside={(e) => {
+            if (!isDismissable) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (!isDismissable) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <VisuallyHidden>
+            <Title>{title}</Title>
+          </VisuallyHidden>
+          {typeof children === 'function' ? children(handleClose) : children}
+        </Content>
+      </Portal>
+    </Root>
   );
 }

@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';

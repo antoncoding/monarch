@@ -1,6 +1,6 @@
 'use client';
 
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';

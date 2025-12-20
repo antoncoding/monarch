@@ -1,5 +1,6 @@
 import React from 'react';
-import { Input, Divider } from '@heroui/react';
+import { Divider } from '@/components/ui/divider';
+import { Input } from '@/components/ui/input';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';

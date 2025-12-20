@@ -1,4 +1,4 @@
-import { Input } from '@heroui/react';
+import { Input } from '@/components/ui/input';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -50,7 +50,6 @@ export default function SupplierFiltersModal({
                   placeholder="0"
                   value={minShares}
                   onChange={handleSharesChange}
-                  size="sm"
                   type="text"
                   inputMode="decimal"
                   className="w-28"

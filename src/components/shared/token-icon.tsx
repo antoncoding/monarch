@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
 import { useTokens } from '@/components/providers/TokenProvider';

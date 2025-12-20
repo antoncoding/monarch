@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
@@ -65,12 +65,7 @@ export function SuppliersTable({ chainId, market, minShares, onOpenFiltersModal 
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-lg text-secondary">Top Suppliers</h4>
         <div className="flex items-center gap-2">
-          <Tooltip
-            classNames={{
-              base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            }}
-            content={
+          <Tooltip            content={
               <TooltipContent
                 title="Filters"
                 detail="Filter suppliers by minimum share amount"

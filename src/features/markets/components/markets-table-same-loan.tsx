@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Input } from '@heroui/react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';

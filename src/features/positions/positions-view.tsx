@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';

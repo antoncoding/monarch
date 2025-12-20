@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardBody, Tooltip as HeroTooltip } from '@heroui/react';
+import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
 import { HiOutlineInformationCircle } from 'react-icons/hi2';

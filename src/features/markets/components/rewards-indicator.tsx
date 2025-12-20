@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { FiGift } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';

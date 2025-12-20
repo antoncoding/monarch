@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { MdOutlineWaterDrop } from 'react-icons/md';
 import { formatUnits, maxUint256 } from 'viem';
 import { formatBalance, formatReadable } from '@/utils/balance';

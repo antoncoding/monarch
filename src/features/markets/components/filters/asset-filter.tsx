@@ -1,7 +1,6 @@
 'use client';
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 
@@ -78,13 +77,10 @@ export default function AssetFilter({
   }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
-    <div
-      className="relative z-30 w-full"
-      ref={dropdownRef}
-    >
+    <div className="relative w-full" ref={dropdownRef}>
       <div
-        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-          isOpen ? 'bg-surface-dark' : ''
+        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+          isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
         }`}
         role="button"
         tabIndex={0}
@@ -93,10 +89,10 @@ export default function AssetFilter({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="absolute left-2 top-2 px-1 text-xs">{label}</span>
+        <span className="absolute left-2 top-2 px-1 text-xs text-secondary font-zen">{label}</span>
         <div className="flex items-center justify-between pt-4">
           {loading ? (
-            <span className="p-[2px] text-sm text-gray-400">Loading...</span>
+            <span className="p-[2px] text-sm text-secondary font-zen">Loading...</span>
           ) : selectedAssets.length > 0 ? (
             <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
               {selectedAssets.map((asset) => {
@@ -122,82 +118,68 @@ export default function AssetFilter({
               })}
             </div>
           ) : (
-            <span className="p-[2px] text-sm text-gray-400">{placeholder}</span>
+            <span className="p-[2px] text-sm text-secondary font-zen">{placeholder}</span>
           )}
           <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
             <ChevronDownIcon />
           </span>
         </div>
       </div>
-      <AnimatePresence>
-        {isOpen && !loading && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="bg-surface absolute z-50 mt-1 w-full rounded-sm shadow-lg"
-          >
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search tokens..."
-              className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
-            />
-            <div className="relative">
-              <ul
-                className="custom-scrollbar max-h-60 overflow-auto pb-12"
-                role="listbox"
+      <div
+        className={`bg-surface absolute z-50 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
+          isOpen && !loading ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
+        }`}
+      >
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search tokens..."
+          className="w-full border-none bg-transparent p-3 text-sm text-primary placeholder:text-secondary font-zen outline-none focus:outline-none"
+        />
+        <div className="relative">
+          <ul className="custom-scrollbar max-h-96 overflow-auto pb-12" role="listbox">
+            {filteredItems.map((token) => (
+              <li
+                key={token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')}
+                className={`m-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
+                  selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))
+                    ? 'bg-gray-300 dark:bg-gray-700'
+                    : ''
+                }`}
+                onClick={() => selectOption(token)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    selectOption(token);
+                  }
+                }}
+                role="option"
+                aria-selected={selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))}
+                tabIndex={0}
               >
-                {filteredItems.map((token) => (
-                  <li
-                    key={token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')}
-                    className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                      selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))
-                        ? 'bg-gray-300 dark:bg-gray-700'
-                        : ''
-                    }`}
-                    onClick={() => selectOption(token)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        selectOption(token);
-                      }
-                    }}
-                    role="option"
-                    aria-selected={selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))}
-                    tabIndex={0}
-                  >
-                    <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
-                    {token.img ? (
-                      <Image
-                        src={token.img}
-                        alt={token.symbol}
-                        width={18}
-                        height={18}
-                      />
-                    ) : (
-                      <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">
-                        ?
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
-                <button
-                  className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
-                  onClick={clearSelection}
-                  type="button"
-                >
-                  <span>Clear All</span>
-                  <TrashIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                <span className="font-zen text-primary" title={token.symbol}>
+                  {token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}
+                </span>
+                {token.img ? (
+                  <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                ) : (
+                  <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">?</div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
+            <button
+              className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
+              onClick={clearSelection}
+              type="button"
+            >
+              <span>Clear All</span>
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

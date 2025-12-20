@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type ReactNode } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
 import { TokenIcon } from '@/components/shared/token-icon';

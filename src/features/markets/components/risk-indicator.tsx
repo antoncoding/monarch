@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/shared/tooltip-content';

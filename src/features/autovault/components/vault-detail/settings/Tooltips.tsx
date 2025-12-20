@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 

@@ -1,6 +1,7 @@
 import type React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Chip, Link } from '@heroui/react';
+import Link from 'next/link';
+import { Badge as Chip } from '@/components/ui/badge';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import moment from 'moment';
@@ -343,9 +344,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                             </div>
                             <Chip
                               size="sm"
-                              variant="light"
                               className="bg-default-100 text-xs"
-                              radius="sm"
                             >
                               {formatReadable(lltv)}%
                             </Chip>

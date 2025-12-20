@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { HiQuestionMarkCircle } from 'react-icons/hi';
 import type { Address } from 'viem';

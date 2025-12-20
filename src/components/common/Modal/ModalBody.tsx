@@ -1,5 +1,4 @@
 import type React from 'react';
-import { ModalBody as HeroModalBody } from '@heroui/react';
 import { twMerge } from 'tailwind-merge';
 
 export type ModalBodyVariant = 'standard' | 'compact';
@@ -15,5 +14,5 @@ export function ModalBody({ children, variant = 'standard', className = '' }: Mo
   const paddingClass = isStandard ? 'px-6 pb-6 pt-2' : 'px-6 pb-4 pt-2';
   const gapClass = isStandard ? 'gap-5' : 'gap-4';
 
-  return <HeroModalBody className={twMerge(`flex flex-col ${gapClass} font-zen`, paddingClass, className)}>{children}</HeroModalBody>;
+  return <div className={twMerge(`flex flex-col ${gapClass} font-zen`, paddingClass, className)}>{children}</div>;
 }

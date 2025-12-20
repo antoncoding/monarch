@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';

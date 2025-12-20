@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { Badge } from '@/components/ui/badge';
 import { TooltipContent } from '@/components/shared/tooltip-content';

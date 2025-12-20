@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Slider } from '@heroui/react';
+import { Slider } from '@/components/ui/slider';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';

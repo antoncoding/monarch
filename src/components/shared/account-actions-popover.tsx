@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, type ReactNode } from 'react';
-import { Popover, PopoverTrigger, PopoverContent } from '@heroui/react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LuCopy, LuUser } from 'react-icons/lu';
 import { SiEthereum } from 'react-icons/si';
@@ -48,19 +48,13 @@ export function AccountActionsPopover({ address, children }: AccountActionsPopov
 
   return (
     <Popover
-      isOpen={isOpen}
+      open={isOpen}
       onOpenChange={setIsOpen}
-      placement="bottom"
-      offset={8}
-      classNames={{
-        base: 'p-0',
-        content: 'p-0 bg-surface shadow-lg border-none',
-      }}
     >
       <PopoverTrigger>
         <div className="cursor-pointer outline-none focus:outline-none">{children}</div>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent className="p-0 bg-surface shadow-lg border-none">
         <AnimatePresence>
           {isOpen && (
             <motion.div

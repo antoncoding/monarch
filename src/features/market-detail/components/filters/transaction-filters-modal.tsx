@@ -1,5 +1,6 @@
 import type React from 'react';
-import { Input, Divider } from '@heroui/react';
+import { Divider } from '@/components/ui/divider';
+import { Input } from '@/components/ui/input';
 import { FiSliders } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
@@ -82,7 +83,6 @@ export default function TransactionFiltersModal({
                   placeholder="0"
                   value={minSupplyAmount}
                   onChange={handleSupplyChange}
-                  size="sm"
                   type="text"
                   inputMode="decimal"
                   className="w-28"
@@ -99,7 +99,6 @@ export default function TransactionFiltersModal({
                   placeholder="0"
                   value={minBorrowAmount}
                   onChange={handleBorrowChange}
-                  size="sm"
                   type="text"
                   inputMode="decimal"
                   className="w-28"

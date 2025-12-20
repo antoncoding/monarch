@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Divider, Input, Spinner } from '@heroui/react';
+import { Spinner } from '@/components/ui/spinner';
+import { Divider } from '@/components/ui/divider';
+import { Input } from '@/components/ui/input';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { IoWarningOutline } from 'react-icons/io5';
@@ -235,11 +237,9 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
               </button>
               {morphoSectionOpen &&
                 (morphoLoading ? (
-                  <div className="flex justify-center py-6">
-                    <Spinner
-                      size="sm"
-                      label="Loading Morpho vaults..."
-                    />
+                  <div className="flex flex-col items-center justify-center gap-2 py-6">
+                    <Spinner size={24} />
+                    <span className="text-sm text-secondary">Loading Morpho vaults...</span>
                   </div>
                 ) : sortedMorphoVaults.length === 0 ? (
                   <div className="text-center text-sm text-secondary py-4">

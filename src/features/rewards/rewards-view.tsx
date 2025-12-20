@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { useParams } from 'next/navigation';
 import { BsQuestionCircle } from 'react-icons/bs';
 import type { Address } from 'viem';

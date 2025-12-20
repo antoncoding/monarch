@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';

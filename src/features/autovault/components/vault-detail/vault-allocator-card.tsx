@@ -1,4 +1,5 @@
-import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Tooltip } from '@/components/ui/tooltip';
 import { GearIcon } from '@radix-ui/react-icons';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';

@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Divider, Tooltip, useDisclosure } from '@heroui/react';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { Divider } from '@/components/ui/divider';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FiFilter } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';

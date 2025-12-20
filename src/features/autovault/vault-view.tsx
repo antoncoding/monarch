@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { GearIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';

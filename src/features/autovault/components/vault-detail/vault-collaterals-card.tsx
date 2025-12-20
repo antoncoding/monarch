@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { GearIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
 import { Spinner } from '@/components/ui/spinner';

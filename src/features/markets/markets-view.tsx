@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useDisclosure, Tooltip } from '@heroui/react';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { Tooltip } from '@/components/ui/tooltip';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import type { Chain } from 'viem';
 import { useRouter } from 'next/navigation';
