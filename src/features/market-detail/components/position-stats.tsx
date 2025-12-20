@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '@heroui/react';
-import { Switch } from '@heroui/react';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiUser } from 'react-icons/fi';
 import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
@@ -24,7 +24,7 @@ type PositionStatsProps = {
   isRefreshing?: boolean;
 };
 
-function ThumbIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
+function ThumbIcon({ isSelected, className }: { isSelected?: boolean; className?: string }) {
   return isSelected ? <FiUser className={className} /> : <HiOutlineGlobeAsiaAustralia className={className} />;
 }
 
@@ -207,9 +207,9 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
               <ReloadIcon className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           )}
-          <Switch
+          <IconSwitch
             defaultSelected={viewMode === 'user'}
-            size="sm"
+            size="xs"
             color="primary"
             classNames={{
               wrapper: 'mx-0',

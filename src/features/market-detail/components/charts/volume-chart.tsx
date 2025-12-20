@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardHeader, CardBody } from '@heroui/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
@@ -136,6 +136,15 @@ function VolumeChart({
     borrow: true,
     liquidity: true,
   });
+
+  // This is only for adoptive curve
+  const deltaToTargetUtilization = useMemo(() => {
+    const supply = market.state.supplyAssets ? BigInt(market.state.supplyAssets) : 0n;
+    const borrow = market.state.borrowAssets ? BigInt(market.state.borrowAssets) : 0n;
+
+    const targetBorrow = supply * 9n / 10n; // target u is always 90%
+    return borrow - targetBorrow;
+  }, [])
 
   return (
     <Card className="bg-surface rounded p-4 shadow-sm">
@@ -318,6 +327,14 @@ function VolumeChart({
                     </div>
                   );
                 })}
+
+                {/* Delta to target Utilization */}
+                <div key={'delta-target-u'} className="flex items-center justify-between mt-4">
+                  <span className="capitalize"> Delta to Target:</span>
+                  <span className='text-sm'>
+                  {formatValue(Number(formatUnits(deltaToTargetUtilization, market.loanAsset.decimals)))}
+                  </span>
+                </div>
               </div>
 
               <div>

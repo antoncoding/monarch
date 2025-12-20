@@ -11,7 +11,7 @@ export type IconSwitchProps = {
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?: 'primary' | 'secondary' | 'accent' | 'destructive';
   onChange?: (selected: boolean) => void;
-  thumbIcon?: React.ComponentType<{ className?: string }>;
+  thumbIcon?: React.ComponentType<{ className?: string; isSelected?: boolean }> | null;
   thumbIconOn?: React.ComponentType<{ className?: string }>;
   thumbIconOff?: React.ComponentType<{ className?: string }>;
   classNames?: {
@@ -35,7 +35,8 @@ type SizeConfig = {
   iconClass: string;
 };
 
-const SIZE_CONFIG: Record<NonNullable<IconSwitchProps['size']>, SizeConfig> = {
+// Size config for switches with icons
+const SIZE_CONFIG_WITH_ICON: Record<NonNullable<IconSwitchProps['size']>, SizeConfig> = {
   xs: {
     width: 38,
     height: 22,
@@ -78,6 +79,50 @@ const SIZE_CONFIG: Record<NonNullable<IconSwitchProps['size']>, SizeConfig> = {
   },
 };
 
+// Size config for plain switches (no icon) - more compact
+const SIZE_CONFIG_PLAIN: Record<NonNullable<IconSwitchProps['size']>, SizeConfig> = {
+  xs: {
+    width: 28,
+    height: 16,
+    padding: 3,
+    thumbWidth: 10,
+    thumbHeight: 10,
+    radius: 8,
+    thumbRadius: 5,
+    iconClass: '',
+  },
+  sm: {
+    width: 36,
+    height: 20,
+    padding: 3,
+    thumbWidth: 14,
+    thumbHeight: 14,
+    radius: 10,
+    thumbRadius: 7,
+    iconClass: '',
+  },
+  md: {
+    width: 44,
+    height: 24,
+    padding: 4,
+    thumbWidth: 16,
+    thumbHeight: 16,
+    radius: 12,
+    thumbRadius: 8,
+    iconClass: '',
+  },
+  lg: {
+    width: 52,
+    height: 28,
+    padding: 4,
+    thumbWidth: 20,
+    thumbHeight: 20,
+    radius: 14,
+    thumbRadius: 10,
+    iconClass: '',
+  },
+};
+
 const TRACK_COLOR: Record<NonNullable<IconSwitchProps['color']>, string> = {
   primary: 'bg-[var(--palette-orange)]',
   secondary: 'bg-[var(--color-background-secondary)]',
@@ -104,11 +149,12 @@ export function IconSwitch({
   const isControlled = controlledSelected !== undefined;
   const isSelected = isControlled ? controlledSelected : internalSelected;
 
-  const config = SIZE_CONFIG[size];
-  const translate = config.width - config.thumbWidth - config.padding * 2;
-
-  // Determine which icon to use
+  // Determine which icon to use (null means no icon)
   const IconComponent = thumbIconOn && thumbIconOff ? (isSelected ? thumbIconOn : thumbIconOff) : ThumbIcon;
+
+  // Use compact config for plain switches, icon config otherwise
+  const config = IconComponent ? SIZE_CONFIG_WITH_ICON[size] : SIZE_CONFIG_PLAIN[size];
+  const translate = config.width - config.thumbWidth - config.padding * 2;
 
   const handleToggle = useCallback(() => {
     if (disabled) return;
@@ -155,7 +201,8 @@ export function IconSwitch({
       onClick={handleToggle}
       onKeyDown={handleKeyDown}
       className={cn(
-        'relative inline-flex shrink-0 items-center justify-start overflow-hidden rounded-[8px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ring-1 ring-[var(--color-background-secondary)]',
+        'relative inline-flex shrink-0 items-center justify-start overflow-hidden rounded-[8px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        IconComponent && 'ring-1 ring-[var(--color-background-secondary)]',
         isSelected ? TRACK_COLOR[color] : 'bg-main',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         classNames?.base,
@@ -167,7 +214,8 @@ export function IconSwitch({
     >
       <motion.div
         className={cn(
-          'flex items-center justify-center bg-surface shadow-sm ring-1 ring-[var(--color-background-secondary)]',
+          'flex items-center justify-center bg-surface shadow-sm',
+          IconComponent && 'ring-1 ring-[var(--color-background-secondary)]',
           classNames?.thumb,
         )}
         initial={false}
@@ -181,17 +229,19 @@ export function IconSwitch({
         }}
         style={thumbStyle}
       >
-        <motion.div
-          initial={false}
-          className={cn(
-            'flex items-center justify-center',
-            config.iconClass,
-            isSelected ? 'text-primary' : 'text-secondary',
-            classNames?.thumbIcon,
-          )}
-        >
-          <IconComponent className="h-[100%]" />
-        </motion.div>
+        {IconComponent && (
+          <motion.div
+            initial={false}
+            className={cn(
+              'flex items-center justify-center',
+              config.iconClass,
+              isSelected ? 'text-primary' : 'text-secondary',
+              classNames?.thumbIcon,
+            )}
+          >
+            <IconComponent className="h-[100%]" isSelected={isSelected} />
+          </motion.div>
+        )}
       </motion.div>
     </button>
   );

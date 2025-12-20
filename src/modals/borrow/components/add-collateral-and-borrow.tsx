@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Switch } from '@heroui/react';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { LTVWarning } from '@/components/shared/ltv-warning';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
@@ -253,10 +253,11 @@ export function AddCollateralAndBorrow({
               {isWrappedNativeToken(market.collateralAsset.address, market.morphoBlue.chain.id) && (
                 <div className="mb-2 mt-1 flex items-center justify-end">
                   <div className="mr-2 font text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
-                  <Switch
+                  <IconSwitch
                     size="sm"
-                    isSelected={useEth}
-                    onValueChange={setUseEth}
+                    selected={useEth}
+                    onChange={setUseEth}
+                    thumbIcon={null}
                     classNames={{
                       wrapper: 'w-9 h-4 mr-0',
                       thumb: 'w-3 h-3',

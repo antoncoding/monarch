@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip, Switch } from '@heroui/react';
+import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip } from '@heroui/react';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
@@ -250,10 +251,11 @@ export function PositionsSummaryTable({
             >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Empty Positions</span>
-                <Switch
-                  size="sm"
-                  isSelected={showEmptyPositions}
-                  onValueChange={setShowEmptyPositions}
+                <IconSwitch
+                  size="xs"
+                  selected={showEmptyPositions}
+                  onChange={setShowEmptyPositions}
+                  thumbIcon={null}
                   aria-label="Show empty positions"
                   classNames={{
                     wrapper: 'mx-0',
@@ -268,10 +270,11 @@ export function PositionsSummaryTable({
             >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Collateral Exposure</span>
-                <Switch
-                  size="sm"
-                  isSelected={showCollateralExposure}
-                  onValueChange={setShowCollateralExposure}
+                <IconSwitch
+                  size="xs"
+                  selected={showCollateralExposure}
+                  onChange={setShowCollateralExposure}
+                  thumbIcon={null}
                   classNames={{
                     wrapper: 'mx-0',
                     thumbIcon: 'p-0 mr-0',
