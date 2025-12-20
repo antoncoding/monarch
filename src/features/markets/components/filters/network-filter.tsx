@@ -42,7 +42,10 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
   const selectedNetworkData = networks.find((n) => n.network === selectedNetwork);
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div
+      className="relative w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
@@ -59,7 +62,12 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
           {selectedNetworkData ? (
             <div className="flex items-center gap-2 p-1">
               {selectedNetwork && getNetworkImg(selectedNetwork) && (
-                <Image src={getNetworkImg(selectedNetwork)!} alt={selectedNetworkData.name} width={18} height={18} />
+                <Image
+                  src={getNetworkImg(selectedNetwork)!}
+                  alt={selectedNetworkData.name}
+                  width={18}
+                  height={18}
+                />
               )}
               <span className="text-sm text-primary font-zen">{selectedNetworkData.name}</span>
             </div>
@@ -76,7 +84,10 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
           isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
         }`}
       >
-        <ul className="custom-scrollbar max-h-96 overflow-auto" role="listbox">
+        <ul
+          className="custom-scrollbar max-h-96 overflow-auto"
+          role="listbox"
+        >
           {networks.map((network) => (
             <li
               key={network.network}
@@ -94,7 +105,12 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
               tabIndex={0}
             >
               <span className="text-primary font-zen">{network.name}</span>
-              <Image src={network.logo} alt={network.name} width={18} height={18} />
+              <Image
+                src={network.logo}
+                alt={network.name}
+                width={18}
+                height={18}
+              />
             </li>
           ))}
         </ul>

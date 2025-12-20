@@ -191,7 +191,7 @@ function AdvancedSearchBar({
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={handleInputFocus}
-            className="w-full bg-transparent text-sm text-primary placeholder:text-secondary font-zen outline-none focus:outline-none"
+            className="w-full bg-transparent text-sm text-primary placeholder:text-sm font-zen outline-none focus:outline-none"
             autoComplete="off"
           />
           <FaSearch

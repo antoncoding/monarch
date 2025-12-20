@@ -72,7 +72,11 @@ export function Modal({
   }, [onOpenChange]);
 
   return (
-    <Root open={isOpen} onOpenChange={handleOpenChange} modal>
+    <Root
+      open={isOpen}
+      onOpenChange={handleOpenChange}
+      modal
+    >
       <Portal>
         <Overlay
           className={cn(

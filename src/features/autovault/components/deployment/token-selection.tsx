@@ -200,12 +200,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
 
                   <div className="flex items-center gap-2">
                     {tokenNetwork.hasExistingVault && (
-                      <Tooltip
-                        classNames={{
-                          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                        }}
-                        content={
+                      <Tooltip                        content={
                           <TooltipContent
                             icon={<LuVault className="h-4 w-4 text-primary" />}
                             title="Vault deployed"

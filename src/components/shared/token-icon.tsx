@@ -67,12 +67,7 @@ export function TokenIcon({
     }
 
     return (
-      <Tooltip
-        classNames={{
-          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        }}
-        content={
+      <Tooltip        content={
           <TooltipContent
             icon={img}
             title={title}

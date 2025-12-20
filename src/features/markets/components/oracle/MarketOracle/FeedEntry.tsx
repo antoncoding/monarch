@@ -114,12 +114,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
   };
 
   return (
-    <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-      content={getTooltipContent()}
+    <Tooltip      content={getTooltipContent()}
     >
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
         {showAssetPair ? (

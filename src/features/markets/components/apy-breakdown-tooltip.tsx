@@ -67,12 +67,7 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYB
   );
 
   return (
-    <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-      content={content}
+    <Tooltip      content={content}
     >
       {children}
     </Tooltip>

@@ -20,11 +20,9 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@heroui/input": "^2.2.2",
     "@heroui/react": "^2.4.2",
     "@heroui/system": "^2.2.2",
     "@heroui/theme": "^2.2.6",
-    "@heroui/tooltip": "^2.0.36",
     "@internationalized/date": "^3.8.2",
     "@merkl/api": "^1.7.0",
     "@morpho-org/blue-sdk": "^5.3.0",

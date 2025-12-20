@@ -195,12 +195,7 @@ export function TablePagination({
               open={isJumpOpen}
               onOpenChange={setIsJumpOpen}
             >
-              <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
-                content={
+              <Tooltip                content={
                   <TooltipContent
                     title="Jump to page"
                     detail={`Go to a specific page (1-${totalPages})`}
@@ -208,7 +203,7 @@ export function TablePagination({
                   />
                 }
               >
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"

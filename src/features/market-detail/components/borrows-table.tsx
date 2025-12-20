@@ -56,7 +56,8 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-lg text-secondary">Borrow & Repay</h4>
         <div className="flex items-center gap-2">
-          <Tooltip            content={
+          <Tooltip
+            content={
               <TooltipContent
                 title="Filters"
                 detail="Filter transactions by minimum amount"

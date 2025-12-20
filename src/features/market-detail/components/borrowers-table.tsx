@@ -72,7 +72,8 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-lg text-secondary">Top Borrowers</h4>
         <div className="flex items-center gap-2">
-          <Tooltip            content={
+          <Tooltip
+            content={
               <TooltipContent
                 title="Filters"
                 detail="Filter borrowers by minimum borrow amount"

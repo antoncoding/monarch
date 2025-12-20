@@ -47,11 +47,11 @@ export function TooltipContent({
   // Complex tooltip with additional details
   return (
     <div className={className}>
-      <div className="flex w-full gap-4">
+      <div className="flex w-full gap-3">
         {icon && <div className="flex-shrink-0 self-center">{icon}</div>}
         <div className="flex flex-col gap-1 flex-1">
           {title && <div className="font-zen font-bold text-primary">{title}</div>}
-          {detail && <div className="font-zen text-sm text-primary">{detail}</div>}
+          {detail && <div className="font-zen text-sm text-primary whitespace-normal">{detail}</div>}
           {secondaryDetail && <div className="font-zen text-xs text-secondary">{secondaryDetail}</div>}
         </div>
         {actionIcon && actionHref && (

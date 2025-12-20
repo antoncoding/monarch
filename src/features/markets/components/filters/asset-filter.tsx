@@ -77,7 +77,10 @@ export default function AssetFilter({
   }, [updateFromSearch, items, setSelectedAssets]);
 
   return (
-    <div className="relative w-full" ref={dropdownRef}>
+    <div
+      className="relative w-full"
+      ref={dropdownRef}
+    >
       <div
         className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
           isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
@@ -92,9 +95,9 @@ export default function AssetFilter({
         <span className="absolute left-2 top-2 px-1 text-xs text-secondary font-zen">{label}</span>
         <div className="flex items-center justify-between pt-4">
           {loading ? (
-            <span className="p-[2px] text-sm text-secondary font-zen">Loading...</span>
+            <span className="p-0.5 text-sm text-secondary font-zen">Loading...</span>
           ) : selectedAssets.length > 0 ? (
-            <div className="flex-scroll flex gap-2 p-1 pb-[2px]">
+            <div className="flex-scroll flex gap-2 p-1 pb-0.5">
               {selectedAssets.map((asset) => {
                 const token = items.find((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset);
                 return token ? (
@@ -138,7 +141,10 @@ export default function AssetFilter({
           className="w-full border-none bg-transparent p-3 text-sm text-primary placeholder:text-secondary font-zen outline-none focus:outline-none"
         />
         <div className="relative">
-          <ul className="custom-scrollbar max-h-96 overflow-auto pb-12" role="listbox">
+          <ul
+            className="custom-scrollbar max-h-96 overflow-auto pb-12"
+            role="listbox"
+          >
             {filteredItems.map((token) => (
               <li
                 key={token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|')}
@@ -157,13 +163,23 @@ export default function AssetFilter({
                 aria-selected={selectedAssets.includes(token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|'))}
                 tabIndex={0}
               >
-                <span className="font-zen text-primary" title={token.symbol}>
+                <span
+                  className="font-zen text-primary"
+                  title={token.symbol}
+                >
                   {token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}
                 </span>
                 {token.img ? (
-                  <Image src={token.img} alt={token.symbol} width={18} height={18} />
+                  <Image
+                    src={token.img}
+                    alt={token.symbol}
+                    width={18}
+                    height={18}
+                  />
                 ) : (
-                  <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">?</div>
+                  <div className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-700">
+                    ?
+                  </div>
                 )}
               </li>
             ))}

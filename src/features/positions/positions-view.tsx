@@ -177,12 +177,7 @@ export default function Positions() {
         ) : (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
-              <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
-                content={
+              <Tooltip                content={
                   <TooltipContent
                     title="Refresh"
                     detail="Fetch latest data"

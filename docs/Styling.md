@@ -10,7 +10,7 @@ Use these shared components instead of raw HTML elements:
 
 ## Modal Guidelines
 
-**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal`. Never import HeroUI modals directly. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
+**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal`. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
 
 All modals MUST follow consistent styling standards for typography, spacing, and structure. There are two modal patterns based on use case.
 
@@ -228,7 +228,7 @@ For section headers within modal content, use consistent styling:
 <h3 className="text-base font-normal text-primary">Section Title</h3>
 ```
 
-### Custom Modals (Non-HeroUI)
+### Custom Modals
 
 For custom modals using `framer-motion`, apply `font-zen` to the outer container:
 

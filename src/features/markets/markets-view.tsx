@@ -566,12 +566,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
               onOpenSettings={onSettingsModalOpen}
             />
 
-            <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
-              content={
+            <Tooltip              content={
                 <TooltipContent
                   title="Refresh"
                   detail="Fetch the latest market data"
@@ -593,12 +588,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
             {/* Hide expand/compact toggle on mobile */}
             <div className="hidden md:block">
-              <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
-                content={
+              <Tooltip                content={
                   <TooltipContent
                     icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
                     title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
@@ -624,12 +614,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
               </Tooltip>
             </div>
 
-            <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
-              content={
+            <Tooltip              content={
                 <TooltipContent
                   title="Preferences"
                   detail="Adjust thresholds and columns"

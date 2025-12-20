@@ -87,12 +87,7 @@ export function RiskIndicator({ level, description, mode = 'simple', warningDeta
   return (
     <Tooltip
       content={tooltipContent}
-      className="max-w-[300px] rounded-sm"
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-    >
+      className="max-w-[300px] rounded-sm"    >
       <div className="gap flex">
         <div className={`h-4 w-[4px] ${styles.bar}`} />
       </div>

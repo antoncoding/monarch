@@ -43,15 +43,17 @@ type InputRootProps = {
 };
 
 export type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> &
-  VariantProps<typeof inputVariants> &
-  InputRootProps;
+  Omit<VariantProps<typeof inputVariants>, 'inputSize'> &
+  InputRootProps & {
+    size?: 'sm' | 'md' | 'lg';
+  };
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       className,
       variant,
-      inputSize,
+      size,
       type = 'text',
       label,
       description,
@@ -88,7 +90,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             type={type}
             className={cn(
-              inputVariants({ variant, inputSize }),
+              inputVariants({ variant, inputSize: size }),
               isInvalid && 'border-red-500 focus-visible:ring-red-500/20',
               startContent && 'pl-10',
               endContent && 'pr-10',
