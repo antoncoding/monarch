@@ -1,13 +1,13 @@
 'use client';
 
 import { useCallback } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { ExitIcon, ExternalLinkIcon, CopyIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import { useConnection, useDisconnect } from 'wagmi';
 import { useAppKit } from '@reown/appkit/react';
 import { Avatar } from '@/components/Avatar/Avatar';
 import { AccountIdentity } from '@/components/shared/account-identity';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { getExplorerURL } from '@/utils/external';
 
@@ -36,8 +36,8 @@ export function AccountDropdown() {
   if (!address) return null;
 
   return (
-    <Dropdown className="rounded-sm">
-      <DropdownTrigger>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
         <button
           type="button"
           className={clsx(
@@ -47,20 +47,11 @@ export function AccountDropdown() {
         >
           <Avatar address={address} />
         </button>
-      </DropdownTrigger>
-      <DropdownMenu
-        aria-label="Account actions"
-        itemClasses={{
-          base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
-          title: 'text-sm text-primary flex-grow font-zen',
-          wrapper: 'justify-between no-underline rounded-sm',
-        }}
-      >
-        <DropdownItem
-          key="account-info"
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
           className="border-b border-primary/10 pb-4 cursor-pointer"
           onClick={handleOpenModal}
-          showDivider={false}
         >
           <div className="flex w-full items-center gap-3">
             <Avatar
@@ -73,33 +64,30 @@ export function AccountDropdown() {
               showActions={false}
             />
           </div>
-        </DropdownItem>
+        </DropdownMenuItem>
 
-        <DropdownItem
-          key="copy"
+        <DropdownMenuItem
           onClick={handleCopyAddress}
           endContent={<CopyIcon className="h-4 w-4" />}
         >
           Copy Address
-        </DropdownItem>
+        </DropdownMenuItem>
 
-        <DropdownItem
-          key="explorer"
+        <DropdownMenuItem
           endContent={<ExternalLinkIcon className="h-4 w-4" />}
           onClick={() => window.open(getExplorerURL(address, chainId ?? 1), '_blank')}
         >
           View on Explorer
-        </DropdownItem>
+        </DropdownMenuItem>
 
-        <DropdownItem
-          key="logout"
+        <DropdownMenuItem
           onClick={handleDisconnectWallet}
           endContent={<ExitIcon className="h-4 w-4" />}
-          className="text-red-500 data-[hover=true]:text-red-500"
+          className="text-red-500 hover:text-red-500 focus:text-red-500"
         >
           Log out
-        </DropdownItem>
-      </DropdownMenu>
-    </Dropdown>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

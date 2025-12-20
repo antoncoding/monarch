@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, DropdownSection } from '@heroui/react';
 import { HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
@@ -13,6 +12,13 @@ import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -57,13 +63,11 @@ export default function NavbarMobile() {
           />
         </Link>
 
-        <Dropdown
-          isOpen={isMenuOpen}
+        <DropdownMenu
+          open={isMenuOpen}
           onOpenChange={setIsMenuOpen}
-          placement="bottom-start"
-          className="z-50 rounded-sm"
         >
-          <DropdownTrigger>
+          <DropdownMenuTrigger asChild>
             <button
               type="button"
               aria-label="Menu"
@@ -80,81 +84,67 @@ export default function NavbarMobile() {
                 height="20"
               />
             </button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Navigation menu"
-            className="bg-surface min-w-[200px] rounded-sm border-none shadow-md"
-            itemClasses={{
-              base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
-              title: 'text-sm text-primary flex-grow font-zen',
-              wrapper: 'justify-between no-underline rounded-sm',
-            }}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="min-w-[200px]"
           >
-            <DropdownSection showDivider>
-              <DropdownItem
-                key="markets"
-                startContent={<RiLineChartLine className="h-5 w-5" />}
-                onClick={() => handleNavigation('/markets')}
-                className="py-3"
-              >
-                <span className="font-medium">Markets</span>
-              </DropdownItem>
-              <DropdownItem
-                key="portfolio"
-                startContent={<RiBriefcaseLine className="h-5 w-5" />}
-                onClick={() => handleNavigation(address ? `/positions/${address}` : '/positions')}
-                className="py-3"
-              >
-                <span className="font-medium">Portfolio</span>
-              </DropdownItem>
-              <DropdownItem
-                key="rewards"
-                startContent={<RiGiftLine className="h-5 w-5" />}
-                onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}
-                className="py-3"
-              >
-                <span className="font-medium">Rewards</span>
-              </DropdownItem>
-            </DropdownSection>
-            <DropdownSection>
-              <DropdownItem
-                key="docs"
-                startContent={<RiBookLine className="h-4 w-4" />}
-                onClick={() => handleExternalLink(EXTERNAL_LINKS.docs)}
-              >
-                Docs
-              </DropdownItem>
-              <DropdownItem
-                key="discord"
-                startContent={<RiDiscordFill className="h-4 w-4" />}
-                onClick={() => handleExternalLink(EXTERNAL_LINKS.discord)}
-              >
-                Discord
-              </DropdownItem>
-              <DropdownItem
-                key="github"
-                startContent={<RiGithubFill className="h-4 w-4" />}
-                onClick={() => handleExternalLink(EXTERNAL_LINKS.github)}
-              >
-                GitHub
-              </DropdownItem>
-              <DropdownItem
-                key="theme"
-                startContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
-                onClick={toggleTheme}
-              >
-                {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}
-              </DropdownItem>
-              <DropdownItem
-                key="settings"
-                startContent={<FiSettings className="h-4 w-4" />}
-                onClick={() => handleNavigation('/settings')}
-              >
-                Settings
-              </DropdownItem>
-            </DropdownSection>
-          </DropdownMenu>
-        </Dropdown>
+            <DropdownMenuItem
+              startContent={<RiLineChartLine className="h-5 w-5" />}
+              onClick={() => handleNavigation('/markets')}
+              className="py-3"
+            >
+              <span className="font-medium">Markets</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<RiBriefcaseLine className="h-5 w-5" />}
+              onClick={() => handleNavigation(address ? `/positions/${address}` : '/positions')}
+              className="py-3"
+            >
+              <span className="font-medium">Portfolio</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<RiGiftLine className="h-5 w-5" />}
+              onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}
+              className="py-3"
+            >
+              <span className="font-medium">Rewards</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              startContent={<RiBookLine className="h-4 w-4" />}
+              onClick={() => handleExternalLink(EXTERNAL_LINKS.docs)}
+            >
+              Docs
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<RiDiscordFill className="h-4 w-4" />}
+              onClick={() => handleExternalLink(EXTERNAL_LINKS.discord)}
+            >
+              Discord
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<RiGithubFill className="h-4 w-4" />}
+              onClick={() => handleExternalLink(EXTERNAL_LINKS.github)}
+            >
+              GitHub
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
+              onClick={toggleTheme}
+            >
+              {mounted && (theme === 'dark' ? 'Light Theme' : 'Dark Theme')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              startContent={<FiSettings className="h-4 w-4" />}
+              onClick={() => handleNavigation('/settings')}
+            >
+              Settings
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex items-center">

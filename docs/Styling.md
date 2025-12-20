@@ -355,6 +355,53 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 Variants: `default` | `highlighted`
 
+### Dropdown Menu
+
+Always use `DropdownMenu` from `@/components/ui/dropdown-menu`.
+
+```tsx
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu';
+
+// Basic
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button>Options</Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    <DropdownMenuItem onClick={handleAction}>Action</DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
+
+// With icons
+<DropdownMenuItem startContent={<Icon />}>Supply</DropdownMenuItem>
+<DropdownMenuItem endContent={<Icon />}>Explorer</DropdownMenuItem>
+
+// Sections
+<DropdownMenuSeparator />
+
+// Multi-select
+<DropdownMenuCheckboxItem
+  checked={isChecked}
+  onCheckedChange={setIsChecked}
+>
+  Item
+</DropdownMenuCheckboxItem>
+
+// Prevent auto-close (for switches)
+<DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+  {/* custom content */}
+</DropdownMenuItem>
+```
+
+Alignment: `align="start"` | `"center"` | `"end"`
+
 ## Background, Border
 
 - Use `bg-surface` first layer components
@@ -461,7 +508,6 @@ import { TablePagination } from '@/components/common/TablePagination';
 - Jump-to-page search icon (appears when >10 pages)
 - Optional entry count display ("Showing X-Y of Z entries")
 - Loading states with disabled buttons
-- Rounded-md styling with bg-surface
 - Tighter spacing (gap-2) when used in layouts
 
 **Props:**

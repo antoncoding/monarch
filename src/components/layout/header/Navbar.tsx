@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { clsx } from 'clsx';
 import Image from 'next/image';
@@ -13,6 +12,7 @@ import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { EXTERNAL_LINKS } from '@/utils/external';
 import logo from '../../imgs/logo.png';
 import AccountConnect from './AccountConnect';
@@ -117,12 +117,8 @@ export function Navbar() {
             </>
           )}
 
-          <Dropdown
-            onOpenChange={setIsMoreOpen}
-            placement="bottom-end"
-            className="z-50 rounded-sm"
-          >
-            <DropdownTrigger>
+          <DropdownMenu onOpenChange={setIsMoreOpen}>
+            <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={clsx(
@@ -138,53 +134,43 @@ export function Navbar() {
                 More
                 <ChevronDownIcon className={clsx('h-4 w-4 transition-transform duration-200 ease-in-out', isMoreOpen && 'rotate-180')} />
               </button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="More links"
-              className="bg-surface min-w-[180px] rounded-sm border-none shadow-none"
-              itemClasses={{
-                base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
-                title: 'text-sm text-primary flex-grow font-zen',
-                wrapper: 'justify-between no-underline rounded-sm',
-              }}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="min-w-[180px]"
             >
-              <DropdownItem
-                key="docs"
+              <DropdownMenuItem
                 endContent={<RiBookLine className="h-4 w-4" />}
                 onClick={() => window.open(EXTERNAL_LINKS.docs, '_blank')}
               >
                 Docs
-              </DropdownItem>
-              <DropdownItem
-                key="discord"
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 endContent={<RiDiscordFill className="h-4 w-4" />}
                 onClick={() => window.open(EXTERNAL_LINKS.discord, '_blank')}
               >
                 Discord
-              </DropdownItem>
-              <DropdownItem
-                key="github"
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 endContent={<RiGithubFill className="h-4 w-4" />}
                 onClick={() => window.open(EXTERNAL_LINKS.github, '_blank')}
               >
                 GitHub
-              </DropdownItem>
-              <DropdownItem
-                key="theme"
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 endContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
                 onClick={toggleTheme}
               >
                 {theme === 'dark' ? 'Light Theme' : 'Dark Theme'}
-              </DropdownItem>
-              <DropdownItem
-                key="settings"
+              </DropdownMenuItem>
+              <DropdownMenuItem
                 endContent={<FiSettings className="h-4 w-4" />}
                 onClick={() => router.push('/settings')}
               >
                 Settings
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex items-center gap-6">
