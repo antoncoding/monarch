@@ -2,12 +2,12 @@
 
 import type React from 'react';
 import { useState } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { TbArrowUp } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
 
@@ -64,8 +64,8 @@ export function MarketActionsDropdown({
       role="button"
       tabIndex={-1}
     >
-      <Dropdown className="rounded-sm">
-        <DropdownTrigger>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             size="xs"
             variant="surface"
@@ -73,17 +73,9 @@ export function MarketActionsDropdown({
           >
             <IoEllipsisVertical className="h-3 w-3" />
           </Button>
-        </DropdownTrigger>
-        <DropdownMenu
-          aria-label="Market actions"
-          itemClasses={{
-            base: ['gap-4 px-4 py-2 rounded-none font-zen', 'data-[hover=true]:bg-hovered rounded-sm'].join(' '),
-            title: 'text-sm text-primary flex-grow font-zen',
-            wrapper: 'justify-between no-underline rounded-sm',
-          }}
-        >
-          <DropdownItem
-            key="supply"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
             onClick={() => {
               setSelectedMarket(market);
               setShowSupplyModal(true);
@@ -91,20 +83,18 @@ export function MarketActionsDropdown({
             startContent={<TbArrowUp className="h-4 w-4" />}
           >
             Supply
-          </DropdownItem>
+          </DropdownMenuItem>
 
-          <DropdownItem
-            key="view"
+          <DropdownMenuItem
             onClick={() => {
               onMarketClick(market);
             }}
             startContent={<GoGraph className="h-4 w-4" />}
           >
             View Market
-          </DropdownItem>
+          </DropdownMenuItem>
 
-          <DropdownItem
-            key="star"
+          <DropdownMenuItem
             onClick={() => {
               if (isStared) {
                 unstarMarket(market.uniqueKey);
@@ -115,19 +105,18 @@ export function MarketActionsDropdown({
             startContent={isStared ? <GoStarFill className="h-4 w-4" /> : <GoStar className="h-4 w-4" />}
           >
             {isStared ? 'Unstar' : 'Star'}
-          </DropdownItem>
+          </DropdownMenuItem>
 
-          <DropdownItem
-            key="blacklist"
+          <DropdownMenuItem
             onClick={handleBlacklistClick}
             startContent={<AiOutlineStop className="h-4 w-4" />}
             className={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket ? 'opacity-50 cursor-not-allowed' : ''}
-            isDisabled={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket}
+            disabled={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket}
           >
             {isBlacklisted?.(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
-          </DropdownItem>
-        </DropdownMenu>
-      </Dropdown>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <BlacklistConfirmationModal
         isOpen={isConfirmModalOpen}

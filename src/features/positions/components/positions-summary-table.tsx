@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Tooltip } from '@heroui/react';
+import { Tooltip } from '@heroui/react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
@@ -13,6 +13,7 @@ import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -185,8 +186,8 @@ export function PositionsSummaryTable({
   return (
     <div className="space-y-4 overflow-x-auto">
       <div className="mb-4 flex items-center justify-end gap-2">
-        <Dropdown>
-          <DropdownTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
@@ -195,17 +196,18 @@ export function PositionsSummaryTable({
               <IoChevronDownOutline className="mr-2 h-4 w-4" />
               {periodLabels[earningsPeriod]}
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Earnings period selection"
-            className="bg-surface rounded p-2"
-            onAction={(key) => setEarningsPeriod(key as EarningsPeriod)}
-          >
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
             {Object.entries(periodLabels).map(([period, label]) => (
-              <DropdownItem key={period}>{label}</DropdownItem>
+              <DropdownMenuItem
+                key={period}
+                onClick={() => setEarningsPeriod(period as EarningsPeriod)}
+              >
+                {label}
+              </DropdownMenuItem>
             ))}
-          </DropdownMenu>
-        </Dropdown>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Tooltip
           classNames={{
             base: 'p-0 m-0 bg-transparent shadow-sm border-none',
@@ -230,8 +232,8 @@ export function PositionsSummaryTable({
             </Button>
           </span>
         </Tooltip>
-        <Dropdown>
-          <DropdownTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
@@ -239,15 +241,11 @@ export function PositionsSummaryTable({
             >
               <GearIcon className="h-3 w-3" />
             </Button>
-          </DropdownTrigger>
-          <DropdownMenu
-            aria-label="Position table settings"
-            className="bg-surface rounded p-2"
-            closeOnSelect={false}
-          >
-            <DropdownItem
-              key="show-empty"
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
               className="flex h-auto gap-2 p-0"
+              onSelect={(e) => e.preventDefault()}
             >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Empty Positions</span>
@@ -263,10 +261,10 @@ export function PositionsSummaryTable({
                   }}
                 />
               </div>
-            </DropdownItem>
-            <DropdownItem
-              key="show-collateral-exposure"
+            </DropdownMenuItem>
+            <DropdownMenuItem
               className="flex h-auto gap-2 p-0"
+              onSelect={(e) => e.preventDefault()}
             >
               <div className="flex w-full items-center justify-between px-2 py-1.5">
                 <span className="mr-2 text-xs">Show Collateral Exposure</span>
@@ -281,9 +279,9 @@ export function PositionsSummaryTable({
                   }}
                 />
               </div>
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <div className="bg-surface overflow-hidden rounded shadow-sm">
         <Table className="responsive w-full min-w-[640px]">

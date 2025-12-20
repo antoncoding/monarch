@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import Image from 'next/image';
 import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarkets } from '@/contexts/MarketsContext';
 import { fetchAllStatistics } from '@/services/statsService';
@@ -179,8 +185,8 @@ export default function StatsPage() {
         <h1 className="font-zen text-2xl font-bold">Platform Statistics</h1>
         <div className="flex items-center gap-4">
           {/* Network selector */}
-          <Dropdown>
-            <DropdownTrigger>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
                 <div className="flex gap-2">
                   <div className="flex items-center">
@@ -197,14 +203,10 @@ export default function StatsPage() {
                   <div>{getNetworkName(selectedNetwork)}</div>
                 </div>
               </Button>
-            </DropdownTrigger>
-            <DropdownMenu
-              aria-label="Network Selection"
-              onAction={(key) => setSelectedNetwork(Number(key) as SupportedNetworks)}
-              className="font-zen"
-            >
-              <DropdownItem
-                key={SupportedNetworks.Base}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => setSelectedNetwork(SupportedNetworks.Base)}
                 startContent={
                   getNetworkImg(SupportedNetworks.Base) && (
                     <Image
@@ -218,9 +220,9 @@ export default function StatsPage() {
                 className="py-2"
               >
                 {baseNetworkName}
-              </DropdownItem>
-              <DropdownItem
-                key={SupportedNetworks.Mainnet}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSelectedNetwork(SupportedNetworks.Mainnet)}
                 startContent={
                   getNetworkImg(SupportedNetworks.Mainnet) && (
                     <Image
@@ -234,9 +236,9 @@ export default function StatsPage() {
                 className="py-2"
               >
                 {mainnetNetworkName}
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Timeframe selector */}
           <ButtonGroup
@@ -264,8 +266,8 @@ export default function StatsPage() {
           {/* Transaction Filters */}
           <div className="flex items-center gap-4">
             {/* Loan Asset Filter */}
-            <Dropdown>
-              <DropdownTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button className="bg-surface min-w-[160px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
                   {selectedLoanAssets.length === 0
                     ? 'All loan assets'
@@ -276,24 +278,23 @@ export default function StatsPage() {
                         })?.symbol ?? 'Selected')
                       : `${selectedLoanAssets.length} selected`}
                 </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Loan Asset Selection"
-                selectionMode="multiple"
-                selectedKeys={new Set(selectedLoanAssets)}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys) as string[];
-                  setSelectedLoanAssets(selected);
-                }}
-                className="font-zen"
-              >
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
                 {uniqueLoanAssets.map((asset) => {
                   const assetKey = asset.networks.map((n) => `${n.address}-${n.chain.id}`).join('|');
                   const firstNetwork = asset.networks[0];
 
                   return (
-                    <DropdownItem
+                    <DropdownMenuCheckboxItem
                       key={assetKey}
+                      checked={selectedLoanAssets.includes(assetKey)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedLoanAssets([...selectedLoanAssets, assetKey]);
+                        } else {
+                          setSelectedLoanAssets(selectedLoanAssets.filter((k) => k !== assetKey));
+                        }
+                      }}
                       className="py-2"
                       startContent={
                         <TokenIcon
@@ -306,15 +307,15 @@ export default function StatsPage() {
                       }
                     >
                       {asset.symbol}
-                    </DropdownItem>
+                    </DropdownMenuCheckboxItem>
                   );
                 })}
-              </DropdownMenu>
-            </Dropdown>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Side Filter */}
-            <Dropdown>
-              <DropdownTrigger>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button className="bg-surface min-w-[140px] border border-divider font-zen hover:bg-default-100 active:bg-default-200">
                   {selectedSides.length === 0
                     ? 'All sides'
@@ -322,31 +323,36 @@ export default function StatsPage() {
                       ? selectedSides[0]
                       : `${selectedSides.length} selected`}
                 </Button>
-              </DropdownTrigger>
-              <DropdownMenu
-                aria-label="Side Selection"
-                selectionMode="multiple"
-                selectedKeys={new Set(selectedSides)}
-                onSelectionChange={(keys) => {
-                  const selected = Array.from(keys) as ('Supply' | 'Withdraw')[];
-                  setSelectedSides(selected);
-                }}
-                className="font-zen"
-              >
-                <DropdownItem
-                  key="Supply"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuCheckboxItem
+                  checked={selectedSides.includes('Supply')}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedSides([...selectedSides, 'Supply']);
+                    } else {
+                      setSelectedSides(selectedSides.filter((s) => s !== 'Supply'));
+                    }
+                  }}
                   className="py-2"
                 >
                   Supply
-                </DropdownItem>
-                <DropdownItem
-                  key="Withdraw"
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuCheckboxItem
+                  checked={selectedSides.includes('Withdraw')}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedSides([...selectedSides, 'Withdraw']);
+                    } else {
+                      setSelectedSides(selectedSides.filter((s) => s !== 'Withdraw'));
+                    }
+                  }}
                   className="py-2"
                 >
                   Withdraw
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
+                </DropdownMenuCheckboxItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <TransactionsTable
