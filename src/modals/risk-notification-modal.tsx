@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Checkbox } from '@heroui/react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { usePathname } from 'next/navigation';
 import { PiButterflyDuotone } from 'react-icons/pi';
@@ -59,16 +59,12 @@ export default function RiskNotificationModal() {
           This flexibility comes with the responsibility to actively manage your positions, monitor market conditions, and make informed
           decisions about rebalancing.
         </p>
-        <div className="mt-4">
-          <Checkbox
-            isSelected={isChecked}
-            onValueChange={setIsChecked}
-            className="gap-2"
-            size="sm"
-          >
-            <span className="text-zen text-sm text-secondary">I understand that direct lending requires active management</span>
-          </Checkbox>
-        </div>
+        <Checkbox
+          variant="highlighted"
+          label="I understand that direct lending requires active management"
+          checked={isChecked}
+          onCheckedChange={(checked) => setIsChecked(checked === true)}
+        />
       </ModalBody>
       <ModalFooter>
         <Button

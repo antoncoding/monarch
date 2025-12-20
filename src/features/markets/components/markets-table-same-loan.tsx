@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Checkbox, Input } from '@heroui/react';
+import { Input } from '@heroui/react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -487,14 +488,13 @@ function MarketRow({
     >
       {showSelectColumn && (
         <td className="z-50 py-1">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center">
             <Checkbox
-              isSelected={isSelected}
-              onValueChange={onToggle}
+              checked={isSelected}
+              onCheckedChange={(checked) => onToggle()}
               disabled={disabled}
-              className="h-6 w-4 cursor-pointer rounded border-gray-300 text-primary"
-              onSelect={(e) => e.stopPropagation()}
-              size="sm"
+              className="cursor-pointer"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </td>

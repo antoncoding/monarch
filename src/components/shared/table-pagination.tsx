@@ -3,7 +3,7 @@ import { Input, Popover, PopoverTrigger, PopoverContent, Tooltip } from '@heroui
 import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils';
 
 type TablePaginationProps = {
   currentPage: number;
