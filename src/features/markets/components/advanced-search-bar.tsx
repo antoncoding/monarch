@@ -180,7 +180,12 @@ function AdvancedSearchBar({
   return (
     <div className="relative w-full">
       <div className="bg-surface min-w-48 cursor-text rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700">
-        <span className="absolute left-2 top-2 px-1 text-xs text-secondary font-zen">Quick Search</span>
+        <span
+          className="absolute left-2 top-2 px-1 text-xs font-zen"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          Quick Search
+        </span>
         <div className="flex items-center justify-between pt-4">
           <input
             ref={inputRef}
@@ -195,7 +200,8 @@ function AdvancedSearchBar({
             autoComplete="off"
           />
           <FaSearch
-            className="ml-2 cursor-pointer text-secondary flex-shrink-0"
+            className="ml-2 cursor-pointer flex-shrink-0"
+            style={{ color: 'var(--color-text-secondary)' }}
             onClick={handleSearch}
           />
         </div>

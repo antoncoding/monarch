@@ -302,11 +302,10 @@ export function SetupPositions() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-[120px]">
                         <Slider
-                          size="sm"
                           step={1}
                           maxValue={100}
                           minValue={0}
-                          value={currentPercentage}
+                          value={[currentPercentage]}
                           onChange={(value) => handlePercentageChange(market.uniqueKey, Number(value))}
                           className="w-full"
                           classNames={{

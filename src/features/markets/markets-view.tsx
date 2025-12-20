@@ -485,7 +485,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
           trustedVaults={userTrustedVaults}
         />
 
-        <div className="flex items-center justify-between pb-4">
+        <div className="flex flex-col gap-4 pb-4">
           <AdvancedSearchBar
             searchQuery={searchQuery}
             onSearch={handleSearch}
@@ -495,52 +495,50 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             uniqueCollaterals={uniqueCollaterals}
             uniqueLoanAssets={uniqueLoanAssets}
           />
+
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <NetworkFilter
+              selectedNetwork={selectedNetwork}
+              setSelectedNetwork={(network) => {
+                setSelectedNetwork(network);
+                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+              }}
+            />
+
+            <AssetFilter
+              label="Loan Asset"
+              placeholder="All loan asset"
+              selectedAssets={selectedLoanAssets}
+              setSelectedAssets={(assets) => {
+                setSelectedLoanAssets(assets);
+                updateUrlParams(selectedCollaterals, assets, selectedNetwork);
+              }}
+              items={uniqueLoanAssets}
+              loading={loading}
+              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+            />
+
+            <AssetFilter
+              label="Collateral"
+              placeholder="All collateral"
+              selectedAssets={selectedCollaterals}
+              setSelectedAssets={(assets) => {
+                setSelectedCollaterals(assets);
+                updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
+              }}
+              items={uniqueCollaterals}
+              loading={loading}
+              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+            />
+
+            <OracleFilter
+              selectedOracles={selectedOracles}
+              setSelectedOracles={setSelectedOracles}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <NetworkFilter
-                selectedNetwork={selectedNetwork}
-                setSelectedNetwork={(network) => {
-                  setSelectedNetwork(network);
-                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-                }}
-              />
-
-              <AssetFilter
-                label="Loan Asset"
-                placeholder="All loan asset"
-                selectedAssets={selectedLoanAssets}
-                setSelectedAssets={(assets) => {
-                  setSelectedLoanAssets(assets);
-                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-                }}
-                items={uniqueLoanAssets}
-                loading={loading}
-                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <AssetFilter
-                label="Collateral"
-                placeholder="All collateral"
-                selectedAssets={selectedCollaterals}
-                setSelectedAssets={(assets) => {
-                  setSelectedCollaterals(assets);
-                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-                }}
-                items={uniqueCollaterals}
-                loading={loading}
-                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <OracleFilter
-                selectedOracles={selectedOracles}
-                setSelectedOracles={setSelectedOracles}
-              />
-            </div>
-          </div>
-
           {/* Settings */}
           <div className="mt-4 flex items-center gap-2 lg:mt-0">
             <SuppliedAssetFilterCompactSwitch
