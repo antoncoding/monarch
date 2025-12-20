@@ -1,5 +1,5 @@
 import { generateMetadata } from '@/utils/generateMetadata';
-import HomePage from './HomePage';
+import HomePage from '../src/features/home/home-view';
 
 export const metadata = generateMetadata({
   title: 'Monarch',
