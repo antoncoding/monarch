@@ -275,120 +275,85 @@ For custom modals using `framer-motion`, apply `font-zen` to the outer container
   - Tags/badges
   - Helper text containers
 
-### Button Component
+### Button
 
-```typescript
+Always use `Button` from `@/components/ui/button`.
+
+```tsx
 import { Button } from '@/components/ui/button';
+
+// Primary - main actions
+<Button variant="primary" size="md">New Position</Button>
+
+// Surface - actions in cards, tables
+<Button variant="surface" size="sm">Claim</Button>
+
+// Default - navigation
+<Button variant="default" size="md">Back to Markets</Button>
+
+// Ghost - icon buttons
+<Button variant="ghost" size="icon"><RefreshIcon /></Button>
 ```
 
-#### Button Variants
+Variants: `primary` | `surface` | `default` | `ghost`
+Sizes: `xs` | `sm` | `md` | `lg` | `icon`
 
-Our button system uses 4 simple, purpose-driven variants:
+When wrapping Button in HeroUI Tooltip, wrap it in a `<span>` to prevent ResizeObserver errors.
 
-**default** - For buttons on background areas
-- Uses `bg-surface` color
-- Hover: Darkens slightly and increases opacity
-- Use for: Navigation buttons, actions on main background
-- Example: "Back to Markets", top-level page actions
+### Switch
 
-**primary** - For important actions
-- Uses `bg-primary` color (primary theme color, NOT orange)
-- Hover: Increases shadow and opacity, slight scale down on click
-- Use for: Main CTAs, confirmations, primary flows
-- Example: "New Position", "Execute Rebalance", "Supply", "Withdraw"
-
-**surface** - For buttons on surface-colored backgrounds
-- Uses `bg-hovered` color - Subtle, doesn't stand out too much
-- Hover: `bg-default-200`, Active: `bg-default-300` (gentle color progression)
-- Use for: Actions in cards, modals, table rows
-- Example: "Claim" button in tables, dropdown triggers, actions in cards
-
-**ghost** - For icon buttons and minimal actions
-- Transparent background with responsive hover states
-- Icon buttons: Scale up slightly on hover, visible background feedback
-- Size-specific hover styles for optimal feedback
-- Use for: Icon-only buttons, utility actions, settings
-- Example: Refresh icons, settings icons, filter toggles
-
-#### Examples
+Always use `IconSwitch` from `@/components/ui/icon-switch`. Never use HeroUI Switch.
 
 ```tsx
-// Primary - Important action
-<Button variant="primary" size="md" className="font-zen">
-  New Position
-</Button>
+import { IconSwitch } from '@/components/ui/icon-switch';
 
-// Surface - Action in a table/card (subtle)
-<Button variant="surface" size="sm">
-  Claim
-</Button>
+// Plain switch (no icon)
+<IconSwitch
+  size="xs"
+  selected={isEnabled}
+  onChange={setIsEnabled}
+  thumbIcon={null}
+/>
 
-// Default - Navigation on background
-<Button variant="default" size="md">
-  <ChevronLeftIcon className="mr-2" />
-  Back to Markets
-</Button>
+// With icon
+function ViewIcon({ isSelected, className }: { isSelected?: boolean; className?: string }) {
+  return isSelected ? <FiUser className={className} /> : <HiGlobe className={className} />;
+}
 
-// Ghost - Icon-only button with tooltip (always wrap in span for HeroUI Tooltip)
-<Tooltip
-  classNames={{
-    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-  }}
-  content={<TooltipContent title="Refresh" detail="Fetch latest data" />}
->
-  <span>
-    <Button variant="ghost" size="icon" className="text-secondary">
-      <RefreshIcon />
-    </Button>
-  </span>
-</Tooltip>
+<IconSwitch
+  size="sm"
+  selected={viewMode === 'user'}
+  onChange={toggleView}
+  thumbIcon={ViewIcon}
+/>
 ```
 
-#### Button Sizes
+Sizes: `xs` | `sm` | `md` | `lg`
 
-- `xs`: Extra small (h-6, 40px min-width) - Rare use
-- `sm`: Small (h-8, 64px min-width) - Common for compact actions
-- `md`/`default`: Medium (h-10, 80px min-width) - Standard size
-- `lg`: Large (h-12, 96px min-width) - Important CTAs
-- `icon`: Icon-only (h-8 w-8, 14px icons) - Use for icon buttons
+### Checkbox
 
-#### Button Hover Effects
-
-All buttons have subtle hover refinements:
-- **Opacity**: Buttons start at 95% opacity and become 100% on hover for a refined look
-- **Color transitions**: Smooth 200ms transitions for all state changes
-- **Scale feedback**: Active state provides tactile press feedback
-- **Ghost buttons**: Size-specific hover behaviors for optimal UX
-  - Icon size: Scales to 105% on hover, darker background
-  - Small size: Scales to 102% on hover, medium background
-  - Medium/Large: Scales to 101% on hover, lighter background
-
-**Important Note**: When wrapping Button in HeroUI Tooltip, always wrap the Button in a `<span>` to prevent ResizeObserver errors.
-
-### Toggle Controls
-
-- Always use the shared `IconSwitch` component (`@/components/common/IconSwitch`) for boolean toggles so dimensions, motion, and iconography stay consistent across pages.
-- Prefer the `xs` size inside dense settings groups (e.g., Market Settings, global Settings). Pair the switch with a left-aligned label and secondary description beneath it to mirror existing sections.
-- Example:
+Always use `Checkbox` from `@/components/ui/checkbox`. Never use HeroUI Checkbox.
 
 ```tsx
-import { IconSwitch } from '@/components/common/IconSwitch';
+import { Checkbox } from '@/components/ui/checkbox';
 
-<div className="flex items-start justify-between gap-4">
-  <div className="flex flex-col gap-1">
-    <h4 className="text-base font-medium text-primary">Show Unknown Tokens</h4>
-    <p className="text-xs text-secondary">Display assets flagged as unverified.</p>
-  </div>
-  <IconSwitch
-    size="xs"
-    color="primary"
-    selected={value}
-    onChange={setValue}
-    aria-label="Toggle unknown tokens"
-  />
-</div>
+// Default
+<Checkbox
+  checked={isChecked}
+  onCheckedChange={setIsChecked}
+  label="Accept terms"
+/>
+
+// Highlighted
+<Checkbox
+  variant="highlighted"
+  checked={isSelected}
+  onCheckedChange={setIsSelected}
+  label="Enable advanced features"
+/>
 ```
+
+Variants: `default` | `highlighted`
 
 ## Background, Border
 
@@ -397,69 +362,37 @@ import { IconSwitch } from '@/components/common/IconSwitch';
 
 ## Tooltip
 
-Use the `TooltipContent` component for consistent tooltip styling. The component supports two modes:
-
-### Simple Tooltip (no detail)
-Shows icon, title, and optional action link on the right:
+Use `TooltipContent` from `@/components/shared/tooltip-content` for consistent tooltip styling.
 
 ```tsx
+import { TooltipContent } from '@/components/shared/tooltip-content';
+
+// Simple
 <Tooltip
-  classNames={{
-    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-  }}
-  content={<TooltipContent icon={<GrStatusGood />} title="Tooltip Title" />}
+  classNames={{ base: 'p-0 m-0 bg-transparent shadow-sm border-none', content: 'p-0 m-0 bg-transparent shadow-sm border-none' }}
+  content={<TooltipContent title="Tooltip Title" />}
 >
-  {/* Your trigger element */}
+  {/* trigger */}
 </Tooltip>
-```
 
-### Complex Tooltip (with detail)
-Shows icon, title, detail text, and optional secondary detail text:
-
-```tsx
-<Tooltip
-  classNames={{
-    base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-    content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-  }}
-  content={
-    <TooltipContent
-      icon={<GrStatusGood />}
-      title="Tooltip Title"
-      detail="Main description (text-primary, text-sm)"
-      secondaryDetail="Additional info (text-secondary, text-xs)"
-    />
-  }
->
-  {/* Your trigger element */}
-</Tooltip>
-```
-
-### Tooltip with Action Link
-Add an action link (like explorer) in the top-right corner:
-
-```tsx
+// With detail
 <TooltipContent
-  icon={icon}
-  title="Token Name"
+  icon={<GrStatusGood />}
+  title="Tooltip Title"
   detail="Main description"
-  secondaryDetail="Source or additional info"
-  actionIcon={<FiExternalLink className="h-4 w-4" />}
-  actionHref="https://explorer.com/address/0x123"
-  onActionClick={(e) => e.stopPropagation()}
+  secondaryDetail="Additional info"
+/>
+
+// With action link
+<TooltipContent
+  title="Token Name"
+  detail="Description"
+  actionIcon={<FiExternalLink />}
+  actionHref="https://explorer.com"
 />
 ```
 
-**Important:**
-- Always use the `classNames` configuration shown above to remove HeroUI's default styling
-- `detail`: Main description text (text-primary, text-sm)
-- `secondaryDetail`: Additional info below detail (text-secondary, text-xs)
-
-## Shared UI Elements
-
-- Render token avatars with `TokenIcon` (`@/components/TokenIcon`) so chain-specific fallbacks, glyph sizing, and tooltips stay consistent.
-- Display oracle provenance data with `OracleVendorBadge` (`@/components/OracleVendorBadge`) instead of plain text to benefit from vendor icons, warnings, and tooltips.
+Always use the `classNames` configuration shown above to remove HeroUI's default styling.
 
 ### Table Component
 
@@ -582,190 +515,64 @@ import { TablePagination } from '@/components/common/TablePagination';
 </div>
 ```
 
-**Styling Notes:**
-- Uses `font-zen !font-normal` throughout (overrides button's default font-medium)
-- All buttons have consistent 8px height (h-8)
-- Rounded-md container with bg-surface and shadow-sm
-- Primary color for active page button
-- Jump-to-page popover with Input and Go button
-- Entry count uses text-xs text-secondary
+### AccountIdentity
 
-### Account Identity Component
-
-**AccountIdentity** (`@/components/common/AccountIdentity`)
-- Unified component for displaying addresses, vault names, and ENS names
-- Three variants: `badge`, `compact`, `full`
-- All avatars are round by default
-
-**Variant Behaviors:**
-
-**Badge** - Minimal inline (no avatar)
-- Shows: Vault name → ENS name → Shortened address
-
-**Compact** - Avatar (16px) wrapped in badge
-- Avatar + (Vault name → ENS name → Shortened address)
-- Single badge wraps both avatar and text
-
-**Full** - Horizontal layout with all info
-- Avatar (36px) + Address badge + Extra badges (all on one line, centered)
-- **Address badge**: Always shows shortened address (e.g., 0x1234...5678), click to copy
-- **Extra badges** (shown based on conditions):
-  - Connected badge (if wallet is connected)
-  - ENS badge (if `showAddress=true` and no vault name)
-  - Vault badge (if address is a known vault)
-
-**Styling Rules:**
-- Use `rounded-sm` for badges (not `rounded`)
-- Background: `bg-hovered` (or `bg-green-500/10` for connected)
-- Text: `font-zen` with `text-secondary` or `text-primary`
-- No underscores in variable names
-- All avatars are round
-- Full variant: all elements centered vertically
-- Smooth Framer Motion animations on all interactions
+Use `AccountIdentity` from `@/components/common/AccountIdentity` for displaying addresses, ENS names, and vault names.
 
 ```tsx
 import { AccountIdentity } from '@/components/common/AccountIdentity';
 
-// Badge variant - minimal inline (no avatar)
-<AccountIdentity
-  address={address}
-  variant="badge"
-  linkTo="profile"
-  showCopy
-/>
-
-// Compact variant - avatar (16px) wrapped in badge background
-<AccountIdentity
-  address={address}
-  variant="compact"
-  linkTo="explorer"
-  chainId={1}
-/>
-
-// Full variant - avatar + address + extra info badges
-<AccountIdentity
-  address={address}
-  variant="full"
-  showAddress  // Shows ENS badge if available
-/>
-
-// Full variant for vault address
-<AccountIdentity
-  address={vaultAddress}
-  variant="full"
-  chainId={1}  // Will show vault name badge if recognized
-/>
-```
-
-**Props:**
-- `variant`: `'badge'` | `'compact'` | `'full'`
-- `linkTo`: `'explorer'` | `'profile'` | `'none'`
-- `showCopy`: Show copy icon at end of badge
-- `copyable`: Make entire component clickable to copy
-- `showAddress`: Show ENS badge (full variant only)
-- `showActions`: Show actions popover on click (default: `true`)
-
-**Actions Popover (Default Behavior):**
-
-By default, clicking any AccountIdentity shows a minimal popover with:
-1. **Copy Address** - Copies address to clipboard
-2. **View Account** - Navigate to positions page
-3. **View on Explorer** - Opens Etherscan in new tab
-
-To disable: `showActions={false}`
-
-```tsx
-// Default - shows actions popover on click
+// Badge - minimal inline (no avatar)
 <AccountIdentity address={address} variant="badge" />
 
-// Disable actions (e.g., in dropdown menus)
-<AccountIdentity address={address} variant="badge" showActions={false} />
+// Compact - small avatar + text in badge
+<AccountIdentity address={address} variant="compact" chainId={1} />
+
+// Full - avatar + address badge + extra info badges
+<AccountIdentity address={address} variant="full" showAddress />
 ```
 
-### Market Display Components
+Variants: `badge` | `compact` | `full`
 
-Use the right component for displaying market information:
+Clicking opens actions popover (copy, view account, explorer). Disable with `showActions={false}`.
 
-**MarketIdentity** (`@/components/MarketIdentity`)
-- Use for displaying market info in compact rows (tables, lists, cards)
-- Shows token icons, symbols, LLTV badge, and oracle badge
-- Three modes: `Normal`, `Focused`, `Minimum`
-- Focus parameter: `Loan` or `Collateral` (affects which symbol is emphasized)
+### MarketIdentity
+
+Use `MarketIdentity` from `@/components/MarketIdentity` for displaying market info in tables, lists, and cards.
 
 ```tsx
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/components/MarketIdentity';
 
-// Focused mode (default) - emphasizes one asset
+// Normal mode - both assets shown equally
+<MarketIdentity market={market} chainId={chainId} mode={MarketIdentityMode.Normal} />
+
+// Focused mode - emphasizes one asset
 <MarketIdentity
   market={market}
   chainId={chainId}
   mode={MarketIdentityMode.Focused}
   focus={MarketIdentityFocus.Collateral}
-  showLltv={true}
-  showOracle={true}
-  iconSize={20}
-  showExplorerLink={true}
 />
 
-// Normal mode - both assets shown equally
-<MarketIdentity
-  market={market}
-  chainId={chainId}
-  mode={MarketIdentityMode.Normal}
-/>
-
-// Minimum mode - only shows the focused asset (with LLTV and oracle if enabled)
+// Minimum mode - only focused asset
 <MarketIdentity
   market={market}
   chainId={chainId}
   mode={MarketIdentityMode.Minimum}
-  focus={MarketIdentityFocus.Collateral}
-  showLltv={true}
-  showOracle={true}
+  focus={MarketIdentityFocus.Loan}
+  showLltv
+  showOracle
 />
 
-// Wide layout - spreads content across full width (useful for tables)
-// Icon + name on left, LLTV in middle, oracle on right
-<MarketIdentity
-  market={market}
-  chainId={chainId}
-  mode={MarketIdentityMode.Minimum}
-  focus={MarketIdentityFocus.Collateral}
-  showLltv={true}
-  showOracle={true}
-  wide={true}
-/>
+// Wide layout - for table cells
+<MarketIdentity market={market} chainId={chainId} wide />
 ```
 
-**Wide Layout:**
+Modes: `Normal` | `Focused` | `Minimum`
 
-The `wide` prop changes the layout to use `justify-between` with full width, perfect for table cells:
+### MarketDetailsBlock
 
-- **Left side**: Token icon(s) + symbol(s)
-- **Middle**: LLTV badge (if enabled)
-- **Right side**: Oracle badge (if enabled)
-
-Works with all three modes (Normal, Focused, Minimum). Use in table cells with a fixed width for consistent alignment:
-
-```tsx
-<td style={{ width: '280px' }}>
-  <MarketIdentity
-    market={market}
-    chainId={chainId}
-    mode={MarketIdentityMode.Minimum}
-    focus={MarketIdentityFocus.Collateral}
-    showLltv={true}
-    showOracle={true}
-    wide={true}
-  />
-</td>
-```
-
-**MarketDetailsBlock** (`@/components/common/MarketDetailsBlock`)
-- Used for previewing transactions onto a existing market.
-- Use as an expandable row in modals (e.g., supply/borrow flows)
-- Shows market state details when expanded (APY, liquidity, utilization, etc.)
-- Includes collapse/expand functionality
+Use `MarketDetailsBlock` from `@/components/common/MarketDetailsBlock` for expandable market details in modals.
 
 ```tsx
 import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
@@ -773,73 +580,20 @@ import { MarketDetailsBlock } from '@/components/common/MarketDetailsBlock';
 <MarketDetailsBlock
   market={market}
   mode="supply"
-  showDetailsLink={true}
-  defaultCollapsed={false}
-  showRewards={true}
+  defaultCollapsed
+  showRewards
 />
 ```
 
-**When to use which:**
-- Tables/Lists/Cards, Data display → Use `MarketIdentity`
-- Modal flows during a transaction, with expandable details → Use `MarketDetailsBlock`
+### TransactionIdentity
 
-**TransactionIdentity** (`@/components/common/TransactionIdentity`)
-- Use to display transaction hashes with explorer links
-- Consistent monospace badge styling with external link icon
-- Supports full or truncated hash display
-- Always opens in new tab with security attributes
+Use `TransactionIdentity` from `@/components/common/TransactionIdentity` for displaying transaction hashes.
 
 ```tsx
 import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 
-// Standard usage (truncated hash)
-<TransactionIdentity
-  txHash="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-  chainId={1}
-/>
-
-// Full hash display
-<TransactionIdentity
-  txHash="0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
-  chainId={1}
-  showFullHash={true}
-/>
-
-// With custom styling
-<TransactionIdentity
-  txHash={txHash}
-  chainId={chainId}
-  className="ml-2"
-/>
-```
-
-**Styling:**
-- Uses `font-monospace text-[0.65rem]` for hash display
-- Badge with `bg-hovered rounded-sm px-2 py-1`
-- Hover: `hover:bg-gray-300 hover:text-primary dark:hover:bg-gray-700`
-- External link icon (3x3) aligned with text
-- Click event stops propagation to prevent row/parent click handlers
-
-**MarketIdBadge** (`@/components/MarketIdBadge`)
-- Use to display a short market ID badge with optional network icon and warning indicator
-- Consistent styling across all tables
-- `chainId` is required
-- Warning indicator reserves space for alignment even when no warnings present
-
-```tsx
-import { MarketIdBadge } from '@/components/MarketIdBadge';
-
-// Basic usage (required chainId)
-<MarketIdBadge marketId={market.uniqueKey} chainId={chainId} />
-
-// With network icon and warnings
-<MarketIdBadge
-  chainId={market.morphoBlue.chain.id}
-  showNetworkIcon={true}
-  showWarnings={true}
-  market={market}
-/>
-
+<TransactionIdentity txHash={txHash} chainId={chainId} />
+<TransactionIdentity txHash={txHash} chainId={chainId} showFullHash />
 ```
 
 ## Input Components

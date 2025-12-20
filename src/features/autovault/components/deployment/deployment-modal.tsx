@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Checkbox } from '@heroui/react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FaCube } from 'react-icons/fa';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
@@ -100,18 +100,12 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
               )}
 
               {userAlreadyHasVault && selectedTokenAndNetwork && (
-                <div className="rounded bg-primary/5 p-3">
-                  <Checkbox
-                    isSelected={ackExistingVault}
-                    onValueChange={setAckExistingVault}
-                    className="items-center gap-2"
-                    size="sm"
-                  >
-                    <span className="text-sm leading-5 text-secondary">
-                      I understand I already deployed an autovault for this token on {getNetworkName(selectedTokenAndNetwork.networkId)}.
-                    </span>
-                  </Checkbox>
-                </div>
+                <Checkbox
+                  variant="highlighted"
+                  label={`I understand I already deployed an autovault for this token on ${getNetworkName(selectedTokenAndNetwork.networkId)}.`}
+                  checked={ackExistingVault}
+                  onCheckedChange={(checked) => setAckExistingVault(checked === true)}
+                />
               )}
 
               <div className="flex justify-end pt-2">

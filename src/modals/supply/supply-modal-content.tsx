@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Switch } from '@heroui/react';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Input from '@/components/Input/Input';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -85,10 +85,11 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
             {isWrappedNativeToken(market.loanAsset.address, market.morphoBlue.chain.id) && (
               <div className="flex items-center justify-end gap-2">
                 <div className="font-inter text-xs opacity-50">Use {getNativeTokenSymbol(market.morphoBlue.chain.id)} instead</div>
-                <Switch
+                <IconSwitch
                   size="sm"
-                  isSelected={useEth}
-                  onValueChange={setUseEth}
+                  selected={useEth}
+                  onChange={setUseEth}
+                  thumbIcon={null}
                   classNames={{
                     wrapper: 'w-9 h-4 mr-0',
                     thumb: 'w-3 h-3',

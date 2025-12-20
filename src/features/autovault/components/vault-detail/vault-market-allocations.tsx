@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Switch } from '@heroui/react';
+import { IconSwitch } from '@/components/ui/icon-switch';
 import { HiOutlineCube } from 'react-icons/hi';
 import { MdOutlineAccountBalance } from 'react-icons/md';
 import { Spinner } from '@/components/ui/spinner';
@@ -20,7 +20,7 @@ type VaultMarketAllocationsProps = {
 
 type ViewMode = 'collateral' | 'market';
 
-function ViewIcon({ isSelected, className }: { isSelected: boolean; className?: string }) {
+function ViewIcon({ isSelected, className }: { isSelected?: boolean; className?: string }) {
   return isSelected ? <HiOutlineCube className={className} /> : <MdOutlineAccountBalance className={className} />;
 }
 
@@ -79,7 +79,7 @@ export function VaultMarketAllocations({
             <p className="text-lg font-medium">{hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}</p>
             <div className="flex items-center gap-3">
               <span className="text-xs text-secondary">{viewMode === 'collateral' ? 'By Collateral' : 'By Market'}</span>
-              <Switch
+              <IconSwitch
                 defaultSelected={viewMode === 'market'}
                 size="sm"
                 color="primary"

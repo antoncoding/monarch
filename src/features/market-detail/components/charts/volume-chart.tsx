@@ -1,11 +1,13 @@
 /* eslint-disable react/no-unstable-nested-components */
 
-import { useState } from 'react';
-import { Card, CardHeader, CardBody } from '@heroui/react';
+import { useState, useMemo } from 'react';
+import { Card, CardHeader, CardBody, Tooltip as HeroTooltip } from '@heroui/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
+import { HiOutlineInformationCircle } from 'react-icons/hi2';
 import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import type { MarketVolumes } from '@/utils/types';
@@ -136,6 +138,24 @@ function VolumeChart({
     borrow: true,
     liquidity: true,
   });
+
+  // This is only for adaptive curve
+  const targetUtilizationData = useMemo(() => {
+    const supply = market.state.supplyAssets ? BigInt(market.state.supplyAssets) : 0n;
+    const borrow = market.state.borrowAssets ? BigInt(market.state.borrowAssets) : 0n;
+
+    // Calculate deltas to reach 90% target utilization
+    const targetBorrow = (supply * 9n) / 10n; // B_target = S * 0.9
+    const borrowDelta = targetBorrow - borrow;
+
+    const targetSupply = (borrow * 10n) / 9n; // S_target = B / 0.9
+    const supplyDelta = targetSupply - supply;
+
+    return {
+      borrowDelta,
+      supplyDelta,
+    };
+  }, [market.state.supplyAssets, market.state.borrowAssets]);
 
   return (
     <Card className="bg-surface rounded p-4 shadow-sm">
@@ -318,6 +338,60 @@ function VolumeChart({
                     </div>
                   );
                 })}
+
+                {/* Delta to target Utilization */}
+                <div className="mt-4 space-y-1 border-t border-border pt-3 text-sm">
+                  <h3 className="mb-1 text text-secondary text-base">IRM Targets </h3>
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <span>Supply Δ:</span>
+                      <HeroTooltip
+                        classNames={{
+                          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                        }}
+                        content={
+                          <TooltipContent
+                            title="Supply Delta to Target"
+                            detail="Supply change needed to reach 90% target utilization (keeping borrow constant). Positive = add supply. Negative = withdraw supply."
+                          />
+                        }
+                      >
+                        <span className="cursor-help">
+                          <HiOutlineInformationCircle className="h-4 w-4 text-secondary" />
+                        </span>
+                      </HeroTooltip>
+                    </span>
+                    <span className="text-sm">
+                      {formatValue(Number(formatUnits(targetUtilizationData.supplyDelta, market.loanAsset.decimals)))}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <span>Borrow Δ:</span>
+                      <HeroTooltip
+                        classNames={{
+                          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
+                        }}
+                        content={
+                          <TooltipContent
+                            title="Borrow Delta to Target"
+                            detail="Borrow change needed to reach 90% target utilization (keeping supply constant). Positive = borrow more. Negative = repay."
+                          />
+                        }
+                      >
+                        <span className="cursor-help">
+                          <HiOutlineInformationCircle className="h-4 w-4 text-secondary" />
+                        </span>
+                      </HeroTooltip>
+                    </span>
+                    <span className="text-sm">
+                      {formatValue(Number(formatUnits(targetUtilizationData.borrowDelta, market.loanAsset.decimals)))}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div>
