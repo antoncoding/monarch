@@ -346,7 +346,8 @@ function VolumeChart({
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <span>Supply Δ:</span>
-                      <HeroTooltip                        content={
+                      <HeroTooltip
+                        content={
                           <TooltipContent
                             title="Supply Delta to Target"
                             detail="Supply change needed to reach 90% target utilization (keeping borrow constant). Positive = add supply. Negative = withdraw supply."
@@ -366,7 +367,8 @@ function VolumeChart({
                   <div className="flex items-center justify-between">
                     <span className="flex items-center gap-1">
                       <span>Borrow Δ:</span>
-                      <HeroTooltip                        content={
+                      <HeroTooltip
+                        content={
                           <TooltipContent
                             title="Borrow Delta to Target"
                             detail="Borrow change needed to reach 90% target utilization (keeping supply constant). Positive = borrow more. Negative = repay."

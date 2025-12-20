@@ -66,12 +66,7 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYB
     </div>
   );
 
-  return (
-    <Tooltip      content={content}
-    >
-      {children}
-    </Tooltip>
-  );
+  return <Tooltip content={content}>{children}</Tooltip>;
 }
 
 export function APYCell({ market }: APYCellProps) {

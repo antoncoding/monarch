@@ -67,7 +67,8 @@ export function TokenIcon({
     }
 
     return (
-      <Tooltip        content={
+      <Tooltip
+        content={
           <TooltipContent
             icon={img}
             title={title}

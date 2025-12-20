@@ -566,7 +566,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
               onOpenSettings={onSettingsModalOpen}
             />
 
-            <Tooltip              content={
+            <Tooltip
+              content={
                 <TooltipContent
                   title="Refresh"
                   detail="Fetch the latest market data"
@@ -588,7 +589,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
             {/* Hide expand/compact toggle on mobile */}
             <div className="hidden md:block">
-              <Tooltip                content={
+              <Tooltip
+                content={
                   <TooltipContent
                     icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
                     title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
@@ -614,7 +616,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
               </Tooltip>
             </div>
 
-            <Tooltip              content={
+            <Tooltip
+              content={
                 <TooltipContent
                   title="Preferences"
                   detail="Adjust thresholds and columns"

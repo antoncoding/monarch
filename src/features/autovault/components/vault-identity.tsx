@@ -133,7 +133,8 @@ export function VaultIdentity({
   );
 
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           icon={
             <VaultIcon

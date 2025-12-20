@@ -55,7 +55,8 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
   );
 
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           title={agent.name}
           detail={agent.strategyDescription}

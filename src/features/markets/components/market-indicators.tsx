@@ -31,7 +31,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
     <div className="flex items-center justify-center gap-2">
       {/* Personal Indicators */}
       {isStared && (
-        <Tooltip          content={
+        <Tooltip
+          content={
             <TooltipContent
               icon={
                 <FaStar
@@ -53,7 +54,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       )}
 
       {hasUserPosition && (
-        <Tooltip          content={
+        <Tooltip
+          content={
             <TooltipContent
               icon={<FaUser size={ICON_SIZE} />}
               detail="You have supplied to this market"
@@ -68,7 +70,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
 
       {/* Universal Indicators */}
       {hasLiquidationProtection && (
-        <Tooltip          content={
+        <Tooltip
+          content={
             <TooltipContent
               icon={
                 <FaShieldAlt
@@ -113,7 +116,8 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
 
       {/* Risk Warnings */}
       {showRisk && hasWarnings && (
-        <Tooltip          content={
+        <Tooltip
+          content={
             <TooltipContent
               title={warningLevel === 'alert' ? 'High Risk' : 'Warning'}
               detail={alertWarning?.description ?? warnings[0]?.description ?? 'Market has warnings'}

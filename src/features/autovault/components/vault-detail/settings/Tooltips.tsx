@@ -4,7 +4,8 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 
 export function CollateralCapTooltip() {
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           title="Collateral Caps"
           detail="Defines the maximum amount or percentage of an asset that can be allocated across all markets using the same collateral."
@@ -18,7 +19,8 @@ export function CollateralCapTooltip() {
 
 export function MarketCapTooltip() {
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           title="Market Caps"
           detail="Defines the maximum amount or percentage of an asset that can be allocated to each individual market."

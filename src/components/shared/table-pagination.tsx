@@ -195,7 +195,8 @@ export function TablePagination({
               open={isJumpOpen}
               onOpenChange={setIsJumpOpen}
             >
-              <Tooltip                content={
+              <Tooltip
+                content={
                   <TooltipContent
                     title="Jump to page"
                     detail={`Go to a specific page (1-${totalPages})`}

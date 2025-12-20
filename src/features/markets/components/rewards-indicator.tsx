@@ -34,7 +34,8 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
     .join('\n');
 
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           icon={
             <Image

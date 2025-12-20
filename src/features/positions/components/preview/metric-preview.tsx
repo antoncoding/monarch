@@ -26,7 +26,8 @@ export function MetricPreview({ currentValue, previewValue, label }: MetricPrevi
   }
 
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           title={`${label} Change`}
           detail={`${formattedCurrent}% → ${formattedPreview}%`}

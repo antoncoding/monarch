@@ -208,7 +208,8 @@ export function PositionsSummaryTable({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Tooltip          content={
+        <Tooltip
+          content={
             <TooltipContent
               title="Refresh"
               detail="Fetch latest position data"

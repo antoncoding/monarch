@@ -78,7 +78,8 @@ export function SuppliedAssetFilterCompactSwitch({
 
   return (
     <div className={className}>
-      <Tooltip        content={
+      <Tooltip
+        content={
           <TooltipContent
             title="Filters"
             detail="Toggle market filters and risk guards"

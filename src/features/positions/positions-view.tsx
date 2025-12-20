@@ -177,7 +177,8 @@ export default function Positions() {
         ) : (
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
-              <Tooltip                content={
+              <Tooltip
+                content={
                   <TooltipContent
                     title="Refresh"
                     detail="Fetch latest data"

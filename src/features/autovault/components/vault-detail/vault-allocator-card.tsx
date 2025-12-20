@@ -63,7 +63,8 @@ export function VaultAllocatorCard({
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-yellow-500" />
             <span className="text-xs text-secondary">No allocators configured</span>
-            <Tooltip              content={
+            <Tooltip
+              content={
                 <TooltipContent
                   icon={<GrStatusGood className="h-4 w-4" />}
                   title="Allocators"

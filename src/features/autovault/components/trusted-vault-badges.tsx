@@ -14,7 +14,8 @@ export function MoreVaultsBadge({ vaults, badgeSize = 22 }: MoreVaultsBadgeProps
   if (vaults.length === 0) return null;
 
   return (
-    <Tooltip      content={
+    <Tooltip
+      content={
         <TooltipContent
           title={<span className="text-sm font-semibold">More trusted vaults</span>}
           detail={
