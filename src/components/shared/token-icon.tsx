@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
 import { useTokens } from '@/components/providers/TokenProvider';
@@ -68,10 +68,6 @@ export function TokenIcon({
 
     return (
       <Tooltip
-        classNames={{
-          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        }}
         content={
           <TooltipContent
             icon={img}

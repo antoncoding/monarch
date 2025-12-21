@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { formatReadable } from '@/utils/balance';
 
@@ -27,10 +27,6 @@ export function MetricPreview({ currentValue, previewValue, label }: MetricPrevi
 
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           title={`${label} Change`}

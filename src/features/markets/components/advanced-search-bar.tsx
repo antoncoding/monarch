@@ -1,7 +1,6 @@
 'use client';
 import type React from 'react';
 import { useState, useEffect, useRef } from 'react';
-import { Input } from '@heroui/react';
 import Image from 'next/image';
 import { AiOutlineEnter } from 'react-icons/ai';
 import { FaSearch } from 'react-icons/fa';
@@ -180,33 +179,39 @@ function AdvancedSearchBar({
 
   return (
     <div className="relative w-full">
-      <Input
-        ref={inputRef}
-        id="market-search-input"
-        label="Quick Search"
-        placeholder="(Ctrl+F) Search markets or use shortcuts to filter"
-        value={inputValue}
-        onValueChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onFocus={handleInputFocus}
-        endContent={
+      <div className="bg-surface min-w-48 cursor-text rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700">
+        <span
+          className="absolute left-2 top-2 px-1 text-xs font-zen"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
+          Quick Search
+        </span>
+        <div className="flex items-center justify-between pt-4">
+          <input
+            ref={inputRef}
+            id="market-search-input"
+            type="text"
+            placeholder="(Ctrl+F) Search markets or use shortcuts to filter"
+            value={inputValue}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={handleInputFocus}
+            className="w-full bg-transparent text-sm text-primary placeholder:text-sm font-zen outline-none focus:outline-none"
+            autoComplete="off"
+          />
           <FaSearch
-            className="cursor-pointer text-secondary"
+            className="ml-2 cursor-pointer flex-shrink-0"
+            style={{ color: 'var(--color-text-secondary)' }}
             onClick={handleSearch}
           />
-        }
-        classNames={{
-          inputWrapper: 'bg-surface rounded-sm w-full lg:w-[600px] focus-within:outline-none',
-          input: 'bg-surface rounded-sm text-xs focus:outline-none',
-        }}
-        autoComplete="off"
-      />
+        </div>
+      </div>
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="bg-surface absolute z-50 mt-1 w-full max-w-[400px] rounded-sm shadow-lg"
+          className="bg-surface absolute z-50 mt-1 w-full rounded-sm shadow-lg"
         >
-          <ul className="max-h-60 overflow-auto">
+          <ul className="max-h-96 overflow-auto">
             {suggestions.map((suggestion, index) => {
               const isTokenSuggestion = suggestion.includes(':');
               const token = isTokenSuggestion ? supportedTokens.find((t) => t.symbol === suggestion.split(':')[1]) : null;

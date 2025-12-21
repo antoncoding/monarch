@@ -38,7 +38,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
 
   return (
     <div
-      className="relative w-full"
+      className="relative w-full font-zen"
       ref={dropdownRef}
     >
       <div
@@ -56,7 +56,7 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="absolute left-2 top-2 px-1 text-xs">Oracle</span>
+        <span className="absolute left-2 top-2 px-1 text-xs text-secondary">Oracle</span>
         <div className="flex items-center justify-between pt-4">
           {selectedOracles.length > 0 ? (
             <div className="flex-scroll flex gap-2 p-1">

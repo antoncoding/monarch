@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { GrStatusGood } from 'react-icons/gr';
 import { MdWarning, MdError } from 'react-icons/md';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -88,10 +88,6 @@ export function RiskIndicator({ level, description, mode = 'simple', warningDeta
     <Tooltip
       content={tooltipContent}
       className="max-w-[300px] rounded-sm"
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
     >
       <div className="gap flex">
         <div className={`h-4 w-[4px] ${styles.bar}`} />

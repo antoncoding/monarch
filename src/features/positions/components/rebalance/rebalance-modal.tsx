@@ -228,7 +228,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         isDismissable={false}
-        size="4xl"
+        flexibleWidth
       >
         <ModalHeader
           title={

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Divider } from '@heroui/react';
+import { Divider } from '@/components/ui/divider';
 import { FiPlus, FiX } from 'react-icons/fi';
 import { MdBlockFlipped } from 'react-icons/md';
 import { Button } from '@/components/ui/button';

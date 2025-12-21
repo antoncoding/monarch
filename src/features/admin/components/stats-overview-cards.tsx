@@ -1,4 +1,4 @@
-import { Card, CardBody } from '@heroui/react';
+import { Card, CardBody } from '@/components/ui/card';
 import { type SupportedNetworks, getNetworkName } from '@/utils/networks';
 import type { PlatformStats } from '@/utils/statsUtils';
 

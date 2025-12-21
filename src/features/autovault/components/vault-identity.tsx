@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type ReactNode } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { FiExternalLink } from 'react-icons/fi';
 import { TokenIcon } from '@/components/shared/token-icon';
@@ -134,10 +134,6 @@ export function VaultIdentity({
 
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           icon={

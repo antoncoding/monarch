@@ -9,16 +9,11 @@ export const ONBOARDING_STEPS = [
     title: 'Select Asset',
     description: 'Choose the asset you want to supply',
   },
-  { id: 'market-selection', title: 'Select Markets', description: '' },
+  { id: 'market-selection', title: 'Select Markets', description: 'Choose markets for your supply position' },
   {
     id: 'setup',
     title: 'Position Setup',
     description: 'Configure your initial position',
-  },
-  {
-    id: 'success',
-    title: 'Complete',
-    description: 'Position created successfully',
   },
 ] as const;
 
@@ -47,7 +42,6 @@ const OnboardingContext = createContext<OnboardingContextType | null>(null);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
-
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
   // Fetch user balances once for the entire onboarding flow
@@ -68,19 +62,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }, [currentStep, selectedToken, selectedMarkets]);
 
-  const goToNextStep = () => {
+  const goToNextStep = useCallback(() => {
     const nextStep = ONBOARDING_STEPS[currentStepIndex + 1];
     if (nextStep) {
       setStep(nextStep.id);
     }
-  };
+  }, [currentStepIndex]);
 
-  const goToPrevStep = () => {
+  const goToPrevStep = useCallback(() => {
     const prevStep = ONBOARDING_STEPS[currentStepIndex - 1];
     if (prevStep) {
       setStep(prevStep.id);
     }
-  };
+  }, [currentStepIndex]);
 
   const resetOnboarding = useCallback(() => {
     setSelectedToken(null);
@@ -106,20 +100,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       balances,
       balancesLoading,
     }),
-    [
-      selectedToken,
-      selectedMarkets,
-      currentStep,
-      canGoNext,
-      goToNextStep,
-      goToPrevStep,
-      resetOnboarding,
-      setSelectedToken,
-      setSelectedMarkets,
-      setStep,
-      balances,
-      balancesLoading,
-    ],
+    [selectedToken, selectedMarkets, currentStep, canGoNext, goToNextStep, goToPrevStep, resetOnboarding, balances, balancesLoading],
   );
 
   return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;

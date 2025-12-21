@@ -97,7 +97,8 @@ export function MarketSelectionModal({
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      size="4xl"
+      // size="4xl"
+      flexibleWidth
       scrollBehavior="inside"
       zIndex="selection"
       backdrop="blur"
@@ -133,32 +134,12 @@ export function MarketSelectionModal({
           />
         )}
       </ModalBody>
-      <ModalFooter className="flex items-center justify-between">
+      <ModalFooter>
         {multiSelect ? (
           <>
-            <p className="text-xs text-secondary">
+            <p className="text-xs text-secondary mr-auto">
               {selectedCount} market{selectedCount !== 1 ? 's' : ''} selected
             </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                disabled={selectedCount === 0}
-                onClick={handleConfirm}
-              >
-                {buttonText}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <div className="flex w-full justify-end">
             <Button
               variant="default"
               size="sm"
@@ -166,7 +147,23 @@ export function MarketSelectionModal({
             >
               Cancel
             </Button>
-          </div>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={selectedCount === 0}
+              onClick={handleConfirm}
+            >
+              {buttonText}
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
         )}
       </ModalFooter>
     </Modal>

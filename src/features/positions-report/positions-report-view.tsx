@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import type { DateValue } from '@heroui/react';
-import { parseDate, getLocalTimeZone, today, parseAbsoluteToLocal, type ZonedDateTime, now } from '@internationalized/date';
+import { parseDate, getLocalTimeZone, today, parseAbsoluteToLocal, type ZonedDateTime, now, type DateValue } from '@internationalized/date';
 import { useDateFormatter } from '@react-aria/i18n';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Tooltip } from '@/components/ui/tooltip';
 import { PlusIcon } from '@radix-ui/react-icons';
 import { TbTrendingUp } from 'react-icons/tb';
 import type { Address } from 'viem';

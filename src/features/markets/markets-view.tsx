@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useDisclosure, Tooltip } from '@heroui/react';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { Tooltip } from '@/components/ui/tooltip';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import type { Chain } from 'viem';
 import { useRouter } from 'next/navigation';
@@ -484,62 +485,62 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
           trustedVaults={userTrustedVaults}
         />
 
-        <div className="flex items-center justify-between pb-4">
-          <AdvancedSearchBar
-            searchQuery={searchQuery}
-            onSearch={handleSearch}
-            onFilterUpdate={handleFilterUpdate}
-            selectedCollaterals={selectedCollaterals}
-            selectedLoanAssets={selectedLoanAssets}
-            uniqueCollaterals={uniqueCollaterals}
-            uniqueLoanAssets={uniqueLoanAssets}
-          />
+        <div className="flex flex-col gap-4 pb-4">
+          <div className="w-full lg:w-1/2">
+            <AdvancedSearchBar
+              searchQuery={searchQuery}
+              onSearch={handleSearch}
+              onFilterUpdate={handleFilterUpdate}
+              selectedCollaterals={selectedCollaterals}
+              selectedLoanAssets={selectedLoanAssets}
+              uniqueCollaterals={uniqueCollaterals}
+              uniqueLoanAssets={uniqueLoanAssets}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4 lg:flex-row">
+            <NetworkFilter
+              selectedNetwork={selectedNetwork}
+              setSelectedNetwork={(network) => {
+                setSelectedNetwork(network);
+                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+              }}
+            />
+
+            <AssetFilter
+              label="Loan Asset"
+              placeholder="All loan asset"
+              selectedAssets={selectedLoanAssets}
+              setSelectedAssets={(assets) => {
+                setSelectedLoanAssets(assets);
+                updateUrlParams(selectedCollaterals, assets, selectedNetwork);
+              }}
+              items={uniqueLoanAssets}
+              loading={loading}
+              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+            />
+
+            <AssetFilter
+              label="Collateral"
+              placeholder="All collateral"
+              selectedAssets={selectedCollaterals}
+              setSelectedAssets={(assets) => {
+                setSelectedCollaterals(assets);
+                updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
+              }}
+              items={uniqueCollaterals}
+              loading={loading}
+              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+            />
+
+            <OracleFilter
+              selectedOracles={selectedOracles}
+              setSelectedOracles={setSelectedOracles}
+            />
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <NetworkFilter
-                selectedNetwork={selectedNetwork}
-                setSelectedNetwork={(network) => {
-                  setSelectedNetwork(network);
-                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-                }}
-              />
-
-              <AssetFilter
-                label="Loan Asset"
-                placeholder="All loan asset"
-                selectedAssets={selectedLoanAssets}
-                setSelectedAssets={(assets) => {
-                  setSelectedLoanAssets(assets);
-                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-                }}
-                items={uniqueLoanAssets}
-                loading={loading}
-                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <AssetFilter
-                label="Collateral"
-                placeholder="All collateral"
-                selectedAssets={selectedCollaterals}
-                setSelectedAssets={(assets) => {
-                  setSelectedCollaterals(assets);
-                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-                }}
-                items={uniqueCollaterals}
-                loading={loading}
-                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <OracleFilter
-                selectedOracles={selectedOracles}
-                setSelectedOracles={setSelectedOracles}
-              />
-            </div>
-          </div>
-
           {/* Settings */}
           <div className="mt-4 flex items-center gap-2 lg:mt-0">
             <SuppliedAssetFilterCompactSwitch
@@ -566,10 +567,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             />
 
             <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
               content={
                 <TooltipContent
                   title="Refresh"
@@ -593,10 +590,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             {/* Hide expand/compact toggle on mobile */}
             <div className="hidden md:block">
               <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
                 content={
                   <TooltipContent
                     icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
@@ -624,10 +617,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             </div>
 
             <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
               content={
                 <TooltipContent
                   title="Preferences"

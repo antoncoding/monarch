@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Input, Popover, PopoverTrigger, PopoverContent, Tooltip } from '@heroui/react';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Tooltip } from '@/components/ui/tooltip';
 import { ChevronLeftIcon, ChevronRightIcon, MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { Button } from '@/components/ui/button';
@@ -190,15 +192,10 @@ export function TablePagination({
         {totalPages > 10 && (
           <div className="ml-1">
             <Popover
-              isOpen={isJumpOpen}
+              open={isJumpOpen}
               onOpenChange={setIsJumpOpen}
-              placement="top"
             >
               <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
                 content={
                   <TooltipContent
                     title="Jump to page"
@@ -207,7 +204,7 @@ export function TablePagination({
                   />
                 }
               >
-                <PopoverTrigger>
+                <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"

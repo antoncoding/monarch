@@ -329,7 +329,7 @@ export function AdvancedRpcSettings() {
             </div>
 
             <Button
-              variant="surface"
+              variant="default"
               size="sm"
               onClick={() => setIsModalOpen(true)}
             >

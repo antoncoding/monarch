@@ -47,8 +47,8 @@ export function AssetSelection() {
 
       // Calculate min and max APY
       const apys = relevantMarkets.map((market) => market.state.supplyApy);
-      const minApy = Math.min(...apys);
-      const maxApy = Math.max(...apys);
+      const minApy = Math.max(Math.min(...apys), 0);
+      const maxApy = Math.max(Math.max(...apys), 0);
 
       // Get network name
       const network = balance.chainId;
@@ -80,10 +80,9 @@ export function AssetSelection() {
 
   if (balancesLoading || marketsLoading) {
     return (
-      <div className="flex-col">
-        <div className="flex min-h-[400px] items-center justify-center">
-          {' '}
-          <Spinner />{' '}
+      <div className="flex h-full flex-col">
+        <div className="mt-6 flex min-h-[400px] w-full md:min-w-[600px] items-center justify-center">
+          <Spinner />
         </div>
       </div>
     );
@@ -96,16 +95,11 @@ export function AssetSelection() {
           <p className="text-lg">No assets available</p>
           <p className="text-sm text-gray-400">You need to have some assets in your wallet to supply</p>
           <Link href="/markets">
-            <Button
-              color="primary"
-              className="rounded"
-            >
-              View Markets
-            </Button>
+            <Button variant="primary">View Markets</Button>
           </Link>
         </div>
       ) : (
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
           {tokensWithMarkets.map((token, idx) => (
             <motion.button
               aria-label={`Select ${token.symbol} on ${getNetworkName(token.network)}`}

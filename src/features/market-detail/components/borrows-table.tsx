@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import moment from 'moment';
 import { FiFilter } from 'react-icons/fi';
@@ -57,10 +57,6 @@ export function BorrowsTable({ chainId, market, minAssets, onOpenFiltersModal }:
         <h4 className="text-lg text-secondary">Borrow & Repay</h4>
         <div className="flex items-center gap-2">
           <Tooltip
-            classNames={{
-              base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            }}
             content={
               <TooltipContent
                 title="Filters"

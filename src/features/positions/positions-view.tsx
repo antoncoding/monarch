@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { TbReport } from 'react-icons/tb';
@@ -178,10 +178,6 @@ export default function Positions() {
           <div className="container flex flex-col">
             <div className="flex w-full justify-end">
               <Tooltip
-                classNames={{
-                  base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                  content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                }}
                 content={
                   <TooltipContent
                     title="Refresh"

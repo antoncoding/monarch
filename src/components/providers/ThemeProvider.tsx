@@ -1,8 +1,8 @@
 'use client';
 
-import { HeroUIProvider } from '@heroui/react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { ToastContainer } from 'react-toastify';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 export function ThemeProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +13,7 @@ export function ThemeProviders({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
       themes={['light', 'dark']}
     >
-      <HeroUIProvider>{children}</HeroUIProvider>
+      <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
       <ToastContainer
         position="bottom-right"
         toastClassName="bg-[#fff] dark:bg-[#202426] text-[#000] dark:text-[#fff]"

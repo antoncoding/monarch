@@ -1,14 +1,10 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 
 export function CollateralCapTooltip() {
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           title="Collateral Caps"
@@ -24,10 +20,6 @@ export function CollateralCapTooltip() {
 export function MarketCapTooltip() {
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           title="Market Caps"

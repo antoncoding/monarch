@@ -1,7 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Divider, Tooltip, useDisclosure } from '@heroui/react';
+import { useDisclosure } from '@/hooks/useDisclosure';
+import { Divider } from '@/components/ui/divider';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FiFilter } from 'react-icons/fi';
 import { Button } from '@/components/ui/button';
 import { FilterRow, FilterSection } from '@/components/ui/filter-components';
@@ -77,10 +79,6 @@ export function SuppliedAssetFilterCompactSwitch({
   return (
     <div className={className}>
       <Tooltip
-        classNames={{
-          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        }}
         content={
           <TooltipContent
             title="Filters"

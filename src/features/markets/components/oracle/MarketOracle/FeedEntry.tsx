@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { IoIosSwap } from 'react-icons/io';
 import { IoHelpCircleOutline } from 'react-icons/io5';
@@ -114,13 +114,7 @@ export function FeedEntry({ feed, chainId }: FeedEntryProps): JSX.Element | null
   };
 
   return (
-    <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-      content={getTooltipContent()}
-    >
+    <Tooltip content={getTooltipContent()}>
       <div className="bg-hovered flex w-full cursor-pointer items-center justify-between rounded-sm px-2 py-1 hover:bg-opacity-80">
         {showAssetPair ? (
           <div className="flex min-w-0 flex-1 items-center gap-1">

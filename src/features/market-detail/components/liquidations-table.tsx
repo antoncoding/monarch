@@ -83,7 +83,7 @@ export function LiquidationsTable({ chainId, market }: LiquidationsTableProps) {
                   const isLiquidatorAddress = liquidation.liquidator?.startsWith('0x');
 
                   return (
-                    <TableRow key={liquidation.hash}>
+                    <TableRow key={`${liquidation.hash}-${(liquidation.repaidAssets)}`}>
                       <TableCell>
                         {isLiquidatorAddress ? (
                           <AccountIdentity

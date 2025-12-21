@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card } from '@heroui/react';
+import { Card } from '@/components/ui/card';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiUser } from 'react-icons/fi';

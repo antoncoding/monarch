@@ -125,6 +125,11 @@
     grid-template-columns: 420px 1fr;
   }
 
+  /* Placeholder color using custom variable */
+  .placeholder-secondary::placeholder {
+    color: var(--color-text-secondary);
+  }
+
   /* Container with custom center behavior */
   .container {
     @apply mx-auto;

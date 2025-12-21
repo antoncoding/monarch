@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { FiGift } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -35,10 +35,6 @@ export function RewardsIndicator({ marketId, chainId, loanTokenAddress, whitelis
 
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           icon={

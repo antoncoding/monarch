@@ -1,4 +1,5 @@
-import { Card, CardBody, CardHeader, Tooltip } from '@heroui/react';
+import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Tooltip } from '@/components/ui/tooltip';
 import { GearIcon } from '@radix-ui/react-icons';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
@@ -63,10 +64,6 @@ export function VaultAllocatorCard({
             <span className="h-2 w-2 rounded-full bg-yellow-500" />
             <span className="text-xs text-secondary">No allocators configured</span>
             <Tooltip
-              classNames={{
-                base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              }}
               content={
                 <TooltipContent
                   icon={<GrStatusGood className="h-4 w-4" />}

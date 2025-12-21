@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Card, CardHeader, CardBody } from '@heroui/react';
+import { Card, CardHeader, CardBody } from '@/components/ui/card';
 import { ExternalLinkIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -364,22 +364,20 @@ function MarketContent() {
 
         <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           <Card className={cardStyle}>
-            <CardHeader className="flex items-center justify-between text-xl">
+            <CardHeader className="flex flex-row items-center justify-between text-xl">
               <span>Basic Info</span>
-              <span className="text-sm text-gray-500">
-                <div className="flex items-center">
-                  {networkImg && (
-                    <Image
-                      src={networkImg}
-                      alt={network.toString()}
-                      width={18}
-                      height={18}
-                      className="mr-2"
-                    />
-                  )}
-                  {getNetworkName(network)}
-                </div>
-              </span>
+              <div className="flex items-center text-sm text-gray-500">
+                {networkImg && (
+                  <Image
+                    src={networkImg}
+                    alt={network.toString()}
+                    width={18}
+                    height={18}
+                    className="mr-2"
+                  />
+                )}
+                {getNetworkName(network)}
+              </div>
             </CardHeader>
             <CardBody>
               <div className="space-y-2">
@@ -443,19 +441,16 @@ function MarketContent() {
           </Card>
 
           <Card className={cardStyle}>
-            <CardHeader className="flex items-center justify-between text-xl">
+            <CardHeader className="flex flex-row items-center justify-between text-xl">
               <span>Oracle Info</span>
-
-              <span className="text-sm text-gray-500">
-                <Link
-                  href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center hover:underline"
-                >
-                  <ExternalLinkIcon className="ml-1" />
-                </Link>
-              </span>
+              <Link
+                href={getExplorerURL(market.oracleAddress, market.morphoBlue.chain.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center text-sm text-gray-500 hover:underline"
+              >
+                <ExternalLinkIcon />
+              </Link>
             </CardHeader>
             <CardBody>
               <div className="space-y-2">

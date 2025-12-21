@@ -41,15 +41,15 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {positions.length === 0 ? (
         <div className="flex min-h-[200px] items-center justify-center">
           <p className="text-sm text-secondary">Loading positions...</p>
         </div>
       ) : (
         <>
-          <div className="w-full overflow-x-auto">
-            <Table className="w-full table-fixed rounded-sm font-zen text-sm">
+          <div className="overflow-x-auto">
+            <Table className="table-fixed rounded-sm font-zen text-sm">
               <colgroup>
                 <col className="w-auto" />
                 <col className="w-[120px]" />

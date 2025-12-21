@@ -10,7 +10,7 @@ Use these shared components instead of raw HTML elements:
 
 ## Modal Guidelines
 
-**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal`. Never import HeroUI modals directly. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
+**IMPORTANT**: Always use our custom Modal components from `@/components/common/Modal`. The shared wrapper applies Monarch typography, corner radius, background, blur, and z-index rules automatically.
 
 All modals MUST follow consistent styling standards for typography, spacing, and structure. There are two modal patterns based on use case.
 
@@ -228,7 +228,7 @@ For section headers within modal content, use consistent styling:
 <h3 className="text-base font-normal text-primary">Section Title</h3>
 ```
 
-### Custom Modals (Non-HeroUI)
+### Custom Modals
 
 For custom modals using `framer-motion`, apply `font-zen` to the outer container:
 
@@ -409,37 +409,91 @@ Alignment: `align="start"` | `"center"` | `"end"`
 
 ## Tooltip
 
-Use `TooltipContent` from `@/components/shared/tooltip-content` for consistent tooltip styling.
+### Basic Tooltip
 
 ```tsx
-import { TooltipContent } from '@/components/shared/tooltip-content';
+import { Tooltip } from '@/components/ui/tooltip';
 
-// Simple
-<Tooltip
-  classNames={{ base: 'p-0 m-0 bg-transparent shadow-sm border-none', content: 'p-0 m-0 bg-transparent shadow-sm border-none' }}
-  content={<TooltipContent title="Tooltip Title" />}
->
-  {/* trigger */}
+<Tooltip content="Tooltip text">
+  <Button>Hover me</Button>
 </Tooltip>
 
-// With detail
-<TooltipContent
-  icon={<GrStatusGood />}
-  title="Tooltip Title"
-  detail="Main description"
-  secondaryDetail="Additional info"
-/>
+<Tooltip content="Top tooltip" placement="top">
+  <span>Hover</span>
+</Tooltip>
 
-// With action link
-<TooltipContent
-  title="Token Name"
-  detail="Description"
-  actionIcon={<FiExternalLink />}
-  actionHref="https://explorer.com"
-/>
+<Tooltip content="Delayed" delay={500}>
+  <InfoIcon />
+</Tooltip>
 ```
 
-Always use the `classNames` configuration shown above to remove HeroUI's default styling.
+**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay` (ms), `className`
+
+### Structured Content
+
+```tsx
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
+
+// Icon + title
+<Tooltip content={<TooltipContent icon={<Icon />} title="Title" />}>
+  <Button>Hover</Button>
+</Tooltip>
+
+// With details
+<Tooltip
+  content={
+    <TooltipContent
+      icon={<Icon />}
+      title="Title"
+      detail="Detail text"
+      secondaryDetail="Secondary detail"
+    />
+  }
+>
+  <Button>Hover</Button>
+</Tooltip>
+
+// With action link
+<Tooltip
+  content={
+    <TooltipContent
+      title="Title"
+      actionIcon={<ExternalLink />}
+      actionHref="https://..."
+    />
+  }
+>
+  <Button>Hover</Button>
+</Tooltip>
+```
+
+**TooltipContent Props:** `icon`, `title`, `detail`, `secondaryDetail`, `className`, `actionIcon`, `actionHref`, `onActionClick`
+
+### Primitives
+
+```tsx
+import { TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
+<TooltipRoot delayDuration={300}>
+  <TooltipTrigger asChild>
+    <button>Hover</button>
+  </TooltipTrigger>
+  <TooltipContent side="right">
+    Custom content
+  </TooltipContent>
+</TooltipRoot>
+```
+
+### Provider
+
+```tsx
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+<TooltipProvider>
+  <App />
+</TooltipProvider>
+```
 
 ### Table Component
 

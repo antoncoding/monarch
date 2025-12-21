@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { Input } from '@heroui/react';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
@@ -87,7 +87,6 @@ export function GeneralTab({
           </label>
           <Input
             size="sm"
-            radius="sm"
             value={nameInput}
             onChange={(event) => setNameInput(event.target.value)}
             placeholder={defaultName}
@@ -109,7 +108,6 @@ export function GeneralTab({
           </label>
           <Input
             size="sm"
-            radius="sm"
             value={symbolInput}
             onChange={(event) => setSymbolInput(event.target.value)}
             placeholder={defaultSymbol}

@@ -1,7 +1,8 @@
 /* eslint-disable react/no-unstable-nested-components */
 
 import { useState, useMemo } from 'react';
-import { Card, CardHeader, CardBody, Tooltip as HeroTooltip } from '@heroui/react';
+import { Card, CardHeader, CardBody } from '@/components/ui/card';
+import { Tooltip as HeroTooltip } from '@/components/ui/tooltip';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatUnits } from 'viem';
 import { HiOutlineInformationCircle } from 'react-icons/hi2';
@@ -346,10 +347,6 @@ function VolumeChart({
                     <span className="flex items-center gap-1">
                       <span>Supply Δ:</span>
                       <HeroTooltip
-                        classNames={{
-                          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                        }}
                         content={
                           <TooltipContent
                             title="Supply Delta to Target"
@@ -371,10 +368,6 @@ function VolumeChart({
                     <span className="flex items-center gap-1">
                       <span>Borrow Δ:</span>
                       <HeroTooltip
-                        classNames={{
-                          base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                          content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-                        }}
                         content={
                           <TooltipContent
                             title="Borrow Delta to Target"

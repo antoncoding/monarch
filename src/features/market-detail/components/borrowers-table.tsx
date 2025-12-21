@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FiFilter } from 'react-icons/fi';
 import type { Address } from 'viem';
@@ -73,10 +73,6 @@ export function BorrowersTable({ chainId, market, minShares, oraclePrice, onOpen
         <h4 className="text-lg text-secondary">Top Borrowers</h4>
         <div className="flex items-center gap-2">
           <Tooltip
-            classNames={{
-              base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-              content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            }}
             content={
               <TooltipContent
                 title="Filters"

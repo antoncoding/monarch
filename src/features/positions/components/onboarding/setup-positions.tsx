@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Slider } from '@heroui/react';
+import { Slider } from '@/components/ui/slider';
 import { LockClosedIcon, LockOpen1Icon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { formatUnits, parseUnits } from 'viem';
@@ -18,10 +18,10 @@ import { SupportedNetworks } from '@/utils/networks';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useOnboarding } from './onboarding-context';
 
-export function SetupPositions() {
+export function SetupPositions({ onClose }: { onClose: () => void }) {
   const toast = useStyledToast();
   const { short: rateLabel } = useRateLabel();
-  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep, balances } = useOnboarding();
+  const { selectedToken, selectedMarkets, balances, goToPrevStep } = useOnboarding();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -183,7 +183,7 @@ export function SetupPositions() {
     supplies,
     useEth,
     usePermit2Setting,
-    goToNextStep,
+    onClose,
   );
 
   const handleSupply = useCallback(() => {
@@ -196,7 +196,7 @@ export function SetupPositions() {
       setIsSupplying(true);
 
       try {
-        // trigger the tx. goToNextStep() be called as a `onSuccess` callback
+        // trigger the tx. onClose() will be called as a `onSuccess` callback to close the modal
         await approveAndSupply();
       } catch (_supplyError) {
       } finally {
@@ -252,7 +252,7 @@ export function SetupPositions() {
       </div>
 
       {/* Markets Distribution */}
-      <div className="mt-6 h-96 overflow-y-auto">
+      <div className="mt-6 max-h-[400px] overflow-y-auto">
         <Table className="responsive w-full rounded-md font-zen">
           <TableHeader className="">
             <TableRow>
@@ -302,11 +302,10 @@ export function SetupPositions() {
                     <div className="flex items-center gap-2">
                       <div className="flex-1 min-w-[120px]">
                         <Slider
-                          size="sm"
                           step={1}
                           maxValue={100}
                           minValue={0}
-                          value={currentPercentage}
+                          value={[currentPercentage]}
                           onChange={(value) => handlePercentageChange(market.uniqueKey, Number(value))}
                           className="w-full"
                           classNames={{
@@ -358,12 +357,12 @@ export function SetupPositions() {
         />
       )}
 
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between">
+      {/* Footer Navigation */}
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">
         <Button
           variant="ghost"
-          className="min-w-[120px]"
           onClick={goToPrevStep}
+          className="min-w-[120px]"
         >
           Back
         </Button>

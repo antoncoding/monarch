@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Input } from '@heroui/react';
+import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -185,7 +185,7 @@ function CollateralFilter({
 
   return (
     <div
-      className="relative z-30 w-full"
+      className="relative z-30 w-full max-w-xs"
       ref={dropdownRef}
     >
       <div
@@ -296,7 +296,8 @@ function CollateralFilter({
               </ul>
               <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-1.5">
                 <button
-                  className="hover:bg-main flex w-full items-center justify-between rounded-sm p-1.5 text-left text-[10px] text-secondary"
+                  className="hover:bg-main flex w-full items-center justify-between rounded-sm p-1.5 text-left text-[10px] "
+                  style={{ color: 'var(--color-text-secondary)' }}
                   onClick={clearSelection}
                   type="button"
                 >
@@ -350,7 +351,7 @@ function OracleFilterComponent({
 
   return (
     <div
-      className="relative z-30 w-full"
+      className="relative z-30 w-full max-w-xs"
       ref={dropdownRef}
     >
       <div
@@ -382,7 +383,7 @@ function OracleFilterComponent({
                     />
                   ) : (
                     <IoHelpCircleOutline
-                      className="text-secondary"
+                      style={{ color: 'var(--color-text-secondary)' }}
                       size={14}
                     />
                   )}
@@ -433,7 +434,7 @@ function OracleFilterComponent({
                   />
                 ) : (
                   <IoHelpCircleOutline
-                    className="text-secondary"
+                    style={{ color: 'var(--color-text-secondary)' }}
                     size={14}
                   />
                 )}
@@ -954,7 +955,8 @@ export function MarketsTableWithSameLoanAsset({
                     type="button"
                     onClick={() => onToggleMarket(market.uniqueKey)}
                     disabled={disabled}
-                    className="flex h-6 w-6 items-center justify-center rounded-full text-secondary transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+                    className="flex h-6 w-6 items-center justify-center rounded-full  transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
+                    style={{ color: 'var(--color-text-secondary)' }}
                   >
                     <LuX className="h-4 w-4" />
                   </button>
@@ -966,13 +968,13 @@ export function MarketsTableWithSameLoanAsset({
       )}
 
       {/* Search and Controls */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-grow">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="w-80">
           <Input
             placeholder="Search by collateral symbol or market ID..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            endContent={<FaSearch className="text-secondary" />}
+            endContent={<FaSearch style={{ color: 'var(--color-text-secondary)' }} />}
             classNames={{
               inputWrapper: 'bg-surface rounded-sm focus-within:outline-none',
               input: 'bg-surface rounded-sm text-xs focus:outline-none',
@@ -1031,7 +1033,7 @@ export function MarketsTableWithSameLoanAsset({
       </div>
 
       {/* Table */}
-      <div className="w-full overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="responsive rounded-md font-zen text-sm">
           <thead className="">
             <tr>
@@ -1149,7 +1151,8 @@ export function MarketsTableWithSameLoanAsset({
               <tr>
                 <td
                   colSpan={emptyStateColumns}
-                  className="py-8 text-center text-secondary"
+                  className="py-8 text-center "
+                  style={{ color: 'var(--color-text-secondary)' }}
                 >
                   No markets found
                 </td>

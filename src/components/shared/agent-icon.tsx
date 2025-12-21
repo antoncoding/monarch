@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { HiQuestionMarkCircle } from 'react-icons/hi';
 import type { Address } from 'viem';
@@ -56,10 +56,6 @@ export function AgentIcon({ address, width, height }: AgentIconProps) {
 
   return (
     <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
       content={
         <TooltipContent
           title={agent.name}

@@ -1,5 +1,5 @@
 import type React from 'react';
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -66,17 +66,7 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYB
     </div>
   );
 
-  return (
-    <Tooltip
-      classNames={{
-        base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-        content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-      }}
-      content={content}
-    >
-      {children}
-    </Tooltip>
-  );
+  return <Tooltip content={content}>{children}</Tooltip>;
 }
 
 export function APYCell({ market }: APYCellProps) {

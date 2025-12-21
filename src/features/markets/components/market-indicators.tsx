@@ -1,4 +1,4 @@
-import { Tooltip } from '@heroui/react';
+import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -32,10 +32,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       {/* Personal Indicators */}
       {isStared && (
         <Tooltip
-          classNames={{
-            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          }}
           content={
             <TooltipContent
               icon={
@@ -59,10 +55,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
 
       {hasUserPosition && (
         <Tooltip
-          classNames={{
-            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          }}
           content={
             <TooltipContent
               icon={<FaUser size={ICON_SIZE} />}
@@ -79,10 +71,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       {/* Universal Indicators */}
       {hasLiquidationProtection && (
         <Tooltip
-          classNames={{
-            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          }}
           content={
             <TooltipContent
               icon={
@@ -105,12 +93,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       )}
 
       {/* {market.isMonarchWhitelisted && (
-        <Tooltip
-          classNames={{
-            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          }}
-          content={
+        <Tooltip          content={
             <TooltipContent
               icon={<Image src={logo} alt="Monarch" width={ICON_SIZE} height={ICON_SIZE} />}
               detail="This market is recognized by Monarch"
@@ -134,10 +117,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
       {/* Risk Warnings */}
       {showRisk && hasWarnings && (
         <Tooltip
-          classNames={{
-            base: 'p-0 m-0 bg-transparent shadow-sm border-none',
-            content: 'p-0 m-0 bg-transparent shadow-sm border-none',
-          }}
           content={
             <TooltipContent
               title={warningLevel === 'alert' ? 'High Risk' : 'Warning'}
