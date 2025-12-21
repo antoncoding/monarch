@@ -81,7 +81,7 @@ export function AssetSelection() {
   if (balancesLoading || marketsLoading) {
     return (
       <div className="flex h-full flex-col">
-        <div className="mt-6 flex min-h-[400px] w-full min-w-[600px] items-center justify-center">
+        <div className="mt-6 flex min-h-[400px] w-full md:min-w-[600px] items-center justify-center">
           <Spinner />
         </div>
       </div>
