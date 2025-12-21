@@ -409,43 +409,78 @@ Alignment: `align="start"` | `"center"` | `"end"`
 
 ## Tooltip
 
-Always use `Tooltip` from `@/components/ui/tooltip`.
+### Basic Tooltip
 
 ```tsx
 import { Tooltip } from '@/components/ui/tooltip';
 
-// Basic
-<Tooltip content="This is a tooltip">
+<Tooltip content="Tooltip text">
   <Button>Hover me</Button>
 </Tooltip>
 
-// With placement
 <Tooltip content="Top tooltip" placement="top">
-  <span>Hover me</span>
+  <span>Hover</span>
 </Tooltip>
 
-// With delays
-<Tooltip content="Delayed tooltip" delay={500}>
+<Tooltip content="Delayed" delay={500}>
   <InfoIcon />
 </Tooltip>
 ```
 
-**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay`, `className`, `classNames.content`
+**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay` (ms), `className`
 
-### Advanced with Primitives
+### Structured Content
+
+```tsx
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
+
+// Icon + title
+<Tooltip content={<TooltipContent icon={<Icon />} title="Title" />}>
+  <Button>Hover</Button>
+</Tooltip>
+
+// With details
+<Tooltip
+  content={
+    <TooltipContent
+      icon={<Icon />}
+      title="Title"
+      detail="Detail text"
+      secondaryDetail="Secondary detail"
+    />
+  }
+>
+  <Button>Hover</Button>
+</Tooltip>
+
+// With action link
+<Tooltip
+  content={
+    <TooltipContent
+      title="Title"
+      actionIcon={<ExternalLink />}
+      actionHref="https://..."
+    />
+  }
+>
+  <Button>Hover</Button>
+</Tooltip>
+```
+
+**TooltipContent Props:** `icon`, `title`, `detail`, `secondaryDetail`, `className`, `actionIcon`, `actionHref`, `onActionClick`
+
+### Primitives
 
 ```tsx
 import { TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 <TooltipRoot delayDuration={300}>
   <TooltipTrigger asChild>
-    <button>Hover me</button>
+    <button>Hover</button>
   </TooltipTrigger>
   <TooltipContent side="right">
-    <div className="flex flex-col gap-2">
-      <p className="font-medium">Custom Content</p>
-      <p className="text-xs text-secondary">Details</p>
-    </div>
+    Custom content
   </TooltipContent>
 </TooltipRoot>
 ```
