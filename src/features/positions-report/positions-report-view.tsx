@@ -123,14 +123,35 @@ export default function ReportContent({ account }: { account: Address }) {
   // Validate dates
   const getDateError = useCallback(
     (date: DateValue, isStart: boolean) => {
-      if (date.compare(maxDate) > 0) return 'Cannot select future date';
-      if (isStart && date.compare(endDate) > 0) return 'Start date cannot be after end date';
-      if (!isStart && date.compare(startDate) < 0) return 'End date cannot be before start date';
-      if (selectedAsset) {
-        const genesisDate = parseDate(getMorphoGenesisDate(selectedAsset.chainId).toISOString().split('T')[0]);
-        if (date.compare(genesisDate) < 0) return `Date cannot be before ${formatter.format(genesisDate.toDate(getLocalTimeZone()))}`;
+      try {
+        if (!date) return undefined;
+
+        // Check against max date (today)
+        if (maxDate && date.compare(maxDate) > 0) {
+          return 'Cannot select future date';
+        }
+
+        // Check start vs end date relationship
+        if (isStart && endDate && date.compare(endDate) > 0) {
+          return 'Start date cannot be after end date';
+        }
+        if (!isStart && startDate && date.compare(startDate) < 0) {
+          return 'End date cannot be before start date';
+        }
+
+        // Check against genesis date
+        if (selectedAsset) {
+          const genesisDate = parseDate(getMorphoGenesisDate(selectedAsset.chainId).toISOString().split('T')[0]);
+          if (date.compare(genesisDate) < 0) {
+            return `Date cannot be before ${formatter.format(genesisDate.toDate(getLocalTimeZone()))}`;
+          }
+        }
+
+        return undefined;
+      } catch (error) {
+        console.error('Error validating date:', error);
+        return undefined;
       }
-      return undefined;
     },
     [maxDate, startDate, endDate, selectedAsset, formatter],
   );

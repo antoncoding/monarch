@@ -302,7 +302,7 @@ When wrapping Button in Tooltip, wrap it in a `<span>` to prevent ResizeObserver
 
 ### Switch
 
-Always use `IconSwitch` from `@/components/ui/icon-switch`. Never use HeroUI Switch.
+Always use `IconSwitch` from `@/components/ui/icon-switch`. 
 
 ```tsx
 import { IconSwitch } from '@/components/ui/icon-switch';
@@ -332,7 +332,7 @@ Sizes: `xs` | `sm` | `md` | `lg`
 
 ### Checkbox
 
-Always use `Checkbox` from `@/components/ui/checkbox`. Never use HeroUI Checkbox.
+Always use `Checkbox` from `@/components/ui/checkbox`.
 
 ```tsx
 import { Checkbox } from '@/components/ui/checkbox';
@@ -546,7 +546,7 @@ import { TablePagination } from '@/components/common/TablePagination';
      </div>
    </TableCell>
    ```
-4. **Pagination**: Always use `TablePagination` component (not HeroUI `Pagination`)
+4. **Pagination**: Always use `TablePagination` component
 
 **Styling:** All styling applied via `app/global.css` - don't add inline styles or override padding.
 

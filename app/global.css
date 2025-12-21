@@ -5,9 +5,6 @@
 /* Reference tailwind.config.js for HeroUI compatibility */
 @config "../tailwind.config.js";
 
-/* HeroUI Plugin */
-@plugin "./hero.ts";
-
 /* Theme configuration - migrated from tailwind.config.ts */
 @theme {
   /* Primary colors from tailwind.config.ts */
