@@ -52,12 +52,12 @@ export function ModalHeader({
 
   // If children are provided, use them directly (for custom layouts)
   if (children) {
-    return <div className={twMerge('flex w-full flex-col gap-1 font-zen', paddingClass, className)}>{children}</div>;
+    return <div className={twMerge('flex flex-col gap-1 font-zen', paddingClass, className)}>{children}</div>;
   }
 
   // Standard layout with title, description, and optional icon
   return (
-    <div className={twMerge('relative w-full font-zen font-normal', paddingClass, className)}>
+    <div className={twMerge('relative font-zen font-normal', paddingClass, className)}>
       <div className={twMerge('flex flex-col gap-2', contentRightPadding)}>
         <div className="flex items-center gap-3 text-primary font-normal">
           {mainIcon && <div className="flex-shrink-0">{mainIcon}</div>}

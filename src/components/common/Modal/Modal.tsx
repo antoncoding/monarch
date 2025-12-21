@@ -20,6 +20,7 @@ type ModalProps = {
   scrollBehavior?: 'inside' | 'outside' | 'normal';
   backdrop?: 'transparent' | 'opaque' | 'blur';
   className?: string;
+  flexibleWidth?: boolean; // Removes max-width constraint, lets content determine width up to w-[90vw]
 };
 
 const Z_INDEX_MAP: Record<ModalZIndex, { wrapper: string; backdrop: string }> = {
@@ -54,6 +55,7 @@ export function Modal({
   scrollBehavior = 'inside',
   backdrop = 'blur',
   className = '',
+  flexibleWidth = false,
 }: ModalProps) {
   const zIndexClasses = Z_INDEX_MAP[zIndex];
   const backdropStyle =
@@ -87,7 +89,8 @@ export function Modal({
         />
         <Content
           className={cn(
-            'fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw]',
+            'fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]',
+            flexibleWidth ? 'max-w-[90vw]' : 'w-[90vw]',
             'rounded-sm border border-white/10 bg-surface text-primary shadow-2xl font-zen',
             'focus:outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
@@ -96,7 +99,7 @@ export function Modal({
             'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]',
             'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
             zIndexClasses.wrapper,
-            SIZE_MAP[size],
+            !flexibleWidth && SIZE_MAP[size],
             scrollBehavior === 'inside' && 'max-h-[85vh] overflow-y-auto',
             className,
           )}

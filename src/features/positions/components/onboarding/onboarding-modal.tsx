@@ -1,17 +1,17 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaCompass } from 'react-icons/fa';
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { Button } from '@/components/ui/button';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { AssetSelection } from './asset-selection';
 import { MarketSelectionOnboarding } from './market-selection-onboarding';
 import { useOnboarding, ONBOARDING_STEPS } from './onboarding-context';
 import { SetupPositions } from './setup-positions';
-import { SuccessPage } from './success-page';
 
 const StepComponents = {
   'asset-selection': AssetSelection,
   'market-selection': MarketSelectionOnboarding,
   setup: SetupPositions,
-  success: SuccessPage,
 } as const;
 
 function StepIndicator({ currentStep }: { currentStep: string }) {
@@ -41,8 +41,10 @@ function StepIndicator({ currentStep }: { currentStep: string }) {
 }
 
 export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange: (open: boolean) => void }) {
-  const { step } = useOnboarding();
+  const { step, goToPrevStep, goToNextStep, canGoNext } = useOnboarding();
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === step);
+  const isFirstStep = currentStepIndex === 0;
+  const isLastStep = currentStepIndex === ONBOARDING_STEPS.length - 1;
 
   const CurrentStepComponent = StepComponents[step];
 
@@ -50,7 +52,7 @@ export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onO
     <Modal
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      size="3xl"
+      flexibleWidth
       scrollBehavior="inside"
       backdrop="blur"
       className="bg-surface"
@@ -79,8 +81,30 @@ export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onO
         </div>
       </ModalBody>
 
-      <ModalFooter className="justify-center border-t border-divider">
+      <ModalFooter className="flex-col gap-4 border-t border-divider">
         <StepIndicator currentStep={step} />
+        <div className="flex w-full items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={goToPrevStep}
+            disabled={isFirstStep}
+            className="gap-2"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+            Previous
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={isLastStep ? () => onOpenChange(false) : goToNextStep}
+            disabled={!canGoNext && !isLastStep}
+            className="gap-2"
+          >
+            {isLastStep ? 'Finish' : 'Next'}
+            {!isLastStep && <ChevronRightIcon className="h-4 w-4" />}
+          </Button>
+        </div>
       </ModalFooter>
     </Modal>
   );

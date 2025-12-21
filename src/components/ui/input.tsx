@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/components';
 
 const inputVariants = cva(
-  'flex w-full rounded bg-surface px-3 py-2 text-sm text-primary placeholder:text-secondary outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 font-zen transition-all',
+  'flex w-full rounded bg-surface px-3 py-2 text-sm text-primary outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 font-zen transition-all',
   {
     variants: {
       variant: {
@@ -94,6 +94,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               isInvalid && 'border-red-500 focus-visible:ring-red-500/20',
               startContent && 'pl-10',
               endContent && 'pr-10',
+              'placeholder-secondary',
               className,
               classNames?.input,
             )}

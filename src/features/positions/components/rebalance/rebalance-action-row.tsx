@@ -78,9 +78,9 @@ export function RebalanceActionRow({
   const displayAmount = typeof amount === 'string' ? amount : formatUnits(amount, groupedPosition.loanAssetDecimals);
 
   return (
-    <div className="flex items-center">
-      {/* Column 1: From → To Market Section - 50% */}
-      <div className="flex w-[50%] items-center gap-3">
+    <div className="flex items-center gap-4">
+      {/* Column 1: From → To Market Section */}
+      <div className="flex flex-1 items-center gap-3">
         {/* From Market */}
         <div className="flex items-center gap-2">
           <span className="text-xs text-secondary">From</span>
@@ -155,8 +155,8 @@ export function RebalanceActionRow({
         </div>
       </div>
 
-      {/* Column 2: APY/APR & Utilization Preview - 25% */}
-      <div className="flex w-[25%] items-center gap-4 text-xs">
+      {/* Column 2: APY/APR & Utilization Preview */}
+      <div className="flex items-center gap-4 text-xs">
         {/* Market APY/APR */}
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] uppercase tracking-wide text-secondary whitespace-nowrap">{rateLabel}</span>
@@ -184,8 +184,8 @@ export function RebalanceActionRow({
         </div>
       </div>
 
-      {/* Column 3: Amount Input/Display + Button - 25% */}
-      <div className="flex w-[25%] items-center justify-end gap-2">
+      {/* Column 3: Amount Input/Display + Button */}
+      <div className="flex items-center justify-end gap-2">
         <div className="bg-hovered relative h-8 rounded-sm">
           {mode === 'input' ? (
             <>

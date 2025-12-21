@@ -486,15 +486,17 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
         />
 
         <div className="flex flex-col gap-4 pb-4">
-          <AdvancedSearchBar
-            searchQuery={searchQuery}
-            onSearch={handleSearch}
-            onFilterUpdate={handleFilterUpdate}
-            selectedCollaterals={selectedCollaterals}
-            selectedLoanAssets={selectedLoanAssets}
-            uniqueCollaterals={uniqueCollaterals}
-            uniqueLoanAssets={uniqueLoanAssets}
-          />
+          <div className="w-full lg:w-1/2">
+            <AdvancedSearchBar
+              searchQuery={searchQuery}
+              onSearch={handleSearch}
+              onFilterUpdate={handleFilterUpdate}
+              selectedCollaterals={selectedCollaterals}
+              selectedLoanAssets={selectedLoanAssets}
+              uniqueCollaterals={uniqueCollaterals}
+              uniqueLoanAssets={uniqueLoanAssets}
+            />
+          </div>
 
           <div className="flex flex-col gap-4 lg:flex-row">
             <NetworkFilter

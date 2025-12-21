@@ -9,16 +9,11 @@ export const ONBOARDING_STEPS = [
     title: 'Select Asset',
     description: 'Choose the asset you want to supply',
   },
-  { id: 'market-selection', title: 'Select Markets', description: '' },
+  { id: 'market-selection', title: 'Select Markets', description: 'Choose markets for your supply position' },
   {
     id: 'setup',
     title: 'Position Setup',
     description: 'Configure your initial position',
-  },
-  {
-    id: 'success',
-    title: 'Complete',
-    description: 'Position created successfully',
   },
 ] as const;
 

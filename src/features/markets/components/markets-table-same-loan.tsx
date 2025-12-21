@@ -185,7 +185,7 @@ function CollateralFilter({
 
   return (
     <div
-      className="relative z-30 w-full"
+      className="relative z-30 w-full max-w-xs"
       ref={dropdownRef}
     >
       <div
@@ -351,7 +351,7 @@ function OracleFilterComponent({
 
   return (
     <div
-      className="relative z-30 w-full"
+      className="relative z-30 w-full max-w-xs"
       ref={dropdownRef}
     >
       <div
@@ -968,8 +968,8 @@ export function MarketsTableWithSameLoanAsset({
       )}
 
       {/* Search and Controls */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="flex-grow">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="w-80">
           <Input
             placeholder="Search by collateral symbol or market ID..."
             value={searchQuery}
@@ -1033,7 +1033,7 @@ export function MarketsTableWithSameLoanAsset({
       </div>
 
       {/* Table */}
-      <div className="w-full overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="responsive rounded-md font-zen text-sm">
           <thead className="">
             <tr>
