@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/features/markets/components/markets-table-same-loan';
 import type { MarketWithSelection } from '@/features/markets/components/markets-table-same-loan';
@@ -6,7 +6,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { useOnboarding } from './onboarding-context';
 
 export function MarketSelectionOnboarding() {
-  const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep, setFooterContent } = useOnboarding();
+  const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep } = useOnboarding();
 
   const { getUniqueTokens } = useTokens();
 
@@ -32,36 +32,6 @@ export function MarketSelectionOnboarding() {
         isSelected: selectedMarkets.some((m) => m?.uniqueKey === market.uniqueKey),
       }));
   }, [selectedToken?.markets, selectedMarkets]);
-
-  // Memoize footer content
-  const footerButtons = useMemo(
-    () => (
-      <>
-        <Button
-          variant="ghost"
-          onClick={goToPrevStep}
-          className="min-w-[120px]"
-        >
-          Back
-        </Button>
-        <Button
-          variant="primary"
-          onClick={goToNextStep}
-          disabled={!canGoNext}
-          className="min-w-[120px]"
-        >
-          Continue
-        </Button>
-      </>
-    ),
-    [canGoNext, goToNextStep, goToPrevStep],
-  );
-
-  // Set footer content for this step
-  useEffect(() => {
-    setFooterContent(footerButtons);
-    return () => setFooterContent(null);
-  }, [footerButtons, setFooterContent]);
 
   // Handle case when no token is selected yet
   if (!selectedToken) {
@@ -103,6 +73,25 @@ export function MarketSelectionOnboarding() {
           showSelectColumn
           showCart={false}
         />
+      </div>
+
+      {/* Footer Navigation */}
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+        <Button
+          variant="ghost"
+          onClick={goToPrevStep}
+          className="min-w-[120px]"
+        >
+          Back
+        </Button>
+        <Button
+          variant="primary"
+          onClick={goToNextStep}
+          disabled={!canGoNext}
+          className="min-w-[120px]"
+        >
+          Continue
+        </Button>
       </div>
     </div>
   );

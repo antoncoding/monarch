@@ -35,10 +35,6 @@ type OnboardingContextType = {
   // Shared balances across all steps
   balances: { address: string; balance: string }[];
   balancesLoading: boolean;
-
-  // Footer content control
-  footerContent: React.ReactNode | null;
-  setFooterContent: (content: React.ReactNode | null) => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -46,8 +42,6 @@ const OnboardingContext = createContext<OnboardingContextType | null>(null);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
-  const [footerContent, setFooterContent] = useState<React.ReactNode | null>(null);
-
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
   // Fetch user balances once for the entire onboarding flow
@@ -105,22 +99,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       resetOnboarding,
       balances,
       balancesLoading,
-      footerContent,
-      setFooterContent,
     }),
-    [
-      selectedToken,
-      selectedMarkets,
-      currentStep,
-      canGoNext,
-      goToNextStep,
-      goToPrevStep,
-      resetOnboarding,
-      balances,
-      balancesLoading,
-      // Note: footerContent is intentionally excluded from deps to prevent infinite loops
-      // Components can read it but setting it won't trigger context updates
-    ],
+    [selectedToken, selectedMarkets, currentStep, canGoNext, goToNextStep, goToPrevStep, resetOnboarding, balances, balancesLoading],
   );
 
   return <OnboardingContext.Provider value={contextValue}>{children}</OnboardingContext.Provider>;

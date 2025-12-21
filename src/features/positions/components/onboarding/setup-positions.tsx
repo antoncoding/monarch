@@ -21,7 +21,7 @@ import { useOnboarding } from './onboarding-context';
 export function SetupPositions({ onClose }: { onClose: () => void }) {
   const toast = useStyledToast();
   const { short: rateLabel } = useRateLabel();
-  const { selectedToken, selectedMarkets, balances, goToPrevStep, setFooterContent } = useOnboarding();
+  const { selectedToken, selectedMarkets, balances, goToPrevStep } = useOnboarding();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -205,38 +205,6 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
     })();
   }, [isSupplying, toast, approveAndSupply]);
 
-  // Memoize footer content
-  const footerButtons = useMemo(
-    () => (
-      <>
-        <Button
-          variant="ghost"
-          onClick={goToPrevStep}
-          className="min-w-[120px]"
-        >
-          Back
-        </Button>
-        <ExecuteTransactionButton
-          targetChainId={selectedToken?.network ?? SupportedNetworks.Base}
-          onClick={handleSupply}
-          disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
-          isLoading={supplyPending || isLoadingPermit2}
-          variant="primary"
-          className="min-w-[120px]"
-        >
-          Execute
-        </ExecuteTransactionButton>
-      </>
-    ),
-    [error, totalAmountBigInt, supplies.length, supplyPending, isLoadingPermit2, handleSupply, selectedToken?.network, goToPrevStep],
-  );
-
-  // Set footer content for this step
-  useEffect(() => {
-    setFooterContent(footerButtons);
-    return () => setFooterContent(null);
-  }, [footerButtons, setFooterContent]);
-
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;
   }
@@ -388,6 +356,27 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
           usePermit2={usePermit2Setting}
         />
       )}
+
+      {/* Footer Navigation */}
+      <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+        <Button
+          variant="ghost"
+          onClick={goToPrevStep}
+          className="min-w-[120px]"
+        >
+          Back
+        </Button>
+        <ExecuteTransactionButton
+          targetChainId={selectedToken?.network ?? SupportedNetworks.Base}
+          onClick={handleSupply}
+          disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
+          isLoading={supplyPending || isLoadingPermit2}
+          variant="primary"
+          className="min-w-[120px]"
+        >
+          Execute
+        </ExecuteTransactionButton>
+      </div>
     </div>
   );
 }
