@@ -409,37 +409,56 @@ Alignment: `align="start"` | `"center"` | `"end"`
 
 ## Tooltip
 
-Use `TooltipContent` from `@/components/shared/tooltip-content` for consistent tooltip styling.
+Always use `Tooltip` from `@/components/ui/tooltip`.
 
 ```tsx
-import { TooltipContent } from '@/components/shared/tooltip-content';
+import { Tooltip } from '@/components/ui/tooltip';
 
-// Simple
-<Tooltip
-  classNames={{ base: 'p-0 m-0 bg-transparent shadow-sm border-none', content: 'p-0 m-0 bg-transparent shadow-sm border-none' }}
-  content={<TooltipContent title="Tooltip Title" />}
->
-  {/* trigger */}
+// Basic
+<Tooltip content="This is a tooltip">
+  <Button>Hover me</Button>
 </Tooltip>
 
-// With detail
-<TooltipContent
-  icon={<GrStatusGood />}
-  title="Tooltip Title"
-  detail="Main description"
-  secondaryDetail="Additional info"
-/>
+// With placement
+<Tooltip content="Top tooltip" placement="top">
+  <span>Hover me</span>
+</Tooltip>
 
-// With action link
-<TooltipContent
-  title="Token Name"
-  detail="Description"
-  actionIcon={<FiExternalLink />}
-  actionHref="https://explorer.com"
-/>
+// With delays
+<Tooltip content="Delayed tooltip" delay={500} closeDelay={200}>
+  <InfoIcon />
+</Tooltip>
 ```
 
-Always use the `classNames` configuration shown above to remove HeroUI's default styling.
+**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay`, `closeDelay`, `className`, `classNames.content`
+
+### Advanced with Primitives
+
+```tsx
+import { TooltipRoot, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+
+<TooltipRoot delayDuration={300}>
+  <TooltipTrigger asChild>
+    <button>Hover me</button>
+  </TooltipTrigger>
+  <TooltipContent side="right">
+    <div className="flex flex-col gap-2">
+      <p className="font-medium">Custom Content</p>
+      <p className="text-xs text-secondary">Details</p>
+    </div>
+  </TooltipContent>
+</TooltipRoot>
+```
+
+### Provider
+
+```tsx
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+<TooltipProvider>
+  <App />
+</TooltipProvider>
+```
 
 ### Table Component
 
