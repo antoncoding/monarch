@@ -26,7 +26,6 @@ type MarketTableBodyProps = {
   setSelectedMarket: (market: Market) => void;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
-  onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
