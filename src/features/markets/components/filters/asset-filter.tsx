@@ -134,6 +134,7 @@ export default function AssetFilter({
         }`}
       >
         <input
+          aria-label="Search tokens"
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

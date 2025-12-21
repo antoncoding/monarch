@@ -425,12 +425,12 @@ import { Tooltip } from '@/components/ui/tooltip';
 </Tooltip>
 
 // With delays
-<Tooltip content="Delayed tooltip" delay={500} closeDelay={200}>
+<Tooltip content="Delayed tooltip" delay={500}>
   <InfoIcon />
 </Tooltip>
 ```
 
-**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay`, `closeDelay`, `className`, `classNames.content`
+**Props:** `content`, `placement` (`top` | `bottom` | `left` | `right`), `delay`, `className`, `classNames.content`
 
 ### Advanced with Primitives
 

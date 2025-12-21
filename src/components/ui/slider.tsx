@@ -4,7 +4,7 @@ import * as SliderPrimitive from '@radix-ui/react-slider';
 import { cn } from '@/utils/components';
 
 // Support both Radix and HeroUI API for backward compatibility
-type SliderProps = Omit<React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>, 'onValueChange'> & {
+type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> & {
   // HeroUI compatibility props
   maxValue?: number;
   minValue?: number;
@@ -12,27 +12,14 @@ type SliderProps = Omit<React.ComponentPropsWithoutRef<typeof SliderPrimitive.Ro
   classNames?: {
     base?: string;
   };
-  onChange?: (value: number[] | number) => void;
 };
 
 const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
-  ({ className, maxValue, minValue, isDisabled, classNames, onChange, max, min, disabled, onValueChange, ...props }, ref) => {
+  ({ className, maxValue, minValue, isDisabled, classNames, max, min, disabled, ...props }, ref) => {
     // Map HeroUI props to Radix props
     const effectiveMax = maxValue ?? max ?? 100;
     const effectiveMin = minValue ?? min ?? 0;
     const effectiveDisabled = isDisabled ?? disabled ?? false;
-
-    // Handle onChange callback - support both HeroUI (single value or array) and Radix (array)
-    const handleValueChange = React.useCallback(
-      (value: number[]) => {
-        if (onChange) {
-          // HeroUI expects either single value or array
-          onChange(value.length === 1 ? value[0] : value);
-        }
-        onValueChange?.(value);
-      },
-      [onChange, onValueChange],
-    );
 
     return (
       <SliderPrimitive.Root
@@ -41,7 +28,6 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
         max={effectiveMax}
         min={effectiveMin}
         disabled={effectiveDisabled}
-        onValueChange={handleValueChange}
         {...props}
       >
         <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-hovered">

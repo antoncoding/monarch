@@ -35,19 +35,14 @@ type TooltipProps = {
   content: React.ReactNode;
   placement?: 'top' | 'bottom' | 'left' | 'right';
   delay?: number;
-  closeDelay?: number;
   className?: string;
-  classNames?: {
-    base?: string;
-    content?: string;
-  };
 };
 
-function Tooltip({ children, content, placement = 'top', delay = 200, closeDelay = 0, className, classNames }: TooltipProps) {
+function Tooltip({ children, content, placement = 'top', delay = 200, className }: TooltipProps) {
   return (
     <TooltipRoot delayDuration={delay}>
       <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent side={placement} className={cn(className, classNames?.content)}>
+      <TooltipContent side={placement} className={className}>
         {content}
       </TooltipContent>
     </TooltipRoot>
