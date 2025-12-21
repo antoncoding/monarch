@@ -298,7 +298,7 @@ import { Button } from '@/components/ui/button';
 Variants: `primary` | `surface` | `default` | `ghost`
 Sizes: `xs` | `sm` | `md` | `lg` | `icon`
 
-When wrapping Button in HeroUI Tooltip, wrap it in a `<span>` to prevent ResizeObserver errors.
+When wrapping Button in Tooltip, wrap it in a `<span>` to prevent ResizeObserver errors.
 
 ### Switch
 
