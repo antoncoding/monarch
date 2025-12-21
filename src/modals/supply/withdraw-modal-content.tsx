@@ -138,6 +138,7 @@ export function WithdrawModalContent({ position, market, onClose, refetch, onAmo
                 setValue={handleWithdrawAmountChange}
                 setError={setInputError}
                 exceedMaxErrMessage="Insufficient Liquidity"
+                allowExceedMax={true} // allow exceeding max so it still show previews
                 error={inputError}
               />
             </div>

@@ -15,6 +15,8 @@ type SupplyModalContentProps = {
   market: Market;
   onClose: () => void;
   refetch: () => void;
+
+  // should still be trigger when amount > max balance, to show preview
   onAmountChange?: (amount: bigint | undefined) => void;
 };
 
@@ -133,6 +135,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                         setInputError(null);
                       }
                     }}
+                    allowExceedMax={true} // allow exceeding max so it still show previews
                     exceedMaxErrMessage={
                       supplyAmount && supplyAmount > (useEth ? (ethBalance ?? BigInt(0)) : (tokenBalance ?? BigInt(0)))
                         ? 'Insufficient Balance'

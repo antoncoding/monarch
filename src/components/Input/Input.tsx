@@ -48,7 +48,7 @@ export default function Input({
       try {
         const inputBigInt = parseUnits(inputText, decimals);
 
-        if (max && inputBigInt > max && !bypassMax) {
+        if (max !== undefined && inputBigInt > max && !bypassMax) {
           if (setError) setError(exceedMaxErrMessage ?? 'Input exceeds max');
           if (allowExceedMax) {
             setValue(inputBigInt);
