@@ -7,7 +7,6 @@ import type { DateValue, ZonedDateTime } from '@internationalized/date';
 import { fromDate, getLocalTimeZone, toCalendarDate } from '@internationalized/date';
 
 import { cn } from '@/utils/components';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
@@ -122,7 +121,10 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
 
   return (
     <div className={cn('flex flex-col gap-1', isInvalid && 'h-[88px]', !isInvalid && 'h-14')}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+      >
         <PopoverTrigger asChild>
           <button
             type="button"
@@ -134,9 +136,7 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
             {label && <span className="absolute left-4 top-2 text-xs text-gray-500">{label}</span>}
             <div className="flex w-full items-center justify-start gap-2 pt-4 text-sm">
               <FiCalendar className="h-4 w-4 text-gray-500" />
-              <span className={cn(!value && 'text-secondary')}>
-                {displayValue ?? <span className="text-secondary">Pick a date</span>}
-              </span>
+              <span className={cn(!value && 'text-secondary')}>{displayValue ?? <span className="text-secondary">Pick a date</span>}</span>
             </div>
           </button>
         </PopoverTrigger>

@@ -434,7 +434,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     }
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
-  
+
   const handleRefresh = () => {
     refetch(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   };
@@ -524,99 +524,99 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
             {/* Settings buttons */}
             <div className="flex items-center gap-2">
-            <SuppliedAssetFilterCompactSwitch
-              includeUnknownTokens={includeUnknownTokens}
-              setIncludeUnknownTokens={setIncludeUnknownTokens}
-              showUnknownOracle={showUnknownOracle}
-              setShowUnknownOracle={setShowUnknownOracle}
-              showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-              setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-              trustedVaultsOnly={trustedVaultsOnly}
-              setTrustedVaultsOnly={setTrustedVaultsOnly}
-              minSupplyEnabled={minSupplyEnabled}
-              setMinSupplyEnabled={setMinSupplyEnabled}
-              minBorrowEnabled={minBorrowEnabled}
-              setMinBorrowEnabled={setMinBorrowEnabled}
-              minLiquidityEnabled={minLiquidityEnabled}
-              setMinLiquidityEnabled={setMinLiquidityEnabled}
-              thresholds={{
-                minSupply: effectiveMinSupply,
-                minBorrow: effectiveMinBorrow,
-                minLiquidity: effectiveMinLiquidity,
-              }}
-              onOpenSettings={onSettingsModalOpen}
-            />
+              <SuppliedAssetFilterCompactSwitch
+                includeUnknownTokens={includeUnknownTokens}
+                setIncludeUnknownTokens={setIncludeUnknownTokens}
+                showUnknownOracle={showUnknownOracle}
+                setShowUnknownOracle={setShowUnknownOracle}
+                showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+                setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+                trustedVaultsOnly={trustedVaultsOnly}
+                setTrustedVaultsOnly={setTrustedVaultsOnly}
+                minSupplyEnabled={minSupplyEnabled}
+                setMinSupplyEnabled={setMinSupplyEnabled}
+                minBorrowEnabled={minBorrowEnabled}
+                setMinBorrowEnabled={setMinBorrowEnabled}
+                minLiquidityEnabled={minLiquidityEnabled}
+                setMinLiquidityEnabled={setMinLiquidityEnabled}
+                thresholds={{
+                  minSupply: effectiveMinSupply,
+                  minBorrow: effectiveMinBorrow,
+                  minLiquidity: effectiveMinLiquidity,
+                }}
+                onOpenSettings={onSettingsModalOpen}
+              />
 
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="Refresh"
-                  detail="Fetch the latest market data"
-                />
-              }
-            >
-              <span>
-                <Button
-                  disabled={loading || isRefetching}
-                  variant="ghost"
-                  size="icon"
-                  className="text-secondary"
-                  onClick={handleRefresh}
-                >
-                  <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
-                </Button>
-              </span>
-            </Tooltip>
-
-            {/* Hide expand/compact toggle on mobile */}
-            <div className="hidden md:block">
               <Tooltip
                 content={
                   <TooltipContent
-                    icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
-                    title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-                    detail={
-                      effectiveTableViewMode === 'compact'
-                        ? 'Expand table to full width, useful when more columns are enabled.'
-                        : 'Restore compact table view'
-                    }
+                    title="Refresh"
+                    detail="Fetch the latest market data"
                   />
                 }
               >
                 <span>
                   <Button
-                    aria-label="Toggle table width"
+                    disabled={loading || isRefetching}
                     variant="ghost"
                     size="icon"
                     className="text-secondary"
-                    onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                    onClick={handleRefresh}
                   >
-                    {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
+                    <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
                   </Button>
                 </span>
               </Tooltip>
-            </div>
 
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="Preferences"
-                  detail="Adjust thresholds and columns"
-                />
-              }
-            >
-              <span>
-                <Button
-                  aria-label="Market Preferences"
-                  variant="ghost"
-                  size="icon"
-                  className="text-secondary"
-                  onClick={onSettingsModalOpen}
+              {/* Hide expand/compact toggle on mobile */}
+              <div className="hidden md:block">
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
+                      title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
+                      detail={
+                        effectiveTableViewMode === 'compact'
+                          ? 'Expand table to full width, useful when more columns are enabled.'
+                          : 'Restore compact table view'
+                      }
+                    />
+                  }
                 >
-                  <FiSettings />
-                </Button>
-              </span>
-            </Tooltip>
+                  <span>
+                    <Button
+                      aria-label="Toggle table width"
+                      variant="ghost"
+                      size="icon"
+                      className="text-secondary"
+                      onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                    >
+                      {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="Preferences"
+                    detail="Adjust thresholds and columns"
+                  />
+                }
+              >
+                <span>
+                  <Button
+                    aria-label="Market Preferences"
+                    variant="ghost"
+                    size="icon"
+                    className="text-secondary"
+                    onClick={onSettingsModalOpen}
+                  >
+                    <FiSettings />
+                  </Button>
+                </span>
+              </Tooltip>
             </div>
           </div>
         </div>

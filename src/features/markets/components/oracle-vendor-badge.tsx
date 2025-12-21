@@ -69,9 +69,9 @@ function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip =
     const getTooltipContent = () => {
       if (isCustom) {
         return (
-          <div className="m-2">
-            <p className="py-2 text-sm font-medium">Custom Oracle</p>
-            <p className="text-xs text-secondary">Uses an unrecognized oracle contract.</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-primary font-zen">Custom Oracle</p>
+            <p className="text-xs text-secondary font-zen">Uses an unrecognized oracle contract.</p>
           </div>
         );
       }
@@ -96,9 +96,9 @@ function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip =
         description = `Uses feeds from: ${parts.join(', ')}.`;
 
         return (
-          <div className="m-2">
-            <p className="py-2 text-sm font-medium">Standard Oracle</p>
-            <p className="text-xs text-secondary">{description}</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-medium text-primary font-zen">Standard Oracle</p>
+            <p className="text-xs text-secondary font-zen">{description}</p>
           </div>
         );
       }
@@ -106,21 +106,14 @@ function OracleVendorBadge({ oracleData, chainId, showText = false, useTooltip =
       // All core vendors - clean case
       const allVendors = [...coreVendors, ...taggedVendors];
       return (
-        <div className="m-2">
-          <p className="py-2 text-sm font-medium">Standard Oracle</p>
-          <p className="text-xs text-secondary">Uses feeds from {allVendors.join(', ')}.</p>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm font-medium text-primary font-zen">Standard Oracle</p>
+          <p className="text-xs text-secondary font-zen">Uses feeds from {allVendors.join(', ')}.</p>
         </div>
       );
     };
 
-    return (
-      <Tooltip
-        content={getTooltipContent()}
-        className="rounded-sm"
-      >
-        {content}
-      </Tooltip>
-    );
+    return <Tooltip content={getTooltipContent()}>{content}</Tooltip>;
   }
 
   return content;

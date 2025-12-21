@@ -58,12 +58,10 @@ export function MarketActionsDropdown({
     }
   };
 
-
   const onMarketClick = () => {
     const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
     router.push(marketPath);
   };
-
 
   return (
     <div
