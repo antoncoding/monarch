@@ -197,7 +197,8 @@
         "tsconfig.json",
         "src/constants/oracle/**/*.json",
         "public/manifest.json",
-        "src/components/ui/*.tsx"
+        "src/components/ui/*.tsx",
+        "src/components/shared/date-picker.tsx"
       ],
       "formatter": {
         "enabled": false

@@ -16,7 +16,6 @@ type SliderProps = React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root> &
 
 const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
   ({ className, maxValue, minValue, isDisabled, classNames, max, min, disabled, ...props }, ref) => {
-    // Map HeroUI props to Radix props
     const effectiveMax = maxValue ?? max ?? 100;
     const effectiveMin = minValue ?? min ?? 0;
     const effectiveDisabled = isDisabled ?? disabled ?? false;

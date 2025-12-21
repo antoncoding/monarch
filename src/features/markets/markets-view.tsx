@@ -435,24 +435,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
 
-  const handleMarketClick = (market: Market) => {
-    // Build URL with current state instead of searchParams
-    const params = new URLSearchParams();
-    if (selectedCollaterals.length > 0) {
-      params.set('collaterals', selectedCollaterals.join(','));
-    }
-    if (selectedLoanAssets.length > 0) {
-      params.set('loanAssets', selectedLoanAssets.join(','));
-    }
-    if (selectedNetwork) {
-      params.set('network', selectedNetwork.toString());
-    }
-
-    const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
-    const targetPath = params.toString() ? `${marketPath}?${params.toString()}` : marketPath;
-    window.open(targetPath, '_blank');
-  };
-
   const handleRefresh = () => {
     refetch(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   };
@@ -498,144 +480,144 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             />
           </div>
 
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <NetworkFilter
-              selectedNetwork={selectedNetwork}
-              setSelectedNetwork={(network) => {
-                setSelectedNetwork(network);
-                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-              }}
-            />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <NetworkFilter
+                selectedNetwork={selectedNetwork}
+                setSelectedNetwork={(network) => {
+                  setSelectedNetwork(network);
+                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+                }}
+              />
 
-            <AssetFilter
-              label="Loan Asset"
-              placeholder="All loan asset"
-              selectedAssets={selectedLoanAssets}
-              setSelectedAssets={(assets) => {
-                setSelectedLoanAssets(assets);
-                updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-              }}
-              items={uniqueLoanAssets}
-              loading={loading}
-              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-            />
+              <AssetFilter
+                label="Loan Asset"
+                placeholder="All loan asset"
+                selectedAssets={selectedLoanAssets}
+                setSelectedAssets={(assets) => {
+                  setSelectedLoanAssets(assets);
+                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
+                }}
+                items={uniqueLoanAssets}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+              />
 
-            <AssetFilter
-              label="Collateral"
-              placeholder="All collateral"
-              selectedAssets={selectedCollaterals}
-              setSelectedAssets={(assets) => {
-                setSelectedCollaterals(assets);
-                updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-              }}
-              items={uniqueCollaterals}
-              loading={loading}
-              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-            />
+              <AssetFilter
+                label="Collateral"
+                placeholder="All collateral"
+                selectedAssets={selectedCollaterals}
+                setSelectedAssets={(assets) => {
+                  setSelectedCollaterals(assets);
+                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
+                }}
+                items={uniqueCollaterals}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+              />
 
-            <OracleFilter
-              selectedOracles={selectedOracles}
-              setSelectedOracles={setSelectedOracles}
-            />
-          </div>
-        </div>
+              <OracleFilter
+                selectedOracles={selectedOracles}
+                setSelectedOracles={setSelectedOracles}
+              />
+            </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          {/* Settings */}
-          <div className="mt-4 flex items-center gap-2 lg:mt-0">
-            <SuppliedAssetFilterCompactSwitch
-              includeUnknownTokens={includeUnknownTokens}
-              setIncludeUnknownTokens={setIncludeUnknownTokens}
-              showUnknownOracle={showUnknownOracle}
-              setShowUnknownOracle={setShowUnknownOracle}
-              showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-              setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-              trustedVaultsOnly={trustedVaultsOnly}
-              setTrustedVaultsOnly={setTrustedVaultsOnly}
-              minSupplyEnabled={minSupplyEnabled}
-              setMinSupplyEnabled={setMinSupplyEnabled}
-              minBorrowEnabled={minBorrowEnabled}
-              setMinBorrowEnabled={setMinBorrowEnabled}
-              minLiquidityEnabled={minLiquidityEnabled}
-              setMinLiquidityEnabled={setMinLiquidityEnabled}
-              thresholds={{
-                minSupply: effectiveMinSupply,
-                minBorrow: effectiveMinBorrow,
-                minLiquidity: effectiveMinLiquidity,
-              }}
-              onOpenSettings={onSettingsModalOpen}
-            />
+            {/* Settings buttons */}
+            <div className="flex items-center gap-2">
+              <SuppliedAssetFilterCompactSwitch
+                includeUnknownTokens={includeUnknownTokens}
+                setIncludeUnknownTokens={setIncludeUnknownTokens}
+                showUnknownOracle={showUnknownOracle}
+                setShowUnknownOracle={setShowUnknownOracle}
+                showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+                setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+                trustedVaultsOnly={trustedVaultsOnly}
+                setTrustedVaultsOnly={setTrustedVaultsOnly}
+                minSupplyEnabled={minSupplyEnabled}
+                setMinSupplyEnabled={setMinSupplyEnabled}
+                minBorrowEnabled={minBorrowEnabled}
+                setMinBorrowEnabled={setMinBorrowEnabled}
+                minLiquidityEnabled={minLiquidityEnabled}
+                setMinLiquidityEnabled={setMinLiquidityEnabled}
+                thresholds={{
+                  minSupply: effectiveMinSupply,
+                  minBorrow: effectiveMinBorrow,
+                  minLiquidity: effectiveMinLiquidity,
+                }}
+                onOpenSettings={onSettingsModalOpen}
+              />
 
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="Refresh"
-                  detail="Fetch the latest market data"
-                />
-              }
-            >
-              <span>
-                <Button
-                  disabled={loading || isRefetching}
-                  variant="ghost"
-                  size="icon"
-                  className="text-secondary"
-                  onClick={handleRefresh}
-                >
-                  <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
-                </Button>
-              </span>
-            </Tooltip>
-
-            {/* Hide expand/compact toggle on mobile */}
-            <div className="hidden md:block">
               <Tooltip
                 content={
                   <TooltipContent
-                    icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
-                    title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-                    detail={
-                      effectiveTableViewMode === 'compact'
-                        ? 'Expand table to full width, useful when more columns are enabled.'
-                        : 'Restore compact table view'
-                    }
+                    title="Refresh"
+                    detail="Fetch the latest market data"
                   />
                 }
               >
                 <span>
                   <Button
-                    aria-label="Toggle table width"
+                    disabled={loading || isRefetching}
                     variant="ghost"
                     size="icon"
                     className="text-secondary"
-                    onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                    onClick={handleRefresh}
                   >
-                    {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
+                    <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
+                  </Button>
+                </span>
+              </Tooltip>
+
+              {/* Hide expand/compact toggle on mobile */}
+              <div className="hidden md:block">
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
+                      title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
+                      detail={
+                        effectiveTableViewMode === 'compact'
+                          ? 'Expand table to full width, useful when more columns are enabled.'
+                          : 'Restore compact table view'
+                      }
+                    />
+                  }
+                >
+                  <span>
+                    <Button
+                      aria-label="Toggle table width"
+                      variant="ghost"
+                      size="icon"
+                      className="text-secondary"
+                      onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+                    >
+                      {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="Preferences"
+                    detail="Adjust thresholds and columns"
+                  />
+                }
+              >
+                <span>
+                  <Button
+                    aria-label="Market Preferences"
+                    variant="ghost"
+                    size="icon"
+                    className="text-secondary"
+                    onClick={onSettingsModalOpen}
+                  >
+                    <FiSettings />
                   </Button>
                 </span>
               </Tooltip>
             </div>
-
-            <Tooltip
-              content={
-                <TooltipContent
-                  title="Preferences"
-                  detail="Adjust thresholds and columns"
-                />
-              }
-            >
-              <span>
-                <Button
-                  aria-label="Market Preferences"
-                  variant="ghost"
-                  size="icon"
-                  className="text-secondary"
-                  onClick={onSettingsModalOpen}
-                >
-                  <FiSettings />
-                </Button>
-              </span>
-            </Tooltip>
           </div>
         </div>
       </div>
@@ -659,7 +641,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 titleOnclick={titleOnclick}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
-                onMarketClick={handleMarketClick}
                 staredIds={staredIds}
                 starMarket={starMarket}
                 unstarMarket={unstarMarket}

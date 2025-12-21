@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { AiOutlineStop } from 'react-icons/ai';
 import { GoStarFill, GoStar, GoGraph } from 'react-icons/go';
@@ -16,7 +17,6 @@ type MarketActionsDropdownProps = {
   isStared: boolean;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
-  onMarketClick: (market: Market) => void;
   setSelectedMarket: (market: Market) => void;
   setShowSupplyModal: (show: boolean) => void;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
@@ -28,13 +28,14 @@ export function MarketActionsDropdown({
   isStared,
   starMarket,
   unstarMarket,
-  onMarketClick,
   setSelectedMarket,
   setShowSupplyModal,
   addBlacklistedMarket,
   isBlacklisted,
 }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -55,6 +56,11 @@ export function MarketActionsDropdown({
     if (addBlacklistedMarket) {
       addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
     }
+  };
+
+  const onMarketClick = () => {
+    const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
+    router.push(marketPath);
   };
 
   return (
@@ -86,9 +92,7 @@ export function MarketActionsDropdown({
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            onClick={() => {
-              onMarketClick(market);
-            }}
+            onClick={onMarketClick}
             startContent={<GoGraph className="h-4 w-4" />}
           >
             View Market

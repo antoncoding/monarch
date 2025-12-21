@@ -160,24 +160,21 @@ function VolumeChart({
 
   return (
     <Card className="bg-surface rounded p-4 shadow-sm">
-      <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
-        <span />
-        <div className="flex gap-4">
-          <ButtonGroup
-            options={volumeViewOptions}
-            value={volumeView}
-            onChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
-            size="sm"
-            variant="default"
-          />
-          <ButtonGroup
-            options={timeframeOptions}
-            value={selectedTimeframe}
-            onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
-            size="sm"
-            variant="default"
-          />
-        </div>
+      <CardHeader className="flex flex-row items-center justify-end gap-4 px-6 py-4">
+        <ButtonGroup
+          options={volumeViewOptions}
+          value={volumeView}
+          onChange={(value) => setVolumeView(value as 'USD' | 'Asset')}
+          size="sm"
+          variant="default"
+        />
+        <ButtonGroup
+          options={timeframeOptions}
+          value={selectedTimeframe}
+          onChange={(value) => handleTimeframeChange(value as '1d' | '7d' | '30d')}
+          size="sm"
+          variant="default"
+        />
       </CardHeader>
       <CardBody>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
