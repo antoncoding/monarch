@@ -24,7 +24,6 @@ type MarketsTableProps = {
   currentPage: number;
   entriesPerPage: number;
   setCurrentPage: (value: number) => void;
-  onMarketClick: (market: Market) => void;
   columnVisibility: ColumnVisibility;
   trustedVaults: TrustedVault[];
   className?: string;
@@ -47,7 +46,6 @@ function MarketsTable({
   currentPage,
   entriesPerPage,
   setCurrentPage,
-  onMarketClick,
   columnVisibility,
   trustedVaults,
   className,
@@ -215,7 +213,6 @@ function MarketsTable({
             setSelectedMarket={setSelectedMarket}
             starMarket={starMarket}
             unstarMarket={unstarMarket}
-            onMarketClick={onMarketClick}
             columnVisibility={columnVisibility}
             trustedVaultMap={trustedVaultMap}
             addBlacklistedMarket={addBlacklistedMarket}

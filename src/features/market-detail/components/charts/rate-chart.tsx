@@ -110,8 +110,7 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
 
   return (
     <Card className="bg-surface rounded p-4 shadow-sm">
-      <CardHeader className="flex items-center justify-between px-6 py-4 text-xl">
-        <span />
+      <CardHeader className="flex flex-row items-center justify-end px-6 py-4">
         <ButtonGroup
           options={timeframeOptions}
           value={selectedTimeframe}

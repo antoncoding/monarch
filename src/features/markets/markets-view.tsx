@@ -434,25 +434,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     }
     // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
   };
-
-  const handleMarketClick = (market: Market) => {
-    // Build URL with current state instead of searchParams
-    const params = new URLSearchParams();
-    if (selectedCollaterals.length > 0) {
-      params.set('collaterals', selectedCollaterals.join(','));
-    }
-    if (selectedLoanAssets.length > 0) {
-      params.set('loanAssets', selectedLoanAssets.join(','));
-    }
-    if (selectedNetwork) {
-      params.set('network', selectedNetwork.toString());
-    }
-
-    const marketPath = `/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`;
-    const targetPath = params.toString() ? `${marketPath}?${params.toString()}` : marketPath;
-    window.open(targetPath, '_blank');
-  };
-
+  
   const handleRefresh = () => {
     refetch(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   };
@@ -498,51 +480,50 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             />
           </div>
 
-          <div className="flex flex-col gap-4 lg:flex-row">
-            <NetworkFilter
-              selectedNetwork={selectedNetwork}
-              setSelectedNetwork={(network) => {
-                setSelectedNetwork(network);
-                updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-              }}
-            />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row">
+              <NetworkFilter
+                selectedNetwork={selectedNetwork}
+                setSelectedNetwork={(network) => {
+                  setSelectedNetwork(network);
+                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
+                }}
+              />
 
-            <AssetFilter
-              label="Loan Asset"
-              placeholder="All loan asset"
-              selectedAssets={selectedLoanAssets}
-              setSelectedAssets={(assets) => {
-                setSelectedLoanAssets(assets);
-                updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-              }}
-              items={uniqueLoanAssets}
-              loading={loading}
-              updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-            />
+              <AssetFilter
+                label="Loan Asset"
+                placeholder="All loan asset"
+                selectedAssets={selectedLoanAssets}
+                setSelectedAssets={(assets) => {
+                  setSelectedLoanAssets(assets);
+                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
+                }}
+                items={uniqueLoanAssets}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+              />
 
-            <AssetFilter
-              label="Collateral"
-              placeholder="All collateral"
-              selectedAssets={selectedCollaterals}
-              setSelectedAssets={(assets) => {
-                setSelectedCollaterals(assets);
-                updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-              }}
-              items={uniqueCollaterals}
-              loading={loading}
-              updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-            />
+              <AssetFilter
+                label="Collateral"
+                placeholder="All collateral"
+                selectedAssets={selectedCollaterals}
+                setSelectedAssets={(assets) => {
+                  setSelectedCollaterals(assets);
+                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
+                }}
+                items={uniqueCollaterals}
+                loading={loading}
+                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+              />
 
-            <OracleFilter
-              selectedOracles={selectedOracles}
-              setSelectedOracles={setSelectedOracles}
-            />
-          </div>
-        </div>
+              <OracleFilter
+                selectedOracles={selectedOracles}
+                setSelectedOracles={setSelectedOracles}
+              />
+            </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-          {/* Settings */}
-          <div className="mt-4 flex items-center gap-2 lg:mt-0">
+            {/* Settings buttons */}
+            <div className="flex items-center gap-2">
             <SuppliedAssetFilterCompactSwitch
               includeUnknownTokens={includeUnknownTokens}
               setIncludeUnknownTokens={setIncludeUnknownTokens}
@@ -636,6 +617,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 </Button>
               </span>
             </Tooltip>
+            </div>
           </div>
         </div>
       </div>
@@ -659,7 +641,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 titleOnclick={titleOnclick}
                 sortColumn={sortColumn}
                 sortDirection={sortDirection}
-                onMarketClick={handleMarketClick}
                 staredIds={staredIds}
                 starMarket={starMarket}
                 unstarMarket={unstarMarket}

@@ -42,7 +42,6 @@ export function MarketTableBody({
   setSelectedMarket,
   starMarket,
   unstarMarket,
-  onMarketClick,
   columnVisibility,
   trustedVaultMap,
   addBlacklistedMarket,
@@ -130,20 +129,11 @@ export function MarketTableBody({
                 className="z-50"
                 style={{ minWidth: '80px' }}
               >
-                <button
-                  type="button"
-                  className="cursor-pointer no-underline hover:underline"
-                  onClick={(e) => {
-                    onMarketClick(item);
-                    e.stopPropagation();
-                  }}
-                >
-                  <MarketIdBadge
-                    marketId={item.uniqueKey}
-                    chainId={item.morphoBlue.chain.id}
-                    showNetworkIcon
-                  />
-                </button>
+                <MarketIdBadge
+                  marketId={item.uniqueKey}
+                  chainId={item.morphoBlue.chain.id}
+                  showNetworkIcon
+                />
               </TableCell>
               <TDAsset
                 dataLabel="Loan"
@@ -274,7 +264,6 @@ export function MarketTableBody({
                     isStared={isStared}
                     starMarket={starMarket}
                     unstarMarket={unstarMarket}
-                    onMarketClick={onMarketClick}
                     setSelectedMarket={setSelectedMarket}
                     setShowSupplyModal={setShowSupplyModal}
                     addBlacklistedMarket={addBlacklistedMarket}
