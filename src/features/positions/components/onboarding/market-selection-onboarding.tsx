@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/features/markets/components/markets-table-same-loan';
 import type { MarketWithSelection } from '@/features/markets/components/markets-table-same-loan';
@@ -6,7 +6,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { useOnboarding } from './onboarding-context';
 
 export function MarketSelectionOnboarding() {
-  const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep } = useOnboarding();
+  const { selectedToken, selectedMarkets, setSelectedMarkets, canGoNext, goToNextStep, goToPrevStep, setFooterContent } = useOnboarding();
 
   const { getUniqueTokens } = useTokens();
 
@@ -33,18 +33,41 @@ export function MarketSelectionOnboarding() {
       }));
   }, [selectedToken?.markets, selectedMarkets]);
 
+  // Memoize footer content
+  const footerButtons = useMemo(
+    () => (
+      <>
+        <Button
+          variant="ghost"
+          onClick={goToPrevStep}
+          className="min-w-[120px]"
+        >
+          Back
+        </Button>
+        <Button
+          variant="primary"
+          onClick={goToNextStep}
+          disabled={!canGoNext}
+          className="min-w-[120px]"
+        >
+          Continue
+        </Button>
+      </>
+    ),
+    [canGoNext, goToNextStep, goToPrevStep],
+  );
+
+  // Set footer content for this step
+  useEffect(() => {
+    setFooterContent(footerButtons);
+    return () => setFooterContent(null);
+  }, [footerButtons, setFooterContent]);
+
   // Handle case when no token is selected yet
   if (!selectedToken) {
     return (
       <div className="flex h-full flex-col items-center justify-center">
         <p className="text-gray-400">No token selected. Please go back and select a token.</p>
-        <Button
-          variant="ghost"
-          onClick={goToPrevStep}
-          className="mt-4 min-w-[120px]"
-        >
-          Back
-        </Button>
       </div>
     );
   }
@@ -80,25 +103,6 @@ export function MarketSelectionOnboarding() {
           showSelectColumn
           showCart={false}
         />
-      </div>
-
-      {/* Navigation - ALWAYS VISIBLE */}
-      <div className="mt-6 flex items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-        <Button
-          variant="ghost"
-          onClick={goToPrevStep}
-          className="min-w-[120px]"
-        >
-          Back
-        </Button>
-        <Button
-          variant="primary"
-          onClick={goToNextStep}
-          disabled={!canGoNext}
-          className="min-w-[120px]"
-        >
-          Continue
-        </Button>
       </div>
     </div>
   );

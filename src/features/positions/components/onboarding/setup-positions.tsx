@@ -18,10 +18,10 @@ import { SupportedNetworks } from '@/utils/networks';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useOnboarding } from './onboarding-context';
 
-export function SetupPositions() {
+export function SetupPositions({ onClose }: { onClose: () => void }) {
   const toast = useStyledToast();
   const { short: rateLabel } = useRateLabel();
-  const { selectedToken, selectedMarkets, goToNextStep, goToPrevStep, balances } = useOnboarding();
+  const { selectedToken, selectedMarkets, balances, goToPrevStep, setFooterContent } = useOnboarding();
   const [useEth] = useLocalStorage('useEth', false);
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
   const [totalAmount, setTotalAmount] = useState<string>('');
@@ -183,7 +183,7 @@ export function SetupPositions() {
     supplies,
     useEth,
     usePermit2Setting,
-    goToNextStep,
+    onClose,
   );
 
   const handleSupply = useCallback(() => {
@@ -196,7 +196,7 @@ export function SetupPositions() {
       setIsSupplying(true);
 
       try {
-        // trigger the tx. goToNextStep() be called as a `onSuccess` callback
+        // trigger the tx. onClose() will be called as a `onSuccess` callback to close the modal
         await approveAndSupply();
       } catch (_supplyError) {
       } finally {
@@ -204,6 +204,38 @@ export function SetupPositions() {
       }
     })();
   }, [isSupplying, toast, approveAndSupply]);
+
+  // Memoize footer content
+  const footerButtons = useMemo(
+    () => (
+      <>
+        <Button
+          variant="ghost"
+          onClick={goToPrevStep}
+          className="min-w-[120px]"
+        >
+          Back
+        </Button>
+        <ExecuteTransactionButton
+          targetChainId={selectedToken?.network ?? SupportedNetworks.Base}
+          onClick={handleSupply}
+          disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
+          isLoading={supplyPending || isLoadingPermit2}
+          variant="primary"
+          className="min-w-[120px]"
+        >
+          Execute
+        </ExecuteTransactionButton>
+      </>
+    ),
+    [error, totalAmountBigInt, supplies.length, supplyPending, isLoadingPermit2, handleSupply, selectedToken?.network, goToPrevStep],
+  );
+
+  // Set footer content for this step
+  useEffect(() => {
+    setFooterContent(footerButtons);
+    return () => setFooterContent(null);
+  }, [footerButtons, setFooterContent]);
 
   if (!selectedToken || !selectedMarkets || selectedMarkets.length === 0) {
     return null;
@@ -252,7 +284,7 @@ export function SetupPositions() {
       </div>
 
       {/* Markets Distribution */}
-      <div className="mt-6 h-96 overflow-y-auto">
+      <div className="mt-6 max-h-[400px] overflow-y-auto">
         <Table className="responsive w-full rounded-md font-zen">
           <TableHeader className="">
             <TableRow>
@@ -356,27 +388,6 @@ export function SetupPositions() {
           usePermit2={usePermit2Setting}
         />
       )}
-
-      {/* Navigation */}
-      <div className="mt-6 flex items-center justify-between">
-        <Button
-          variant="ghost"
-          className="min-w-[120px]"
-          onClick={goToPrevStep}
-        >
-          Back
-        </Button>
-        <ExecuteTransactionButton
-          targetChainId={selectedToken?.network ?? SupportedNetworks.Base}
-          onClick={handleSupply}
-          disabled={error !== null || totalAmountBigInt === 0n || supplies.length === 0}
-          isLoading={supplyPending || isLoadingPermit2}
-          variant="primary"
-          className="min-w-[120px]"
-        >
-          Execute
-        </ExecuteTransactionButton>
-      </div>
     </div>
   );
 }

@@ -35,6 +35,10 @@ type OnboardingContextType = {
   // Shared balances across all steps
   balances: { address: string; balance: string }[];
   balancesLoading: boolean;
+
+  // Footer content control
+  footerContent: React.ReactNode | null;
+  setFooterContent: (content: React.ReactNode | null) => void;
 };
 
 const OnboardingContext = createContext<OnboardingContextType | null>(null);
@@ -42,6 +46,7 @@ const OnboardingContext = createContext<OnboardingContextType | null>(null);
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const [selectedToken, setSelectedToken] = useState<TokenWithMarkets | null>(null);
   const [selectedMarkets, setSelectedMarkets] = useState<Market[]>([]);
+  const [footerContent, setFooterContent] = useState<React.ReactNode | null>(null);
 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
@@ -63,19 +68,19 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }, [currentStep, selectedToken, selectedMarkets]);
 
-  const goToNextStep = () => {
+  const goToNextStep = useCallback(() => {
     const nextStep = ONBOARDING_STEPS[currentStepIndex + 1];
     if (nextStep) {
       setStep(nextStep.id);
     }
-  };
+  }, [currentStepIndex]);
 
-  const goToPrevStep = () => {
+  const goToPrevStep = useCallback(() => {
     const prevStep = ONBOARDING_STEPS[currentStepIndex - 1];
     if (prevStep) {
       setStep(prevStep.id);
     }
-  };
+  }, [currentStepIndex]);
 
   const resetOnboarding = useCallback(() => {
     setSelectedToken(null);
@@ -100,6 +105,8 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       resetOnboarding,
       balances,
       balancesLoading,
+      footerContent,
+      setFooterContent,
     }),
     [
       selectedToken,
@@ -109,11 +116,10 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       goToNextStep,
       goToPrevStep,
       resetOnboarding,
-      setSelectedToken,
-      setSelectedMarkets,
-      setStep,
       balances,
       balancesLoading,
+      // Note: footerContent is intentionally excluded from deps to prevent infinite loops
+      // Components can read it but setting it won't trigger context updates
     ],
   );
 
