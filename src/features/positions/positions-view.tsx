@@ -15,8 +15,10 @@ import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import type { MarketPosition } from '@/utils/types';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
+import { PortfolioValueBadge } from './components/portfolio-value-badge';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
@@ -36,6 +38,9 @@ export default function Positions() {
     refetch,
     loadingStates,
   } = useUserPositionsSummaryData(account, earningsPeriod);
+
+  // Calculate portfolio value from positions
+  const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions);
 
   const loading = isMarketsLoading || isPositionsLoading;
 
@@ -62,12 +67,23 @@ export default function Positions() {
         <div className="pb-4">
           <h1 className="font-zen">Portfolio</h1>
         </div>
-        <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-4 pb-4 sm:flex-row">
           <AccountIdentity
             address={account as Address}
             variant="full"
             showAddress
           />
+          {!loading && hasSuppliedMarkets && (
+            <PortfolioValueBadge
+              totalUsd={totalUsd}
+              isLoading={isPricesLoading}
+              error={pricesError}
+              onClick={() => {
+                // TODO: Add click handler (show breakdown modal, navigate, etc.)
+                console.log('Portfolio value clicked');
+              }}
+            />
+          )}
         </div>
 
         {showWithdrawModal && selectedPosition && (

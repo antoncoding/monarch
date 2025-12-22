@@ -595,3 +595,20 @@ export const vaultV2Query = `
     }
   }
 `;
+
+// Query for fetching token prices from Morpho API
+export const assetPricesQuery = `
+  query getAssetPrices($where: AssetsFilters) {
+    assets(where: $where) {
+      items {
+        address
+        symbol
+        decimals
+        chain {
+          id
+        }
+        priceUsd
+      }
+    }
+  }
+`;
