@@ -131,15 +131,6 @@ badDebt {
 supplyingVaults {
   address
 }
-
-riskAnalysis {
-  analysis {
-    ... on CredoraRiskAnalysis {
-      score
-      rating
-    }
-  }
-}
 `;
 
 // Market Fragement is only used type when querying a single market
@@ -236,14 +227,6 @@ export const marketsQuery = `
       type
       level
       __typename
-    }
-    riskAnalysis {
-      analysis {
-        ... on CredoraRiskAnalysis {
-          score
-          rating
-        }
-      }
     }
   }
 `;
