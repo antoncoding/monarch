@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
-import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
@@ -38,6 +38,7 @@ import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { RebalanceModal } from './rebalance/rebalance-modal';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
+import { CollateralIconsDisplay } from './collateral-icons-display';
 
 // Component to compute and display aggregated risk indicators for a group of positions
 function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: GroupedPosition }) {
@@ -97,7 +98,7 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
   );
 }
 
-type PositionsSummaryTableProps = {
+type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
   marketPositions: MarketPositionWithEarnings[];
   setShowWithdrawModal: (show: boolean) => void;
@@ -110,7 +111,7 @@ type PositionsSummaryTableProps = {
   setEarningsPeriod: (period: EarningsPeriod) => void;
 };
 
-export function PositionsSummaryTable({
+export function SuppliedMorphoBlueGroupedTable({
   marketPositions,
   setShowWithdrawModal,
   setShowSupplyModal,
@@ -121,7 +122,7 @@ export function PositionsSummaryTable({
   account,
   earningsPeriod,
   setEarningsPeriod,
-}: PositionsSummaryTableProps) {
+}: SuppliedMorphoBlueGroupedTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
@@ -183,88 +184,94 @@ export function PositionsSummaryTable({
     );
   };
 
+  // Header actions (period dropdown, refresh, settings)
+  const headerActions = (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="font-zen text-secondary min-w-fit"
+          >
+            <IoChevronDownOutline className="mr-2 h-4 w-4" />
+            {periodLabels[earningsPeriod]}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {Object.entries(periodLabels).map(([period, label]) => (
+            <DropdownMenuItem
+              key={period}
+              onClick={() => setEarningsPeriod(period as EarningsPeriod)}
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Refresh"
+            detail="Fetch latest position data"
+          />
+        }
+      >
+        <span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleManualRefresh}
+            disabled={isRefetching}
+            className="text-secondary min-w-0 px-2"
+          >
+            <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+          </Button>
+        </span>
+      </Tooltip>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-secondary min-w-0 px-2"
+          >
+            <GearIcon className="h-3 w-3" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            className="flex h-auto gap-2 p-0"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <div className="flex w-full items-center justify-between px-2 py-1.5">
+              <span className="mr-2 text-xs">Show Collateral Exposure</span>
+              <IconSwitch
+                size="xs"
+                selected={showCollateralExposure}
+                onChange={setShowCollateralExposure}
+                thumbIcon={null}
+                classNames={{
+                  wrapper: 'mx-0',
+                  thumbIcon: 'p-0 mr-0',
+                }}
+              />
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
+
   return (
     <div className="space-y-4 overflow-x-auto">
-      <div className="mb-4 flex items-center justify-end gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="font-zen text-secondary min-w-fit"
-            >
-              <IoChevronDownOutline className="mr-2 h-4 w-4" />
-              {periodLabels[earningsPeriod]}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            {Object.entries(periodLabels).map(([period, label]) => (
-              <DropdownMenuItem
-                key={period}
-                onClick={() => setEarningsPeriod(period as EarningsPeriod)}
-              >
-                {label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Tooltip
-          content={
-            <TooltipContent
-              title="Refresh"
-              detail="Fetch latest position data"
-            />
-          }
-        >
-          <span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleManualRefresh}
-              disabled={isRefetching}
-              className="text-secondary min-w-0 px-2"
-            >
-              <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-            </Button>
-          </span>
-        </Tooltip>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-            >
-              <GearIcon className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              className="flex h-auto gap-2 p-0"
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex w-full items-center justify-between px-2 py-1.5">
-                <span className="mr-2 text-xs">Show Collateral Exposure</span>
-                <IconSwitch
-                  size="xs"
-                  selected={showCollateralExposure}
-                  onChange={setShowCollateralExposure}
-                  thumbIcon={null}
-                  classNames={{
-                    wrapper: 'mx-0',
-                    thumbIcon: 'p-0 mr-0',
-                  }}
-                />
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="bg-surface overflow-hidden rounded shadow-sm">
+      <TableContainerWithHeader
+        title="Supplied Positions"
+        actions={headerActions}
+      >
         <Table className="responsive w-full min-w-[640px]">
           <TableHeader>
             <TableRow className="w-full justify-center text-secondary">
-              <TableHead className="w-10" />
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
@@ -298,7 +305,7 @@ export function PositionsSummaryTable({
           <TableBody className="text-sm">
             {processedPositions.map((groupedPosition) => {
               const rowKey = `${groupedPosition.loanAssetAddress}-${groupedPosition.chainId}`;
-              const isExpanded = expandedRows.has(rowKey);
+              const _isExpanded = expandedRows.has(rowKey);
               const avgApy = groupedPosition.totalWeightedApy;
 
               const earnings = getGroupedEarnings(groupedPosition);
@@ -309,7 +316,6 @@ export function PositionsSummaryTable({
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleRow(rowKey)}
                   >
-                    <TableCell className="w-10 text-center">{isExpanded ? <ChevronUpIcon /> : <ChevronDownIcon />}</TableCell>
                     <TableCell className="w-10">
                       <div className="flex items-center justify-center">
                         <Image
@@ -363,25 +369,12 @@ export function PositionsSummaryTable({
                       </div>
                     </TableCell>
                     <TableCell data-label="Collateral">
-                      <div className="flex items-center justify-center gap-1">
-                        {groupedPosition.collaterals.length > 0 ? (
-                          groupedPosition.collaterals
-                            .sort((a, b) => b.amount - a.amount)
-                            .map((collateral, index) => (
-                              <TokenIcon
-                                key={`${collateral.address}-${index}`}
-                                address={collateral.address}
-                                chainId={groupedPosition.chainId}
-                                symbol={collateral.symbol}
-                                width={20}
-                                height={20}
-                                opacity={collateral.amount > 0 ? 1 : 0.5}
-                              />
-                            ))
-                        ) : (
-                          <span className="text-sm text-gray-500">No known collaterals</span>
-                        )}
-                      </div>
+                      <CollateralIconsDisplay
+                        collaterals={groupedPosition.collaterals}
+                        chainId={groupedPosition.chainId}
+                        maxDisplay={8}
+                        iconSize={20}
+                      />
                     </TableCell>
                     <TableCell
                       data-label="Warnings"
@@ -445,7 +438,7 @@ export function PositionsSummaryTable({
             })}
           </TableBody>
         </Table>
-      </div>
+      </TableContainerWithHeader>
       {showRebalanceModal && selectedGroupedPosition && (
         <RebalanceModal
           groupedPosition={selectedGroupedPosition}

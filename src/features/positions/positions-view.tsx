@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Tooltip } from '@/components/ui/tooltip';
-import { FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
 import { toast } from 'react-toastify';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
@@ -18,29 +16,15 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import type { MarketPosition } from '@/utils/types';
-import { OnboardingModal } from './components/onboarding/onboarding-modal';
-import { PositionsSummaryTable } from './components/positions-summary-table';
+import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
-  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
 
   const { account } = useParams<{ account: string }>();
-  const { address } = useConnection();
-
-  const [mounted, setMounted] = useState(false);
-
-  const isOwner = useMemo(() => {
-    if (!account || !address || !mounted) return false;
-    return account === address;
-  }, [account, address, mounted]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const { loading: isMarketsLoading } = useMarkets();
 
@@ -84,22 +68,6 @@ export default function Positions() {
             variant="full"
             showAddress
           />
-          <div className="flex gap-4">
-            {isOwner && (
-              <Button
-                variant="primary"
-                size="md"
-                className="font-zen"
-                onClick={() => setShowOnboardingModal(true)}
-              >
-                <FaPlus
-                  size={14}
-                  className="mr-2"
-                />
-                New Position
-              </Button>
-            )}
-          </div>
         </div>
 
         {showWithdrawModal && selectedPosition && (
@@ -123,11 +91,6 @@ export default function Positions() {
           />
         )}
 
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          onOpenChange={setShowOnboardingModal}
-        />
-
         {loading ? (
           <LoadingScreen
             message={loadingMessage}
@@ -135,7 +98,7 @@ export default function Positions() {
           />
         ) : hasSuppliedMarkets ? (
           <div className="mt-4">
-            <PositionsSummaryTable
+            <SuppliedMorphoBlueGroupedTable
               account={account}
               marketPositions={marketPositions}
               setShowWithdrawModal={setShowWithdrawModal}
