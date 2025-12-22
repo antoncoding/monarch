@@ -1,22 +1,21 @@
 import type React from 'react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Badge as Chip } from '@/components/ui/badge';
+import { useSearchParams } from 'next/navigation';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
-import moment from 'moment';
 import Image from 'next/image';
 import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
-import { Badge } from '@/components/ui/badge';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import LoadingScreen from '@/components/status/loading-screen';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { MarketIdentity, MarketIdentityFocus } from '@/features/markets/components/market-identity';
+import { getTruncatedAssetName } from '@/utils/oracle';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
-import { actionTypeToText } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { UserTxTypes, type UserRebalancerInfo, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
 
@@ -33,10 +32,35 @@ type AssetKey = {
   decimals: number;
 };
 
+const formatTimeAgo = (timestamp: number): string => {
+  const now = Date.now();
+  const txTime = timestamp * 1000;
+  const diffInSeconds = Math.floor((now - txTime) / 1000);
+
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) return `${diffInDays}d ago`;
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
+
+  const diffInYears = Math.floor(diffInMonths / 12);
+  return `${diffInYears}y ago`;
+};
+
 export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTableProps) {
+  const searchParams = useSearchParams();
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { allMarkets } = useMarkets();
 
@@ -66,6 +90,55 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
     });
     return Array.from(assetMap.values());
   }, [positions, allMarkets]);
+
+  // Handle initial URL parameters for pre-filtering (only once)
+  useEffect(() => {
+    // Only initialize once and only if we have URL params
+    if (hasInitializedFromUrl) return;
+
+    const chainIdParam = searchParams.get('chainId');
+    const tokenAddressParam = searchParams.get('tokenAddress');
+    const tokenSymbolParam = searchParams.get('tokenSymbol');
+
+    // If no URL params, we're done initializing
+    if (!chainIdParam || !tokenAddressParam) {
+      setHasInitializedFromUrl(true);
+      return;
+    }
+
+    // Wait for markets to load before initializing
+    if (allMarkets.length === 0) return;
+
+    const chainId = Number.parseInt(chainIdParam, 10);
+
+    // Try to find in uniqueAssets first (from user positions)
+    const matchingAsset = uniqueAssets.find(
+      (asset) => asset.chainId === chainId && asset.address.toLowerCase() === tokenAddressParam.toLowerCase(),
+    );
+
+    if (matchingAsset) {
+      setSelectedAsset(matchingAsset);
+      setHasInitializedFromUrl(true);
+    } else if (tokenSymbolParam) {
+      // If not in positions, create from URL params (user might not have position but coming from link)
+      const decimals =
+        allMarkets.find((m) => m.morphoBlue.chain.id === chainId && m.loanAsset.address.toLowerCase() === tokenAddressParam.toLowerCase())
+          ?.loanAsset.decimals ?? 18;
+
+      setSelectedAsset({
+        symbol: tokenSymbolParam,
+        chainId,
+        address: tokenAddressParam,
+        decimals,
+      });
+      setHasInitializedFromUrl(true);
+    }
+  }, [searchParams, uniqueAssets, allMarkets, hasInitializedFromUrl]);
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedAsset]);
 
   // Get filtered market IDs based on selected asset
   const marketIdFilter = useMemo(() => {
@@ -123,11 +196,11 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
   return (
     <div className="space-y-4">
       <div
-        className="relative w-full"
+        className="relative w-fit max-w-md"
         ref={dropdownRef}
       >
         <div
-          className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
+          className={`bg-surface min-w-64 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
             isOpen ? 'bg-surface-dark' : ''
           }`}
           role="button"
@@ -169,7 +242,7 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
           </div>
         </div>
         {isOpen && (
-          <div className="bg-surface absolute z-10 mt-1 w-full rounded-sm shadow-lg">
+          <div className="bg-surface absolute z-10 mt-1 min-w-64 rounded-sm shadow-lg">
             <input
               type="text"
               value={query}
@@ -258,19 +331,50 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
         <>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="text-left">Asset & Network</TableHead>
-                <TableHead className="text-left">Market Details</TableHead>
-                <TableHead className="text-center">Action & Amount</TableHead>
-                <TableHead className="text-center">Time</TableHead>
-                <TableHead className="text-right">Transaction</TableHead>
+              <TableRow className="text-secondary">
+                <TableHead
+                  className="z-50 text-center"
+                  style={{ minWidth: '100px' }}
+                >
+                  Loan Asset
+                </TableHead>
+                <TableHead
+                  className="z-50 text-center"
+                  style={{ minWidth: '140px' }}
+                >
+                  Market
+                </TableHead>
+                <TableHead
+                  className="z-50 text-center"
+                  style={{ minWidth: '80px' }}
+                >
+                  Side
+                </TableHead>
+                <TableHead
+                  className="z-50 text-right"
+                  style={{ minWidth: '120px' }}
+                >
+                  Amount
+                </TableHead>
+                <TableHead
+                  className="z-50 text-center"
+                  style={{ minWidth: '120px' }}
+                >
+                  Tx Hash
+                </TableHead>
+                <TableHead
+                  className="z-50 text-right"
+                  style={{ minWidth: '90px' }}
+                >
+                  Time
+                </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="table-body-compact">
+            <TableBody className="text-sm">
               {history.filter((tx) => tx.data.market !== undefined).length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center text-gray-400"
                   >
                     No transactions found
@@ -283,10 +387,8 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     // safely cast here because we only fetch txs for unique id in "markets"
                     const market = allMarkets.find((m) => m.uniqueKey === tx.data.market.uniqueKey) as Market;
 
-                    const networkImg = getNetworkImg(market.morphoBlue.chain.id);
-                    const networkName = getNetworkName(market.morphoBlue.chain.id);
                     const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
-                    const lltv = Number(formatUnits(BigInt(market.lltv), 18)) * 100;
+                    const side = tx.type === UserTxTypes.MarketSupply ? 'Supply' : 'Withdraw';
 
                     // Find the rebalancer info for the specific network of the transaction
                     const networkRebalancerInfo = rebalancerInfos.find((info) => info.network === market.morphoBlue.chain.id);
@@ -294,93 +396,105 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     const isAgent = networkRebalancerInfo?.transactions.some((agentTx) => agentTx.transactionHash === tx.hash);
 
                     return (
-                      <TableRow key={index.toFixed()}>
-                        {/* Network & Asset */}
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                              <TokenIcon
-                                address={market.loanAsset.address}
-                                chainId={market.morphoBlue.chain.id}
-                                symbol={market.loanAsset.symbol}
-                                width={16}
-                                height={16}
-                              />
-                              <span className="text-default-600 text-sm">{market.loanAsset.symbol}</span>
-                            </div>
-                            <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                              {networkImg && (
-                                <Image
-                                  src={networkImg}
-                                  alt="network"
-                                  width="16"
-                                  height="16"
-                                  className="rounded-full"
-                                />
-                              )}
-                              <span className="text-xs text-gray-600 dark:text-gray-300">{networkName}</span>
-                            </div>
+                      <TableRow
+                        key={index.toFixed()}
+                        className="hover:bg-hovered"
+                      >
+                        {/* Loan Asset */}
+                        <TableCell
+                          data-label="Loan Asset"
+                          className="z-50"
+                          style={{ minWidth: '100px' }}
+                        >
+                          <div className="flex items-center justify-center gap-1.5">
+                            <TokenIcon
+                              address={market.loanAsset.address}
+                              chainId={market.morphoBlue.chain.id}
+                              symbol={market.loanAsset.symbol}
+                              width={16}
+                              height={16}
+                            />
+                            <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
                           </div>
                         </TableCell>
 
-                        {/* Market Details */}
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Link
-                              href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-                              className="font-monospace text-xs hover:underline"
-                            >
-                              {market.uniqueKey.slice(2, 8)}
-                            </Link>
-                            <div className="flex items-center gap-1">
-                              <TokenIcon
-                                address={market.collateralAsset.address}
+                        {/* Market */}
+                        <TableCell
+                          data-label="Market"
+                          className="z-50"
+                          style={{ minWidth: '140px' }}
+                        >
+                          <Link
+                            href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+                            className="no-underline hover:no-underline"
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <MarketIdentity
+                                market={market}
                                 chainId={market.morphoBlue.chain.id}
-                                symbol={market.collateralAsset.symbol}
-                                width={16}
-                                height={16}
+                                showOracle={false}
+                                showLltv
+                                focus={MarketIdentityFocus.Collateral}
                               />
-                              <span className="text-sm text-default-500">{market.collateralAsset.symbol}</span>
                             </div>
-                            <Chip
-                              size="sm"
-                              className="bg-default-100 text-xs"
-                            >
-                              {formatReadable(lltv)}%
-                            </Chip>
-                          </div>
+                          </Link>
                         </TableCell>
 
-                        {/* Action & Amount */}
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-2 text-sm">
-                            <span className="">{actionTypeToText(tx.type)}</span>
-                            <span className={tx.type === UserTxTypes.MarketSupply ? 'text-success' : 'text-danger'}>
-                              {sign}
-                              {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))}{' '}
-                              {market.loanAsset.symbol}
-                            </span>
+                        {/* Side */}
+                        <TableCell
+                          data-label="Side"
+                          className="z-50 text-center"
+                          style={{ minWidth: '80px' }}
+                        >
+                          <span
+                            className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
+                              side === 'Supply' ? 'text-green-500' : 'text-red-500'
+                            }`}
+                          >
+                            {side}
                             {isAgent && (
-                              <Badge size="sm">
-                                <RiRobot2Line />
-                              </Badge>
+                              <RiRobot2Line
+                                className="ml-1"
+                                size={12}
+                              />
                             )}
-                          </div>
+                          </span>
                         </TableCell>
 
-                        {/* Time */}
-                        <TableCell>
-                          <div className="flex justify-center text-sm text-gray-500">{moment.unix(tx.timestamp).fromNow()}</div>
+                        {/* Amount */}
+                        <TableCell
+                          data-label="Amount"
+                          className="z-50 text-right"
+                          style={{ minWidth: '120px' }}
+                        >
+                          <span className="text-sm">
+                            {sign}
+                            {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))}{' '}
+                            {getTruncatedAssetName(market.loanAsset.symbol)}
+                          </span>
                         </TableCell>
 
-                        {/* Transaction */}
-                        <TableCell>
-                          <div className="flex justify-end">
+                        {/* Transaction Hash */}
+                        <TableCell
+                          data-label="Tx Hash"
+                          className="z-50"
+                          style={{ minWidth: '120px' }}
+                        >
+                          <div className="flex justify-center">
                             <TransactionIdentity
                               txHash={tx.hash}
                               chainId={market.morphoBlue.chain.id}
                             />
                           </div>
+                        </TableCell>
+
+                        {/* Time */}
+                        <TableCell
+                          data-label="Time"
+                          className="z-50 text-right"
+                          style={{ minWidth: '90px' }}
+                        >
+                          <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(tx.timestamp)}</span>
                         </TableCell>
                       </TableRow>
                     );

@@ -24,7 +24,6 @@ export function OnboardingModal({ isOpen, onOpenChange }: { isOpen: boolean; onO
       flexibleWidth
       scrollBehavior="inside"
       backdrop="blur"
-      className="bg-surface"
     >
       <ModalHeader
         title={ONBOARDING_STEPS[currentStepIndex].title}

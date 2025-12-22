@@ -35,6 +35,7 @@ import {
   WarningCategory,
 } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
+import { PositionActionsDropdown } from './position-actions-dropdown';
 import { RebalanceModal } from './rebalance/rebalance-modal';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 
@@ -415,11 +416,13 @@ export function PositionsSummaryTable({
                       className="justify-center px-4 py-3"
                     >
                       <div className="flex items-center justify-center">
-                        <Button
-                          size="sm"
-                          variant="surface"
-                          className="text-xs"
-                          onClick={() => {
+                        <PositionActionsDropdown
+                          account={account}
+                          chainId={groupedPosition.chainId}
+                          tokenAddress={groupedPosition.loanAssetAddress}
+                          tokenSymbol={groupedPosition.loanAsset}
+                          isOwner={isOwner}
+                          onRebalanceClick={() => {
                             if (!isOwner) {
                               toast.error('No authorization', 'You can only rebalance your own positions');
                               return;
@@ -427,10 +430,7 @@ export function PositionsSummaryTable({
                             setSelectedGroupedPosition(groupedPosition);
                             setShowRebalanceModal(true);
                           }}
-                          disabled={!isOwner}
-                        >
-                          Rebalance
-                        </Button>
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

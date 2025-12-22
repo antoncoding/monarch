@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { Tooltip } from '@/components/ui/tooltip';
-import { FaHistory, FaPlus } from 'react-icons/fa';
+import { FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
-import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
@@ -87,30 +85,6 @@ export default function Positions() {
             showAddress
           />
           <div className="flex gap-4">
-            <Link href={`/history/${account}`}>
-              <Button
-                size="md"
-                className="font-zen text-secondary"
-              >
-                <FaHistory
-                  size={14}
-                  className="mr-2"
-                />
-                History
-              </Button>
-            </Link>
-            <Link href={`/positions/report/${account}`}>
-              <Button
-                size="md"
-                className="font-zen text-secondary"
-              >
-                <TbReport
-                  size={15}
-                  className="mr-2"
-                />
-                Report
-              </Button>
-            </Link>
             {isOwner && (
               <Button
                 variant="primary"
