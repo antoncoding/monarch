@@ -249,11 +249,6 @@ export default function Rewards() {
             </div>
           </section>
           <section>
-            <div className="my-4 flex items-center justify-between pt-4">
-              <div className="flex items-center gap-2">
-                <h2 className="font-zen text-xl"> All Rewards </h2>
-              </div>
-            </div>
             {loadingRewards ? (
               <LoadingScreen message="Loading Rewards..." />
             ) : rewards.length === 0 ? (
@@ -264,6 +259,8 @@ export default function Rewards() {
                 rewards={allRewards}
                 distributions={distributions}
                 merklRewardsWithProofs={merklRewardsWithProofs}
+                onRefresh={refresh}
+                isRefetching={loadingRewards}
               />
             )}
           </section>

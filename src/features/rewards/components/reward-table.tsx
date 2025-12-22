@@ -1,13 +1,16 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { ExternalLinkIcon } from '@radix-ui/react-icons';
+import { ExternalLinkIcon, ReloadIcon } from '@radix-ui/react-icons';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Address } from 'viem';
 import { useConnection, useChainId, useSwitchChain } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMerklCampaigns } from '@/contexts/MerklCampaignsContext';
 import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/useRewards';
@@ -25,9 +28,18 @@ type RewardTableProps = {
   rewards: AggregatedRewardType[];
   distributions: DistributionResponseType[];
   merklRewardsWithProofs: MerklRewardWithProofs[];
+  onRefresh: () => void;
+  isRefetching: boolean;
 };
 
-export default function RewardTable({ rewards, distributions, merklRewardsWithProofs, account }: RewardTableProps) {
+export default function RewardTable({
+  rewards,
+  distributions,
+  merklRewardsWithProofs,
+  account,
+  onRefresh,
+  isRefetching,
+}: RewardTableProps) {
   const { chainId } = useConnection();
   const currentChainId = useChainId();
   const toast = useStyledToast();
@@ -135,17 +147,44 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
     [account, merklRewardsWithProofs, claimSingleReward, toast],
   );
 
+  // Header actions (refresh)
+  const headerActions = (
+    <Tooltip
+      content={
+        <TooltipContent
+          title="Refresh"
+          detail="Fetch latest rewards data"
+        />
+      }
+    >
+      <span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefetching}
+          className="text-secondary min-w-0 px-2"
+        >
+          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+        </Button>
+      </span>
+    </Tooltip>
+  );
+
   return (
     <div className="pb-4">
-      <div className="bg-surface shadow-sm rounded overflow-hidden">
+      <TableContainerWithHeader
+        title="All Rewards"
+        actions={headerActions}
+      >
         <Table aria-label="Rewards table">
           <TableHeader>
             <TableRow>
-              <TableHead className="text-left">ASSET</TableHead>
-              <TableHead className="text-center">CHAIN</TableHead>
-              <TableHead className="text-right">CLAIMABLE</TableHead>
-              <TableHead className="text-center">CAMPAIGN</TableHead>
-              <TableHead className="text-right">ACTIONS</TableHead>
+              <TableHead className="text-left">Asset</TableHead>
+              <TableHead className="text-center">Chain</TableHead>
+              <TableHead className="text-right">Claimable</TableHead>
+              <TableHead className="text-center">Campaign</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="table-body-compact">
@@ -277,7 +316,7 @@ export default function RewardTable({ rewards, distributions, merklRewardsWithPr
               })}
           </TableBody>
         </Table>
-      </div>
+      </TableContainerWithHeader>
     </div>
   );
 }
