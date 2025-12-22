@@ -1,21 +1,23 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
+import { Divider } from '@/components/ui/divider';
+import { FilterRow, FilterSection } from '@/components/ui/filter-components';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { BsQuestionCircle } from 'react-icons/bs';
-import { IoChevronDownOutline } from 'react-icons/io5';
 import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
+import { useDisclosure } from '@/hooks/useDisclosure';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
@@ -130,6 +132,7 @@ export function SuppliedMorphoBlueGroupedTable({
     storageKeys.PositionsShowCollateralExposureKey,
     true,
   );
+  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
   const { isAprDisplay } = useMarkets();
   const { short: rateLabel } = useRateLabel();
@@ -184,31 +187,9 @@ export function SuppliedMorphoBlueGroupedTable({
     );
   };
 
-  // Header actions (period dropdown, refresh, settings)
+  // Header actions (refresh, settings)
   const headerActions = (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="font-zen text-secondary min-w-fit"
-          >
-            <IoChevronDownOutline className="mr-2 h-4 w-4" />
-            {periodLabels[earningsPeriod]}
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          {Object.entries(periodLabels).map(([period, label]) => (
-            <DropdownMenuItem
-              key={period}
-              onClick={() => setEarningsPeriod(period as EarningsPeriod)}
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
       <Tooltip
         content={
           <TooltipContent
@@ -229,37 +210,23 @@ export function SuppliedMorphoBlueGroupedTable({
           </Button>
         </span>
       </Tooltip>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-secondary min-w-0 px-2"
-          >
-            <GearIcon className="h-3 w-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            className="flex h-auto gap-2 p-0"
-            onSelect={(e) => e.preventDefault()}
-          >
-            <div className="flex w-full items-center justify-between px-2 py-1.5">
-              <span className="mr-2 text-xs">Show Collateral Exposure</span>
-              <IconSwitch
-                size="xs"
-                selected={showCollateralExposure}
-                onChange={setShowCollateralExposure}
-                thumbIcon={null}
-                classNames={{
-                  wrapper: 'mx-0',
-                  thumbIcon: 'p-0 mr-0',
-                }}
-              />
-            </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Tooltip
+        content={
+          <TooltipContent
+            title="Settings"
+            detail="Configure view settings"
+          />
+        }
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-secondary min-w-0 px-2"
+          onClick={onSettingsOpen}
+        >
+          <GearIcon className="h-3 w-3" />
+        </Button>
+      </Tooltip>
     </>
   );
 
@@ -448,6 +415,79 @@ export function SuppliedMorphoBlueGroupedTable({
           isRefetching={isRefetching}
         />
       )}
+      <Modal
+        isOpen={isSettingsOpen}
+        onOpenChange={onSettingsOpenChange}
+        size="md"
+        backdrop="opaque"
+        zIndex="settings"
+      >
+        {(close) => (
+          <>
+            <ModalHeader
+              variant="compact"
+              title="View Settings"
+              description="Configure how morpho blue lending positions are displayed"
+              mainIcon={<GearIcon />}
+              onClose={close}
+            />
+            <ModalBody
+              variant="compact"
+              className="flex flex-col gap-4"
+            >
+              <FilterSection
+                title="Time Period"
+                helper="Select the time period for interest accrued calculations"
+              >
+                <div className="flex flex-col gap-2">
+                  {Object.entries(periodLabels).map(([period, label]) => (
+                    <label
+                      key={period}
+                      className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-gray-50"
+                    >
+                      <span className="text-sm font-medium">{label}</span>
+                      <input
+                        type="radio"
+                        name="earningsPeriod"
+                        checked={earningsPeriod === period}
+                        onChange={() => setEarningsPeriod(period as EarningsPeriod)}
+                        className="h-4 w-4 cursor-pointer"
+                      />
+                    </label>
+                  ))}
+                </div>
+              </FilterSection>
+
+              <Divider />
+
+              <FilterSection
+                title="Display Options"
+                helper="Customize what information is shown in the table"
+              >
+                <FilterRow
+                  title="Show Collateral Exposure"
+                  description="Display detailed collateral breakdown for each position"
+                >
+                  <IconSwitch
+                    selected={showCollateralExposure}
+                    onChange={setShowCollateralExposure}
+                    size="xs"
+                  />
+                </FilterRow>
+              </FilterSection>
+            </ModalBody>
+            <ModalFooter className="justify-end">
+              <Button
+                color="primary"
+                size="sm"
+                onClick={close}
+              >
+                Done
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
