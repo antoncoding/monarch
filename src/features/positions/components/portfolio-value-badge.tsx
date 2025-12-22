@@ -1,4 +1,5 @@
 import { formatUsdValue } from '@/utils/portfolio';
+import { PulseLoader } from 'react-spinners';
 
 type PortfolioValueBadgeProps = {
   totalUsd: number;
@@ -16,11 +17,17 @@ export function PortfolioValueBadge({ totalUsd, isLoading, error, onClick }: Por
     >
       <span className="text-xs text-secondary">Total Value</span>
       {isLoading ? (
-        <span className="font-zen text-2xl font-normal text-secondary">Calculating...</span>
+        <div className="font-zen text-2xl font-normal sm:text-3xl min-h-8 sm:min-h-9 flex items-center justify-end">
+          <PulseLoader
+            size={4}
+            color="#f45f2d"
+            margin={2}
+          />
+        </div>
       ) : error ? (
-        <span className="font-zen text-2xl font-normal text-secondary sm:text-3xl">—</span>
+        <span className="font-zen text-2xl font-normal text-secondary sm:text-2xl">—</span>
       ) : (
-        <span className="font-zen text-2xl font-normal sm:text-3xl">{formatUsdValue(totalUsd)}</span>
+        <span className="font-zen text-2xl font-normal sm:text-2xl">{formatUsdValue(totalUsd)}</span>
       )}
     </button>
   );
