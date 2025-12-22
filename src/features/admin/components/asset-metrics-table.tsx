@@ -87,7 +87,7 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
   return (
     <div className="bg-surface rounded-md font-zen shadow-sm">
       <div className="border-b border-gray-200 px-6 py-4">
-        <h3 className="font-zen text-lg font-semibold">Asset Activity</h3>
+        <h3 className="font-zen text-lg">Asset Activity</h3>
       </div>
       <div className="overflow-x-auto">
         {processedData.length === 0 ? (

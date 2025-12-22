@@ -10,7 +10,6 @@ export const storageKeys = {
   MarketsMinSupplyEnabledKey: 'monarch_minSupplyEnabled',
   MarketsMinBorrowEnabledKey: 'monarch_minBorrowEnabled',
   MarketsMinLiquidityEnabledKey: 'monarch_minLiquidityEnabled',
-  PositionsShowEmptyKey: 'positions:show-empty',
   PositionsShowCollateralExposureKey: 'positions:show-collateral-exposure',
   ThemeKey: 'theme',
   CacheMarketPositionKeys: 'monarch_cache_market_unique_keys',

@@ -125,7 +125,6 @@ export function PositionsSummaryTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
-  const [showEmptyPositions, setShowEmptyPositions] = useLocalStorage<boolean>(storageKeys.PositionsShowEmptyKey, false);
   const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(
     storageKeys.PositionsShowCollateralExposureKey,
     true,
@@ -240,25 +239,6 @@ export function PositionsSummaryTable({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem
-              className="flex h-auto gap-2 p-0"
-              onSelect={(e) => e.preventDefault()}
-            >
-              <div className="flex w-full items-center justify-between px-2 py-1.5">
-                <span className="mr-2 text-xs">Show Empty Positions</span>
-                <IconSwitch
-                  size="xs"
-                  selected={showEmptyPositions}
-                  onChange={setShowEmptyPositions}
-                  thumbIcon={null}
-                  aria-label="Show empty positions"
-                  classNames={{
-                    wrapper: 'mx-0',
-                    thumbIcon: 'p-0 mr-0',
-                  }}
-                />
-              </div>
-            </DropdownMenuItem>
             <DropdownMenuItem
               className="flex h-auto gap-2 p-0"
               onSelect={(e) => e.preventDefault()}
@@ -453,7 +433,6 @@ export function PositionsSummaryTable({
                               setShowWithdrawModal={setShowWithdrawModal}
                               setShowSupplyModal={setShowSupplyModal}
                               setSelectedPosition={setSelectedPosition}
-                              showEmptyPositions={showEmptyPositions}
                               showCollateralExposure={showCollateralExposure}
                             />
                           </motion.div>
