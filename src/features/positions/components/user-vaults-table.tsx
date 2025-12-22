@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import { ReloadIcon } from '@radix-ui/react-icons';
@@ -123,9 +123,8 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
               const displayRate = avgApy !== null && avgApy !== undefined && isAprDisplay ? convertApyToApr(avgApy) : avgApy;
 
               return (
-                <>
+                <Fragment key={rowKey}>
                   <TableRow
-                    key={rowKey}
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => toggleRow(rowKey)}
                   >
@@ -228,7 +227,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                       </TableRow>
                     )}
                   </AnimatePresence>
-                </>
+                </Fragment>
               );
             })}
           </TableBody>
