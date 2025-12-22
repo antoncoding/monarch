@@ -241,7 +241,11 @@ export function IconSwitch({
               classNames?.thumbIcon,
             )}
           >
-            <IconComponent className="h-[100%]" isSelected={isSelected} />
+            {thumbIconOn && thumbIconOff ? (
+              <IconComponent className="h-[100%]" />
+            ) : (
+              <IconComponent className="h-[100%]" isSelected={isSelected} />
+            )}
           </motion.div>
         )}
       </motion.div>

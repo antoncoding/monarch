@@ -231,7 +231,7 @@ export function SuppliedMorphoBlueGroupedTable({
   );
 
   return (
-    <div className="space-y-4 overflow-x-auto">
+    <div className="space-y-6 overflow-x-auto">
       <TableContainerWithHeader
         title="Market Supplies"
         actions={headerActions}
