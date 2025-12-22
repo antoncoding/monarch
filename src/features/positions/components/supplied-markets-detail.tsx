@@ -9,6 +9,8 @@ import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import type { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '@/features/positions/utils/colors';
+import { SuppliedAmountCell } from './supplied-amount-cell';
+import { SuppliedPercentageCell } from './supplied-percentage-cell';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
   setShowWithdrawModal: (show: boolean) => void;
@@ -74,21 +76,16 @@ function MarketRow({
         data-label="Supplied"
         className="text-center"
       >
-        {formatReadable(suppliedAmount)} {position.market.loanAsset.symbol}
+        <SuppliedAmountCell
+          amount={suppliedAmount}
+          symbol={position.market.loanAsset.symbol}
+        />
       </TableCell>
       <TableCell
         data-label="% of Portfolio"
         className="text-center"
       >
-        <div className="flex items-center">
-          <div className="mr-2 h-2 w-full rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-blue-500"
-              style={{ width: `${percentageOfPortfolio}%` }}
-            />
-          </div>
-          <span className="whitespace-nowrap">{formatReadable(percentageOfPortfolio)}%</span>
-        </div>
+        <SuppliedPercentageCell percentage={percentageOfPortfolio} />
       </TableCell>
       <TableCell
         data-label="Indicators"

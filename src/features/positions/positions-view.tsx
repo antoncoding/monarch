@@ -16,9 +16,11 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
+import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
 import type { MarketPosition } from '@/utils/types';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
+import { UserVaultsTable } from './components/user-vaults-table';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
@@ -39,8 +41,11 @@ export default function Positions() {
     loadingStates,
   } = useUserPositionsSummaryData(account, earningsPeriod);
 
-  // Calculate portfolio value from positions
-  const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions);
+  // Fetch user's auto vaults
+  const { vaults, loading: isVaultsLoading, refetch: refetchVaults } = useUserVaultsV2(account);
+
+  // Calculate portfolio value from positions and vaults
+  const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
 
   const loading = isMarketsLoading || isPositionsLoading;
 
@@ -55,6 +60,8 @@ export default function Positions() {
   }, [isMarketsLoading, loadingStates]);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
+  const hasVaults = vaults && vaults.length > 0;
+  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
 
   const handleRefetch = () => {
     void refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
@@ -73,7 +80,7 @@ export default function Positions() {
             variant="full"
             showAddress
           />
-          {!loading && hasSuppliedMarkets && (
+          {!loading && (hasSuppliedMarkets || hasVaults) && (
             <PortfolioValueBadge
               totalUsd={totalUsd}
               isLoading={isPricesLoading}
@@ -107,13 +114,17 @@ export default function Positions() {
           />
         )}
 
-        {loading ? (
-          <LoadingScreen
-            message={loadingMessage}
-            className="mt-10"
-          />
-        ) : hasSuppliedMarkets ? (
-          <div className="mt-4">
+        <div className="space-y-6">
+          {/* Loading state for initial page load */}
+          {loading && (
+            <LoadingScreen
+              message={loadingMessage}
+              className="mt-10"
+            />
+          )}
+
+          {/* Morpho Blue Positions Section */}
+          {!loading && hasSuppliedMarkets && (
             <SuppliedMorphoBlueGroupedTable
               account={account}
               marketPositions={marketPositions}
@@ -126,38 +137,57 @@ export default function Positions() {
               earningsPeriod={earningsPeriod}
               setEarningsPeriod={setEarningsPeriod}
             />
-          </div>
-        ) : (
-          <div className="container flex flex-col">
-            <div className="flex w-full justify-end">
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Refresh"
-                    detail="Fetch latest data"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRefetch}
-                    className="text-secondary min-w-0 px-2"
-                  >
-                    <IoRefreshOutline className="h-3 w-3" />
-                  </Button>
-                </span>
-              </Tooltip>
+          )}
+
+          {/* Auto Vaults Section (progressive loading) */}
+          {isVaultsLoading && !loading && (
+            <LoadingScreen
+              message="Loading vaults..."
+              className="mt-10"
+            />
+          )}
+
+          {!isVaultsLoading && hasVaults && (
+            <UserVaultsTable
+              vaults={vaults}
+              account={account}
+              refetch={() => void refetchVaults()}
+            />
+          )}
+
+          {/* Empty state (only if both finished loading and both empty) */}
+          {showEmpty && (
+            <div className="container flex flex-col">
+              <div className="flex w-full justify-end">
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      title="Refresh"
+                      detail="Fetch latest data"
+                    />
+                  }
+                >
+                  <span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRefetch}
+                      className="text-secondary min-w-0 px-2"
+                    >
+                      <IoRefreshOutline className="h-3 w-3" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+              <div className="flex justify-center">
+                <EmptyScreen
+                  message="No open positions. Start supplying!"
+                  className="mt-2"
+                />
+              </div>
             </div>
-            <div className="flex justify-center">
-              <EmptyScreen
-                message="No open supplies. Start lending now!"
-                className="mt-2"
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

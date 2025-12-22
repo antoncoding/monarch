@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 import AccountConnect from '@/components/layout/header/AccountConnect';
 import Header from '@/components/layout/header/Header';
 import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
+import { UserVaultsTable } from '@/features/positions/components/user-vaults-table';
 import { DeploymentModal } from './components/deployment/deployment-modal';
-import { VaultListV2 } from './components/vault-list';
 
 export default function AutovaultListContent() {
-  const { isConnected } = useConnection();
+  const { isConnected, address } = useConnection();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
 
   const { vaults, loading: vaultsLoading } = useUserVaultsV2();
@@ -75,10 +76,29 @@ export default function AutovaultListContent() {
         </div>
 
         <div className="mt-4">
-          <VaultListV2
-            vaults={vaults}
-            loading={vaultsLoading}
-          />
+          {vaultsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="text-center">
+                <Spinner />
+                <p className="mt-3 text-sm text-secondary">Loading your vaults...</p>
+              </div>
+            </div>
+          ) : vaults.length === 0 ? (
+            <div className="py-16 text-center">
+              <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <span className="text-2xl">🏛️</span>
+              </div>
+              <h3 className="text-lg mb-2">No Vaults Found</h3>
+              <p className="text-secondary max-w-sm mx-auto">
+                You haven't deployed any autovaults yet. Create your first one to get started!
+              </p>
+            </div>
+          ) : (
+            <UserVaultsTable
+              vaults={vaults}
+              account={address ?? '0x'}
+            />
+          )}
         </div>
 
         {/* Deployment Modal */}

@@ -51,14 +51,17 @@ async function fetchAndProcessVaults(address: Address): Promise<UserVaultV2[]> {
   return vaultsWithBalances;
 }
 
-export function useUserVaultsV2(): UseUserVaultsV2Return {
-  const { address } = useConnection();
+export function useUserVaultsV2(account?: string): UseUserVaultsV2Return {
+  const { address: connectedAddress } = useConnection();
   const [vaults, setVaults] = useState<UserVaultV2[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  // Use provided account or fall back to connected address
+  const targetAddress = account ?? connectedAddress;
+
   const fetchVaults = useCallback(async () => {
-    if (!address) {
+    if (!targetAddress) {
       setVaults([]);
       setLoading(false);
       return;
@@ -68,7 +71,7 @@ export function useUserVaultsV2(): UseUserVaultsV2Return {
     setError(null);
 
     try {
-      const vaultsWithBalances = await fetchAndProcessVaults(address);
+      const vaultsWithBalances = await fetchAndProcessVaults(targetAddress as Address);
       setVaults(vaultsWithBalances);
     } catch (err) {
       const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
@@ -77,7 +80,7 @@ export function useUserVaultsV2(): UseUserVaultsV2Return {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [targetAddress]);
 
   useEffect(() => {
     void fetchVaults();

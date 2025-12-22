@@ -233,7 +233,7 @@ export function SuppliedMorphoBlueGroupedTable({
   return (
     <div className="space-y-4 overflow-x-auto">
       <TableContainerWithHeader
-        title="Supplied Positions"
+        title="Market Supplies"
         actions={headerActions}
       >
         <Table className="responsive w-full min-w-[640px]">
@@ -265,7 +265,7 @@ export function SuppliedMorphoBlueGroupedTable({
                 </span>
               </TableHead>
               <TableHead>Collateral</TableHead>
-              <TableHead>Warnings</TableHead>
+              <TableHead>Risk Tiers</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -344,7 +344,7 @@ export function SuppliedMorphoBlueGroupedTable({
                       />
                     </TableCell>
                     <TableCell
-                      data-label="Warnings"
+                      data-label="Risk Tiers"
                       className="align-middle"
                     >
                       <div className="flex items-center justify-center gap-1">
@@ -375,7 +375,7 @@ export function SuppliedMorphoBlueGroupedTable({
                   </TableRow>
                   <AnimatePresence>
                     {expandedRows.has(rowKey) && (
-                      <TableRow className="bg-surface">
+                      <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                         <TableCell
                           colSpan={10}
                           className="bg-surface"
