@@ -111,15 +111,19 @@ export const positionsToBalances = (positions: MarketPositionWithEarnings[]): To
 /**
  * Convert vaults to token balances
  * @param vaults - Array of user vaults
+ * @param findToken - Function to find token metadata
  * @returns Array of token balances
  */
-export const vaultsToBalances = (vaults: UserVaultV2[]): TokenBalance[] => {
+export const vaultsToBalances = (
+  vaults: UserVaultV2[],
+  findToken: (address: string, chainId: number) => { decimals: number } | undefined,
+): TokenBalance[] => {
   return vaults
-    .filter((vault) => vault.balance !== undefined)
+    .filter((vault) => vault.balance !== undefined && vault.balance > 0n)
     .map((vault) => {
-      // Find the asset decimals from the vault data
-      // Default to 18 if not available (most ERC20 tokens use 18 decimals)
-      const decimals = 18;
+      // Get decimals from token metadata
+      const token = findToken(vault.asset, vault.networkId);
+      const decimals = token?.decimals ?? 18;
 
       return {
         tokenAddress: vault.asset,
@@ -135,12 +139,14 @@ export const vaultsToBalances = (vaults: UserVaultV2[]): TokenBalance[] => {
  * @param positions - Array of market positions
  * @param vaults - Array of user vaults (optional)
  * @param prices - Map of token prices
+ * @param findToken - Function to find token metadata (required for vaults)
  * @returns Portfolio value with breakdown
  */
 export const calculatePortfolioValue = (
   positions: MarketPositionWithEarnings[],
   vaults: UserVaultV2[] | undefined,
   prices: Map<string, number>,
+  findToken?: (address: string, chainId: number) => { decimals: number } | undefined,
 ): PortfolioValue => {
   // Convert positions to balances
   const positionBalances = positionsToBalances(positions);
@@ -148,8 +154,8 @@ export const calculatePortfolioValue = (
 
   // Convert vaults to balances (if provided)
   let vaultsUsd = 0;
-  if (vaults && vaults.length > 0) {
-    const vaultBalances = vaultsToBalances(vaults);
+  if (vaults && vaults.length > 0 && findToken) {
+    const vaultBalances = vaultsToBalances(vaults, findToken);
     vaultsUsd = calculateUsdValue(vaultBalances, prices);
   }
 

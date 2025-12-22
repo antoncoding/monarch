@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTokens } from '@/components/providers/TokenProvider';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import type { MarketPositionWithEarnings } from '@/utils/types';
 import { calculatePortfolioValue, extractTokensFromPositions, extractTokensFromVaults } from '@/utils/portfolio';
@@ -19,6 +20,8 @@ type UsePortfolioValueReturn = {
  * @returns Portfolio value breakdown and loading/error states
  */
 export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vaults?: UserVaultV2[]): UsePortfolioValueReturn => {
+  const { findToken } = useTokens();
+
   // Extract unique tokens from all sources
   const tokens = useMemo(() => {
     const positionTokens = extractTokensFromPositions(positions);
@@ -41,8 +44,8 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
       };
     }
 
-    return calculatePortfolioValue(positions, vaults, prices);
-  }, [positions, vaults, prices, isLoading]);
+    return calculatePortfolioValue(positions, vaults, prices, findToken);
+  }, [positions, vaults, prices, isLoading, findToken]);
 
   return {
     totalUsd: portfolioValue.total,

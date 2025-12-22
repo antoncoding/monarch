@@ -1,3 +1,4 @@
+import type { Address } from 'viem';
 import type { VaultV2Details } from '@/data-sources/morpho-api/v2-vaults';
 import { userVaultsV2AddressesQuery } from '@/graphql/morpho-v2-subgraph-queries';
 import { type SupportedNetworks, getAgentConfig, networks, isAgentAvailable } from '@/utils/networks';
@@ -26,7 +27,8 @@ export type UserVaultV2Address = {
 // This is used by the autovault page to display user's vaults
 export type UserVaultV2 = VaultV2Details & {
   networkId: SupportedNetworks;
-  balance?: bigint;
+  balance?: bigint; // User's redeemable assets (from previewRedeem)
+  adapter?: Address; // MorphoMarketV1Adapter address
 };
 
 /**

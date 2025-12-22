@@ -146,7 +146,7 @@ export function UserVaultsTable({ vaults, account, refetch, isRefetching = false
                     <TableCell data-label="Size">
                       <div className="flex items-center justify-center gap-2">
                         <span className="font-medium">
-                          {vault.balance && token ? formatReadable(formatUnits(BigInt(vault.balance), token.decimals)) : '0'}
+                          {vault.balance && token ? formatReadable(formatUnits(vault.balance, token.decimals)) : '0'}
                         </span>
                         <span>{token?.symbol ?? 'USDC'}</span>
                         <TokenIcon
