@@ -2,13 +2,10 @@
 
 import Header from '@/components/layout/header/Header';
 import useUserPositions from '@/hooks/useUserPositions';
-import { useUserRebalancerInfo } from '@/hooks/useUserRebalancerInfo';
 import { HistoryTable } from './components/history-table';
 
 export default function HistoryContent({ account }: { account: string }) {
   const { data: positions } = useUserPositions(account, true);
-
-  const { rebalancerInfos } = useUserRebalancerInfo(account);
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -20,7 +17,6 @@ export default function HistoryContent({ account }: { account: string }) {
           <HistoryTable
             account={account}
             positions={positions}
-            rebalancerInfos={rebalancerInfos}
           />
         </div>
       </div>

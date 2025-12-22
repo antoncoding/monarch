@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
-import { RiRobot2Line } from 'react-icons/ri';
 import { formatUnits } from 'viem';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
@@ -17,12 +16,11 @@ import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
-import { UserTxTypes, type UserRebalancerInfo, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
+import { UserTxTypes, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
 
 type HistoryTableProps = {
   account: string | undefined;
   positions: MarketPosition[];
-  rebalancerInfos: UserRebalancerInfo[];
 };
 
 type AssetKey = {
@@ -55,7 +53,7 @@ const formatTimeAgo = (timestamp: number): string => {
   return `${diffInYears}y ago`;
 };
 
-export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTableProps) {
+export function HistoryTable({ account, positions }: HistoryTableProps) {
   const searchParams = useSearchParams();
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -98,7 +96,6 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
     const chainIdParam = searchParams.get('chainId');
     const tokenAddressParam = searchParams.get('tokenAddress');
-    const tokenSymbolParam = searchParams.get('tokenSymbol');
 
     // If no URL params, we're done initializing
     if (!chainIdParam || !tokenAddressParam) {
@@ -118,19 +115,6 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
 
     if (matchingAsset) {
       setSelectedAsset(matchingAsset);
-      setHasInitializedFromUrl(true);
-    } else if (tokenSymbolParam) {
-      // If not in positions, create from URL params (user might not have position but coming from link)
-      const decimals =
-        allMarkets.find((m) => m.morphoBlue.chain.id === chainId && m.loanAsset.address.toLowerCase() === tokenAddressParam.toLowerCase())
-          ?.loanAsset.decimals ?? 18;
-
-      setSelectedAsset({
-        symbol: tokenSymbolParam,
-        chainId,
-        address: tokenAddressParam,
-        decimals,
-      });
       setHasInitializedFromUrl(true);
     }
   }, [searchParams, uniqueAssets, allMarkets, hasInitializedFromUrl]);
@@ -390,11 +374,6 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                     const sign = tx.type === UserTxTypes.MarketSupply ? '+' : '-';
                     const side = tx.type === UserTxTypes.MarketSupply ? 'Supply' : 'Withdraw';
 
-                    // Find the rebalancer info for the specific network of the transaction
-                    const networkRebalancerInfo = rebalancerInfos.find((info) => info.network === market.morphoBlue.chain.id);
-                    // Check if the transaction hash exists in the transactions of the found rebalancer info
-                    const isAgent = networkRebalancerInfo?.transactions.some((agentTx) => agentTx.transactionHash === tx.hash);
-
                     return (
                       <TableRow
                         key={index.toFixed()}
@@ -452,12 +431,6 @@ export function HistoryTable({ account, positions, rebalancerInfos }: HistoryTab
                             }`}
                           >
                             {side}
-                            {isAgent && (
-                              <RiRobot2Line
-                                className="ml-1"
-                                size={12}
-                              />
-                            )}
                           </span>
                         </TableCell>
 

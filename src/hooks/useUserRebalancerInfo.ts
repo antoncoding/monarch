@@ -4,6 +4,11 @@ import { networks, isAgentAvailable } from '@/utils/networks';
 import type { UserRebalancerInfo } from '@/utils/types';
 import { getMonarchAgentUrl } from '@/utils/urls';
 
+/**
+ * Get monarch v1 rebalancer info
+ * @param account
+ * @returns
+ */
 export function useUserRebalancerInfo(account: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<UserRebalancerInfo[]>([]);

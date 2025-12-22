@@ -360,7 +360,6 @@ export function SuppliedMorphoBlueGroupedTable({
                           account={account}
                           chainId={groupedPosition.chainId}
                           tokenAddress={groupedPosition.loanAssetAddress}
-                          tokenSymbol={groupedPosition.loanAsset}
                           isOwner={isOwner}
                           onRebalanceClick={() => {
                             if (!isOwner) {
