@@ -8,7 +8,7 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useMarkets } from '@/contexts/MarketsContext';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, type SupportedNetworks } from '@/utils/networks';
+import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from '@/features/autovault/components/deployment/deployment-context';
 import { TokenSelection } from './token-selection';
 
@@ -110,7 +110,7 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
 
               <div className="flex justify-end pt-2">
                 <ExecuteTransactionButton
-                  targetChainId={selectedTokenAndNetwork?.networkId ?? 1}
+                  targetChainId={selectedTokenAndNetwork?.networkId ?? SupportedNetworks.Base}
                   onClick={handleCreateVault}
                   disabled={!selectedTokenAndNetwork || balancesLoading || marketsLoading || (userAlreadyHasVault && !ackExistingVault)}
                   isLoading={isDeploying}
