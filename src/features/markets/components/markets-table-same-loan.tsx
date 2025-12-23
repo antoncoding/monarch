@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaSearch } from 'react-icons/fa';
 import { IoHelpCircleOutline } from 'react-icons/io5';
-import { LuX } from 'react-icons/lu';
 import { Button } from '@/components/ui/button';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import { TablePagination } from '@/components/shared/table-pagination';
@@ -60,8 +59,6 @@ type MarketsTableWithSameLoanAssetProps = {
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
   showSelectColumn?: boolean;
-  // Optional: Hide the cart/staging area showing selected markets
-  showCart?: boolean;
   // Optional: Show the settings button (default: true)
   showSettings?: boolean;
 };
@@ -632,7 +629,6 @@ export function MarketsTableWithSameLoanAsset({
   renderCartItemExtra,
   uniqueCollateralTokens,
   showSelectColumn = true,
-  showCart = true,
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
@@ -929,44 +925,6 @@ export function MarketsTableWithSameLoanAsset({
 
   return (
     <div className="space-y-3">
-      {/* Cart/Staging Area Style */}
-      {showCart && selectedMarkets.length > 0 && (
-        <div className="space-y-2">
-          {selectedMarkets.map(({ market }) => (
-            <div
-              key={market.uniqueKey}
-              className="bg-hovered rounded transition-colors"
-            >
-              <div className="flex items-center justify-between p-2">
-                <MarketIdentity
-                  market={market}
-                  chainId={market.morphoBlue.chain.id}
-                  mode={MarketIdentityMode.Focused}
-                  focus={MarketIdentityFocus.Collateral}
-                  showLltv
-                  showOracle
-                  iconSize={20}
-                  showExplorerLink={false}
-                />
-
-                <div className="flex items-center gap-2">
-                  {renderCartItemExtra && renderCartItemExtra(market)}
-                  <button
-                    type="button"
-                    onClick={() => onToggleMarket(market.uniqueKey)}
-                    disabled={disabled}
-                    className="flex h-6 w-6 items-center justify-center rounded-full  transition-colors hover:bg-red-500/10 hover:text-red-500 disabled:opacity-50"
-                    style={{ color: 'var(--color-text-secondary)' }}
-                  >
-                    <LuX className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Search and Controls */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="w-80">
