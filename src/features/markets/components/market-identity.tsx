@@ -206,7 +206,7 @@ export function MarketIdentity({
               <MarketIdBadge
                 marketId={market.uniqueKey}
                 chainId={chainId}
-                showLink={false}
+                showLink={true}
               />
             )}
             {tokenStack}
@@ -241,7 +241,7 @@ export function MarketIdentity({
           <MarketIdBadge
             marketId={market.uniqueKey}
             chainId={chainId}
-            showLink={false}
+            showLink={true}
           />
         )}
         {tokenStack}

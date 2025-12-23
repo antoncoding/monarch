@@ -52,7 +52,7 @@ export function AllocationCell({ amount, symbol, percentage }: AllocationCellPro
               r={radius}
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="3"
               className="text-gray-200"
             />
             {/* Progress circle */}
@@ -62,7 +62,7 @@ export function AllocationCell({ amount, symbol, percentage }: AllocationCellPro
               r={radius}
               fill="none"
               stroke={isZero ? 'currentColor' : MONARCH_PRIMARY}
-              strokeWidth="2"
+              strokeWidth="3"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               className={isZero ? 'text-gray-300' : ''}
