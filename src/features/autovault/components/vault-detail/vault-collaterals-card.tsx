@@ -26,10 +26,6 @@ export function VaultCollateralsCard({
 }: VaultCollateralsCardProps) {
   const cardStyle = 'bg-surface rounded shadow-sm';
 
-  if (needsSetup) {
-    return null;
-  }
-
   const collateralTokens = collateralCaps
     .map((cap) => {
       const parsed = parseCapIdParams(cap.idParams);
@@ -43,7 +39,7 @@ export function VaultCollateralsCard({
     <Card className={cardStyle}>
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Collaterals</span>
-        {isOwner && (
+        {isOwner && !needsSetup && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
             onClick={onManageCaps}
@@ -53,6 +49,13 @@ export function VaultCollateralsCard({
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
           <Spinner size={16} />
+        ) : needsSetup ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-orange-500" />
+              <span className="text-xs text-secondary">Setup required</span>
+            </div>
+          </div>
         ) : hasCollaterals ? (
           <div className="flex flex-wrap gap-1.5 justify-center">
             {collateralTokens.map((tokenAddress) => (

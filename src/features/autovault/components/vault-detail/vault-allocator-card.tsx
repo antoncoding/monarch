@@ -27,15 +27,11 @@ export function VaultAllocatorCard({
   const hasAllocators = allocators.length > 0;
   const cardStyle = 'bg-surface rounded shadow-sm';
 
-  if (needsSetup) {
-    return null;
-  }
-
   return (
     <Card className={cardStyle}>
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
-        {isOwner && (
+        {isOwner && !needsSetup && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
             onClick={onManageAgents}
@@ -45,6 +41,13 @@ export function VaultAllocatorCard({
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
           <Spinner size={16} />
+        ) : needsSetup ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-orange-500" />
+              <span className="text-xs text-secondary">Setup required</span>
+            </div>
+          </div>
         ) : hasAllocators ? (
           <div className="flex flex-wrap gap-1.5 justify-center">
             {allocators

@@ -7,7 +7,7 @@ import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
-import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
+import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 
 // Skeleton component for loading state
@@ -51,16 +51,38 @@ function BenefitCard({ icon, title, description }: { icon: React.ReactNode; titl
 
 export default function AutovaultListContent() {
   const { open } = useAppKit();
-  const { isConnected } = useConnection();
+  const { isConnected, address } = useConnection();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-
-  // Fetch vaults to check if user has any and pass to deployment modal
-  const { vaults, loading: vaultsLoading } = useUserVaultsV2();
+  const [vaultAddresses, setVaultAddresses] = useState<{ address: string; networkId: number }[]>([]);
+  const [vaultsLoading, setVaultsLoading] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  // Fetch vault addresses from subgraph (simple, fast, works for uninitialized vaults)
+  useEffect(() => {
+    if (!address || !isConnected) {
+      setVaultAddresses([]);
+      return;
+    }
+
+    const fetchVaults = async () => {
+      setVaultsLoading(true);
+      try {
+        const addresses = await fetchUserVaultV2AddressesAllNetworks(address);
+        setVaultAddresses(addresses);
+      } catch (error) {
+        console.error('Error fetching vault addresses:', error);
+        setVaultAddresses([]);
+      } finally {
+        setVaultsLoading(false);
+      }
+    };
+
+    void fetchVaults();
+  }, [address, isConnected]);
 
   const handleConnect = () => {
     open();
@@ -71,13 +93,13 @@ export default function AutovaultListContent() {
   };
 
   const handleManageVault = () => {
-    if (vaults.length > 0) {
-      const firstVault = vaults[0];
+    if (vaultAddresses.length > 0) {
+      const firstVault = vaultAddresses[0];
       window.location.href = `/autovault/${firstVault.networkId}/${firstVault.address}`;
     }
   };
 
-  const hasVaults = vaults.length > 0;
+  const hasVaults = vaultAddresses.length > 0;
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -177,7 +199,6 @@ export default function AutovaultListContent() {
         <DeploymentModal
           isOpen={showDeploymentModal}
           onOpenChange={setShowDeploymentModal}
-          existingVaults={vaults}
         />
       </div>
     </div>

@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { FaCube } from 'react-icons/fa';
+import { useCallback } from 'react';
+import { FaCube, FaCheck } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useMarkets } from '@/contexts/MarketsContext';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { getNetworkName, ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from '@/features/autovault/components/deployment/deployment-context';
 import { TokenSelection } from './token-selection';
 
@@ -16,41 +15,17 @@ const VAULT_SUPPORTED_NETWORKS: SupportedNetworks[] = ALL_SUPPORTED_NETWORKS.fil
 
 type DeploymentModalContentProps = {
   isOpen: boolean;
-
   onOpenChange: (open: boolean) => void;
-  existingVaults: UserVaultV2[];
 };
 
-function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: DeploymentModalContentProps) {
-  const { selectedTokenAndNetwork, createVault, isDeploying } = useDeployment();
+function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContentProps) {
+  const { selectedTokenAndNetwork, createVault, isDeploying, deploymentPhase, deployedVaultAddress, navigateToVault } = useDeployment();
 
   // Load balances and tokens at modal level
   const { balances, loading: balancesLoading } = useUserBalances({
     networkIds: VAULT_SUPPORTED_NETWORKS,
   });
   const { whitelistedMarkets, loading: marketsLoading } = useMarkets();
-
-  const [ackExistingVault, setAckExistingVault] = useState(false);
-
-  const userAlreadyHasVault = useMemo(() => {
-    if (!selectedTokenAndNetwork) return false;
-
-    return existingVaults.some(
-      (vault) =>
-        vault.networkId === selectedTokenAndNetwork.networkId &&
-        vault.asset.toLowerCase() === selectedTokenAndNetwork.token.address.toLowerCase(),
-    );
-  }, [existingVaults, selectedTokenAndNetwork]);
-
-  useEffect(() => {
-    setAckExistingVault(false);
-  }, [selectedTokenAndNetwork]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setAckExistingVault(false);
-    }
-  }, [isOpen]);
 
   const handleCreateVault = useCallback(() => {
     void createVault();
@@ -63,6 +38,92 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
     return 'Deploy Vault';
   }, [isDeploying, balancesLoading, marketsLoading, selectedTokenAndNetwork]);
 
+  // Waiting phase: show indexing state
+  if (deploymentPhase === 'waiting') {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="2xl"
+        scrollBehavior="inside"
+        backdrop="blur"
+        className="bg-background dark:border border-gray-700"
+      >
+        <ModalHeader
+          title="Deploying Vault"
+          description=""
+          mainIcon={<FaCube className="h-5 w-5" />}
+          onClose={() => onOpenChange(false)}
+        />
+        <ModalBody className="px-8">
+          <div className="flex flex-col items-center justify-center space-y-4 py-12">
+            <div className="animate-spin">
+              <FaCube className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="text-lg font-medium text-primary">Indexing your vault...</h3>
+            <p className="max-w-md text-center text-sm text-secondary">
+              Your transaction was successful! We're waiting for your vault to be indexed.
+            </p>
+          </div>
+        </ModalBody>
+      </Modal>
+    );
+  }
+
+  // Success phase: show success state with navigation
+  if (deploymentPhase === 'success') {
+    return (
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="2xl"
+        scrollBehavior="inside"
+        backdrop="blur"
+        className="bg-background dark:border border-gray-700"
+      >
+        <ModalHeader
+          title="Vault Deployed!"
+          description=""
+          mainIcon={<FaCube className="h-5 w-5" />}
+          onClose={() => onOpenChange(false)}
+        />
+        <ModalBody className="px-8">
+          <div className="flex flex-col items-center justify-center space-y-6 py-12">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <FaCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h3 className="text-lg font-medium text-primary">Your vault is ready!</h3>
+            <p className="max-w-md text-center text-sm text-secondary">
+              {deployedVaultAddress
+                ? 'Complete the initialization to start using your autovault.'
+                : 'Your vault was successfully deployed. Check your portfolio to view it.'}
+            </p>
+            {deployedVaultAddress ? (
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={navigateToVault}
+                className="font-zen px-8"
+              >
+                Start Setup
+              </Button>
+            ) : (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={() => onOpenChange(false)}
+                className="font-zen px-8"
+              >
+                Close
+              </Button>
+            )}
+          </div>
+        </ModalBody>
+      </Modal>
+    );
+  }
+
+  // Selection/Deploying phase: show token selection
   return (
     <Modal
       isOpen={isOpen}
@@ -89,7 +150,6 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
                   balancesLoading={balancesLoading}
                   whitelistedMarkets={whitelistedMarkets}
                   marketsLoading={marketsLoading}
-                  existingVaults={existingVaults}
                 />
               </div>
 
@@ -99,20 +159,11 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
                 </div>
               )}
 
-              {userAlreadyHasVault && selectedTokenAndNetwork && (
-                <Checkbox
-                  variant="highlighted"
-                  label={`I understand I already deployed an autovault for this token on ${getNetworkName(selectedTokenAndNetwork.networkId)}.`}
-                  checked={ackExistingVault}
-                  onCheckedChange={(checked) => setAckExistingVault(checked === true)}
-                />
-              )}
-
               <div className="flex justify-end pt-2">
                 <ExecuteTransactionButton
                   targetChainId={selectedTokenAndNetwork?.networkId ?? SupportedNetworks.Base}
                   onClick={handleCreateVault}
-                  disabled={!selectedTokenAndNetwork || balancesLoading || marketsLoading || (userAlreadyHasVault && !ackExistingVault)}
+                  disabled={!selectedTokenAndNetwork || balancesLoading || marketsLoading}
                   isLoading={isDeploying}
                   variant="primary"
                   className="min-w-[140px]"
@@ -131,16 +182,14 @@ function DeploymentModalContent({ isOpen, onOpenChange, existingVaults }: Deploy
 type DeploymentModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  existingVaults: UserVaultV2[];
 };
 
-export function DeploymentModal({ isOpen, onOpenChange, existingVaults }: DeploymentModalProps) {
+export function DeploymentModal({ isOpen, onOpenChange }: DeploymentModalProps) {
   return (
     <DeploymentProvider>
       <DeploymentModalContent
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        existingVaults={existingVaults}
       />
     </DeploymentProvider>
   );

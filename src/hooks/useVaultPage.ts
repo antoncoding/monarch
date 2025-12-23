@@ -42,6 +42,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     isUpdatingMetadata,
     name: onChainName,
     symbol: onChainSymbol,
+    owner: contractOwner,
     setAllocator,
     isUpdatingAllocator,
     updateCaps,
@@ -56,7 +57,38 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   // Fetch market adapter
   const { morphoMarketV1Adapter, loading: adapterLoading, refetch: refetchAdapter } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
 
-  // Compute derived state
+  // Compute initialization state
+  // A vault goes through these states:
+  // 1. Vault deployed (has address)
+  // 2. Adapter deployed (morphoMarketV1Adapter !== zeroAddress)
+  // 3. Vault initialized (adapter registered + registry set + adapter cap set)
+  // 4. Fully configured (collateral caps + market caps + allocators set)
+  //
+  // The Morpho API only returns data for initialized vaults (state 3+).
+  // Before initialization, we detect the vault via subgraph but get no API data.
+  const isVaultInitialized = useMemo(() => {
+    // Still loading - can't determine state yet
+    if (adapterLoading || vaultDataLoading) {
+      return false;
+    }
+
+    // If adapter not deployed, definitely not initialized
+    if (morphoMarketV1Adapter === zeroAddress) {
+      return false;
+    }
+
+    // If adapter exists but no vault data from API, vault is deployed but NOT initialized
+    // (Morpho API only returns data for initialized vaults that have been registered)
+    if (!vaultData) {
+      return false;
+    }
+
+    // If we have data, check if adapter cap is set (indicates complete initialization)
+    // Without an adapter cap, the vault cannot function properly
+    return vaultData?.capsData?.adapterCap !== null && vaultData?.capsData?.adapterCap !== undefined;
+  }, [adapterLoading, vaultDataLoading, morphoMarketV1Adapter, vaultData]);
+
+  // Helper flag: adapter not deployed at all (need to deploy it first)
   const needsAdapterDeployment = useMemo(
     () => !adapterLoading && morphoMarketV1Adapter === zeroAddress,
     [adapterLoading, morphoMarketV1Adapter],
@@ -107,9 +139,10 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     return total;
   }, [adapterPositions]);
 
+  // Determine ownership from contract owner (not API data, since API returns null for uninitialized vaults)
   const isOwner = useMemo(
-    () => Boolean(vaultData?.owner && connectedAddress && vaultData.owner.toLowerCase() === connectedAddress.toLowerCase()),
-    [vaultData?.owner, connectedAddress],
+    () => Boolean(contractOwner && connectedAddress && contractOwner.toLowerCase() === connectedAddress.toLowerCase()),
+    [contractOwner, connectedAddress],
   );
 
   const hasNoAllocators = useMemo(
@@ -142,9 +175,32 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     void refetchAllocations();
   }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
 
-  // Loading states
-  const isLoading = vaultDataLoading || contractLoading || adapterLoading;
+  // Loading states - wait for ALL queries before showing content
+  const isLoading = vaultDataLoading || contractLoading || adapterLoading || allocationsLoading;
   const hasError = !!vaultDataError || !!allocationsError;
+
+  // Comprehensive check: needs initialization if vault is deployed but not fully initialized
+  // This captures the state where:
+  // - Vault contract is deployed
+  // - Adapter may or may not be deployed
+  // - But the vault hasn't been initialized (registry not set, adapter not registered, caps not set)
+  const needsInitialization = useMemo(() => {
+    // Don't show initialization prompt while still loading
+    if (isLoading) {
+      return false;
+    }
+
+    // If vault is already initialized, no need for initialization
+    if (isVaultInitialized) {
+      return false;
+    }
+
+    // At this point: vault exists but is not initialized
+    // This covers both cases:
+    // 1. Adapter not deployed yet (need to deploy + initialize)
+    // 2. Adapter deployed but not connected to vault (need to initialize)
+    return true;
+  }, [isLoading, isVaultInitialized]);
 
   return {
     // Data
@@ -164,6 +220,8 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     // Computed state
     isOwner,
     needsAdapterDeployment,
+    needsInitialization,
+    isVaultInitialized,
     hasNoAllocators,
     capsUninitialized,
 

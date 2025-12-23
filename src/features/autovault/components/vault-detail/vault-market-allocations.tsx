@@ -16,6 +16,7 @@ type VaultMarketAllocationsProps = {
   vaultAssetDecimals: number;
   chainId: SupportedNetworks;
   isLoading: boolean;
+  needsInitialization?: boolean;
 };
 
 type ViewMode = 'collateral' | 'market';
@@ -32,6 +33,7 @@ export function VaultMarketAllocations({
   vaultAssetDecimals,
   chainId,
   isLoading,
+  needsInitialization = false,
 }: VaultMarketAllocationsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('market');
 
@@ -64,8 +66,12 @@ export function VaultMarketAllocations({
 
   if (collateralAllocations.length === 0 && marketAllocations.length === 0) {
     return (
-      <div className="bg-surface rounded p-6 text-center font-zen text-secondary">
-        No markets configured yet. Configure caps in settings to start allocating assets.
+      <div className="bg-surface rounded p-10 flex flex-col items-center justify-center font-zen">
+        <p className="text-sm text-center text-secondary">
+          {needsInitialization
+            ? 'Finish the vault setup to configure market caps'
+            : 'No markets configured yet. Configure caps in settings to start allocating assets'}
+        </p>
       </div>
     );
   }

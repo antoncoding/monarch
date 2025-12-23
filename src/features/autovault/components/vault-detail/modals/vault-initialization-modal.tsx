@@ -1,15 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { type Address, zeroAddress } from 'viem';
 import { Button } from '@/components/ui/button';
-import { AccountIdentity } from '@/components/shared/account-identity';
+import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
@@ -17,28 +18,24 @@ import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
 
-const STEP_SEQUENCE = ['deploy', 'adapter-cap', 'finalize', 'agents'] as const;
+const STEP_SEQUENCE = ['deploy', 'metadata', 'agents', 'finalize'] as const;
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
   const currentIndex = STEP_SEQUENCE.findIndex((s) => s === currentStep);
 
   return (
-    <div className="flex w-full items-center justify-center gap-2">
+    <div className="flex items-center justify-center gap-2">
       {STEP_SEQUENCE.map((step, index) => {
         const isPast = index < currentIndex;
         const isCurrent = index === currentIndex;
         return (
           <div
             key={step}
-            className="flex items-center"
-          >
-            <div
-              className={`h-[6px] w-8 rounded transition-colors duration-300 ${
-                isCurrent ? 'bg-primary' : isPast ? 'bg-primary/50' : 'bg-gray-200 dark:bg-gray-700'
-              }`}
-            />
-          </div>
+            className={`h-2 w-2 rounded-full transition-colors duration-300 ${
+              isCurrent ? 'bg-primary' : isPast ? 'bg-primary/50' : 'bg-gray-200 dark:bg-gray-700'
+            }`}
+          />
         );
       })}
     </div>
@@ -46,69 +43,80 @@ function StepIndicator({ currentStep }: { currentStep: StepId }) {
 }
 
 function DeployAdapterStep({
-  loading,
+  isDeploying,
+  isChecking,
   adapterDetected,
   adapterAddress,
+  justDeployed,
 }: {
-  loading: boolean;
+  isDeploying: boolean;
+  isChecking: boolean;
   adapterDetected: boolean;
   adapterAddress: Address;
+  justDeployed: boolean;
 }) {
   return (
-    <div className="space-y-4 px-2 font-zen">
+    <div className="space-y-4 font-zen">
       <p className="text-sm text-secondary">Deploy a Morpho Market adapter so this vault can allocate assets into Morpho Blue markets.</p>
-      <div className="flex items-center gap-2 text-xs text-secondary">
-        {loading && <Spinner size={12} />}
-        <span>{adapterDetected ? `Adapter detected: ${shortenAddress(adapterAddress)}` : 'Adapter not detected yet.'}</span>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-secondary">
+          {(isDeploying || isChecking) && <Spinner size={12} />}
+          <span>
+            {adapterDetected
+              ? `Adapter detected: ${shortenAddress(adapterAddress)}`
+              : justDeployed && isChecking
+                ? 'Indexing your adapter...'
+                : isChecking
+                  ? 'Checking for adapter...'
+                  : 'Adapter not detected yet. Click deploy to create one.'}
+          </span>
+        </div>
       </div>
     </div>
   );
 }
 
-function AdapterCapStep({
-  adapterAddress,
-  adapterCapRelative,
-  onSetAdapterCap,
+function MetadataStep({
+  vaultName,
+  vaultSymbol,
+  onNameChange,
+  onSymbolChange,
 }: {
-  adapterAddress: Address;
-  adapterCapRelative: string;
-  onSetAdapterCap: (relativeCap: string) => void;
+  vaultName: string;
+  vaultSymbol: string;
+  onNameChange: (value: string) => void;
+  onSymbolChange: (value: string) => void;
 }) {
-  const handleCapChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // Allow empty or valid numbers between 0-100
-    if (value === '' || (!isNaN(Number.parseFloat(value)) && Number.parseFloat(value) >= 0 && Number.parseFloat(value) <= 100)) {
-      onSetAdapterCap(value);
-    }
-  };
-
   return (
-    <div className="space-y-4 px-2 font-zen">
-      <p className="text-sm text-secondary">
-        Set a maximum allocation cap for the Morpho adapter. This controls the total percentage of vault assets that can be allocated
-        through this adapter.
-      </p>
-      <div className="rounded bg-hovered/60 p-4 space-y-4">
-        <div className="space-y-1">
-          <span className="text-xs uppercase text-secondary">Adapter address</span>
-          <AccountIdentity
-            address={adapterAddress}
-            variant="full"
+    <div className="space-y-4 font-zen">
+      <p className="text-sm text-secondary">Set your vault's name and symbol. Both fields are required to continue.</p>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <span className="text-[11px] uppercase text-secondary">Vault name *</span>
+          <Input
+            size="sm"
+            value={vaultName}
+            onChange={(event) => onNameChange(event.target.value)}
+            placeholder="e.g., Automonarch USD"
+            classNames={{
+              input: 'text-sm',
+              inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
+            }}
           />
         </div>
         <div className="space-y-2">
-          <span className="text-xs uppercase text-secondary">Adapter cap (%)</span>
-          <input
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={adapterCapRelative}
-            onChange={handleCapChange}
-            className="w-full rounded border border-divider bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-            placeholder="e.g., 80"
+          <span className="text-[11px] uppercase text-secondary">Vault symbol *</span>
+          <Input
+            size="sm"
+            value={vaultSymbol}
+            onChange={(event) => onSymbolChange(event.target.value)}
+            placeholder="e.g., aMUSD"
+            maxLength={16}
+            classNames={{
+              input: 'text-sm',
+              inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
+            }}
           />
-          <p className="text-xs text-secondary">Maximum percentage of vault assets that can be allocated via this adapter (0-100%)</p>
         </div>
       </div>
     </div>
@@ -127,36 +135,21 @@ function FinalizeSetupStep({
   const adapterIsReady = adapter !== ZERO_ADDRESS;
 
   return (
-    <div className="space-y-4 px-2 font-zen">
-      <div className="flex items-center gap-2 text-sm text-secondary">
-        {isInitializing && <Spinner size={12} />}
-        <span>
-          Link the vault to the adapter and commit to the Morpho registry. This permanently opts the vault into Morpho-approved adapters.
-        </span>
-      </div>
-      <div className="rounded bg-hovered/60 p-4 text-sm space-y-4">
+    <div className="space-y-4 font-zen">
+      <p className="text-sm text-secondary">Review your configuration and complete the vault initialization.</p>
+      <div className="rounded bg-hovered/60 p-4 text-sm space-y-3">
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Adapter</span>
           {adapterIsReady ? (
-            <AccountIdentity
-              address={adapter}
-              variant="full"
-            />
+            <div className="text-xs text-secondary">{shortenAddress(adapter)}</div>
           ) : (
             <span className="text-xs text-secondary">Adapter not detected yet.</span>
           )}
         </div>
         <div className="space-y-1">
           <span className="text-xs uppercase text-secondary">Morpho registry</span>
-          <AccountIdentity
-            address={registryAddress}
-            variant="full"
-          />
+          <div className="text-xs text-secondary">{shortenAddress(registryAddress)}</div>
         </div>
-        <ul className="list-disc space-y-1 pl-4 text-xs text-secondary">
-          <li>Only Morpho-approved adapters can be enabled after this step.</li>
-          <li>Registry configuration is abdicated and cannot be reversed.</li>
-        </ul>
       </div>
     </div>
   );
@@ -170,7 +163,7 @@ function AgentSelectionStep({
   onSelectAgent: (agent: Address | null) => void;
 }) {
   return (
-    <div className="space-y-4 px-2 font-zen">
+    <div className="space-y-4 font-zen">
       <p className="text-sm text-secondary">Choose an agent to automate your vault's allocations. You can change this later in settings.</p>
       <div className="space-y-3">
         {v2AgentsBase.map((agent) => (
@@ -184,9 +177,6 @@ function AgentSelectionStep({
           />
         ))}
       </div>
-      <p className="text-xs text-secondary italic">
-        💡 Tip: Agents help maximize returns by rebalancing between markets. You can skip this and configure later.
-      </p>
     </div>
   );
 }
@@ -213,8 +203,13 @@ export function VaultInitializationModal({
   const [stepIndex, setStepIndex] = useState(0);
   const [statusVisible, setStatusVisible] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Address | null>(null);
-  const [adapterCapRelative, setAdapterCapRelative] = useState<string>('100');
+  const [vaultName, setVaultName] = useState<string>('');
+  const [vaultSymbol, setVaultSymbol] = useState<string>('');
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const postInitPollingRef = useRef<NodeJS.Timeout | null>(null);
   const currentStep = STEP_SEQUENCE[stepIndex];
+
+  const toast = useStyledToast();
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
   const registryAddress = useMemo(() => {
@@ -237,34 +232,115 @@ export function VaultInitializationModal({
 
   const handleDeploy = useCallback(async () => {
     setStatusVisible(true);
-    await deploy();
-    void refetchMarketAdapter();
+    try {
+      await deploy();
+      // Polling will continue automatically (already running from modal open effect)
+      void refetchMarketAdapter(); // Immediate check after deploy
+    } catch (error) {
+      console.error('Adapter deployment failed:', error);
+      setStatusVisible(false);
+    }
   }, [deploy, refetchMarketAdapter]);
 
   const handleCompleteInitialization = useCallback(async () => {
     if (marketAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
 
     try {
-      const success = await completeInitialization(registryAddress, marketAdapter, selectedAgent ?? undefined);
+      // Note: Adapter cap will be set when user configures market caps
+      // Pass name and symbol if provided (will be trimmed and checked in useVaultV2)
+      const success = await completeInitialization(
+        registryAddress,
+        marketAdapter,
+        selectedAgent ?? undefined,
+        vaultName || undefined,
+        vaultSymbol || undefined,
+      );
       if (!success) {
         return;
       }
-      onAdapterConfigured();
+
+      // Show toast and start polling for vault data
+      toast.info('Indexing vault data...', 'This may take a few moments as the data is being indexed.');
+
+      // Poll every 3 seconds for up to 30 seconds (10 attempts)
+      let attempts = 0;
+      const maxAttempts = 10;
+      postInitPollingRef.current = setInterval(() => {
+        attempts++;
+        void onAdapterConfigured();
+
+        if (attempts >= maxAttempts && postInitPollingRef.current) {
+          clearInterval(postInitPollingRef.current);
+          postInitPollingRef.current = null;
+        }
+      }, 3000);
+
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to complete initialization', error);
     }
-  }, [completeInitialization, onAdapterConfigured, onOpenChange, registryAddress, selectedAgent, marketAdapter]);
+  }, [
+    completeInitialization,
+    onAdapterConfigured,
+    onOpenChange,
+    registryAddress,
+    selectedAgent,
+    marketAdapter,
+    vaultName,
+    vaultSymbol,
+    toast,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
       setStatusVisible(false);
       setSelectedAgent(null);
-      setAdapterCapRelative('100');
+      setVaultName('');
+      setVaultSymbol('');
+
+      // Clean up adapter polling interval
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      // Note: postInitPollingRef continues after modal close to index vault data
     }
   }, [isOpen]);
 
+  // Cleanup post-init polling on unmount
+  useEffect(() => {
+    return () => {
+      if (postInitPollingRef.current) {
+        clearInterval(postInitPollingRef.current);
+        postInitPollingRef.current = null;
+      }
+    };
+  }, []);
+
+  // Auto-poll for adapter when modal is open and adapter not detected (vault-specific)
+  useEffect(() => {
+    if (!isOpen || adapterDetected) {
+      return;
+    }
+
+    // Initial check immediately
+    void refetchMarketAdapter();
+
+    // Poll every 5 seconds
+    pollingIntervalRef.current = setInterval(() => {
+      void refetchMarketAdapter();
+    }, 5000);
+
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [isOpen, adapterDetected, refetchMarketAdapter]);
+
+  // Detection effect: Auto-advance when adapter found
   useEffect(() => {
     if (adapterDetected && stepIndex === 0) {
       setStepIndex(1);
@@ -275,21 +351,16 @@ export function VaultInitializationModal({
     switch (currentStep) {
       case 'deploy':
         return 'Deploy Morpho Market adapter';
-      case 'adapter-cap':
-        return 'Set adapter allocation cap';
-      case 'finalize':
-        return 'Configure vault registry';
+      case 'metadata':
+        return 'Set vault name & symbol';
       case 'agents':
-        return 'Choose an agent (optional)';
+        return 'Choose an agent';
+      case 'finalize':
+        return 'Review & finalize';
       default:
         return '';
     }
   }, [currentStep]);
-
-  const canProceedToAgents = adapterDetected && registryAddress !== ZERO_ADDRESS;
-  const showLoading = statusVisible && (isDeploying || marketAdapterLoading);
-  const showBackButton = stepIndex > 0 && stepIndex < 3;
-  const canProceedFromAdapterCap = adapterCapRelative !== '' && Number.parseFloat(adapterCapRelative) > 0;
 
   const renderCta = () => {
     // Step 0: Deploy adapter
@@ -297,14 +368,17 @@ export function VaultInitializationModal({
       return (
         <Button
           variant="primary"
-          size="sm"
           className="min-w-[150px]"
-          disabled={!canDeploy || isDeploying}
+          disabled={!canDeploy || isDeploying || marketAdapterLoading}
           onClick={() => void handleDeploy()}
         >
           {isDeploying ? (
             <span className="flex items-center gap-2">
               <Spinner size={12} /> Deploying...
+            </span>
+          ) : marketAdapterLoading ? (
+            <span className="flex items-center gap-2">
+              <Spinner size={12} /> Checking...
             </span>
           ) : (
             'Deploy adapter'
@@ -313,64 +387,51 @@ export function VaultInitializationModal({
       );
     }
 
-    // Step 1: Set adapter cap
+    // Step 1: Metadata (required)
     if (stepIndex === 1) {
+      const isValid = vaultName.trim().length > 0 && vaultSymbol.trim().length > 0;
       return (
         <Button
           variant="primary"
-          size="sm"
           className="min-w-[150px]"
-          disabled={!canProceedFromAdapterCap}
+          disabled={!isValid}
           onClick={() => setStepIndex(2)}
         >
-          Next: Finalize setup
+          Continue
         </Button>
       );
     }
 
-    // Step 2: Finalize setup -> move to agent selection
+    // Step 2: Agent selection (required)
     if (stepIndex === 2) {
       return (
         <Button
           variant="primary"
-          size="sm"
-          className="min-w-[170px]"
-          disabled={!canProceedToAgents}
+          className="min-w-[150px]"
+          disabled={!selectedAgent}
           onClick={() => setStepIndex(3)}
         >
-          Next: Choose agent
+          Continue
         </Button>
       );
     }
 
-    // Step 3: Agent selection -> complete with optional agent
+    // Step 3: Finalize - execute initialization
     return (
-      <>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="min-w-[120px]"
-          onClick={() => void handleCompleteInitialization()}
-          disabled={isInitializing}
-        >
-          Skip for now
-        </Button>
-        <Button
-          variant="primary"
-          size="sm"
-          className="min-w-[170px]"
-          disabled={isInitializing}
-          onClick={() => void handleCompleteInitialization()}
-        >
-          {isInitializing ? (
-            <span className="flex items-center gap-2">
-              <Spinner size={12} /> Completing...
-            </span>
-          ) : (
-            'Complete setup'
-          )}
-        </Button>
-      </>
+      <Button
+        variant="primary"
+        className="min-w-[170px]"
+        disabled={isInitializing}
+        onClick={() => void handleCompleteInitialization()}
+      >
+        {isInitializing ? (
+          <span className="flex items-center gap-2">
+            <Spinner size={12} /> Completing...
+          </span>
+        ) : (
+          'Complete setup'
+        )}
+      </Button>
     );
   };
 
@@ -384,25 +445,26 @@ export function VaultInitializationModal({
     >
       <ModalHeader
         title={stepTitle}
-        description={
-          stepIndex < 3 ? 'Complete these steps to activate your vault' : 'Optionally choose an agent now, or configure later in settings'
-        }
+        description="Complete vault initialization to start using your vault"
         mainIcon={<FiZap className="h-5 w-5" />}
         onClose={() => onOpenChange(false)}
       />
-      <ModalBody className="space-y-6 px-2">
+      <ModalBody className="space-y-6 px-8 py-6">
         {currentStep === 'deploy' && (
           <DeployAdapterStep
-            loading={showLoading}
+            isDeploying={isDeploying}
+            isChecking={marketAdapterLoading}
             adapterDetected={adapterDetected}
             adapterAddress={marketAdapter}
+            justDeployed={statusVisible}
           />
         )}
-        {currentStep === 'adapter-cap' && (
-          <AdapterCapStep
-            adapterAddress={marketAdapter}
-            adapterCapRelative={adapterCapRelative}
-            onSetAdapterCap={setAdapterCapRelative}
+        {currentStep === 'metadata' && (
+          <MetadataStep
+            vaultName={vaultName}
+            vaultSymbol={vaultSymbol}
+            onNameChange={setVaultName}
+            onSymbolChange={setVaultSymbol}
           />
         )}
         {currentStep === 'finalize' && (
@@ -419,21 +481,10 @@ export function VaultInitializationModal({
           />
         )}
       </ModalBody>
-      <ModalFooter className="flex items-center justify-end gap-2 border-t border-divider/40 pt-4">
-        {showBackButton && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setStepIndex((prev) => Math.max(prev - 1, 0))}
-          >
-            Back
-          </Button>
-        )}
-        {renderCta()}
-      </ModalFooter>
-      <div className="px-4 pb-2">
+      <ModalFooter className="flex flex-col items-center gap-4 border-t border-divider/40 pt-6 px-8 pb-6">
         <StepIndicator currentStep={currentStep} />
-      </div>
+        <div className="flex items-center gap-3">{renderCta()}</div>
+      </ModalFooter>
     </Modal>
   );
 }

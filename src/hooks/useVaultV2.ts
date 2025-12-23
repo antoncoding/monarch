@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { type Address, encodeFunctionData, toFunctionSelector, zeroAddress } from 'viem';
+import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } from 'viem';
 import { useConnection, useChainId, useReadContract } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
@@ -18,6 +18,17 @@ export function useVaultV2({
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
+
+  const { data: owner } = useReadContract({
+    address: vaultAddress,
+    abi: vaultv2Abi,
+    functionName: 'owner',
+    args: [],
+    chainId: chainIdToUse,
+    query: {
+      enabled: Boolean(vaultAddress),
+    },
+  });
 
   const { data: curator } = useReadContract({
     address: vaultAddress,
@@ -123,10 +134,29 @@ export function useVaultV2({
 
   // All morpho v2 vault operations have to be proposed first, and then execute
   const completeInitialization = useCallback(
-    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address): Promise<boolean> => {
+    async (morphoRegistry: Address, marketV1Adapter: Address, allocator?: Address, _name?: string, _symbol?: string): Promise<boolean> => {
       if (!account || !vaultAddress || marketV1Adapter === zeroAddress) return false;
 
       const txs: `0x${string}`[] = [];
+
+      // Step 0 (Optional). Set vault metadata if provided (no timelock needed)
+      if (_name?.trim()) {
+        const setNameTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setName',
+          args: [_name.trim()],
+        });
+        txs.push(setNameTx);
+      }
+
+      if (_symbol?.trim()) {
+        const setSymbolTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setSymbol',
+          args: [_symbol.trim()],
+        });
+        txs.push(setSymbolTx);
+      }
 
       // Step 1. Assign curator if unset.
       if (currentCurator === zeroAddress) {
@@ -168,7 +198,11 @@ export function useVaultV2({
 
       txs.push(submitAddAdapterTx, addAdapterTx);
 
-      // Step 4. Abdicate registry control.
+      // Note: Adapter cap will be set when user configures market caps in settings
+      // (EditCaps.tsx automatically ensures adapter cap is 100% + maxUint128)
+
+      // Note: do not do this for maximized flexibility for now: open in the future!
+      // Step 5. Abdicate registry control.
       const setAdapterRegistrySelector = toFunctionSelector('setAdapterRegistry(address)');
 
       const abdicateSetAdapterRegistryTx = encodeFunctionData({
@@ -185,7 +219,7 @@ export function useVaultV2({
 
       txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
-      // Step 5 (Optional). Set initial allocator if provided.
+      // Step 6 (Optional). Set initial allocator if provided.
       if (allocator && allocator !== zeroAddress) {
         const setAllocatorTx = encodeFunctionData({
           abi: vaultv2Abi,
@@ -202,7 +236,7 @@ export function useVaultV2({
         txs.push(submitSetAllocatorTx, setAllocatorTx);
       }
 
-      // Step 6. Execute multicall with all steps.
+      // Step 7. Execute multicall with all steps.
       const multicallTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'multicall',
@@ -490,13 +524,13 @@ export function useVaultV2({
   );
 
   const withdraw = useCallback(
-    async (amount: bigint, receiver: Address, owner: Address): Promise<boolean> => {
+    async (amount: bigint, receiver: Address, _account: Address): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
       const withdrawTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'withdraw',
-        args: [amount, receiver, owner],
+        args: [amount, receiver, _account],
       });
 
       try {
@@ -528,6 +562,11 @@ export function useVaultV2({
     return String(rawSymbol);
   }, [rawSymbol]);
 
+  const vaultOwner = useMemo(() => {
+    if (!owner) return zeroAddress;
+    return owner as Address;
+  }, [owner]);
+
   return {
     isLoading: loadingBalance,
     refetch: refetchAll,
@@ -535,6 +574,7 @@ export function useVaultV2({
     isInitializing,
     name,
     symbol,
+    owner: vaultOwner,
     updateNameAndSymbol,
     isUpdatingMetadata,
     setAllocator,

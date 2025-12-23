@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { LuVault } from 'react-icons/lu';
 import { type Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { TooltipContent } from '@/components/shared/tooltip-content';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import type { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, type SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { useDeployment, type SelectedToken } from '@/features/autovault/components/deployment/deployment-context';
 
@@ -23,7 +19,6 @@ type TokenNetwork = {
   balance: bigint;
   networkId: number;
   marketCount: number;
-  hasExistingVault: boolean;
 };
 
 function NetworkIcon({ networkId }: { networkId: number }) {
@@ -44,10 +39,9 @@ type TokenSelectionProps = {
   balancesLoading: boolean;
   whitelistedMarkets: Market[] | null;
   marketsLoading: boolean;
-  existingVaults: UserVaultV2[];
 };
 
-export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading, existingVaults }: TokenSelectionProps) {
+export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading }: TokenSelectionProps) {
   const { selectedTokenAndNetwork, setSelectedTokenAndNetwork } = useDeployment();
 
   const { findToken } = useTokens();
@@ -69,10 +63,6 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       const balanceValue = balance.balance ? BigInt(balance.balance) : 0n;
 
       if (network && balanceValue > 0n) {
-        const hasExistingVault = existingVaults.some(
-          (vault) => vault.networkId === balance.chainId && vault.asset.toLowerCase() === balance.address.toLowerCase(),
-        );
-
         // Count markets for this token on this network
         const marketCount = marketsToUse.filter(
           (market) =>
@@ -90,7 +80,6 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
           balance: balanceValue,
           networkId: balance.chainId,
           marketCount,
-          hasExistingVault,
         });
       }
     });
@@ -102,7 +91,7 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       if (bBalance !== aBalance) return bBalance - aBalance;
       return a.symbol.localeCompare(b.symbol);
     });
-  }, [balances, existingVaults, findToken, whitelistedMarkets]);
+  }, [balances, findToken, whitelistedMarkets]);
 
   const handleTokenNetworkSelect = (tokenNetwork: TokenNetwork) => {
     const selectedToken: SelectedToken = {
@@ -199,22 +188,6 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {tokenNetwork.hasExistingVault && (
-                      <Tooltip
-                        content={
-                          <TooltipContent
-                            icon={<LuVault className="h-4 w-4 text-primary" />}
-                            title="Vault deployed"
-                            detail={`You already deployed a vault for this token on ${getNetworkName(tokenNetwork.networkId)}.`}
-                          />
-                        }
-                      >
-                        <span className="text-secondary">
-                          <LuVault className="h-4 w-4" />
-                        </span>
-                      </Tooltip>
-                    )}
-
                     <NetworkIcon networkId={tokenNetwork.networkId} />
                     <span className="text-sm text-secondary">
                       {tokenNetwork.marketCount} market
