@@ -891,7 +891,7 @@ export function MarketsTableWithSameLoanAsset({
   ]);
 
   // Get selected markets
-  const selectedMarkets = useMemo(() => {
+  const _selectedMarkets = useMemo(() => {
     return markets.filter((m) => m.isSelected);
   }, [markets]);
 

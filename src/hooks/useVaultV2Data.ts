@@ -26,7 +26,6 @@ export type VaultV2Data = {
   assetAddress: string;
   tokenSymbol?: string;
   tokenDecimals?: number;
-  totalSupply: string;
   allocators: string[];
   sentinels: string[];
   owner: string;
@@ -102,7 +101,6 @@ export function useVaultV2Data({
         assetAddress: result.asset,
         tokenSymbol: token?.symbol,
         tokenDecimals: token?.decimals,
-        totalSupply: result.totalSupply,
         allocators: result.allocators,
         sentinels: result.sentinels,
         owner: result.owner,

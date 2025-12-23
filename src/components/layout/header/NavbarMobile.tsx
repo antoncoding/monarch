@@ -10,7 +10,7 @@ import { useTheme } from 'next-themes';
 import { FaRegMoon } from 'react-icons/fa';
 import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
-import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine, RiSafeLine } from 'react-icons/ri';
+import { RiBookLine, RiDiscordFill, RiGithubFill, RiLineChartLine, RiBriefcaseLine, RiGiftLine } from 'react-icons/ri';
 import { useConnection } from 'wagmi';
 import {
   DropdownMenu,
@@ -103,13 +103,13 @@ export default function NavbarMobile() {
             >
               <span className="font-medium">Portfolio</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               startContent={<RiSafeLine className="h-5 w-5" />}
               onClick={() => handleNavigation('/autovault')}
               className="py-3"
             >
               <span className="font-medium">Autovault</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               startContent={<RiGiftLine className="h-5 w-5" />}
               onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}

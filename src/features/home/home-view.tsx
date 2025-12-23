@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { RiBookLine, RiDiscordFill, RiGithubFill, RiArrowDownLine, RiExternalLinkLine } from 'react-icons/ri';
 import RebalanceAnimation from '@/components/animations/RebalanceAnimation';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
@@ -282,14 +281,19 @@ function HomePage() {
 
               {/* CTA Buttons - Centered */}
               <div className="mx-auto flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50"
-                  disabled
+              <Link
+                  href="/autovault"
+                  className="block no-underline"
                 >
-                  Auto Vault <Badge variant="success"> Coming Soon </Badge>
-                </Button>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50"
+                    disabled
+                  >
+                    Auto Vault
+                  </Button>
+                </Link>
                 <Link
                   href="/markets"
                   className="block no-underline"
