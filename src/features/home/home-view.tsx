@@ -288,7 +288,7 @@ function HomePage() {
                   <Button
                     variant="default"
                     size="lg"
-                    className="w-auto min-w-[200px] cursor-not-allowed font-zen opacity-50"
+                    className="w-auto min-w-[200px]"
                   >
                     Auto Vault
                   </Button>
