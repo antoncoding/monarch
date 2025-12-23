@@ -550,6 +550,76 @@ import { TablePagination } from '@/components/common/TablePagination';
 
 **Styling:** All styling applied via `app/global.css` - don't add inline styles or override padding.
 
+### TableContainerWithHeader Component
+
+**TableContainerWithHeader** (`@/components/common/table-container-with-header`)
+- Standard wrapper for tables with header section
+- Provides title on left, optional actions on right
+- Consistent styling with border separator, overflow handling, and responsive layout
+
+**Structure:**
+- Outer wrapper with `bg-surface`, `rounded-md`, `font-zen`, `shadow-sm`
+- Header section with border bottom separator
+- Title uses `font-monospace text-xs uppercase text-secondary`
+- Actions area with flexbox gap spacing
+- Overflow-x-auto wrapper for table content
+
+**Props:**
+- `title`: Table heading (e.g., "Asset Activity", "Supplied Positions")
+- `actions?`: Optional React node for controls (filters, refresh, settings dropdowns)
+- `children`: Table component
+- `className?`: Additional classes for outer wrapper
+
+**Usage Examples:**
+
+```tsx
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { Table, TableHeader, TableBody } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu } from '@/components/ui/dropdown-menu';
+
+// Simple table with title only
+<TableContainerWithHeader title="Asset Activity">
+  <Table>
+    {/* table content */}
+  </Table>
+</TableContainerWithHeader>
+
+// Table with actions (filters, refresh, settings)
+<TableContainerWithHeader
+  title="Supplied Positions"
+  actions={
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <ChevronDownIcon className="mr-2 h-4 w-4" />
+            Filter
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          {/* filter options */}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button variant="ghost" size="sm" onClick={handleRefresh}>
+        <RefreshIcon className="h-3 w-3" />
+      </Button>
+      <Button variant="ghost" size="sm">
+        <SettingsIcon className="h-3 w-3" />
+      </Button>
+    </>
+  }
+>
+  <Table>
+    {/* table content */}
+  </Table>
+</TableContainerWithHeader>
+```
+
+**Examples in codebase:**
+- `src/features/admin/components/asset-metrics-table.tsx`
+- `src/features/positions/components/supplied-morpho-blue-grouped-table.tsx`
+
 ### TablePagination Component
 
 **TablePagination** (`@/components/common/TablePagination`)
@@ -695,6 +765,53 @@ import { TransactionIdentity } from '@/components/common/TransactionIdentity';
 <TransactionIdentity txHash={txHash} chainId={chainId} />
 <TransactionIdentity txHash={txHash} chainId={chainId} showFullHash />
 ```
+
+### CollateralIconsDisplay
+
+Use `CollateralIconsDisplay` from `@/features/positions/components/collateral-icons-display` for displaying collateral tokens with smart overflow handling.
+
+**Features:**
+- Shows up to `maxDisplay` collateral icons (default: 8)
+- Overlapping icon style with proper z-index stacking
+- Automatic sorting by amount (descending)
+- "+X more" badge for additional collaterals with tooltip
+- Opacity support for collaterals with zero balance
+
+**Props:**
+- `collaterals`: Array of collateral objects with `address`, `symbol`, `amount`
+- `chainId`: Network chain ID for token icons
+- `maxDisplay?`: Maximum icons to display before showing "+X more" badge (default: 8)
+- `iconSize?`: Size of token icons in pixels (default: 20)
+
+**Usage:**
+
+```tsx
+import { CollateralIconsDisplay } from '@/features/positions/components/collateral-icons-display';
+
+// Basic usage
+<CollateralIconsDisplay
+  collaterals={position.collaterals}
+  chainId={position.chainId}
+/>
+
+// Custom display limit and icon size
+<CollateralIconsDisplay
+  collaterals={position.collaterals}
+  chainId={position.chainId}
+  maxDisplay={5}
+  iconSize={24}
+/>
+```
+
+**Pattern:**
+This component follows the same overlapping icon pattern as `TrustedByCell` in `trusted-vault-badges.tsx`:
+- First icon has `ml-0`, subsequent icons have `-ml-2` for overlapping effect
+- Z-index decreases from left to right for proper stacking
+- "+X more" badge shows remaining items in tooltip
+- Empty state shows "No known collaterals" message
+
+**Examples in codebase:**
+- `src/features/positions/components/supplied-morpho-blue-grouped-table.tsx`
 
 ## Input Components
 

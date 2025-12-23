@@ -1,15 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Tooltip } from '@/components/ui/tooltip';
-import { FaHistory, FaPlus } from 'react-icons/fa';
 import { IoRefreshOutline } from 'react-icons/io5';
-import { TbReport } from 'react-icons/tb';
 import { toast } from 'react-toastify';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
@@ -19,30 +15,20 @@ import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import { usePortfolioValue } from '@/hooks/usePortfolioValue';
+import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
 import type { MarketPosition } from '@/utils/types';
-import { OnboardingModal } from './components/onboarding/onboarding-modal';
-import { PositionsSummaryTable } from './components/positions-summary-table';
+import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
+import { PortfolioValueBadge } from './components/portfolio-value-badge';
+import { UserVaultsTable } from './components/user-vaults-table';
 
 export default function Positions() {
   const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
-  const [showOnboardingModal, setShowOnboardingModal] = useState<boolean>(false);
   const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
 
   const { account } = useParams<{ account: string }>();
-  const { address } = useConnection();
-
-  const [mounted, setMounted] = useState(false);
-
-  const isOwner = useMemo(() => {
-    if (!account || !address || !mounted) return false;
-    return account === address;
-  }, [account, address, mounted]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const { loading: isMarketsLoading } = useMarkets();
 
@@ -54,6 +40,12 @@ export default function Positions() {
     refetch,
     loadingStates,
   } = useUserPositionsSummaryData(account, earningsPeriod);
+
+  // Fetch user's auto vaults
+  const { vaults, loading: isVaultsLoading, refetch: refetchVaults } = useUserVaultsV2(account);
+
+  // Calculate portfolio value from positions and vaults
+  const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
 
   const loading = isMarketsLoading || isPositionsLoading;
 
@@ -68,6 +60,8 @@ export default function Positions() {
   }, [isMarketsLoading, loadingStates]);
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
+  const hasVaults = vaults && vaults.length > 0;
+  const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
 
   const handleRefetch = () => {
     void refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
@@ -80,52 +74,23 @@ export default function Positions() {
         <div className="pb-4">
           <h1 className="font-zen">Portfolio</h1>
         </div>
-        <div className="flex flex-col items-center justify-between pb-4 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-4 pb-4 sm:flex-row">
           <AccountIdentity
             address={account as Address}
             variant="full"
             showAddress
           />
-          <div className="flex gap-4">
-            <Link href={`/history/${account}`}>
-              <Button
-                size="md"
-                className="font-zen text-secondary"
-              >
-                <FaHistory
-                  size={14}
-                  className="mr-2"
-                />
-                History
-              </Button>
-            </Link>
-            <Link href={`/positions/report/${account}`}>
-              <Button
-                size="md"
-                className="font-zen text-secondary"
-              >
-                <TbReport
-                  size={15}
-                  className="mr-2"
-                />
-                Report
-              </Button>
-            </Link>
-            {isOwner && (
-              <Button
-                variant="primary"
-                size="md"
-                className="font-zen"
-                onClick={() => setShowOnboardingModal(true)}
-              >
-                <FaPlus
-                  size={14}
-                  className="mr-2"
-                />
-                New Position
-              </Button>
-            )}
-          </div>
+          {!loading && (hasSuppliedMarkets || hasVaults) && (
+            <PortfolioValueBadge
+              totalUsd={totalUsd}
+              isLoading={isPricesLoading}
+              error={pricesError}
+              onClick={() => {
+                // TODO: Add click handler (show breakdown modal, navigate, etc.)
+                console.log('Portfolio value clicked');
+              }}
+            />
+          )}
         </div>
 
         {showWithdrawModal && selectedPosition && (
@@ -149,19 +114,18 @@ export default function Positions() {
           />
         )}
 
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          onOpenChange={setShowOnboardingModal}
-        />
+        <div className="space-y-6 mt-2 pb-20">
+          {/* Loading state for initial page load */}
+          {loading && (
+            <LoadingScreen
+              message={loadingMessage}
+              className="mt-10"
+            />
+          )}
 
-        {loading ? (
-          <LoadingScreen
-            message={loadingMessage}
-            className="mt-10"
-          />
-        ) : hasSuppliedMarkets ? (
-          <div className="mt-4">
-            <PositionsSummaryTable
+          {/* Morpho Blue Positions Section */}
+          {!loading && hasSuppliedMarkets && (
+            <SuppliedMorphoBlueGroupedTable
               account={account}
               marketPositions={marketPositions}
               setShowWithdrawModal={setShowWithdrawModal}
@@ -173,38 +137,57 @@ export default function Positions() {
               earningsPeriod={earningsPeriod}
               setEarningsPeriod={setEarningsPeriod}
             />
-          </div>
-        ) : (
-          <div className="container flex flex-col">
-            <div className="flex w-full justify-end">
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Refresh"
-                    detail="Fetch latest data"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRefetch}
-                    className="text-secondary min-w-0 px-2"
-                  >
-                    <IoRefreshOutline className="h-3 w-3" />
-                  </Button>
-                </span>
-              </Tooltip>
+          )}
+
+          {/* Auto Vaults Section (progressive loading) */}
+          {isVaultsLoading && !loading && (
+            <LoadingScreen
+              message="Loading vaults..."
+              className="mt-10"
+            />
+          )}
+
+          {!isVaultsLoading && hasVaults && (
+            <UserVaultsTable
+              vaults={vaults}
+              account={account}
+              refetch={() => void refetchVaults()}
+            />
+          )}
+
+          {/* Empty state (only if both finished loading and both empty) */}
+          {showEmpty && (
+            <div className="container flex flex-col">
+              <div className="flex w-full justify-end">
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      title="Refresh"
+                      detail="Fetch latest data"
+                    />
+                  }
+                >
+                  <span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRefetch}
+                      className="text-secondary min-w-0 px-2"
+                    >
+                      <IoRefreshOutline className="h-3 w-3" />
+                    </Button>
+                  </span>
+                </Tooltip>
+              </div>
+              <div className="flex justify-center">
+                <EmptyScreen
+                  message="No open positions. Start supplying!"
+                  className="mt-2"
+                />
+              </div>
             </div>
-            <div className="flex justify-center">
-              <EmptyScreen
-                message="No open supplies. Start lending now!"
-                className="mt-2"
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

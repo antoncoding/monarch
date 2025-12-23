@@ -149,11 +149,13 @@ export function IconSwitch({
   const isControlled = controlledSelected !== undefined;
   const isSelected = isControlled ? controlledSelected : internalSelected;
 
-  // Determine which icon to use (null means no icon)
+  // Determine which icon to use (null/undefined means no icon)
   const IconComponent = thumbIconOn && thumbIconOff ? (isSelected ? thumbIconOn : thumbIconOff) : ThumbIcon;
 
   // Use compact config for plain switches, icon config otherwise
-  const config = IconComponent ? SIZE_CONFIG_WITH_ICON[size] : SIZE_CONFIG_PLAIN[size];
+  // Treat undefined the same as null - no icon
+  const hasIcon = IconComponent !== null && IconComponent !== undefined;
+  const config = hasIcon ? SIZE_CONFIG_WITH_ICON[size] : SIZE_CONFIG_PLAIN[size];
   const translate = config.width - config.thumbWidth - config.padding * 2;
 
   const handleToggle = useCallback(() => {
@@ -202,7 +204,7 @@ export function IconSwitch({
       onKeyDown={handleKeyDown}
       className={cn(
         'relative inline-flex shrink-0 items-center justify-start overflow-hidden rounded-[8px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        IconComponent && 'ring-1 ring-[var(--color-background-secondary)]',
+        hasIcon && 'ring-1 ring-[var(--color-background-secondary)]',
         isSelected ? TRACK_COLOR[color] : 'bg-main',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
         classNames?.base,
@@ -215,7 +217,7 @@ export function IconSwitch({
       <motion.div
         className={cn(
           'flex items-center justify-center bg-surface shadow-sm',
-          IconComponent && 'ring-1 ring-[var(--color-background-secondary)]',
+          hasIcon && 'ring-1 ring-[var(--color-background-secondary)]',
           classNames?.thumb,
         )}
         initial={false}
@@ -229,7 +231,7 @@ export function IconSwitch({
         }}
         style={thumbStyle}
       >
-        {IconComponent && (
+        {hasIcon && IconComponent && (
           <motion.div
             initial={false}
             className={cn(
@@ -239,7 +241,11 @@ export function IconSwitch({
               classNames?.thumbIcon,
             )}
           >
-            <IconComponent className="h-[100%]" isSelected={isSelected} />
+            {thumbIconOn && thumbIconOff ? (
+              <IconComponent className="h-[100%]" />
+            ) : (
+              <IconComponent className="h-[100%]" isSelected={isSelected} />
+            )}
           </motion.div>
         )}
       </motion.div>

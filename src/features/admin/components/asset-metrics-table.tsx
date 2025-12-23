@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { formatReadable } from '@/utils/balance';
 import { calculateHumanReadableVolumes } from '@/utils/statsDataProcessing';
@@ -85,125 +86,120 @@ export function AssetMetricsTable({ data }: AssetMetricsTableProps) {
   }, [processedData, sortKey, sortDirection]);
 
   return (
-    <div className="bg-surface rounded-md font-zen shadow-sm">
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h3 className="font-zen text-lg font-semibold">Asset Activity</h3>
-      </div>
-      <div className="overflow-x-auto">
-        {processedData.length === 0 ? (
-          <div className="py-8 text-center text-gray-400">No asset data available</div>
-        ) : (
-          <Table className="responsive rounded-md font-zen w-full min-w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Asset</TableHead>
-                <SortableHeader
-                  label="Total Volume"
-                  sortKeyValue="totalVolume"
-                  currentSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Total Transactions"
-                  sortKeyValue="totalCount"
-                  currentSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Supply Count"
-                  sortKeyValue="supplyCount"
-                  currentSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Withdraw Count"
-                  sortKeyValue="withdrawCount"
-                  currentSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-                <SortableHeader
-                  label="Unique Users"
-                  sortKeyValue="uniqueUsers"
-                  currentSortKey={sortKey}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              </TableRow>
-            </TableHeader>
-            <TableBody className="text-sm">
-              {sortedData.map((asset) => {
-                // Use a determined chainId for display purposes
-                const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
+    <TableContainerWithHeader title="Asset Activity">
+      {processedData.length === 0 ? (
+        <div className="py-8 text-center text-gray-400">No asset data available</div>
+      ) : (
+        <Table className="responsive rounded-md font-zen w-full min-w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Asset</TableHead>
+              <SortableHeader
+                label="Total Volume"
+                sortKeyValue="totalVolume"
+                currentSortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                label="Total Transactions"
+                sortKeyValue="totalCount"
+                currentSortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                label="Supply Count"
+                sortKeyValue="supplyCount"
+                currentSortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                label="Withdraw Count"
+                sortKeyValue="withdrawCount"
+                currentSortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+              <SortableHeader
+                label="Unique Users"
+                sortKeyValue="uniqueUsers"
+                currentSortKey={sortKey}
+                sortDirection={sortDirection}
+                onSort={handleSort}
+              />
+            </TableRow>
+          </TableHeader>
+          <TableBody className="text-sm">
+            {sortedData.map((asset) => {
+              // Use a determined chainId for display purposes
+              const displayChainId = asset.chainId ?? BASE_CHAIN_ID;
 
-                return (
-                  <TableRow
-                    key={`${asset.assetAddress}-${asset.chainId}`}
-                    className="hover:bg-hovered"
+              return (
+                <TableRow
+                  key={`${asset.assetAddress}-${asset.chainId}`}
+                  className="hover:bg-hovered"
+                >
+                  <TableCell
+                    data-label="Asset"
+                    className="z-50"
+                    style={{ minWidth: '120px' }}
                   >
-                    <TableCell
-                      data-label="Asset"
-                      className="z-50"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <TokenIcon
-                          address={asset.assetAddress}
-                          chainId={displayChainId}
-                          symbol={asset.assetSymbol}
-                          width={20}
-                          height={20}
-                        />
-                        <span className="font-zen text-sm">{asset.assetSymbol ?? 'Unknown'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      data-label="Total Volume"
-                      className="z-50 text-center"
-                      style={{ minWidth: '120px' }}
-                    >
-                      <span className="text-sm">
-                        {asset.totalVolumeFormatted ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}` : '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell
-                      data-label="Total Transactions"
-                      className="z-50 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell
-                      data-label="Supply Count"
-                      className="z-50 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell
-                      data-label="Withdraw Count"
-                      className="z-50 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
-                    </TableCell>
-                    <TableCell
-                      data-label="Unique Users"
-                      className="z-50 text-center"
-                      style={{ minWidth: '100px' }}
-                    >
-                      <span className="text-sm">{asset.uniqueUsers.toLocaleString()}</span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-    </div>
+                    <div className="flex items-center gap-2">
+                      <TokenIcon
+                        address={asset.assetAddress}
+                        chainId={displayChainId}
+                        symbol={asset.assetSymbol}
+                        width={20}
+                        height={20}
+                      />
+                      <span className="font-zen text-sm">{asset.assetSymbol ?? 'Unknown'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell
+                    data-label="Total Volume"
+                    className="z-50 text-center"
+                    style={{ minWidth: '120px' }}
+                  >
+                    <span className="text-sm">
+                      {asset.totalVolumeFormatted ? `${formatReadable(Number(asset.totalVolumeFormatted))} ${asset.assetSymbol}` : '—'}
+                    </span>
+                  </TableCell>
+                  <TableCell
+                    data-label="Total Transactions"
+                    className="z-50 text-center"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{(asset.supplyCount + asset.withdrawCount).toLocaleString()}</span>
+                  </TableCell>
+                  <TableCell
+                    data-label="Supply Count"
+                    className="z-50 text-center"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.supplyCount.toLocaleString()}</span>
+                  </TableCell>
+                  <TableCell
+                    data-label="Withdraw Count"
+                    className="z-50 text-center"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.withdrawCount.toLocaleString()}</span>
+                  </TableCell>
+                  <TableCell
+                    data-label="Unique Users"
+                    className="z-50 text-center"
+                    style={{ minWidth: '100px' }}
+                  >
+                    <span className="text-sm">{asset.uniqueUsers.toLocaleString()}</span>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+    </TableContainerWithHeader>
   );
 }

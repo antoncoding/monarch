@@ -131,15 +131,6 @@ badDebt {
 supplyingVaults {
   address
 }
-
-riskAnalysis {
-  analysis {
-    ... on CredoraRiskAnalysis {
-      score
-      rating
-    }
-  }
-}
 `;
 
 // Market Fragement is only used type when querying a single market
@@ -236,14 +227,6 @@ export const marketsQuery = `
       type
       level
       __typename
-    }
-    riskAnalysis {
-      analysis {
-        ... on CredoraRiskAnalysis {
-          score
-          rating
-        }
-      }
     }
   }
 `;
@@ -591,6 +574,23 @@ export const vaultV2Query = `
             relativeCap
           }
         }
+      }
+    }
+  }
+`;
+
+// Query for fetching token prices from Morpho API
+export const assetPricesQuery = `
+  query getAssetPrices($where: AssetsFilters) {
+    assets(where: $where) {
+      items {
+        address
+        symbol
+        decimals
+        chain {
+          id
+        }
+        priceUsd
       }
     }
   }

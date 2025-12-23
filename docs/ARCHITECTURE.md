@@ -398,7 +398,8 @@ src/modals/
         /rebalance/
         /preview/
         /onboarding/
-        positions-summary-table.tsx
+        supplied-morpho-blue-grouped-table.tsx
+        collateral-icons-display.tsx
         ...
     /autovault/
       autovault-view.tsx

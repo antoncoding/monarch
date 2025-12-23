@@ -1,23 +1,15 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { Tooltip } from '@/components/ui/tooltip';
-import { ReloadIcon } from '@radix-ui/react-icons';
 import type { Chain } from 'viem';
 import { useRouter } from 'next/navigation';
-import { CgCompress } from 'react-icons/cg';
-import { FiSettings } from 'react-icons/fi';
-import { RiExpandHorizontalLine } from 'react-icons/ri';
 
-import { Button } from '@/components/ui/button';
-import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { SupplyModalV2 } from '@/modals/supply/supply-modal';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -521,103 +513,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 setSelectedOracles={setSelectedOracles}
               />
             </div>
-
-            {/* Settings buttons */}
-            <div className="flex items-center gap-2">
-              <SuppliedAssetFilterCompactSwitch
-                includeUnknownTokens={includeUnknownTokens}
-                setIncludeUnknownTokens={setIncludeUnknownTokens}
-                showUnknownOracle={showUnknownOracle}
-                setShowUnknownOracle={setShowUnknownOracle}
-                showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-                setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-                trustedVaultsOnly={trustedVaultsOnly}
-                setTrustedVaultsOnly={setTrustedVaultsOnly}
-                minSupplyEnabled={minSupplyEnabled}
-                setMinSupplyEnabled={setMinSupplyEnabled}
-                minBorrowEnabled={minBorrowEnabled}
-                setMinBorrowEnabled={setMinBorrowEnabled}
-                minLiquidityEnabled={minLiquidityEnabled}
-                setMinLiquidityEnabled={setMinLiquidityEnabled}
-                thresholds={{
-                  minSupply: effectiveMinSupply,
-                  minBorrow: effectiveMinBorrow,
-                  minLiquidity: effectiveMinLiquidity,
-                }}
-                onOpenSettings={onSettingsModalOpen}
-              />
-
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Refresh"
-                    detail="Fetch the latest market data"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    disabled={loading || isRefetching}
-                    variant="ghost"
-                    size="icon"
-                    className="text-secondary"
-                    onClick={handleRefresh}
-                  >
-                    <ReloadIcon className={isRefetching ? 'animate-spin' : ''} />
-                  </Button>
-                </span>
-              </Tooltip>
-
-              {/* Hide expand/compact toggle on mobile */}
-              <div className="hidden md:block">
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
-                      title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-                      detail={
-                        effectiveTableViewMode === 'compact'
-                          ? 'Expand table to full width, useful when more columns are enabled.'
-                          : 'Restore compact table view'
-                      }
-                    />
-                  }
-                >
-                  <span>
-                    <Button
-                      aria-label="Toggle table width"
-                      variant="ghost"
-                      size="icon"
-                      className="text-secondary"
-                      onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
-                    >
-                      {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine /> : <CgCompress />}
-                    </Button>
-                  </span>
-                </Tooltip>
-              </div>
-
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Preferences"
-                    detail="Adjust thresholds and columns"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    aria-label="Market Preferences"
-                    variant="ghost"
-                    size="icon"
-                    className="text-secondary"
-                    onClick={onSettingsModalOpen}
-                  >
-                    <FiSettings />
-                  </Button>
-                </span>
-              </Tooltip>
-            </div>
           </div>
         </div>
       </div>
@@ -656,6 +551,31 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
                 addBlacklistedMarket={addBlacklistedMarket}
                 isBlacklisted={isBlacklisted}
+                includeUnknownTokens={includeUnknownTokens}
+                setIncludeUnknownTokens={setIncludeUnknownTokens}
+                showUnknownOracle={showUnknownOracle}
+                setShowUnknownOracle={setShowUnknownOracle}
+                showUnwhitelistedMarkets={showUnwhitelistedMarkets}
+                setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
+                trustedVaultsOnly={trustedVaultsOnly}
+                setTrustedVaultsOnly={setTrustedVaultsOnly}
+                minSupplyEnabled={minSupplyEnabled}
+                setMinSupplyEnabled={setMinSupplyEnabled}
+                minBorrowEnabled={minBorrowEnabled}
+                setMinBorrowEnabled={setMinBorrowEnabled}
+                minLiquidityEnabled={minLiquidityEnabled}
+                setMinLiquidityEnabled={setMinLiquidityEnabled}
+                thresholds={{
+                  minSupply: effectiveMinSupply,
+                  minBorrow: effectiveMinBorrow,
+                  minLiquidity: effectiveMinLiquidity,
+                }}
+                onOpenSettings={onSettingsModalOpen}
+                onRefresh={handleRefresh}
+                isRefetching={isRefetching}
+                tableViewMode={tableViewMode}
+                setTableViewMode={setTableViewMode}
+                isMobile={isMobile}
               />
             ) : (
               <EmptyScreen

@@ -11,6 +11,7 @@ import { FaRegMoon } from 'react-icons/fa';
 import { FiSettings } from 'react-icons/fi';
 import { LuSunMedium } from 'react-icons/lu';
 import { RiBookLine, RiDiscordFill, RiGithubFill } from 'react-icons/ri';
+import { TbReport } from 'react-icons/tb';
 import { useConnection } from 'wagmi';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { EXTERNAL_LINKS } from '@/utils/external';
@@ -157,6 +158,14 @@ export function Navbar() {
               >
                 GitHub
               </DropdownMenuItem>
+              {mounted && address && (
+                <DropdownMenuItem
+                  endContent={<TbReport className="h-4 w-4" />}
+                  onClick={() => router.push(`/positions/report/${address}`)}
+                >
+                  Report
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 endContent={mounted && (theme === 'dark' ? <LuSunMedium size={16} /> : <FaRegMoon size={14} />)}
                 onClick={toggleTheme}
