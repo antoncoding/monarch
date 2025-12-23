@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { useRouter } from 'next/navigation';
-import { GoHistory } from 'react-icons/go';
+// import { GoHistory } from 'react-icons/go';
 import { IoEllipsisVertical } from 'react-icons/io5';
 import { MdOutlineSettings } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
@@ -30,10 +30,10 @@ export function VaultActionsDropdown({ vaultAddress, chainId, account }: VaultAc
     router.push(`/autovault/${chainId}/${vaultAddress}`);
   };
 
-  const handleHistoryClick = () => {
-    const historyUrl = `/history/${account}?chainId=${chainId}`;
-    router.push(historyUrl);
-  };
+  // const handleHistoryClick = () => {
+  //   const historyUrl = `/history/${account}?chainId=${chainId}`;
+  //   router.push(historyUrl);
+  // };
 
   return (
     <div
@@ -60,12 +60,12 @@ export function VaultActionsDropdown({ vaultAddress, chainId, account }: VaultAc
             Manage
           </DropdownMenuItem>
 
-          <DropdownMenuItem
+          {/* <DropdownMenuItem
             onClick={handleHistoryClick}
             startContent={<GoHistory className="h-4 w-4" />}
           >
             History
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

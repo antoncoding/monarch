@@ -114,7 +114,7 @@ export default function Positions() {
           />
         )}
 
-        <div className="space-y-6 mt-2">
+        <div className="space-y-6 mt-2 pb-20">
           {/* Loading state for initial page load */}
           {loading && (
             <LoadingScreen

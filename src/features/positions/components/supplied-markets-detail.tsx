@@ -1,16 +1,14 @@
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { RateFormatted } from '@/components/shared/rate-formatted';
-import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { MarketIndicators } from '@/features/markets/components/market-indicators';
+import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
+import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import type { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '@/features/positions/utils/colors';
-import { SuppliedAmountCell } from './supplied-amount-cell';
-import { SuppliedPercentageCell } from './supplied-percentage-cell';
+import { AllocationCell } from './allocation-cell';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
   setShowWithdrawModal: (show: boolean) => void;
@@ -44,63 +42,50 @@ function MarketRow({
     >
       <TableCell
         data-label="Market"
-        className="text-center"
-      >
-        <div className="flex items-center justify-center">
-          <MarketIdBadge
-            marketId={position.market.uniqueKey}
-            chainId={position.market.morphoBlue.chain.id}
-            showNetworkIcon={false}
-          />
-        </div>
-      </TableCell>
-      <TableCell
-        data-label="Market Detail"
         className="align-middle p-4"
       >
         <MarketIdentity
           market={position.market}
-          mode={MarketIdentityMode.Minimum}
+          mode={MarketIdentityMode.Focused}
           focus={MarketIdentityFocus.Collateral}
           chainId={position.market.morphoBlue.chain.id}
-          wide
+          showId
+          showOracle
+          showLltv
         />
       </TableCell>
       <TableCell
         data-label={rateLabel}
         className="text-center"
       >
-        <RateFormatted value={position.market.state.supplyApy} />
+        <APYCell market={position.market} />
       </TableCell>
       <TableCell
-        data-label="Supplied"
-        className="text-center"
+        data-label="Allocation"
+        className="align-middle"
       >
-        <SuppliedAmountCell
+        <AllocationCell
           amount={suppliedAmount}
           symbol={position.market.loanAsset.symbol}
+          percentage={percentageOfPortfolio}
         />
       </TableCell>
       <TableCell
-        data-label="% of Portfolio"
-        className="text-center"
+        data-label="Risk Tiers"
+        className="text-center align-middle"
+        style={{ maxWidth: '120px' }}
       >
-        <SuppliedPercentageCell percentage={percentageOfPortfolio} />
-      </TableCell>
-      <TableCell
-        data-label="Indicators"
-        className="text-center"
-      >
-        <MarketIndicators
+        <MarketRiskIndicators
           market={position.market}
-          showRisk
+          mode="complex"
         />
       </TableCell>
       <TableCell
         data-label="Actions"
-        className="justify-center px-4 py-3"
+        className="justify-end px-4 py-3"
+        style={{ minWidth: '180px' }}
       >
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           <Button
             size="sm"
             variant="surface"
@@ -127,6 +112,7 @@ function MarketRow({
   );
 }
 
+// shared similar style with @vault-allocation-detail.tsx
 export function SuppliedMarketsDetail({
   groupedPosition,
   setShowWithdrawModal,
@@ -198,12 +184,10 @@ export function SuppliedMarketsDetail({
           <TableHeader className="">
             <TableRow>
               <TableHead>Market</TableHead>
-              <TableHead> Collateral & Parameters </TableHead>
               <TableHead>{rateLabel}</TableHead>
-              <TableHead>Supplied</TableHead>
-              <TableHead>% of Portfolio</TableHead>
-              <TableHead>Indicators</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Allocation</TableHead>
+              <TableHead>Risk Tiers</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-xs">

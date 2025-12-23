@@ -5,6 +5,7 @@ import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { RateFormatted } from '@/components/shared/rate-formatted';
 import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIndicators } from '@/features/markets/components/market-indicators';
+import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
@@ -15,7 +16,6 @@ import type { ColumnVisibility } from '../column-visibility';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
 import { ExpandedMarketDetail } from './market-row-detail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './market-table-utils';
-import { MarketAssetIndicator, MarketOracleIndicator, MarketDebtIndicator } from '../risk-indicator';
 
 type MarketTableBodyProps = {
   currentEntries: Market[];
@@ -237,11 +237,7 @@ export function MarketTableBody({
                 </TableCell>
               )}
               <TableCell style={{ minWidth: '90px' }}>
-                <div className="flex items-center justify-center gap-1">
-                  <MarketAssetIndicator market={item} />
-                  <MarketOracleIndicator market={item} />
-                  <MarketDebtIndicator market={item} />
-                </div>
+                <MarketRiskIndicators market={item} />
               </TableCell>
               <TableCell
                 data-label="Indicators"

@@ -4,17 +4,15 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Spinner } from '@/components/ui/spinner';
-import { MarketIdBadge } from '@/features/markets/components/market-id-badge';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { MarketIndicators } from '@/features/markets/components/market-indicators';
+import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
+import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
-import { RateFormatted } from '@/components/shared/rate-formatted';
 import { formatBalance } from '@/utils/balance';
 import { parseCapIdParams } from '@/utils/morpho';
-import { SuppliedAmountCell } from './supplied-amount-cell';
-import { SuppliedPercentageCell } from './supplied-percentage-cell';
+import { AllocationCell } from './allocation-cell';
 
 type VaultAllocationDetailProps = {
   vault: UserVaultV2;
@@ -103,12 +101,10 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Market</TableHead>
-              <TableHead>Collateral & Parameters</TableHead>
               <TableHead>{rateLabel}</TableHead>
-              <TableHead>Supplied</TableHead>
-              <TableHead>% of Portfolio</TableHead>
-              <TableHead>Indicators</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Allocation</TableHead>
+              <TableHead>Risk Tiers</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-xs">
@@ -125,31 +121,19 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                   key={allocation.market.uniqueKey}
                   className="gap-1"
                 >
-                  {/* Market ID Badge */}
+                  {/* Market */}
                   <TableCell
                     data-label="Market"
-                    className="text-center"
-                  >
-                    <div className="flex items-center justify-center">
-                      <MarketIdBadge
-                        marketId={allocation.market.uniqueKey}
-                        chainId={vault.networkId}
-                        showNetworkIcon={false}
-                      />
-                    </div>
-                  </TableCell>
-
-                  {/* Collateral & Parameters */}
-                  <TableCell
-                    data-label="Market Detail"
                     className="align-middle p-4"
                   >
                     <MarketIdentity
                       market={allocation.market}
-                      mode={MarketIdentityMode.Minimum}
+                      mode={MarketIdentityMode.Focused}
                       focus={MarketIdentityFocus.Collateral}
                       chainId={vault.networkId}
-                      wide
+                      showId
+                      showOracle
+                      showLltv
                     />
                   </TableCell>
 
@@ -158,45 +142,40 @@ export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
                     data-label={rateLabel}
                     className="text-center"
                   >
-                    <RateFormatted value={allocation.market.state.supplyApy} />
+                    <APYCell market={allocation.market} />
                   </TableCell>
 
-                  {/* Supplied */}
+                  {/* Allocation */}
                   <TableCell
-                    data-label="Supplied"
-                    className="text-center"
+                    data-label="Allocation"
+                    className="align-middle"
                   >
-                    <SuppliedAmountCell
+                    <AllocationCell
                       amount={allocatedAmount}
                       symbol={vaultAssetSymbol}
+                      percentage={percentage}
                     />
                   </TableCell>
 
-                  {/* % of Portfolio */}
+                  {/* Risk Tiers */}
                   <TableCell
-                    data-label="% of Portfolio"
-                    className="text-center"
+                    data-label="Risk Tiers"
+                    className="text-center align-middle"
+                    style={{ maxWidth: '120px' }}
                   >
-                    <SuppliedPercentageCell percentage={percentage} />
-                  </TableCell>
-
-                  {/* Indicators */}
-                  <TableCell
-                    data-label="Indicators"
-                    className="text-center"
-                  >
-                    <MarketIndicators
+                    <MarketRiskIndicators
                       market={allocation.market}
-                      showRisk
+                      mode="complex"
                     />
                   </TableCell>
 
                   {/* Actions */}
                   <TableCell
                     data-label="Actions"
-                    className="justify-center px-4 py-3"
+                    className="justify-end px-4 py-3"
+                    style={{ minWidth: '180px' }}
                   >
-                    <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center justify-end gap-2">
                       <Button
                         size="sm"
                         variant="surface"
