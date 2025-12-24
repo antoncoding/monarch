@@ -109,10 +109,11 @@ export default function AutovaultListContent() {
     setShowDeploymentModal(true);
   };
 
-  // Merge locally stored vaults with API results
+  // Merge locally stored vaults with API results (filtered by connected address)
   const mergedVaultAddresses = useMemo(() => {
     const apiVaults = vaultAddresses;
-    const localVaults = getDeployedVaults();
+    // Only get locally stored vaults for the currently connected address
+    const localVaults = address ? getDeployedVaults(address) : [];
 
     // Create a map of existing vaults by address+chainId for quick lookup
     const existingVaults = new Set(apiVaults.map((v) => `${v.address.toLowerCase()}-${v.networkId}`));
@@ -130,7 +131,7 @@ export default function AutovaultListContent() {
     }
 
     return combined;
-  }, [vaultAddresses]);
+  }, [vaultAddresses, address]);
 
   const handleManageVault = () => {
     if (mergedVaultAddresses.length > 0) {

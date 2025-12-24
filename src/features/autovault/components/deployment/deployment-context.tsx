@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useCallback, useMemo } from 'react
 import type { Address } from 'viem';
 import { decodeEventLog } from 'viem';
 import { useRouter } from 'next/navigation';
-import { usePublicClient } from 'wagmi';
+import { usePublicClient, useConnection } from 'wagmi';
 import { useCreateVault } from '@/hooks/useCreateVault';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
@@ -44,6 +44,7 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
   const [deployedVaultAddress, setDeployedVaultAddress] = useState<Address | null>(null);
 
   const router = useRouter();
+  const { address: connectedAddress } = useConnection();
   const publicClient = usePublicClient({ chainId: selectedTokenAndNetwork?.networkId });
 
   // Network switching logic
@@ -95,8 +96,10 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
         // Extract vault address from event
         const vaultAddress = (decoded.args as any).newVaultV2 as Address;
 
-        // Store vault address locally for immediate display in vault list
-        addDeployedVault(vaultAddress, selectedTokenAndNetwork.networkId);
+        // Store vault address locally for immediate display in vault list (with owner tracking)
+        if (connectedAddress) {
+          addDeployedVault(vaultAddress, selectedTokenAndNetwork.networkId, connectedAddress);
+        }
 
         setDeployedVaultAddress(vaultAddress);
         setDeploymentPhase('success');
