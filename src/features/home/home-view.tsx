@@ -347,7 +347,7 @@ function HomePage() {
                     <div>
                       <h4 className="mb-2 font-zen text-xl text-primary">Full Control</h4>
                       <p className="text-lg text-secondary">
-                        Set your own risk parameters, choose markets, define caps. You're the curator. No performance fees, no middlemen.
+                        Set your own risk parameters, choose markets, define caps. You're the curator. No hidden fees, no middlemen.
                       </p>
                     </div>
                   </div>

@@ -6,9 +6,13 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/shared/token-icon';
 import type { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, type SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { useDeployment, type SelectedToken } from '@/features/autovault/components/deployment/deployment-context';
+
+// Hardcoded USDC on Base as default suggestion
+const USDC_BASE_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as Address;
+const USDC_BASE_NETWORK = SupportedNetworks.Base;
 
 type TokenNetwork = {
   symbol: string;
@@ -54,6 +58,35 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
 
     const tokenNetworks: TokenNetwork[] = [];
 
+    // Check if USDC on Base has markets available
+    const usdcBaseMarketCount = marketsToUse.filter(
+      (market) =>
+        market.loanAsset.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && market.morphoBlue.chain.id === USDC_BASE_NETWORK,
+    ).length;
+
+    // Get USDC on Base token info
+    const usdcBaseToken = findToken(USDC_BASE_ADDRESS, USDC_BASE_NETWORK);
+
+    // Always add USDC on Base as the first option if it has markets
+    if (usdcBaseMarketCount > 0 && usdcBaseToken) {
+      // Find user's USDC balance on Base if it exists
+      const usdcBaseBalance = balances.find(
+        (b) => b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.chainId === USDC_BASE_NETWORK,
+      );
+      const balanceValue = usdcBaseBalance?.balance ? BigInt(usdcBaseBalance.balance) : 0n;
+
+      tokenNetworks.push({
+        symbol: usdcBaseToken.symbol,
+        name: usdcBaseToken.symbol,
+        address: USDC_BASE_ADDRESS,
+        decimals: usdcBaseToken.decimals,
+        img: usdcBaseToken.img,
+        balance: balanceValue,
+        networkId: USDC_BASE_NETWORK,
+        marketCount: usdcBaseMarketCount,
+      });
+    }
+
     balances.forEach((balance) => {
       const token = findToken(balance.address, balance.chainId);
 
@@ -61,6 +94,11 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
 
       const network = balance.chainId as SupportedNetworks;
       const balanceValue = balance.balance ? BigInt(balance.balance) : 0n;
+
+      // Skip USDC on Base since we already added it
+      if (balance.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && balance.chainId === USDC_BASE_NETWORK) {
+        return;
+      }
 
       if (network && balanceValue > 0n) {
         // Count markets for this token on this network
@@ -84,8 +122,12 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       }
     });
 
-    // Sort by balance descending, then by symbol
+    // Sort by balance descending, then by symbol (USDC on Base will stay first since it's added first)
     return tokenNetworks.sort((a, b) => {
+      // Keep USDC on Base at the top
+      if (a.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && a.networkId === USDC_BASE_NETWORK) return -1;
+      if (b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.networkId === USDC_BASE_NETWORK) return 1;
+
       const aBalance = Number(formatUnits(a.balance, a.decimals));
       const bBalance = Number(formatUnits(b.balance, b.decimals));
       if (bBalance !== aBalance) return bBalance - aBalance;
@@ -142,6 +184,12 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
               selectedTokenAndNetwork?.token?.address?.toLowerCase?.() === tokenNetwork.address.toLowerCase() &&
               selectedTokenAndNetwork?.networkId === tokenNetwork.networkId;
 
+            // Check if this is the suggested USDC on Base with 0 balance
+            const isSuggestedUsdcBase =
+              tokenNetwork.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() &&
+              tokenNetwork.networkId === USDC_BASE_NETWORK &&
+              tokenNetwork.balance === 0n;
+
             return (
               <div
                 key={`${tokenNetwork.symbol}-${tokenNetwork.networkId}-${tokenNetwork.address}`}
@@ -182,9 +230,16 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                       width={20}
                       height={20}
                     />
-                    <span className="font-medium">
-                      {formatReadable(formatUnits(tokenNetwork.balance, tokenNetwork.decimals))} {tokenNetwork.symbol}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {formatReadable(formatUnits(tokenNetwork.balance, tokenNetwork.decimals))} {tokenNetwork.symbol}
+                      </span>
+                      {isSuggestedUsdcBase && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                          Suggested
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
