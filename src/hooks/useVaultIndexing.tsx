@@ -19,14 +19,17 @@ type UseVaultIndexingArgs = {
  */
 export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch }: UseVaultIndexingArgs) {
   const [isIndexing, setIsIndexing] = useState(false);
-  const refetchIntervalRef = useRef<NodeJS.Timeout>();
+  const refetchIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const toastIdRef = useRef<string | number>();
   const hasDetectedIndexing = useRef(false);
-  const styledToast = useStyledToast();
+  const { info: styledInfo, success: styledSuccess } = useStyledToast();
 
   // Poll localStorage to detect when indexing state is set
   // This ensures we pick up indexing state even if it's set after component mount
   useEffect(() => {
+    // Reset detection flag when vault or chain changes
+    hasDetectedIndexing.current = false;
+
     // Immediate check on mount
     const indexingData = getIndexingVault(vaultAddress, chainId);
     if (indexingData && !hasDetectedIndexing.current) {
@@ -78,7 +81,7 @@ export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch 
         toastIdRef.current = undefined;
       }
 
-      styledToast.success('Vault data loaded', 'Your vault is ready to use.');
+      styledSuccess('Vault data loaded', 'Your vault is ready to use.');
 
       if (refetchIntervalRef.current) {
         clearInterval(refetchIntervalRef.current);
@@ -109,10 +112,7 @@ export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch 
             toastIdRef.current = undefined;
           }
 
-          styledToast.info(
-            'Indexing delayed',
-            'Data is taking longer than expected. Please try refreshing manually using the refresh button.',
-          );
+          styledInfo('Indexing delayed', 'Data is taking longer than expected. Please try refreshing manually using the refresh button.');
           return;
         }
 
@@ -126,8 +126,13 @@ export function useVaultIndexing({ vaultAddress, chainId, isDataLoaded, refetch 
         clearInterval(refetchIntervalRef.current);
         refetchIntervalRef.current = undefined;
       }
+      // Dismiss toast when vault or chain changes
+      if (toastIdRef.current) {
+        toast.dismiss(toastIdRef.current);
+        toastIdRef.current = undefined;
+      }
     };
-  }, [isIndexing, isDataLoaded, vaultAddress, chainId, refetch, styledToast]);
+  }, [isIndexing, isDataLoaded, vaultAddress, chainId, refetch, styledSuccess, styledInfo]);
 
   // Cleanup on unmount
   useEffect(() => {

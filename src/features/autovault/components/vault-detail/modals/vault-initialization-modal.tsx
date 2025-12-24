@@ -212,7 +212,7 @@ export function VaultInitializationModal({
   const [selectedAgent, setSelectedAgent] = useState<Address | null>(null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>();
   const currentStep = STEP_SEQUENCE[stepIndex];
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
@@ -297,7 +297,7 @@ export function VaultInitializationModal({
       // Clean up adapter polling interval
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
+        pollingIntervalRef.current = undefined;
       }
     }
   }, [isOpen]);
@@ -319,7 +319,7 @@ export function VaultInitializationModal({
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
+        pollingIntervalRef.current = undefined;
       }
     };
   }, [isOpen, adapterDetected, refetchMarketAdapter]);
