@@ -19,6 +19,11 @@ const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
 
 const STEP_SEQUENCE = ['deploy', 'metadata', 'agents', 'finalize'] as const;
+
+// Polling configuration constants
+const ADAPTER_POLLING_INTERVAL_MS = 5000; // Poll every 5 seconds for adapter deployment
+const POST_INIT_POLLING_INTERVAL_MS = 3000; // Poll every 3 seconds after initialization
+const POST_INIT_MAX_ATTEMPTS = 10; // Maximum number of polling attempts (30 seconds total)
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -98,6 +103,7 @@ function MetadataStep({
             value={vaultName}
             onChange={(event) => onNameChange(event.target.value)}
             placeholder="e.g., Automonarch USD"
+            maxLength={MAX_NAME_LENGTH}
             classNames={{
               input: 'text-sm',
               inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
@@ -111,7 +117,7 @@ function MetadataStep({
             value={vaultSymbol}
             onChange={(event) => onSymbolChange(event.target.value)}
             placeholder="e.g., aMUSD"
-            maxLength={16}
+            maxLength={MAX_SYMBOL_LENGTH}
             classNames={{
               input: 'text-sm',
               inputWrapper: 'bg-hovered/60 border-transparent shadow-none focus-within:border-transparent focus-within:bg-hovered/80',
@@ -181,6 +187,9 @@ function AgentSelectionStep({
   );
 }
 
+const MAX_NAME_LENGTH = 64;
+const MAX_SYMBOL_LENGTH = 16;
+
 export function VaultInitializationModal({
   isOpen,
   onOpenChange,
@@ -236,8 +245,8 @@ export function VaultInitializationModal({
       await deploy();
       // Polling will continue automatically (already running from modal open effect)
       void refetchMarketAdapter(); // Immediate check after deploy
-    } catch (error) {
-      console.error('Adapter deployment failed:', error);
+    } catch (_error) {
+      // Error is handled by useDeployMorphoMarketV1Adapter hook
       setStatusVisible(false);
     }
   }, [deploy, refetchMarketAdapter]);
@@ -262,22 +271,21 @@ export function VaultInitializationModal({
       // Show toast and start polling for vault data
       toast.info('Indexing vault data...', 'This may take a few moments as the data is being indexed.');
 
-      // Poll every 3 seconds for up to 30 seconds (10 attempts)
+      // Poll for vault data to be indexed
       let attempts = 0;
-      const maxAttempts = 10;
       postInitPollingRef.current = setInterval(() => {
         attempts++;
         void onAdapterConfigured();
 
-        if (attempts >= maxAttempts && postInitPollingRef.current) {
+        if (attempts >= POST_INIT_MAX_ATTEMPTS && postInitPollingRef.current) {
           clearInterval(postInitPollingRef.current);
           postInitPollingRef.current = null;
         }
-      }, 3000);
+      }, POST_INIT_POLLING_INTERVAL_MS);
 
       onOpenChange(false);
-    } catch (error) {
-      console.error('Failed to complete initialization', error);
+    } catch (_error) {
+      // Error is handled by useVaultV2 hook (toast shown to user)
     }
   }, [
     completeInitialization,
@@ -327,10 +335,10 @@ export function VaultInitializationModal({
     // Initial check immediately
     void refetchMarketAdapter();
 
-    // Poll every 5 seconds
+    // Poll for adapter deployment
     pollingIntervalRef.current = setInterval(() => {
       void refetchMarketAdapter();
-    }, 5000);
+    }, ADAPTER_POLLING_INTERVAL_MS);
 
     return () => {
       if (pollingIntervalRef.current) {

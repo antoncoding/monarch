@@ -443,7 +443,7 @@ export function useVaultV2({
       });
 
       if (txs.length === 0) {
-        console.log('No cap changes detected');
+        // No cap changes to apply
         return false;
       }
 

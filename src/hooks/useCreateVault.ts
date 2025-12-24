@@ -16,7 +16,7 @@ export type UseCreateVaultReturn = {
   isDeploying: boolean;
 
   // Actions
-  createVault: (asset: Address, salt?: string) => Promise<void>;
+  createVault: (asset: Address, salt?: string) => Promise<string | undefined>;
 };
 
 export function useCreateVault(chainId: number): UseCreateVaultReturn {
@@ -44,15 +44,15 @@ export function useCreateVault(chainId: number): UseCreateVaultReturn {
 
   // Execute vault creation
   const createVault = useCallback(
-    async (asset: Address, salt?: string): Promise<void> => {
+    async (asset: Address, salt?: string): Promise<string | undefined> => {
       if (!account) {
         toast.error('No Account', 'Please connect your wallet to deploy a vault');
-        return;
+        return undefined;
       }
 
       if (!agentConfig?.v2FactoryAddress) {
         toast.error('Network Not Supported', 'Vault deployment is not available on this network');
-        return;
+        return undefined;
       }
 
       try {
@@ -66,19 +66,19 @@ export function useCreateVault(chainId: number): UseCreateVaultReturn {
           args: [account, asset, saltBytes],
         });
 
-        await sendTransactionAsync({
+        const txHash = await sendTransactionAsync({
           account,
           to: agentConfig.v2FactoryAddress,
           data: txData,
         });
 
         setCurrentStep('deploy');
+        return txHash;
       } catch (error: unknown) {
         setCurrentStep('deploy');
-        console.error('Error creating vault:', error);
 
         if (error instanceof Error) {
-          if (error.message.includes('User rejected')) {
+          if (error.message.includes('User rejected') || error.message.includes('rejected')) {
             toast.error('Transaction Rejected', 'Vault deployment was rejected by user');
           } else {
             toast.error('Deployment Error', 'Failed to deploy vault');
@@ -86,6 +86,7 @@ export function useCreateVault(chainId: number): UseCreateVaultReturn {
         } else {
           toast.error('Deployment Error', 'An unexpected error occurred');
         }
+        return undefined;
       }
     },
     [account, agentConfig, sendTransactionAsync, toast],

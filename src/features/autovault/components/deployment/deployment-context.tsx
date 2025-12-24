@@ -1,19 +1,14 @@
-import { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
+import { decodeEventLog } from 'viem';
+import { useRouter } from 'next/navigation';
+import { usePublicClient } from 'wagmi';
 import { useCreateVault } from '@/hooks/useCreateVault';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
-import { fetchUserVaultV2Addresses } from '@/data-sources/subgraph/v2-vaults';
+import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import type { SupportedNetworks } from '@/utils/networks';
 
-// Keeping enum for backwards compatibility but not using steps anymore
-export enum DeploymentStep {
-  TOKEN_SELECTION = 0,
-  DEPLOY = 1,
-  SUCCESS = 2,
-}
-
-export type DeploymentPhase = 'selection' | 'deploying' | 'waiting' | 'success';
+export type DeploymentPhase = 'selection' | 'deploying' | 'success';
 
 export type SelectedToken = {
   symbol: string;
@@ -46,11 +41,9 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
   const [selectedTokenAndNetwork, setSelectedTokenAndNetwork] = useState<SelectedTokenAndNetwork | null>(null);
   const [deploymentPhase, setDeploymentPhase] = useState<DeploymentPhase>('selection');
   const [deployedVaultAddress, setDeployedVaultAddress] = useState<Address | null>(null);
-  const [preDeploymentVaultCount, setPreDeploymentVaultCount] = useState(0);
 
-  const { address: account } = useConnection();
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
+  const publicClient = usePublicClient({ chainId: selectedTokenAndNetwork?.networkId });
 
   // Network switching logic
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
@@ -60,110 +53,66 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
   // Vault creation logic
   const { createVault: createVaultTx, isDeploying } = useCreateVault(selectedTokenAndNetwork?.networkId ?? 1);
 
-  // Simplified polling: just check subgraph for vault addresses
-  useEffect(() => {
-    if (deploymentPhase !== 'waiting' || !selectedTokenAndNetwork || !account) return;
-
-    const checkForNewVault = async () => {
-      try {
-        // Fetch ONLY addresses from subgraph (fast, reliable)
-        const vaultAddresses = await fetchUserVaultV2Addresses(account, selectedTokenAndNetwork.networkId);
-
-        // If we have more vaults than before deployment, a new one was created
-        if (vaultAddresses.length > preDeploymentVaultCount) {
-          // Get the newest vault (last in array, or we could sort by timestamp if available)
-          const newestVault = vaultAddresses.at(-1);
-          if (newestVault) {
-            setDeployedVaultAddress(newestVault.address as Address);
-            setDeploymentPhase('success');
-          }
-
-          // Clean up polling
-          if (pollingIntervalRef.current) {
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
-          }
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-          }
-        }
-      } catch (error) {
-        console.error('Error checking for new vault:', error);
-      }
-    };
-
-    // Initial check
-    void checkForNewVault();
-
-    // Poll every 3 seconds
-    pollingIntervalRef.current = setInterval(() => {
-      void checkForNewVault();
-    }, 3000);
-
-    // Optimistic success after 90 seconds (subgraph should have indexed by then)
-    timeoutRef.current = setTimeout(() => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = null;
-      }
-      if (deploymentPhase === 'waiting') {
-        setDeploymentPhase('success');
-      }
-    }, 90000);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [deploymentPhase, selectedTokenAndNetwork, account, preDeploymentVaultCount]);
-
   const createVault = useCallback(async () => {
-    if (!selectedTokenAndNetwork || !account) return;
+    if (!selectedTokenAndNetwork || !publicClient) return;
 
     setDeploymentPhase('deploying');
 
     try {
-      // Count existing vaults BEFORE deployment
-      const existingVaults = await fetchUserVaultV2Addresses(account, selectedTokenAndNetwork.networkId);
-      setPreDeploymentVaultCount(existingVaults.length);
+      // Execute deployment and get transaction hash
+      const txHash = await createVaultTx(selectedTokenAndNetwork.token.address);
 
-      // Execute deployment
-      await createVaultTx(selectedTokenAndNetwork.token.address);
+      if (!txHash) {
+        setDeploymentPhase('selection');
+        return;
+      }
 
-      // Move to waiting phase - polling will start
-      setDeploymentPhase('waiting');
-    } catch (error) {
-      console.error('Vault deployment failed:', error);
+      // Wait for transaction receipt
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+      // Parse CreateVaultV2 event to get vault address
+      const createEvent = receipt.logs.find((log) => {
+        try {
+          const decoded = decodeEventLog({
+            abi: vaultFactoryAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+          return decoded.eventName === 'CreateVaultV2';
+        } catch {
+          return false;
+        }
+      });
+
+      if (createEvent) {
+        const decoded = decodeEventLog({
+          abi: vaultFactoryAbi,
+          data: createEvent.data,
+          topics: createEvent.topics,
+        });
+
+        // Extract vault address from event
+        const vaultAddress = (decoded.args as any).newVaultV2 as Address;
+        setDeployedVaultAddress(vaultAddress);
+        setDeploymentPhase('success');
+      } else {
+        setDeploymentPhase('selection');
+      }
+    } catch (_error) {
       setDeploymentPhase('selection');
     }
-  }, [selectedTokenAndNetwork, account, createVaultTx]);
+  }, [selectedTokenAndNetwork, createVaultTx, publicClient]);
 
   const navigateToVault = useCallback(() => {
     if (deployedVaultAddress && selectedTokenAndNetwork) {
-      window.location.href = `/autovault/${selectedTokenAndNetwork.networkId}/${deployedVaultAddress}`;
+      router.push(`/autovault/${selectedTokenAndNetwork.networkId}/${deployedVaultAddress}`);
     }
-  }, [deployedVaultAddress, selectedTokenAndNetwork]);
+  }, [deployedVaultAddress, selectedTokenAndNetwork, router]);
 
   const resetDeployment = useCallback(() => {
     setSelectedTokenAndNetwork(null);
     setDeploymentPhase('selection');
     setDeployedVaultAddress(null);
-    setPreDeploymentVaultCount(0);
-
-    // Clean up any active polling
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
   }, []);
 
   const contextValue = useMemo(

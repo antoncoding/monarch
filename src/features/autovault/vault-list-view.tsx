@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { FiShield, FiZap, FiSettings } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
@@ -50,12 +51,14 @@ function BenefitCard({ icon, title, description }: { icon: React.ReactNode; titl
 }
 
 export default function AutovaultListContent() {
+  const router = useRouter();
   const { open } = useAppKit();
   const { isConnected, address } = useConnection();
   const [showDeploymentModal, setShowDeploymentModal] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [vaultAddresses, setVaultAddresses] = useState<{ address: string; networkId: number }[]>([]);
   const [vaultsLoading, setVaultsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -65,17 +68,19 @@ export default function AutovaultListContent() {
   useEffect(() => {
     if (!address || !isConnected) {
       setVaultAddresses([]);
+      setFetchError(null);
       return;
     }
 
     const fetchVaults = async () => {
       setVaultsLoading(true);
+      setFetchError(null);
       try {
         const addresses = await fetchUserVaultV2AddressesAllNetworks(address);
         setVaultAddresses(addresses);
-      } catch (error) {
-        console.error('Error fetching vault addresses:', error);
-        setVaultAddresses([]);
+      } catch (_error) {
+        setFetchError('Unable to load vaults. Please try again.');
+        // Keep existing vault addresses if we had them (don't clear on error)
       } finally {
         setVaultsLoading(false);
       }
@@ -83,6 +88,17 @@ export default function AutovaultListContent() {
 
     void fetchVaults();
   }, [address, isConnected]);
+
+  const handleRetryFetch = () => {
+    if (address && isConnected) {
+      setVaultsLoading(true);
+      setFetchError(null);
+      fetchUserVaultV2AddressesAllNetworks(address)
+        .then((addresses) => setVaultAddresses(addresses))
+        .catch(() => setFetchError('Unable to load vaults. Please try again.'))
+        .finally(() => setVaultsLoading(false));
+    }
+  };
 
   const handleConnect = () => {
     open();
@@ -95,7 +111,7 @@ export default function AutovaultListContent() {
   const handleManageVault = () => {
     if (vaultAddresses.length > 0) {
       const firstVault = vaultAddresses[0];
-      window.location.href = `/autovault/${firstVault.networkId}/${firstVault.address}`;
+      router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
     }
   };
 
@@ -107,6 +123,21 @@ export default function AutovaultListContent() {
       <div className="container h-full gap-8 px-[4%] pb-20">
         {/* Loading State */}
         {hasMounted && isConnected && vaultsLoading && <PageSkeleton />}
+
+        {/* Error Banner */}
+        {fetchError && (
+          <div className="mx-auto max-w-3xl rounded border border-red-500/40 bg-red-500/10 p-4 flex items-center justify-between">
+            <p className="text-sm text-red-600 dark:text-red-400">{fetchError}</p>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleRetryFetch}
+              disabled={vaultsLoading}
+            >
+              {vaultsLoading ? 'Retrying...' : 'Retry'}
+            </Button>
+          </div>
+        )}
 
         {/* Content - shown to all users (connected or not, after loading) */}
         {hasMounted && (!isConnected || !vaultsLoading) && (

@@ -38,38 +38,6 @@ function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContent
     return 'Deploy Vault';
   }, [isDeploying, balancesLoading, marketsLoading, selectedTokenAndNetwork]);
 
-  // Waiting phase: show indexing state
-  if (deploymentPhase === 'waiting') {
-    return (
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        size="2xl"
-        scrollBehavior="inside"
-        backdrop="blur"
-        className="bg-background dark:border border-gray-700"
-      >
-        <ModalHeader
-          title="Deploying Vault"
-          description=""
-          mainIcon={<FaCube className="h-5 w-5" />}
-          onClose={() => onOpenChange(false)}
-        />
-        <ModalBody className="px-8">
-          <div className="flex flex-col items-center justify-center space-y-4 py-12">
-            <div className="animate-spin">
-              <FaCube className="h-12 w-12 text-primary" />
-            </div>
-            <h3 className="text-lg font-medium text-primary">Indexing your vault...</h3>
-            <p className="max-w-md text-center text-sm text-secondary">
-              Your transaction was successful! We're waiting for your vault to be indexed.
-            </p>
-          </div>
-        </ModalBody>
-      </Modal>
-    );
-  }
-
   // Success phase: show success state with navigation
   if (deploymentPhase === 'success') {
     return (
@@ -96,8 +64,13 @@ function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContent
             <p className="max-w-md text-center text-sm text-secondary">
               {deployedVaultAddress
                 ? 'Complete the initialization to start using your autovault.'
-                : 'Your vault was successfully deployed. Check your portfolio to view it.'}
+                : 'Your vault was successfully deployed.'}
             </p>
+            {deployedVaultAddress && (
+              <p className="max-w-md text-center text-xs text-secondary">
+                Note: It may take a few moments for your vault to appear in the Morpho API.
+              </p>
+            )}
             {deployedVaultAddress ? (
               <Button
                 variant="primary"

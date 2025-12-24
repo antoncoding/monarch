@@ -135,7 +135,7 @@ const fetchVaultV2DetailsCore = async (vaultAddresses: string[], network: Suppor
 
       const vault = response.data?.vaultV2ByAddress;
       if (!vault) {
-        console.log(`No V2 vault found for address ${address} on network ${network}`);
+        // Vault not found in API (might not be initialized yet)
         return null;
       }
 
