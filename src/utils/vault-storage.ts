@@ -89,10 +89,3 @@ function getAllDeployedVaults(): StoredVault[] {
     return [];
   }
 }
-
-/**
- * Manually clean up old vault entries
- */
-export function cleanupOldVaults(): void {
-  getDeployedVaults(); // Calling this triggers auto-cleanup
-}
