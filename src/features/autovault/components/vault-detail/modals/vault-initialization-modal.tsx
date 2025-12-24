@@ -10,7 +10,6 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Spinner } from '@/components/ui/spinner';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useStyledToast } from '@/hooks/useStyledToast';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
@@ -215,8 +214,6 @@ export function VaultInitializationModal({
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentStep = STEP_SEQUENCE[stepIndex];
-
-  const _toast = useStyledToast();
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
   const registryAddress = useMemo(() => {
