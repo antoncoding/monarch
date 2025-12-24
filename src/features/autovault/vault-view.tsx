@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { GearIcon } from '@radix-ui/react-icons';
+import { GearIcon, ReloadIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { IoRefreshOutline } from 'react-icons/io5';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
-import { AccountIdentity } from '@/components/shared/account-identity';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
+import { useVaultIndexing } from '@/hooks/useVaultIndexing';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { TotalSupplyCard } from '@/features/autovault/components/vault-detail/total-supply-card';
@@ -21,6 +22,7 @@ import { VaultInitializationModal } from '@/features/autovault/components/vault-
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
+import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -62,6 +64,8 @@ export default function VaultContent() {
 
   const {
     refetchAll,
+    completeInitialization,
+    isInitializing,
     updateNameAndSymbol,
     setAllocator,
     refetchAdapter,
@@ -75,6 +79,19 @@ export default function VaultContent() {
   const handleRefreshVault = useCallback(() => {
     void refetchAll();
   }, [refetchAll]);
+
+  // Determine if vault data has loaded successfully
+  const isDataLoaded = useMemo(() => {
+    return !vault.vaultDataLoading && !vault.hasError && vault.vaultData !== null;
+  }, [vault.vaultDataLoading, vault.hasError, vault.vaultData]);
+
+  // Use indexing hook to manage retry logic and toast
+  const { isIndexing } = useVaultIndexing({
+    vaultAddress: vaultAddressValue,
+    chainId,
+    isDataLoaded,
+    refetch: handleRefreshVault,
+  });
 
   const handleUpdateMetadata = useCallback(
     async (values: { name?: string; symbol?: string }) => updateNameAndSymbol(values),
@@ -111,11 +128,46 @@ export default function VaultContent() {
 
   // Format APY
   const apyLabel = useMemo(() => {
-    if (isAPYLoading) return '...';
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
-  }, [vaultAPY, isAPYLoading]);
+  }, [vaultAPY]);
 
+  // Show loading state if indexing (prevents UI jumping)
+  if (isIndexing) {
+    return (
+      <div className="flex w-full flex-col font-zen">
+        <Header />
+        <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
+          <div className="space-y-8">
+            {/* Loading skeleton */}
+            <div className="animate-pulse space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="bg-hovered h-8 w-64 rounded" />
+                <div className="bg-hovered h-8 w-24 rounded" />
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-surface rounded shadow-sm p-4 space-y-3"
+                  >
+                    <div className="bg-hovered h-4 w-20 rounded" />
+                    <div className="bg-hovered h-6 w-32 rounded" />
+                  </div>
+                ))}
+              </div>
+              <div className="bg-surface rounded shadow-sm p-6 space-y-4">
+                <div className="bg-hovered h-6 w-48 rounded" />
+                <div className="bg-hovered h-32 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if data failed to load (but not while indexing)
   if (vault.hasError) {
     return (
       <div className="flex w-full flex-col font-zen">
@@ -139,51 +191,64 @@ export default function VaultContent() {
       <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
         <div className="space-y-8">
           {/* Vault Header */}
-          <div className="flex items-start justify-between gap-4 pt-6">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <h1 className="font-zen text-2xl">{title}</h1>
               {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
             </div>
-            <div className="flex items-center gap-3">
-              <AccountIdentity
-                address={vaultAddressValue}
-                variant="compact"
-                linkTo="explorer"
-              />
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleRefreshVault}
-                disabled={vault.vaultDataLoading}
-                className="font-zen text-secondary opacity-80 transition-all duration-200 ease-in-out hover:opacity-100"
+            <div className="flex items-center gap-2">
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title="Refresh"
+                    detail="Fetch latest vault data"
+                  />
+                }
               >
-                <IoRefreshOutline className="mr-2 h-4 w-4" />
-                Refresh
-              </Button>
+                <span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRefreshVault}
+                    disabled={vault.vaultDataLoading}
+                    className="text-secondary min-w-0 px-2"
+                  >
+                    <ReloadIcon className={`${vault.vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
+                  </Button>
+                </span>
+              </Tooltip>
               {vault.isOwner && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                    setSettingsTab('general');
-                    setShowSettings(true);
-                  }}
-                  className="flex items-center gap-2"
+                <Tooltip
+                  content={
+                    <TooltipContent
+                      title="Settings"
+                      detail="Configure vault settings"
+                    />
+                  }
                 >
-                  <GearIcon className="h-4 w-4" />
-                  Settings
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-secondary min-w-0 px-2"
+                    onClick={() => {
+                      setSettingsTab('general');
+                      setShowSettings(true);
+                    }}
+                  >
+                    <GearIcon className="h-3 w-3" />
+                  </Button>
+                </Tooltip>
               )}
             </div>
           </div>
 
-          {/* Setup Banners - Only show when data is loaded */}
-          {!vault.vaultDataLoading && vault.needsAdapterDeployment && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+          {/* Setup Banner - Show if vault needs initialization */}
+          {vault.needsInitialization && vault.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
-                <p className="text-sm text-primary">Complete vault initialization</p>
+                <p className="text-sm text-primary">Complete vault setup</p>
                 <p className="text-sm text-secondary">
-                  Deploy adapter, configure registry, and optionally choose an agent to automate this vault.
+                  Initialize your vault by deploying an adapter, setting caps, and configuring the registry to start using your vault.
                 </p>
               </div>
               <Button
@@ -191,14 +256,14 @@ export default function VaultContent() {
                 size="sm"
                 className="mt-3 sm:mt-0"
                 onClick={() => setShowInitializationModal(true)}
-                disabled={vault.isLoading}
               >
-                Start setup
+                Start Setup
               </Button>
             </div>
           )}
 
-          {!vault.vaultDataLoading && vault.hasNoAllocators && vault.isOwner && (
+          {/* Only show allocator/caps banners if vault IS initialized */}
+          {vault.isVaultInitialized && vault.hasNoAllocators && vault.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Choose an agent</p>
@@ -218,7 +283,7 @@ export default function VaultContent() {
             </div>
           )}
 
-          {!vault.vaultDataLoading && vault.capsUninitialized && vault.isOwner && (
+          {vault.isVaultInitialized && vault.capsUninitialized && vault.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Configure allocation caps</p>
@@ -252,26 +317,31 @@ export default function VaultContent() {
               vaultAddress={vaultAddressValue}
               vaultName={title}
               onRefresh={handleRefreshVault}
+              isLoading={vault.isLoading}
             />
             <Card className="bg-surface rounded shadow-sm">
               <CardHeader className="flex items-center justify-between pb-2">
                 <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
               </CardHeader>
               <CardBody className="flex items-center justify-center py-3">
-                <div className="text-lg text-primary">{apyLabel}</div>
+                {vault.isLoading || isAPYLoading ? (
+                  <div className="bg-hovered h-6 w-20 rounded animate-pulse" />
+                ) : (
+                  <div className="text-lg text-primary">{apyLabel}</div>
+                )}
               </CardBody>
             </Card>
             <VaultAllocatorCard
               allocators={allocators}
               onManageAgents={() => {
-                if (vault.needsAdapterDeployment && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
+                if (vault.needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
                   setShowInitializationModal(true);
                   return;
                 }
                 setSettingsTab('agents');
                 setShowSettings(true);
               }}
-              needsSetup={vault.needsAdapterDeployment}
+              needsSetup={vault.needsInitialization}
               isOwner={vault.isOwner}
               isLoading={vault.vaultDataLoading}
             />
@@ -279,10 +349,14 @@ export default function VaultContent() {
               collateralCaps={collateralCaps}
               chainId={chainId}
               onManageCaps={() => {
+                if (vault.needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
+                  setShowInitializationModal(true);
+                  return;
+                }
                 setSettingsTab('caps');
                 setShowSettings(true);
               }}
-              needsSetup={vault.needsAdapterDeployment}
+              needsSetup={vault.needsInitialization}
               isOwner={vault.isOwner}
               isLoading={vault.vaultDataLoading}
             />
@@ -297,7 +371,19 @@ export default function VaultContent() {
             vaultAssetDecimals={vault.vaultData?.tokenDecimals ?? 18}
             chainId={chainId}
             isLoading={vault.allocationsLoading || vault.vaultDataLoading}
+            needsInitialization={vault.needsInitialization}
           />
+
+          {/* Transaction History Preview - only show when vault is fully set up */}
+          {vault.adapter && vault.isVaultInitialized && !vault.capsUninitialized && (
+            <TransactionHistoryPreview
+              account={vault.adapter}
+              chainId={chainId}
+              isVaultAdapter={true}
+              limit={10}
+              emptyMessage="Setup complete, your automated rebalance will show up here once it's triggered."
+            />
+          )}
 
           {/* Settings Modal */}
           <VaultSettingsModal
@@ -340,6 +426,8 @@ export default function VaultContent() {
           marketAdapterLoading={vault.adapterLoading}
           refetchMarketAdapter={handleRefetchAdapter}
           onAdapterConfigured={handleAdapterConfigured}
+          completeInitialization={completeInitialization}
+          isInitializing={isInitializing}
         />
       )}
     </div>

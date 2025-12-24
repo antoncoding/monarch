@@ -22,4 +22,7 @@ export const storageKeys = {
   // Table view mode
   MarketsTableViewModeKey: 'monarch_marketsTableViewMode',
   MarketsTrustedVaultsOnlyKey: 'monarch_marketsTrustedVaultsOnly',
+  // History settings
+  HistoryEntriesPerPageKey: 'monarch_historyEntriesPerPage',
+  HistoryGroupedViewKey: 'monarch_historyGroupedView',
 } as const;

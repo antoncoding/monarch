@@ -1,18 +1,18 @@
 import { useMemo } from 'react';
-import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
-import { LuVault } from 'react-icons/lu';
 import { type Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { TooltipContent } from '@/components/shared/tooltip-content';
-import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import type { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
+import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 import { useDeployment, type SelectedToken } from '@/features/autovault/components/deployment/deployment-context';
+
+// Hardcoded USDC on Base as default suggestion
+const USDC_BASE_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as Address;
+const USDC_BASE_NETWORK = SupportedNetworks.Base;
 
 type TokenNetwork = {
   symbol: string;
@@ -23,7 +23,6 @@ type TokenNetwork = {
   balance: bigint;
   networkId: number;
   marketCount: number;
-  hasExistingVault: boolean;
 };
 
 function NetworkIcon({ networkId }: { networkId: number }) {
@@ -44,10 +43,9 @@ type TokenSelectionProps = {
   balancesLoading: boolean;
   whitelistedMarkets: Market[] | null;
   marketsLoading: boolean;
-  existingVaults: UserVaultV2[];
 };
 
-export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading, existingVaults }: TokenSelectionProps) {
+export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading }: TokenSelectionProps) {
   const { selectedTokenAndNetwork, setSelectedTokenAndNetwork } = useDeployment();
 
   const { findToken } = useTokens();
@@ -55,26 +53,19 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
   const availableTokenNetworks = useMemo(() => {
     if (!balances || !whitelistedMarkets) return [];
 
-    // Use whitelisted markets only
-    const marketsToUse = whitelistedMarkets;
-
     const tokenNetworks: TokenNetwork[] = [];
 
+    // Build token list from user balances
     balances.forEach((balance) => {
       const token = findToken(balance.address, balance.chainId);
-
       if (!token) return;
 
       const network = balance.chainId as SupportedNetworks;
       const balanceValue = balance.balance ? BigInt(balance.balance) : 0n;
 
       if (network && balanceValue > 0n) {
-        const hasExistingVault = existingVaults.some(
-          (vault) => vault.networkId === balance.chainId && vault.asset.toLowerCase() === balance.address.toLowerCase(),
-        );
-
         // Count markets for this token on this network
-        const marketCount = marketsToUse.filter(
+        const marketCount = whitelistedMarkets.filter(
           (market) =>
             market.loanAsset.address.toLowerCase() === balance.address.toLowerCase() && market.morphoBlue.chain.id === balance.chainId,
         ).length;
@@ -90,19 +81,50 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
           balance: balanceValue,
           networkId: balance.chainId,
           marketCount,
-          hasExistingVault,
         });
       }
     });
 
-    // Sort by balance descending, then by symbol
+    // Ensure USDC on Base is always available (even with 0 balance)
+    const hasUsdcBase = tokenNetworks.some(
+      (t) => t.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && t.networkId === USDC_BASE_NETWORK,
+    );
+
+    if (!hasUsdcBase) {
+      const usdcBaseToken = findToken(USDC_BASE_ADDRESS, USDC_BASE_NETWORK);
+      const usdcBaseMarketCount = whitelistedMarkets.filter(
+        (market) =>
+          market.loanAsset.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && market.morphoBlue.chain.id === USDC_BASE_NETWORK,
+      ).length;
+
+      if (usdcBaseToken && usdcBaseMarketCount > 0) {
+        tokenNetworks.unshift({
+          symbol: usdcBaseToken.symbol,
+          name: usdcBaseToken.symbol,
+          address: USDC_BASE_ADDRESS,
+          decimals: usdcBaseToken.decimals,
+          img: usdcBaseToken.img,
+          balance: 0n,
+          networkId: USDC_BASE_NETWORK,
+          marketCount: usdcBaseMarketCount,
+        });
+      }
+    }
+
+    // Sort: USDC on Base first, then by balance descending, then by symbol
     return tokenNetworks.sort((a, b) => {
+      const isAUsdcBase = a.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && a.networkId === USDC_BASE_NETWORK;
+      const isBUsdcBase = b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.networkId === USDC_BASE_NETWORK;
+
+      if (isAUsdcBase) return -1;
+      if (isBUsdcBase) return 1;
+
       const aBalance = Number(formatUnits(a.balance, a.decimals));
       const bBalance = Number(formatUnits(b.balance, b.decimals));
       if (bBalance !== aBalance) return bBalance - aBalance;
       return a.symbol.localeCompare(b.symbol);
     });
-  }, [balances, existingVaults, findToken, whitelistedMarkets]);
+  }, [balances, findToken, whitelistedMarkets]);
 
   const handleTokenNetworkSelect = (tokenNetwork: TokenNetwork) => {
     const selectedToken: SelectedToken = {
@@ -153,6 +175,12 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
               selectedTokenAndNetwork?.token?.address?.toLowerCase?.() === tokenNetwork.address.toLowerCase() &&
               selectedTokenAndNetwork?.networkId === tokenNetwork.networkId;
 
+            // Check if this is the suggested USDC on Base with 0 balance
+            const isSuggestedUsdcBase =
+              tokenNetwork.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() &&
+              tokenNetwork.networkId === USDC_BASE_NETWORK &&
+              tokenNetwork.balance === 0n;
+
             return (
               <div
                 key={`${tokenNetwork.symbol}-${tokenNetwork.networkId}-${tokenNetwork.address}`}
@@ -193,28 +221,19 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
                       width={20}
                       height={20}
                     />
-                    <span className="font-medium">
-                      {formatReadable(formatUnits(tokenNetwork.balance, tokenNetwork.decimals))} {tokenNetwork.symbol}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {formatReadable(formatUnits(tokenNetwork.balance, tokenNetwork.decimals))} {tokenNetwork.symbol}
+                      </span>
+                      {isSuggestedUsdcBase && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                          Suggested
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {tokenNetwork.hasExistingVault && (
-                      <Tooltip
-                        content={
-                          <TooltipContent
-                            icon={<LuVault className="h-4 w-4 text-primary" />}
-                            title="Vault deployed"
-                            detail={`You already deployed a vault for this token on ${getNetworkName(tokenNetwork.networkId)}.`}
-                          />
-                        }
-                      >
-                        <span className="text-secondary">
-                          <LuVault className="h-4 w-4" />
-                        </span>
-                      </Tooltip>
-                    )}
-
                     <NetworkIcon networkId={tokenNetwork.networkId} />
                     <span className="text-sm text-secondary">
                       {tokenNetwork.marketCount} market

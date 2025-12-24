@@ -234,17 +234,26 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
 
     const capsToUpdate: VaultV2Cap[] = [];
 
-    // Add adapter cap if it doesn't exist
-    if (!existingCaps?.adapterCap && adapterAddress) {
-      const { params, id } = getAdapterCapId(adapterAddress);
-      capsToUpdate.push({
-        capId: id,
-        idParams: params,
-        relativeCap: parseUnits('100', 16).toString(), // Default 100%
-        absoluteCap: maxUint128.toString(), // No limit
-        oldRelativeCap: '0',
-        oldAbsoluteCap: '0',
-      });
+    // Add or fix adapter cap to ensure it's always 100% relative + maxUint128 absolute
+    if (adapterAddress) {
+      const targetRelativeCap = parseUnits('100', 16);
+      const targetAbsoluteCap = maxUint128;
+
+      const currentRelativeCap = existingCaps?.adapterCap ? BigInt(existingCaps.adapterCap.relativeCap) : 0n;
+      const currentAbsoluteCap = existingCaps?.adapterCap ? BigInt(existingCaps.adapterCap.absoluteCap) : 0n;
+
+      // Only update if not already at target values
+      if (currentRelativeCap !== targetRelativeCap || currentAbsoluteCap !== targetAbsoluteCap) {
+        const { params, id } = getAdapterCapId(adapterAddress);
+        capsToUpdate.push({
+          capId: id,
+          idParams: params,
+          relativeCap: targetRelativeCap.toString(),
+          absoluteCap: targetAbsoluteCap.toString(),
+          oldRelativeCap: currentRelativeCap.toString(),
+          oldAbsoluteCap: currentAbsoluteCap.toString(),
+        });
+      }
     }
 
     // Add collateral caps with delta calculation (only when changed)

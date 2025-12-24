@@ -24,7 +24,6 @@ export type VaultV2Details = {
   allocators: string[];
   sentinels: string[];
   caps: VaultV2Cap[];
-  totalSupply: string;
   adapters: string[];
   avgApy?: number;
 };
@@ -43,7 +42,6 @@ type ApiVaultV2 = {
   name: string;
   symbol: string;
   avgApy: number;
-  totalSupply: string | number;
   asset: {
     id: string;
     address: string;
@@ -69,9 +67,7 @@ type ApiVaultV2 = {
 
 type VaultV2ApiResponse = {
   data: {
-    vaultV2s: {
-      items: ApiVaultV2[];
-    };
+    vaultV2ByAddress: ApiVaultV2 | null;
   };
   errors?: { message: string }[];
 };
@@ -103,7 +99,6 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
     allocators: apiVault.allocators.map((a) => a.allocator.address),
     sentinels: [], // Not available in API response
     caps: apiVault.caps.items.map(transformCap),
-    totalSupply: String(apiVault.totalSupply),
     adapters: [], // Not available in API response
     avgApy: apiVault.avgApy,
   };
@@ -112,6 +107,7 @@ function transformVault(apiVault: ApiVaultV2): VaultV2Details {
 /**
  * Core function to fetch VaultV2 details from Morpho API
  * Handles both single and multiple vault addresses
+ * Note: API only accepts one address at a time, so we fetch individually
  *
  * @param vaultAddresses - Array of vault addresses
  * @param network - The network/chain ID
@@ -123,25 +119,31 @@ const fetchVaultV2DetailsCore = async (vaultAddresses: string[], network: Suppor
   }
 
   try {
-    const variables = {
-      addresses: vaultAddresses.map((addr) => addr.toLowerCase()),
-      chainId: network,
-    };
+    // Fetch each vault individually since API only accepts single address
+    const promises = vaultAddresses.map(async (address) => {
+      const variables = {
+        address: address.toLowerCase(),
+        chainId: network,
+      };
 
-    const response = await morphoGraphqlFetcher<VaultV2ApiResponse>(vaultV2Query, variables);
+      const response = await morphoGraphqlFetcher<VaultV2ApiResponse>(vaultV2Query, variables);
 
-    if (response.errors && response.errors.length > 0) {
-      console.error('GraphQL errors:', response.errors);
-      return [];
-    }
+      if (response.errors && response.errors.length > 0) {
+        console.error('GraphQL errors:', response.errors);
+        return null;
+      }
 
-    const vaults = response.data?.vaultV2s?.items;
-    if (!vaults || vaults.length === 0) {
-      console.log(`No V2 vaults found for addresses on network ${network}`);
-      return [];
-    }
+      const vault = response.data?.vaultV2ByAddress;
+      if (!vault) {
+        // Vault not found in API (might not be initialized yet)
+        return null;
+      }
 
-    return vaults.map(transformVault);
+      return transformVault(vault);
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter((vault): vault is VaultV2Details => vault !== null);
   } catch (error) {
     console.error(`Error fetching V2 vault details on network ${network}:`, error);
     return [];

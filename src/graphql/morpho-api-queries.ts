@@ -536,43 +536,37 @@ export const marketBorrowersQuery = `
 
 // Query for VaultV2 details from Morpho API
 export const vaultV2Query = `
-  query VaultV2Query($addresses: [String!], $chainId: Int!) {
-    vaultV2s(where: {
-      chainId_in: [$chainId],
-      address_in: $addresses
-    }) {
-      items {
+  query VaultV2($address: String!, $chainId: Int!) {
+    vaultV2ByAddress(address: $address, chainId: $chainId) {
+      id
+      address
+      name
+      symbol
+      avgApy
+      asset {
         id
         address
-        name
         symbol
-        avgApy
-        totalSupply
-        asset {
+        name
+        decimals
+      }
+      curator {
+        address
+      }
+      owner {
+        address
+      }
+      allocators {
+        allocator {
+          address
+        }
+      }
+      caps {
+        items {
           id
-          address
-          symbol
-          name
-          decimals
-        }
-        curator {
-          address
-        }
-        owner {
-          address
-        }
-        allocators {
-          allocator {
-            address
-          }
-        }
-        caps {
-          items {
-            id
-            idData
-            absoluteCap
-            relativeCap
-          }
+          idData
+          absoluteCap
+          relativeCap
         }
       }
     }

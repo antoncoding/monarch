@@ -103,6 +103,13 @@ export default function NavbarMobile() {
             >
               <span className="font-medium">Portfolio</span>
             </DropdownMenuItem>
+            {/* <DropdownMenuItem
+              startContent={<RiSafeLine className="h-5 w-5" />}
+              onClick={() => handleNavigation('/autovault')}
+              className="py-3"
+            >
+              <span className="font-medium">Autovault</span>
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               startContent={<RiGiftLine className="h-5 w-5" />}
               onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}

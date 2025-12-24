@@ -39,7 +39,7 @@ export const fetchUserVaultV2Addresses = async (owner: string, network: Supporte
   const agentConfig = getAgentConfig(network);
 
   if (!agentConfig?.adapterSubgraphEndpoint) {
-    console.log(`No subgraph endpoint configured for network ${network}`);
+    // No subgraph configured for this network
     return [];
   }
 
@@ -59,18 +59,15 @@ export const fetchUserVaultV2Addresses = async (owner: string, network: Supporte
 
     const vaults = response.data?.vaultV2S;
     if (!vaults || vaults.length === 0) {
-      console.log(`No V2 vaults found for owner ${owner} on network ${network}`);
+      // No vaults found for this owner on this network
       return [];
     }
 
     // Convert to UserVaultV2Address with network information
-    const vaultAddresses = vaults.map((vault) => ({
+    return vaults.map((vault) => ({
       address: vault.id,
       networkId: network,
     }));
-
-    console.log(`Fetched ${vaultAddresses.length} V2 vault addresses for owner ${owner} on network ${network}`);
-    return vaultAddresses;
   } catch (error) {
     console.error(`Error fetching V2 vault addresses for owner ${owner} on network ${network}:`, error);
     return [];
