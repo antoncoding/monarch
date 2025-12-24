@@ -9,7 +9,6 @@ import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
-import { AccountIdentity } from '@/components/shared/account-identity';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
@@ -22,51 +21,6 @@ import { VaultInitializationModal } from '@/features/autovault/components/vault-
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
-
-// Skeleton component for loading state
-function VaultPageSkeleton() {
-  return (
-    <div className="animate-pulse space-y-8">
-      {/* Header skeleton */}
-      <div className="flex items-start justify-between gap-4 pt-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-hovered h-8 w-64 rounded" />
-          <div className="bg-hovered h-6 w-16 rounded" />
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-hovered h-10 w-32 rounded" />
-          <div className="bg-hovered h-10 w-24 rounded" />
-        </div>
-      </div>
-
-      {/* Metrics skeleton - 4 cards grid (matches VaultSummaryMetrics layout) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            className="bg-surface rounded shadow-sm p-6 min-h-[120px]"
-          >
-            <div className="bg-hovered mb-4 h-4 w-24 rounded" />
-            <div className="bg-hovered h-8 w-32 rounded" />
-          </div>
-        ))}
-      </div>
-
-      {/* Allocations skeleton */}
-      <div className="bg-surface rounded shadow-sm p-6">
-        <div className="bg-hovered mb-4 h-6 w-48 rounded" />
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-hovered h-16 rounded"
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -157,23 +111,11 @@ export default function VaultContent() {
 
   // Format APY
   const apyLabel = useMemo(() => {
-    if (isAPYLoading) return '...';
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
-  }, [vaultAPY, isAPYLoading]);
+  }, [vaultAPY]);
 
-  // Show skeleton during initial loading - wait for ALL queries
-  if (vault.isLoading) {
-    return (
-      <div className="flex w-full flex-col font-zen">
-        <Header />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
-          <VaultPageSkeleton />
-        </div>
-      </div>
-    );
-  }
-
+  // Show error state if data failed to load
   if (vault.hasError) {
     return (
       <div className="flex w-full flex-col font-zen">
@@ -197,17 +139,12 @@ export default function VaultContent() {
       <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
         <div className="space-y-8">
           {/* Vault Header */}
-          <div className="flex items-start justify-between gap-4 pt-6">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <h1 className="font-zen text-2xl">{title}</h1>
               {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
             </div>
             <div className="flex items-center gap-2">
-              <AccountIdentity
-                address={vaultAddressValue}
-                variant="compact"
-                linkTo="explorer"
-              />
               <Tooltip
                 content={
                   <TooltipContent
@@ -328,13 +265,18 @@ export default function VaultContent() {
               vaultAddress={vaultAddressValue}
               vaultName={title}
               onRefresh={handleRefreshVault}
+              isLoading={vault.isLoading}
             />
             <Card className="bg-surface rounded shadow-sm">
               <CardHeader className="flex items-center justify-between pb-2">
                 <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
               </CardHeader>
               <CardBody className="flex items-center justify-center py-3">
-                <div className="text-lg text-primary">{apyLabel}</div>
+                {vault.isLoading || isAPYLoading ? (
+                  <div className="bg-hovered h-6 w-20 rounded animate-pulse" />
+                ) : (
+                  <div className="text-lg text-primary">{apyLabel}</div>
+                )}
               </CardBody>
             </Card>
             <VaultAllocatorCard

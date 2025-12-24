@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Tooltip } from '@/components/ui/tooltip';
-import { PlusIcon } from '@radix-ui/react-icons';
-import { TbTrendingUp } from 'react-icons/tb';
+import { GoPlusCircle } from 'react-icons/go';
 import type { Address } from 'viem';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { formatBalance } from '@/utils/balance';
@@ -18,6 +17,7 @@ type VaultTotalAssetsCardProps = {
   vaultAddress: Address;
   vaultName: string;
   onRefresh?: () => void;
+  isLoading?: boolean;
 };
 
 export function TotalSupplyCard({
@@ -30,6 +30,7 @@ export function TotalSupplyCard({
   totalAssets,
   vault24hEarnings,
   onRefresh,
+  isLoading = false,
 }: VaultTotalAssetsCardProps): JSX.Element {
   const [showDepositModal, setShowDepositModal] = useState(false);
 
@@ -83,33 +84,36 @@ export function TotalSupplyCard({
             <button
               type="button"
               onClick={() => setShowDepositModal(true)}
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+              className="flex h-4 w-4 items-center justify-center rounded-full transition-colors text-secondary"
               aria-label="Deposit to vault"
             >
-              <PlusIcon className="h-4 w-4" />
+              <GoPlusCircle className="h-4 w-4" />
             </button>
           )}
         </CardHeader>
         <CardBody className="flex items-center justify-center py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg text-primary">{totalAssetsLabel}</span>
-            {assetAddress && (
-              <TokenIcon
-                address={assetAddress}
-                chainId={chainId}
-                width={20}
-                height={20}
-              />
-            )}
-            {earnings24hLabel && (
-              <Tooltip content="Total yield earned in the last 24 hours">
-                <div className="flex items-center gap-1 text-xs text-green-500">
-                  <TbTrendingUp className="h-3 w-3" />
-                  <span>{earnings24hLabel}</span>
-                </div>
-              </Tooltip>
-            )}
-          </div>
+          {isLoading ? (
+            <div className="bg-hovered h-6 w-32 rounded animate-pulse" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-lg text-primary">{totalAssetsLabel}</span>
+              {assetAddress && (
+                <TokenIcon
+                  address={assetAddress}
+                  chainId={chainId}
+                  width={20}
+                  height={20}
+                />
+              )}
+              {earnings24hLabel && (
+                <Tooltip content="Total yield earned in the last 24 hours">
+                  <div className="flex items-center gap-1 text-xs text-green-500">
+                    <span>{earnings24hLabel}</span>
+                  </div>
+                </Tooltip>
+              )}
+            </div>
+          )}
         </CardBody>
       </Card>
 

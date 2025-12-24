@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { HiOutlineCube } from 'react-icons/hi';
 import { MdOutlineAccountBalance } from 'react-icons/md';
-import { Spinner } from '@/components/ui/spinner';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import type { SupportedNetworks } from '@/utils/networks';
+import { useMarkets } from '@/hooks/useMarkets';
 import { CollateralView } from './allocations/allocations/collateral-view';
 import { MarketView } from './allocations/allocations/market-view';
 
@@ -36,6 +36,7 @@ export function VaultMarketAllocations({
   needsInitialization = false,
 }: VaultMarketAllocationsProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('market');
+  const { loading: marketsLoading } = useMarkets();
 
   // Calculate total allocation from market allocations (canonical source)
   // Note: collateralAllocations and marketAllocations are different VIEWS of the same data
@@ -56,10 +57,22 @@ export function VaultMarketAllocations({
     return `See where your ${vaultAssetSymbol} supply is deployed across markets.`;
   }, [viewMode, vaultAssetSymbol]);
 
-  if (isLoading) {
+  // Show loading state when either allocations or markets context is still loading
+  if (isLoading || marketsLoading) {
     return (
-      <div className="bg-surface rounded p-6 flex items-center justify-center font-zen">
-        <Spinner size={24} />
+      <div className="bg-surface rounded p-6 font-zen">
+        <div className="mb-6">
+          <div className="bg-hovered mb-3 h-6 w-48 rounded animate-pulse" />
+          <div className="bg-hovered h-4 w-64 rounded animate-pulse" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="bg-hovered h-16 rounded animate-pulse"
+            />
+          ))}
+        </div>
       </div>
     );
   }

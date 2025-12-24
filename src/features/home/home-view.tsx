@@ -281,7 +281,7 @@ function HomePage() {
 
               {/* CTA Buttons - Centered */}
               <div className="mx-auto flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-              <Link
+                <Link
                   href="/autovault"
                   className="block no-underline"
                 >

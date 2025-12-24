@@ -1,8 +1,9 @@
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { GearIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
-import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent } from '@/components/shared/tooltip-content';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -25,6 +26,8 @@ export function VaultCollateralsCard({
   isLoading = false,
 }: VaultCollateralsCardProps) {
   const cardStyle = 'bg-surface rounded shadow-sm';
+  const maxDisplay = 5;
+  const iconSize = 20;
 
   const collateralTokens = collateralCaps
     .map((cap) => {
@@ -34,6 +37,8 @@ export function VaultCollateralsCard({
     .filter((token): token is Address => !!token);
 
   const hasCollaterals = collateralTokens.length > 0;
+  const preview = collateralTokens.slice(0, maxDisplay);
+  const remaining = collateralTokens.slice(maxDisplay);
 
   return (
     <Card className={cardStyle}>
@@ -48,7 +53,7 @@ export function VaultCollateralsCard({
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
-          <Spinner size={16} />
+          <div className="bg-hovered h-5 w-24 rounded animate-pulse" />
         ) : needsSetup ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
@@ -57,20 +62,58 @@ export function VaultCollateralsCard({
             </div>
           </div>
         ) : hasCollaterals ? (
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {collateralTokens.map((tokenAddress) => (
+          <div className="flex items-center justify-center">
+            {preview.map((tokenAddress, index) => (
               <div
                 key={tokenAddress}
-                className="flex items-center"
+                className={`relative ${index === 0 ? 'ml-0' : '-ml-2'}`}
+                style={{ zIndex: preview.length - index }}
               >
                 <TokenIcon
                   address={tokenAddress}
                   chainId={chainId}
-                  width={20}
-                  height={20}
+                  width={iconSize}
+                  height={iconSize}
                 />
               </div>
             ))}
+            {remaining.length > 0 && (
+              <Tooltip
+                content={
+                  <TooltipContent
+                    title={<span className="text-sm font-semibold">More collaterals</span>}
+                    detail={
+                      <div className="flex flex-col gap-2">
+                        {remaining.map((tokenAddress) => (
+                          <div
+                            key={tokenAddress}
+                            className="flex items-center gap-2"
+                          >
+                            <TokenIcon
+                              address={tokenAddress}
+                              chainId={chainId}
+                              width={16}
+                              height={16}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    }
+                  />
+                }
+              >
+                <span
+                  className="-ml-2 flex items-center justify-center rounded-full border border-background/40 bg-hovered text-[11px] text-secondary"
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    zIndex: 0,
+                  }}
+                >
+                  +{remaining.length}
+                </span>
+              </Tooltip>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
