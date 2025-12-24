@@ -5,6 +5,7 @@ import { MdOutlineAccountBalance } from 'react-icons/md';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useMarkets } from '@/hooks/useMarkets';
+import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { CollateralView } from './allocations/allocations/collateral-view';
 import { MarketView } from './allocations/allocations/market-view';
 
@@ -60,12 +61,12 @@ export function VaultMarketAllocations({
   // Show loading state when either allocations or markets context is still loading
   if (isLoading || marketsLoading) {
     return (
-      <div className="bg-surface rounded p-6 font-zen">
-        <div className="mb-6">
-          <div className="bg-hovered mb-3 h-6 w-48 rounded animate-pulse" />
+      <div className="bg-surface rounded-md font-zen shadow-sm">
+        <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+          <div className="bg-hovered h-5 w-48 rounded mb-2 animate-pulse" />
           <div className="bg-hovered h-4 w-64 rounded animate-pulse" />
         </div>
-        <div className="space-y-3">
+        <div className="p-6 space-y-3">
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -79,7 +80,7 @@ export function VaultMarketAllocations({
 
   if (collateralAllocations.length === 0 && marketAllocations.length === 0) {
     return (
-      <div className="bg-surface rounded p-10 flex flex-col items-center justify-center font-zen">
+      <div className="bg-surface rounded-md shadow-sm p-10 flex flex-col items-center justify-center font-zen">
         <p className="text-sm text-center text-secondary">
           {needsInitialization
             ? 'Finish the vault setup to configure market caps'
@@ -89,32 +90,29 @@ export function VaultMarketAllocations({
     );
   }
 
+  const headerActions = (
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-secondary">{viewMode === 'collateral' ? 'By Collateral' : 'By Market'}</span>
+      <IconSwitch
+        defaultSelected={viewMode === 'market'}
+        size="sm"
+        color="primary"
+        classNames={{
+          wrapper: 'mx-0',
+          thumbIcon: 'p-0 mr-0',
+        }}
+        onChange={() => setViewMode(viewMode === 'collateral' ? 'market' : 'collateral')}
+        thumbIcon={ViewIcon}
+      />
+    </div>
+  );
+
   return (
-    <div className="bg-surface rounded p-6 shadow-sm font-zen">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex-1">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-lg font-medium">{hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}</p>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-secondary">{viewMode === 'collateral' ? 'By Collateral' : 'By Market'}</span>
-              <IconSwitch
-                defaultSelected={viewMode === 'market'}
-                size="sm"
-                color="primary"
-                classNames={{
-                  wrapper: 'mx-0',
-                  thumbIcon: 'p-0 mr-0',
-                }}
-                onChange={() => setViewMode(viewMode === 'collateral' ? 'market' : 'collateral')}
-                thumbIcon={ViewIcon}
-              />
-            </div>
-          </div>
-          <p className="text-xs text-secondary leading-relaxed">{viewDescription}</p>
-        </div>
-      </div>
-      {/* Content */}
+    <TableContainerWithDescription
+      title={hasAnyAllocations ? 'Active Allocations' : 'Market Configuration'}
+      description={viewDescription}
+      actions={headerActions}
+    >
       {viewMode === 'collateral' ? (
         <CollateralView
           allocations={collateralAllocations}
@@ -132,6 +130,6 @@ export function VaultMarketAllocations({
           chainId={chainId}
         />
       )}
-    </div>
+    </TableContainerWithDescription>
   );
 }

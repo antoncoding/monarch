@@ -23,48 +23,46 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
   });
 
   return (
-    <div className="overflow-x-auto">
-      <Table className="w-full font-zen">
-        <TableHeader>
-          <TableRow className="text-xs text-secondary">
-            <TableHead className="pb-3 text-left font-normal">Collateral</TableHead>
-            <TableHead className="pb-3 text-right font-normal">Allocation</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="space-y-2">
-          {sortedItems.map((item) => {
-            const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
-            // Calculate amount as number for AllocationCell
-            const allocatedAmount = formatBalance(item.allocation, vaultAssetDecimals);
+    <Table className="w-full font-zen">
+      <TableHeader>
+        <TableRow className="text-xs text-secondary">
+          <TableHead className="pb-3 text-left font-normal">Collateral</TableHead>
+          <TableHead className="pb-3 text-right font-normal">Allocation</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody className="space-y-2">
+        {sortedItems.map((item) => {
+          const percentage = totalAllocation > 0n ? Number.parseFloat(calculateAllocationPercent(item.allocation, totalAllocation)) : 0;
+          // Calculate amount as number for AllocationCell
+          const allocatedAmount = formatBalance(item.allocation, vaultAssetDecimals);
 
-            return (
-              <TableRow
-                key={item.collateralAddress.toLowerCase()}
-                className="rounded bg-hovered/20"
-              >
-                <TableCell className="p-3 rounded-l">
-                  <div className="flex items-center gap-3">
-                    <TokenIcon
-                      address={item.collateralAddress}
-                      chainId={chainId}
-                      width={24}
-                      height={24}
-                    />
-                    <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="p-3 rounded-r align-middle">
-                  <AllocationCell
-                    amount={allocatedAmount}
-                    symbol={vaultAssetSymbol}
-                    percentage={percentage}
+          return (
+            <TableRow
+              key={item.collateralAddress.toLowerCase()}
+              className="rounded bg-hovered/20"
+            >
+              <TableCell className="p-3 rounded-l">
+                <div className="flex items-center gap-3">
+                  <TokenIcon
+                    address={item.collateralAddress}
+                    chainId={chainId}
+                    width={24}
+                    height={24}
                   />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
+                  <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
+                </div>
+              </TableCell>
+              <TableCell className="p-3 rounded-r align-middle">
+                <AllocationCell
+                  amount={allocatedAmount}
+                  symbol={vaultAssetSymbol}
+                  percentage={percentage}
+                />
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 }

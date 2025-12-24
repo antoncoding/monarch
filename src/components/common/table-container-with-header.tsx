@@ -40,3 +40,50 @@ export function TableContainerWithHeader({ title, actions, children, className =
     </div>
   );
 }
+
+type TableContainerWithDescriptionProps = {
+  title: string;
+  description: string;
+  actions?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+};
+
+/**
+ * Expanded table container variant with description support.
+ *
+ * Features:
+ * - Larger title with primary color (not secondary)
+ * - Description text below title
+ * - More vertical padding in header
+ * - Actions are vertically centered
+ *
+ * @example
+ * <TableContainerWithDescription
+ *   title="Active Allocations"
+ *   description="See where your assets are deployed"
+ *   actions={<IconSwitch />}
+ * >
+ *   <Table>...</Table>
+ * </TableContainerWithDescription>
+ */
+export function TableContainerWithDescription({
+  title,
+  description,
+  actions,
+  children,
+  className = '',
+}: TableContainerWithDescriptionProps) {
+  return (
+    <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+        <div className="flex-1">
+          <h3 className="text-sm font-medium mb-1">{title}</h3>
+          <p className="text-xs text-secondary">{description}</p>
+        </div>
+        {actions && <div className="flex items-center gap-2 ml-4">{actions}</div>}
+      </div>
+      <div className="overflow-x-auto">{children}</div>
+    </div>
+  );
+}
