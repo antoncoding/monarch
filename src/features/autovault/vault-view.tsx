@@ -421,7 +421,6 @@ export default function VaultContent() {
           vaultAddress={vaultAddressValue}
           chainId={chainId}
           marketAdapter={vault.adapter}
-          marketAdapterLoading={vault.adapterLoading}
           refetchMarketAdapter={handleRefetchAdapter}
           onAdapterConfigured={handleAdapterConfigured}
         />

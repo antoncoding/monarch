@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
-import { type Address, zeroAddress } from 'viem';
+import { type Address, zeroAddress, decodeEventLog } from 'viem';
+import { usePublicClient } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AllocatorCard } from '@/components/shared/allocator-card';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
+import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
@@ -19,9 +21,6 @@ const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
 
 const STEP_SEQUENCE = ['deploy', 'metadata', 'agents', 'finalize'] as const;
-
-// Polling configuration constants
-const ADAPTER_POLLING_INTERVAL_MS = 5000; // Poll every 5 seconds for adapter deployment
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -47,31 +46,25 @@ function StepIndicator({ currentStep }: { currentStep: StepId }) {
 
 function DeployAdapterStep({
   isDeploying,
-  isChecking,
   adapterDetected,
   adapterAddress,
-  justDeployed,
 }: {
   isDeploying: boolean;
-  isChecking: boolean;
   adapterDetected: boolean;
   adapterAddress: Address;
-  justDeployed: boolean;
 }) {
   return (
     <div className="space-y-4 font-zen">
       <p className="text-sm text-secondary">Deploy a Morpho Market adapter so this vault can allocate assets into Morpho Blue markets.</p>
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs text-secondary">
-          {(isDeploying || isChecking) && <Spinner size={12} />}
+          {isDeploying && <Spinner size={12} />}
           <span>
             {adapterDetected
               ? `Adapter detected: ${shortenAddress(adapterAddress)}`
-              : justDeployed && isChecking
-                ? 'Indexing your adapter...'
-                : isChecking
-                  ? 'Checking for adapter...'
-                  : 'Adapter not detected yet. Click deploy to create one.'}
+              : isDeploying
+                ? 'Deploying adapter...'
+                : 'Adapter not detected yet. Click deploy to create one.'}
           </span>
         </div>
       </div>
@@ -192,15 +185,13 @@ export function VaultInitializationModal({
   isOpen,
   onOpenChange,
   vaultAddress,
-  marketAdapter, // address of MorphoMakretV1Aapater
-  marketAdapterLoading, //
-  refetchMarketAdapter, // refetch all "depolyed market adapter"
+  marketAdapter,
+  refetchMarketAdapter,
   chainId,
   onAdapterConfigured,
 }: {
   isOpen: boolean;
   marketAdapter: Address;
-  marketAdapterLoading: boolean;
   refetchMarketAdapter: () => void;
   onOpenChange: (open: boolean) => void;
   vaultAddress: Address;
@@ -208,12 +199,13 @@ export function VaultInitializationModal({
   onAdapterConfigured: () => void;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
-  const [statusVisible, setStatusVisible] = useState(false);
-  const [selectedAgent, setSelectedAgent] = useState<Address | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>(v2AgentsBase.at(0)?.address as Address || null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
-  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>();
+  const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
   const currentStep = STEP_SEQUENCE[stepIndex];
+
+  const publicClient = usePublicClient({ chainId });
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
   const registryAddress = useMemo(() => {
@@ -226,7 +218,9 @@ export function VaultInitializationModal({
     chainId,
   });
 
-  const adapterDetected = marketAdapter !== ZERO_ADDRESS;
+  // Adapter is detected if it exists in the subgraph OR we just deployed it
+  const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : marketAdapter;
+  const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
   const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
     vaultAddress,
@@ -235,26 +229,64 @@ export function VaultInitializationModal({
   });
 
   const handleDeploy = useCallback(async () => {
-    setStatusVisible(true);
+    if (!publicClient) return;
+
     try {
-      await deploy();
-      // Polling will continue automatically (already running from modal open effect)
-      void refetchMarketAdapter(); // Immediate check after deploy
+      // Execute deployment and get transaction hash
+      const txHash = await deploy();
+
+      if (!txHash) {
+        return;
+      }
+
+      // Wait for transaction receipt
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+
+      // Parse CreateMorphoMarketV1Adapter event to get adapter address
+      const createEvent = receipt.logs.find((log) => {
+        try {
+          const decoded = decodeEventLog({
+            abi: adapterFactoryAbi,
+            data: log.data,
+            topics: log.topics,
+          });
+          return decoded.eventName === 'CreateMorphoMarketV1Adapter';
+        } catch {
+          return false;
+        }
+      });
+
+      if (createEvent) {
+        const decoded = decodeEventLog({
+          abi: adapterFactoryAbi,
+          data: createEvent.data,
+          topics: createEvent.topics,
+        });
+
+        // Extract adapter address from event
+        const adapter = (decoded.args as any).morphoMarketV1Adapter as Address;
+        setDeployedAdapter(adapter);
+
+        // Trigger refetch for subgraph sync
+        void refetchMarketAdapter();
+
+        // Auto-advance to next step
+        setStepIndex(1);
+      }
     } catch (_error) {
       // Error is handled by useDeployMorphoMarketV1Adapter hook
-      setStatusVisible(false);
     }
-  }, [deploy, refetchMarketAdapter]);
+  }, [deploy, publicClient, refetchMarketAdapter]);
 
   const handleCompleteInitialization = useCallback(async () => {
-    if (marketAdapter === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
+    if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
 
     try {
       // Note: Adapter cap will be set when user configures market caps
       // Pass name and symbol if provided (will be trimmed and checked in useVaultV2)
       const success = await completeInitialization(
         registryAddress,
-        marketAdapter,
+        adapterAddress,
         selectedAgent ?? undefined,
         vaultName || undefined,
         vaultSymbol || undefined,
@@ -279,57 +311,30 @@ export function VaultInitializationModal({
     onOpenChange,
     registryAddress,
     selectedAgent,
-    marketAdapter,
+    adapterAddress,
     vaultName,
     vaultSymbol,
     vaultAddress,
     chainId,
   ]);
 
+  // Reset state when modal closes
   useEffect(() => {
     if (!isOpen) {
       setStepIndex(0);
-      setStatusVisible(false);
       setSelectedAgent(null);
       setVaultName('');
       setVaultSymbol('');
-
-      // Clean up adapter polling interval
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = undefined;
-      }
+      setDeployedAdapter(ZERO_ADDRESS);
     }
   }, [isOpen]);
 
-  // Auto-poll for adapter when modal is open and adapter not detected (vault-specific)
+  // Auto-advance when adapter already exists (from subgraph)
   useEffect(() => {
-    if (!isOpen || adapterDetected) {
-      return;
-    }
-
-    // Initial check immediately
-    void refetchMarketAdapter();
-
-    // Poll for adapter deployment
-    pollingIntervalRef.current = setInterval(() => {
-      void refetchMarketAdapter();
-    }, ADAPTER_POLLING_INTERVAL_MS);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-        pollingIntervalRef.current = undefined;
-      }
-    };
-  }, [isOpen, adapterDetected, refetchMarketAdapter]);
-
-  // Detection effect: Auto-advance when adapter found
-  useEffect(() => {
-    if (adapterDetected && stepIndex === 0) {
+    if (marketAdapter !== ZERO_ADDRESS && stepIndex === 0 && deployedAdapter === ZERO_ADDRESS) {
       setStepIndex(1);
     }
-  }, [adapterDetected, stepIndex]);
+  }, [marketAdapter, stepIndex, deployedAdapter]);
 
   const stepTitle = useMemo(() => {
     switch (currentStep) {
@@ -353,16 +358,12 @@ export function VaultInitializationModal({
         <Button
           variant="primary"
           className="min-w-[150px]"
-          disabled={!canDeploy || isDeploying || marketAdapterLoading}
+          disabled={!canDeploy || isDeploying}
           onClick={() => void handleDeploy()}
         >
           {isDeploying ? (
             <span className="flex items-center gap-2">
               <Spinner size={12} /> Deploying...
-            </span>
-          ) : marketAdapterLoading ? (
-            <span className="flex items-center gap-2">
-              <Spinner size={12} /> Checking...
             </span>
           ) : (
             'Deploy adapter'
@@ -437,10 +438,8 @@ export function VaultInitializationModal({
         {currentStep === 'deploy' && (
           <DeployAdapterStep
             isDeploying={isDeploying}
-            isChecking={marketAdapterLoading}
             adapterDetected={adapterDetected}
-            adapterAddress={marketAdapter}
-            justDeployed={statusVisible}
+            adapterAddress={adapterAddress}
           />
         )}
         {currentStep === 'metadata' && (
@@ -453,7 +452,7 @@ export function VaultInitializationModal({
         )}
         {currentStep === 'finalize' && (
           <FinalizeSetupStep
-            adapter={marketAdapter}
+            adapter={adapterAddress}
             registryAddress={registryAddress}
             isInitializing={isInitializing}
           />

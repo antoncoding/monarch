@@ -53,56 +53,19 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
   const availableTokenNetworks = useMemo(() => {
     if (!balances || !whitelistedMarkets) return [];
 
-    // Use whitelisted markets only
-    const marketsToUse = whitelistedMarkets;
-
     const tokenNetworks: TokenNetwork[] = [];
 
-    // Check if USDC on Base has markets available
-    const usdcBaseMarketCount = marketsToUse.filter(
-      (market) =>
-        market.loanAsset.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && market.morphoBlue.chain.id === USDC_BASE_NETWORK,
-    ).length;
-
-    // Get USDC on Base token info
-    const usdcBaseToken = findToken(USDC_BASE_ADDRESS, USDC_BASE_NETWORK);
-
-    // Always add USDC on Base as the first option if it has markets
-    if (usdcBaseMarketCount > 0 && usdcBaseToken) {
-      // Find user's USDC balance on Base if it exists
-      const usdcBaseBalance = balances.find(
-        (b) => b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.chainId === USDC_BASE_NETWORK,
-      );
-      const balanceValue = usdcBaseBalance?.balance ? BigInt(usdcBaseBalance.balance) : 0n;
-
-      tokenNetworks.push({
-        symbol: usdcBaseToken.symbol,
-        name: usdcBaseToken.symbol,
-        address: USDC_BASE_ADDRESS,
-        decimals: usdcBaseToken.decimals,
-        img: usdcBaseToken.img,
-        balance: balanceValue,
-        networkId: USDC_BASE_NETWORK,
-        marketCount: usdcBaseMarketCount,
-      });
-    }
-
+    // Build token list from user balances
     balances.forEach((balance) => {
       const token = findToken(balance.address, balance.chainId);
-
       if (!token) return;
 
       const network = balance.chainId as SupportedNetworks;
       const balanceValue = balance.balance ? BigInt(balance.balance) : 0n;
 
-      // Skip USDC on Base since we already added it
-      if (balance.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && balance.chainId === USDC_BASE_NETWORK) {
-        return;
-      }
-
       if (network && balanceValue > 0n) {
         // Count markets for this token on this network
-        const marketCount = marketsToUse.filter(
+        const marketCount = whitelistedMarkets.filter(
           (market) =>
             market.loanAsset.address.toLowerCase() === balance.address.toLowerCase() && market.morphoBlue.chain.id === balance.chainId,
         ).length;
@@ -122,11 +85,39 @@ export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, 
       }
     });
 
-    // Sort by balance descending, then by symbol (USDC on Base will stay first since it's added first)
+    // Ensure USDC on Base is always available (even with 0 balance)
+    const hasUsdcBase = tokenNetworks.some(
+      (t) => t.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && t.networkId === USDC_BASE_NETWORK,
+    );
+
+    if (!hasUsdcBase) {
+      const usdcBaseToken = findToken(USDC_BASE_ADDRESS, USDC_BASE_NETWORK);
+      const usdcBaseMarketCount = whitelistedMarkets.filter(
+        (market) =>
+          market.loanAsset.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && market.morphoBlue.chain.id === USDC_BASE_NETWORK,
+      ).length;
+
+      if (usdcBaseToken && usdcBaseMarketCount > 0) {
+        tokenNetworks.unshift({
+          symbol: usdcBaseToken.symbol,
+          name: usdcBaseToken.symbol,
+          address: USDC_BASE_ADDRESS,
+          decimals: usdcBaseToken.decimals,
+          img: usdcBaseToken.img,
+          balance: 0n,
+          networkId: USDC_BASE_NETWORK,
+          marketCount: usdcBaseMarketCount,
+        });
+      }
+    }
+
+    // Sort: USDC on Base first, then by balance descending, then by symbol
     return tokenNetworks.sort((a, b) => {
-      // Keep USDC on Base at the top
-      if (a.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && a.networkId === USDC_BASE_NETWORK) return -1;
-      if (b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.networkId === USDC_BASE_NETWORK) return 1;
+      const isAUsdcBase = a.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && a.networkId === USDC_BASE_NETWORK;
+      const isBUsdcBase = b.address.toLowerCase() === USDC_BASE_ADDRESS.toLowerCase() && b.networkId === USDC_BASE_NETWORK;
+
+      if (isAUsdcBase) return -1;
+      if (isBUsdcBase) return 1;
 
       const aBalance = Number(formatUnits(a.balance, a.decimals));
       const bBalance = Number(formatUnits(b.balance, b.decimals));

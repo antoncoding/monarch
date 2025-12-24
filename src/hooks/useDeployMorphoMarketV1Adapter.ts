@@ -46,10 +46,10 @@ export function useDeployMorphoMarketV1Adapter({
     chainId: resolvedChainId,
   });
 
-  const deploy = useCallback(async () => {
-    if (!canDeploy || !account) return;
+  const deploy = useCallback(async (): Promise<`0x${string}` | undefined> => {
+    if (!canDeploy || !account) return undefined;
 
-    await sendTransactionAsync({
+    const txHash = await sendTransactionAsync({
       account,
       to: factoryAddress as Address,
       data: encodeFunctionData({
@@ -58,6 +58,8 @@ export function useDeployMorphoMarketV1Adapter({
         args: [vaultAddress as Address, morpho as Address],
       }),
     });
+
+    return txHash;
   }, [account, canDeploy, factoryAddress, morpho, sendTransactionAsync, vaultAddress]);
 
   return {
