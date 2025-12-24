@@ -9,6 +9,7 @@ export const morphoGraphqlFetcher = async <T extends Record<string, any>>(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
+    cache: 'no-store', // Disable browser caching to ensure fresh data
   });
 
   if (!response.ok) {

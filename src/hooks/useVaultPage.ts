@@ -61,11 +61,11 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   // A vault goes through these states:
   // 1. Vault deployed (has address)
   // 2. Adapter deployed (morphoMarketV1Adapter !== zeroAddress)
-  // 3. Vault initialized (adapter registered + registry set + adapter cap set)
-  // 4. Fully configured (collateral caps + market caps + allocators set)
+  // 3. Vault initialized (adapter registered + registry set) - API returns data
+  // 4. Fully configured (adapter cap + collateral caps + market caps set)
   //
-  // The Morpho API only returns data for initialized vaults (state 3+).
-  // Before initialization, we detect the vault via subgraph but get no API data.
+  // The Morpho API returns data once the vault is initialized (state 3+).
+  // Caps can be configured separately after initialization.
   const isVaultInitialized = useMemo(() => {
     // Still loading - can't determine state yet
     if (adapterLoading || vaultDataLoading) {
@@ -77,15 +77,10 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
       return false;
     }
 
-    // If adapter exists but no vault data from API, vault is deployed but NOT initialized
+    // If adapter exists and we have vault data from API, the vault is initialized
     // (Morpho API only returns data for initialized vaults that have been registered)
-    if (!vaultData) {
-      return false;
-    }
-
-    // If we have data, check if adapter cap is set (indicates complete initialization)
-    // Without an adapter cap, the vault cannot function properly
-    return vaultData?.capsData?.adapterCap !== null && vaultData?.capsData?.adapterCap !== undefined;
+    // Note: Caps may or may not be set at this point - that's a separate configuration step
+    return vaultData !== null && vaultData !== undefined;
   }, [adapterLoading, vaultDataLoading, morphoMarketV1Adapter, vaultData]);
 
   // Helper flag: adapter not deployed at all (need to deploy it first)

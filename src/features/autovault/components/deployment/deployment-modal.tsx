@@ -66,11 +66,6 @@ function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContent
                 ? 'Complete the initialization to start using your autovault.'
                 : 'Your vault was successfully deployed.'}
             </p>
-            {deployedVaultAddress && (
-              <p className="max-w-md text-center text-xs text-secondary">
-                Note: It may take a few moments for your vault to appear in the Morpho API.
-              </p>
-            )}
             {deployedVaultAddress ? (
               <Button
                 variant="primary"

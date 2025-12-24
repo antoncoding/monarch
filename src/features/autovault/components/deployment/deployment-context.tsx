@@ -7,6 +7,7 @@ import { useCreateVault } from '@/hooks/useCreateVault';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
 import { abi as vaultFactoryAbi } from '@/abis/vaultv2factory';
 import type { SupportedNetworks } from '@/utils/networks';
+import { addDeployedVault } from '@/utils/vault-storage';
 
 export type DeploymentPhase = 'selection' | 'deploying' | 'success';
 
@@ -93,6 +94,10 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
         // Extract vault address from event
         const vaultAddress = (decoded.args as any).newVaultV2 as Address;
+
+        // Store vault address locally for immediate display in vault list
+        addDeployedVault(vaultAddress, selectedTokenAndNetwork.networkId);
+
         setDeployedVaultAddress(vaultAddress);
         setDeploymentPhase('success');
       } else {

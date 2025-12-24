@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FaPlus } from 'react-icons/fa';
 import { FiShield, FiZap, FiSettings } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
+import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
 
 // Skeleton component for loading state
@@ -108,14 +109,37 @@ export default function AutovaultListContent() {
     setShowDeploymentModal(true);
   };
 
+  // Merge locally stored vaults with API results
+  const mergedVaultAddresses = useMemo(() => {
+    const apiVaults = vaultAddresses;
+    const localVaults = getDeployedVaults();
+
+    // Create a map of existing vaults by address+chainId for quick lookup
+    const existingVaults = new Set(apiVaults.map((v) => `${v.address.toLowerCase()}-${v.networkId}`));
+
+    // Add local vaults that aren't in API results yet
+    const combined = [...apiVaults];
+    for (const localVault of localVaults) {
+      const key = `${localVault.address.toLowerCase()}-${localVault.chainId}`;
+      if (!existingVaults.has(key)) {
+        combined.push({
+          address: localVault.address,
+          networkId: localVault.chainId,
+        });
+      }
+    }
+
+    return combined;
+  }, [vaultAddresses]);
+
   const handleManageVault = () => {
-    if (vaultAddresses.length > 0) {
-      const firstVault = vaultAddresses[0];
+    if (mergedVaultAddresses.length > 0) {
+      const firstVault = mergedVaultAddresses[0];
       router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
     }
   };
 
-  const hasVaults = vaultAddresses.length > 0;
+  const hasVaults = mergedVaultAddresses.length > 0;
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">

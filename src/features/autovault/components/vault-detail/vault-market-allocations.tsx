@@ -78,17 +78,7 @@ export function VaultMarketAllocations({
     );
   }
 
-  if (collateralAllocations.length === 0 && marketAllocations.length === 0) {
-    return (
-      <div className="bg-surface rounded-md shadow-sm p-10 flex flex-col items-center justify-center font-zen">
-        <p className="text-sm text-center text-secondary">
-          {needsInitialization
-            ? 'Finish the vault setup to configure market caps'
-            : 'No markets configured yet. Configure caps in settings to start allocating assets'}
-        </p>
-      </div>
-    );
-  }
+  const hasNoAllocations = collateralAllocations.length === 0 && marketAllocations.length === 0;
 
   const headerActions = (
     <div className="flex items-center gap-3">
@@ -113,7 +103,15 @@ export function VaultMarketAllocations({
       description={viewDescription}
       actions={headerActions}
     >
-      {viewMode === 'collateral' ? (
+      {hasNoAllocations ? (
+        <div className="p-10 flex flex-col items-center justify-center font-zen">
+          <p className="text-sm text-center text-secondary">
+            {needsInitialization
+              ? 'Finish the vault setup to configure market caps'
+              : 'No markets configured yet. Configure caps in settings to start allocating assets'}
+          </p>
+        </div>
+      ) : viewMode === 'collateral' ? (
         <CollateralView
           allocations={collateralAllocations}
           totalAllocation={totalAllocation}

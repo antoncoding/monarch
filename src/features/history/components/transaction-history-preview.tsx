@@ -18,6 +18,7 @@ type TransactionHistoryPreviewProps = {
   chainId?: number;
   isVaultAdapter?: boolean;
   limit?: number;
+  emptyMessage?: string;
 };
 
 const formatTimeAgo = (timestamp: number): string => {
@@ -43,7 +44,13 @@ const formatTimeAgo = (timestamp: number): string => {
   return `${diffInYears}y ago`;
 };
 
-export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = false, limit = 10 }: TransactionHistoryPreviewProps) {
+export function TransactionHistoryPreview({
+  account,
+  chainId,
+  isVaultAdapter = false,
+  limit = 10,
+  emptyMessage,
+}: TransactionHistoryPreviewProps) {
   const { loading, fetchTransactions } = useUserTransactions();
   const [history, setHistory] = useState<ReturnType<typeof groupTransactionsByHash>>([]);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -126,9 +133,9 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
             <TableRow>
               <TableCell
                 colSpan={4}
-                className="text-center text-secondary py-8"
+                className="text-center text-secondary text-sm py-8"
               >
-                No transactions found
+                {emptyMessage ?? 'No transactions found'}
               </TableCell>
             </TableRow>
           ) : (

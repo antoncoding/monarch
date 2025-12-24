@@ -14,6 +14,7 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
+import { startVaultIndexing } from '@/utils/vault-indexing';
 
 const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
@@ -22,8 +23,6 @@ const STEP_SEQUENCE = ['deploy', 'metadata', 'agents', 'finalize'] as const;
 
 // Polling configuration constants
 const ADAPTER_POLLING_INTERVAL_MS = 5000; // Poll every 5 seconds for adapter deployment
-const POST_INIT_POLLING_INTERVAL_MS = 3000; // Poll every 3 seconds after initialization
-const POST_INIT_MAX_ATTEMPTS = 10; // Maximum number of polling attempts (30 seconds total)
 type StepId = (typeof STEP_SEQUENCE)[number];
 
 function StepIndicator({ currentStep }: { currentStep: StepId }) {
@@ -215,10 +214,9 @@ export function VaultInitializationModal({
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const postInitPollingRef = useRef<NodeJS.Timeout | null>(null);
   const currentStep = STEP_SEQUENCE[stepIndex];
 
-  const toast = useStyledToast();
+  const _toast = useStyledToast();
 
   const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
   const registryAddress = useMemo(() => {
@@ -268,20 +266,11 @@ export function VaultInitializationModal({
         return;
       }
 
-      // Show toast and start polling for vault data
-      toast.info('Indexing vault data...', 'This may take a few moments as the data is being indexed.');
+      // Start indexing mode - vault page will handle retry logic
+      startVaultIndexing(vaultAddress, chainId);
 
-      // Poll for vault data to be indexed
-      let attempts = 0;
-      postInitPollingRef.current = setInterval(() => {
-        attempts++;
-        void onAdapterConfigured();
-
-        if (attempts >= POST_INIT_MAX_ATTEMPTS && postInitPollingRef.current) {
-          clearInterval(postInitPollingRef.current);
-          postInitPollingRef.current = null;
-        }
-      }, POST_INIT_POLLING_INTERVAL_MS);
+      // Trigger initial refetch
+      void onAdapterConfigured();
 
       onOpenChange(false);
     } catch (_error) {
@@ -296,7 +285,8 @@ export function VaultInitializationModal({
     marketAdapter,
     vaultName,
     vaultSymbol,
-    toast,
+    vaultAddress,
+    chainId,
   ]);
 
   useEffect(() => {
@@ -312,19 +302,8 @@ export function VaultInitializationModal({
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
       }
-      // Note: postInitPollingRef continues after modal close to index vault data
     }
   }, [isOpen]);
-
-  // Cleanup post-init polling on unmount
-  useEffect(() => {
-    return () => {
-      if (postInitPollingRef.current) {
-        clearInterval(postInitPollingRef.current);
-        postInitPollingRef.current = null;
-      }
-    };
-  }, []);
 
   // Auto-poll for adapter when modal is open and adapter not detected (vault-specific)
   useEffect(() => {
