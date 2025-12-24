@@ -8,12 +8,8 @@ export const userVaultsV2AddressesQuery = `
       where: {
         owner: $owner
       }
-      orderBy: createdAtBlockNumber
-      orderDirection: desc
     ) {
       id
-      createdAtBlockNumber
-      createdAtTimestamp
     }
   }
 `;

@@ -11,7 +11,6 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Spinner } from '@/components/ui/spinner';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
-import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
 import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
@@ -186,20 +185,32 @@ export function VaultInitializationModal({
   onOpenChange,
   vaultAddress,
   marketAdapter,
+  marketAdapterLoading,
   refetchMarketAdapter,
   chainId,
   onAdapterConfigured,
+  completeInitialization,
+  isInitializing,
 }: {
   isOpen: boolean;
   marketAdapter: Address;
+  marketAdapterLoading: boolean;
   refetchMarketAdapter: () => void;
   onOpenChange: (open: boolean) => void;
   vaultAddress: Address;
   chainId: SupportedNetworks;
   onAdapterConfigured: () => void;
+  completeInitialization: (
+    morphoRegistry: Address,
+    marketV1Adapter: Address,
+    allocator?: Address,
+    name?: string,
+    symbol?: string,
+  ) => Promise<boolean>;
+  isInitializing: boolean;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
-  const [selectedAgent, setSelectedAgent] = useState<Address | null>(v2AgentsBase.at(0)?.address as Address || null);
+  const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) || null);
   const [vaultName, setVaultName] = useState<string>('');
   const [vaultSymbol, setVaultSymbol] = useState<string>('');
   const [deployedAdapter, setDeployedAdapter] = useState<Address>(ZERO_ADDRESS);
@@ -212,11 +223,6 @@ export function VaultInitializationModal({
     const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
-
-  const { completeInitialization, isInitializing } = useVaultV2({
-    vaultAddress,
-    chainId,
-  });
 
   // Adapter is detected if it exists in the subgraph OR we just deployed it
   const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : marketAdapter;

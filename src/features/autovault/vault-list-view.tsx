@@ -171,7 +171,7 @@ export default function AutovaultListContent() {
             <div className="mx-auto max-w-3xl space-y-4 text-center">
               <h1 className="font-zen text-3xl text-primary md:text-4xl">Be Your Own Risk Curator</h1>
               <p className="mx-auto max-w-2xl text-lg text-secondary">
-                Deploy your own vault, define your risk parameters, and keep full control. 
+                Deploy your own vault, define your risk parameters, and keep full control.
               </p>
 
               {/* Actions for users with existing vaults */}

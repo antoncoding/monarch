@@ -64,6 +64,8 @@ export default function VaultContent() {
 
   const {
     refetchAll,
+    completeInitialization,
+    isInitializing,
     updateNameAndSymbol,
     setAllocator,
     refetchAdapter,
@@ -421,8 +423,11 @@ export default function VaultContent() {
           vaultAddress={vaultAddressValue}
           chainId={chainId}
           marketAdapter={vault.adapter}
+          marketAdapterLoading={vault.adapterLoading}
           refetchMarketAdapter={handleRefetchAdapter}
           onAdapterConfigured={handleAdapterConfigured}
+          completeInitialization={completeInitialization}
+          isInitializing={isInitializing}
         />
       )}
     </div>

@@ -38,6 +38,8 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
   const {
     isLoading: contractLoading,
     refetch: refetchContract,
+    completeInitialization,
+    isInitializing,
     updateNameAndSymbol,
     isUpdatingMetadata,
     name: onChainName,
@@ -228,6 +230,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     hasError,
 
     // Actions
+    completeInitialization,
     updateNameAndSymbol,
     setAllocator,
     updateCaps,
@@ -235,6 +238,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     refetchAdapter,
 
     // Action loading states
+    isInitializing,
     isUpdatingMetadata,
     isUpdatingAllocator,
     isUpdatingCaps,

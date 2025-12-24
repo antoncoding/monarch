@@ -84,24 +84,22 @@ export function useVaultV2({
     void refetchBalance();
   }, [refetchBalance]);
 
-  const handleInitializationSuccess = useCallback(() => {
-    void refetchAll();
-    onTransactionSuccess?.();
-  }, [refetchAll, onTransactionSuccess]);
-
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
-    toastId: 'completeInitialization',
+    toastId: `init-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Completing vault initialization',
     successText: 'Vault initialized successfully',
     errorText: 'Failed to initialize vault',
     pendingDescription: 'Setting up adapter, registry, and optional allocator',
     successDescription: 'Vault is ready to use',
     chainId: chainIdToUse,
-    onSuccess: handleInitializationSuccess,
+    onSuccess: () => {
+      void refetchAll();
+      onTransactionSuccess?.();
+    },
   });
 
   const { isConfirming: isUpdatingMetadata, sendTransactionAsync: sendMetadataTx } = useTransactionWithToast({
-    toastId: 'update-vault-metadata',
+    toastId: `metadata-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Updating vault metadata',
     successText: 'Vault metadata updated',
     errorText: 'Failed to update vault metadata',
@@ -111,7 +109,7 @@ export function useVaultV2({
   });
 
   const { isConfirming: isUpdatingAllocator, sendTransactionAsync: sendAllocatorTx } = useTransactionWithToast({
-    toastId: 'update-allocator',
+    toastId: `allocator-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Updating allocator',
     successText: 'Allocator updated',
     errorText: 'Failed to update allocator',
@@ -122,7 +120,7 @@ export function useVaultV2({
   });
 
   const { isConfirming: isUpdatingCaps, sendTransactionAsync: sendCapsTx } = useTransactionWithToast({
-    toastId: 'update-caps',
+    toastId: `caps-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Updating market caps',
     successText: 'Market caps updated',
     errorText: 'Failed to update caps',
@@ -473,7 +471,7 @@ export function useVaultV2({
   );
 
   const { isConfirming: isDepositing, sendTransactionAsync: sendDepositTx } = useTransactionWithToast({
-    toastId: 'vault-deposit',
+    toastId: `deposit-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Depositing to vault',
     successText: 'Deposit successful',
     errorText: 'Failed to deposit',
@@ -484,7 +482,7 @@ export function useVaultV2({
   });
 
   const { isConfirming: isWithdrawing, sendTransactionAsync: sendWithdrawTx } = useTransactionWithToast({
-    toastId: 'vault-withdraw',
+    toastId: `withdraw-${vaultAddress ?? 'unknown'}`,
     pendingText: 'Withdrawing from vault',
     successText: 'Withdrawal successful',
     errorText: 'Failed to withdraw',
