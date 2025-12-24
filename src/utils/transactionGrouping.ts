@@ -4,9 +4,37 @@ export type GroupedTransaction = {
   hash: string;
   timestamp: number;
   isMetaAction: boolean;
-  metaActionType?: 'rebalance' | 'unknown';
+  metaActionType?: 'rebalance' | 'deposits' | 'withdrawals' | 'unknown';
+  amount?: bigint;
   transactions: UserTransaction[];
 };
+
+/**
+ * Filters transactions to only include withdrawals
+ */
+export function getWithdrawals(transactions: UserTransaction[]): UserTransaction[] {
+  return transactions.filter((t) => t.type === 'MarketWithdraw');
+}
+
+/**
+ * Filters transactions to only include supplies
+ */
+export function getSupplies(transactions: UserTransaction[]): UserTransaction[] {
+  return transactions.filter((t) => t.type === 'MarketSupply');
+}
+
+/**
+ * Calculates the rebalance amount as the minimum of total supplies vs total withdrawals
+ */
+export function getRebalanceAmount(transactions: UserTransaction[]): bigint {
+  const supplies = getSupplies(transactions);
+  const withdrawals = getWithdrawals(transactions);
+
+  const totalSupply = supplies.reduce((sum, tx) => sum + BigInt(tx.data.assets), 0n);
+  const totalWithdraw = withdrawals.reduce((sum, tx) => sum + BigInt(tx.data.assets), 0n);
+
+  return totalSupply < totalWithdraw ? totalSupply : totalWithdraw;
+}
 
 /**
  * Groups transactions by hash to identify meta-actions like rebalances.
@@ -32,15 +60,27 @@ export function groupTransactionsByHash(transactions: UserTransaction[]): Groupe
 
   for (const [hash, txs] of grouped.entries()) {
     const isMetaAction = txs.length > 1;
-    let metaActionType: 'rebalance' | 'unknown' | undefined;
+    let metaActionType: 'rebalance' | 'deposits' | 'withdrawals' | 'unknown' | undefined;
+    let amount: bigint | undefined;
 
     if (isMetaAction) {
-      // Detect rebalance: has both supply and withdraw
-      const hasSupply = txs.some((t) => t.type === 'MarketSupply');
-      const hasWithdraw = txs.some((t) => t.type === 'MarketWithdraw');
+      const supplies = getSupplies(txs);
+      const withdrawals = getWithdrawals(txs);
+      const hasSupply = supplies.length > 0;
+      const hasWithdraw = withdrawals.length > 0;
 
       if (hasSupply && hasWithdraw) {
+        // Rebalance: has both supply and withdraw
         metaActionType = 'rebalance';
+        amount = getRebalanceAmount(txs);
+      } else if (hasSupply && !hasWithdraw) {
+        // Multiple deposits to same or different markets
+        metaActionType = 'deposits';
+        amount = supplies.reduce((sum, tx) => sum + BigInt(tx.data.assets), 0n);
+      } else if (hasWithdraw && !hasSupply) {
+        // Multiple withdrawals from same or different markets
+        metaActionType = 'withdrawals';
+        amount = withdrawals.reduce((sum, tx) => sum + BigInt(tx.data.assets), 0n);
       } else {
         metaActionType = 'unknown';
       }
@@ -51,6 +91,7 @@ export function groupTransactionsByHash(transactions: UserTransaction[]): Groupe
       timestamp: txs[0].timestamp,
       isMetaAction,
       metaActionType,
+      amount,
       transactions: txs,
     });
   }

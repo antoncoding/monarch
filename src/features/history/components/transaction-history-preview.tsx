@@ -136,6 +136,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
               const chainIdForTx =
                 chainId ?? allMarkets.find((m) => m.uniqueKey === group.transactions[0].data.market.uniqueKey)?.morphoBlue.chain.id;
 
+              // Handle rebalances
               if (group.isMetaAction && group.metaActionType === 'rebalance') {
                 return (
                   <TableRow
@@ -146,6 +147,68 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                       <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-primary">Rebalance</span>
                     </TableCell>
                     <TableCell className="p-3 text-right text-xs text-secondary">{group.transactions.length} actions</TableCell>
+                    <TableCell className="p-3 text-center">
+                      <TransactionIdentity
+                        txHash={group.hash}
+                        chainId={chainIdForTx ?? 1}
+                      />
+                    </TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{formatTimeAgo(group.timestamp)}</TableCell>
+                  </TableRow>
+                );
+              }
+
+              // Handle multiple deposits
+              if (group.isMetaAction && group.metaActionType === 'deposits') {
+                const firstTx = group.transactions[0];
+                const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
+
+                return (
+                  <TableRow
+                    key={group.hash}
+                    className="rounded bg-hovered/20"
+                  >
+                    <TableCell className="p-3 rounded-l">
+                      <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-green-500">
+                        Deposits ({group.transactions.length})
+                      </span>
+                    </TableCell>
+                    <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">
+                      {group.amount && market
+                        ? `+${formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))} ${getTruncatedAssetName(market.loanAsset.symbol)}`
+                        : `${group.transactions.length} actions`}
+                    </TableCell>
+                    <TableCell className="p-3 text-center">
+                      <TransactionIdentity
+                        txHash={group.hash}
+                        chainId={chainIdForTx ?? 1}
+                      />
+                    </TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{formatTimeAgo(group.timestamp)}</TableCell>
+                  </TableRow>
+                );
+              }
+
+              // Handle multiple withdrawals
+              if (group.isMetaAction && group.metaActionType === 'withdrawals') {
+                const firstTx = group.transactions[0];
+                const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
+
+                return (
+                  <TableRow
+                    key={group.hash}
+                    className="rounded bg-hovered/20"
+                  >
+                    <TableCell className="p-3 rounded-l">
+                      <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-red-500">
+                        Withdrawals ({group.transactions.length})
+                      </span>
+                    </TableCell>
+                    <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">
+                      {group.amount && market
+                        ? `-${formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))} ${getTruncatedAssetName(market.loanAsset.symbol)}`
+                        : `${group.transactions.length} actions`}
+                    </TableCell>
                     <TableCell className="p-3 text-center">
                       <TransactionIdentity
                         txHash={group.hash}
