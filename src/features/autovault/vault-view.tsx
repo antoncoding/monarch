@@ -21,6 +21,7 @@ import { VaultInitializationModal } from '@/features/autovault/components/vault-
 import { VaultMarketAllocations } from '@/features/autovault/components/vault-detail/vault-market-allocations';
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
+import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -321,6 +322,16 @@ export default function VaultContent() {
             isLoading={vault.allocationsLoading || vault.vaultDataLoading}
             needsInitialization={vault.needsInitialization}
           />
+
+          {/* Transaction History Preview */}
+          {vault.adapter && (
+            <TransactionHistoryPreview
+              account={vault.adapter}
+              chainId={chainId}
+              isVaultAdapter={true}
+              limit={10}
+            />
+          )}
 
           {/* Settings Modal */}
           <VaultSettingsModal
