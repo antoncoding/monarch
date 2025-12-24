@@ -16,7 +16,7 @@ export type UseCreateVaultReturn = {
   isDeploying: boolean;
 
   // Actions
-  createVault: (asset: Address, salt?: string) => Promise<string | undefined>;
+  createVault: (asset: Address, salt?: string) => Promise<`0x${string}` | undefined>;
 };
 
 export function useCreateVault(chainId: number): UseCreateVaultReturn {
@@ -44,7 +44,7 @@ export function useCreateVault(chainId: number): UseCreateVaultReturn {
 
   // Execute vault creation
   const createVault = useCallback(
-    async (asset: Address, salt?: string): Promise<string | undefined> => {
+    async (asset: Address, salt?: string): Promise<`0x${string}` | undefined> => {
       if (!account) {
         toast.error('No Account', 'Please connect your wallet to deploy a vault');
         return undefined;
