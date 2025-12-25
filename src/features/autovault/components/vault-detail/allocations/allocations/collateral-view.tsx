@@ -52,7 +52,7 @@ export function CollateralView({ allocations, totalAllocation, vaultAssetSymbol,
                   <span className="text-sm whitespace-nowrap">{item.collateralSymbol}</span>
                 </div>
               </TableCell>
-              <TableCell className="p-3 rounded-r align-middle">
+              <TableCell className="p-3 rounded-r align-middle text-sm">
                 <AllocationCell
                   amount={allocatedAmount}
                   symbol={vaultAssetSymbol}

@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { FaPlus } from 'react-icons/fa';
+import { GoPlusCircle } from 'react-icons/go';
 import { FiShield, FiZap, FiSettings } from 'react-icons/fi';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import { useRouter } from 'next/navigation';
 import { useAppKit } from '@reown/appkit/react';
 import { useConnection } from 'wagmi';
 import { Button } from '@/components/ui/button';
+import { Avatar } from '@/components/Avatar/Avatar';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import Header from '@/components/layout/header/Header';
 import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
 import { getDeployedVaults } from '@/utils/vault-storage';
@@ -133,14 +136,18 @@ export default function AutovaultListContent() {
     return combined;
   }, [vaultAddresses, address]);
 
-  const handleManageVault = () => {
-    if (mergedVaultAddresses.length > 0) {
+  const handleManageVault = (vaultAddress?: string, networkId?: number) => {
+    if (vaultAddress && networkId) {
+      router.push(`/autovault/${networkId}/${vaultAddress}`);
+    } else if (mergedVaultAddresses.length > 0) {
       const firstVault = mergedVaultAddresses[0];
       router.push(`/autovault/${firstVault.networkId}/${firstVault.address}`);
     }
   };
 
   const hasVaults = mergedVaultAddresses.length > 0;
+  const hasSingleVault = mergedVaultAddresses.length === 1;
+  const hasMultipleVaults = mergedVaultAddresses.length > 1;
 
   return (
     <div className="flex w-full flex-col justify-between font-zen">
@@ -177,21 +184,64 @@ export default function AutovaultListContent() {
               {/* Actions for users with existing vaults */}
               {isConnected && hasVaults && (
                 <div className="flex items-center justify-center gap-3 pt-4">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="font-zen px-8"
-                    onClick={handleManageVault}
-                  >
-                    Manage Vault
-                  </Button>
+                  {/* Single vault - show avatar with address */}
+                  {hasSingleVault && (
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      className="font-zen px-6"
+                      onClick={() => handleManageVault()}
+                    >
+                      <Avatar
+                        address={mergedVaultAddresses[0].address as `0x${string}`}
+                        size={20}
+                      />
+                      <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                    </Button>
+                  )}
+
+                  {/* Multiple vaults - show dropdown */}
+                  {hasMultipleVaults && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="primary"
+                          size="lg"
+                          className="font-zen px-6"
+                        >
+                          <Avatar
+                            address={mergedVaultAddresses[0].address as `0x${string}`}
+                            size={20}
+                          />
+                          <span className="ml-2">Manage {mergedVaultAddresses[0].address.slice(0, 6)}</span>
+                          <ChevronDownIcon className="ml-2 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center">
+                        {mergedVaultAddresses.map((vault) => (
+                          <DropdownMenuItem
+                            key={`${vault.networkId}-${vault.address}`}
+                            onClick={() => handleManageVault(vault.address, vault.networkId)}
+                            className="cursor-pointer"
+                          >
+                            <Avatar
+                              address={vault.address as `0x${string}`}
+                              size={16}
+                            />
+                            <span className="ml-2">{vault.address.slice(0, 6)}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
                   <Button
                     variant="default"
                     size="lg"
                     className="font-zen px-8"
                     onClick={handleCreateVault}
                   >
-                    <FaPlus
+                    <GoPlusCircle
                       size={16}
                       className="mr-2"
                     />
@@ -210,7 +260,7 @@ export default function AutovaultListContent() {
                       className="font-zen px-8"
                       onClick={handleCreateVault}
                     >
-                      <FaPlus
+                      <GoPlusCircle
                         size={16}
                         className="mr-2"
                       />

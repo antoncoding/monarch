@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ChevronDownIcon, TrashIcon, ReloadIcon, GearIcon } from '@radix-ui/react-icons';
-import { MdWarning } from 'react-icons/md';
+import { IoIosArrowRoundForward } from 'react-icons/io';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,9 +22,8 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
-import { MarketIdentity, MarketIdentityFocus } from '@/features/markets/components/market-identity';
+import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { RebalanceDetail } from './rebalance-detail';
-import { getTruncatedAssetName } from '@/utils/oracle';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { useDisclosure } from '@/hooks/useDisclosure';
@@ -32,7 +31,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
-import { groupTransactionsByHash, type GroupedTransaction } from '@/utils/transactionGrouping';
+import { groupTransactionsByHash, getWithdrawals, getSupplies, type GroupedTransaction } from '@/utils/transactionGrouping';
 import { storageKeys } from '@/utils/storageKeys';
 import { UserTxTypes, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
 
@@ -113,6 +112,11 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
       ),
     [history],
   );
+
+  // Determine MarketIdentity mode based on context
+  // Use Badge mode when showing single loan asset context (vault adapter or filtered by asset)
+  // Use Normal mode with Collateral focus when showing all history
+  const shouldUseBadgeMode = isVaultAdapter || selectedAsset !== null;
 
   // Helper functions
   const toggleRow = (rowKey: string) => {
@@ -274,24 +278,19 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
   const renderSkeletonRows = (count = 5) => {
     return Array.from({ length: count }).map((_, idx) => (
       <TableRow key={`skeleton-${idx}`}>
-        {!isVaultAdapter && (
-          <TableCell style={{ minWidth: '100px' }}>
-            <div className="flex items-center justify-center gap-1.5">
-              <div className="bg-hovered h-4 w-4 rounded-full animate-pulse" />
-              <div className="bg-hovered h-4 w-16 rounded animate-pulse" />
-            </div>
-          </TableCell>
-        )}
-        <TableCell style={{ minWidth: '140px' }}>
-          <div className="flex items-center justify-center gap-2">
-            <div className="bg-hovered h-4 w-24 rounded animate-pulse" />
-          </div>
-        </TableCell>
-        <TableCell style={{ minWidth: '80px' }}>
-          <div className="flex justify-center">
+        {/* Action column */}
+        <TableCell style={{ minWidth: '100px' }}>
+          <div className="flex justify-start">
             <div className="bg-hovered h-6 w-16 rounded animate-pulse" />
           </div>
         </TableCell>
+        {/* Market column */}
+        <TableCell style={{ minWidth: '200px' }}>
+          <div className="flex items-center justify-start gap-2">
+            <div className="bg-hovered h-4 w-32 rounded animate-pulse" />
+          </div>
+        </TableCell>
+        {/* Amount column */}
         <TableCell
           className="text-right"
           style={{ minWidth: '120px' }}
@@ -300,11 +299,13 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
             <div className="bg-hovered h-4 w-24 rounded animate-pulse" />
           </div>
         </TableCell>
+        {/* Tx Hash column */}
         <TableCell style={{ minWidth: '120px' }}>
           <div className="flex justify-center">
             <div className="bg-hovered h-4 w-20 rounded animate-pulse" />
           </div>
         </TableCell>
+        {/* Time column */}
         <TableCell
           className="text-right"
           style={{ minWidth: '90px' }}
@@ -332,53 +333,11 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
         key={`${tx.hash}-${index}`}
         className="hover:bg-hovered"
       >
-        {/* Loan Asset - only show if not vault adapter */}
-        {!isVaultAdapter && (
-          <TableCell
-            data-label="Loan Asset"
-            className="z-50"
-            style={{ minWidth: '100px' }}
-          >
-            <div className="flex items-center justify-center gap-1.5">
-              <TokenIcon
-                address={market.loanAsset.address}
-                chainId={market.morphoBlue.chain.id}
-                symbol={market.loanAsset.symbol}
-                width={16}
-                height={16}
-              />
-              <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
-            </div>
-          </TableCell>
-        )}
-
-        {/* Market */}
+        {/* Action */}
         <TableCell
-          data-label="Market"
-          className="z-50"
-          style={{ minWidth: '140px' }}
-        >
-          <Link
-            href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
-            className="no-underline hover:no-underline"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <MarketIdentity
-                market={market}
-                chainId={market.morphoBlue.chain.id}
-                showOracle={false}
-                showLltv
-                focus={isVaultAdapter ? MarketIdentityFocus.Collateral : MarketIdentityFocus.Collateral}
-              />
-            </div>
-          </Link>
-        </TableCell>
-
-        {/* Side */}
-        <TableCell
-          data-label="Side"
-          className="z-50 text-center"
-          style={{ minWidth: '80px' }}
+          data-label="Action"
+          className="z-10"
+          style={{ minWidth: '100px' }}
         >
           <span
             className={`inline-flex items-center rounded bg-hovered px-2 py-1 text-xs ${
@@ -389,23 +348,54 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
           </span>
         </TableCell>
 
+        {/* Market */}
+        <TableCell
+          data-label="Market"
+          className="z-10"
+          style={{ minWidth: '200px' }}
+        >
+          <Link
+            href={`/market/${market.morphoBlue.chain.id}/${market.uniqueKey}`}
+            className="no-underline hover:no-underline"
+          >
+            <div className="flex items-center justify-start gap-2">
+              <MarketIdentity
+                market={market}
+                chainId={market.morphoBlue.chain.id}
+                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                focus={MarketIdentityFocus.Collateral}
+                showOracle={false}
+                showLltv={!shouldUseBadgeMode}
+              />
+            </div>
+          </Link>
+        </TableCell>
+
         {/* Amount */}
         <TableCell
           data-label="Amount"
-          className="z-50 text-right"
+          className="z-10 text-right"
           style={{ minWidth: '120px' }}
         >
-          <span className="text-sm">
-            {sign}
-            {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))}{' '}
-            {getTruncatedAssetName(market.loanAsset.symbol)}
-          </span>
+          <div className="flex items-center justify-end gap-1.5 text-sm">
+            <span>
+              {sign}
+              {formatReadable(Number(formatUnits(BigInt(tx.data.assets), market.loanAsset.decimals)))}
+            </span>
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={market.morphoBlue.chain.id}
+              symbol={market.loanAsset.symbol}
+              width={16}
+              height={16}
+            />
+          </div>
         </TableCell>
 
         {/* Transaction Hash */}
         <TableCell
           data-label="Tx Hash"
-          className="z-50"
+          className="z-10"
           style={{ minWidth: '120px' }}
         >
           <div className="flex justify-center">
@@ -419,7 +409,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
         {/* Time */}
         <TableCell
           data-label="Time"
-          className="z-50 text-right"
+          className="z-10 text-right"
           style={{ minWidth: '90px' }}
         >
           <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(tx.timestamp)}</span>
@@ -455,17 +445,18 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
         content={
           <TooltipContent
             title="Settings"
-            detail="Configure view settings"
+            detail={isGroupedView ? 'Configure view settings • Grouped view active' : 'Configure view settings'}
           />
         }
       >
         <Button
           variant="ghost"
           size="sm"
-          className="text-secondary min-w-0 px-2"
+          className="text-secondary min-w-0 px-2 relative"
           onClick={onSettingsOpen}
         >
           <GearIcon className="h-3 w-3" />
+          {isGroupedView && <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-primary" />}
         </Button>
       </Tooltip>
     </>
@@ -480,7 +471,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
       )}
       {!isVaultAdapter && (
         <div
-          className="relative w-fit max-w-md z-50"
+          className="relative w-fit max-w-md z-10"
           ref={dropdownRef}
         >
           <div
@@ -610,20 +601,6 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
         </div>
       )}
 
-      {isGroupedView && (
-        <div className="rounded bg-yellow-50 dark:bg-yellow-900/20 p-4">
-          <div className="flex items-start gap-2">
-            <MdWarning
-              size={18}
-              className="text-yellow-700 dark:text-yellow-300 flex-shrink-0 mt-0.5"
-            />
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              Grouped view may show incomplete groups near page boundaries. Increase entries per page for more accurate grouping.
-            </p>
-          </div>
-        </div>
-      )}
-
       <TableContainerWithHeader
         title="Transaction History"
         actions={headerActions}
@@ -631,40 +608,32 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
         <Table>
           <TableHeader>
             <TableRow className="text-secondary">
-              {!isVaultAdapter && (
-                <TableHead
-                  className="z-50 text-center"
-                  style={{ minWidth: '100px' }}
-                >
-                  Loan Asset
-                </TableHead>
-              )}
               <TableHead
-                className="z-50 text-center"
-                style={{ minWidth: '140px' }}
+                className="z-10 text-left"
+                style={{ minWidth: '100px' }}
+              >
+                Action
+              </TableHead>
+              <TableHead
+                className="z-10 text-left"
+                style={{ minWidth: '200px' }}
               >
                 Market
               </TableHead>
               <TableHead
-                className="z-50 text-center"
-                style={{ minWidth: '80px' }}
-              >
-                Side
-              </TableHead>
-              <TableHead
-                className="z-50 text-right"
+                className="z-10 text-right"
                 style={{ minWidth: '120px' }}
               >
                 Amount
               </TableHead>
               <TableHead
-                className="z-50 text-center"
+                className="z-10 text-center"
                 style={{ minWidth: '120px' }}
               >
                 Tx Hash
               </TableHead>
               <TableHead
-                className="z-50 text-right"
+                className="z-10 text-right"
                 style={{ minWidth: '90px' }}
               >
                 Time
@@ -677,7 +646,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
             ) : (isGroupedView ? groupedHistory : ungroupedHistory).length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={isVaultAdapter ? 5 : 6}
+                  colSpan={5}
                   className="text-center text-gray-400"
                 >
                   No transactions found
@@ -687,8 +656,21 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
               (isGroupedView ? groupedHistory : ungroupedHistory).map((group, index) => {
                 // Handle rebalances (expandable)
                 if (isGroupedView && group.isMetaAction && group.metaActionType === 'rebalance') {
-                  const firstTx = group.transactions[0];
-                  const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
+                  const withdrawals = getWithdrawals(group.transactions);
+                  const supplies = getSupplies(group.transactions);
+                  const firstWithdrawal = withdrawals[0];
+                  const firstSupply = supplies[0];
+                  const fromMarket = firstWithdrawal
+                    ? (allMarkets.find((m) => m.uniqueKey === firstWithdrawal.data.market.uniqueKey) as Market | undefined)
+                    : undefined;
+                  const toMarket = firstSupply
+                    ? (allMarkets.find((m) => m.uniqueKey === firstSupply.data.market.uniqueKey) as Market | undefined)
+                    : undefined;
+                  const market = fromMarket ?? toMarket;
+                  const loanAssetDecimals = fromMarket?.loanAsset.decimals ?? toMarket?.loanAsset.decimals ?? 18;
+                  const _loanAssetSymbol = fromMarket?.loanAsset.symbol ?? toMarket?.loanAsset.symbol ?? '';
+                  const hasMoreWithdrawals = withdrawals.length > 1;
+                  const hasMoreSupplies = supplies.length > 1;
                   const rowKey = `rebalance-${group.hash}`;
                   const isExpanded = expandedRows.has(rowKey);
 
@@ -698,59 +680,75 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                         className="cursor-pointer hover:bg-hovered"
                         onClick={() => toggleRow(rowKey)}
                       >
-                        {/* Loan Asset - only show if not vault adapter */}
-                        {!isVaultAdapter && (
-                          <TableCell
-                            data-label="Loan Asset"
-                            className="z-50"
-                            style={{ minWidth: '100px' }}
-                          >
-                            <div className="flex items-center justify-center gap-1.5">
-                              {market && (
-                                <>
-                                  <TokenIcon
-                                    address={market.loanAsset.address}
-                                    chainId={market.morphoBlue.chain.id}
-                                    symbol={market.loanAsset.symbol}
-                                    width={16}
-                                    height={16}
-                                  />
-                                  <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
-                                </>
-                              )}
-                            </div>
-                          </TableCell>
-                        )}
-
-                        {/* Market - show count of markets */}
+                        {/* Action - Rebalance badge */}
                         <TableCell
-                          data-label="Market"
-                          className="z-50 text-center"
-                          style={{ minWidth: '140px' }}
+                          data-label="Action"
+                          className="z-10"
+                          style={{ minWidth: '100px' }}
                         >
-                          <span className="text-sm text-secondary">{group.transactions.length} markets</span>
+                          <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-primary whitespace-nowrap">
+                            Rebalance
+                          </span>
                         </TableCell>
 
-                        {/* Side - Rebalance badge */}
+                        {/* Market - show from -> to markets, left-aligned */}
                         <TableCell
-                          data-label="Side"
-                          className="z-50 text-center"
-                          style={{ minWidth: '80px' }}
+                          data-label="Market"
+                          className="z-10"
+                          style={{ minWidth: '200px' }}
                         >
-                          <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-primary">Rebalance</span>
+                          <div className="flex items-center justify-start gap-1.5 text-xs">
+                            {fromMarket ? (
+                              <div className="flex items-center gap-1">
+                                <MarketIdentity
+                                  market={fromMarket}
+                                  chainId={market?.morphoBlue.chain.id ?? 1}
+                                  mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                  focus={MarketIdentityFocus.Collateral}
+                                  showOracle={false}
+                                  showLltv={!shouldUseBadgeMode}
+                                />
+                                {hasMoreWithdrawals && <span className="text-secondary text-[10px]">+{withdrawals.length - 1}</span>}
+                              </div>
+                            ) : (
+                              <span className="text-secondary">From</span>
+                            )}
+                            <IoIosArrowRoundForward className="h-4 w-4 text-secondary flex-shrink-0" />
+                            {toMarket ? (
+                              <div className="flex items-center gap-1">
+                                <MarketIdentity
+                                  market={toMarket}
+                                  chainId={market?.morphoBlue.chain.id ?? 1}
+                                  mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                  focus={MarketIdentityFocus.Collateral}
+                                  showOracle={false}
+                                  showLltv={!shouldUseBadgeMode}
+                                />
+                                {hasMoreSupplies && <span className="text-secondary text-[10px]">+{supplies.length - 1}</span>}
+                              </div>
+                            ) : (
+                              <span className="text-secondary">To</span>
+                            )}
+                          </div>
                         </TableCell>
 
                         {/* Amount - show rebalance amount */}
                         <TableCell
                           data-label="Amount"
-                          className="z-50 text-right"
+                          className="z-10 text-right"
                           style={{ minWidth: '120px' }}
                         >
                           {group.amount && market ? (
-                            <span className="text-sm">
-                              {formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))}{' '}
-                              {getTruncatedAssetName(market.loanAsset.symbol)}
-                            </span>
+                            <div className="flex items-center justify-end gap-1.5 text-sm">
+                              <span>{formatReadable(Number(formatUnits(group.amount, loanAssetDecimals)))}</span>
+                              <TokenIcon
+                                address={market.loanAsset.address}
+                                chainId={market.morphoBlue.chain.id}
+                                symbol={market.loanAsset.symbol}
+                                width={16}
+                                height={16}
+                              />
+                            </div>
                           ) : (
                             <span className="text-sm text-secondary">{group.transactions.length} actions</span>
                           )}
@@ -759,7 +757,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                         {/* Transaction Hash */}
                         <TableCell
                           data-label="Tx Hash"
-                          className="z-50"
+                          className="z-10"
                           style={{ minWidth: '120px' }}
                         >
                           <div className="flex justify-center">
@@ -773,7 +771,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                         {/* Time */}
                         <TableCell
                           data-label="Time"
-                          className="z-50 text-right"
+                          className="z-10 text-right"
                           style={{ minWidth: '90px' }}
                         >
                           <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
@@ -785,7 +783,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                         {isExpanded && (
                           <TableRow className="bg-surface [&:hover]:border-transparent [&:hover]:bg-surface">
                             <TableCell
-                              colSpan={isVaultAdapter ? 5 : 6}
+                              colSpan={5}
                               className="bg-surface"
                             >
                               <motion.div
@@ -810,18 +808,56 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                   const firstTx = group.transactions[0];
                   const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
                   const marketCount = new Set(group.transactions.map((t) => t.data.market.uniqueKey)).size;
+                  const hasMoreMarkets = marketCount > 1;
 
                   return (
                     <TableRow
                       key={group.hash}
                       className="hover:bg-hovered"
                     >
-                      {!isVaultAdapter && market && (
-                        <TableCell
-                          className="z-50"
-                          style={{ minWidth: '100px' }}
-                        >
-                          <div className="flex items-center justify-center gap-1.5">
+                      {/* Action - Deposits badge */}
+                      <TableCell
+                        data-label="Action"
+                        className="z-10"
+                        style={{ minWidth: '100px' }}
+                      >
+                        <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-green-500 whitespace-nowrap">
+                          Deposits
+                        </span>
+                      </TableCell>
+
+                      {/* Market - show market identity, left-aligned */}
+                      <TableCell
+                        data-label="Market"
+                        className="z-10"
+                        style={{ minWidth: '200px' }}
+                      >
+                        <div className="flex items-center justify-start gap-1">
+                          {market && (
+                            <>
+                              <MarketIdentity
+                                market={market}
+                                chainId={market.morphoBlue.chain.id}
+                                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                focus={MarketIdentityFocus.Collateral}
+                                showOracle={false}
+                                showLltv={!shouldUseBadgeMode}
+                              />
+                              {hasMoreMarkets && <span className="text-secondary text-[10px]">+{marketCount - 1} more</span>}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Amount */}
+                      <TableCell
+                        data-label="Amount"
+                        className="z-10 text-right"
+                        style={{ minWidth: '120px' }}
+                      >
+                        {group.amount && market ? (
+                          <div className="flex items-center justify-end gap-1.5 text-sm">
+                            <span>+{formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))}</span>
                             <TokenIcon
                               address={market.loanAsset.address}
                               chainId={market.morphoBlue.chain.id}
@@ -829,39 +865,16 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                               width={16}
                               height={16}
                             />
-                            <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
                           </div>
-                        </TableCell>
-                      )}
-                      <TableCell
-                        className="z-50 text-center"
-                        style={{ minWidth: '140px' }}
-                      >
-                        <span className="text-sm text-secondary">
-                          {marketCount} {marketCount === 1 ? 'market' : 'markets'}
-                        </span>
-                      </TableCell>
-                      <TableCell
-                        className="z-50 text-center"
-                        style={{ minWidth: '80px' }}
-                      >
-                        <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-green-500">Deposits</span>
-                      </TableCell>
-                      <TableCell
-                        className="z-50 text-right"
-                        style={{ minWidth: '120px' }}
-                      >
-                        {group.amount && market ? (
-                          <span className="text-sm">
-                            +{formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))}{' '}
-                            {getTruncatedAssetName(market.loanAsset.symbol)}
-                          </span>
                         ) : (
                           <span className="text-sm text-secondary">{group.transactions.length} actions</span>
                         )}
                       </TableCell>
+
+                      {/* Transaction Hash */}
                       <TableCell
-                        className="z-50"
+                        data-label="Tx Hash"
+                        className="z-10"
                         style={{ minWidth: '120px' }}
                       >
                         <div className="flex justify-center">
@@ -871,8 +884,11 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                           />
                         </div>
                       </TableCell>
+
+                      {/* Time */}
                       <TableCell
-                        className="z-50 text-right"
+                        data-label="Time"
+                        className="z-10 text-right"
                         style={{ minWidth: '90px' }}
                       >
                         <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
@@ -886,18 +902,56 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                   const firstTx = group.transactions[0];
                   const market = allMarkets.find((m) => m.uniqueKey === firstTx.data.market.uniqueKey) as Market | undefined;
                   const marketCount = new Set(group.transactions.map((t) => t.data.market.uniqueKey)).size;
+                  const hasMoreMarkets = marketCount > 1;
 
                   return (
                     <TableRow
                       key={group.hash}
                       className="hover:bg-hovered"
                     >
-                      {!isVaultAdapter && market && (
-                        <TableCell
-                          className="z-50"
-                          style={{ minWidth: '100px' }}
-                        >
-                          <div className="flex items-center justify-center gap-1.5">
+                      {/* Action - Withdrawals badge */}
+                      <TableCell
+                        data-label="Action"
+                        className="z-10"
+                        style={{ minWidth: '100px' }}
+                      >
+                        <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-red-500 whitespace-nowrap">
+                          Withdrawals
+                        </span>
+                      </TableCell>
+
+                      {/* Market - show market identity, left-aligned */}
+                      <TableCell
+                        data-label="Market"
+                        className="z-10"
+                        style={{ minWidth: '200px' }}
+                      >
+                        <div className="flex items-center justify-start gap-1">
+                          {market && (
+                            <>
+                              <MarketIdentity
+                                market={market}
+                                chainId={market.morphoBlue.chain.id}
+                                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                focus={MarketIdentityFocus.Collateral}
+                                showOracle={false}
+                                showLltv={!shouldUseBadgeMode}
+                              />
+                              {hasMoreMarkets && <span className="text-secondary text-[10px]">+{marketCount - 1} more</span>}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Amount */}
+                      <TableCell
+                        data-label="Amount"
+                        className="z-10 text-right"
+                        style={{ minWidth: '120px' }}
+                      >
+                        {group.amount && market ? (
+                          <div className="flex items-center justify-end gap-1.5 text-sm">
+                            <span>-{formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))}</span>
                             <TokenIcon
                               address={market.loanAsset.address}
                               chainId={market.morphoBlue.chain.id}
@@ -905,39 +959,16 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                               width={16}
                               height={16}
                             />
-                            <span className="text-sm whitespace-nowrap">{getTruncatedAssetName(market.loanAsset.symbol)}</span>
                           </div>
-                        </TableCell>
-                      )}
-                      <TableCell
-                        className="z-50 text-center"
-                        style={{ minWidth: '140px' }}
-                      >
-                        <span className="text-sm text-secondary">
-                          {marketCount} {marketCount === 1 ? 'market' : 'markets'}
-                        </span>
-                      </TableCell>
-                      <TableCell
-                        className="z-50 text-center"
-                        style={{ minWidth: '80px' }}
-                      >
-                        <span className="inline-flex items-center rounded bg-hovered px-2 py-1 text-xs text-red-500">Withdrawals</span>
-                      </TableCell>
-                      <TableCell
-                        className="z-50 text-right"
-                        style={{ minWidth: '120px' }}
-                      >
-                        {group.amount && market ? (
-                          <span className="text-sm">
-                            -{formatReadable(Number(formatUnits(group.amount, market.loanAsset.decimals)))}{' '}
-                            {getTruncatedAssetName(market.loanAsset.symbol)}
-                          </span>
                         ) : (
                           <span className="text-sm text-secondary">{group.transactions.length} actions</span>
                         )}
                       </TableCell>
+
+                      {/* Transaction Hash */}
                       <TableCell
-                        className="z-50"
+                        data-label="Tx Hash"
+                        className="z-10"
                         style={{ minWidth: '120px' }}
                       >
                         <div className="flex justify-center">
@@ -947,8 +978,11 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                           />
                         </div>
                       </TableCell>
+
+                      {/* Time */}
                       <TableCell
-                        className="z-50 text-right"
+                        data-label="Time"
+                        className="z-10 text-right"
                         style={{ minWidth: '90px' }}
                       >
                         <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
@@ -973,6 +1007,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             isLoading={loading}
+            showEntryCount={false}
           />
         )}
       </TableContainerWithHeader>
@@ -1012,6 +1047,14 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                     size="xs"
                   />
                 </FilterRow>
+                {isGroupedView && (
+                  <div className="mt-3 rounded bg-yellow-50 dark:bg-yellow-900/20 p-3">
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                      Note: Grouped view may show incomplete groups near page boundaries. Increase entries per page for more accurate
+                      grouping.
+                    </p>
+                  </div>
+                )}
               </FilterSection>
 
               <Divider />
