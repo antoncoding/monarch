@@ -58,6 +58,7 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
               {/* Market Info Column */}
               <TableCell className="p-3 rounded-l">
                 <MarketIdentity
+                  showId
                   market={market}
                   chainId={chainId}
                   focus={MarketIdentityFocus.Collateral}
@@ -78,7 +79,7 @@ export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vau
               <TableCell className="p-3 text-right text-xs text-secondary whitespace-nowrap">{liquidity}</TableCell>
 
               {/* Allocation */}
-              <TableCell className="p-3 rounded-r align-middle">
+              <TableCell className="p-3 rounded-r align-middle text-sm">
                 <AllocationCell
                   amount={allocatedAmount}
                   symbol={vaultAssetSymbol}

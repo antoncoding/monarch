@@ -36,7 +36,7 @@ export function TableContainerWithHeader({ title, actions, children, className =
         <h3 className="font-monospace text-xs uppercase text-secondary">{title}</h3>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      <div className="overflow-x-auto">{children}</div>
+      <div className="overflow-x-auto pb-4">{children}</div>
     </div>
   );
 }

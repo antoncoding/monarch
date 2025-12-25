@@ -77,32 +77,65 @@ export function MarketIdentity({
 
   const tokenStack = (
     <div className="flex items-center flex-shrink-0">
-      <div className={`${focus === MarketIdentityFocus.Loan ? 'z-10' : 'z-0'}`}>
-        <TokenIcon
-          address={market.loanAsset.address}
-          chainId={chainId}
-          symbol={market.loanAsset.symbol}
-          width={iconSize}
-          height={iconSize}
-          customTooltipTitle={market.loanAsset.symbol}
-          customTooltipDetail="Loan Asset in this market"
-          showExplorerLink={showExplorerLink}
-        />
-      </div>
-      {collateralAsset ? (
-        <div className={`${focus === MarketIdentityFocus.Collateral ? 'z-10' : 'z-0'} -ml-1`}>
-          <TokenIcon
-            address={collateralAsset.address}
-            chainId={chainId}
-            symbol={collateralAsset.symbol}
-            width={iconSize}
-            height={iconSize}
-            customTooltipTitle={collateralAsset.symbol}
-            customTooltipDetail="Collateral Asset in this market"
-            showExplorerLink={showExplorerLink}
-          />
-        </div>
-      ) : null}
+      {focus === MarketIdentityFocus.Loan ? (
+        <>
+          {collateralAsset && (
+            <div>
+              <TokenIcon
+                address={collateralAsset.address}
+                chainId={chainId}
+                symbol={collateralAsset.symbol}
+                width={iconSize}
+                height={iconSize}
+                customTooltipTitle={collateralAsset.symbol}
+                customTooltipDetail="Collateral Asset in this market"
+                showExplorerLink={showExplorerLink}
+              />
+            </div>
+          )}
+          <div className={collateralAsset ? '-ml-1' : ''}>
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={chainId}
+              symbol={market.loanAsset.symbol}
+              width={iconSize}
+              height={iconSize}
+              customTooltipTitle={market.loanAsset.symbol}
+              customTooltipDetail="Loan Asset in this market"
+              showExplorerLink={showExplorerLink}
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div>
+            <TokenIcon
+              address={market.loanAsset.address}
+              chainId={chainId}
+              symbol={market.loanAsset.symbol}
+              width={iconSize}
+              height={iconSize}
+              customTooltipTitle={market.loanAsset.symbol}
+              customTooltipDetail="Loan Asset in this market"
+              showExplorerLink={showExplorerLink}
+            />
+          </div>
+          {collateralAsset && (
+            <div className="-ml-1">
+              <TokenIcon
+                address={collateralAsset.address}
+                chainId={chainId}
+                symbol={collateralAsset.symbol}
+                width={iconSize}
+                height={iconSize}
+                customTooltipTitle={collateralAsset.symbol}
+                customTooltipDetail="Collateral Asset in this market"
+                showExplorerLink={showExplorerLink}
+              />
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 
