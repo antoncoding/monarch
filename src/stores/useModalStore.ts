@@ -1,13 +1,13 @@
 import { create } from 'zustand';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
-import type { Address } from 'viem';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import type { ColumnVisibility } from '@/features/markets/components/column-visibility';
 
 /**
- * Central registry of all modal types and their required props.
- * Add new modals here to get full type safety across the app.
+ * Registry of Zustand-managed modals (Pattern 2).
+ * Only includes modals with multi-trigger or modal chaining requirements.
+ * See docs/Styling.md for Pattern 1 (local state) vs Pattern 2 (Zustand) decision framework.
  */
 export type ModalProps = {
   // Swap & Bridge
@@ -22,34 +22,6 @@ export type ModalProps = {
     defaultMode?: 'supply' | 'withdraw';
     isMarketPage?: boolean;
     refetch?: () => void;
-  };
-
-  supplyProcess: {
-    supplies: Array<{ market: Market; amount: bigint }>;
-    currentStep: 'approve' | 'signing' | 'supplying';
-    tokenSymbol: string;
-    useEth: boolean;
-    usePermit2?: boolean;
-  };
-
-  // Vault
-  vaultDeposit: {
-    vaultAddress: Address;
-    vaultName: string;
-    assetAddress: Address;
-    assetSymbol: string;
-    assetDecimals: number;
-    chainId: number;
-    onSuccess?: () => void;
-  };
-
-  vaultDepositProcess: {
-    currentStep: 'approve' | 'signing' | 'depositing';
-    vaultName: string;
-    assetSymbol: string;
-    amount: bigint;
-    assetDecimals: number;
-    usePermit2: boolean;
   };
 
   // Settings & Configuration
@@ -72,51 +44,6 @@ export type ModalProps = {
   };
 
   blacklistedMarkets: Record<string, never>; // No props needed - uses useMarkets() context
-
-  // Oracle & Information
-  chainlinkRiskTiers: Record<string, never>; // No props needed
-
-  // Borrow
-  borrow: {
-    market: Market;
-    position?: MarketPosition | null;
-    onOpenChange: (open: boolean) => void;
-    refetch?: () => void;
-    isMarketPage?: boolean;
-    defaultMode?: 'borrow' | 'repay';
-  };
-
-  borrowProcess: {
-    borrows: Array<{ market: Market; amount: bigint }>;
-    currentStep: 'approve' | 'signing' | 'borrowing';
-    tokenSymbol: string;
-    usePermit2?: boolean;
-  };
-
-  repayProcess: {
-    repays: Array<{ market: Market; amount: bigint }>;
-    currentStep: 'approve' | 'signing' | 'repaying';
-    tokenSymbol: string;
-    useEth: boolean;
-    usePermit2?: boolean;
-  };
-
-  // Rebalance
-  rebalance: {
-    fromMarket: Market;
-    fromPosition: MarketPosition;
-    onClose: () => void;
-    refetch: () => void;
-  };
-
-  rebalanceProcess: {
-    operations: Array<{
-      type: 'withdraw' | 'supply';
-      market: Market;
-      amount: bigint;
-    }>;
-    currentStep: 'approve' | 'signing' | 'executing';
-  };
 };
 
 export type ModalType = keyof ModalProps;
