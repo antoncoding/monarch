@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Input from '@/components/Input/Input';
@@ -10,8 +10,7 @@ import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { SupplyProcessModal } from './supply-process-modal';
-import { BridgeSwapModal } from '@/features/swap/components/BridgeSwapModal';
-import type { SwapToken } from '@/features/swap/types';
+import { useModal } from '@/hooks/useModal';
 
 type SupplyModalContentProps = {
   market: Market;
@@ -24,7 +23,7 @@ type SupplyModalContentProps = {
 
 export function SupplyModalContent({ onClose, market, refetch, onAmountChange }: SupplyModalContentProps): JSX.Element {
   const [usePermit2Setting] = useLocalStorage('usePermit2', true);
-  const [swapTarget, setSwapTarget] = useState<SwapToken | null>(null);
+  const { open: openModal } = useModal();
 
   const onSuccess = useCallback(() => {
     onClose();
@@ -73,13 +72,6 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
 
   return (
     <>
-      {swapTarget && (
-        <BridgeSwapModal
-          isOpen
-          onClose={() => setSwapTarget(null)}
-          targetToken={swapTarget}
-        />
-      )}
       {showProcessModal && (
         <SupplyProcessModal
           supplies={[{ market, amount: supplyAmount }]}
@@ -133,11 +125,13 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                     <button
                       type="button"
                       onClick={() =>
-                        setSwapTarget({
-                          address: market.loanAsset.address,
-                          symbol: market.loanAsset.symbol,
-                          chainId: market.morphoBlue.chain.id,
-                          decimals: market.loanAsset.decimals,
+                        openModal('bridgeSwap', {
+                          targetToken: {
+                            address: market.loanAsset.address,
+                            symbol: market.loanAsset.symbol,
+                            chainId: market.morphoBlue.chain.id,
+                            decimals: market.loanAsset.decimals,
+                          },
                         })
                       }
                       className="text-primary text-xs transition hover:opacity-70"

@@ -10,13 +10,13 @@ import { Button } from '@/components/ui/button';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokens } from '@/components/providers/TokenProvider';
-import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
@@ -29,7 +29,6 @@ import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/toke
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
-import MarketSettingsModal from '@/features/markets/components/market-settings-modal';
 import { MarketIdBadge } from './market-id-badge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from './market-identity';
 import { MarketIndicators } from './market-indicators';
@@ -653,9 +652,7 @@ export function MarketsTableWithSameLoanAsset({
     });
   }, [markets, freshMarketsList]);
 
-  // Settings modal state
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showTrustedVaultsModal, setShowTrustedVaultsModal] = useState(false);
+  const { open: openModal } = useModal();
 
   // Table state
   const [currentPage, setCurrentPage] = useState(1);
@@ -669,7 +666,10 @@ export function MarketsTableWithSameLoanAsset({
   const [entriesPerPage, setEntriesPerPage] = useLocalStorage(storageKeys.MarketEntriesPerPageKey, 8);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(storageKeys.MarketsShowUnknownTokens, false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(storageKeys.MarketsShowUnknownOracle, false);
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
+  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    storageKeys.UserTrustedVaultsKey,
+    defaultTrustedVaults,
+  );
 
   // Store USD filters as separate localStorage items to match markets.tsx pattern
   const [usdMinSupply, setUsdMinSupply] = useLocalStorage(storageKeys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
@@ -961,13 +961,31 @@ export function MarketsTableWithSameLoanAsset({
               minBorrow: effectiveMinBorrow,
               minLiquidity: effectiveMinLiquidity,
             }}
-            onOpenSettings={() => setShowSettingsModal(true)}
+            onOpenSettings={() =>
+              openModal('marketSettings', {
+                usdFilters,
+                setUsdFilters,
+                entriesPerPage,
+                onEntriesPerPageChange: setEntriesPerPage,
+                columnVisibility,
+                setColumnVisibility,
+              })
+            }
           />
           {showSettings && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowSettingsModal(true)}
+              onClick={() =>
+                openModal('marketSettings', {
+                  usdFilters,
+                  setUsdFilters,
+                  entriesPerPage,
+                  onEntriesPerPageChange: setEntriesPerPage,
+                  columnVisibility,
+                  setColumnVisibility,
+                })
+              }
               className="min-w-0 px-2"
             >
               <GearIcon className="h-4 w-4" />
@@ -1144,32 +1162,6 @@ export function MarketsTableWithSameLoanAsset({
         onPageChange={setCurrentPage}
         isLoading={false}
       />
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <MarketSettingsModal
-          isOpen={showSettingsModal}
-          onOpenChange={setShowSettingsModal}
-          usdFilters={usdFilters}
-          setUsdFilters={setUsdFilters}
-          entriesPerPage={entriesPerPage}
-          onEntriesPerPageChange={setEntriesPerPage}
-          columnVisibility={columnVisibility}
-          setColumnVisibility={setColumnVisibility}
-          trustedVaults={userTrustedVaults}
-          onOpenTrustedVaultsModal={() => setShowTrustedVaultsModal(true)}
-        />
-      )}
-
-      {/* Trusted Vaults Modal */}
-      {showTrustedVaultsModal && (
-        <TrustedVaultsModal
-          isOpen={showTrustedVaultsModal}
-          onOpenChange={setShowTrustedVaultsModal}
-          userTrustedVaults={userTrustedVaults}
-          setUserTrustedVaults={setUserTrustedVaults}
-        />
-      )}
     </div>
   );
 }

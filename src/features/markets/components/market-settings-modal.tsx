@@ -8,6 +8,9 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useModal } from '@/hooks/useModal';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { storageKeys } from '@/utils/storageKeys';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -23,8 +26,6 @@ type MarketSettingsModalProps = {
   onEntriesPerPageChange: (value: number) => void;
   columnVisibility: ColumnVisibility;
   setColumnVisibility: (visibility: ColumnVisibility) => void;
-  onOpenTrustedVaultsModal?: () => void;
-  trustedVaults?: TrustedVault[];
 };
 
 function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
@@ -48,12 +49,12 @@ export default function MarketSettingsModal({
   onEntriesPerPageChange,
   columnVisibility,
   setColumnVisibility,
-  onOpenTrustedVaultsModal,
-  trustedVaults,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const totalVaults = trustedVaults?.length ?? defaultTrustedVaults.length;
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
+  const totalVaults = userTrustedVaults.length;
   const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
+  const { open: openModal } = useModal();
 
   const handleCustomEntriesSubmit = () => {
     const value = Number(customEntries);
@@ -205,34 +206,35 @@ export default function MarketSettingsModal({
                   aria-label="Toggle full reward APY"
                 />
               </SettingItem>
-              {onOpenTrustedVaultsModal && (
-                <>
-                  <Divider />
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-1 pr-4">
-                        <h4 className="font-zen text-base font-medium text-primary">Trusted Vaults</h4>
-                        <p className="font-zen text-xs text-secondary">Vaults that power the "Trusted By" column and filters.</p>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={onOpenTrustedVaultsModal}
-                        className="flex-shrink-0"
-                      >
-                        Manage
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between gap-3">
-                      <TrustedByCell
-                        vaults={trustedVaults ?? []}
-                        badgeSize={26}
-                      />
-                      <span className="text-xs text-secondary">{totalVaults} total</span>
-                    </div>
+              <Divider />
+              <div className="flex flex-col gap-3">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-1 pr-4">
+                    <h4 className="font-zen text-base font-medium text-primary">Trusted Vaults</h4>
+                    <p className="font-zen text-xs text-secondary">Vaults that power the "Trusted By" column and filters.</p>
                   </div>
-                </>
-              )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      openModal('trustedVaults', {
+                        userTrustedVaults,
+                        setUserTrustedVaults,
+                      })
+                    }
+                    className="flex-shrink-0"
+                  >
+                    Manage
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <TrustedByCell
+                    vaults={userTrustedVaults}
+                    badgeSize={26}
+                  />
+                  <span className="text-xs text-secondary">{totalVaults} total</span>
+                </div>
+              </div>
               <Divider />
               <SettingItem
                 title="Entries Per Page"

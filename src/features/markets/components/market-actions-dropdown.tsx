@@ -11,14 +11,13 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
+import { useModal } from '@/hooks/useModal';
 
 type MarketActionsDropdownProps = {
   market: Market;
   isStared: boolean;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
-  setSelectedMarket: (market: Market) => void;
-  setShowSupplyModal: (show: boolean) => void;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   isBlacklisted?: (uniqueKey: string) => boolean;
 };
@@ -28,12 +27,11 @@ export function MarketActionsDropdown({
   isStared,
   starMarket,
   unstarMarket,
-  setSelectedMarket,
-  setShowSupplyModal,
   addBlacklistedMarket,
   isBlacklisted,
 }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const { open: openModal } = useModal();
 
   const router = useRouter();
 
@@ -83,8 +81,7 @@ export function MarketActionsDropdown({
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => {
-              setSelectedMarket(market);
-              setShowSupplyModal(true);
+              openModal('supply', { market });
             }}
             startContent={<TbArrowUp className="h-4 w-4" />}
           >

@@ -25,8 +25,6 @@ type MarketsTableProps = {
   titleOnclick: (column: number) => void;
   sortDirection: number;
   markets: Market[];
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedMarket: (market: Market | undefined) => void;
   staredIds: string[];
   unstarMarket: (id: string) => void;
   starMarket: (id: string) => void;
@@ -74,8 +72,6 @@ function MarketsTable({
   titleOnclick,
   sortDirection,
   markets,
-  setShowSupplyModal,
-  setSelectedMarket,
   starMarket,
   unstarMarket,
   currentPage,
@@ -362,8 +358,6 @@ function MarketsTable({
             staredIds={staredIds}
             expandedRowId={expandedRowId}
             setExpandedRowId={setExpandedRowId}
-            setShowSupplyModal={setShowSupplyModal}
-            setSelectedMarket={setSelectedMarket}
             starMarket={starMarket}
             unstarMarket={unstarMarket}
             columnVisibility={columnVisibility}

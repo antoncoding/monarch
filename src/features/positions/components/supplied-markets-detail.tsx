@@ -5,33 +5,18 @@ import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/featu
 import { MarketRiskIndicators } from '@/features/markets/components/market-risk-indicators';
 import { APYCell } from '@/features/markets/components/apy-breakdown-tooltip';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useModal } from '@/hooks/useModal';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import type { MarketPosition, GroupedPosition } from '@/utils/types';
 import { getCollateralColor } from '@/features/positions/utils/colors';
 import { AllocationCell } from './allocation-cell';
 type SuppliedMarketsDetailProps = {
   groupedPosition: GroupedPosition;
-  setShowWithdrawModal: (show: boolean) => void;
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedPosition: (position: MarketPosition) => void;
   showCollateralExposure: boolean;
 };
 
-function MarketRow({
-  position,
-  totalSupply,
-  setShowWithdrawModal,
-  setShowSupplyModal,
-  setSelectedPosition,
-  rateLabel,
-}: {
-  position: MarketPosition;
-  totalSupply: number;
-  setShowWithdrawModal: (show: boolean) => void;
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedPosition: (position: MarketPosition) => void;
-  rateLabel: string;
-}) {
+function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosition; totalSupply: number; rateLabel: string }) {
+  const { open } = useModal();
   const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
 
@@ -90,8 +75,12 @@ function MarketRow({
             size="sm"
             variant="surface"
             onClick={() => {
-              setSelectedPosition(position);
-              setShowWithdrawModal(true);
+              open('supply', {
+                market: position.market,
+                position,
+                defaultMode: 'withdraw',
+                isMarketPage: false,
+              });
             }}
           >
             Withdraw
@@ -100,8 +89,11 @@ function MarketRow({
             size="sm"
             variant="surface"
             onClick={() => {
-              setSelectedPosition(position);
-              setShowSupplyModal(true);
+              open('supply', {
+                market: position.market,
+                position,
+                isMarketPage: false,
+              });
             }}
           >
             Supply
@@ -113,13 +105,7 @@ function MarketRow({
 }
 
 // shared similar style with @vault-allocation-detail.tsx
-export function SuppliedMarketsDetail({
-  groupedPosition,
-  setShowWithdrawModal,
-  setShowSupplyModal,
-  setSelectedPosition,
-  showCollateralExposure,
-}: SuppliedMarketsDetailProps) {
+export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
 
   // Sort markets by size
@@ -196,9 +182,6 @@ export function SuppliedMarketsDetail({
                 key={position.market.uniqueKey}
                 position={position}
                 totalSupply={totalSupply}
-                setShowWithdrawModal={setShowWithdrawModal}
-                setShowSupplyModal={setShowSupplyModal}
-                setSelectedPosition={setSelectedPosition}
                 rateLabel={rateLabel}
               />
             ))}

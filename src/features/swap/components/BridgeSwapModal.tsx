@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ArrowDownIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
-import { useAccount } from 'wagmi';
+import { useConnection } from 'wagmi';
 import { motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ type BridgeSwapModalProps = {
 };
 
 export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModalProps) {
-  const { address: account } = useAccount();
+  const { address: account } = useConnection();
   const [sourceToken, setSourceToken] = useState<SwapToken | null>(null);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));

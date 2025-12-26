@@ -29,13 +29,7 @@ import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { storageKeys } from '@/utils/storageKeys';
-import {
-  type MarketPosition,
-  type GroupedPosition,
-  type MarketPositionWithEarnings,
-  type WarningWithDetail,
-  WarningCategory,
-} from '@/utils/types';
+import { type GroupedPosition, type MarketPositionWithEarnings, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { RebalanceModal } from './rebalance/rebalance-modal';
@@ -103,9 +97,6 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
   marketPositions: MarketPositionWithEarnings[];
-  setShowWithdrawModal: (show: boolean) => void;
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
   isLoadingEarnings?: boolean;
@@ -115,9 +106,6 @@ type SuppliedMorphoBlueGroupedTableProps = {
 
 export function SuppliedMorphoBlueGroupedTable({
   marketPositions,
-  setShowWithdrawModal,
-  setShowSupplyModal,
-  setSelectedPosition,
   refetch,
   isRefetching,
   isLoadingEarnings,
@@ -389,9 +377,6 @@ export function SuppliedMorphoBlueGroupedTable({
                           >
                             <SuppliedMarketsDetail
                               groupedPosition={groupedPosition}
-                              setShowWithdrawModal={setShowWithdrawModal}
-                              setShowSupplyModal={setShowSupplyModal}
-                              setSelectedPosition={setSelectedPosition}
                               showCollateralExposure={showCollateralExposure}
                             />
                           </motion.div>

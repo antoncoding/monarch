@@ -53,6 +53,5 @@ next-env.d.ts
 
 CLAUDE.md
 FULLAUTO_CONTEXT.md
-.claude/settings.local.json
 
 .claude/settings.local.json

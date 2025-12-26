@@ -25,4 +25,6 @@ export const storageKeys = {
   // History settings
   HistoryEntriesPerPageKey: 'monarch_historyEntriesPerPage',
   HistoryGroupedViewKey: 'monarch_historyGroupedView',
+  // Trusted vaults
+  UserTrustedVaultsKey: 'userTrustedVaults',
 } as const;

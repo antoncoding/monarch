@@ -11,21 +11,16 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useMarkets } from '@/hooks/useMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
-import type { MarketPosition } from '@/utils/types';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
 
 export default function Positions() {
-  const [showSupplyModal, setShowSupplyModal] = useState<boolean>(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState<boolean>(false);
-  const [selectedPosition, setSelectedPosition] = useState<MarketPosition | null>(null);
   const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
 
   const { account } = useParams<{ account: string }>();
@@ -93,27 +88,6 @@ export default function Positions() {
           )}
         </div>
 
-        {showWithdrawModal && selectedPosition && (
-          <SupplyModalV2
-            market={selectedPosition.market}
-            position={selectedPosition}
-            onOpenChange={setShowWithdrawModal}
-            refetch={() => void refetch()}
-            isMarketPage={false}
-            defaultMode="withdraw"
-          />
-        )}
-
-        {showSupplyModal && selectedPosition && (
-          <SupplyModalV2
-            market={selectedPosition.market}
-            position={selectedPosition}
-            onOpenChange={setShowSupplyModal}
-            refetch={() => void refetch()}
-            isMarketPage={false}
-          />
-        )}
-
         <div className="space-y-6 mt-2 pb-20">
           {/* Loading state for initial page load */}
           {loading && (
@@ -128,9 +102,6 @@ export default function Positions() {
             <SuppliedMorphoBlueGroupedTable
               account={account}
               marketPositions={marketPositions}
-              setShowWithdrawModal={setShowWithdrawModal}
-              setShowSupplyModal={setShowSupplyModal}
-              setSelectedPosition={setSelectedPosition}
               refetch={() => void refetch()}
               isRefetching={isRefetching}
               isLoadingEarnings={isEarningsLoading}
