@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi';
-import { formatUnits, parseUnits } from 'viem';
-import { OrderKind } from '@cowprotocol/contracts';
+import { OrderKind, setGlobalAdapter } from '@cowprotocol/cow-sdk';
 import {
   isBridgeQuoteAndPost,
-  NATIVE_CURRENCY_ADDRESS,
-  setGlobalAdapter,
   type BridgeQuoteAndPost,
   type CrossChainQuoteAndPost,
   type QuoteBridgeRequest,
-} from '@cowprotocol/cow-sdk';
+} from '@cowprotocol/sdk-bridging';
 import { ViemAdapter } from '@cowprotocol/sdk-viem-adapter';
-import { bridgingSdk } from '../cowBridgingSdk';
+import { bridgingSdk, tradingSdk } from '../cowBridgingSdk';
 import type { SwapQuoteDisplay, SwapToken } from '../types';
 
 type UseCowBridgeParams = {
@@ -25,15 +22,12 @@ type UseCowBridgeReturn = {
   quote: SwapQuoteDisplay | null;
   rawQuote: CrossChainQuoteAndPost | null;
   isQuoting: boolean;
-  isApproving: boolean;
   isExecuting: boolean;
-  needsApproval: boolean;
-  currentAllowance: bigint | null;
   error: Error | null;
+  errorDescription: string | null;
   orderUid: string | null;
 
   getQuote: () => Promise<void>;
-  approveToken: () => Promise<void>;
   executeSwap: () => Promise<void>;
   reset: () => void;
 };
@@ -41,12 +35,7 @@ type UseCowBridgeReturn = {
 /**
  * Hook for managing CoW Protocol swaps and cross-chain bridges
  */
-export function useCowBridge({
-  sourceToken,
-  targetToken,
-  amount,
-  slippageBps,
-}: UseCowBridgeParams): UseCowBridgeReturn {
+export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: UseCowBridgeParams): UseCowBridgeReturn {
   const { address: account, chainId } = useAccount();
   const { data: walletClient } = useWalletClient();
   const publicClient = usePublicClient();
@@ -54,10 +43,9 @@ export function useCowBridge({
   const [quote, setQuote] = useState<SwapQuoteDisplay | null>(null);
   const [rawQuote, setRawQuote] = useState<CrossChainQuoteAndPost | null>(null);
   const [isQuoting, setIsQuoting] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [currentAllowance, setCurrentAllowance] = useState<bigint | null>(null);
+  const [errorDescription, setErrorDescription] = useState<string | null>(null);
   const [orderUid, setOrderUid] = useState<string | null>(null);
 
   // Bind SDK to wagmi
@@ -72,65 +60,25 @@ export function useCowBridge({
         }),
       );
 
-      bridgingSdk.setTraderParams({ chainId });
+      tradingSdk.setTraderParams({ chainId });
     } catch (err) {
       console.error('Failed to bind SDK to wagmi:', err);
     }
   }, [publicClient, walletClient, chainId]);
 
-  // Check if token is native (ETH, MATIC, etc.)
-  const isNativeToken = sourceToken?.address.toLowerCase() === NATIVE_CURRENCY_ADDRESS.toLowerCase();
-
-  // Determine if approval is needed
-  const needsApproval = !isNativeToken && currentAllowance !== null && currentAllowance < amount;
-
   /**
-   * Check current allowance for ERC-20 token
+   * Parse error to extract description from CoW Protocol API errors
+   * Format: { errorType: string, description: string }
    */
-  const checkAllowance = useCallback(async () => {
-    if (!sourceToken || !account || isNativeToken) {
-      setCurrentAllowance(null);
-      return;
+  const parseErrorDescription = (err: unknown): string => {
+    if (err && typeof err === 'object' && 'description' in err && typeof err.description === 'string') {
+      return err.description;
     }
-
-    try {
-      const allowance = await bridgingSdk.getCowProtocolAllowance({
-        tokenAddress: sourceToken.address,
-        owner: account,
-        chainId: sourceToken.chainId,
-      });
-
-      setCurrentAllowance(allowance);
-    } catch (err) {
-      console.error('Error checking allowance:', err);
-      setCurrentAllowance(null);
+    if (err instanceof Error) {
+      return err.message;
     }
-  }, [sourceToken, account, isNativeToken]);
-
-  /**
-   * Approve CoW Protocol to spend source token
-   */
-  const approveToken = useCallback(async () => {
-    if (!sourceToken || !account) return;
-
-    setIsApproving(true);
-    setError(null);
-
-    try {
-      await bridgingSdk.approveCowProtocol({
-        tokenAddress: sourceToken.address,
-        amount,
-        chainId: sourceToken.chainId,
-      });
-
-      // Refresh allowance after approval
-      await checkAllowance();
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Approval failed'));
-    } finally {
-      setIsApproving(false);
-    }
-  }, [sourceToken, account, amount, checkAllowance]);
+    return 'An unknown error occurred';
+  };
 
   /**
    * Get quote for swap/bridge
@@ -154,14 +102,14 @@ export function useCowBridge({
         buyTokenAddress: targetToken.address,
         buyTokenDecimals: targetToken.decimals,
         kind: OrderKind.SELL,
-        amount: amount.toString(),
+        amount,
         account,
         receiver: account,
+        signer: walletClient as any, // Viem WalletClient as signer
+        appCode: 'monarch-swap',
       };
 
-      const quoteResult = await bridgingSdk.getQuote(quoteBridgeRequest, {
-        slippageBps,
-      });
+      const quoteResult = await bridgingSdk.getQuote(quoteBridgeRequest);
 
       setRawQuote(quoteResult);
 
@@ -171,27 +119,31 @@ export function useCowBridge({
         const bridgeQuote = quoteResult as BridgeQuoteAndPost;
         setQuote({
           type: 'cross-chain',
-          buyAmount: bridgeQuote.quoteResults.amountsAndCosts.afterNetworkCosts.buyAmount,
+          buyAmount: bridgeQuote.swap.amountsAndCosts.afterNetworkCosts.buyAmount,
+          sellAmount: amount,
           bridgeProvider: bridgeQuote.bridge.providerInfo.name,
           bridgeFee: bridgeQuote.bridge.fees.bridgeFee,
           estimatedTimeSeconds: bridgeQuote.bridge.expectedFillTimeSeconds,
           destinationGasFee: bridgeQuote.bridge.fees.destinationGasFee,
         });
       } else {
-        // Same-chain quote
+        // Same-chain quote (QuoteAndPost)
         setQuote({
           type: 'same-chain',
           buyAmount: quoteResult.quoteResults.amountsAndCosts.afterNetworkCosts.buyAmount,
+          sellAmount: amount,
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to get quote'));
+      const errObj = err instanceof Error ? err : new Error('Failed to get quote');
+      setError(errObj);
+      setErrorDescription(parseErrorDescription(err));
       setQuote(null);
       setRawQuote(null);
     } finally {
       setIsQuoting(false);
     }
-  }, [sourceToken, targetToken, account, amount, slippageBps]);
+  }, [sourceToken, targetToken, account, amount, slippageBps, walletClient]);
 
   /**
    * Execute the swap/bridge
@@ -219,7 +171,9 @@ export function useCowBridge({
 
       setOrderUid(result.orderId);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to execute swap'));
+      const errObj = err instanceof Error ? err : new Error('Failed to execute swap');
+      setError(errObj);
+      setErrorDescription(parseErrorDescription(err));
     } finally {
       setIsExecuting(false);
     }
@@ -232,8 +186,8 @@ export function useCowBridge({
     setQuote(null);
     setRawQuote(null);
     setError(null);
+    setErrorDescription(null);
     setOrderUid(null);
-    setCurrentAllowance(null);
   }, []);
 
   // Auto-fetch quote when parameters change
@@ -247,11 +201,7 @@ export function useCowBridge({
     // Reset state
     setOrderUid(null);
     setError(null);
-
-    // Check allowance for ERC-20 tokens
-    if (!isNativeToken) {
-      void checkAllowance();
-    }
+    setErrorDescription(null);
 
     // Debounce quote fetching
     const timeoutId = setTimeout(() => {
@@ -259,20 +209,17 @@ export function useCowBridge({
     }, 800);
 
     return () => clearTimeout(timeoutId);
-  }, [sourceToken, amount, slippageBps, getQuote, checkAllowance, isNativeToken]);
+  }, [sourceToken, amount, slippageBps, getQuote]);
 
   return {
     quote,
     rawQuote,
     isQuoting,
-    isApproving,
     isExecuting,
-    needsApproval,
-    currentAllowance,
     error,
+    errorDescription,
     orderUid,
     getQuote,
-    approveToken,
     executeSwap,
     reset,
   };

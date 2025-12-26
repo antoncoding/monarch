@@ -68,7 +68,7 @@ const DropdownMenuContent = React.forwardRef<
       sideOffset={sideOffset}
       className={cn(
         "z-50 min-w-[10rem] max-h-[var(--radix-dropdown-menu-content-available-height)]",
-        "overflow-y-auto overflow-x-hidden rounded-sm bg-surface p-3 shadow-lg font-zen",
+        "overflow-y-auto overflow-x-hidden rounded-sm bg-surface p-2 shadow-lg font-zen",
         "border border-border",
         "data-[state=open]:[animation:dropdownFadeIn_150ms_ease-out]",
         "data-[state=closed]:[animation:dropdownFadeOut_150ms_ease-in]",
@@ -91,7 +91,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-4 py-2 text-sm outline-none transition-colors font-zen",
+      "relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-3 py-1.5 text-sm outline-none transition-colors font-zen",
       "text-primary hover:bg-hovered focus:bg-hovered",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       "[&>svg]:size-4 [&>svg]:shrink-0",
@@ -117,7 +117,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-4 py-2 text-sm outline-none transition-colors font-zen",
+      "relative flex cursor-pointer select-none items-center gap-3 rounded-sm px-3 py-1.5 text-sm outline-none transition-colors font-zen",
       "text-primary hover:bg-hovered focus:bg-hovered",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       !startContent && "pl-8",
@@ -151,7 +151,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center gap-4 rounded-sm px-4 py-2 text-sm outline-none transition-colors font-zen",
+      "relative flex cursor-pointer select-none items-center gap-4 rounded-sm px-3 py-1.5 text-sm outline-none transition-colors font-zen",
       "text-primary hover:bg-hovered focus:bg-hovered",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       !startContent && "pl-8",
@@ -182,7 +182,7 @@ const DropdownMenuLabel = React.forwardRef<
   <DropdownMenuPrimitive.Label
     ref={ref}
     className={cn(
-      "px-4 py-2 text-sm font-semibold font-zen text-primary",
+      "px-3 py-1.5 text-sm font-semibold font-zen text-primary",
       inset && "pl-8",
       className
     )}

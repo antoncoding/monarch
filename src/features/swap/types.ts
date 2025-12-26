@@ -1,10 +1,8 @@
-import type { Address } from 'viem';
-
 /**
  * Token information with optional balance
  */
 export type SwapToken = {
-  address: Address;
+  address: string;
   symbol: string;
   chainId: number;
   decimals: number;
@@ -17,6 +15,7 @@ export type SwapToken = {
 export type SwapQuoteDisplay = {
   type: 'same-chain' | 'cross-chain';
   buyAmount: bigint;
+  sellAmount: bigint;
 
   // Cross-chain specific fields
   bridgeProvider?: string;
@@ -27,9 +26,16 @@ export type SwapQuoteDisplay = {
 
 /**
  * CoW Protocol supported chains for bridging
- * Mainnet (1), Base (8453), Polygon (137), Arbitrum (42161)
+ * Only chains supported by our API: Mainnet (1), Base (8453), Polygon (137), Arbitrum (42161)
+ * Note: Gnosis (100) removed - not supported by balance API
  */
 export const COW_BRIDGE_CHAINS = [1, 8453, 137, 42_161] as const;
+
+/**
+ * CoW Protocol VaultRelayer address (same across all chains)
+ * This is the address that needs to be approved to spend tokens
+ */
+export const COW_VAULT_RELAYER = '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110' as const;
 
 /**
  * Type for CoW bridge supported chain IDs

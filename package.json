@@ -19,7 +19,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cowprotocol/contracts": "^1.8.0",
     "@cowprotocol/cow-sdk": "^7.2.9",
+    "@cowprotocol/sdk-bridging": "^1.2.0",
     "@cowprotocol/sdk-viem-adapter": "^0.3.0",
     "@heroicons/react": "^2.2.0",
     "@internationalized/date": "^3.8.2",

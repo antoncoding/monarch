@@ -1,16 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ArrowDownIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
+import { useAccount } from 'wagmi';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
-import Input from '@/components/Input/Input';
+import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { useUserBalances } from '@/hooks/useUserBalances';
-import { TokenIcon } from '@/components/shared/token-icon';
-import { NetworkIcon } from '@/components/shared/network-icon';
-import { getNetworkName } from '@/utils/networks';
+import { useAllowance } from '@/hooks/useAllowance';
+import { formatBalance } from '@/utils/balance';
 import { useCowBridge } from '../hooks/useCowBridge';
-import { TokenSelector } from './TokenSelector';
-import { COW_BRIDGE_CHAINS, type SwapToken } from '../types';
+import { TokenNetworkDropdown } from './TokenNetworkDropdown';
+import { SwapProcessModal } from './SwapProcessModal';
+import { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
 
 type BridgeSwapModalProps = {
   isOpen: boolean;
@@ -19,22 +20,38 @@ type BridgeSwapModalProps = {
 };
 
 export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModalProps) {
+  const { address: account } = useAccount();
   const [sourceToken, setSourceToken] = useState<SwapToken | null>(null);
+  const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
-  const [slippage, setSlippage] = useState<number>(0.5); // 0.5%
-  const [amountError, setAmountError] = useState<string | null>(null);
+  const [slippage, _setSlippage] = useState<number>(0.5); // 0.5%
+  const [showProcessModal, setShowProcessModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState<'approve' | 'swapping'>('approve');
 
   // Fetch user balances from CoW-supported chains
   const { balances, loading: balancesLoading } = useUserBalances({
     networkIds: COW_BRIDGE_CHAINS as unknown as number[],
   });
 
-  // Convert balances to SwapTokens
+  // Handle approval for source token
+  const { allowance, approveInfinite, approvePending } = useAllowance({
+    token: (sourceToken?.address ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,
+    chainId: sourceToken?.chainId,
+    user: account,
+    spender: COW_VAULT_RELAYER,
+    tokenSymbol: sourceToken?.symbol,
+  });
+
+  // Convert balances to SwapTokens (support cross-chain)
   const availableTokens = useMemo<SwapToken[]>(() => {
     return balances
       .filter((b) => BigInt(b.balance) > BigInt(0)) // Only show tokens with balance
+      .filter(
+        // Not the same token as target
+        (b) => !(b.chainId === targetToken.chainId && b.address.toLowerCase() === targetToken.address.toLowerCase()),
+      )
       .map((b) => ({
-        address: b.address as `0x${string}`,
+        address: b.address,
         symbol: b.symbol,
         chainId: b.chainId,
         decimals: b.decimals,
@@ -46,37 +63,43 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
         const bValue = Number(formatUnits(b.balance ?? BigInt(0), b.decimals));
         return bValue - aValue;
       });
-  }, [balances]);
+  }, [balances, targetToken.chainId, targetToken.address]);
 
   // CoW Bridge hook
-  const {
-    quote,
-    isQuoting,
-    isApproving,
-    isExecuting,
-    needsApproval,
-    currentAllowance,
-    error: swapError,
-    orderUid,
-    approveToken,
-    executeSwap,
-    reset,
-  } = useCowBridge({
+  const { quote, isQuoting, isExecuting, errorDescription, orderUid, executeSwap, reset } = useCowBridge({
     sourceToken,
     targetToken,
     amount,
     slippageBps: Math.round(slippage * 100),
   });
 
+  // Check if approval is needed
+  const needsApproval = allowance < amount && amount > BigInt(0);
+
   const handleSourceTokenSelect = (token: SwapToken) => {
     setSourceToken(token);
     setAmount(BigInt(0));
-    setAmountError(null);
+    setInputAmount('0');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputAmount(value);
+
+    if (!sourceToken) return;
+
+    try {
+      const parsed = parseUnits(value, sourceToken.decimals);
+      setAmount(parsed);
+    } catch {
+      // Invalid input, keep previous amount
+    }
   };
 
   const handleMaxClick = () => {
     if (sourceToken?.balance) {
       setAmount(sourceToken.balance);
+      setInputAmount(formatBalance(sourceToken.balance, sourceToken.decimals).toString());
     }
   };
 
@@ -84,157 +107,168 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     reset();
     setSourceToken(null);
     setAmount(BigInt(0));
-    setAmountError(null);
+    setInputAmount('0');
+    setShowProcessModal(false);
     onClose();
   };
 
-  const isLoading = isQuoting || isApproving || isExecuting;
-  const canExecute = quote && !needsApproval && !isExecuting && amount > BigInt(0);
+  // Unified execution handler - handles approve + swap automatically
+  const handleSwap = useCallback(async () => {
+    try {
+      if (needsApproval) {
+        // Show process modal when approval needed
+        setShowProcessModal(true);
+        setCurrentStep('approve');
+        await approveInfinite();
 
-  return (
-    <Modal isOpen={isOpen} onClose={handleClose} variant="standard" zIndex="base" size="xl">
-      <ModalHeader title="Swap Tokens" description="Trade tokens across chains via CoW Protocol" />
+        setCurrentStep('swapping');
+        await executeSwap();
+
+        setShowProcessModal(false);
+      } else {
+        // Direct swap without process modal
+        await executeSwap();
+      }
+    } catch (_err) {
+      setShowProcessModal(false);
+      // Error is already handled by hooks
+    }
+  }, [needsApproval, approveInfinite, executeSwap]);
+
+  const isLoading = isQuoting || approvePending || isExecuting;
+
+  // Determine output display text
+  const getOutputDisplay = () => {
+    if (!sourceToken) return 'Select token above';
+    if (amount === BigInt(0)) return '0';
+    if (isQuoting) return 'Loading...';
+    if (errorDescription) return '—';
+    if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
+    return '0';
+  };
+
+  return showProcessModal && sourceToken ? (
+    <SwapProcessModal
+      currentStep={currentStep}
+      onClose={() => setShowProcessModal(false)}
+      needsApproval={needsApproval}
+      sourceSymbol={sourceToken.symbol}
+      targetSymbol={targetToken.symbol}
+    />
+  ) : (
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && handleClose()}
+      size="lg"
+    >
+      <ModalHeader
+        title="Swap Tokens"
+        description={`Swap to ${targetToken.symbol} via CoW Protocol`}
+      />
 
       <ModalBody>
         <div className="space-y-4">
-          {/* Source Token Selector */}
-          <TokenSelector
-            label="From"
-            selectedToken={sourceToken}
-            tokens={availableTokens}
-            onSelect={handleSourceTokenSelect}
-            disabled={balancesLoading}
-          />
-
-          {/* Amount Input */}
-          {sourceToken && (
-            <div>
-              <div className="mb-1 text-xs text-secondary">Amount</div>
-              <Input
-                decimals={sourceToken.decimals}
-                setValue={setAmount}
-                value={amount}
-                max={sourceToken.balance}
-                setError={setAmountError}
-                onMaxClick={handleMaxClick}
-                error={amountError}
-              />
-              {amountError && <p className="mt-1 text-sm text-red-500">{amountError}</p>}
-            </div>
-          )}
-
-          {/* Arrow Indicator */}
-          {sourceToken && (
-            <div className="flex justify-center">
-              <ArrowDownIcon className="text-secondary h-5 w-5" />
-            </div>
-          )}
-
-          {/* Target Token Display */}
-          {sourceToken && (
-            <div>
-              <div className="mb-1 text-xs text-secondary">To</div>
-              <div className="bg-hovered flex h-14 items-center gap-2 rounded-sm px-4">
-                <TokenIcon
-                  address={targetToken.address}
-                  chainId={targetToken.chainId}
-                  symbol={targetToken.symbol}
-                  width={20}
-                  height={20}
-                />
-                <span className="font-medium">{targetToken.symbol}</span>
-                <div className="badge flex items-center gap-1">
-                  <NetworkIcon networkId={targetToken.chainId} />
-                  <span className="text-xs">{getNetworkName(targetToken.chainId)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quote Display */}
-          {quote && sourceToken && (
-            <div className="bg-surface space-y-2 rounded p-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-secondary">You receive</span>
-                <span className="font-medium">
-                  {Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)} {targetToken.symbol}
-                </span>
-              </div>
-
-              {quote.type === 'cross-chain' && (
-                <>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-secondary">Type</span>
-                    <span className="font-medium">Cross-chain swap</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-secondary">Bridge</span>
-                    <span className="font-medium">{quote.bridgeProvider}</span>
-                  </div>
-                  {quote.estimatedTimeSeconds && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-secondary">Estimated time</span>
-                      <span className="font-medium">{Math.ceil(quote.estimatedTimeSeconds / 60)} minutes</span>
-                    </div>
-                  )}
-                  {quote.bridgeFee && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-secondary">Bridge fee</span>
-                      <span className="font-medium">
-                        {Number(formatUnits(quote.bridgeFee, sourceToken.decimals)).toFixed(6)}{' '}
-                        {sourceToken.symbol}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {quote.type === 'same-chain' && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-secondary">Type</span>
-                  <span className="font-medium">Same-chain swap</span>
-                </div>
+          {/* From Section - Always visible */}
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-xs text-secondary">From</span>
+              {sourceToken && (
+                <button
+                  type="button"
+                  onClick={handleMaxClick}
+                  className="text-xs text-secondary hover:text-primary"
+                >
+                  Balance: {sourceToken.balance ? formatBalance(sourceToken.balance, sourceToken.decimals) : '0'} {sourceToken.symbol}
+                </button>
               )}
             </div>
-          )}
-
-          {/* Slippage Setting */}
-          {sourceToken && (
             <div className="flex items-center gap-2">
-              <span className="text-secondary text-sm">Slippage tolerance:</span>
               <input
-                type="number"
-                value={slippage}
-                min={0}
-                max={10}
-                step={0.1}
-                onChange={(e) => setSlippage(Number(e.target.value))}
-                className="bg-hovered w-16 rounded-sm p-1 text-sm focus:border-primary focus:outline-none"
+                type="text"
+                value={inputAmount}
+                onChange={handleInputChange}
+                placeholder="0"
+                disabled={!sourceToken}
+                className="bg-hovered h-10 flex-1 rounded-sm px-3 text-lg focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               />
-              <span className="text-secondary text-sm">%</span>
+              <TokenNetworkDropdown
+                selectedToken={sourceToken}
+                tokens={availableTokens}
+                onSelect={handleSourceTokenSelect}
+                placeholder="Select"
+                disabled={availableTokens.length === 0}
+              />
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div className="flex justify-center">
+            <ArrowDownIcon className="text-secondary h-5 w-5" />
+          </div>
+
+          {/* To Section - Always visible */}
+          <div>
+            <div className="mb-1.5 text-xs text-secondary">To</div>
+            <div className="flex items-center gap-2">
+              <div className="bg-hovered flex h-10 flex-1 items-center rounded-sm px-3 text-xs text-secondary">{getOutputDisplay()}</div>
+              <TokenNetworkDropdown
+                selectedToken={targetToken}
+                tokens={[targetToken]}
+                onSelect={() => {}}
+                disabled
+              />
+            </div>
+            <div className="mt-1.5 text-xs text-secondary">
+              {quote && sourceToken && !errorDescription && (
+                <span>
+                  1 {sourceToken.symbol} ≈{' '}
+                  {(
+                    Number(formatUnits(quote.buyAmount, targetToken.decimals)) / Number(formatUnits(quote.sellAmount, sourceToken.decimals))
+                  ).toFixed(6)}{' '}
+                  {targetToken.symbol}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Error Display */}
+          {errorDescription && (
+            <div className="rounded bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
+              <p className="font-medium">⚠️ Error</p>
+              <p className="mt-1 text-xs">{errorDescription}</p>
             </div>
           )}
 
-          {/* Approval Warning */}
-          {needsApproval && currentAllowance !== null && sourceToken && (
-            <div className="rounded bg-yellow-50 p-3 text-sm dark:bg-yellow-900/20">
-              <p className="font-medium">⚠️ Approval Required</p>
-              <p className="text-secondary mt-1 text-xs">
-                You need to approve CoW Protocol to spend your {sourceToken.symbol}
-              </p>
-              {currentAllowance > BigInt(0) && (
-                <p className="text-secondary mt-1 text-xs">
-                  Current allowance: {Number(formatUnits(currentAllowance, sourceToken.decimals)).toFixed(4)}{' '}
-                  {sourceToken.symbol}
-                </p>
+          {/* Quote Details */}
+          {quote && sourceToken && !errorDescription && quote.type === 'cross-chain' && (
+            <div className="bg-surface space-y-2 rounded p-3 text-sm">
+              {quote.bridgeProvider && (
+                <div className="flex justify-between">
+                  <span className="text-secondary">Bridge</span>
+                  <span className="font-medium">{quote.bridgeProvider}</span>
+                </div>
+              )}
+              {quote.estimatedTimeSeconds && (
+                <div className="flex justify-between">
+                  <span className="text-secondary">Estimated time</span>
+                  <span className="font-medium">~{Math.ceil(quote.estimatedTimeSeconds / 60)} min</span>
+                </div>
+              )}
+              {quote.bridgeFee && (
+                <div className="flex justify-between">
+                  <span className="text-secondary">Bridge fee</span>
+                  <span className="font-medium">
+                    {Number(formatUnits(quote.bridgeFee, sourceToken.decimals)).toFixed(6)} {sourceToken.symbol}
+                  </span>
+                </div>
               )}
             </div>
           )}
 
           {/* Success Message */}
           {orderUid && (
-            <div className="rounded bg-green-50 p-3 dark:bg-green-900/20">
-              <p className="text-sm font-medium">✓ Order Submitted Successfully!</p>
+            <div className="rounded bg-green-50 p-3 text-sm dark:bg-green-900/20">
+              <p className="font-medium">✓ Order Submitted!</p>
               <p className="text-secondary mt-1 break-all text-xs">{orderUid}</p>
               <a
                 href={`https://explorer.cow.fi/orders/${orderUid}`}
@@ -248,32 +282,33 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
             </div>
           )}
 
-          {/* Error Display */}
-          {swapError && <div className="text-sm text-red-500">{swapError.message}</div>}
-
           {/* Empty State */}
-          {!balancesLoading && availableTokens.length === 0 && (
-            <div className="text-secondary py-8 text-center text-sm">
+          {!balancesLoading && availableTokens.length === 0 && !sourceToken && (
+            <div className="text-secondary py-6 text-center text-sm">
               <p>No tokens found on supported chains</p>
-              <p className="mt-1 text-xs">Supported: Ethereum, Base, Polygon, Arbitrum</p>
+              <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Base, Polygon, Arbitrum</p>
             </div>
           )}
         </div>
       </ModalBody>
 
       <ModalFooter>
-        <Button variant="secondary" onClick={handleClose}>
+        <Button
+          variant="default"
+          onClick={handleClose}
+        >
           {orderUid ? 'Close' : 'Cancel'}
         </Button>
-        {needsApproval && !orderUid && (
-          <Button variant="primary" onClick={approveToken} disabled={isApproving || !sourceToken || amount === BigInt(0)}>
-            {isApproving ? 'Approving...' : 'Approve'}
-          </Button>
-        )}
         {!orderUid && (
-          <Button variant="cta" onClick={executeSwap} disabled={!canExecute || isLoading}>
-            {isExecuting ? 'Swapping...' : isQuoting ? 'Getting Quote...' : 'Swap'}
-          </Button>
+          <ExecuteTransactionButton
+            targetChainId={sourceToken?.chainId ?? 1}
+            onClick={() => void handleSwap()}
+            isLoading={isLoading}
+            disabled={!quote || amount === BigInt(0) || !!errorDescription}
+            variant="primary"
+          >
+            {needsApproval ? 'Approve & Swap' : 'Swap'}
+          </ExecuteTransactionButton>
         )}
       </ModalFooter>
     </Modal>

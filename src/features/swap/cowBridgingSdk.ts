@@ -1,4 +1,16 @@
-import { BridgingSdk, BungeeBridgeProvider } from '@cowprotocol/cow-sdk';
+import { TradingSdk } from '@cowprotocol/cow-sdk';
+import { BridgingSdk, BungeeBridgeProvider } from '@cowprotocol/sdk-bridging';
+
+/**
+ * Trading SDK for approvals and allowances
+ */
+export const tradingSdk = new TradingSdk(
+  {
+    chainId: 1, // Default, will be updated by adapter
+    appCode: 'monarch-swap',
+  },
+  {},
+);
 
 /**
  * Bungee bridge provider configuration
@@ -6,7 +18,7 @@ import { BridgingSdk, BungeeBridgeProvider } from '@cowprotocol/cow-sdk';
  */
 export const bungeeBridgeProvider = new BungeeBridgeProvider({
   apiOptions: {
-    includeBridges: ['across', 'cctp'], // Fast and reliable bridge providers
+    includeBridges: ['across', 'cctp'],
   },
 });
 
@@ -14,7 +26,11 @@ export const bungeeBridgeProvider = new BungeeBridgeProvider({
  * CoW Protocol BridgingSDK instance
  * Handles both same-chain swaps and cross-chain bridging automatically
  */
-export const bridgingSdk = new BridgingSdk({
-  providers: [bungeeBridgeProvider],
-  enableLogging: false, // Set to true for debugging
-});
+export const bridgingSdk = new BridgingSdk(
+  {
+    providers: [bungeeBridgeProvider],
+    tradingSdk, // Pass TradingSdk for approvals
+    enableLogging: false, // Set to true for debugging
+  },
+  undefined,
+);
