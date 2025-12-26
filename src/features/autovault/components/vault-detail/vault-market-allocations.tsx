@@ -2,22 +2,21 @@ import { useMemo, useState } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { HiOutlineCube } from 'react-icons/hi';
 import { MdOutlineAccountBalance } from 'react-icons/md';
-import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
+import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { CollateralView } from './allocations/allocations/collateral-view';
 import { MarketView } from './allocations/allocations/market-view';
 
 type VaultMarketAllocationsProps = {
-  totalAssets?: bigint;
-  collateralAllocations: CollateralAllocation[];
-  marketAllocations: MarketAllocation[];
-  vaultAssetSymbol: string;
-  vaultAssetDecimals: number;
+  vaultAddress: Address;
   chainId: SupportedNetworks;
-  isLoading: boolean;
-  needsInitialization?: boolean;
+  needsInitialization: boolean;
 };
 
 type ViewMode = 'collateral' | 'market';
@@ -26,16 +25,22 @@ function ViewIcon({ isSelected, className }: { isSelected?: boolean; className?:
   return isSelected ? <HiOutlineCube className={className} /> : <MdOutlineAccountBalance className={className} />;
 }
 
-export function VaultMarketAllocations({
-  totalAssets,
-  collateralAllocations,
-  marketAllocations,
-  vaultAssetSymbol,
-  vaultAssetDecimals,
-  chainId,
-  isLoading,
-  needsInitialization = false,
-}: VaultMarketAllocationsProps) {
+export function VaultMarketAllocations({ vaultAddress, chainId, needsInitialization }: VaultMarketAllocationsProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
+  const { totalAssets } = useVaultV2({ vaultAddress, chainId, connectedAddress });
+  const {
+    collateralAllocations,
+    marketAllocations,
+    loading: allocationsLoading,
+  } = useVaultAllocations({
+    vaultAddress,
+    chainId,
+  });
+
+  const isLoading = vaultDataLoading || allocationsLoading;
   const [viewMode, setViewMode] = useState<ViewMode>('market');
   const { loading: marketsLoading } = useMarkets();
 
@@ -52,11 +57,12 @@ export function VaultMarketAllocations({
   const hasAnyAllocations = useMemo(() => totalAllocation > 0n, [totalAllocation]);
 
   const viewDescription = useMemo(() => {
+    if (!vaultData) return '';
     if (viewMode === 'collateral') {
-      return `See how your ${vaultAssetSymbol} supply is collateralized across assets shared by multiple markets.`;
+      return `See how your ${vaultData.tokenSymbol} supply is collateralized across assets shared by multiple markets.`;
     }
-    return `See where your ${vaultAssetSymbol} supply is deployed across markets.`;
-  }, [viewMode, vaultAssetSymbol]);
+    return `See where your ${vaultData.tokenSymbol} supply is deployed across markets.`;
+  }, [viewMode, vaultData]);
 
   // Show loading state when either allocations or markets context is still loading
   if (isLoading || marketsLoading) {
@@ -77,6 +83,8 @@ export function VaultMarketAllocations({
       </div>
     );
   }
+
+  if (!vaultData) return null;
 
   const hasNoAllocations = collateralAllocations.length === 0 && marketAllocations.length === 0;
 
@@ -115,16 +123,16 @@ export function VaultMarketAllocations({
         <CollateralView
           allocations={collateralAllocations}
           totalAllocation={totalAllocation}
-          vaultAssetSymbol={vaultAssetSymbol}
-          vaultAssetDecimals={vaultAssetDecimals}
+          vaultAssetSymbol={vaultData.tokenSymbol}
+          vaultAssetDecimals={vaultData.tokenDecimals}
           chainId={chainId}
         />
       ) : (
         <MarketView
           allocations={marketAllocations}
           totalAllocation={totalAllocation}
-          vaultAssetSymbol={vaultAssetSymbol}
-          vaultAssetDecimals={vaultAssetDecimals}
+          vaultAssetSymbol={vaultData.tokenSymbol}
+          vaultAssetDecimals={vaultData.tokenDecimals}
           chainId={chainId}
         />
       )}

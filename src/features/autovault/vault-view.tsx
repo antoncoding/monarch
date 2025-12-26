@@ -15,7 +15,6 @@ import { useVaultPage } from '@/hooks/useVaultPage';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
-import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultIndexing } from '@/hooks/useVaultIndexing';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
@@ -61,7 +60,7 @@ export default function VaultContent() {
     }
   }, [chainId]);
 
-  // Pull data directly - each hook call is deduplicated by TanStack Query
+  // Pull minimal data for vault-view itself
   const vaultDataQuery = useVaultV2Data({ vaultAddress: vaultAddressValue, chainId });
   const vaultContract = useVaultV2({
     vaultAddress: vaultAddressValue,
@@ -70,10 +69,9 @@ export default function VaultContent() {
     onTransactionSuccess: vaultDataQuery.refetch,
   });
   const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress: vaultAddressValue, chainId });
-  const allocationsQuery = useVaultAllocations({ vaultAddress: vaultAddressValue, chainId });
 
-  // Only use useVaultPage for complex computed state (APY, etc.)
-  const { vaultAPY, vault24hEarnings, isAPYLoading, isVaultInitialized, needsInitialization } = useVaultPage({
+  // Only use useVaultPage for complex computed state
+  const { vaultAPY, isAPYLoading, isVaultInitialized, needsInitialization } = useVaultPage({
     vaultAddress: vaultAddressValue,
     chainId,
     connectedAddress,
@@ -84,13 +82,14 @@ export default function VaultContent() {
     void vaultDataQuery.refetch();
     void vaultContract.refetch();
     void adapterQuery.refetch();
-    void allocationsQuery.refetch();
-  }, [vaultDataQuery, vaultContract, adapterQuery, allocationsQuery]);
+  }, [vaultDataQuery, vaultContract, adapterQuery]);
 
-  // Extract data from queries
+  // Extract minimal data for vault-view rendering
   const vaultData = vaultDataQuery.data;
   const hasError = vaultDataQuery.isError;
   const vaultDataLoading = vaultDataQuery.isLoading;
+  const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
+  const symbolToDisplay = vaultData?.displaySymbol;
 
   // Determine if vault data has loaded successfully
   const isDataLoaded = useMemo(() => {
@@ -105,24 +104,16 @@ export default function VaultContent() {
     refetch: handleRefreshVault,
   });
 
-  // UI state from Zustand stores
+  // UI state from Zustand stores (for vault-view banners only)
   const { open: openSettings } = useVaultSettingsModalStore();
   const { open: openInitialization } = useVaultInitializationModalStore();
 
-  // Derived display data
-  const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
-  const title = vaultData?.displayName ?? fallbackTitle;
-  const symbolToDisplay = vaultData?.displaySymbol;
-  const allocators = vaultData?.allocators ?? [];
-  const capData = vaultData?.capsData;
-  const collateralCaps = capData?.collateralCaps ?? [];
-  const assetAddress = vaultData?.assetAddress;
+  // Computed state flags for vault-view banners
+  const hasNoAllocators = (vaultData?.allocators ?? []).length === 0;
+  const capsUninitialized =
+    !vaultData?.capsData || (vaultData.capsData.collateralCaps.length === 0 && vaultData.capsData.marketCaps.length === 0);
 
-  // Computed state flags
-  const hasNoAllocators = allocators.length === 0;
-  const capsUninitialized = !capData || (capData.collateralCaps.length === 0 && capData.marketCaps.length === 0);
-
-  // Format APY
+  // Format APY for APY card in vault-view
   const apyLabel = useMemo(() => {
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
@@ -295,16 +286,9 @@ export default function VaultContent() {
           {/* Summary Metrics */}
           <VaultSummaryMetrics columns={4}>
             <TotalSupplyCard
-              tokenDecimals={vaultData?.tokenDecimals}
-              tokenSymbol={vaultData?.tokenSymbol}
-              totalAssets={vaultContract.totalAssets}
-              vault24hEarnings={vault24hEarnings}
-              assetAddress={assetAddress as Address | undefined}
-              chainId={chainId}
               vaultAddress={vaultAddressValue}
-              vaultName={title}
-              onRefresh={handleRefreshVault}
-              isLoading={vaultContract.isLoading}
+              chainId={chainId}
+              needsInitialization={needsInitialization}
             />
             <Card className="bg-surface rounded shadow-sm">
               <CardHeader className="flex items-center justify-between pb-2">
@@ -319,43 +303,21 @@ export default function VaultContent() {
               </CardBody>
             </Card>
             <VaultAllocatorCard
-              allocators={allocators}
-              onManageAgents={() => {
-                if (needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
-                  openInitialization();
-                  return;
-                }
-                openSettings('agents');
-              }}
-              needsSetup={needsInitialization}
-              isOwner={vaultContract.isOwner}
-              isLoading={vaultDataLoading}
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              needsInitialization={needsInitialization}
             />
             <VaultCollateralsCard
-              collateralCaps={collateralCaps}
+              vaultAddress={vaultAddressValue}
               chainId={chainId}
-              onManageCaps={() => {
-                if (needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
-                  openInitialization();
-                  return;
-                }
-                openSettings('caps');
-              }}
-              needsSetup={needsInitialization}
-              isOwner={vaultContract.isOwner}
-              isLoading={vaultDataLoading}
+              needsInitialization={needsInitialization}
             />
           </VaultSummaryMetrics>
 
           {/* Market Allocations */}
           <VaultMarketAllocations
-            collateralAllocations={allocationsQuery.collateralAllocations}
-            marketAllocations={allocationsQuery.marketAllocations}
-            totalAssets={vaultContract.totalAssets}
-            vaultAssetSymbol={vaultData?.tokenSymbol ?? '--'}
-            vaultAssetDecimals={vaultData?.tokenDecimals ?? 18}
+            vaultAddress={vaultAddressValue}
             chainId={chainId}
-            isLoading={allocationsQuery.loading || vaultDataLoading}
             needsInitialization={needsInitialization}
           />
 

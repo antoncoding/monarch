@@ -24,8 +24,8 @@ export type VaultV2Data = {
   displayName: string;
   displaySymbol: string;
   assetAddress: string;
-  tokenSymbol?: string;
-  tokenDecimals?: number;
+  tokenSymbol: string; // Always has default: '--'
+  tokenDecimals: number; // Always has default: 18
   allocators: string[];
   sentinels: string[];
   owner: string;
@@ -54,6 +54,10 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
       const token = result.asset ? findToken(result.asset, chainId) : undefined;
       const curatorDisplay = result.curator ? getSlicedAddress(result.curator as Address) : '--';
 
+      // Apply defaults for token info
+      const tokenSymbol = token?.symbol ?? '--';
+      const tokenDecimals = token?.decimals ?? 18;
+
       // Parse caps by level using parseCapIdParams
       let adapterCap: VaultV2Cap | null = null;
       const collateralCaps: VaultV2Cap[] = [];
@@ -78,8 +82,8 @@ export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallb
         displayName: result.name || fallbackName,
         displaySymbol: result.symbol || fallbackSymbol,
         assetAddress: result.asset,
-        tokenSymbol: token?.symbol,
-        tokenDecimals: token?.decimals,
+        tokenSymbol, // Defaults applied above
+        tokenDecimals, // Defaults applied above
         allocators: result.allocators,
         sentinels: result.sentinels,
         owner: result.owner,

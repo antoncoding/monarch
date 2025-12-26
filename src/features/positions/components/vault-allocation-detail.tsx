@@ -11,7 +11,6 @@ import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { formatBalance } from '@/utils/balance';
-import { parseCapIdParams } from '@/utils/morpho';
 import { AllocationCell } from './allocation-cell';
 
 type VaultAllocationDetailProps = {
