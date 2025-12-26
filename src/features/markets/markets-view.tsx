@@ -134,7 +134,10 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
+  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
+    storageKeys.UserTrustedVaultsKey,
+    defaultTrustedVaults,
+  );
   const { open: openModal } = useModal();
 
   const trustedVaultKeys = useMemo(() => {

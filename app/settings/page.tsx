@@ -11,12 +11,13 @@ import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/know
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
+import { storageKeys } from '@/utils/storageKeys';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
   const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage('includeUnknownTokens', false);
   const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
   const { open: openModal } = useModal();

@@ -10,6 +10,7 @@ import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/know
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { storageKeys } from '@/utils/storageKeys';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -50,7 +51,7 @@ export default function MarketSettingsModal({
   setColumnVisibility,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
+  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
   const totalVaults = userTrustedVaults.length;
   const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
   const { open: openModal } = useModal();
