@@ -10,3 +10,4 @@ export { useCowBridge } from './hooks/useCowBridge';
 export { bridgingSdk, bungeeBridgeProvider } from './cowBridgingSdk';
 export type { SwapToken, SwapQuoteDisplay, CowBridgeChainId } from './types';
 export { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, isCowBridgeChain } from './types';
+export { SWAP_APP_CODE, DEFAULT_SLIPPAGE_PERCENT } from './constants';

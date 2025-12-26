@@ -1,5 +1,6 @@
 import { TradingSdk } from '@cowprotocol/cow-sdk';
 import { BridgingSdk, BungeeBridgeProvider } from '@cowprotocol/sdk-bridging';
+import { SWAP_APP_CODE } from './constants';
 
 /**
  * Trading SDK for approvals and allowances
@@ -7,7 +8,7 @@ import { BridgingSdk, BungeeBridgeProvider } from '@cowprotocol/sdk-bridging';
 export const tradingSdk = new TradingSdk(
   {
     chainId: 1, // Default, will be updated by adapter
-    appCode: 'monarch-swap',
+    appCode: SWAP_APP_CODE,
   },
   {},
 );

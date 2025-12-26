@@ -10,6 +10,7 @@ import {
 import { ViemAdapter } from '@cowprotocol/sdk-viem-adapter';
 import { bridgingSdk, tradingSdk } from '../cowBridgingSdk';
 import type { SwapQuoteDisplay, SwapToken } from '../types';
+import { SWAP_APP_CODE } from '../constants';
 
 type UseCowBridgeParams = {
   sourceToken: SwapToken | null;
@@ -102,7 +103,7 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
         account,
         receiver: account,
         signer: walletClient as any, // Viem WalletClient as signer
-        appCode: 'monarch-swap',
+        appCode: SWAP_APP_CODE,
       };
 
       const quoteResult = await bridgingSdk.getQuote(quoteBridgeRequest);

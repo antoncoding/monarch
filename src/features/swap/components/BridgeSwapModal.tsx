@@ -11,6 +11,7 @@ import { formatBalance } from '@/utils/balance';
 import { useCowBridge } from '../hooks/useCowBridge';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
+import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
 
 type BridgeSwapModalProps = {
   isOpen: boolean;
@@ -23,7 +24,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   const [sourceToken, setSourceToken] = useState<SwapToken | null>(null);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
-  const [slippage, _setSlippage] = useState<number>(0.5); // 0.5%
+  const [slippage, _setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
   // Fetch user balances from CoW-supported chains
   const { balances, loading: balancesLoading } = useUserBalances({
