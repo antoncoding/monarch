@@ -34,28 +34,109 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Button } from '@/components/ui/button';
 ```
 
-### Global Modal Context
+### Modal State Management: Two Patterns
 
-Use `useGlobalModal` when you need a modal to persist independently of the component that triggers it:
+**DEFAULT: Use Pattern 1 (Local State) for most modals.**
+
+Use Pattern 2 (Zustand) ONLY when:
+- ✓ Multiple unrelated trigger locations (2+ places)
+- ✓ Props drilling pain (passing callbacks through 2+ levels)
+- ✓ Modal chaining (modal opens from within another modal)
+
+---
+
+#### Pattern 1: Local State (Default) ✅
+
+State lives in parent component. Modal receives `isOpen` and `onClose` props.
 
 ```tsx
-import { useGlobalModal } from '@/contexts/GlobalModalContext';
-
-// In your component (e.g., inside a tooltip)
-const { toggleModal, closeModal } = useGlobalModal();
-
-<button onClick={() => toggleModal(<MyModal isOpen onClose={closeModal} />)}>
-  <HelpIcon />
-</button>
+const [showModal, setShowModal] = useState(false);
+{showModal && <MyModal isOpen={showModal} onClose={() => setShowModal(false)} />}
 ```
 
-**When to use:**
-- Modals triggered from tooltips (modal stays open when tooltip closes)
-- Modals triggered from ephemeral UI that may unmount
+**When:** Single usage location, no props drilling pain, state available in parent.
 
-**When NOT to use:**
-- Standard page-level modals with local state
-- Cases where parent component stays mounted
+**Examples:** RebalanceModal, VaultSettingsModal, BorrowModal, all process/filter modals.
+
+---
+
+#### Pattern 2: Global State (Zustand) 🌐
+
+Modal opened via `useModal()` hook from anywhere. No local state needed.
+
+```tsx
+const { open } = useModal();
+<Button onClick={() => open('supply', { market, position })}>Supply</Button>
+```
+
+**Setup:** Add to `useModalStore.ts` ModalProps type → Register in `registry.tsx` → Use `useModal()` hook.
+
+**When:** Multi-trigger (2+ unrelated places), props drilling pain, modal chaining.
+
+**Examples:** SupplyModalV2 (3 triggers), MarketSettingsModal (2 triggers + chaining), TrustedVaultsModal (modal chaining).
+
+---
+
+#### The "Trigger Depth" Decision Framework
+
+**Trigger Depth = Component levels between state and trigger button**
+
+```
+Depth 0: Button & state in same file → Pattern 1 ✅
+Depth 1: Parent (state) → Child (button) → Pattern 1 ✅
+Depth 2-3: Deep nesting → Pattern 1 OK if no pain, else Pattern 2
+Multi-trigger: Different locations → Pattern 2 ✅
+```
+
+**Migration Checklist:**
+1. Used from 2+ unrelated places? → Migrate ✅
+2. Painful props drilling (3+ levels)? → Migrate ✅
+3. Modal chaining? → Migrate ✅
+4. Otherwise? → Keep local ✅
+
+---
+
+### Complete Modal Inventory (28 Total)
+
+#### Pattern 2: Zustand (5 modals) - Already Migrated ✅
+| Modal | Triggers | Depth | Reason |
+|-------|----------|-------|--------|
+| SupplyModalV2 | Markets, Market Detail, Positions (3) | 0-3 | Multi-trigger |
+| MarketSettingsModal | 2 tables | 1-2 | Multi-trigger + chaining |
+| TrustedVaultsModal | Settings + chained from MarketSettings (3) | 0-2 | Modal chaining |
+| BridgeSwapModal | Chained from SupplyModal (1) | N/A | Modal chaining |
+| BlacklistedMarketsModal | Settings (1) | 0 | Consistency with TrustedVaults |
+
+#### Pattern 1: Local State (23 modals) - Keep As-Is ✅
+
+**Feature Modals (8):**
+- RebalanceModal - positions-view (Depth 0, single use)
+- VaultSettingsModal - vault-view (Depth 0-1, single use, many props)
+- BorrowModal - market-view (Depth 0, single use)
+- DepositToVaultModal - vault-view (Depth 0, single use)
+- OnboardingModal - positions-view (Depth 0, single use)
+- CampaignModal - market-view (Depth 0, single use)
+- VaultInitializationModal - vault-view (Depth 0, single use)
+- DeploymentModal - autovault (Depth 0, single use)
+
+**Utility Modals (2):**
+- MarketSelectionModal - Reusable utility, used by RebalanceModal (Depth 0)
+- BlacklistConfirmationModal - Inline confirmation (Depth 0)
+
+**Info Modals (2):**
+- ChainlinkRiskTiersModal - Informational (Depth 0)
+- RedstoneTypesModal - Informational (Depth 0)
+
+**Process Modals (6):** Transaction flows, always local
+- SupplyProcessModal, BorrowProcessModal, RepayProcessModal
+- RebalanceProcessModal, VaultDepositProcessModal, WrapProcessModal
+
+**Filter Modals (3):** Always scoped to parent view
+- BorrowerFiltersModal, SupplierFiltersModal, TransactionFiltersModal
+
+**Settings Modals (2):**
+- AddMarketCapModal - vault settings tab (Depth 1)
+- RiskNotificationModal - settings (Depth 0)
 
 ### Standard Modal Pattern
 
