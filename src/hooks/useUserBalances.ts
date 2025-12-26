@@ -50,7 +50,7 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
         const data = (await response.json()) as TokenResponse;
         return data.tokens;
       } catch (err) {
-        console.error(`Error fetching balances for chain ${chainId}:`, err);
+        console.warn(`Failed to fetch balances for chain ${chainId}:`, err);
         throw err instanceof Error ? err : new Error('Unknown error occurred');
       }
     },
@@ -121,10 +121,12 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
         }
       });
 
+      // Always set balances, even if some/all networks failed
       setBalances(processedBalances);
 
-      if (failedChainIds.length > 0) {
-        const fallbackMessage = `Failed to fetch balances for chains: ${failedChainIds.join(', ')}`;
+      // Only set error if ALL networks failed
+      if (failedChainIds.length > 0 && failedChainIds.length === networksToFetch.length) {
+        const fallbackMessage = 'All networks failed to fetch balances';
         const aggregatedMessage = errorMessages.length > 0 ? [...new Set(errorMessages)].join(' | ') : fallbackMessage;
         setError(new Error(aggregatedMessage));
       }

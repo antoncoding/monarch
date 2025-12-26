@@ -293,7 +293,10 @@ const supportedTokens = [
     symbol: 'DAI',
     img: require('../imgs/tokens/dai.webp') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' }],
+    networks: [
+      { chain: mainnet, address: '0x6B175474E89094C44Da98b954EedeAC495271d0F' },
+      { chain: base, address: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb' },
+    ],
     peg: TokenPeg.USD,
   },
   {
