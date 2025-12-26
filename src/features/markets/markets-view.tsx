@@ -9,7 +9,6 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -73,9 +72,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const [sortColumn, setSortColumn] = useLocalStorage(storageKeys.MarketSortColumnKey, SortColumn.Supply);
   const [sortDirection, setSortDirection] = useLocalStorage(storageKeys.MarketSortDirectionKey, -1);
-
-  const [showSupplyModal, setShowSupplyModal] = useState(false);
-  const [selectedMarket, setSelectedMarket] = useState<Market | undefined>(undefined);
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
@@ -439,13 +435,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        {showSupplyModal && selectedMarket && (
-          <SupplyModalV2
-            market={selectedMarket}
-            onOpenChange={setShowSupplyModal}
-          />
-        )}
-
         <MarketSettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={onSettingsModalOpenChange}
@@ -542,8 +531,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 currentPage={currentPage}
                 entriesPerPage={entriesPerPage}
                 setCurrentPage={setCurrentPage}
-                setShowSupplyModal={setShowSupplyModal}
-                setSelectedMarket={setSelectedMarket}
                 columnVisibility={columnVisibility}
                 trustedVaults={userTrustedVaults}
                 className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}

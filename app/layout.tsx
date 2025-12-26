@@ -6,6 +6,7 @@ import { QueryProvider } from '@/components/providers/QueryProvider';
 import RiskNotificationModal from '@/modals/risk-notification-modal';
 import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 import OnchainProviders from '@/OnchainProviders';
+import { ModalRenderer } from '@/components/modals/ModalRenderer';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <ClientProviders>
                   {children}
                   <RiskNotificationModal />
+                  <ModalRenderer />
                 </ClientProviders>
               </VaultRegistryProvider>
             </OnchainProviders>

@@ -22,8 +22,6 @@ type MarketTableBodyProps = {
   staredIds: string[];
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedMarket: (market: Market) => void;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
   columnVisibility: ColumnVisibility;
@@ -37,8 +35,6 @@ export function MarketTableBody({
   staredIds,
   expandedRowId,
   setExpandedRowId,
-  setShowSupplyModal,
-  setSelectedMarket,
   starMarket,
   unstarMarket,
   columnVisibility,
@@ -259,8 +255,6 @@ export function MarketTableBody({
                     isStared={isStared}
                     starMarket={starMarket}
                     unstarMarket={unstarMarket}
-                    setSelectedMarket={setSelectedMarket}
-                    setShowSupplyModal={setShowSupplyModal}
                     addBlacklistedMarket={addBlacklistedMarket}
                     isBlacklisted={isBlacklisted}
                   />
