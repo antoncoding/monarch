@@ -10,7 +10,6 @@ import { isWrappedNativeToken } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { SupplyProcessModal } from './supply-process-modal';
-import { SwapButton } from '@/features/swap/components/SwapButton';
 import { BridgeSwapModal } from '@/features/swap/components/BridgeSwapModal';
 import type { SwapToken } from '@/features/swap/types';
 
@@ -131,18 +130,20 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                     <ReloadIcon className="h-3 w-3" />
                   </button>
                   {((useEth && (ethBalance ?? BigInt(0)) === BigInt(0)) || (!useEth && (tokenBalance ?? BigInt(0)) === BigInt(0))) && (
-                    <SwapButton
-                      targetToken={{
-                        address: market.loanAsset.address,
-                        symbol: market.loanAsset.symbol,
-                        chainId: market.morphoBlue.chain.id,
-                        decimals: market.loanAsset.decimals,
-                      }}
-                      onOpenSwap={setSwapTarget}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSwapTarget({
+                          address: market.loanAsset.address,
+                          symbol: market.loanAsset.symbol,
+                          chainId: market.morphoBlue.chain.id,
+                          decimals: market.loanAsset.decimals,
+                        })
+                      }
                       className="text-primary flex items-center gap-0.5 text-xs transition hover:opacity-70"
                     >
                       Swap to {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
-                    </SwapButton>
+                    </button>
                   )}
                 </div>
               </div>

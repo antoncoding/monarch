@@ -15,8 +15,8 @@ type ClientProvidersProps = {
 
 export function ClientProviders({ children }: ClientProvidersProps) {
   return (
-    <TokenProvider>
-      <GlobalModalProvider>
+    <GlobalModalProvider>
+      <TokenProvider>
         <OracleDataProvider>
           <MarketsProvider>
             <LiquidationsProvider>
@@ -26,7 +26,7 @@ export function ClientProviders({ children }: ClientProvidersProps) {
             </LiquidationsProvider>
           </MarketsProvider>
         </OracleDataProvider>
-      </GlobalModalProvider>
-    </TokenProvider>
+      </TokenProvider>
+    </GlobalModalProvider>
   );
 }

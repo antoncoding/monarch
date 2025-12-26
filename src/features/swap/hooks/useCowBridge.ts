@@ -20,14 +20,11 @@ type UseCowBridgeParams = {
 
 type UseCowBridgeReturn = {
   quote: SwapQuoteDisplay | null;
-  rawQuote: CrossChainQuoteAndPost | null;
   isQuoting: boolean;
   isExecuting: boolean;
-  error: Error | null;
-  errorDescription: string | null;
+  error: string | null;
   orderUid: string | null;
 
-  getQuote: () => Promise<void>;
   executeSwap: () => Promise<void>;
   reset: () => void;
 };
@@ -44,8 +41,7 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
   const [rawQuote, setRawQuote] = useState<CrossChainQuoteAndPost | null>(null);
   const [isQuoting, setIsQuoting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [errorDescription, setErrorDescription] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [orderUid, setOrderUid] = useState<string | null>(null);
 
   // Bind SDK to wagmi
@@ -135,9 +131,7 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
         });
       }
     } catch (err) {
-      const errObj = err instanceof Error ? err : new Error('Failed to get quote');
-      setError(errObj);
-      setErrorDescription(parseErrorDescription(err));
+      setError(parseErrorDescription(err));
       setQuote(null);
       setRawQuote(null);
     } finally {
@@ -171,9 +165,7 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
 
       setOrderUid(result.orderId);
     } catch (err) {
-      const errObj = err instanceof Error ? err : new Error('Failed to execute swap');
-      setError(errObj);
-      setErrorDescription(parseErrorDescription(err));
+      setError(parseErrorDescription(err));
     } finally {
       setIsExecuting(false);
     }
@@ -186,7 +178,6 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
     setQuote(null);
     setRawQuote(null);
     setError(null);
-    setErrorDescription(null);
     setOrderUid(null);
   }, []);
 
@@ -201,7 +192,6 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
     // Reset state
     setOrderUid(null);
     setError(null);
-    setErrorDescription(null);
 
     // Debounce quote fetching
     const timeoutId = setTimeout(() => {
@@ -213,13 +203,10 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
 
   return {
     quote,
-    rawQuote,
     isQuoting,
     isExecuting,
     error,
-    errorDescription,
     orderUid,
-    getQuote,
     executeSwap,
     reset,
   };

@@ -10,7 +10,6 @@ import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
 import { useCowBridge } from '../hooks/useCowBridge';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
-import { SwapProcessModal } from './SwapProcessModal';
 import { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
 
 type BridgeSwapModalProps = {
@@ -25,8 +24,6 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, _setSlippage] = useState<number>(0.5); // 0.5%
-  const [showProcessModal, setShowProcessModal] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'approve' | 'swapping'>('approve');
 
   // Fetch user balances from CoW-supported chains
   const { balances, loading: balancesLoading } = useUserBalances({
@@ -66,7 +63,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   }, [balances, targetToken.chainId, targetToken.address]);
 
   // CoW Bridge hook
-  const { quote, isQuoting, isExecuting, errorDescription, orderUid, executeSwap, reset } = useCowBridge({
+  const { quote, isQuoting, isExecuting, error, orderUid, executeSwap, reset } = useCowBridge({
     sourceToken,
     targetToken,
     amount,
@@ -108,31 +105,15 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     setSourceToken(null);
     setAmount(BigInt(0));
     setInputAmount('0');
-    setShowProcessModal(false);
     onClose();
   };
 
   // Unified execution handler - handles approve + swap automatically
   const handleSwap = useCallback(async () => {
-    try {
-      if (needsApproval) {
-        // Show process modal when approval needed
-        setShowProcessModal(true);
-        setCurrentStep('approve');
-        await approveInfinite();
-
-        setCurrentStep('swapping');
-        await executeSwap();
-
-        setShowProcessModal(false);
-      } else {
-        // Direct swap without process modal
-        await executeSwap();
-      }
-    } catch (_err) {
-      setShowProcessModal(false);
-      // Error is already handled by hooks
+    if (needsApproval) {
+      await approveInfinite();
     }
+    await executeSwap();
   }, [needsApproval, approveInfinite, executeSwap]);
 
   const isLoading = isQuoting || approvePending || isExecuting;
@@ -142,20 +123,12 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     if (!sourceToken) return 'Select token above';
     if (amount === BigInt(0)) return '0';
     if (isQuoting) return 'Loading...';
-    if (errorDescription) return '—';
+    if (error) return '—';
     if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
     return '0';
   };
 
-  return showProcessModal && sourceToken ? (
-    <SwapProcessModal
-      currentStep={currentStep}
-      onClose={() => setShowProcessModal(false)}
-      needsApproval={needsApproval}
-      sourceSymbol={sourceToken.symbol}
-      targetSymbol={targetToken.symbol}
-    />
-  ) : (
+  return (
     <Modal
       isOpen={isOpen}
       onOpenChange={(open) => !open && handleClose()}
@@ -219,7 +192,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
               />
             </div>
             <div className="mt-1.5 text-xs text-secondary">
-              {quote && sourceToken && !errorDescription && (
+              {quote && sourceToken && !error && (
                 <span>
                   1 {sourceToken.symbol} ≈{' '}
                   {(
@@ -232,15 +205,15 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
           </div>
 
           {/* Error Display */}
-          {errorDescription && (
+          {error && (
             <div className="rounded bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
               <p className="font-medium">⚠️ Error</p>
-              <p className="mt-1 text-xs">{errorDescription}</p>
+              <p className="mt-1 text-xs">{error}</p>
             </div>
           )}
 
           {/* Quote Details */}
-          {quote && sourceToken && !errorDescription && quote.type === 'cross-chain' && (
+          {quote && sourceToken && !error && quote.type === 'cross-chain' && (
             <div className="bg-surface space-y-2 rounded p-3 text-sm">
               {quote.bridgeProvider && (
                 <div className="flex justify-between">
@@ -304,7 +277,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
             targetChainId={sourceToken?.chainId ?? 1}
             onClick={() => void handleSwap()}
             isLoading={isLoading}
-            disabled={!quote || amount === BigInt(0) || !!errorDescription}
+            disabled={!quote || amount === BigInt(0) || !!error}
             variant="primary"
           >
             {needsApproval ? 'Approve & Swap' : 'Swap'}
