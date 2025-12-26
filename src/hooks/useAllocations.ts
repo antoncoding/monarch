@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { Address } from 'viem';
+import { useQuery } from '@tanstack/react-query';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { readAllocation } from '@/utils/vaultAllocation';
@@ -17,18 +18,7 @@ type UseAllocationsArgs = {
   enabled?: boolean;
 };
 
-type UseAllocationsReturn = {
-  allocations: AllocationData[];
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-};
-
-export function useAllocations({ vaultAddress, chainId, caps = [], enabled = true }: UseAllocationsArgs): UseAllocationsReturn {
-  const [allocations, setAllocations] = useState<AllocationData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
+export function useAllocations({ vaultAddress, chainId, caps = [], enabled = true }: UseAllocationsArgs) {
   // Create a stable key from capIds to detect actual changes
   const capsKey = useMemo(() => {
     return caps
@@ -37,17 +27,13 @@ export function useAllocations({ vaultAddress, chainId, caps = [], enabled = tru
       .join(',');
   }, [caps]);
 
-  const load = useCallback(async () => {
-    if (!vaultAddress || !enabled || caps.length === 0) {
-      setAllocations([]);
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: ['vault-allocations', vaultAddress, chainId, capsKey],
+    queryFn: async () => {
+      if (!vaultAddress || caps.length === 0) {
+        return [];
+      }
 
-    setLoading(true);
-    setError(null);
-
-    try {
       // Read all allocations in parallel
       const allocationPromises = caps.map(async (cap) => {
         const allocation = await readAllocation(vaultAddress, cap.capId as `0x${string}`, chainId);
@@ -60,28 +46,16 @@ export function useAllocations({ vaultAddress, chainId, caps = [], enabled = tru
       });
 
       const results = await Promise.all(allocationPromises);
-      setAllocations(results);
-    } catch (err) {
-      const errorObj = err instanceof Error ? err : new Error('Failed to fetch allocations');
-      setError(errorObj);
-      console.error('Error fetching allocations:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [vaultAddress, chainId, capsKey, enabled]); // Use capsKey instead of caps
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const refetch = useCallback(async () => {
-    await load();
-  }, [load]);
+      return results;
+    },
+    enabled: enabled && Boolean(vaultAddress) && caps.length > 0,
+    staleTime: 30_000, // 30 seconds - allocation data is cacheable
+  });
 
   return {
-    allocations,
-    loading,
-    error,
-    refetch,
+    allocations: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
   };
 }

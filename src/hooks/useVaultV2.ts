@@ -9,10 +9,12 @@ import { useTransactionWithToast } from './useTransactionWithToast';
 export function useVaultV2({
   vaultAddress,
   chainId,
+  connectedAddress,
   onTransactionSuccess,
 }: {
   vaultAddress?: Address;
   chainId?: SupportedNetworks | number;
+  connectedAddress?: Address;
   onTransactionSuccess?: () => void;
 }) {
   const connectedChainId = useChainId();
@@ -565,6 +567,11 @@ export function useVaultV2({
     return owner as Address;
   }, [owner]);
 
+  const isOwner = useMemo(
+    () => Boolean(vaultOwner && connectedAddress && vaultOwner.toLowerCase() === connectedAddress.toLowerCase()),
+    [vaultOwner, connectedAddress],
+  );
+
   return {
     isLoading: loadingBalance,
     refetch: refetchAll,
@@ -573,6 +580,7 @@ export function useVaultV2({
     name,
     symbol,
     owner: vaultOwner,
+    isOwner,
     updateNameAndSymbol,
     isUpdatingMetadata,
     setAllocator,

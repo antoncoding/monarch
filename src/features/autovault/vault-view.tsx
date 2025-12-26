@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { GearIcon, ReloadIcon } from '@radix-ui/react-icons';
 import Link from 'next/link';
@@ -23,6 +23,9 @@ import { VaultMarketAllocations } from '@/features/autovault/components/vault-de
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
 import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
+import { VaultIdProvider } from '@/contexts/VaultIdContext';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -103,18 +106,9 @@ export default function VaultContent() {
     [setAllocator],
   );
 
-  const handleRefetchAdapter = useCallback(() => {
-    void refetchAdapter();
-  }, [refetchAdapter]);
-
-  const handleAdapterConfigured = useCallback(() => {
-    void refetchAll();
-  }, [refetchAll]);
-
-  // UI state
-  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'caps'>('general');
-  const [showSettings, setShowSettings] = useState(false);
-  const [showInitializationModal, setShowInitializationModal] = useState(false);
+  // UI state from Zustand stores
+  const { open: openSettings } = useVaultSettingsModalStore();
+  const { open: openInitialization } = useVaultInitializationModalStore();
 
   // Derived display data
   const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
@@ -186,61 +180,59 @@ export default function VaultContent() {
   }
 
   return (
-    <div className="flex w-full flex-col font-zen">
-      <Header />
-      <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
-        <div className="space-y-8">
-          {/* Vault Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <h1 className="font-zen text-2xl">{title}</h1>
-              {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
-            </div>
-            <div className="flex items-center gap-2">
-              <Tooltip
-                content={
-                  <TooltipContent
-                    title="Refresh"
-                    detail="Fetch latest vault data"
-                  />
-                }
-              >
-                <span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRefreshVault}
-                    disabled={vault.vaultDataLoading}
-                    className="text-secondary min-w-0 px-2"
-                  >
-                    <ReloadIcon className={`${vault.vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
-                  </Button>
-                </span>
-              </Tooltip>
-              {vault.isOwner && (
+    <VaultIdProvider value={{ vaultAddress: vaultAddressValue, chainId }}>
+      <div className="flex w-full flex-col font-zen">
+        <Header />
+        <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
+          <div className="space-y-8">
+            {/* Vault Header */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <h1 className="font-zen text-2xl">{title}</h1>
+                {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
+              </div>
+              <div className="flex items-center gap-2">
                 <Tooltip
                   content={
                     <TooltipContent
-                      title="Settings"
-                      detail="Configure vault settings"
+                      title="Refresh"
+                      detail="Fetch latest vault data"
                     />
                   }
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-secondary min-w-0 px-2"
-                    onClick={() => {
-                      setSettingsTab('general');
-                      setShowSettings(true);
-                    }}
-                  >
-                    <GearIcon className="h-3 w-3" />
-                  </Button>
+                  <span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRefreshVault}
+                      disabled={vault.vaultDataLoading}
+                      className="text-secondary min-w-0 px-2"
+                    >
+                      <ReloadIcon className={`${vault.vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
+                    </Button>
+                  </span>
                 </Tooltip>
-              )}
+                {vault.isOwner && (
+                  <Tooltip
+                    content={
+                      <TooltipContent
+                        title="Settings"
+                        detail="Configure vault settings"
+                      />
+                    }
+                  >
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-secondary min-w-0 px-2"
+                      onClick={() => openSettings('general')}
+                    >
+                      <GearIcon className="h-3 w-3" />
+                    </Button>
+                  </Tooltip>
+                )}
+              </div>
             </div>
-          </div>
 
           {/* Setup Banner - Show if vault needs initialization */}
           {vault.needsInitialization && vault.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (

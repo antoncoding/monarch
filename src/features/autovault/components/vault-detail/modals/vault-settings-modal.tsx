@@ -1,14 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';
 import type { Address } from 'viem';
+import { useParams } from 'next/navigation';
+import { useConnection } from 'wagmi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import type { CapData } from '@/hooks/useVaultV2Data';
-import type { SupportedNetworks } from '@/utils/networks';
 import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from '../settings';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
+import { ALL_SUPPORTED_NETWORKS, SupportedNetworks } from '@/utils/networks';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -16,72 +20,106 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'caps', label: 'Caps' },
 ];
 
-type VaultSettingsModalProps = {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialTab?: SettingsTab;
-  isOwner: boolean;
-  onUpdateMetadata: (values: { name?: string; symbol?: string }) => Promise<boolean>;
-  updatingMetadata: boolean;
-  defaultName: string;
-  defaultSymbol: string;
-  currentName: string;
-  currentSymbol: string;
-  owner?: string;
-  curator?: string;
-  allocators: string[];
-  sentinels?: string[];
-  chainId: SupportedNetworks;
-  vaultAsset?: Address;
-  marketAdapter: Address; // the deploy morpho market v1 adapter
-  capData?: CapData;
-  onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
-  updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
-  isUpdatingAllocator: boolean;
-  isUpdatingCaps: boolean;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
-};
+/**
+ * VaultSettingsModal - Completely self-contained modal component.
+ * Reads all data directly from Zustand stores and hooks - no props needed!
+ *
+ * Open this modal using: useVaultSettingsModalStore().open('tabName')
+ */
+export function VaultSettingsModal() {
+  // Modal state from Zustand (UI state)
+  const { isOpen, activeTab, close, setTab } = useVaultSettingsModalStore();
 
-export function VaultSettingsModal({
-  isOpen,
-  onOpenChange,
-  initialTab = 'general',
-  isOwner,
-  onUpdateMetadata,
-  updatingMetadata,
-  defaultName,
-  defaultSymbol,
-  currentName,
-  currentSymbol,
-  owner,
-  curator,
-  allocators,
-  sentinels = [],
-  chainId,
-  vaultAsset,
-  marketAdapter,
-  capData = undefined,
-  onSetAllocator,
-  updateCaps,
-  isUpdatingAllocator,
-  isUpdatingCaps,
-  onRefresh,
-  isRefreshing = false,
-}: VaultSettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+  // Get vault address and chain ID from URL params
+  const { chainId: chainIdParam, vaultAddress } = useParams<{
+    chainId: string;
+    vaultAddress: string;
+  }>();
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(initialTab);
+  const vaultAddressValue = vaultAddress as Address;
+  const { address: connectedAddress } = useConnection();
+
+  const chainId = useMemo(() => {
+    const parsed = Number(chainIdParam);
+    if (Number.isFinite(parsed) && ALL_SUPPORTED_NETWORKS.includes(parsed as SupportedNetworks)) {
+      return parsed as SupportedNetworks;
     }
-  }, [initialTab, isOpen]);
+    return SupportedNetworks.Base;
+  }, [chainIdParam]);
 
-  const handleTabChange = useCallback((tab: SettingsTab) => {
-    setActiveTab(tab);
-  }, []);
+  // Fetch vault data
+  const {
+    data: vaultData,
+    loading: vaultDataLoading,
+    refetch: refetchVaultData,
+  } = useVaultV2Data({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
+
+  // Transaction success handler
+  const handleTransactionSuccess = useCallback(() => {
+    void refetchVaultData();
+  }, [refetchVaultData]);
+
+  // Fetch vault contract state and actions
+  const {
+    name: onChainName,
+    symbol: onChainSymbol,
+    owner: contractOwner,
+    updateNameAndSymbol,
+    isUpdatingMetadata,
+    setAllocator,
+    isUpdatingAllocator,
+    updateCaps,
+    isUpdatingCaps,
+    refetch: refetchContract,
+  } = useVaultV2({
+    vaultAddress: vaultAddressValue,
+    chainId,
+    onTransactionSuccess: handleTransactionSuccess,
+  });
+
+  // Fetch adapter
+  const { morphoMarketV1Adapter: adapter } = useMorphoMarketV1Adapters({
+    vaultAddress: vaultAddressValue,
+    chainId
+  });
+
+  // Determine ownership
+  const isOwner = useMemo(
+    () => Boolean(contractOwner && connectedAddress && contractOwner.toLowerCase() === connectedAddress.toLowerCase()),
+    [contractOwner, connectedAddress],
+  );
+
+  // Unified refetch function
+  const refetchAll = useCallback(() => {
+    void refetchVaultData();
+    void refetchContract();
+  }, [refetchVaultData, refetchContract]);
+
+  // Extract data from vaultData
+  const defaultName = vaultData?.displayName ?? '';
+  const defaultSymbol = vaultData?.displaySymbol ?? '';
+  const currentName = onChainName ?? '';
+  const currentSymbol = onChainSymbol ?? '';
+  const owner = vaultData?.owner;
+  const curator = vaultData?.curator;
+  const allocators = vaultData?.allocators ?? [];
+  const sentinels = vaultData?.sentinels ?? [];
+  const vaultAsset = vaultData?.assetAddress as Address | undefined;
+  const capData = vaultData?.capsData;
+
+  const handleTabChange = useCallback(
+    (tab: SettingsTab) => {
+      setTab(tab);
+    },
+    [setTab],
+  );
 
   const renderActiveTab = () => {
+    if (!chainId) return null;
+
     switch (activeTab) {
       case 'general':
         return (
@@ -91,8 +129,8 @@ export function VaultSettingsModal({
             defaultSymbol={defaultSymbol}
             currentName={currentName}
             currentSymbol={currentSymbol}
-            onUpdateMetadata={onUpdateMetadata}
-            updatingMetadata={updatingMetadata}
+            onUpdateMetadata={updateNameAndSymbol}
+            updatingMetadata={isUpdatingMetadata}
             chainId={chainId}
           />
         );
@@ -104,7 +142,7 @@ export function VaultSettingsModal({
             curator={curator}
             allocators={allocators}
             sentinels={sentinels}
-            onSetAllocator={onSetAllocator}
+            onSetAllocator={setAllocator}
             isUpdatingAllocator={isUpdatingAllocator}
             chainId={chainId}
           />
@@ -115,7 +153,7 @@ export function VaultSettingsModal({
             isOwner={isOwner}
             chainId={chainId}
             vaultAsset={vaultAsset}
-            adapterAddress={marketAdapter}
+            adapterAddress={adapter ?? undefined}
             existingCaps={capData}
             updateCaps={updateCaps}
             isUpdatingCaps={isUpdatingCaps}
@@ -133,7 +171,9 @@ export function VaultSettingsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
       size="5xl"
       scrollBehavior="inside"
       className="w-full max-w-6xl"
@@ -143,20 +183,16 @@ export function VaultSettingsModal({
         title="Vault Settings"
         description="Manage metadata, automation agents, and vault caps"
         mainIcon={<FiSettings className="h-5 w-5" />}
-        onClose={() => onOpenChange(false)}
-        auxiliaryAction={
-          onRefresh
-            ? {
-                icon: <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />,
-                onClick: () => {
-                  if (!isRefreshing) {
-                    onRefresh();
-                  }
-                },
-                ariaLabel: 'Refresh vault data',
-              }
-            : undefined
-        }
+        onClose={close}
+        auxiliaryAction={{
+          icon: <ReloadIcon className={`h-4 w-4 ${vaultDataLoading ? 'animate-spin' : ''}`} />,
+          onClick: () => {
+            if (!vaultDataLoading) {
+              refetchAll();
+            }
+          },
+          ariaLabel: 'Refresh vault data',
+        }}
       />
       <ModalBody className="px-0 pb-6">
         <div className="flex flex-col gap-6">

@@ -13,93 +13,127 @@ type UseVaultPageArgs = {
   connectedAddress?: Address;
 };
 
+export type VaultPageData = {
+  // Raw data from queries
+  vaultData: ReturnType<typeof useVaultV2Data>['data'];
+  totalAssets: bigint | undefined;
+  adapter: Address;
+  onChainName: string;
+  onChainSymbol: string;
+
+  // Allocations
+  collateralAllocations: ReturnType<typeof useVaultAllocations>['collateralAllocations'];
+  marketAllocations: ReturnType<typeof useVaultAllocations>['marketAllocations'];
+
+  // APY & Earnings
+  vaultAPY: number | null;
+  vault24hEarnings: bigint | null;
+  isAPYLoading: boolean;
+
+  // Computed state
+  isOwner: boolean;
+  needsAdapterDeployment: boolean;
+  needsInitialization: boolean;
+  isVaultInitialized: boolean;
+  hasNoAllocators: boolean;
+  capsUninitialized: boolean;
+
+  // Loading/Error states
+  isLoading: boolean;
+  vaultDataLoading: boolean;
+  allocationsLoading: boolean;
+  adapterLoading: boolean;
+  hasError: boolean;
+
+  // Actions
+  completeInitialization: ReturnType<typeof useVaultV2>['completeInitialization'];
+  updateNameAndSymbol: ReturnType<typeof useVaultV2>['updateNameAndSymbol'];
+  setAllocator: ReturnType<typeof useVaultV2>['setAllocator'];
+  updateCaps: ReturnType<typeof useVaultV2>['updateCaps'];
+  refetchAll: () => void;
+  refetchAdapter: () => void;
+
+  // Action loading states
+  isInitializing: boolean;
+  isUpdatingMetadata: boolean;
+  isUpdatingAllocator: boolean;
+  isUpdatingCaps: boolean;
+};
+
 /**
  * Unified hook for vault page data and actions.
  * Combines all vault-related data fetching and provides computed state.
+ *
+ * Supports selector pattern for performance:
+ * @example
+ * // Get all data
+ * const vault = useVaultPage({ vaultAddress, chainId });
+ *
+ * // Get only specific fields (prevents unnecessary re-renders)
+ * const vault = useVaultPage(
+ *   { vaultAddress, chainId },
+ *   (d) => ({ vaultAPY: d.vaultAPY, isOwner: d.isOwner })
+ * );
  */
-export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVaultPageArgs) {
+export function useVaultPage<T = VaultPageData>(
+  { vaultAddress, chainId, connectedAddress }: UseVaultPageArgs,
+  selector?: (data: VaultPageData) => T
+): T extends VaultPageData ? VaultPageData & { data: T } : VaultPageData {
   // Fetch vault data from API/subgraph
-  const {
-    data: vaultData,
-    loading: vaultDataLoading,
-    error: vaultDataError,
-    refetch: refetchVaultData,
-  } = useVaultV2Data({
+  const vaultDataQuery = useVaultV2Data({
     vaultAddress,
     chainId,
   });
 
   // Memoize transaction success handler to prevent infinite refetch loops
   const handleTransactionSuccess = useCallback(() => {
-    void refetchVaultData();
-  }, [refetchVaultData]);
+    void vaultDataQuery.refetch();
+  }, [vaultDataQuery]);
 
   // Fetch vault contract state and actions
-  const {
-    isLoading: contractLoading,
-    refetch: refetchContract,
-    completeInitialization,
-    isInitializing,
-    updateNameAndSymbol,
-    isUpdatingMetadata,
-    name: onChainName,
-    symbol: onChainSymbol,
-    owner: contractOwner,
-    setAllocator,
-    isUpdatingAllocator,
-    updateCaps,
-    isUpdatingCaps,
-    totalAssets,
-  } = useVaultV2({
+  const contract = useVaultV2({
     vaultAddress,
     chainId,
+    connectedAddress,
     onTransactionSuccess: handleTransactionSuccess,
   });
 
   // Fetch market adapter
-  const { morphoMarketV1Adapter, loading: adapterLoading, refetch: refetchAdapter } = useMorphoMarketV1Adapters({ vaultAddress, chainId });
+  const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress, chainId });
 
   // Compute initialization state
-  // A vault goes through these states:
-  // 1. Vault deployed (has address)
-  // 2. Adapter deployed (morphoMarketV1Adapter !== zeroAddress)
-  // 3. Vault initialized (adapter registered + registry set) - API returns data
-  // 4. Fully configured (adapter cap + collateral caps + market caps set)
-  //
-  // The Morpho API returns data once the vault is initialized (state 3+).
-  // Caps can be configured separately after initialization.
   const isVaultInitialized = useMemo(() => {
-    // Still loading - can't determine state yet
-    if (adapterLoading || vaultDataLoading) {
+    if (adapterQuery.isLoading || vaultDataQuery.isLoading) {
       return false;
     }
-
-    // If adapter not deployed, definitely not initialized
-    if (morphoMarketV1Adapter === zeroAddress) {
+    if (adapterQuery.morphoMarketV1Adapter === zeroAddress) {
       return false;
     }
+    return vaultDataQuery.data !== null && vaultDataQuery.data !== undefined;
+  }, [adapterQuery.isLoading, vaultDataQuery.isLoading, adapterQuery.morphoMarketV1Adapter, vaultDataQuery.data]);
 
-    // If adapter exists and we have vault data from API, the vault is initialized
-    // (Morpho API only returns data for initialized vaults that have been registered)
-    // Note: Caps may or may not be set at this point - that's a separate configuration step
-    return vaultData !== null && vaultData !== undefined;
-  }, [adapterLoading, vaultDataLoading, morphoMarketV1Adapter, vaultData]);
-
-  // Helper flag: adapter not deployed at all (need to deploy it first)
   const needsAdapterDeployment = useMemo(
-    () => !adapterLoading && morphoMarketV1Adapter === zeroAddress,
-    [adapterLoading, morphoMarketV1Adapter],
+    () => !adapterQuery.isLoading && adapterQuery.morphoMarketV1Adapter === zeroAddress,
+    [adapterQuery.isLoading, adapterQuery.morphoMarketV1Adapter],
   );
+
+  // Fetch and parse allocations with typed structures
+  const allocationsQuery = useVaultAllocations({
+    collateralCaps: vaultDataQuery.data?.capsData?.collateralCaps ?? [],
+    marketCaps: vaultDataQuery.data?.capsData?.marketCaps ?? [],
+    vaultAddress,
+    chainId,
+    enabled: !needsAdapterDeployment && !!vaultDataQuery.data?.capsData,
+  });
 
   // Fetch adapter positions for APY calculation (only last 24h, only current chain)
   const { positions: adapterPositions, isEarningsLoading: isAPYLoading } = useUserPositionsSummaryData(
-    !needsAdapterDeployment && morphoMarketV1Adapter !== zeroAddress ? morphoMarketV1Adapter : undefined,
+    !needsAdapterDeployment && adapterQuery.morphoMarketV1Adapter !== zeroAddress ? adapterQuery.morphoMarketV1Adapter : undefined,
     'day',
     [chainId],
   );
 
   // Calculate vault APY from adapter positions (weighted average)
-  // Uses normalized decimals to avoid precision loss from BigInt->Number conversion
   const vaultAPY = useMemo(() => {
     if (!adapterPositions || adapterPositions.length === 0) return null;
 
@@ -107,7 +141,6 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     let weightedAPY = 0;
 
     for (const position of adapterPositions) {
-      // Normalize to human-readable decimals to avoid overflow/precision loss
       const suppliedNorm = Number(formatUnits(BigInt(position.state.supplyAssets), position.market.loanAsset.decimals));
       if (suppliedNorm <= 0) continue;
 
@@ -128,7 +161,6 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
 
     adapterPositions.forEach((position) => {
       if (position.earned) {
-        // Sum up all earnings (assumes they're in raw bigint string format)
         total += BigInt(position.earned);
       }
     });
@@ -136,78 +168,51 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     return total;
   }, [adapterPositions]);
 
-  // Determine ownership from contract owner (not API data, since API returns null for uninitialized vaults)
-  const isOwner = useMemo(
-    () => Boolean(contractOwner && connectedAddress && contractOwner.toLowerCase() === connectedAddress.toLowerCase()),
-    [contractOwner, connectedAddress],
-  );
-
   const hasNoAllocators = useMemo(
-    () => !needsAdapterDeployment && (vaultData?.allocators ?? []).length === 0,
-    [needsAdapterDeployment, vaultData?.allocators],
+    () => !needsAdapterDeployment && (vaultDataQuery.data?.allocators ?? []).length === 0,
+    [needsAdapterDeployment, vaultDataQuery.data?.allocators],
   );
 
-  const capsUninitialized = useMemo(() => vaultData?.capsData?.needSetupCaps ?? true, [vaultData?.capsData?.needSetupCaps]);
-
-  // Fetch and parse allocations with typed structures
-  const {
-    collateralAllocations,
-    marketAllocations,
-    loading: allocationsLoading,
-    error: allocationsError,
-    refetch: refetchAllocations,
-  } = useVaultAllocations({
-    collateralCaps: vaultData?.capsData?.collateralCaps ?? [],
-    marketCaps: vaultData?.capsData?.marketCaps ?? [],
-    vaultAddress,
-    chainId,
-    enabled: !needsAdapterDeployment && !!vaultData?.capsData,
-  });
+  const capsUninitialized = useMemo(
+    () => vaultDataQuery.data?.capsData?.needSetupCaps ?? true,
+    [vaultDataQuery.data?.capsData?.needSetupCaps]
+  );
 
   // Unified refetch function
   const refetchAll = useCallback(() => {
-    void refetchVaultData();
-    void refetchContract();
-    void refetchAdapter();
-    void refetchAllocations();
-  }, [refetchVaultData, refetchContract, refetchAdapter, refetchAllocations]);
+    void vaultDataQuery.refetch();
+    void contract.refetch();
+    void adapterQuery.refetch();
+    void allocationsQuery.refetch();
+  }, [vaultDataQuery, contract, adapterQuery, allocationsQuery]);
 
-  // Loading states - wait for ALL queries before showing content
-  const isLoading = vaultDataLoading || contractLoading || adapterLoading || allocationsLoading;
-  const hasError = !!vaultDataError || !!allocationsError;
+  // Loading states
+  const isLoading = vaultDataQuery.isLoading || contract.isLoading || adapterQuery.isLoading || allocationsQuery.loading;
+  const hasError = !!vaultDataQuery.error || !!allocationsQuery.error;
 
-  // Comprehensive check: needs initialization if vault is deployed but not fully initialized
-  // This captures the state where:
-  // - Vault contract is deployed
-  // - Adapter may or may not be deployed
-  // - But the vault hasn't been initialized (registry not set, adapter not registered, caps not set)
+  // Needs initialization check
   const needsInitialization = useMemo(() => {
-    // Don't show initialization prompt while still loading
     if (isLoading) {
       return false;
     }
-
-    // If vault is already initialized, no need for initialization
     if (isVaultInitialized) {
       return false;
     }
-
-    // At this point: vault exists but is not initialized
-    // This covers both cases:
-    // 1. Adapter not deployed yet (need to deploy + initialize)
-    // 2. Adapter deployed but not connected to vault (need to initialize)
     return true;
   }, [isLoading, isVaultInitialized]);
 
-  return {
-    // Data
-    vaultData,
-    totalAssets,
-    collateralAllocations,
-    marketAllocations,
-    adapter: morphoMarketV1Adapter,
-    onChainName,
-    onChainSymbol,
+  // Aggregate all data
+  const aggregatedData: VaultPageData = useMemo(() => ({
+    // Raw data
+    vaultData: vaultDataQuery.data,
+    totalAssets: contract.totalAssets,
+    adapter: adapterQuery.morphoMarketV1Adapter,
+    onChainName: contract.name,
+    onChainSymbol: contract.symbol,
+
+    // Allocations
+    collateralAllocations: allocationsQuery.collateralAllocations,
+    marketAllocations: allocationsQuery.marketAllocations,
 
     // APY & Earnings
     vaultAPY,
@@ -215,7 +220,7 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
     isAPYLoading,
 
     // Computed state
-    isOwner,
+    isOwner: contract.isOwner,
     needsAdapterDeployment,
     needsInitialization,
     isVaultInitialized,
@@ -224,23 +229,55 @@ export function useVaultPage({ vaultAddress, chainId, connectedAddress }: UseVau
 
     // Loading/Error states
     isLoading,
-    vaultDataLoading,
-    allocationsLoading,
-    adapterLoading,
+    vaultDataLoading: vaultDataQuery.isLoading,
+    allocationsLoading: allocationsQuery.loading,
+    adapterLoading: adapterQuery.isLoading,
     hasError,
 
     // Actions
-    completeInitialization,
-    updateNameAndSymbol,
-    setAllocator,
-    updateCaps,
+    completeInitialization: contract.completeInitialization,
+    updateNameAndSymbol: contract.updateNameAndSymbol,
+    setAllocator: contract.setAllocator,
+    updateCaps: contract.updateCaps,
     refetchAll,
-    refetchAdapter,
+    refetchAdapter: adapterQuery.refetch,
 
     // Action loading states
-    isInitializing,
-    isUpdatingMetadata,
-    isUpdatingAllocator,
-    isUpdatingCaps,
-  };
+    isInitializing: contract.isInitializing,
+    isUpdatingMetadata: contract.isUpdatingMetadata,
+    isUpdatingAllocator: contract.isUpdatingAllocator,
+    isUpdatingCaps: contract.isUpdatingCaps,
+  }), [
+    vaultDataQuery.data,
+    vaultDataQuery.isLoading,
+    vaultDataQuery.error,
+    contract,
+    adapterQuery.morphoMarketV1Adapter,
+    adapterQuery.isLoading,
+    adapterQuery.refetch,
+    allocationsQuery.collateralAllocations,
+    allocationsQuery.marketAllocations,
+    allocationsQuery.loading,
+    allocationsQuery.error,
+    allocationsQuery.refetch,
+    vaultAPY,
+    vault24hEarnings,
+    isAPYLoading,
+    needsAdapterDeployment,
+    needsInitialization,
+    isVaultInitialized,
+    hasNoAllocators,
+    capsUninitialized,
+    isLoading,
+    hasError,
+    refetchAll,
+  ]);
+
+  // Apply selector if provided (for performance optimization)
+  if (selector) {
+    const selectedData = useMemo(() => selector(aggregatedData), [selector, aggregatedData]);
+    return { ...aggregatedData, data: selectedData } as any;
+  }
+
+  return aggregatedData as any;
 }
