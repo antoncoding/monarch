@@ -13,6 +13,7 @@ import { MODAL_REGISTRY } from '@/modals/registry';
  * - Supports multiple modals (stacking)
  * - Lazy loads modal components for code splitting
  * - Handles modal close automatically
+ * - Adapts between modal store API and component props
  *
  * @example
  * ```tsx
@@ -33,6 +34,9 @@ export function ModalRenderer() {
           return null;
         }
 
+        // Adapt props: modals use onOpenChange, we provide onClose
+        const handleClose = () => close(modal.id);
+
         return (
           <Suspense
             key={modal.id}
@@ -41,7 +45,10 @@ export function ModalRenderer() {
             <ModalComponent
               {...(modal.props as any)}
               isOpen
-              onClose={() => close(modal.id)}
+              onClose={handleClose}
+              onOpenChange={(open: boolean) => {
+                if (!open) handleClose();
+              }}
             />
           </Suspense>
         );

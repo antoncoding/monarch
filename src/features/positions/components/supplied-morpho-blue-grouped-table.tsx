@@ -103,9 +103,6 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
   marketPositions: MarketPositionWithEarnings[];
-  setShowWithdrawModal: (show: boolean) => void;
-  setShowSupplyModal: (show: boolean) => void;
-  setSelectedPosition: (position: MarketPosition) => void;
   refetch: (onSuccess?: () => void) => void;
   isRefetching: boolean;
   isLoadingEarnings?: boolean;
@@ -115,9 +112,6 @@ type SuppliedMorphoBlueGroupedTableProps = {
 
 export function SuppliedMorphoBlueGroupedTable({
   marketPositions,
-  setShowWithdrawModal,
-  setShowSupplyModal,
-  setSelectedPosition,
   refetch,
   isRefetching,
   isLoadingEarnings,
@@ -389,9 +383,6 @@ export function SuppliedMorphoBlueGroupedTable({
                           >
                             <SuppliedMarketsDetail
                               groupedPosition={groupedPosition}
-                              setShowWithdrawModal={setShowWithdrawModal}
-                              setShowSupplyModal={setShowSupplyModal}
-                              setSelectedPosition={setSelectedPosition}
                               showCollateralExposure={showCollateralExposure}
                             />
                           </motion.div>

@@ -16,8 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
 import Header from '@/components/layout/header/Header';
 import { OracleTypeInfo } from '@/features/markets/components/oracle';
-import { SupplyModalV2 } from '@/modals/supply/supply-modal';
 import { TokenIcon } from '@/components/shared/token-icon';
+import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
@@ -76,7 +76,7 @@ function MarketContent() {
   const networkImg = getNetworkImg(network);
 
   // 3. Consolidated state
-  const [showSupplyModal, setShowSupplyModal] = useState(false);
+  const { open: openModal } = useModal();
   const [showBorrowModal, setShowBorrowModal] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'1d' | '7d' | '30d'>('7d');
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeseriesOptions>(
@@ -278,7 +278,7 @@ function MarketContent() {
 
           <div className="flex flex-wrap gap-2">
             <Button
-              onClick={() => setShowSupplyModal(true)}
+              onClick={() => openModal('supply', { market, position: userPosition, isMarketPage: true, refetch: handleRefreshAllSync })}
               className="flex-1 sm:flex-none"
             >
               Supply
@@ -308,16 +308,6 @@ function MarketContent() {
             </Button>
           </div>
         </div>
-
-        {showSupplyModal && (
-          <SupplyModalV2
-            market={market}
-            onOpenChange={setShowSupplyModal}
-            position={userPosition}
-            isMarketPage
-            refetch={handleRefreshAllSync}
-          />
-        )}
 
         {showBorrowModal && (
           <BorrowModal
