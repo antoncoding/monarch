@@ -139,7 +139,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   };
 
   // Truncate order hash for display (e.g., "0x1234...5678")
-  const truncateHash = (hash: string) => {
+  const _truncateHash = (hash: string) => {
     if (hash.length <= 16) return hash;
     return `${hash.slice(0, 8)}...${hash.slice(-6)}`;
   };
