@@ -212,32 +212,29 @@ export function VaultInitializationModal() {
   }, [chainIdParam]);
 
   // Fetch vault data
-  const {
-    refetch: refetchVaultData,
-  } = useVaultV2Data({
+  const vaultDataQuery = useVaultV2Data({
     vaultAddress: vaultAddressValue,
     chainId,
   });
 
   // Transaction success handler
   const handleTransactionSuccess = useCallback(() => {
-    void refetchVaultData();
-  }, [refetchVaultData]);
+    void vaultDataQuery.refetch();
+  }, [vaultDataQuery]);
 
   // Fetch vault contract state and actions
-  const {
-    completeInitialization,
-    isInitializing,
-  } = useVaultV2({
+  const vaultContract = useVaultV2({
     vaultAddress: vaultAddressValue,
     chainId,
     onTransactionSuccess: handleTransactionSuccess,
   });
 
+  const { completeInitialization, isInitializing } = vaultContract;
+
   // Fetch adapter
-  const { morphoMarketV1Adapter: marketAdapter, loading: marketAdapterLoading, refetch: refetchAdapter } = useMorphoMarketV1Adapters({
+  const { morphoMarketV1Adapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketV1Adapters({
     vaultAddress: vaultAddressValue,
-    chainId
+    chainId,
   });
 
   const [stepIndex, setStepIndex] = useState(0);
@@ -337,7 +334,9 @@ export function VaultInitializationModal() {
       startVaultIndexing(vaultAddress, chainId);
 
       // Trigger initial refetch
-      void refetchAll();
+      void vaultDataQuery.refetch();
+      void vaultContract.refetch();
+      void refetchAdapter();
 
       close();
     } catch (_error) {
@@ -345,7 +344,9 @@ export function VaultInitializationModal() {
     }
   }, [
     completeInitialization,
-    refetchAll,
+    vaultDataQuery,
+    vaultContract,
+    refetchAdapter,
     close,
     registryAddress,
     selectedAgent,

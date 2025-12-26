@@ -1,20 +1,28 @@
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useConnection } from 'wagmi';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
 import type { GeneralTabProps } from './types';
 
-export function GeneralTab({
-  isOwner,
-  defaultName,
-  defaultSymbol,
-  currentName,
-  currentSymbol,
-  onUpdateMetadata,
-  updatingMetadata,
-  chainId,
-}: GeneralTabProps) {
+export function GeneralTab({ vaultAddress, chainId }: GeneralTabProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
+  const { isOwner, name, symbol, updateNameAndSymbol, isUpdatingMetadata } = useVaultV2({
+    vaultAddress,
+    chainId,
+    connectedAddress,
+  });
+
+  const defaultName = vaultData?.displayName ?? '';
+  const defaultSymbol = vaultData?.displaySymbol ?? '';
+  const currentName = name;
+  const currentSymbol = symbol;
   const nameInputId = useId();
   const symbolInputId = useId();
 
@@ -65,7 +73,7 @@ export function GeneralTab({
       return;
     }
 
-    const success = await onUpdateMetadata({
+    const success = await updateNameAndSymbol({
       name: trimmedName !== previousName ? trimmedName || undefined : undefined,
       symbol: trimmedSymbol !== previousSymbol ? trimmedSymbol || undefined : undefined,
     });
@@ -73,7 +81,7 @@ export function GeneralTab({
     if (success) {
       setMetadataError(null);
     }
-  }, [metadataChanged, onUpdateMetadata, previousName, previousSymbol, trimmedName, trimmedSymbol, needSwitchChain, switchToNetwork]);
+  }, [metadataChanged, updateNameAndSymbol, previousName, previousSymbol, trimmedName, trimmedSymbol, needSwitchChain, switchToNetwork]);
 
   return (
     <div className="space-y-6">
@@ -127,10 +135,10 @@ export function GeneralTab({
           className="ml-auto"
           variant="surface"
           size="sm"
-          disabled={!metadataChanged || updatingMetadata || !isOwner}
+          disabled={!metadataChanged || isUpdatingMetadata || !isOwner}
           onClick={() => void handleMetadataSubmit()}
         >
-          {updatingMetadata ? (
+          {isUpdatingMetadata ? (
             <span className="flex items-center gap-2">
               <Spinner size={12} /> Saving...
             </span>

@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import type { Address } from 'viem';
 import { useQuery } from '@tanstack/react-query';
 import { useTokens } from '@/components/providers/TokenProvider';
@@ -36,12 +35,7 @@ export type VaultV2Data = {
   curatorDisplay: string;
 };
 
-export function useVaultV2Data({
-  vaultAddress,
-  chainId,
-  fallbackName = '',
-  fallbackSymbol = '',
-}: UseVaultV2DataArgs) {
+export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
   const { findToken } = useTokens();
 
   const query = useQuery({

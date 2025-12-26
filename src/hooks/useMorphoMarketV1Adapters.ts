@@ -36,10 +36,7 @@ export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddr
     staleTime: 30_000, // 30 seconds - adapter data is cacheable
   });
 
-  const morphoMarketV1Adapter = useMemo(
-    () => (query.data && query.data.length > 0 ? query.data[0].adapter : zeroAddress),
-    [query.data],
-  );
+  const morphoMarketV1Adapter = useMemo(() => (query.data && query.data.length > 0 ? query.data[0].adapter : zeroAddress), [query.data]);
 
   return {
     morphoMarketV1Adapter,
