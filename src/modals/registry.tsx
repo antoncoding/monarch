@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import type { ModalType, ModalProps } from '@/stores/useModalStore';
+import type { ModalType } from '@/stores/useModalStore';
 
 // Lazy load modal components for better code splitting
 import { lazy } from 'react';
@@ -10,16 +10,12 @@ import { lazy } from 'react';
  */
 
 // Swap & Bridge
-const BridgeSwapModal = lazy(() =>
-  import('@/features/swap/components/BridgeSwapModal').then((m) => ({ default: m.BridgeSwapModal })),
-);
+const BridgeSwapModal = lazy(() => import('@/features/swap/components/BridgeSwapModal').then((m) => ({ default: m.BridgeSwapModal })));
 
 // Supply & Withdraw
 const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m) => ({ default: m.SupplyModalV2 })));
 
-const SupplyProcessModal = lazy(() =>
-  import('@/modals/supply/supply-process-modal').then((m) => ({ default: m.SupplyProcessModal })),
-);
+const SupplyProcessModal = lazy(() => import('@/modals/supply/supply-process-modal').then((m) => ({ default: m.SupplyProcessModal })));
 
 // Oracle & Information
 const ChainlinkRiskTiersModal = lazy(() =>
@@ -27,6 +23,17 @@ const ChainlinkRiskTiersModal = lazy(() =>
     default: m.ChainlinkRiskTiersModal,
   })),
 );
+
+// Settings & Configuration
+const BlacklistedMarketsModal = lazy(() =>
+  import('@/modals/settings/blacklisted-markets-modal').then((m) => ({
+    default: m.BlacklistedMarketsModal,
+  })),
+);
+
+const TrustedVaultsModal = lazy(() => import('@/modals/settings/trusted-vaults-modal'));
+
+const MarketSettingsModal = lazy(() => import('@/features/markets/components/market-settings-modal'));
 
 /**
  * Central modal registry mapping modal types to their components.
@@ -50,6 +57,11 @@ export const MODAL_REGISTRY: {
   // Oracle & Information
   chainlinkRiskTiers: ChainlinkRiskTiersModal,
 
+  // Settings & Configuration
+  blacklistedMarkets: BlacklistedMarketsModal,
+  trustedVaults: TrustedVaultsModal,
+  marketSettings: MarketSettingsModal,
+
   // Placeholders for modals not yet migrated
   // These will throw helpful errors if accidentally called
   vaultDeposit: (() => {
@@ -57,15 +69,6 @@ export const MODAL_REGISTRY: {
   }) as any,
   vaultDepositProcess: (() => {
     throw new Error('vaultDepositProcess modal not yet migrated to Zustand');
-  }) as any,
-  marketSettings: (() => {
-    throw new Error('marketSettings modal not yet migrated to Zustand');
-  }) as any,
-  trustedVaults: (() => {
-    throw new Error('trustedVaults modal not yet migrated to Zustand');
-  }) as any,
-  blacklistedMarkets: (() => {
-    throw new Error('blacklistedMarkets modal not yet migrated to Zustand');
   }) as any,
   borrow: (() => {
     throw new Error('borrow modal not yet migrated to Zustand');

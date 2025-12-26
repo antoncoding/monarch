@@ -1,18 +1,17 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useDisclosure } from '@/hooks/useDisclosure';
 import type { Chain } from 'viem';
 import { useRouter } from 'next/navigation';
 
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
-import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -28,7 +27,6 @@ import AdvancedSearchBar, { ShortcutType } from './components/advanced-search-ba
 import AssetFilter from './components/filters/asset-filter';
 import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './components/column-visibility';
 import { SortColumn } from './components/constants';
-import MarketSettingsModal from './components/market-settings-modal';
 import MarketsTable from './components/table/markets-table';
 import NetworkFilter from './components/filters/network-filter';
 import OracleFilter from './components/filters/oracle-filter';
@@ -59,8 +57,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   // Use addBlacklistedMarket directly from context
   // The context automatically reapplies the filter when blacklist changes
   const addBlacklistedMarket = addBlacklistedMarketBase;
-
-  const { isOpen: isSettingsModalOpen, onOpen: onSettingsModalOpen, onOpenChange: onSettingsModalOpenChange } = useDisclosure();
 
   // Initialize state with server-parsed values
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
@@ -139,7 +135,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
   const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
-  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = useState(false);
+  const { open: openModal } = useModal();
 
   const trustedVaultKeys = useMemo(() => {
     return new Set(userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
@@ -435,19 +431,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
       <div className="container h-full gap-8 px-[4%]">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        <MarketSettingsModal
-          isOpen={isSettingsModalOpen}
-          onOpenChange={onSettingsModalOpenChange}
-          usdFilters={usdFilters}
-          setUsdFilters={setUsdFilters}
-          entriesPerPage={entriesPerPage}
-          onEntriesPerPageChange={handleEntriesPerPageChange}
-          columnVisibility={columnVisibility}
-          setColumnVisibility={setColumnVisibility}
-          onOpenTrustedVaultsModal={() => setIsTrustedVaultsModalOpen(true)}
-          trustedVaults={userTrustedVaults}
-        />
-
         <div className="flex flex-col gap-4 pb-4">
           <div className="w-full lg:w-1/2">
             <AdvancedSearchBar
@@ -557,7 +540,16 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                   minBorrow: effectiveMinBorrow,
                   minLiquidity: effectiveMinLiquidity,
                 }}
-                onOpenSettings={onSettingsModalOpen}
+                onOpenSettings={() =>
+                  openModal('marketSettings', {
+                    usdFilters,
+                    setUsdFilters,
+                    entriesPerPage,
+                    onEntriesPerPageChange: handleEntriesPerPageChange,
+                    columnVisibility,
+                    setColumnVisibility,
+                  })
+                }
                 onRefresh={handleRefresh}
                 isRefetching={isRefetching}
                 tableViewMode={tableViewMode}
@@ -583,12 +575,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
           </div>
         )}
       </div>
-      <TrustedVaultsModal
-        isOpen={isTrustedVaultsModalOpen}
-        onOpenChange={setIsTrustedVaultsModalOpen}
-        userTrustedVaults={userTrustedVaults}
-        setUserTrustedVaults={setUserTrustedVaults}
-      />
     </>
   );
 }

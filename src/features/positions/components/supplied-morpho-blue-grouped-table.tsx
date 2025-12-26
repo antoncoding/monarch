@@ -29,13 +29,7 @@ import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
 import { storageKeys } from '@/utils/storageKeys';
-import {
-  type MarketPosition,
-  type GroupedPosition,
-  type MarketPositionWithEarnings,
-  type WarningWithDetail,
-  WarningCategory,
-} from '@/utils/types';
+import { type GroupedPosition, type MarketPositionWithEarnings, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { RebalanceModal } from './rebalance/rebalance-modal';

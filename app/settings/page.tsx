@@ -5,13 +5,12 @@ import { GoShield, GoShieldCheck } from 'react-icons/go';
 import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import Header from '@/components/layout/header/Header';
-import { BlacklistedMarketsModal } from '@/modals/settings/blacklisted-markets-modal';
 import { AdvancedRpcSettings } from '@/modals/settings/custom-rpc-settings';
-import TrustedVaultsModal from '@/modals/settings/trusted-vaults-modal';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useModal } from '@/hooks/useModal';
 
 export default function SettingsPage() {
   const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
@@ -20,9 +19,7 @@ export default function SettingsPage() {
   const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>('userTrustedVaults', defaultTrustedVaults);
 
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
-
-  const [isTrustedVaultsModalOpen, setIsTrustedVaultsModalOpen] = React.useState(false);
-  const [isBlacklistedMarketsModalOpen, setIsBlacklistedMarketsModalOpen] = React.useState(false);
+  const { open: openModal } = useModal();
   const [mounted, setMounted] = React.useState(false);
 
   const defaultVaultKeys = React.useMemo(() => {
@@ -186,7 +183,12 @@ export default function SettingsPage() {
                 <Button
                   size="sm"
                   variant="default"
-                  onClick={() => setIsTrustedVaultsModalOpen(true)}
+                  onClick={() =>
+                    openModal('trustedVaults', {
+                      userTrustedVaults,
+                      setUserTrustedVaults,
+                    })
+                  }
                 >
                   Edit
                 </Button>
@@ -244,7 +246,7 @@ export default function SettingsPage() {
                 <Button
                   size="sm"
                   variant="default"
-                  onClick={() => setIsBlacklistedMarketsModalOpen(true)}
+                  onClick={() => openModal('blacklistedMarkets', {})}
                 >
                   Edit
                 </Button>
@@ -258,20 +260,6 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-
-      {/* Trusted Vaults Modal */}
-      <TrustedVaultsModal
-        isOpen={isTrustedVaultsModalOpen}
-        onOpenChange={setIsTrustedVaultsModalOpen}
-        userTrustedVaults={userTrustedVaults}
-        setUserTrustedVaults={setUserTrustedVaults}
-      />
-
-      {/* Blacklisted Markets Modal */}
-      <BlacklistedMarketsModal
-        isOpen={isBlacklistedMarketsModalOpen}
-        onOpenChange={setIsBlacklistedMarketsModalOpen}
-      />
     </div>
   );
 }

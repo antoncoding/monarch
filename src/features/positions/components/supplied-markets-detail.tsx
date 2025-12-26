@@ -15,15 +15,7 @@ type SuppliedMarketsDetailProps = {
   showCollateralExposure: boolean;
 };
 
-function MarketRow({
-  position,
-  totalSupply,
-  rateLabel,
-}: {
-  position: MarketPosition;
-  totalSupply: number;
-  rateLabel: string;
-}) {
+function MarketRow({ position, totalSupply, rateLabel }: { position: MarketPosition; totalSupply: number; rateLabel: string }) {
   const { open } = useModal();
   const suppliedAmount = Number(formatBalance(position.state.supplyAssets, position.market.loanAsset.decimals));
   const percentageOfPortfolio = totalSupply > 0 ? (suppliedAmount / totalSupply) * 100 : 0;
@@ -113,10 +105,7 @@ function MarketRow({
 }
 
 // shared similar style with @vault-allocation-detail.tsx
-export function SuppliedMarketsDetail({
-  groupedPosition,
-  showCollateralExposure,
-}: SuppliedMarketsDetailProps) {
+export function SuppliedMarketsDetail({ groupedPosition, showCollateralExposure }: SuppliedMarketsDetailProps) {
   const { short: rateLabel } = useRateLabel();
 
   // Sort markets by size

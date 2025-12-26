@@ -3,6 +3,7 @@ import type { Market, MarketPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
 import type { Address } from 'viem';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
+import type { ColumnVisibility } from '@/features/markets/components/column-visibility';
 
 /**
  * Central registry of all modal types and their required props.
@@ -61,21 +62,16 @@ export type ModalProps = {
     setUsdFilters: (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => void;
     entriesPerPage: number;
     onEntriesPerPageChange: (value: number) => void;
-    columnVisibility: Record<string, boolean>;
-    setColumnVisibility: (visibility: Record<string, boolean>) => void;
-    onOpenTrustedVaultsModal?: () => void;
-    trustedVaults?: TrustedVault[];
+    columnVisibility: ColumnVisibility;
+    setColumnVisibility: (visibility: ColumnVisibility) => void;
   };
 
   trustedVaults: {
-    trustedVaults: TrustedVault[];
-    onSave: (vaults: TrustedVault[]) => void;
+    userTrustedVaults: TrustedVault[];
+    setUserTrustedVaults: React.Dispatch<React.SetStateAction<TrustedVault[]>>;
   };
 
-  blacklistedMarkets: {
-    blacklistedMarkets: Array<{ uniqueKey: string; chainId: number; reason?: string }>;
-    onRemove: (uniqueKey: string) => void;
-  };
+  blacklistedMarkets: Record<string, never>; // No props needed - uses useMarkets() context
 
   // Oracle & Information
   chainlinkRiskTiers: Record<string, never>; // No props needed
