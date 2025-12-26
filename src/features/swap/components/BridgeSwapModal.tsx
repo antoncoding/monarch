@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ArrowDownIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
 import { useAccount } from 'wagmi';
+import { motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
@@ -119,14 +120,28 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
 
   const isLoading = isQuoting || approvePending || isExecuting;
 
+  // Format error messages to be user-friendly
+  const formatErrorMessage = (errorMsg: string): string => {
+    if (errorMsg.includes('BUILD_TX_ERROR')) return 'Failed to build transaction. Please try again.';
+    if (errorMsg.includes('same from and to token')) return 'Cannot swap to the same token. Try selecting a different source token.';
+    if (errorMsg.toLowerCase().includes('insufficient')) return errorMsg;
+    return errorMsg;
+  };
+
   // Determine output display text
   const getOutputDisplay = () => {
     if (!sourceToken) return 'Select token above';
     if (amount === BigInt(0)) return '0';
     if (isQuoting) return 'Loading...';
-    if (error) return '—';
+    if (error) return <span className="text-xs text-orange-600 dark:text-orange-400">{formatErrorMessage(error)}</span>;
     if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
     return '0';
+  };
+
+  // Truncate order hash for display (e.g., "0x1234...5678")
+  const truncateHash = (hash: string) => {
+    if (hash.length <= 16) return hash;
+    return `${hash.slice(0, 8)}...${hash.slice(-6)}`;
   };
 
   return (
@@ -207,10 +222,14 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
 
           {/* Error Display */}
           {error && (
-            <div className="rounded bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20">
-              <p className="font-medium">⚠️ Error</p>
-              <p className="mt-1 text-xs">{error}</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="rounded bg-orange-50 p-3 text-sm dark:bg-orange-900/20"
+            >
+              <span className="text-orange-700 dark:text-orange-300 text-xs">{formatErrorMessage(error)}</span>
+            </motion.div>
           )}
 
           {/* Quote Details */}
@@ -241,19 +260,25 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
 
           {/* Success Message */}
           {orderUid && (
-            <div className="rounded bg-green-50 p-3 text-sm dark:bg-green-900/20">
-              <p className="font-medium">✓ Order Submitted!</p>
-              <p className="text-secondary mt-1 break-all text-xs">{orderUid}</p>
-              <a
-                href={`https://explorer.cow.fi/orders/${orderUid}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary mt-2 inline-flex items-center gap-1 text-xs underline"
-              >
-                View in CoW Explorer
-                <ExternalLinkIcon className="h-3 w-3" />
-              </a>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="rounded bg-green-50 p-3 text-sm dark:bg-green-900/20"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-secondary text-xs">Order Created 🎉</span>
+                <a
+                  href={`https://explorer.cow.fi/orders/${orderUid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary inline-flex items-center gap-1 text-xs underline hover:opacity-80"
+                >
+                  View in CoW Explorer
+                  <ExternalLinkIcon className="h-3 w-3" />
+                </a>
+              </div>
+            </motion.div>
           )}
 
           {/* Empty State */}

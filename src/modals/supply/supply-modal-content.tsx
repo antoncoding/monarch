@@ -113,7 +113,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
             <div>
               <div className="flex items-center justify-between">
                 <span className="opacity-80">Supply amount</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <p className="font-inter text-xs opacity-50">
                     Balance:{' '}
                     {useEth
@@ -140,9 +140,9 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                           decimals: market.loanAsset.decimals,
                         })
                       }
-                      className="text-primary flex items-center gap-0.5 text-xs transition hover:opacity-70"
+                      className="text-primary text-xs transition hover:opacity-70"
                     >
-                      Swap to {useEth ? getNativeTokenSymbol(market.morphoBlue.chain.id) : market.loanAsset.symbol}
+                      Swap or Bridge
                     </button>
                   )}
                 </div>
