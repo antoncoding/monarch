@@ -98,8 +98,6 @@ function MarketContent() {
     refetch: refetchMarket,
   } = useMarketData(marketid as string, network);
 
-  console.log('market', market);
-
   // Transaction filters with localStorage persistence (per symbol)
   const { minSupplyAmount, minBorrowAmount, setMinSupplyAmount, setMinBorrowAmount } = useTransactionFilters(
     market?.loanAsset?.symbol ?? '',

@@ -1,82 +1,50 @@
 'use client';
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import type { Chain } from 'viem';
-import { useRouter } from 'next/navigation';
 
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { getVaultKey } from '@/constants/vaults/known_vaults';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
+import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
-import type { SupportedNetworks } from '@/utils/networks';
-import type { PriceFeedVendors } from '@/utils/oracle';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
-import type { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './components/advanced-search-bar';
 import AssetFilter from './components/filters/asset-filter';
-import { SortColumn } from './components/constants';
 import MarketsTable from './components/table/markets-table';
 import NetworkFilter from './components/filters/network-filter';
 import OracleFilter from './components/filters/oracle-filter';
 
-type MarketContentProps = {
-  initialNetwork: SupportedNetworks | null;
-  initialCollaterals: string[];
-  initialLoanAssets: string[];
-};
-
-export default function Markets({ initialNetwork, initialCollaterals, initialLoanAssets }: MarketContentProps) {
-  const router = useRouter();
-
+export default function Markets() {
   const toast = useStyledToast();
 
-  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+  // Data fetching with React Query
+  const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
 
-  // Initialize state with server-parsed values
-  const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
-  const [selectedLoanAssets, setSelectedLoanAssets] = useState<string[]>(initialLoanAssets);
-  const [selectedNetwork, setSelectedNetwork] = useState<SupportedNetworks | null>(initialNetwork);
+  // Filter state (persisted to localStorage)
+  const filters = useMarketsFilters();
 
+  // Derived data (filtered + sorted markets)
+  const filteredMarkets = useFilteredMarkets();
+
+  // UI state
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
-
-  // Market preferences from Zustand store
-  const {
-    sortColumn,
-    sortDirection,
-    includeUnknownTokens,
-    showUnknownOracle,
-    usdMinSupply,
-    usdMinBorrow,
-    usdMinLiquidity,
-    minSupplyEnabled,
-    minBorrowEnabled,
-    minLiquidityEnabled,
-    trustedVaultsOnly,
-    starredMarkets,
-  } = useMarketPreferences();
-
-  const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
-
-  const [searchQuery, setSearchQuery] = useState<string>('');
-
-  const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
-
-  const { currentPage, setCurrentPage, resetPage } = usePagination();
-
-  const { allTokens, findToken } = useTokens();
-
-  const { tableViewMode } = useMarketPreferences();
-
-  // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);
 
+  // Store hooks
+  const { currentPage, setCurrentPage, resetPage } = usePagination();
+  const { allTokens } = useTokens();
+  const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
+  const { vaults: userTrustedVaults } = useTrustedVaults();
+  const { open: openModal } = useModal();
+
+  // Force compact mode on mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768); // md breakpoint
@@ -90,37 +58,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const { vaults: userTrustedVaults } = useTrustedVaults();
-  const { open: openModal } = useModal();
-
-  const trustedVaultKeys = useMemo(() => {
-    return new Set(userTrustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
-  }, [userTrustedVaults]);
-
-  const hasTrustedVault = useCallback(
-    (market: Market) => {
-      if (!market.supplyingVaults?.length) return false;
-      const chainId = market.morphoBlue.chain.id;
-      return market.supplyingVaults.some((vault) => {
-        if (!vault.address) return false;
-        return trustedVaultKeys.has(getVaultKey(vault.address as string, chainId));
-      });
-    },
-    [trustedVaultKeys],
-  );
-
-  // Create memoized usdFilters object from individual localStorage values to prevent re-renders
-  const usdFilters = useMemo(
-    () => ({
-      minSupply: usdMinSupply,
-      minBorrow: usdMinBorrow,
-      minLiquidity: usdMinLiquidity,
-    }),
-    [usdMinSupply, usdMinBorrow, usdMinLiquidity],
-  );
-
+  // Compute unique collaterals and loan assets for filter dropdowns
   useEffect(() => {
-    // return if no markets
     if (!rawMarkets) return;
 
     const processTokens = (
@@ -182,130 +121,15 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     setUniqueLoanAssets(processTokens(loanList));
   }, [rawMarkets, includeUnknownTokens, allTokens]);
 
-  const updateUrlParams = useCallback(
-    (collaterals: string[], loanAssets: string[], network: SupportedNetworks | null) => {
-      const params = new URLSearchParams();
-
-      if (collaterals.length > 0) {
-        params.set('collaterals', collaterals.join(','));
-      }
-      if (loanAssets.length > 0) {
-        params.set('loanAssets', loanAssets.join(','));
-      }
-      if (network) {
-        params.set('network', network.toString());
-      }
-
-      const newParams = params.toString();
-      router.push(`?${newParams}`, { scroll: false });
-    },
-    [router],
-  );
-
-  const applyFiltersAndSort = useCallback(() => {
-    if (!rawMarkets) return;
-
-    // Apply filters using the new composable filtering system
-    let filtered = filterMarkets(rawMarkets, {
-      selectedNetwork,
-      showUnknownTokens: includeUnknownTokens,
-      showUnknownOracle,
-      selectedCollaterals,
-      selectedLoanAssets,
-      selectedOracles,
-      usdFilters: {
-        minSupply: {
-          enabled: minSupplyEnabled,
-          threshold: usdFilters.minSupply,
-        },
-        minBorrow: {
-          enabled: minBorrowEnabled,
-          threshold: usdFilters.minBorrow,
-        },
-        minLiquidity: {
-          enabled: minLiquidityEnabled,
-          threshold: usdFilters.minLiquidity,
-        },
-      },
-      findToken,
-      searchQuery,
-    });
-
-    if (trustedVaultsOnly) {
-      filtered = filtered.filter(hasTrustedVault);
-    }
-
-    // Apply sorting
-    let sorted: Market[];
-    if (sortColumn === SortColumn.Starred) {
-      sorted = sortMarkets(filtered, createStarredSort(starredMarkets), 1);
-    } else if (sortColumn === SortColumn.TrustedBy) {
-      sorted = sortMarkets(filtered, (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)), sortDirection as 1 | -1);
-    } else {
-      const sortPropertyMap: Record<SortColumn, string> = {
-        [SortColumn.Starred]: 'uniqueKey',
-        [SortColumn.LoanAsset]: 'loanAsset.name',
-        [SortColumn.CollateralAsset]: 'collateralAsset.name',
-        [SortColumn.LLTV]: 'lltv',
-        [SortColumn.Supply]: 'state.supplyAssetsUsd',
-        [SortColumn.Borrow]: 'state.borrowAssetsUsd',
-        [SortColumn.SupplyAPY]: 'state.supplyApy',
-        [SortColumn.Liquidity]: 'state.liquidityAssets',
-        [SortColumn.BorrowAPY]: 'state.borrowApy',
-        [SortColumn.RateAtTarget]: 'state.apyAtTarget',
-        [SortColumn.TrustedBy]: '',
-        [SortColumn.UtilizationRate]: 'state.utilization',
-      };
-      const propertyPath = sortPropertyMap[sortColumn];
-      if (propertyPath) {
-        sorted = sortMarkets(filtered, createPropertySort(propertyPath), sortDirection as 1 | -1);
-      } else {
-        sorted = filtered;
-      }
-    }
-
-    setFilteredMarkets(sorted);
-  }, [
-    rawMarkets,
-    sortColumn,
-    sortDirection,
-    selectedNetwork,
-    includeUnknownTokens,
-    showUnknownOracle,
-    selectedCollaterals,
-    selectedLoanAssets,
-    selectedOracles,
-    starredMarkets,
-    findToken,
-    usdFilters,
-    minSupplyEnabled,
-    minBorrowEnabled,
-    minLiquidityEnabled,
-    trustedVaultsOnly,
-    searchQuery,
-    hasTrustedVault,
-  ]);
-
-  useEffect(() => {
-    applyFiltersAndSort();
-  }, [applyFiltersAndSort]);
-
-  // Reset page only when filters change (not when sorting or starring changes)
+  // Reset page when filters change
   useEffect(() => {
     resetPage();
   }, [
-    selectedNetwork,
-    includeUnknownTokens,
-    showUnknownOracle,
-    selectedCollaterals,
-    selectedLoanAssets,
-    selectedOracles,
-    usdFilters,
-    minSupplyEnabled,
-    minBorrowEnabled,
-    minLiquidityEnabled,
-    trustedVaultsOnly,
-    searchQuery,
+    filters.selectedNetwork,
+    filters.selectedCollaterals,
+    filters.selectedLoanAssets,
+    filters.selectedOracles,
+    filters.searchQuery,
     resetPage,
   ]);
 
@@ -327,26 +151,22 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     };
   }, []);
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
-  };
+  // Handlers
+  const handleFilterUpdate = useCallback(
+    (type: ShortcutType, tokens: string[]) => {
+      const uniqueTokens = [...new Set(tokens)];
+      if (type === ShortcutType.Collateral) {
+        filters.setSelectedCollaterals(uniqueTokens);
+      } else {
+        filters.setSelectedLoanAssets(uniqueTokens);
+      }
+    },
+    [filters],
+  );
 
-  const handleFilterUpdate = (type: ShortcutType, tokens: string[]) => {
-    // remove duplicates
-    const uniqueTokens = [...new Set(tokens)];
-
-    if (type === ShortcutType.Collateral) {
-      setSelectedCollaterals(uniqueTokens);
-    } else {
-      setSelectedLoanAssets(uniqueTokens);
-    }
-    // We don't need to call applyFiltersAndSort here, as it will be triggered by the useEffect
-  };
-
-  const handleRefresh = () => {
-    refetch(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
-  };
+  const handleRefresh = useCallback(() => {
+    refetch().then(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
+  }, [refetch, toast]);
 
   return (
     <>
@@ -359,11 +179,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
         <div className="flex flex-col gap-4 pb-4">
           <div className="w-full lg:w-1/2">
             <AdvancedSearchBar
-              searchQuery={searchQuery}
-              onSearch={handleSearch}
+              searchQuery={filters.searchQuery}
+              onSearch={filters.setSearchQuery}
               onFilterUpdate={handleFilterUpdate}
-              selectedCollaterals={selectedCollaterals}
-              selectedLoanAssets={selectedLoanAssets}
+              selectedCollaterals={filters.selectedCollaterals}
+              selectedLoanAssets={filters.selectedLoanAssets}
               uniqueCollaterals={uniqueCollaterals}
               uniqueLoanAssets={uniqueLoanAssets}
             />
@@ -371,44 +191,29 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-4 lg:flex-row">
-              <NetworkFilter
-                selectedNetwork={selectedNetwork}
-                setSelectedNetwork={(network) => {
-                  setSelectedNetwork(network);
-                  updateUrlParams(selectedCollaterals, selectedLoanAssets, network);
-                }}
-              />
+              <NetworkFilter selectedNetwork={filters.selectedNetwork} setSelectedNetwork={filters.setSelectedNetwork} />
 
               <AssetFilter
                 label="Loan Asset"
                 placeholder="All loan asset"
-                selectedAssets={selectedLoanAssets}
-                setSelectedAssets={(assets) => {
-                  setSelectedLoanAssets(assets);
-                  updateUrlParams(selectedCollaterals, assets, selectedNetwork);
-                }}
+                selectedAssets={filters.selectedLoanAssets}
+                setSelectedAssets={filters.setSelectedLoanAssets}
                 items={uniqueLoanAssets}
                 loading={loading}
-                updateFromSearch={searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
+                updateFromSearch={filters.searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
               />
 
               <AssetFilter
                 label="Collateral"
                 placeholder="All collateral"
-                selectedAssets={selectedCollaterals}
-                setSelectedAssets={(assets) => {
-                  setSelectedCollaterals(assets);
-                  updateUrlParams(assets, selectedLoanAssets, selectedNetwork);
-                }}
+                selectedAssets={filters.selectedCollaterals}
+                setSelectedAssets={filters.setSelectedCollaterals}
                 items={uniqueCollaterals}
                 loading={loading}
-                updateFromSearch={searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
+                updateFromSearch={filters.searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
               />
 
-              <OracleFilter
-                selectedOracles={selectedOracles}
-                setSelectedOracles={setSelectedOracles}
-              />
+              <OracleFilter selectedOracles={filters.selectedOracles} setSelectedOracles={filters.setSelectedOracles} />
             </div>
           </div>
         </div>
@@ -426,10 +231,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
             onOpenSettings={() => openModal('marketSettings', {})}
             onRefresh={handleRefresh}
-            isRefetching={isRefetching}
             isMobile={isMobile}
-            loading={loading}
-            isEmpty={rawMarkets == null}
           />
         </div>
       </div>

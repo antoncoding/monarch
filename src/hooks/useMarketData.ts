@@ -92,7 +92,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
       return finalMarket;
     },
     enabled: !!uniqueKey && !!network,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 2,
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
   });
