@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FiZap } from 'react-icons/fi';
 import { type Address, zeroAddress, decodeEventLog } from 'viem';
+import { useParams } from 'next/navigation';
 import { usePublicClient } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,10 +12,14 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { Spinner } from '@/components/ui/spinner';
 import { adapterFactoryAbi } from '@/abis/morpho-market-v1-adapter-factory';
 import { useDeployMorphoMarketV1Adapter } from '@/hooks/useDeployMorphoMarketV1Adapter';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { getMorphoAddress } from '@/utils/morpho';
-import { type SupportedNetworks, getNetworkConfig } from '@/utils/networks';
+import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
 import { startVaultIndexing } from '@/utils/vault-indexing';
+import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 const ZERO_ADDRESS = zeroAddress;
 const shortenAddress = (value: Address | string) => (value === ZERO_ADDRESS ? '0x0000…0000' : `${value.slice(0, 6)}…${value.slice(-4)}`);
@@ -180,35 +185,58 @@ function AgentSelectionStep({
 const MAX_NAME_LENGTH = 64;
 const MAX_SYMBOL_LENGTH = 16;
 
-export function VaultInitializationModal({
-  isOpen,
-  onOpenChange,
-  vaultAddress,
-  marketAdapter,
-  marketAdapterLoading,
-  refetchMarketAdapter,
-  chainId,
-  onAdapterConfigured,
-  completeInitialization,
-  isInitializing,
-}: {
-  isOpen: boolean;
-  marketAdapter: Address;
-  marketAdapterLoading: boolean;
-  refetchMarketAdapter: () => void;
-  onOpenChange: (open: boolean) => void;
-  vaultAddress: Address;
-  chainId: SupportedNetworks;
-  onAdapterConfigured: () => void;
-  completeInitialization: (
-    morphoRegistry: Address,
-    marketV1Adapter: Address,
-    allocator?: Address,
-    name?: string,
-    symbol?: string,
-  ) => Promise<boolean>;
-  isInitializing: boolean;
-}) {
+/**
+ * VaultInitializationModal - Completely self-contained modal component.
+ * Reads all data directly from Zustand stores and hooks - no props needed!
+ *
+ * Open this modal using: useVaultInitializationModalStore().open()
+ */
+export function VaultInitializationModal() {
+  // Modal state from Zustand (UI state)
+  const { isOpen, close } = useVaultInitializationModalStore();
+
+  // Get vault address and chain ID from URL params
+  const { chainId: chainIdParam, vaultAddress } = useParams<{
+    chainId: string;
+    vaultAddress: string;
+  }>();
+
+  const vaultAddressValue = vaultAddress as Address;
+
+  const chainId = useMemo(() => {
+    const parsed = Number(chainIdParam);
+    if (Number.isFinite(parsed) && ALL_SUPPORTED_NETWORKS.includes(parsed as SupportedNetworks)) {
+      return parsed as SupportedNetworks;
+    }
+    return SupportedNetworks.Base;
+  }, [chainIdParam]);
+
+  // Fetch vault data
+  const vaultDataQuery = useVaultV2Data({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
+
+  // Transaction success handler
+  const handleTransactionSuccess = useCallback(() => {
+    void vaultDataQuery.refetch();
+  }, [vaultDataQuery]);
+
+  // Fetch vault contract state and actions
+  const vaultContract = useVaultV2({
+    vaultAddress: vaultAddressValue,
+    chainId,
+    onTransactionSuccess: handleTransactionSuccess,
+  });
+
+  const { completeInitialization, isInitializing } = vaultContract;
+
+  // Fetch adapter
+  const { morphoMarketV1Adapter: marketAdapter, refetch: refetchAdapter } = useMorphoMarketV1Adapters({
+    vaultAddress: vaultAddressValue,
+    chainId,
+  });
+
   const [stepIndex, setStepIndex] = useState(0);
   const [selectedAgent, setSelectedAgent] = useState<Address | null>((v2AgentsBase.at(0)?.address as Address) || null);
   const [vaultName, setVaultName] = useState<string>('');
@@ -218,18 +246,19 @@ export function VaultInitializationModal({
 
   const publicClient = usePublicClient({ chainId });
 
-  const morphoAddress = useMemo(() => getMorphoAddress(chainId), [chainId]);
+  const morphoAddress = useMemo(() => (chainId ? getMorphoAddress(chainId) : ZERO_ADDRESS), [chainId]);
   const registryAddress = useMemo(() => {
+    if (!chainId) return ZERO_ADDRESS;
     const configured = getNetworkConfig(chainId).vaultConfig?.morphoRegistry;
     return (configured as Address | undefined) ?? ZERO_ADDRESS;
   }, [chainId]);
 
   // Adapter is detected if it exists in the subgraph OR we just deployed it
-  const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : marketAdapter;
+  const adapterAddress = deployedAdapter !== ZERO_ADDRESS ? deployedAdapter : (marketAdapter ?? ZERO_ADDRESS);
   const adapterDetected = adapterAddress !== ZERO_ADDRESS;
 
   const { deploy, isDeploying, canDeploy } = useDeployMorphoMarketV1Adapter({
-    vaultAddress,
+    vaultAddress: vaultAddressValue,
     chainId,
     morphoAddress,
   });
@@ -274,7 +303,7 @@ export function VaultInitializationModal({
         setDeployedAdapter(adapter);
 
         // Trigger refetch for subgraph sync
-        void refetchMarketAdapter();
+        void refetchAdapter();
 
         // Auto-advance to next step
         setStepIndex(1);
@@ -282,10 +311,10 @@ export function VaultInitializationModal({
     } catch (_error) {
       // Error is handled by useDeployMorphoMarketV1Adapter hook
     }
-  }, [deploy, publicClient, refetchMarketAdapter]);
+  }, [deploy, publicClient, refetchAdapter]);
 
   const handleCompleteInitialization = useCallback(async () => {
-    if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS) return;
+    if (adapterAddress === ZERO_ADDRESS || registryAddress === ZERO_ADDRESS || !vaultAddress || !chainId) return;
 
     try {
       // Note: Adapter cap will be set when user configures market caps
@@ -305,16 +334,20 @@ export function VaultInitializationModal({
       startVaultIndexing(vaultAddress, chainId);
 
       // Trigger initial refetch
-      void onAdapterConfigured();
+      void vaultDataQuery.refetch();
+      void vaultContract.refetch();
+      void refetchAdapter();
 
-      onOpenChange(false);
+      close();
     } catch (_error) {
       // Error is handled by useVaultV2 hook (toast shown to user)
     }
   }, [
     completeInitialization,
-    onAdapterConfigured,
-    onOpenChange,
+    vaultDataQuery,
+    vaultContract,
+    refetchAdapter,
+    close,
     registryAddress,
     selectedAgent,
     adapterAddress,
@@ -426,10 +459,17 @@ export function VaultInitializationModal({
     );
   };
 
+  // Don't render if required data is missing
+  if (!isOpen || !vaultAddress || !chainId) {
+    return null;
+  }
+
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
       size="lg"
       scrollBehavior="inside"
       className="bg-background dark:border border-gray-700"
@@ -438,7 +478,7 @@ export function VaultInitializationModal({
         title={stepTitle}
         description="Complete vault initialization to start using your vault"
         mainIcon={<FiZap className="h-5 w-5" />}
-        onClose={() => onOpenChange(false)}
+        onClose={close}
       />
       <ModalBody className="space-y-6 px-8 py-6">
         {currentStep === 'deploy' && (

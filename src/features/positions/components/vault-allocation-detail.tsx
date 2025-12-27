@@ -11,7 +11,6 @@ import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { formatBalance } from '@/utils/balance';
-import { parseCapIdParams } from '@/utils/morpho';
 import { AllocationCell } from './allocation-cell';
 
 type VaultAllocationDetailProps = {
@@ -21,27 +20,8 @@ type VaultAllocationDetailProps = {
 export function VaultAllocationDetail({ vault }: VaultAllocationDetailProps) {
   const { short: rateLabel } = useRateLabel();
 
-  // Separate collateral and market caps
-  const { collateralCaps, marketCaps } = useMemo(() => {
-    const collat: typeof vault.caps = [];
-    const market: typeof vault.caps = [];
-
-    vault.caps.forEach((cap) => {
-      const params = parseCapIdParams(cap.idParams);
-      if (params.type === 'collateral') {
-        collat.push(cap);
-      } else if (params.type === 'market') {
-        market.push(cap);
-      }
-    });
-
-    return { collateralCaps: collat, marketCaps: market };
-  }, [vault.caps]);
-
-  // Fetch actual allocations
+  // Fetch actual allocations - useVaultAllocations pulls caps internally
   const { marketAllocations, loading } = useVaultAllocations({
-    collateralCaps,
-    marketCaps,
     vaultAddress: vault.address as Address,
     chainId: vault.networkId,
     enabled: true,

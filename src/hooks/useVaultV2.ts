@@ -1,88 +1,86 @@
 import { useCallback, useMemo } from 'react';
 import { type Address, encodeFunctionData, zeroAddress, toFunctionSelector } from 'viem';
-import { useConnection, useChainId, useReadContract } from 'wagmi';
+import { useConnection, useChainId, useReadContracts } from 'wagmi';
 import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
+/**
+ * @notice Reading and Writing hook (via wagmi) for Morpho V2 Vaults
+ */
 export function useVaultV2({
   vaultAddress,
   chainId,
+  connectedAddress,
   onTransactionSuccess,
 }: {
   vaultAddress?: Address;
   chainId?: SupportedNetworks | number;
+  connectedAddress?: Address;
   onTransactionSuccess?: () => void;
 }) {
   const connectedChainId = useChainId();
   const chainIdToUse = (chainId ?? connectedChainId) as SupportedNetworks;
   const { address: account } = useConnection();
 
-  const { data: owner } = useReadContract({
-    address: vaultAddress,
+  const vaultContract = {
+    address: vaultAddress ?? zeroAddress,
     abi: vaultv2Abi,
-    functionName: 'owner',
-    args: [],
     chainId: chainIdToUse,
-    query: {
-      enabled: Boolean(vaultAddress),
-    },
-  });
+  };
 
-  const { data: curator } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'curator',
-    args: [],
-    chainId: chainIdToUse,
-    query: {
-      enabled: Boolean(vaultAddress),
-    },
-  });
-
-  const { data: rawName } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'name',
-    args: [],
-    chainId: chainIdToUse,
-    query: {
-      enabled: Boolean(vaultAddress),
-    },
-  });
-
-  const { data: rawSymbol } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'symbol',
-    args: [],
-    chainId: chainIdToUse,
-    query: {
-      enabled: Boolean(vaultAddress),
-    },
-  });
-
-  // Read totalAssets directly from the vault contract
   const {
-    data: totalAssets,
-    refetch: refetchBalance,
-    isLoading: loadingBalance,
-  } = useReadContract({
-    address: vaultAddress,
-    abi: vaultv2Abi,
-    functionName: 'totalAssets',
-    chainId: chainIdToUse,
+    data: batchData,
+    refetch: refetchAll,
+    isLoading,
+  } = useReadContracts({
+    contracts: [
+      {
+        // owner
+        ...vaultContract,
+        functionName: 'owner',
+        args: [],
+      },
+      {
+        // curator
+        ...vaultContract,
+        functionName: 'curator',
+        args: [],
+      },
+      {
+        // name
+        ...vaultContract,
+        functionName: 'name',
+        args: [],
+      },
+      {
+        // symbol
+        ...vaultContract,
+        functionName: 'symbol',
+        args: [],
+      },
+      {
+        // totalAssets
+        ...vaultContract,
+        functionName: 'totalAssets',
+        args: [],
+      },
+    ],
     query: {
-      enabled: Boolean(vaultAddress),
+      enabled: vaultContract.address !== zeroAddress,
     },
   });
 
-  const currentCurator = useMemo(() => (curator as Address | undefined) ?? zeroAddress, [curator]);
-
-  const refetchAll = useCallback(() => {
-    void refetchBalance();
-  }, [refetchBalance]);
+  const [owner, curator, name, symbol, totalAssets] = useMemo(() => {
+    return [
+      batchData?.[0].result ?? zeroAddress,
+      batchData?.[1].result ?? zeroAddress,
+      batchData?.[2].result ?? '',
+      batchData?.[3].result ?? '',
+      batchData?.[4].result ?? 0n,
+    ];
+  }, [batchData]);
 
   const { isConfirming: isInitializing, sendTransactionAsync: sendInitializationTx } = useTransactionWithToast({
     toastId: `init-${vaultAddress ?? 'unknown'}`,
@@ -157,7 +155,7 @@ export function useVaultV2({
       }
 
       // Step 1. Assign curator if unset.
-      if (currentCurator === zeroAddress) {
+      if (curator === zeroAddress) {
         const setCuratorTx = encodeFunctionData({
           abi: vaultv2Abi,
           functionName: 'setCurator',
@@ -258,7 +256,7 @@ export function useVaultV2({
         throw initError;
       }
     },
-    [account, chainIdToUse, currentCurator, sendInitializationTx, vaultAddress],
+    [account, chainIdToUse, curator, sendInitializationTx, vaultAddress],
   );
 
   const updateNameAndSymbol = useCallback(
@@ -550,29 +548,20 @@ export function useVaultV2({
     [account, chainIdToUse, sendWithdrawTx, vaultAddress],
   );
 
-  const name = useMemo(() => {
-    if (!rawName) return '';
-    return String(rawName);
-  }, [rawName]);
-
-  const symbol = useMemo(() => {
-    if (!rawSymbol) return '';
-    return String(rawSymbol);
-  }, [rawSymbol]);
-
-  const vaultOwner = useMemo(() => {
-    if (!owner) return zeroAddress;
-    return owner as Address;
-  }, [owner]);
+  const isOwner = useMemo(
+    () => Boolean(owner && connectedAddress && owner.toLowerCase() === connectedAddress.toLowerCase()),
+    [owner, connectedAddress],
+  );
 
   return {
-    isLoading: loadingBalance,
+    isLoading: isLoading,
     refetch: refetchAll,
     completeInitialization,
     isInitializing,
     name,
     symbol,
-    owner: vaultOwner,
+    owner,
+    isOwner,
     updateNameAndSymbol,
     isUpdatingMetadata,
     setAllocator,

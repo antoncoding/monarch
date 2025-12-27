@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Address } from 'viem';
+import { useQuery } from '@tanstack/react-query';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { fetchVaultV2Details, type VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
@@ -24,8 +24,8 @@ export type VaultV2Data = {
   displayName: string;
   displaySymbol: string;
   assetAddress: string;
-  tokenSymbol?: string;
-  tokenDecimals?: number;
+  tokenSymbol: string; // Always has default: '--'
+  tokenDecimals: number; // Always has default: 18
   allocators: string[];
   sentinels: string[];
   owner: string;
@@ -35,45 +35,28 @@ export type VaultV2Data = {
   curatorDisplay: string;
 };
 
-type UseVaultV2DataReturn = {
-  data: VaultV2Data | null;
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-};
-
-export function useVaultV2Data({
-  vaultAddress,
-  chainId,
-  fallbackName = '',
-  fallbackSymbol = '',
-}: UseVaultV2DataArgs): UseVaultV2DataReturn {
+export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
   const { findToken } = useTokens();
 
-  const [data, setData] = useState<VaultV2Data | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const query = useQuery({
+    queryKey: ['vault-v2-data', vaultAddress, chainId],
+    queryFn: async () => {
+      if (!vaultAddress) {
+        return null;
+      }
 
-  const load = useCallback(async () => {
-    if (!vaultAddress) {
-      setData(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
       const result = await fetchVaultV2Details(vaultAddress, chainId);
 
       if (!result) {
-        setData(null);
-        return;
+        return null;
       }
 
       const token = result.asset ? findToken(result.asset, chainId) : undefined;
       const curatorDisplay = result.curator ? getSlicedAddress(result.curator as Address) : '--';
+
+      // Apply defaults for token info
+      const tokenSymbol = token?.symbol ?? '--';
+      const tokenDecimals = token?.decimals ?? 18;
 
       // Parse caps by level using parseCapIdParams
       let adapterCap: VaultV2Cap | null = null;
@@ -95,12 +78,12 @@ export function useVaultV2Data({
       // if any one of the caps is not set, it means it still need setup!
       const needSetupCaps = !adapterCap || collateralCaps.length === 0 || marketCaps.length === 0;
 
-      setData({
+      const vaultData: VaultV2Data = {
         displayName: result.name || fallbackName,
         displaySymbol: result.symbol || fallbackSymbol,
         assetAddress: result.asset,
-        tokenSymbol: token?.symbol,
-        tokenDecimals: token?.decimals,
+        tokenSymbol, // Defaults applied above
+        tokenDecimals, // Defaults applied above
         allocators: result.allocators,
         sentinels: result.sentinels,
         owner: result.owner,
@@ -113,31 +96,13 @@ export function useVaultV2Data({
         },
         adapters: result.adapters,
         curatorDisplay,
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch vault data'));
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [vaultAddress, chainId]);
+      };
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+      return vaultData;
+    },
+    enabled: Boolean(vaultAddress),
+    staleTime: 30_000, // 30 seconds - data is cacheable across components
+  });
 
-  // Memoize the refetch function to prevent unnecessary re-renders in parent components
-  const refetch = useCallback(async () => {
-    await load();
-  }, [load]);
-
-  return useMemo(
-    () => ({
-      data,
-      loading,
-      error,
-      refetch,
-    }),
-    [data, error, loading, refetch],
-  );
+  return query;
 }

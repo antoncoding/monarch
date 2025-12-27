@@ -1,30 +1,35 @@
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { GearIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 
 type VaultCollateralsCardProps = {
-  collateralCaps: VaultV2Cap[];
+  vaultAddress: Address;
   chainId: SupportedNetworks;
-  onManageCaps: () => void;
-  needsSetup?: boolean;
-  isOwner?: boolean;
-  isLoading?: boolean;
+  needsInitialization: boolean;
 };
 
-export function VaultCollateralsCard({
-  collateralCaps,
-  chainId,
-  onManageCaps,
-  needsSetup = false,
-  isOwner = false,
-  isLoading = false,
-}: VaultCollateralsCardProps) {
+export function VaultCollateralsCard({ vaultAddress, chainId, needsInitialization }: VaultCollateralsCardProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
+  const { isOwner } = useVaultV2({ vaultAddress, chainId, connectedAddress });
+
+  // UI state from Zustand
+  const { open: openSettings } = useVaultSettingsModalStore();
+
+  const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
+  const isLoading = vaultDataLoading;
+
   const cardStyle = 'bg-surface rounded shadow-sm';
   const maxDisplay = 5;
   const iconSize = 20;
@@ -44,17 +49,17 @@ export function VaultCollateralsCard({
     <Card className={cardStyle}>
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Collaterals</span>
-        {isOwner && !needsSetup && (
+        {isOwner && !needsInitialization && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={onManageCaps}
+            onClick={() => openSettings('caps')}
           />
         )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
           <div className="bg-hovered h-5 w-24 rounded animate-pulse" />
-        ) : needsSetup ? (
+        ) : needsInitialization ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-orange-500" />

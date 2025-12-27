@@ -1,23 +1,30 @@
 import { useCallback, useState } from 'react';
 import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
 import { v2AgentsBase } from '@/utils/monarch-agent';
 import { AgentListItem } from './AgentListItem';
 import type { AgentsTabProps } from './types';
 
-export function AgentsTab({
-  isOwner,
-  owner,
-  curator,
-  allocators,
-  // sentinels = [],
-  onSetAllocator,
-  isUpdatingAllocator,
-  chainId,
-}: AgentsTabProps) {
+export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
+  const { isOwner, setAllocator, isUpdatingAllocator } = useVaultV2({
+    vaultAddress,
+    chainId,
+    connectedAddress,
+  });
+
+  const owner = vaultData?.owner;
+  const curator = vaultData?.curator;
+  const allocators = vaultData?.allocators ?? [];
   const [allocatorToAdd, setAllocatorToAdd] = useState<Address | null>(null);
   const [allocatorToRemove, setAllocatorToRemove] = useState<Address | null>(null);
   const [isEditingAllocators, setIsEditingAllocators] = useState(false);
@@ -36,12 +43,12 @@ export function AgentsTab({
 
       setAllocatorToAdd(allocator);
       try {
-        await onSetAllocator(allocator, true);
+        await setAllocator(allocator, true);
       } finally {
         setAllocatorToAdd(null);
       }
     },
-    [onSetAllocator, needSwitchChain, switchToNetwork],
+    [setAllocator, needSwitchChain, switchToNetwork],
   );
 
   const handleRemoveAllocator = useCallback(
@@ -53,12 +60,12 @@ export function AgentsTab({
       }
 
       setAllocatorToRemove(allocator);
-      const success = await onSetAllocator(allocator, false);
+      const success = await setAllocator(allocator, false);
       if (success) {
         setAllocatorToRemove(null);
       }
     },
-    [onSetAllocator, needSwitchChain, switchToNetwork],
+    [setAllocator, needSwitchChain, switchToNetwork],
   );
 
   const renderSingleRole = (label: string, description: string, addressValue?: string) => {

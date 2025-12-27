@@ -5,25 +5,34 @@ import { GearIcon } from '@radix-ui/react-icons';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
 import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
 import { AgentIcon } from '@/components/shared/agent-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { findAgent } from '@/utils/monarch-agent';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import type { SupportedNetworks } from '@/utils/networks';
 
 type VaultAllocatorCardProps = {
-  allocators: string[];
-  onManageAgents: () => void;
-  needsSetup?: boolean;
-  isOwner?: boolean;
-  isLoading?: boolean;
+  vaultAddress: Address;
+  chainId: SupportedNetworks;
+  needsInitialization: boolean;
 };
 
-export function VaultAllocatorCard({
-  allocators,
-  onManageAgents,
-  needsSetup = false,
-  isOwner = false,
-  isLoading = false,
-}: VaultAllocatorCardProps) {
+export function VaultAllocatorCard({ vaultAddress, chainId, needsInitialization }: VaultAllocatorCardProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
+  const { isOwner } = useVaultV2({ vaultAddress, chainId, connectedAddress });
+
+  // UI state from Zustand
+  const { open: openSettings } = useVaultSettingsModalStore();
+
+  const allocators = vaultData?.allocators ?? [];
+  const isLoading = vaultDataLoading;
+
   const cardStyle = 'bg-surface rounded shadow-sm';
   const maxDisplay = 5;
   const iconSize = 20;
@@ -45,17 +54,17 @@ export function VaultAllocatorCard({
     <Card className={cardStyle}>
       <CardHeader className="flex items-center justify-between pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
-        {isOwner && !needsSetup && (
+        {isOwner && !needsInitialization && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={onManageAgents}
+            onClick={() => openSettings('agents')}
           />
         )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (
           <div className="bg-hovered h-5 w-24 rounded animate-pulse" />
-        ) : needsSetup ? (
+        ) : needsInitialization ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-orange-500" />

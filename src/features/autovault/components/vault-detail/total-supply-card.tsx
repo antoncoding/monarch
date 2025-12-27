@@ -3,35 +3,41 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Tooltip } from '@/components/ui/tooltip';
 import { GoPlusCircle } from 'react-icons/go';
 import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { formatBalance } from '@/utils/balance';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useVaultPage } from '@/hooks/useVaultPage';
+import type { SupportedNetworks } from '@/utils/networks';
 import { DepositToVaultModal } from './modals/deposit-to-vault-modal';
 
 type VaultTotalAssetsCardProps = {
-  totalAssets?: bigint;
-  vault24hEarnings?: bigint | null;
-  tokenDecimals?: number;
-  tokenSymbol?: string;
-  assetAddress?: Address;
-  chainId: number;
   vaultAddress: Address;
-  vaultName: string;
-  onRefresh?: () => void;
-  isLoading?: boolean;
+  chainId: SupportedNetworks;
 };
 
-export function TotalSupplyCard({
-  tokenDecimals,
-  tokenSymbol,
-  assetAddress,
-  chainId,
-  vaultAddress,
-  vaultName,
-  totalAssets,
-  vault24hEarnings,
-  onRefresh,
-  isLoading = false,
-}: VaultTotalAssetsCardProps): JSX.Element {
+export function TotalSupplyCard({ vaultAddress, chainId }: VaultTotalAssetsCardProps): JSX.Element {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
+  const {
+    totalAssets,
+    isLoading: contractLoading,
+    refetch,
+  } = useVaultV2({
+    vaultAddress,
+    chainId,
+    connectedAddress,
+  });
+  const { vault24hEarnings } = useVaultPage({ vaultAddress, chainId, connectedAddress });
+
+  const tokenDecimals = vaultData?.tokenDecimals;
+  const tokenSymbol = vaultData?.tokenSymbol;
+  const assetAddress = vaultData?.assetAddress as Address | undefined;
+  const vaultName = vaultData?.displayName ?? '';
+  const isLoading = vaultDataLoading || contractLoading;
   const [showDepositModal, setShowDepositModal] = useState(false);
 
   const totalAssetsLabel = useMemo(() => {
@@ -70,7 +76,7 @@ export function TotalSupplyCard({
 
   const handleDepositSuccess = () => {
     setShowDepositModal(false);
-    onRefresh?.();
+    void refetch();
   };
 
   const cardStyle = 'bg-surface rounded shadow-sm';

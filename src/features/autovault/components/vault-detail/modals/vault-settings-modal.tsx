@@ -1,14 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { FiSettings } from 'react-icons/fi';
 import type { Address } from 'viem';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
-import type { CapData } from '@/hooks/useVaultV2Data';
-import type { SupportedNetworks } from '@/utils/networks';
 import { GeneralTab, AgentsTab, CapsTab, type SettingsTab } from '../settings';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: 'General' },
@@ -17,108 +16,51 @@ const TABS: { id: SettingsTab; label: string }[] = [
 ];
 
 type VaultSettingsModalProps = {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialTab?: SettingsTab;
-  isOwner: boolean;
-  onUpdateMetadata: (values: { name?: string; symbol?: string }) => Promise<boolean>;
-  updatingMetadata: boolean;
-  defaultName: string;
-  defaultSymbol: string;
-  currentName: string;
-  currentSymbol: string;
-  owner?: string;
-  curator?: string;
-  allocators: string[];
-  sentinels?: string[];
-  chainId: SupportedNetworks;
-  vaultAsset?: Address;
-  marketAdapter: Address; // the deploy morpho market v1 adapter
-  capData?: CapData;
-  onSetAllocator: (allocator: Address, isAllocator: boolean) => Promise<boolean>;
-  updateCaps: (caps: VaultV2Cap[]) => Promise<boolean>;
-  isUpdatingAllocator: boolean;
-  isUpdatingCaps: boolean;
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
+  vaultAddress: Address;
+  chainId: number;
 };
 
-export function VaultSettingsModal({
-  isOpen,
-  onOpenChange,
-  initialTab = 'general',
-  isOwner,
-  onUpdateMetadata,
-  updatingMetadata,
-  defaultName,
-  defaultSymbol,
-  currentName,
-  currentSymbol,
-  owner,
-  curator,
-  allocators,
-  sentinels = [],
-  chainId,
-  vaultAsset,
-  marketAdapter,
-  capData = undefined,
-  onSetAllocator,
-  updateCaps,
-  isUpdatingAllocator,
-  isUpdatingCaps,
-  onRefresh,
-  isRefreshing = false,
-}: VaultSettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+/**
+ * VaultSettingsModal - Self-contained modal using Pull pattern.
+ * Tabs pull their own data using hooks internally.
+ *
+ * Open: useVaultSettingsModalStore().open('tabName')
+ */
+export function VaultSettingsModal({ vaultAddress, chainId }: VaultSettingsModalProps) {
+  // UI state from Zustand
+  const { isOpen, activeTab, close, setTab } = useVaultSettingsModalStore();
 
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab, isOpen]);
+  // Only pull data needed for the modal header refresh button
+  const vaultDataQuery = useVaultV2Data({ vaultAddress, chainId });
 
-  const handleTabChange = useCallback((tab: SettingsTab) => {
-    setActiveTab(tab);
-  }, []);
+  const handleTabChange = useCallback(
+    (tab: SettingsTab) => {
+      setTab(tab);
+    },
+    [setTab],
+  );
 
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'general':
         return (
           <GeneralTab
-            isOwner={isOwner}
-            defaultName={defaultName}
-            defaultSymbol={defaultSymbol}
-            currentName={currentName}
-            currentSymbol={currentSymbol}
-            onUpdateMetadata={onUpdateMetadata}
-            updatingMetadata={updatingMetadata}
+            vaultAddress={vaultAddress}
             chainId={chainId}
           />
         );
       case 'agents':
         return (
           <AgentsTab
-            isOwner={isOwner}
-            owner={owner}
-            curator={curator}
-            allocators={allocators}
-            sentinels={sentinels}
-            onSetAllocator={onSetAllocator}
-            isUpdatingAllocator={isUpdatingAllocator}
+            vaultAddress={vaultAddress}
             chainId={chainId}
           />
         );
       case 'caps':
         return (
           <CapsTab
-            isOwner={isOwner}
+            vaultAddress={vaultAddress}
             chainId={chainId}
-            vaultAsset={vaultAsset}
-            adapterAddress={marketAdapter}
-            existingCaps={capData}
-            updateCaps={updateCaps}
-            isUpdatingCaps={isUpdatingCaps}
           />
         );
       default:
@@ -133,7 +75,9 @@ export function VaultSettingsModal({
   return (
     <Modal
       isOpen={isOpen}
-      onOpenChange={onOpenChange}
+      onOpenChange={(open) => {
+        if (!open) close();
+      }}
       size="5xl"
       scrollBehavior="inside"
       className="w-full max-w-6xl"
@@ -143,20 +87,16 @@ export function VaultSettingsModal({
         title="Vault Settings"
         description="Manage metadata, automation agents, and vault caps"
         mainIcon={<FiSettings className="h-5 w-5" />}
-        onClose={() => onOpenChange(false)}
-        auxiliaryAction={
-          onRefresh
-            ? {
-                icon: <ReloadIcon className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />,
-                onClick: () => {
-                  if (!isRefreshing) {
-                    onRefresh();
-                  }
-                },
-                ariaLabel: 'Refresh vault data',
-              }
-            : undefined
-        }
+        onClose={close}
+        auxiliaryAction={{
+          icon: <ReloadIcon className={`h-4 w-4 ${vaultDataQuery.isLoading ? 'animate-spin' : ''}`} />,
+          onClick: () => {
+            if (!vaultDataQuery.isLoading) {
+              void vaultDataQuery.refetch();
+            }
+          },
+          ariaLabel: 'Refresh vault data',
+        }}
       />
       <ModalBody className="px-0 pb-6">
         <div className="flex flex-col gap-6">

@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
 import type { Address } from 'viem';
-import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { CollateralAllocation, MarketAllocation } from '@/types/vaultAllocations';
+import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { useAllocations } from './useAllocations';
 import { useMarkets } from './useMarkets';
+import { useVaultV2Data } from './useVaultV2Data';
 
 type UseVaultAllocationsArgs = {
-  collateralCaps: VaultV2Cap[];
-  marketCaps: VaultV2Cap[];
   vaultAddress: Address;
   chainId: SupportedNetworks;
   enabled?: boolean;
@@ -21,7 +20,7 @@ type UseVaultAllocationsReturn = {
   marketAllocations: MarketAllocation[];
   loading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 };
 
 /**
@@ -35,14 +34,14 @@ type UseVaultAllocationsReturn = {
  * 4. Fetches on-chain allocations only for valid caps
  * 5. Returns typed, ready-to-use allocation structures
  */
-export function useVaultAllocations({
-  collateralCaps,
-  marketCaps,
-  vaultAddress,
-  chainId,
-  enabled = true,
-}: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
+export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
   const { allMarkets } = useMarkets();
+
+  // Pull vault data directly - TanStack Query handles deduplication
+  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
+
+  const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
+  const marketCaps = vaultData?.capsData?.marketCaps ?? [];
 
   // Parse and filter collateral caps
   const { validCollateralCaps, parsedCollateralCaps } = useMemo(() => {
@@ -109,12 +108,14 @@ export function useVaultAllocations({
   const allValidCaps = useMemo(() => [...validCollateralCaps, ...validMarketCaps], [validCollateralCaps, validMarketCaps]);
 
   // Fetch allocations only for valid, recognized caps
-  const { allocations, loading, error, refetch } = useAllocations({
+  const { allocations, isLoading, error, refetch } = useAllocations({
     vaultAddress,
     chainId,
     caps: allValidCaps,
     enabled: enabled && allValidCaps.length > 0,
   });
+
+  const loading = isLoading;
 
   // Create allocation map for efficient lookup
   const allocationMap = useMemo(() => {
@@ -148,6 +149,8 @@ export function useVaultAllocations({
     marketAllocations,
     loading,
     error,
-    refetch,
+    refetch: () => {
+      void refetch();
+    },
   };
 }

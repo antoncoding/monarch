@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { type Address, zeroAddress } from 'viem';
-import { fetchMorphoMarketV1Adapters, type MorphoMarketV1AdapterRecord } from '@/data-sources/subgraph/morpho-market-v1-adapters';
+import { useQuery } from '@tanstack/react-query';
+import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
 import { getMorphoAddress } from '@/utils/morpho';
 import { getNetworkConfig, type SupportedNetworks } from '@/utils/networks';
 
 export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddress?: Address; chainId: SupportedNetworks }) {
-  const [adapters, setAdapters] = useState<MorphoMarketV1AdapterRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
   const vaultConfig = useMemo(() => {
     try {
       return getNetworkConfig(chainId).vaultConfig;
@@ -20,44 +17,33 @@ export function useMorphoMarketV1Adapters({ vaultAddress, chainId }: { vaultAddr
   const subgraphUrl = vaultConfig?.adapterSubgraphEndpoint ?? null;
   const morpho = useMemo(() => getMorphoAddress(chainId), [chainId]);
 
-  const fetchAdapters = useCallback(async () => {
-    if (!vaultAddress || !subgraphUrl) {
-      setAdapters([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: ['morpho-market-v1-adapters', vaultAddress, chainId],
+    queryFn: async () => {
+      if (!vaultAddress || !subgraphUrl) {
+        return [];
+      }
 
-    setLoading(true);
-    setError(null);
-
-    try {
       const result = await fetchMorphoMarketV1Adapters({
         subgraphUrl,
         parentVault: vaultAddress,
         morpho,
       });
-      setAdapters(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch adapters'));
-      setAdapters([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [vaultAddress, subgraphUrl, morpho]);
 
-  useEffect(() => {
-    void fetchAdapters();
-  }, [fetchAdapters]);
+      return result;
+    },
+    enabled: Boolean(vaultAddress && subgraphUrl),
+    staleTime: 30_000, // 30 seconds - adapter data is cacheable
+  });
 
-  const morphoMarketV1Adapter = useMemo(() => (adapters.length == 0 ? zeroAddress : adapters[0].adapter), [adapters]);
+  const morphoMarketV1Adapter = useMemo(() => (query.data && query.data.length > 0 ? query.data[0].adapter : zeroAddress), [query.data]);
 
   return {
     morphoMarketV1Adapter,
-    adapters, // all market adapters (should only be just one)
-    loading,
-    error,
-    refetch: fetchAdapters,
-    hasAdapters: adapters.length > 0,
+    adapters: query.data ?? [], // all market adapters (should only be just one)
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+    hasAdapters: (query.data ?? []).length > 0,
   };
 }

@@ -1,9 +1,31 @@
 import { useState } from 'react';
+import type { Address } from 'viem';
+import { useConnection } from 'wagmi';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { CurrentCaps } from './CurrentCaps';
 import { EditCaps } from './EditCaps';
 import type { CapsTabProps } from './types';
 
-export function CapsTab({ isOwner, chainId, vaultAsset, adapterAddress, existingCaps, updateCaps, isUpdatingCaps }: CapsTabProps) {
+export function CapsTab({ vaultAddress, chainId }: CapsTabProps) {
+  const { address: connectedAddress } = useConnection();
+
+  // Pull data directly - TanStack Query deduplicates
+  const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
+  const { isOwner, updateCaps, isUpdatingCaps } = useVaultV2({
+    vaultAddress,
+    chainId,
+    connectedAddress,
+  });
+  const { morphoMarketV1Adapter: adapterAddress } = useMorphoMarketV1Adapters({
+    vaultAddress,
+    chainId,
+  });
+
+  const vaultAsset = vaultData?.assetAddress as Address | undefined;
+  const existingCaps = vaultData?.capsData;
+
   const [isEditing, setIsEditing] = useState(false);
 
   return isEditing ? (

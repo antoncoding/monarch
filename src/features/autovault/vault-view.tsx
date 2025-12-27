@@ -12,6 +12,9 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import Header from '@/components/layout/header/Header';
 import { useVaultPage } from '@/hooks/useVaultPage';
+import { useVaultV2Data } from '@/hooks/useVaultV2Data';
+import { useVaultV2 } from '@/hooks/useVaultV2';
+import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { useVaultIndexing } from '@/hooks/useVaultIndexing';
 import { getSlicedAddress } from '@/utils/address';
 import { ALL_SUPPORTED_NETWORKS, SupportedNetworks, getNetworkConfig } from '@/utils/networks';
@@ -23,6 +26,8 @@ import { VaultMarketAllocations } from '@/features/autovault/components/vault-de
 import { VaultSettingsModal } from '@/features/autovault/components/vault-detail/modals/vault-settings-modal';
 import { VaultSummaryMetrics } from '@/features/autovault/components/vault-detail/vault-summary-metrics';
 import { TransactionHistoryPreview } from '@/features/history/components/transaction-history-preview';
+import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
+import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 export default function VaultContent() {
   const { chainId: chainIdParam, vaultAddress } = useParams<{
@@ -55,35 +60,41 @@ export default function VaultContent() {
     }
   }, [chainId]);
 
-  // Unified data hook - all vault data and actions in one place
-  const vault = useVaultPage({
+  // Pull minimal data for vault-view itself
+  const vaultDataQuery = useVaultV2Data({ vaultAddress: vaultAddressValue, chainId });
+  const vaultContract = useVaultV2({
+    vaultAddress: vaultAddressValue,
+    chainId,
+    connectedAddress,
+    onTransactionSuccess: vaultDataQuery.refetch,
+  });
+  const adapterQuery = useMorphoMarketV1Adapters({ vaultAddress: vaultAddressValue, chainId });
+
+  // Only use useVaultPage for complex computed state
+  const { vaultAPY, isAPYLoading, isVaultInitialized, needsInitialization } = useVaultPage({
     vaultAddress: vaultAddressValue,
     chainId,
     connectedAddress,
   });
 
-  const {
-    refetchAll,
-    completeInitialization,
-    isInitializing,
-    updateNameAndSymbol,
-    setAllocator,
-    refetchAdapter,
-    collateralAllocations,
-    marketAllocations,
-    vaultAPY,
-    vault24hEarnings,
-    isAPYLoading,
-  } = vault;
-
+  // Aggregated refetch function
   const handleRefreshVault = useCallback(() => {
-    void refetchAll();
-  }, [refetchAll]);
+    void vaultDataQuery.refetch();
+    void vaultContract.refetch();
+    void adapterQuery.refetch();
+  }, [vaultDataQuery, vaultContract, adapterQuery]);
+
+  // Extract minimal data for vault-view rendering
+  const vaultData = vaultDataQuery.data;
+  const hasError = vaultDataQuery.isError;
+  const vaultDataLoading = vaultDataQuery.isLoading;
+  const title = vaultData?.displayName ?? `Vault ${getSlicedAddress(vaultAddressValue)}`;
+  const symbolToDisplay = vaultData?.displaySymbol;
 
   // Determine if vault data has loaded successfully
   const isDataLoaded = useMemo(() => {
-    return !vault.vaultDataLoading && !vault.hasError && vault.vaultData !== null;
-  }, [vault.vaultDataLoading, vault.hasError, vault.vaultData]);
+    return !vaultDataLoading && !hasError && vaultData !== null;
+  }, [vaultDataLoading, hasError, vaultData]);
 
   // Use indexing hook to manage retry logic and toast
   const { isIndexing } = useVaultIndexing({
@@ -93,40 +104,16 @@ export default function VaultContent() {
     refetch: handleRefreshVault,
   });
 
-  const handleUpdateMetadata = useCallback(
-    async (values: { name?: string; symbol?: string }) => updateNameAndSymbol(values),
-    [updateNameAndSymbol],
-  );
+  // UI state from Zustand stores (for vault-view banners only)
+  const { open: openSettings } = useVaultSettingsModalStore();
+  const { open: openInitialization } = useVaultInitializationModalStore();
 
-  const handleSetAllocator = useCallback(
-    async (allocator: Address, isAllocator: boolean) => setAllocator(allocator, isAllocator),
-    [setAllocator],
-  );
+  // Computed state flags for vault-view banners
+  const hasNoAllocators = (vaultData?.allocators ?? []).length === 0;
+  const capsUninitialized =
+    !vaultData?.capsData || (vaultData.capsData.collateralCaps.length === 0 && vaultData.capsData.marketCaps.length === 0);
 
-  const handleRefetchAdapter = useCallback(() => {
-    void refetchAdapter();
-  }, [refetchAdapter]);
-
-  const handleAdapterConfigured = useCallback(() => {
-    void refetchAll();
-  }, [refetchAll]);
-
-  // UI state
-  const [settingsTab, setSettingsTab] = useState<'general' | 'agents' | 'caps'>('general');
-  const [showSettings, setShowSettings] = useState(false);
-  const [showInitializationModal, setShowInitializationModal] = useState(false);
-
-  // Derived display data
-  const fallbackTitle = `Vault ${getSlicedAddress(vaultAddressValue)}`;
-  const title = vault.vaultData?.displayName ?? fallbackTitle;
-  const symbolToDisplay = vault.vaultData?.displaySymbol;
-  const allocators = vault.vaultData?.allocators ?? [];
-  const sentinels = vault.vaultData?.sentinels ?? [];
-  const capData = vault.vaultData?.capsData;
-  const collateralCaps = capData?.collateralCaps ?? [];
-  const assetAddress = vault.vaultData?.assetAddress;
-
-  // Format APY
+  // Format APY for APY card in vault-view
   const apyLabel = useMemo(() => {
     if (vaultAPY === null || vaultAPY === undefined) return '0%';
     return `${(vaultAPY * 100).toFixed(2)}%`;
@@ -168,7 +155,7 @@ export default function VaultContent() {
   }
 
   // Show error state if data failed to load (but not while indexing)
-  if (vault.hasError) {
+  if (hasError) {
     return (
       <div className="flex w-full flex-col font-zen">
         <Header />
@@ -210,14 +197,14 @@ export default function VaultContent() {
                     variant="ghost"
                     size="sm"
                     onClick={handleRefreshVault}
-                    disabled={vault.vaultDataLoading}
+                    disabled={vaultDataLoading}
                     className="text-secondary min-w-0 px-2"
                   >
-                    <ReloadIcon className={`${vault.vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
+                    <ReloadIcon className={`${vaultDataLoading ? 'animate-spin' : ''} h-3 w-3`} />
                   </Button>
                 </span>
               </Tooltip>
-              {vault.isOwner && (
+              {vaultContract.isOwner && (
                 <Tooltip
                   content={
                     <TooltipContent
@@ -230,10 +217,7 @@ export default function VaultContent() {
                     variant="ghost"
                     size="sm"
                     className="text-secondary min-w-0 px-2"
-                    onClick={() => {
-                      setSettingsTab('general');
-                      setShowSettings(true);
-                    }}
+                    onClick={() => openSettings('general')}
                   >
                     <GearIcon className="h-3 w-3" />
                   </Button>
@@ -243,7 +227,7 @@ export default function VaultContent() {
           </div>
 
           {/* Setup Banner - Show if vault needs initialization */}
-          {vault.needsInitialization && vault.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
+          {needsInitialization && vaultContract.isOwner && networkConfig?.vaultConfig?.marketV1AdapterFactory && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Complete vault setup</p>
@@ -255,7 +239,7 @@ export default function VaultContent() {
                 variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onClick={() => setShowInitializationModal(true)}
+                onClick={openInitialization}
               >
                 Start Setup
               </Button>
@@ -263,7 +247,7 @@ export default function VaultContent() {
           )}
 
           {/* Only show allocator/caps banners if vault IS initialized */}
-          {vault.isVaultInitialized && vault.hasNoAllocators && vault.isOwner && (
+          {isVaultInitialized && hasNoAllocators && vaultContract.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Choose an agent</p>
@@ -273,17 +257,14 @@ export default function VaultContent() {
                 variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onClick={() => {
-                  setSettingsTab('agents');
-                  setShowSettings(true);
-                }}
+                onClick={() => openSettings('agents')}
               >
                 Configure agents
               </Button>
             </div>
           )}
 
-          {vault.isVaultInitialized && vault.capsUninitialized && vault.isOwner && (
+          {isVaultInitialized && capsUninitialized && vaultContract.isOwner && (
             <div className="rounded border border-primary/40 bg-primary/5 p-4 sm:flex sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-primary">Configure allocation caps</p>
@@ -295,10 +276,7 @@ export default function VaultContent() {
                 variant="primary"
                 size="sm"
                 className="mt-3 sm:mt-0"
-                onClick={() => {
-                  setSettingsTab('caps');
-                  setShowSettings(true);
-                }}
+                onClick={() => openSettings('caps')}
               >
                 Configure caps
               </Button>
@@ -308,23 +286,15 @@ export default function VaultContent() {
           {/* Summary Metrics */}
           <VaultSummaryMetrics columns={4}>
             <TotalSupplyCard
-              tokenDecimals={vault.vaultData?.tokenDecimals}
-              tokenSymbol={vault.vaultData?.tokenSymbol}
-              totalAssets={vault.totalAssets}
-              vault24hEarnings={vault24hEarnings}
-              assetAddress={assetAddress as Address | undefined}
-              chainId={chainId}
               vaultAddress={vaultAddressValue}
-              vaultName={title}
-              onRefresh={handleRefreshVault}
-              isLoading={vault.isLoading}
+              chainId={chainId}
             />
             <Card className="bg-surface rounded shadow-sm">
               <CardHeader className="flex items-center justify-between pb-2">
                 <span className="text-xs uppercase tracking-wide text-secondary">Current APY</span>
               </CardHeader>
               <CardBody className="flex items-center justify-center py-3">
-                {vault.isLoading || isAPYLoading ? (
+                {vaultContract.isLoading || isAPYLoading ? (
                   <div className="bg-hovered h-6 w-20 rounded animate-pulse" />
                 ) : (
                   <div className="text-lg text-primary">{apyLabel}</div>
@@ -332,52 +302,28 @@ export default function VaultContent() {
               </CardBody>
             </Card>
             <VaultAllocatorCard
-              allocators={allocators}
-              onManageAgents={() => {
-                if (vault.needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
-                  setShowInitializationModal(true);
-                  return;
-                }
-                setSettingsTab('agents');
-                setShowSettings(true);
-              }}
-              needsSetup={vault.needsInitialization}
-              isOwner={vault.isOwner}
-              isLoading={vault.vaultDataLoading}
+              vaultAddress={vaultAddressValue}
+              chainId={chainId}
+              needsInitialization={needsInitialization}
             />
             <VaultCollateralsCard
-              collateralCaps={collateralCaps}
+              vaultAddress={vaultAddressValue}
               chainId={chainId}
-              onManageCaps={() => {
-                if (vault.needsInitialization && networkConfig?.vaultConfig?.marketV1AdapterFactory) {
-                  setShowInitializationModal(true);
-                  return;
-                }
-                setSettingsTab('caps');
-                setShowSettings(true);
-              }}
-              needsSetup={vault.needsInitialization}
-              isOwner={vault.isOwner}
-              isLoading={vault.vaultDataLoading}
+              needsInitialization={needsInitialization}
             />
           </VaultSummaryMetrics>
 
           {/* Market Allocations */}
           <VaultMarketAllocations
-            collateralAllocations={collateralAllocations}
-            marketAllocations={marketAllocations}
-            totalAssets={vault.totalAssets}
-            vaultAssetSymbol={vault.vaultData?.tokenSymbol ?? '--'}
-            vaultAssetDecimals={vault.vaultData?.tokenDecimals ?? 18}
+            vaultAddress={vaultAddressValue}
             chainId={chainId}
-            isLoading={vault.allocationsLoading || vault.vaultDataLoading}
-            needsInitialization={vault.needsInitialization}
+            needsInitialization={needsInitialization}
           />
 
           {/* Transaction History Preview - only show when vault is fully set up */}
-          {vault.adapter && vault.isVaultInitialized && !vault.capsUninitialized && (
+          {adapterQuery.morphoMarketV1Adapter && isVaultInitialized && !capsUninitialized && (
             <TransactionHistoryPreview
-              account={vault.adapter}
+              account={adapterQuery.morphoMarketV1Adapter}
               chainId={chainId}
               isVaultAdapter={true}
               limit={10}
@@ -385,51 +331,16 @@ export default function VaultContent() {
             />
           )}
 
-          {/* Settings Modal */}
+          {/* Settings Modal - Pulls own data */}
           <VaultSettingsModal
-            isOpen={showSettings}
-            onOpenChange={setShowSettings}
-            initialTab={settingsTab}
-            isOwner={vault.isOwner}
-            onUpdateMetadata={handleUpdateMetadata}
-            updatingMetadata={vault.isUpdatingMetadata}
-            defaultName={vault.vaultData?.displayName ?? ''}
-            defaultSymbol={vault.vaultData?.displaySymbol ?? ''}
-            currentName={vault.onChainName ?? ''}
-            currentSymbol={vault.onChainSymbol ?? ''}
-            owner={vault.vaultData?.owner}
-            curator={vault.vaultData?.curator}
-            allocators={allocators}
-            sentinels={sentinels}
+            vaultAddress={vaultAddressValue}
             chainId={chainId}
-            vaultAsset={assetAddress as Address | undefined}
-            marketAdapter={vault.adapter}
-            capData={capData}
-            onSetAllocator={handleSetAllocator}
-            updateCaps={vault.updateCaps}
-            isUpdatingAllocator={vault.isUpdatingAllocator}
-            isUpdatingCaps={vault.isUpdatingCaps}
-            onRefresh={handleRefreshVault}
-            isRefreshing={vault.vaultDataLoading}
           />
         </div>
       </div>
 
-      {/* Initialization Modal */}
-      {networkConfig?.vaultConfig?.marketV1AdapterFactory && (
-        <VaultInitializationModal
-          isOpen={showInitializationModal}
-          onOpenChange={setShowInitializationModal}
-          vaultAddress={vaultAddressValue}
-          chainId={chainId}
-          marketAdapter={vault.adapter}
-          marketAdapterLoading={vault.adapterLoading}
-          refetchMarketAdapter={handleRefetchAdapter}
-          onAdapterConfigured={handleAdapterConfigured}
-          completeInitialization={completeInitialization}
-          isInitializing={isInitializing}
-        />
-      )}
+      {/* Initialization Modal - Pulls own data from URL params */}
+      {networkConfig?.vaultConfig?.marketV1AdapterFactory && <VaultInitializationModal />}
     </div>
   );
 }
