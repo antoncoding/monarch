@@ -38,7 +38,7 @@ export function WrapProcessModal({ amount, currentStep, onOpenChange }: WrapProc
       backdrop="blur"
     >
       <ModalHeader
-        title={`Wrapping ${formatBalance(amount, 18)} MORPHO`}
+        title="Wrapping MORPHO"
         description="Track each step to move legacy MORPHO into the new token"
         mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
       />
