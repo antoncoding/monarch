@@ -3,8 +3,8 @@ import { type Address, encodeFunctionData, erc20Abi } from 'viem';
 import { useConnection, useBalance, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
@@ -50,7 +50,7 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
   const [useEth, setUseEth] = useState<boolean>(false);
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<SupplyStepType>('approve');
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const { address: account, chainId } = useConnection();
   const { batchAddUserMarkets } = useUserMarketsCache(account);

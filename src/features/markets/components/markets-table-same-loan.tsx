@@ -12,12 +12,13 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
-import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
@@ -662,24 +663,33 @@ export function MarketsTableWithSameLoanAsset({
   const [oracleFilter, setOracleFilter] = useState<PriceFeedVendors[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Settings state (persisted with storage key namespace)
-  const [entriesPerPage, setEntriesPerPage] = useLocalStorage(storageKeys.MarketEntriesPerPageKey, 8);
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(storageKeys.MarketsShowUnknownTokens, false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(storageKeys.MarketsShowUnknownOracle, false);
-  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
-    storageKeys.UserTrustedVaultsKey,
-    defaultTrustedVaults,
-  );
+  // Settings state from Zustand store
+  const {
+    entriesPerPage,
+    setEntriesPerPage,
+    includeUnknownTokens,
+    setIncludeUnknownTokens,
+    showUnknownOracle,
+    setShowUnknownOracle,
+    trustedVaultsOnly,
+    setTrustedVaultsOnly,
+    usdMinSupply,
+    setUsdMinSupply,
+    usdMinBorrow,
+    setUsdMinBorrow,
+    usdMinLiquidity,
+    setUsdMinLiquidity,
+    minSupplyEnabled,
+    setMinSupplyEnabled,
+    minBorrowEnabled,
+    setMinBorrowEnabled,
+    minLiquidityEnabled,
+    setMinLiquidityEnabled,
+    columnVisibility,
+    setColumnVisibility,
+  } = useMarketPreferences();
 
-  // Store USD filters as separate localStorage items to match markets.tsx pattern
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(storageKeys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
-  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(storageKeys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
-    storageKeys.MarketsUsdMinLiquidityKey,
-    DEFAULT_MIN_LIQUIDITY_USD.toString(),
-  );
-
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(storageKeys.MarketsTrustedVaultsOnlyKey, false);
+  const { vaults: userTrustedVaults } = useTrustedVaults();
 
   const trustedVaultMap = useMemo(() => {
     return buildTrustedVaultMap(userTrustedVaults);
@@ -695,20 +705,6 @@ export function MarketsTableWithSameLoanAsset({
       });
     },
     [trustedVaultMap],
-  );
-
-  // USD Filter enabled states
-  const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
-    storageKeys.MarketsMinSupplyEnabledKey,
-    true, // Default to enabled for backward compatibility
-  );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(storageKeys.MarketsMinBorrowEnabledKey, false);
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(storageKeys.MarketsMinLiquidityEnabledKey, false);
-
-  // Column visibility state
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
-    storageKeys.MarketsColumnVisibilityKey,
-    DEFAULT_COLUMN_VISIBILITY,
   );
 
   // Create memoized usdFilters object from individual localStorage values

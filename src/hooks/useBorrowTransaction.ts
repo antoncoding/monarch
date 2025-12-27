@@ -9,6 +9,7 @@ import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
 import { useUserMarketsCache } from './useUserMarketsCache';
@@ -32,7 +33,7 @@ export type BorrowStepType =
 export function useBorrowTransaction({ market, collateralAmount, borrowAmount, onSuccess }: UseBorrowTransactionProps) {
   const [currentStep, setCurrentStep] = useState<BorrowStepType>('approve_permit2');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
   const [useEth, setUseEth] = useState<boolean>(false);
 
   const { address: account, chainId } = useConnection();

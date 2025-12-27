@@ -7,14 +7,15 @@ import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
-import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
 import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -66,8 +67,31 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
 
-  const [sortColumn, setSortColumn] = useLocalStorage(storageKeys.MarketSortColumnKey, SortColumn.Supply);
-  const [sortDirection, setSortDirection] = useLocalStorage(storageKeys.MarketSortDirectionKey, -1);
+  // Market preferences from Zustand store
+  const {
+    sortColumn,
+    setSortColumn,
+    sortDirection,
+    setSortDirection,
+    includeUnknownTokens,
+    setIncludeUnknownTokens,
+    showUnknownOracle,
+    setShowUnknownOracle,
+    usdMinSupply,
+    setUsdMinSupply,
+    usdMinBorrow,
+    setUsdMinBorrow,
+    usdMinLiquidity,
+    setUsdMinLiquidity,
+    minSupplyEnabled,
+    setMinSupplyEnabled,
+    minBorrowEnabled,
+    setMinBorrowEnabled,
+    minLiquidityEnabled,
+    setMinLiquidityEnabled,
+    trustedVaultsOnly,
+    setTrustedVaultsOnly,
+  } = useMarketPreferences();
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
 
@@ -77,46 +101,10 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } = usePagination();
 
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(storageKeys.MarketsShowUnknownTokens, false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(storageKeys.MarketsShowUnknownOracle, false);
-
   const { allTokens, findToken } = useTokens();
 
-  // USD Filter values
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(storageKeys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
-  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(storageKeys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
-    storageKeys.MarketsUsdMinLiquidityKey,
-    DEFAULT_MIN_LIQUIDITY_USD.toString(),
-  );
-
-  // USD Filter enabled states
-  const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
-    storageKeys.MarketsMinSupplyEnabledKey,
-    true, // Default to enabled for backward compatibility
-  );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(storageKeys.MarketsMinBorrowEnabledKey, false);
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(storageKeys.MarketsMinLiquidityEnabledKey, false);
-
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(storageKeys.MarketsTrustedVaultsOnlyKey, false);
-
-  // Column visibility state
-  const [columnVisibilityState, setColumnVisibilityState] = useLocalStorage<ColumnVisibility>(
-    storageKeys.MarketsColumnVisibilityKey,
-    DEFAULT_COLUMN_VISIBILITY,
-  );
-
-  const columnVisibility = useMemo(() => ({ ...DEFAULT_COLUMN_VISIBILITY, ...columnVisibilityState }), [columnVisibilityState]);
-
-  const setColumnVisibility = useCallback(
-    (visibility: ColumnVisibility) => {
-      setColumnVisibilityState({ ...DEFAULT_COLUMN_VISIBILITY, ...visibility });
-    },
-    [setColumnVisibilityState],
-  );
-
-  // Table view mode: 'compact' (scrollable) or 'expanded' (full width)
-  const [tableViewMode, setTableViewMode] = useLocalStorage<'compact' | 'expanded'>(storageKeys.MarketsTableViewModeKey, 'compact');
+  // Column visibility and table view mode from Zustand store
+  const { columnVisibility, setColumnVisibility, tableViewMode, setTableViewMode } = useMarketPreferences();
 
   // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);
@@ -134,10 +122,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   // Effective table view mode - always compact on mobile
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
-    storageKeys.UserTrustedVaultsKey,
-    defaultTrustedVaults,
-  );
+  const { vaults: userTrustedVaults } = useTrustedVaults();
   const { open: openModal } = useModal();
 
   const trustedVaultKeys = useMemo(() => {

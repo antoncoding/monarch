@@ -8,6 +8,7 @@ import type { Market, MarketPosition } from '@/utils/types';
 import { useERC20Approval } from './useERC20Approval';
 import { useLocalStorage } from './useLocalStorage';
 import { usePermit2 } from './usePermit2';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
 
@@ -30,7 +31,7 @@ export function useRepayTransaction({
 }: UseRepayTransactionProps) {
   const [currentStep, setCurrentStep] = useState<'approve' | 'signing' | 'repaying'>('approve');
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const { address: account, chainId } = useConnection();
   const toast = useStyledToast();

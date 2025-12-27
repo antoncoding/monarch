@@ -6,7 +6,7 @@ import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
 import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -48,14 +48,9 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   // Store raw unfiltered markets to avoid refetching when blacklist changes
   const [rawMarkets, setRawMarkets] = useState<Market[]>([]);
 
-  // Global setting for showing unwhitelisted markets
-  const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage('showUnwhitelistedMarkets', false);
-
-  // Global setting for showing full reward APY (base + external rewards)
-  const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
-
-  // Global setting for showing APR instead of APY
-  const [isAprDisplay, setIsAprDisplay] = useLocalStorage('settings-apr-display', false);
+  // Global settings from Zustand store
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, showFullRewardAPY, setShowFullRewardAPY, isAprDisplay, setIsAprDisplay } =
+    useAppSettings();
 
   // Blacklisted markets management
   const { allBlacklistedMarketKeys, addBlacklistedMarket, removeBlacklistedMarket, isBlacklisted, isDefaultBlacklisted } =

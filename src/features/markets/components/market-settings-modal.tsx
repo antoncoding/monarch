@@ -6,11 +6,9 @@ import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { storageKeys } from '@/utils/storageKeys';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -25,7 +23,7 @@ type MarketSettingsModalProps = {
   entriesPerPage: number;
   onEntriesPerPageChange: (value: number) => void;
   columnVisibility: ColumnVisibility;
-  setColumnVisibility: (visibility: ColumnVisibility) => void;
+  setColumnVisibility: (visibilityOrUpdater: ColumnVisibility | ((prev: ColumnVisibility) => ColumnVisibility)) => void;
 };
 
 function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
@@ -51,7 +49,7 @@ export default function MarketSettingsModal({
   setColumnVisibility,
 }: MarketSettingsModalProps) {
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
+  const { vaults: userTrustedVaults } = useTrustedVaults();
   const totalVaults = userTrustedVaults.length;
   const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
   const { open: openModal } = useModal();
@@ -177,10 +175,10 @@ export default function MarketSettingsModal({
                         id={`col-${key}`}
                         selected={isVisible}
                         onChange={(value) =>
-                          setColumnVisibility({
-                            ...columnVisibility,
+                          setColumnVisibility((prev) => ({
+                            ...prev,
                             [key]: value,
-                          })
+                          }))
                         }
                         size="xs"
                         color="primary"
@@ -216,12 +214,7 @@ export default function MarketSettingsModal({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() =>
-                      openModal('trustedVaults', {
-                        userTrustedVaults,
-                        setUserTrustedVaults,
-                      })
-                    }
+                    onClick={() => openModal('trustedVaults', {})}
                     className="flex-shrink-0"
                   >
                     Manage
