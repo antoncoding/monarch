@@ -29,8 +29,6 @@ type MarketsTableProps = {
   trustedVaults: TrustedVault[];
   className?: string;
   tableClassName?: string;
-  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  isBlacklisted?: (uniqueKey: string) => boolean;
   onOpenSettings: () => void;
   onRefresh: () => void;
   isRefetching: boolean;
@@ -46,8 +44,6 @@ function MarketsTable({
   trustedVaults,
   className,
   tableClassName,
-  addBlacklistedMarket,
-  isBlacklisted,
   onOpenSettings,
   onRefresh,
   isRefetching,
@@ -121,17 +117,15 @@ function MarketsTable({
           />
         }
       >
-        <span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isRefetching}
-            className="text-secondary min-w-0 px-2"
-          >
-            <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-          </Button>
-        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefetching}
+          className="text-secondary min-w-0 px-2"
+        >
+          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+        </Button>
       </Tooltip>
 
       {/* Hide expand/compact toggle on mobile */}
@@ -149,17 +143,15 @@ function MarketsTable({
             />
           }
         >
-          <span>
-            <Button
-              aria-label="Toggle table width"
-              variant="ghost"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
-            >
-              {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
-            </Button>
-          </span>
+          <Button
+            aria-label="Toggle table width"
+            variant="ghost"
+            size="sm"
+            className="text-secondary min-w-0 px-2"
+            onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+          >
+            {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
+          </Button>
         </Tooltip>
       )}
 
@@ -171,17 +163,15 @@ function MarketsTable({
           />
         }
       >
-        <span>
-          <Button
-            aria-label="Market Preferences"
-            variant="ghost"
-            size="sm"
-            className="text-secondary min-w-0 px-2"
-            onClick={onOpenSettings}
-          >
-            <FiSettings className="h-3 w-3" />
-          </Button>
-        </span>
+        <Button
+          aria-label="Market Preferences"
+          variant="ghost"
+          size="sm"
+          className="text-secondary min-w-0 px-2"
+          onClick={onOpenSettings}
+        >
+          <FiSettings className="h-3 w-3" />
+        </Button>
       </Tooltip>
     </>
   );
@@ -359,8 +349,6 @@ function MarketsTable({
               expandedRowId={expandedRowId}
               setExpandedRowId={setExpandedRowId}
               trustedVaultMap={trustedVaultMap}
-              addBlacklistedMarket={addBlacklistedMarket}
-              isBlacklisted={isBlacklisted}
             />
           </Table>
         )}

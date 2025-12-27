@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';

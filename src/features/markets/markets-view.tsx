@@ -12,7 +12,6 @@ import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
@@ -38,20 +37,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   const toast = useStyledToast();
 
   const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
-
-  const { isBlacklisted, addBlacklistedMarket: addBlacklistedMarketStore } = useBlacklistedMarkets();
-
-  // Wrap addBlacklistedMarket with toast notification
-  const addBlacklistedMarket = useCallback(
-    (uniqueKey: string, chainId: number, reason?: string) => {
-      const success = addBlacklistedMarketStore(uniqueKey, chainId, reason);
-      if (success) {
-        toast.success('Market blacklisted', 'Market added to blacklist');
-      }
-      return success;
-    },
-    [addBlacklistedMarketStore, toast],
-  );
 
   // Initialize state with server-parsed values
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
@@ -439,8 +424,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             trustedVaults={userTrustedVaults}
             className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
             tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
-            addBlacklistedMarket={addBlacklistedMarket}
-            isBlacklisted={isBlacklisted}
             onOpenSettings={() => openModal('marketSettings', {})}
             onRefresh={handleRefresh}
             isRefetching={isRefetching}

@@ -11,7 +11,6 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';

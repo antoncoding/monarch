@@ -19,7 +19,6 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';

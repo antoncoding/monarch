@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { NetworkIcon } from '@/components/shared/network-icon';
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import type { ReportSummary } from '@/hooks/usePositionReport';
 import { useRateLabel } from '@/hooks/useRateLabel';

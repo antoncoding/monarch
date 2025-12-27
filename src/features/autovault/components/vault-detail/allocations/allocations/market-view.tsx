@@ -1,6 +1,5 @@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import type { MarketAllocation } from '@/types/vaultAllocations';

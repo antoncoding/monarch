@@ -24,7 +24,6 @@ type AppSettingsActions = {
 };
 
 type AppSettingsStore = AppSettingsState & AppSettingsActions;
-
 /**
  * Zustand store for global app settings (transaction preferences, display options).
  * Automatically persisted to localStorage.

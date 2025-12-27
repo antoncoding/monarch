@@ -39,8 +39,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const [rawMarkets, setRawMarkets] = useState<Market[]>([]);
 
   // Global settings from Zustand store
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, showFullRewardAPY, setShowFullRewardAPY, isAprDisplay, setIsAprDisplay } =
-    useAppSettings();
+  const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Blacklisted markets management from Zustand store (internal use only for filtering)
   const { getAllBlacklistedKeys } = useBlacklistedMarkets();
@@ -290,17 +289,7 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       refetch,
       refresh,
     }),
-    [
-      markets,
-      whitelistedMarkets,
-      allMarkets,
-      rawMarkets,
-      isLoading,
-      isRefetching,
-      combinedError,
-      refetch,
-      refresh,
-    ],
+    [markets, whitelistedMarkets, allMarkets, rawMarkets, isLoading, isRefetching, combinedError, refetch, refresh],
   );
 
   return <MarketsContext.Provider value={contextValue}>{children}</MarketsContext.Provider>;

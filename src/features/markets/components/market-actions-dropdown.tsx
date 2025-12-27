@@ -14,17 +14,17 @@ import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
 import { useModal } from '@/hooks/useModal';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 
 type MarketActionsDropdownProps = {
   market: Market;
-  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
-export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklisted }: MarketActionsDropdownProps) {
+export function MarketActionsDropdown({ market }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const { open: openModal } = useModal();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { isBlacklisted, addBlacklistedMarket } = useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
 
   const router = useRouter();
@@ -40,15 +40,13 @@ export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklis
   };
 
   const handleBlacklistClick = () => {
-    if (!isBlacklisted?.(market.uniqueKey) && addBlacklistedMarket) {
+    if (!isBlacklisted(market.uniqueKey)) {
       setIsConfirmModalOpen(true);
     }
   };
 
   const handleConfirmBlacklist = () => {
-    if (addBlacklistedMarket) {
-      addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
-    }
+    addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
   };
 
   const onMarketClick = () => {
@@ -108,10 +106,10 @@ export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklis
           <DropdownMenuItem
             onClick={handleBlacklistClick}
             startContent={<AiOutlineStop className="h-4 w-4" />}
-            className={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket ? 'opacity-50 cursor-not-allowed' : ''}
-            disabled={isBlacklisted?.(market.uniqueKey) || !addBlacklistedMarket}
+            className={isBlacklisted(market.uniqueKey) ? 'opacity-50 cursor-not-allowed' : ''}
+            disabled={isBlacklisted(market.uniqueKey)}
           >
-            {isBlacklisted?.(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
+            {isBlacklisted(market.uniqueKey) ? 'Blacklisted' : 'Blacklist'}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

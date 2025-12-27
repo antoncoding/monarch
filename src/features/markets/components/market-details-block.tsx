@@ -3,7 +3,6 @@ import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';

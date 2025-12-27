@@ -8,7 +8,6 @@ import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/modals/settings/custom-rpc-settings';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { defaultTrustedVaults } from '@/constants/vaults/known_vaults';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useAppSettings } from '@/stores/useAppSettings';
@@ -16,7 +15,8 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 export default function SettingsPage() {
   // App settings from Zustand store
-  const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useAppSettings();
+  const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } =
+    useAppSettings();
 
   // Market preferences from Zustand store
   const { includeUnknownTokens, setIncludeUnknownTokens, showUnknownOracle, setShowUnknownOracle } = useMarketPreferences();

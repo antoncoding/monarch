@@ -23,18 +23,9 @@ type MarketTableBodyProps = {
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
   trustedVaultMap: Map<string, TrustedVault>;
-  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
-export function MarketTableBody({
-  currentEntries,
-  expandedRowId,
-  setExpandedRowId,
-  trustedVaultMap,
-  addBlacklistedMarket,
-  isBlacklisted,
-}: MarketTableBodyProps) {
+export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
   const { success: toastSuccess } = useStyledToast();
 
@@ -248,11 +239,7 @@ export function MarketTableBody({
                 className="justify-center px-4 py-3"
               >
                 <div className="flex items-center justify-center">
-                  <MarketActionsDropdown
-                    market={item}
-                    addBlacklistedMarket={addBlacklistedMarket}
-                    isBlacklisted={isBlacklisted}
-                  />
+                  <MarketActionsDropdown market={item} />
                 </div>
               </TableCell>
             </TableRow>

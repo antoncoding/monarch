@@ -3,4 +3,3 @@ export const storageKeys = {
   ThemeKey: 'theme',
   CacheMarketPositionKeys: 'monarch_cache_market_unique_keys',
 } as const;
-
