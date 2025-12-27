@@ -4,7 +4,6 @@ import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import type { WrapStep } from '@/hooks/useWrapLegacyMorpho';
-import { formatBalance } from '@/utils/balance';
 
 type WrapProcessModalProps = {
   amount: bigint;

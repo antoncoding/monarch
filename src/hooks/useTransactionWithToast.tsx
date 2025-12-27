@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
@@ -35,6 +35,15 @@ export function useTransactionWithToast({
   } = useWaitForTransactionReceipt({
     hash,
   });
+
+  // Use a ref to store the latest onSuccess callback without it being in the dependency array
+  // This prevents infinite loops when the callback is recreated on every render
+  const onSuccessRef = useRef(onSuccess);
+
+  // Update the ref whenever onSuccess changes
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
   const onClick = useCallback(() => {
     if (hash) {
@@ -77,8 +86,8 @@ export function useTransactionWithToast({
         onClick,
         closeButton: true,
       });
-      if (onSuccess) {
-        onSuccess();
+      if (onSuccessRef.current) {
+        onSuccessRef.current();
       }
     }
     if (isError || txError) {
@@ -96,7 +105,7 @@ export function useTransactionWithToast({
         closeButton: true,
       });
     }
-  }, [hash, isConfirmed, isError, txError, successText, successDescription, errorText, toastId, onClick, onSuccess]);
+  }, [hash, isConfirmed, isError, txError, successText, successDescription, errorText, toastId, onClick]);
 
   return { sendTransactionAsync, sendTransaction, isConfirming, isConfirmed };
 }
