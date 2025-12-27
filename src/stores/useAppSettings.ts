@@ -26,22 +26,13 @@ type AppSettingsActions = {
 type AppSettingsStore = AppSettingsState & AppSettingsActions;
 
 /**
- * Zustand store for global app settings.
- * Persisted to localStorage to survive page refreshes.
- *
- * **Migration:** Handled by StorageMigrator component
- * **Store key:** `monarch_store_appSettings`
- * **Old keys:**
- * - `usePermit2`
- * - `useEth`
- * - `showUnwhitelistedMarkets`
- * - `showFullRewardAPY`
- * - `settings-apr-display`
+ * Zustand store for global app settings (transaction preferences, display options).
+ * Automatically persisted to localStorage.
  *
  * @example
  * ```tsx
  * const { usePermit2, setUsePermit2 } = useAppSettings();
- * const { showFullRewardAPY } = useAppSettings();
+ * const { useEth, showFullRewardAPY } = useAppSettings();
  * ```
  */
 export const useAppSettings = create<AppSettingsStore>()(

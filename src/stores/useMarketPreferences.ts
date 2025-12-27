@@ -62,17 +62,13 @@ type MarketPreferencesActions = {
 type MarketPreferencesStore = MarketPreferencesState & MarketPreferencesActions;
 
 /**
- * Zustand store for market table preferences (sorting, filtering, pagination).
- * Persisted to localStorage to survive page refreshes.
- *
- * **Migration:** Handled by StorageMigrator component
- * **Store key:** `monarch_store_marketPreferences`
- * **Old keys:** Multiple keys (see StorageMigrator.tsx for full list)
+ * Zustand store for market table preferences (sorting, filtering, pagination, column visibility).
+ * Automatically persisted to localStorage.
  *
  * @example
  * ```tsx
  * const { sortColumn, setSortColumn } = useMarketPreferences();
- * const { usdMinSupply, setUsdMinSupply } = useMarketPreferences();
+ * const { columnVisibility, setColumnVisibility } = useMarketPreferences();
  * ```
  */
 export const useMarketPreferences = create<MarketPreferencesStore>()(

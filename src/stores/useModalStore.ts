@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Market, MarketPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
-import type { ColumnVisibility } from '@/features/markets/components/column-visibility';
 
 /**
  * Registry of Zustand-managed modals (Pattern 2).
@@ -24,18 +23,7 @@ export type ModalProps = {
   };
 
   // Settings & Configuration
-  marketSettings: {
-    usdFilters: {
-      minSupply: string;
-      minBorrow: string;
-      minLiquidity: string;
-    };
-    setUsdFilters: (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => void;
-    entriesPerPage: number;
-    onEntriesPerPageChange: (value: number) => void;
-    columnVisibility: ColumnVisibility;
-    setColumnVisibility: (visibility: ColumnVisibility) => void;
-  };
+  marketSettings: Record<string, never>; // No props needed - uses useMarketPreferences() store
 
   trustedVaults: Record<string, never>; // No props needed - uses useTrustedVaults() store
 

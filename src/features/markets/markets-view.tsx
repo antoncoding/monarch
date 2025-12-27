@@ -8,7 +8,6 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
@@ -20,13 +19,11 @@ import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } fro
 import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
-import { storageKeys } from '@/utils/storageKeys';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 
 import AdvancedSearchBar, { ShortcutType } from './components/advanced-search-bar';
 import AssetFilter from './components/filters/asset-filter';
-import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from './components/column-visibility';
 import { SortColumn } from './components/constants';
 import MarketsTable from './components/table/markets-table';
 import NetworkFilter from './components/filters/network-filter';
@@ -99,12 +96,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
 
-  const { currentPage, setCurrentPage, entriesPerPage, handleEntriesPerPageChange, resetPage } = usePagination();
+  const { currentPage, setCurrentPage, entriesPerPage, resetPage } = usePagination();
 
   const { allTokens, findToken } = useTokens();
 
-  // Column visibility and table view mode from Zustand store
-  const { columnVisibility, setColumnVisibility, tableViewMode, setTableViewMode } = useMarketPreferences();
+  const { tableViewMode, setTableViewMode } = useMarketPreferences();
 
   // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);
@@ -151,7 +147,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
 
-  const setUsdFilters = useCallback(
+  const _setUsdFilters = useCallback(
     (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
       setUsdMinSupply(filters.minSupply);
       setUsdMinBorrow(filters.minBorrow);
@@ -502,7 +498,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                 currentPage={currentPage}
                 entriesPerPage={entriesPerPage}
                 setCurrentPage={setCurrentPage}
-                columnVisibility={columnVisibility}
                 trustedVaults={userTrustedVaults}
                 className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
                 wrapperClassName={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
@@ -528,16 +523,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
                   minBorrow: effectiveMinBorrow,
                   minLiquidity: effectiveMinLiquidity,
                 }}
-                onOpenSettings={() =>
-                  openModal('marketSettings', {
-                    usdFilters,
-                    setUsdFilters,
-                    entriesPerPage,
-                    onEntriesPerPageChange: handleEntriesPerPageChange,
-                    columnVisibility,
-                    setColumnVisibility,
-                  })
-                }
+                onOpenSettings={() => openModal('marketSettings', {})}
                 onRefresh={handleRefresh}
                 isRefetching={isRefetching}
                 tableViewMode={tableViewMode}

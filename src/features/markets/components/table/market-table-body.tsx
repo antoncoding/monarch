@@ -10,9 +10,9 @@ import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
-import type { ColumnVisibility } from '../column-visibility';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
 import { ExpandedMarketDetail } from './market-row-detail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './market-table-utils';
@@ -24,7 +24,6 @@ type MarketTableBodyProps = {
   setExpandedRowId: (id: string | null) => void;
   starMarket: (id: string) => void;
   unstarMarket: (id: string) => void;
-  columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   isBlacklisted?: (uniqueKey: string) => boolean;
@@ -37,11 +36,12 @@ export function MarketTableBody({
   setExpandedRowId,
   starMarket,
   unstarMarket,
-  columnVisibility,
   trustedVaultMap,
   addBlacklistedMarket,
   isBlacklisted,
 }: MarketTableBodyProps) {
+  const { columnVisibility } = useMarketPreferences();
+
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 

@@ -13,9 +13,9 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import type { ColumnVisibility } from '../column-visibility';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
@@ -31,7 +31,6 @@ type MarketsTableProps = {
   currentPage: number;
   entriesPerPage: number;
   setCurrentPage: (value: number) => void;
-  columnVisibility: ColumnVisibility;
   trustedVaults: TrustedVault[];
   className?: string;
   wrapperClassName?: string;
@@ -77,7 +76,6 @@ function MarketsTable({
   currentPage,
   entriesPerPage,
   setCurrentPage,
-  columnVisibility,
   trustedVaults,
   className,
   wrapperClassName,
@@ -109,6 +107,8 @@ function MarketsTable({
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
+
+  const { columnVisibility } = useMarketPreferences();
 
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
@@ -360,7 +360,6 @@ function MarketsTable({
             setExpandedRowId={setExpandedRowId}
             starMarket={starMarket}
             unstarMarket={unstarMarket}
-            columnVisibility={columnVisibility}
             trustedVaultMap={trustedVaultMap}
             addBlacklistedMarket={addBlacklistedMarket}
             isBlacklisted={isBlacklisted}

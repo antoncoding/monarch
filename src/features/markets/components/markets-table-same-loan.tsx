@@ -11,7 +11,6 @@ import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/component
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
 import { useMarkets } from '@/hooks/useMarkets';
@@ -25,11 +24,9 @@ import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
-import { storageKeys } from '@/utils/storageKeys';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 import { MarketIdBadge } from './market-id-badge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from './market-identity';
 import { MarketIndicators } from './market-indicators';
@@ -450,7 +447,6 @@ function MarketRow({
   onToggle,
   disabled,
   showSelectColumn,
-  columnVisibility,
   trustedVaultMap,
   supplyRateLabel,
   borrowRateLabel,
@@ -460,12 +456,13 @@ function MarketRow({
   onToggle: () => void;
   disabled: boolean;
   showSelectColumn: boolean;
-  columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
   supplyRateLabel: string;
   borrowRateLabel: string;
   isAprDisplay: boolean;
 }) {
+  const { columnVisibility } = useMarketPreferences();
+
   const { market, isSelected } = marketWithSelection;
   const trustedVaults = useMemo(() => {
     if (!columnVisibility.trustedBy) {
@@ -666,7 +663,6 @@ export function MarketsTableWithSameLoanAsset({
   // Settings state from Zustand store
   const {
     entriesPerPage,
-    setEntriesPerPage,
     includeUnknownTokens,
     setIncludeUnknownTokens,
     showUnknownOracle,
@@ -686,7 +682,6 @@ export function MarketsTableWithSameLoanAsset({
     minLiquidityEnabled,
     setMinLiquidityEnabled,
     columnVisibility,
-    setColumnVisibility,
   } = useMarketPreferences();
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
@@ -717,7 +712,7 @@ export function MarketsTableWithSameLoanAsset({
     [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
 
-  const setUsdFilters = useCallback(
+  const _setUsdFilters = useCallback(
     (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
       setUsdMinSupply(filters.minSupply);
       setUsdMinBorrow(filters.minBorrow);
@@ -957,31 +952,13 @@ export function MarketsTableWithSameLoanAsset({
               minBorrow: effectiveMinBorrow,
               minLiquidity: effectiveMinLiquidity,
             }}
-            onOpenSettings={() =>
-              openModal('marketSettings', {
-                usdFilters,
-                setUsdFilters,
-                entriesPerPage,
-                onEntriesPerPageChange: setEntriesPerPage,
-                columnVisibility,
-                setColumnVisibility,
-              })
-            }
+            onOpenSettings={() => openModal('marketSettings', {})}
           />
           {showSettings && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                openModal('marketSettings', {
-                  usdFilters,
-                  setUsdFilters,
-                  entriesPerPage,
-                  onEntriesPerPageChange: setEntriesPerPage,
-                  columnVisibility,
-                  setColumnVisibility,
-                })
-              }
+              onClick={() => openModal('marketSettings', {})}
               className="min-w-0 px-2"
             >
               <GearIcon className="h-4 w-4" />
@@ -1137,7 +1114,6 @@ export function MarketsTableWithSameLoanAsset({
                   onToggle={() => onToggleMarket(marketWithSelection.market.uniqueKey)}
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
-                  columnVisibility={columnVisibility}
                   trustedVaultMap={trustedVaultMap}
                   supplyRateLabel={supplyRateLabel}
                   borrowRateLabel={borrowRateLabel}

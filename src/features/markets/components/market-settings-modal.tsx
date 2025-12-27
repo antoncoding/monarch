@@ -9,21 +9,12 @@ import { TrustedByCell } from '@/features/autovault/components/trusted-vault-bad
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  usdFilters: {
-    minSupply: string;
-    minBorrow: string;
-    minLiquidity: string;
-  };
-  setUsdFilters: (filters: MarketSettingsModalProps['usdFilters']) => void;
-  entriesPerPage: number;
-  onEntriesPerPageChange: (value: number) => void;
-  columnVisibility: ColumnVisibility;
-  setColumnVisibility: (visibilityOrUpdater: ColumnVisibility | ((prev: ColumnVisibility) => ColumnVisibility)) => void;
 };
 
 function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
@@ -38,16 +29,21 @@ function SettingItem({ title, description, children }: { title: string; descript
   );
 }
 
-export default function MarketSettingsModal({
-  isOpen,
-  onOpenChange,
-  usdFilters,
-  setUsdFilters,
-  entriesPerPage,
-  onEntriesPerPageChange,
-  columnVisibility,
-  setColumnVisibility,
-}: MarketSettingsModalProps) {
+export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSettingsModalProps) {
+  // Subscribe to Zustand stores directly - no prop drilling!
+  const {
+    columnVisibility,
+    setColumnVisibility,
+    entriesPerPage,
+    setEntriesPerPage,
+    usdMinSupply,
+    setUsdMinSupply,
+    usdMinBorrow,
+    setUsdMinBorrow,
+    usdMinLiquidity,
+    setUsdMinLiquidity,
+  } = useMarketPreferences();
+
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const totalVaults = userTrustedVaults.length;
@@ -57,7 +53,7 @@ export default function MarketSettingsModal({
   const handleCustomEntriesSubmit = () => {
     const value = Number(customEntries);
     if (!Number.isNaN(value) && value > 0) {
-      onEntriesPerPageChange(value);
+      setEntriesPerPage(value);
     }
     setCustomEntries(value > 0 ? String(value) : entriesPerPage.toString());
   };
@@ -65,7 +61,10 @@ export default function MarketSettingsModal({
   const handleUsdFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (/^\d*$/.test(value)) {
-      setUsdFilters({ ...usdFilters, [name]: value });
+      // Update the corresponding store value
+      if (name === 'minSupply') setUsdMinSupply(value);
+      else if (name === 'minBorrow') setUsdMinBorrow(value);
+      else if (name === 'minLiquidity') setUsdMinLiquidity(value);
     }
   };
 
@@ -100,7 +99,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum supply value"
                   name="minSupply"
                   placeholder="0"
-                  value={usdFilters.minSupply}
+                  value={usdMinSupply}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
@@ -120,7 +119,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum borrow value"
                   name="minBorrow"
                   placeholder="0"
-                  value={usdFilters.minBorrow}
+                  value={usdMinBorrow}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
@@ -140,7 +139,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum liquidity value"
                   name="minLiquidity"
                   placeholder="0"
-                  value={usdFilters.minLiquidity}
+                  value={usdMinLiquidity}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
