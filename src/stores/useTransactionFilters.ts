@@ -73,24 +73,29 @@ export const useTransactionFiltersStore = create<TransactionFiltersStore>()(
  * Convenience hook with scoped API for a specific token symbol.
  * Maintains backward-compatible interface with the old useLocalStorage-based hook.
  *
+ * FIX: Use separate selectors for primitives to avoid infinite loop from object creation.
+ * The `??` operator with object literal creates a new reference every render!
+ *
  * @example
  * ```tsx
  * const { minSupplyAmount, setMinSupplyAmount } = useTransactionFilters('USDC');
  * ```
  */
 export function useTransactionFilters(loanAssetSymbol: string) {
-  const currentFilters = useTransactionFiltersStore((s) => s.filters[loanAssetSymbol] ?? { minSupplyAmount: '0', minBorrowAmount: '0' });
+  // Use separate selectors for each primitive value (prevents infinite loop)
+  const minSupplyAmount = useTransactionFiltersStore((s) => s.filters[loanAssetSymbol]?.minSupplyAmount ?? '0');
+  const minBorrowAmount = useTransactionFiltersStore((s) => s.filters[loanAssetSymbol]?.minBorrowAmount ?? '0');
 
   const setMinSupply = useTransactionFiltersStore((s) => s.setMinSupplyAmount);
   const setMinBorrow = useTransactionFiltersStore((s) => s.setMinBorrowAmount);
 
   return useMemo(
     () => ({
-      minSupplyAmount: currentFilters.minSupplyAmount,
-      minBorrowAmount: currentFilters.minBorrowAmount,
+      minSupplyAmount,
+      minBorrowAmount,
       setMinSupplyAmount: (value: string) => setMinSupply(loanAssetSymbol, value),
       setMinBorrowAmount: (value: string) => setMinBorrow(loanAssetSymbol, value),
     }),
-    [currentFilters, setMinSupply, setMinBorrow, loanAssetSymbol],
+    [minSupplyAmount, minBorrowAmount, setMinSupply, setMinBorrow, loanAssetSymbol],
   );
 }
