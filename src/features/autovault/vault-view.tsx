@@ -288,7 +288,6 @@ export default function VaultContent() {
             <TotalSupplyCard
               vaultAddress={vaultAddressValue}
               chainId={chainId}
-              needsInitialization={needsInitialization}
             />
             <Card className="bg-surface rounded shadow-sm">
               <CardHeader className="flex items-center justify-between pb-2">

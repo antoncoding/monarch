@@ -10,7 +10,6 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
-import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 
 type VaultCollateralsCardProps = {
   vaultAddress: Address;
@@ -27,18 +26,10 @@ export function VaultCollateralsCard({ vaultAddress, chainId, needsInitializatio
 
   // UI state from Zustand
   const { open: openSettings } = useVaultSettingsModalStore();
-  const { open: openInitialization } = useVaultInitializationModalStore();
 
   const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
   const isLoading = vaultDataLoading;
 
-  const handleManageCaps = () => {
-    if (needsInitialization) {
-      openInitialization();
-    } else {
-      openSettings('caps');
-    }
-  };
   const cardStyle = 'bg-surface rounded shadow-sm';
   const maxDisplay = 5;
   const iconSize = 20;
@@ -61,7 +52,7 @@ export function VaultCollateralsCard({ vaultAddress, chainId, needsInitializatio
         {isOwner && !needsInitialization && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={handleManageCaps}
+            onClick={() => openSettings('caps')}
           />
         )}
       </CardHeader>

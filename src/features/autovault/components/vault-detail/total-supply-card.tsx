@@ -15,10 +15,9 @@ import { DepositToVaultModal } from './modals/deposit-to-vault-modal';
 type VaultTotalAssetsCardProps = {
   vaultAddress: Address;
   chainId: SupportedNetworks;
-  needsInitialization: boolean;
 };
 
-export function TotalSupplyCard({ vaultAddress, chainId, needsInitialization }: VaultTotalAssetsCardProps): JSX.Element {
+export function TotalSupplyCard({ vaultAddress, chainId }: VaultTotalAssetsCardProps): JSX.Element {
   const { address: connectedAddress } = useConnection();
 
   // Pull data directly - TanStack Query deduplicates

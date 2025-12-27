@@ -12,7 +12,6 @@ import { findAgent } from '@/utils/monarch-agent';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
-import { useVaultInitializationModalStore } from '@/stores/vault-initialization-modal-store';
 import type { SupportedNetworks } from '@/utils/networks';
 
 type VaultAllocatorCardProps = {
@@ -30,18 +29,10 @@ export function VaultAllocatorCard({ vaultAddress, chainId, needsInitialization 
 
   // UI state from Zustand
   const { open: openSettings } = useVaultSettingsModalStore();
-  const { open: openInitialization } = useVaultInitializationModalStore();
 
   const allocators = vaultData?.allocators ?? [];
   const isLoading = vaultDataLoading;
 
-  const handleManageAgents = () => {
-    if (needsInitialization) {
-      openInitialization();
-    } else {
-      openSettings('agents');
-    }
-  };
   const cardStyle = 'bg-surface rounded shadow-sm';
   const maxDisplay = 5;
   const iconSize = 20;
@@ -66,7 +57,7 @@ export function VaultAllocatorCard({ vaultAddress, chainId, needsInitialization 
         {isOwner && !needsInitialization && (
           <GearIcon
             className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={handleManageAgents}
+            onClick={() => openSettings('agents')}
           />
         )}
       </CardHeader>
