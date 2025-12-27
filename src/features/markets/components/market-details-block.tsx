@@ -3,7 +3,7 @@ import { ChevronDownIcon, ChevronUpIcon, ExternalLinkIcon } from '@radix-ui/reac
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatUnits } from 'viem';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getIRMTitle, previewMarketState } from '@/utils/morpho';
@@ -36,7 +36,7 @@ export function MarketDetailsBlock({
 }: MarketDetailsBlockProps): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(!defaultCollapsed && !disableExpansion);
 
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({

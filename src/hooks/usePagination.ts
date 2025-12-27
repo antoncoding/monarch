@@ -1,25 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import storage from 'local-storage-fallback';
-import { storageKeys } from '@/utils/storageKeys';
+import { useState, useCallback } from 'react';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
-export function usePagination(initialEntriesPerPage = 6) {
+/**
+ * Hook for managing pagination state.
+ * - currentPage: Local state (not persisted)
+ * - entriesPerPage: From Zustand store (persisted)
+ */
+export function usePagination() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(initialEntriesPerPage);
+  const { entriesPerPage, setEntriesPerPage } = useMarketPreferences();
 
   const resetPage = useCallback(() => {
     setCurrentPage(1);
-  }, [setCurrentPage]);
-
-  useEffect(() => {
-    const storedEntriesPerPage = storage.getItem(storageKeys.MarketEntriesPerPageKey);
-    if (storedEntriesPerPage) {
-      setEntriesPerPage(Number.parseInt(storedEntriesPerPage, 10));
-    }
   }, []);
 
   const handleEntriesPerPageChange = (value: number) => {
     setEntriesPerPage(value);
-    storage.setItem(storageKeys.MarketEntriesPerPageKey, value.toString());
     setCurrentPage(1); // Reset to first page
   };
 

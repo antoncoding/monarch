@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import Input from '@/components/Input/Input';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { useSupplyMarket } from '@/hooks/useSupplyMarket';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
@@ -22,7 +22,7 @@ type SupplyModalContentProps = {
 };
 
 export function SupplyModalContent({ onClose, market, refetch, onAmountChange }: SupplyModalContentProps): JSX.Element {
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
   const { open: openModal } = useModal();
 
   const onSuccess = useCallback(() => {

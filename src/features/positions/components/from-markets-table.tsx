@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
@@ -23,7 +23,7 @@ const PER_PAGE = 5;
 
 export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectMarket, onSelectMax }: FromMarketsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const totalPages = Math.ceil(positions.length / PER_PAGE);

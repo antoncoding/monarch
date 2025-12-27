@@ -7,19 +7,22 @@ import { IconSwitch } from '@/components/ui/icon-switch';
 import Header from '@/components/layout/header/Header';
 import { AdvancedRpcSettings } from '@/modals/settings/custom-rpc-settings';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
-import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarkets } from '@/hooks/useMarkets';
+import { defaultTrustedVaults } from '@/constants/vaults/known_vaults';
 import { useModal } from '@/hooks/useModal';
-import { storageKeys } from '@/utils/storageKeys';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useAppSettings } from '@/stores/useAppSettings';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 export default function SettingsPage() {
-  const [usePermit2, setUsePermit2] = useLocalStorage('usePermit2', true);
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage('includeUnknownTokens', false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage('showUnknownOracle', false);
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
+  // App settings from Zustand store
+  const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } =
+    useAppSettings();
 
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
+  // Market preferences from Zustand store
+  const { includeUnknownTokens, setIncludeUnknownTokens, showUnknownOracle, setShowUnknownOracle } = useMarketPreferences();
+
+  const { vaults: userTrustedVaults } = useTrustedVaults();
+
   const { open: openModal } = useModal();
   const [mounted, setMounted] = React.useState(false);
 
@@ -184,12 +187,7 @@ export default function SettingsPage() {
                 <Button
                   size="sm"
                   variant="default"
-                  onClick={() =>
-                    openModal('trustedVaults', {
-                      userTrustedVaults,
-                      setUserTrustedVaults,
-                    })
-                  }
+                  onClick={() => openModal('trustedVaults', {})}
                 >
                   Edit
                 </Button>

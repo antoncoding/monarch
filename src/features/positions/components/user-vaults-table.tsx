@@ -11,7 +11,7 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { useTokens } from '@/components/providers/TokenProvider';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -32,7 +32,7 @@ type UserVaultsTableProps = {
 export function UserVaultsTable({ vaults, account, refetch, isRefetching = false }: UserVaultsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { findToken } = useTokens();
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const toggleRow = (rowKey: string) => {

@@ -18,8 +18,8 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarkets } from '@/hooks/useMarkets';
+import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -28,7 +28,6 @@ import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
-import { storageKeys } from '@/utils/storageKeys';
 import { type GroupedPosition, type MarketPositionWithEarnings, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
@@ -116,13 +115,11 @@ export function SuppliedMorphoBlueGroupedTable({
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
-  const [showCollateralExposure, setShowCollateralExposure] = useLocalStorage<boolean>(
-    storageKeys.PositionsShowCollateralExposureKey,
-    true,
-  );
+  // Positions preferences from Zustand store
+  const { showCollateralExposure, setShowCollateralExposure } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const toast = useStyledToast();

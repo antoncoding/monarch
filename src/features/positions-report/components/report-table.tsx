@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { NetworkIcon } from '@/components/shared/network-icon';
 import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import type { ReportSummary } from '@/hooks/usePositionReport';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatReadable } from '@/utils/balance';
@@ -63,7 +63,7 @@ const formatDays = (seconds: number) => {
 };
 
 function MarketSummaryBlock({ market, interestEarned, decimals, symbol, apy, hasActivePosition }: MarketInfoBlockProps) {
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   // Convert to APR if display mode is enabled
@@ -121,7 +121,7 @@ function MarketSummaryBlock({ market, interestEarned, decimals, symbol, apy, has
 export function ReportTable({ report, asset, startDate, endDate, chainId }: ReportTableProps) {
   const [expandedMarkets, setExpandedMarkets] = useState<Set<string>>(new Set());
 
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   // Convert APY to APR if display mode is enabled

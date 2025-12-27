@@ -5,8 +5,8 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
-import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -21,16 +21,6 @@ export type MarketsContextType = {
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
   refresh: () => Promise<void>;
-  showUnwhitelistedMarkets: boolean;
-  setShowUnwhitelistedMarkets: (value: boolean) => void;
-  showFullRewardAPY: boolean;
-  setShowFullRewardAPY: (value: boolean) => void;
-  isAprDisplay: boolean;
-  setIsAprDisplay: (value: boolean) => void;
-  isBlacklisted: (uniqueKey: string) => boolean;
-  addBlacklistedMarket: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  removeBlacklistedMarket: (uniqueKey: string) => void;
-  isDefaultBlacklisted: (uniqueKey: string) => boolean;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
@@ -48,18 +38,14 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   // Store raw unfiltered markets to avoid refetching when blacklist changes
   const [rawMarkets, setRawMarkets] = useState<Market[]>([]);
 
-  // Global setting for showing unwhitelisted markets
-  const [showUnwhitelistedMarkets, setShowUnwhitelistedMarkets] = useLocalStorage('showUnwhitelistedMarkets', false);
+  // Global settings from Zustand store
+  const { showUnwhitelistedMarkets } = useAppSettings();
 
-  // Global setting for showing full reward APY (base + external rewards)
-  const [showFullRewardAPY, setShowFullRewardAPY] = useLocalStorage('showFullRewardAPY', false);
+  // Blacklisted markets management from Zustand store (internal use only for filtering)
+  const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
 
-  // Global setting for showing APR instead of APY
-  const [isAprDisplay, setIsAprDisplay] = useLocalStorage('settings-apr-display', false);
-
-  // Blacklisted markets management
-  const { allBlacklistedMarketKeys, addBlacklistedMarket, removeBlacklistedMarket, isBlacklisted, isDefaultBlacklisted } =
-    useBlacklistedMarkets();
+  // Get all blacklisted keys for filtering - memoize to prevent infinite loops
+  const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
 
   // Oracle data context for enriching markets
   const { getOracleData } = useOracleDataContext();
@@ -302,38 +288,8 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       error: combinedError,
       refetch,
       refresh,
-      showUnwhitelistedMarkets,
-      setShowUnwhitelistedMarkets,
-      showFullRewardAPY,
-      setShowFullRewardAPY,
-      isAprDisplay,
-      setIsAprDisplay,
-      isBlacklisted,
-      addBlacklistedMarket,
-      removeBlacklistedMarket,
-      isDefaultBlacklisted,
     }),
-    [
-      markets,
-      whitelistedMarkets,
-      allMarkets,
-      rawMarkets,
-      isLoading,
-      isRefetching,
-      combinedError,
-      refetch,
-      refresh,
-      showUnwhitelistedMarkets,
-      setShowUnwhitelistedMarkets,
-      showFullRewardAPY,
-      setShowFullRewardAPY,
-      isAprDisplay,
-      setIsAprDisplay,
-      isBlacklisted,
-      addBlacklistedMarket,
-      removeBlacklistedMarket,
-      isDefaultBlacklisted,
-    ],
+    [markets, whitelistedMarkets, allMarkets, rawMarkets, isLoading, isRefetching, combinedError, refetch, refresh],
   );
 
   return <MarketsContext.Provider value={contextValue}>{children}</MarketsContext.Provider>;

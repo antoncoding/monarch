@@ -5,7 +5,7 @@ import { LTVWarning } from '@/components/shared/ltv-warning';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
 import Input from '@/components/Input/Input';
 import { useBorrowTransaction } from '@/hooks/useBorrowTransaction';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getNativeTokenSymbol } from '@/utils/networks';
 import { isWrappedNativeToken } from '@/utils/tokens';
@@ -39,7 +39,7 @@ export function AddCollateralAndBorrow({
   const [borrowAmount, setBorrowAmount] = useState<bigint>(BigInt(0));
   const [collateralInputError, setCollateralInputError] = useState<string | null>(null);
   const [borrowInputError, setBorrowInputError] = useState<string | null>(null);
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   // lltv with 18 decimals
   const lltv = BigInt(market.lltv);

@@ -7,11 +7,11 @@ import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { GroupedPosition, RebalanceAction } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
-import { useLocalStorage } from './useLocalStorage';
 import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
-import { useUserMarketsCache } from './useUserMarketsCache';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 
 // Define more specific step types
 export type RebalanceStepType =
@@ -31,7 +31,7 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
   const { address: account } = useConnection();
   const bundlerAddress = getBundlerV2(groupedPosition.chainId);
   const toast = useStyledToast();
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true); // Read user setting
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const totalAmount = rebalanceActions.reduce((acc, action) => acc + BigInt(action.amount), BigInt(0));
 

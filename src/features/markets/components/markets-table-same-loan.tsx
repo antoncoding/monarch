@@ -11,24 +11,21 @@ import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/component
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { DEFAULT_MIN_SUPPLY_USD, DEFAULT_MIN_LIQUIDITY_USD } from '@/constants/markets';
-import { defaultTrustedVaults, getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
+import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
-import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
-import { storageKeys } from '@/utils/storageKeys';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import { DEFAULT_COLUMN_VISIBILITY, type ColumnVisibility } from '@/features/markets/components/column-visibility';
 import { MarketIdBadge } from './market-id-badge';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from './market-identity';
 import { MarketIndicators } from './market-indicators';
@@ -52,8 +49,6 @@ type MarketsTableWithSameLoanAssetProps = {
   markets: MarketWithSelection[];
   onToggleMarket: (marketId: string) => void;
   disabled?: boolean;
-  // Optional: Render additional content for selected markets in the cart
-  renderCartItemExtra?: (market: Market) => React.ReactNode;
   // Optional: Pass unique tokens for better filter performance
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
@@ -449,7 +444,6 @@ function MarketRow({
   onToggle,
   disabled,
   showSelectColumn,
-  columnVisibility,
   trustedVaultMap,
   supplyRateLabel,
   borrowRateLabel,
@@ -459,12 +453,13 @@ function MarketRow({
   onToggle: () => void;
   disabled: boolean;
   showSelectColumn: boolean;
-  columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
   supplyRateLabel: string;
   borrowRateLabel: string;
   isAprDisplay: boolean;
 }) {
+  const { columnVisibility } = useMarketPreferences();
+
   const { market, isSelected } = marketWithSelection;
   const trustedVaults = useMemo(() => {
     if (!columnVisibility.trustedBy) {
@@ -625,13 +620,12 @@ export function MarketsTableWithSameLoanAsset({
   markets,
   onToggleMarket,
   disabled = false,
-  renderCartItemExtra,
   uniqueCollateralTokens,
   showSelectColumn = true,
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay } = useMarkets();
+  const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
   const { findToken } = useTokens();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -662,24 +656,22 @@ export function MarketsTableWithSameLoanAsset({
   const [oracleFilter, setOracleFilter] = useState<PriceFeedVendors[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Settings state (persisted with storage key namespace)
-  const [entriesPerPage, setEntriesPerPage] = useLocalStorage(storageKeys.MarketEntriesPerPageKey, 8);
-  const [includeUnknownTokens, setIncludeUnknownTokens] = useLocalStorage(storageKeys.MarketsShowUnknownTokens, false);
-  const [showUnknownOracle, setShowUnknownOracle] = useLocalStorage(storageKeys.MarketsShowUnknownOracle, false);
-  const [userTrustedVaults, _setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(
-    storageKeys.UserTrustedVaultsKey,
-    defaultTrustedVaults,
-  );
+  // Settings state from Zustand store
+  const {
+    entriesPerPage,
+    includeUnknownTokens,
+    showUnknownOracle,
+    trustedVaultsOnly,
+    usdMinSupply,
+    usdMinBorrow,
+    usdMinLiquidity,
+    minSupplyEnabled,
+    minBorrowEnabled,
+    minLiquidityEnabled,
+    columnVisibility,
+  } = useMarketPreferences();
 
-  // Store USD filters as separate localStorage items to match markets.tsx pattern
-  const [usdMinSupply, setUsdMinSupply] = useLocalStorage(storageKeys.MarketsUsdMinSupplyKey, DEFAULT_MIN_SUPPLY_USD.toString());
-  const [usdMinBorrow, setUsdMinBorrow] = useLocalStorage(storageKeys.MarketsUsdMinBorrowKey, '');
-  const [usdMinLiquidity, setUsdMinLiquidity] = useLocalStorage(
-    storageKeys.MarketsUsdMinLiquidityKey,
-    DEFAULT_MIN_LIQUIDITY_USD.toString(),
-  );
-
-  const [trustedVaultsOnly, setTrustedVaultsOnly] = useLocalStorage(storageKeys.MarketsTrustedVaultsOnlyKey, false);
+  const { vaults: userTrustedVaults } = useTrustedVaults();
 
   const trustedVaultMap = useMemo(() => {
     return buildTrustedVaultMap(userTrustedVaults);
@@ -697,20 +689,6 @@ export function MarketsTableWithSameLoanAsset({
     [trustedVaultMap],
   );
 
-  // USD Filter enabled states
-  const [minSupplyEnabled, setMinSupplyEnabled] = useLocalStorage(
-    storageKeys.MarketsMinSupplyEnabledKey,
-    true, // Default to enabled for backward compatibility
-  );
-  const [minBorrowEnabled, setMinBorrowEnabled] = useLocalStorage(storageKeys.MarketsMinBorrowEnabledKey, false);
-  const [minLiquidityEnabled, setMinLiquidityEnabled] = useLocalStorage(storageKeys.MarketsMinLiquidityEnabledKey, false);
-
-  // Column visibility state
-  const [columnVisibility, setColumnVisibility] = useLocalStorage<ColumnVisibility>(
-    storageKeys.MarketsColumnVisibilityKey,
-    DEFAULT_COLUMN_VISIBILITY,
-  );
-
   // Create memoized usdFilters object from individual localStorage values
   const usdFilters = useMemo(
     () => ({
@@ -720,19 +698,6 @@ export function MarketsTableWithSameLoanAsset({
     }),
     [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
-
-  const setUsdFilters = useCallback(
-    (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
-      setUsdMinSupply(filters.minSupply);
-      setUsdMinBorrow(filters.minBorrow);
-      setUsdMinLiquidity(filters.minLiquidity);
-    },
-    [setUsdMinSupply, setUsdMinBorrow, setUsdMinLiquidity],
-  );
-
-  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
-  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
-  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -890,11 +855,6 @@ export function MarketsTableWithSameLoanAsset({
     trustedVaultsOnly,
   ]);
 
-  // Get selected markets
-  const _selectedMarkets = useMemo(() => {
-    return markets.filter((m) => m.isSelected);
-  }, [markets]);
-
   // Pagination with guards to prevent invalid states
   const safePerPage = Math.max(1, Math.floor(entriesPerPage));
   const totalPages = Math.max(1, Math.ceil(processedMarkets.length / safePerPage));
@@ -941,51 +901,12 @@ export function MarketsTableWithSameLoanAsset({
           />
         </div>
         <div className="flex items-center gap-3">
-          <SuppliedAssetFilterCompactSwitch
-            includeUnknownTokens={includeUnknownTokens}
-            setIncludeUnknownTokens={setIncludeUnknownTokens}
-            showUnknownOracle={showUnknownOracle}
-            setShowUnknownOracle={setShowUnknownOracle}
-            showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-            setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-            trustedVaultsOnly={trustedVaultsOnly}
-            setTrustedVaultsOnly={setTrustedVaultsOnly}
-            minSupplyEnabled={minSupplyEnabled}
-            setMinSupplyEnabled={setMinSupplyEnabled}
-            minBorrowEnabled={minBorrowEnabled}
-            setMinBorrowEnabled={setMinBorrowEnabled}
-            minLiquidityEnabled={minLiquidityEnabled}
-            setMinLiquidityEnabled={setMinLiquidityEnabled}
-            thresholds={{
-              minSupply: effectiveMinSupply,
-              minBorrow: effectiveMinBorrow,
-              minLiquidity: effectiveMinLiquidity,
-            }}
-            onOpenSettings={() =>
-              openModal('marketSettings', {
-                usdFilters,
-                setUsdFilters,
-                entriesPerPage,
-                onEntriesPerPageChange: setEntriesPerPage,
-                columnVisibility,
-                setColumnVisibility,
-              })
-            }
-          />
+          <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
           {showSettings && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() =>
-                openModal('marketSettings', {
-                  usdFilters,
-                  setUsdFilters,
-                  entriesPerPage,
-                  onEntriesPerPageChange: setEntriesPerPage,
-                  columnVisibility,
-                  setColumnVisibility,
-                })
-              }
+              onClick={() => openModal('marketSettings', {})}
               className="min-w-0 px-2"
             >
               <GearIcon className="h-4 w-4" />
@@ -1141,7 +1062,6 @@ export function MarketsTableWithSameLoanAsset({
                   onToggle={() => onToggleMarket(marketWithSelection.market.uniqueKey)}
                   disabled={disabled}
                   showSelectColumn={showSelectColumn}
-                  columnVisibility={columnVisibility}
                   trustedVaultMap={trustedVaultMap}
                   supplyRateLabel={supplyRateLabel}
                   borrowRateLabel={borrowRateLabel}

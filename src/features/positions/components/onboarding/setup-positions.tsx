@@ -9,7 +9,7 @@ import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButt
 import Input from '@/components/Input/Input';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
 import { SupplyProcessModal } from '@/modals/supply/supply-process-modal';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useMultiMarketSupply } from '@/hooks/useMultiMarketSupply';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -22,8 +22,7 @@ export function SetupPositions({ onClose }: { onClose: () => void }) {
   const toast = useStyledToast();
   const { short: rateLabel } = useRateLabel();
   const { selectedToken, selectedMarkets, balances, goToPrevStep } = useOnboarding();
-  const [useEth] = useLocalStorage('useEth', false);
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { useEth, usePermit2: usePermit2Setting } = useAppSettings();
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [totalAmountBigInt, setTotalAmountBigInt] = useState<bigint>(0n);
   const [amounts, setAmounts] = useState<Record<string, string>>({});

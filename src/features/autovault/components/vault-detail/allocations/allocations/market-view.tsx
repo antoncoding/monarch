@@ -1,6 +1,6 @@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { MarketIdentity, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import type { MarketAllocation } from '@/types/vaultAllocations';
 import { formatBalance, formatReadable } from '@/utils/balance';
@@ -18,7 +18,7 @@ type MarketViewProps = {
 };
 
 export function MarketView({ allocations, totalAllocation, vaultAssetSymbol, vaultAssetDecimals, chainId }: MarketViewProps) {
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   // Sort by allocation amount (most to least)

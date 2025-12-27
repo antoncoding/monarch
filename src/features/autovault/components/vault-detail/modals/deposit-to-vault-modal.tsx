@@ -6,7 +6,7 @@ import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import Input from '@/components/Input/Input';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useVaultV2Deposit } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
 import { VaultDepositProcessModal } from './vault-deposit-process-modal';
@@ -32,7 +32,7 @@ export function DepositToVaultModal({
   onClose,
   onSuccess,
 }: DepositToVaultModalProps): JSX.Element {
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const {
     depositAmount,

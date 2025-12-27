@@ -6,26 +6,15 @@ import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { defaultTrustedVaults, type TrustedVault } from '@/constants/vaults/known_vaults';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { storageKeys } from '@/utils/storageKeys';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  usdFilters: {
-    minSupply: string;
-    minBorrow: string;
-    minLiquidity: string;
-  };
-  setUsdFilters: (filters: MarketSettingsModalProps['usdFilters']) => void;
-  entriesPerPage: number;
-  onEntriesPerPageChange: (value: number) => void;
-  columnVisibility: ColumnVisibility;
-  setColumnVisibility: (visibility: ColumnVisibility) => void;
 };
 
 function SettingItem({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
@@ -40,26 +29,31 @@ function SettingItem({ title, description, children }: { title: string; descript
   );
 }
 
-export default function MarketSettingsModal({
-  isOpen,
-  onOpenChange,
-  usdFilters,
-  setUsdFilters,
-  entriesPerPage,
-  onEntriesPerPageChange,
-  columnVisibility,
-  setColumnVisibility,
-}: MarketSettingsModalProps) {
+export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSettingsModalProps) {
+  // Subscribe to Zustand stores directly - no prop drilling!
+  const {
+    columnVisibility,
+    setColumnVisibility,
+    entriesPerPage,
+    setEntriesPerPage,
+    usdMinSupply,
+    setUsdMinSupply,
+    usdMinBorrow,
+    setUsdMinBorrow,
+    usdMinLiquidity,
+    setUsdMinLiquidity,
+  } = useMarketPreferences();
+
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
-  const [userTrustedVaults, setUserTrustedVaults] = useLocalStorage<TrustedVault[]>(storageKeys.UserTrustedVaultsKey, defaultTrustedVaults);
+  const { vaults: userTrustedVaults } = useTrustedVaults();
   const totalVaults = userTrustedVaults.length;
-  const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
+  const { showFullRewardAPY, setShowFullRewardAPY } = useAppSettings();
   const { open: openModal } = useModal();
 
   const handleCustomEntriesSubmit = () => {
     const value = Number(customEntries);
     if (!Number.isNaN(value) && value > 0) {
-      onEntriesPerPageChange(value);
+      setEntriesPerPage(value);
     }
     setCustomEntries(value > 0 ? String(value) : entriesPerPage.toString());
   };
@@ -67,7 +61,10 @@ export default function MarketSettingsModal({
   const handleUsdFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (/^\d*$/.test(value)) {
-      setUsdFilters({ ...usdFilters, [name]: value });
+      // Update the corresponding store value
+      if (name === 'minSupply') setUsdMinSupply(value);
+      else if (name === 'minBorrow') setUsdMinBorrow(value);
+      else if (name === 'minLiquidity') setUsdMinLiquidity(value);
     }
   };
 
@@ -87,7 +84,7 @@ export default function MarketSettingsModal({
             mainIcon={<FiSliders className="h-5 w-5" />}
             onClose={onClose}
           />
-          <ModalBody className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
+          <ModalBody className="flex flex-col gap-5">
             <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
               <h3 className="text-xs uppercase text-secondary">Filter Thresholds</h3>
               <p className="-mt-3 mb-1 text-xs text-secondary">
@@ -102,7 +99,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum supply value"
                   name="minSupply"
                   placeholder="0"
-                  value={usdFilters.minSupply}
+                  value={usdMinSupply}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
@@ -122,7 +119,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum borrow value"
                   name="minBorrow"
                   placeholder="0"
-                  value={usdFilters.minBorrow}
+                  value={usdMinBorrow}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
@@ -142,7 +139,7 @@ export default function MarketSettingsModal({
                   aria-label="Minimum liquidity value"
                   name="minLiquidity"
                   placeholder="0"
-                  value={usdFilters.minLiquidity}
+                  value={usdMinLiquidity}
                   onChange={handleUsdFilterChange}
                   size="sm"
                   type="text"
@@ -177,10 +174,10 @@ export default function MarketSettingsModal({
                         id={`col-${key}`}
                         selected={isVisible}
                         onChange={(value) =>
-                          setColumnVisibility({
-                            ...columnVisibility,
+                          setColumnVisibility((prev) => ({
+                            ...prev,
                             [key]: value,
-                          })
+                          }))
                         }
                         size="xs"
                         color="primary"
@@ -216,12 +213,7 @@ export default function MarketSettingsModal({
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() =>
-                      openModal('trustedVaults', {
-                        userTrustedVaults,
-                        setUserTrustedVaults,
-                      })
-                    }
+                    onClick={() => openModal('trustedVaults', {})}
                     className="flex-shrink-0"
                   >
                     Manage

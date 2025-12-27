@@ -100,9 +100,7 @@ export default function LoadingScreen({ message, className }: LoadingScreenProps
 
   return (
     <div
-      className={`bg-surface my-4 flex min-h-48 flex-col items-center justify-center space-y-4 rounded py-8 shadow-sm font-zen ${
-        className ?? ''
-      }`}
+      className={`bg-surface my-4 flex min-h-48 flex-col items-center justify-center space-y-4 rounded py-8 font-zen ${className ?? ''}`}
     >
       <Image
         src={loadingImg}

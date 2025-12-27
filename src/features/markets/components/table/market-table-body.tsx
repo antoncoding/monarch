@@ -10,38 +10,25 @@ import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useStyledToast } from '@/hooks/useStyledToast';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
-import type { ColumnVisibility } from '../column-visibility';
 import { MarketActionsDropdown } from '../market-actions-dropdown';
 import { ExpandedMarketDetail } from './market-row-detail';
 import { TDAsset, TDTotalSupplyOrBorrow } from './market-table-utils';
 
 type MarketTableBodyProps = {
   currentEntries: Market[];
-  staredIds: string[];
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
-  starMarket: (id: string) => void;
-  unstarMarket: (id: string) => void;
-  columnVisibility: ColumnVisibility;
   trustedVaultMap: Map<string, TrustedVault>;
-  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
-export function MarketTableBody({
-  currentEntries,
-  staredIds,
-  expandedRowId,
-  setExpandedRowId,
-  starMarket,
-  unstarMarket,
-  columnVisibility,
-  trustedVaultMap,
-  addBlacklistedMarket,
-  isBlacklisted,
-}: MarketTableBodyProps) {
+export function MarketTableBody({ currentEntries, expandedRowId, setExpandedRowId, trustedVaultMap }: MarketTableBodyProps) {
+  const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { success: toastSuccess } = useStyledToast();
+
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
@@ -91,7 +78,7 @@ export function MarketTableBody({
     <TableBody className="text-sm">
       {currentEntries.map((item, index) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
-        const isStared = staredIds.includes(item.uniqueKey);
+        const isStared = starredMarkets.includes(item.uniqueKey);
 
         return (
           <React.Fragment key={index}>
@@ -111,8 +98,10 @@ export function MarketTableBody({
                     e.stopPropagation();
                     if (isStared) {
                       unstarMarket(item.uniqueKey);
+                      toastSuccess('Market unstarred', 'Removed from favorites');
                     } else {
                       starMarket(item.uniqueKey);
+                      toastSuccess('Market starred', 'Added to favorites');
                     }
                   }}
                 >
@@ -250,14 +239,7 @@ export function MarketTableBody({
                 className="justify-center px-4 py-3"
               >
                 <div className="flex items-center justify-center">
-                  <MarketActionsDropdown
-                    market={item}
-                    isStared={isStared}
-                    starMarket={starMarket}
-                    unstarMarket={unstarMarket}
-                    addBlacklistedMarket={addBlacklistedMarket}
-                    isBlacklisted={isBlacklisted}
-                  />
+                  <MarketActionsDropdown market={item} />
                 </div>
               </TableCell>
             </TableRow>

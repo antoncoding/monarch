@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { CgCompress } from 'react-icons/cg';
@@ -10,105 +10,86 @@ import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import EmptyScreen from '@/components/status/empty-screen';
+import LoadingScreen from '@/components/status/loading-screen';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { buildTrustedVaultMap } from '@/utils/vaults';
-import type { ColumnVisibility } from '../column-visibility';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
 
 type MarketsTableProps = {
-  sortColumn: number;
-  titleOnclick: (column: number) => void;
-  sortDirection: number;
   markets: Market[];
-  staredIds: string[];
-  unstarMarket: (id: string) => void;
-  starMarket: (id: string) => void;
   currentPage: number;
-  entriesPerPage: number;
   setCurrentPage: (value: number) => void;
-  columnVisibility: ColumnVisibility;
   trustedVaults: TrustedVault[];
   className?: string;
-  wrapperClassName?: string;
   tableClassName?: string;
-  addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  isBlacklisted?: (uniqueKey: string) => boolean;
-  // Settings props
-  includeUnknownTokens: boolean;
-  setIncludeUnknownTokens: (value: boolean) => void;
-  showUnknownOracle: boolean;
-  setShowUnknownOracle: (value: boolean) => void;
-  showUnwhitelistedMarkets: boolean;
-  setShowUnwhitelistedMarkets: (value: boolean) => void;
-  trustedVaultsOnly: boolean;
-  setTrustedVaultsOnly: (value: boolean) => void;
-  minSupplyEnabled: boolean;
-  setMinSupplyEnabled: (value: boolean) => void;
-  minBorrowEnabled: boolean;
-  setMinBorrowEnabled: (value: boolean) => void;
-  minLiquidityEnabled: boolean;
-  setMinLiquidityEnabled: (value: boolean) => void;
-  thresholds: {
-    minSupply: number;
-    minBorrow: number;
-    minLiquidity: number;
-  };
   onOpenSettings: () => void;
   onRefresh: () => void;
   isRefetching: boolean;
-  tableViewMode: 'compact' | 'expanded';
-  setTableViewMode: (mode: 'compact' | 'expanded') => void;
   isMobile: boolean;
+  loading?: boolean;
+  isEmpty?: boolean;
 };
 
 function MarketsTable({
-  staredIds,
-  sortColumn,
-  titleOnclick,
-  sortDirection,
   markets,
-  starMarket,
-  unstarMarket,
   currentPage,
-  entriesPerPage,
   setCurrentPage,
-  columnVisibility,
   trustedVaults,
   className,
-  wrapperClassName,
   tableClassName,
-  addBlacklistedMarket,
-  isBlacklisted,
-  includeUnknownTokens,
-  setIncludeUnknownTokens,
-  showUnknownOracle,
-  setShowUnknownOracle,
-  showUnwhitelistedMarkets,
-  setShowUnwhitelistedMarkets,
-  trustedVaultsOnly,
-  setTrustedVaultsOnly,
-  minSupplyEnabled,
-  setMinSupplyEnabled,
-  minBorrowEnabled,
-  setMinBorrowEnabled,
-  minLiquidityEnabled,
-  setMinLiquidityEnabled,
-  thresholds,
   onOpenSettings,
   onRefresh,
   isRefetching,
-  tableViewMode,
-  setTableViewMode,
   isMobile,
+  loading = false,
+  isEmpty = false,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
+
+  const {
+    columnVisibility,
+    sortColumn,
+    setSortColumn,
+    sortDirection,
+    setSortDirection,
+    entriesPerPage,
+    tableViewMode,
+    setTableViewMode,
+    includeUnknownTokens,
+    showUnknownOracle,
+    trustedVaultsOnly,
+    minSupplyEnabled,
+    minBorrowEnabled,
+    minLiquidityEnabled,
+  } = useMarketPreferences();
+
+  // Handle column header clicks for sorting
+  const titleOnclick = useCallback(
+    (column: number) => {
+      // Validate that column is a valid SortColumn value
+      const isValidColumn = Object.values(SortColumn).includes(column);
+      if (!isValidColumn) {
+        console.warn('Invalid sort column:', column);
+        return;
+      }
+
+      setSortColumn(column);
+
+      if (column === sortColumn) {
+        setSortDirection(-sortDirection);
+      }
+    },
+    [sortColumn, sortDirection, setSortColumn, setSortDirection],
+  );
 
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
@@ -120,30 +101,15 @@ function MarketsTable({
 
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const containerClassName = ['flex flex-col gap-2 pb-4', className].filter((value): value is string => Boolean(value)).join(' ');
+  const containerClassName = ['flex flex-col gap-2 pb-4', loading || isEmpty || markets.length === 0 ? 'container items-center' : className]
+    .filter((value): value is string => Boolean(value))
+    .join(' ');
   const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
 
   // Header actions (filter, refresh, expand/compact, settings)
   const headerActions = (
     <>
-      <SuppliedAssetFilterCompactSwitch
-        includeUnknownTokens={includeUnknownTokens}
-        setIncludeUnknownTokens={setIncludeUnknownTokens}
-        showUnknownOracle={showUnknownOracle}
-        setShowUnknownOracle={setShowUnknownOracle}
-        showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-        setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-        trustedVaultsOnly={trustedVaultsOnly}
-        setTrustedVaultsOnly={setTrustedVaultsOnly}
-        minSupplyEnabled={minSupplyEnabled}
-        setMinSupplyEnabled={setMinSupplyEnabled}
-        minBorrowEnabled={minBorrowEnabled}
-        setMinBorrowEnabled={setMinBorrowEnabled}
-        minLiquidityEnabled={minLiquidityEnabled}
-        setMinLiquidityEnabled={setMinLiquidityEnabled}
-        thresholds={thresholds}
-        onOpenSettings={onOpenSettings}
-      />
+      <SuppliedAssetFilterCompactSwitch onOpenSettings={onOpenSettings} />
 
       <Tooltip
         content={
@@ -153,17 +119,15 @@ function MarketsTable({
           />
         }
       >
-        <span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isRefetching}
-            className="text-secondary min-w-0 px-2"
-          >
-            <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-          </Button>
-        </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRefresh}
+          disabled={isRefetching}
+          className="text-secondary min-w-0 px-2"
+        >
+          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
+        </Button>
       </Tooltip>
 
       {/* Hide expand/compact toggle on mobile */}
@@ -181,17 +145,15 @@ function MarketsTable({
             />
           }
         >
-          <span>
-            <Button
-              aria-label="Toggle table width"
-              variant="ghost"
-              size="sm"
-              className="text-secondary min-w-0 px-2"
-              onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
-            >
-              {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
-            </Button>
-          </span>
+          <Button
+            aria-label="Toggle table width"
+            variant="ghost"
+            size="sm"
+            className="text-secondary min-w-0 px-2"
+            onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
+          >
+            {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
+          </Button>
         </Tooltip>
       )}
 
@@ -203,179 +165,208 @@ function MarketsTable({
           />
         }
       >
-        <span>
-          <Button
-            aria-label="Market Preferences"
-            variant="ghost"
-            size="sm"
-            className="text-secondary min-w-0 px-2"
-            onClick={onOpenSettings}
-          >
-            <FiSettings className="h-3 w-3" />
-          </Button>
-        </span>
+        <Button
+          aria-label="Market Preferences"
+          variant="ghost"
+          size="sm"
+          className="text-secondary min-w-0 px-2"
+          onClick={onOpenSettings}
+        >
+          <FiSettings className="h-3 w-3" />
+        </Button>
       </Tooltip>
     </>
   );
+
+  // Determine empty state hint based on active filters
+  const getEmptyStateHint = () => {
+    if (!includeUnknownTokens) {
+      return "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters.";
+    }
+    if (!showUnknownOracle) {
+      return "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters.";
+    }
+    if (trustedVaultsOnly) {
+      return 'Disable the Trusted Vaults filter or update your trusted list in Settings.';
+    }
+    if (minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled) {
+      return 'Try disabling USD filters in settings, or adjust your filter thresholds.';
+    }
+    return 'Try adjusting your filters or search query to see more results.';
+  };
 
   return (
     <div className={containerClassName}>
       <TableContainerWithHeader
         title=""
         actions={headerActions}
+        noPadding={loading || isEmpty || markets.length === 0}
+        className="w-full"
       >
-        <Table className={tableClassNames}>
-          <TableHeader>
-            <TableRow>
-              <HTSortable
-                label={sortColumn === 0 ? <FaStar /> : <FaRegStar />}
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.Starred}
-                showDirection={false}
-              />
-              <TableHead className="font-normal px-2 py-2 whitespace-nowrap"> Id </TableHead>
-              <HTSortable
-                label="Loan"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.LoanAsset}
-              />
-              <HTSortable
-                label="Collateral"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.CollateralAsset}
-              />
-              <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Oracle</TableHead>
-              <HTSortable
-                label="LLTV"
-                sortColumn={sortColumn}
-                titleOnclick={titleOnclick}
-                sortDirection={sortDirection}
-                targetColumn={SortColumn.LLTV}
-              />
-              {columnVisibility.trustedBy && (
-                <HTSortable
-                  label="Trusted By"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.TrustedBy}
-                />
-              )}
-              {columnVisibility.totalSupply && (
-                <HTSortable
-                  label="Total Supply"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.Supply}
-                />
-              )}
-              {columnVisibility.totalBorrow && (
-                <HTSortable
-                  label="Total Borrow"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.Borrow}
-                />
-              )}
-              {columnVisibility.liquidity && (
-                <HTSortable
-                  label="Liquidity"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.Liquidity}
-                />
-              )}
-              {columnVisibility.supplyAPY && (
-                <HTSortable
-                  label={supplyRateLabel}
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.SupplyAPY}
-                />
-              )}
-              {columnVisibility.borrowAPY && (
-                <HTSortable
-                  label={borrowRateLabel}
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.BorrowAPY}
-                />
-              )}
-              {columnVisibility.rateAtTarget && (
-                <HTSortable
-                  label="Target Rate"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.RateAtTarget}
-                />
-              )}
-              {columnVisibility.utilizationRate && (
-                <HTSortable
-                  label="Utilization"
-                  sortColumn={sortColumn}
-                  titleOnclick={titleOnclick}
-                  sortDirection={sortDirection}
-                  targetColumn={SortColumn.UtilizationRate}
-                />
-              )}
-              <TableHead
-                className="font-normal px-2 py-2 whitespace-nowrap"
-                style={{ padding: '0.35rem 0.8rem' }}
-              >
-                {' '}
-                Risk{' '}
-              </TableHead>
-              <TableHead
-                className="font-normal px-2 py-2 whitespace-nowrap"
-                style={{ padding: '0.35rem 0.8rem' }}
-              >
-                {' '}
-                Indicators{' '}
-              </TableHead>
-              <TableHead
-                className="font-normal px-2 py-2 whitespace-nowrap"
-                style={{ padding: '0.35rem 0.8rem' }}
-              >
-                {' '}
-                Actions{' '}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <MarketTableBody
-            currentEntries={currentEntries}
-            staredIds={staredIds}
-            expandedRowId={expandedRowId}
-            setExpandedRowId={setExpandedRowId}
-            starMarket={starMarket}
-            unstarMarket={unstarMarket}
-            columnVisibility={columnVisibility}
-            trustedVaultMap={trustedVaultMap}
-            addBlacklistedMarket={addBlacklistedMarket}
-            isBlacklisted={isBlacklisted}
+        {loading ? (
+          <LoadingScreen
+            message="Loading Morpho Blue Markets..."
+            className="min-h-[300px] container px-[4%]"
           />
-        </Table>
+        ) : isEmpty ? (
+          <div className="flex justify-center min-h-[200px] items-center">
+            <p className="text-secondary">No data available</p>
+          </div>
+        ) : markets.length === 0 ? (
+          <EmptyScreen
+            message="No markets found with the current filters"
+            hint={getEmptyStateHint()}
+          />
+        ) : (
+          <Table className={tableClassNames}>
+            <TableHeader>
+              <TableRow>
+                <HTSortable
+                  label={sortColumn === 0 ? <FaStar /> : <FaRegStar />}
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.Starred}
+                  showDirection={false}
+                />
+                <TableHead className="font-normal px-2 py-2 whitespace-nowrap"> Id </TableHead>
+                <HTSortable
+                  label="Loan"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.LoanAsset}
+                />
+                <HTSortable
+                  label="Collateral"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.CollateralAsset}
+                />
+                <TableHead className="font-normal px-2 py-2 whitespace-nowrap">Oracle</TableHead>
+                <HTSortable
+                  label="LLTV"
+                  sortColumn={sortColumn}
+                  titleOnclick={titleOnclick}
+                  sortDirection={sortDirection}
+                  targetColumn={SortColumn.LLTV}
+                />
+                {columnVisibility.trustedBy && (
+                  <HTSortable
+                    label="Trusted By"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.TrustedBy}
+                  />
+                )}
+                {columnVisibility.totalSupply && (
+                  <HTSortable
+                    label="Total Supply"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.Supply}
+                  />
+                )}
+                {columnVisibility.totalBorrow && (
+                  <HTSortable
+                    label="Total Borrow"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.Borrow}
+                  />
+                )}
+                {columnVisibility.liquidity && (
+                  <HTSortable
+                    label="Liquidity"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.Liquidity}
+                  />
+                )}
+                {columnVisibility.supplyAPY && (
+                  <HTSortable
+                    label={supplyRateLabel}
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.SupplyAPY}
+                  />
+                )}
+                {columnVisibility.borrowAPY && (
+                  <HTSortable
+                    label={borrowRateLabel}
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.BorrowAPY}
+                  />
+                )}
+                {columnVisibility.rateAtTarget && (
+                  <HTSortable
+                    label="Target Rate"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.RateAtTarget}
+                  />
+                )}
+                {columnVisibility.utilizationRate && (
+                  <HTSortable
+                    label="Utilization"
+                    sortColumn={sortColumn}
+                    titleOnclick={titleOnclick}
+                    sortDirection={sortDirection}
+                    targetColumn={SortColumn.UtilizationRate}
+                  />
+                )}
+                <TableHead
+                  className="font-normal px-2 py-2 whitespace-nowrap"
+                  style={{ padding: '0.35rem 0.8rem' }}
+                >
+                  {' '}
+                  Risk{' '}
+                </TableHead>
+                <TableHead
+                  className="font-normal px-2 py-2 whitespace-nowrap"
+                  style={{ padding: '0.35rem 0.8rem' }}
+                >
+                  {' '}
+                  Indicators{' '}
+                </TableHead>
+                <TableHead
+                  className="font-normal px-2 py-2 whitespace-nowrap"
+                  style={{ padding: '0.35rem 0.8rem' }}
+                >
+                  {' '}
+                  Actions{' '}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <MarketTableBody
+              currentEntries={currentEntries}
+              expandedRowId={expandedRowId}
+              setExpandedRowId={setExpandedRowId}
+              trustedVaultMap={trustedVaultMap}
+            />
+          </Table>
+        )}
       </TableContainerWithHeader>
-      <TablePagination
-        totalPages={totalPages}
-        totalEntries={markets.length}
-        currentPage={currentPage}
-        pageSize={entriesPerPage}
-        onPageChange={setCurrentPage}
-        isLoading={false}
-        showEntryCount={false}
-      />
+      {!loading && !isEmpty && markets.length > 0 && (
+        <TablePagination
+          totalPages={totalPages}
+          totalEntries={markets.length}
+          currentPage={currentPage}
+          pageSize={entriesPerPage}
+          onPageChange={setCurrentPage}
+          isLoading={false}
+          showEntryCount={false}
+        />
+      )}
     </div>
   );
 }

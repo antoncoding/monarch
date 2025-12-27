@@ -1,4 +1,4 @@
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { convertApyToApr } from '@/utils/rateMath';
 
 type RateFormattedProps = {
@@ -35,7 +35,7 @@ type RateFormattedProps = {
  * <RateFormatted value={0.05} showLabel />
  */
 export function RateFormatted({ value, showLabel = false, precision = 2, className = '' }: RateFormattedProps) {
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
 
   // Convert APY to APR if the user has enabled APR display mode
   const displayValue = isAprDisplay ? convertApyToApr(value) : value;

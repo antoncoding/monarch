@@ -27,12 +27,11 @@ import { RebalanceDetail } from './rebalance-detail';
 import { useMarkets } from '@/contexts/MarketsContext';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { useDisclosure } from '@/hooks/useDisclosure';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { groupTransactionsByHash, getWithdrawals, getSupplies, type GroupedTransaction } from '@/utils/transactionGrouping';
-import { storageKeys } from '@/utils/storageKeys';
 import { UserTxTypes, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
 
 type HistoryTableProps = {
@@ -87,9 +86,8 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
   const [isInitialized, setIsInitialized] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
 
-  // Settings state
-  const [pageSize, setPageSize] = useLocalStorage<number>(storageKeys.HistoryEntriesPerPageKey, 10);
-  const [isGroupedView, setIsGroupedView] = useLocalStorage<boolean>(storageKeys.HistoryGroupedViewKey, true);
+  // Settings state from Zustand store
+  const { entriesPerPage: pageSize, setEntriesPerPage: setPageSize, isGroupedView, setIsGroupedView } = useHistoryPreferences();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
 

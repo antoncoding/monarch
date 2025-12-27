@@ -3,8 +3,8 @@ import { type Address, encodeFunctionData, erc20Abi } from 'viem';
 import { useConnection, useReadContract } from 'wagmi';
 import morphoBundlerAbi from '@/abis/bundlerV2';
 import { useERC20Approval } from '@/hooks/useERC20Approval';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { usePermit2 } from '@/hooks/usePermit2';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
 import { formatBalance } from '@/utils/balance';
@@ -61,7 +61,7 @@ export function useVaultV2Deposit({
   const [inputError, setInputError] = useState<string | null>(null);
   const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<VaultDepositStepType>('approve');
-  const [usePermit2Setting] = useLocalStorage('usePermit2', true);
+  const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const { address: account } = useConnection();
   const toast = useStyledToast();

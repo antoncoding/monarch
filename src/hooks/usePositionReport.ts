@@ -4,7 +4,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
-import { useCustomRpc } from './useCustomRpc';
+import { useCustomRpc } from '@/stores/useCustomRpc';
 import useUserTransactions from './useUserTransactions';
 
 export type PositionReport = {

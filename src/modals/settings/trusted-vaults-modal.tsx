@@ -14,15 +14,15 @@ import { NetworkIcon } from '@/components/shared/network-icon';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { known_vaults, type KnownVault, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
 
 type TrustedVaultsModalProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  userTrustedVaults: TrustedVault[];
-  setUserTrustedVaults: React.Dispatch<React.SetStateAction<TrustedVault[]>>;
 };
 
-export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVaults, setUserTrustedVaults }: TrustedVaultsModalProps) {
+export default function TrustedVaultsModal({ isOpen, onOpenChange }: TrustedVaultsModalProps) {
+  const { vaults: userTrustedVaults, setVaults: setUserTrustedVaults } = useTrustedVaults();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [morphoSectionOpen, setMorphoSectionOpen] = useState(false);
 
@@ -103,16 +103,14 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange, userTrustedVa
   });
 
   const toggleVault = (vault: KnownVault) => {
-    setUserTrustedVaults((prev) => {
-      const targetAddress = vault.address.toLowerCase();
-      const exists = prev.some((v) => v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress);
+    const targetAddress = vault.address.toLowerCase();
+    const exists = userTrustedVaults.some((v) => v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress);
 
-      if (exists) {
-        return prev.filter((v) => !(v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress));
-      }
-
-      return [...prev, formatVaultForStorage(vault)];
-    });
+    if (exists) {
+      setUserTrustedVaults(userTrustedVaults.filter((v) => !(v.chainId === vault.chainId && v.address.toLowerCase() === targetAddress)));
+    } else {
+      setUserTrustedVaults([...userTrustedVaults, formatVaultForStorage(vault)]);
+    }
   };
 
   const handleSelectAll = () => {
