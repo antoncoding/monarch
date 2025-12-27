@@ -12,51 +12,48 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
+import { parseNumericThreshold } from '@/utils/markets';
 
 type SuppliedAssetFilterCompactSwitchProps = {
-  includeUnknownTokens: boolean;
-  setIncludeUnknownTokens: (value: boolean) => void;
-  showUnknownOracle: boolean;
-  setShowUnknownOracle: (value: boolean) => void;
-  showUnwhitelistedMarkets: boolean;
-  setShowUnwhitelistedMarkets: (value: boolean) => void;
-  trustedVaultsOnly: boolean;
-  setTrustedVaultsOnly: (value: boolean) => void;
-  minSupplyEnabled: boolean;
-  setMinSupplyEnabled: (value: boolean) => void;
-  minBorrowEnabled: boolean;
-  setMinBorrowEnabled: (value: boolean) => void;
-  minLiquidityEnabled: boolean;
-  setMinLiquidityEnabled: (value: boolean) => void;
-  thresholds: {
-    minSupply: number;
-    minBorrow: number;
-    minLiquidity: number;
-  };
   onOpenSettings: () => void;
   className?: string;
 };
 
-export function SuppliedAssetFilterCompactSwitch({
-  includeUnknownTokens,
-  setIncludeUnknownTokens,
-  showUnknownOracle,
-  setShowUnknownOracle,
-  showUnwhitelistedMarkets,
-  setShowUnwhitelistedMarkets,
-  trustedVaultsOnly,
-  setTrustedVaultsOnly,
-  minSupplyEnabled,
-  setMinSupplyEnabled,
-  minBorrowEnabled,
-  setMinBorrowEnabled,
-  minLiquidityEnabled,
-  setMinLiquidityEnabled,
-  thresholds,
-  onOpenSettings,
-  className,
-}: SuppliedAssetFilterCompactSwitchProps) {
+export function SuppliedAssetFilterCompactSwitch({ onOpenSettings, className }: SuppliedAssetFilterCompactSwitchProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+
+  // Get all filter values from stores
+  const {
+    includeUnknownTokens,
+    setIncludeUnknownTokens,
+    showUnknownOracle,
+    setShowUnknownOracle,
+    trustedVaultsOnly,
+    setTrustedVaultsOnly,
+    minSupplyEnabled,
+    setMinSupplyEnabled,
+    minBorrowEnabled,
+    setMinBorrowEnabled,
+    minLiquidityEnabled,
+    setMinLiquidityEnabled,
+    usdMinSupply,
+    usdMinBorrow,
+    usdMinLiquidity,
+  } = useMarketPreferences();
+
+  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
+
+  // Compute thresholds from store values
+  const thresholds = useMemo(
+    () => ({
+      minSupply: parseNumericThreshold(usdMinSupply),
+      minBorrow: parseNumericThreshold(usdMinBorrow),
+      minLiquidity: parseNumericThreshold(usdMinLiquidity),
+    }),
+    [usdMinSupply, usdMinBorrow, usdMinLiquidity],
+  );
 
   const thresholdCopy = useMemo(
     () => ({

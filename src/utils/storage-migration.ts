@@ -19,7 +19,7 @@ import storage from 'local-storage-fallback';
  */
 
 // Migration configuration
-export const MIGRATION_STATUS_KEY = 'monarch_migration_v1_complete';
+export const MIGRATION_STATUS_KEY = 'monarch_migration_v1_complete-0.2';
 export const MIGRATION_EXPIRY_DATE = '2026-02-01';
 export const MIGRATION_VERSION = 'v1';
 

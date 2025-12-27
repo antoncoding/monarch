@@ -12,28 +12,21 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
 import { useModal } from '@/hooks/useModal';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 type MarketActionsDropdownProps = {
   market: Market;
-  isStared: boolean;
-  starMarket: (id: string) => void;
-  unstarMarket: (id: string) => void;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   isBlacklisted?: (uniqueKey: string) => boolean;
 };
 
-export function MarketActionsDropdown({
-  market,
-  isStared,
-  starMarket,
-  unstarMarket,
-  addBlacklistedMarket,
-  isBlacklisted,
-}: MarketActionsDropdownProps) {
+export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklisted }: MarketActionsDropdownProps) {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const { open: openModal } = useModal();
+  const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
 
   const router = useRouter();
+  const isStared = starredMarkets.includes(market.uniqueKey);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();

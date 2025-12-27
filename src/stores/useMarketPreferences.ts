@@ -19,6 +19,9 @@ type MarketPreferencesState = {
   columnVisibility: ColumnVisibility;
   tableViewMode: 'compact' | 'expanded';
 
+  // Starred Markets
+  starredMarkets: string[]; // Array of market uniqueKeys
+
   // USD Filters
   usdMinSupply: string;
   usdMinBorrow: string;
@@ -44,6 +47,11 @@ type MarketPreferencesActions = {
   setTrustedVaultsOnly: (only: boolean) => void;
   setColumnVisibility: (visibilityOrUpdater: ColumnVisibility | ((prev: ColumnVisibility) => ColumnVisibility)) => void;
   setTableViewMode: (mode: 'compact' | 'expanded') => void;
+
+  // Starred Markets
+  starMarket: (uniqueKey: string) => void;
+  unstarMarket: (uniqueKey: string) => void;
+  isMarketStarred: (uniqueKey: string) => boolean;
 
   // USD Filters
   setUsdMinSupply: (value: string) => void;
@@ -73,7 +81,7 @@ type MarketPreferencesStore = MarketPreferencesState & MarketPreferencesActions;
  */
 export const useMarketPreferences = create<MarketPreferencesStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Default state
       sortColumn: SortColumn.Supply,
       sortDirection: -1,
@@ -83,6 +91,7 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       trustedVaultsOnly: false,
       columnVisibility: DEFAULT_COLUMN_VISIBILITY,
       tableViewMode: 'compact',
+      starredMarkets: [],
       usdMinSupply: DEFAULT_MIN_SUPPLY_USD.toString(),
       usdMinBorrow: '',
       usdMinLiquidity: '',
@@ -102,6 +111,18 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
           columnVisibility: typeof visibilityOrUpdater === 'function' ? visibilityOrUpdater(state.columnVisibility) : visibilityOrUpdater,
         })),
       setTableViewMode: (mode) => set({ tableViewMode: mode }),
+      starMarket: (uniqueKey) =>
+        set((state) => ({
+          starredMarkets: state.starredMarkets.includes(uniqueKey) ? state.starredMarkets : [...state.starredMarkets, uniqueKey],
+        })),
+      unstarMarket: (uniqueKey) =>
+        set((state) => ({
+          starredMarkets: state.starredMarkets.filter((id) => id !== uniqueKey),
+        })),
+      isMarketStarred: (uniqueKey) => {
+        const state = get();
+        return state.starredMarkets.includes(uniqueKey);
+      },
       setUsdMinSupply: (value) => set({ usdMinSupply: value }),
       setUsdMinBorrow: (value) => set({ usdMinBorrow: value }),
       setUsdMinLiquidity: (value) => set({ usdMinLiquidity: value }),

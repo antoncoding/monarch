@@ -136,7 +136,7 @@ export function StorageMigrator() {
         oldKey: 'monarch_marketsSortColumn', // Primary key to check
         newKey: 'monarch_store_marketPreferences',
         storeName: 'useMarketPreferences',
-        description: 'Migrated Market Preferences to Zustand store (14 keys)',
+        description: 'Migrated Market Preferences to Zustand store (15 keys)',
         // No validate function - we handle all keys ourselves
         migrate: () => {
           try {
@@ -155,6 +155,7 @@ export function StorageMigrator() {
             const minSupplyEnabled = getStorageValue('monarch_minSupplyEnabled', false);
             const minBorrowEnabled = getStorageValue('monarch_minBorrowEnabled', false);
             const minLiquidityEnabled = getStorageValue('monarch_minLiquidityEnabled', false);
+            const starredMarkets = getStorageValue('monarch_marketsFavorites', []);
 
             // Write to store
             const store = useMarketPreferences.getState();
@@ -173,6 +174,7 @@ export function StorageMigrator() {
               minSupplyEnabled,
               minBorrowEnabled,
               minLiquidityEnabled,
+              starredMarkets,
             });
 
             return true;
@@ -298,6 +300,7 @@ export function StorageMigrator() {
         'monarch_minSupplyEnabled',
         'monarch_minBorrowEnabled',
         'monarch_minLiquidityEnabled',
+        'monarch_marketsFavorites',
       ];
 
       // App Settings keys

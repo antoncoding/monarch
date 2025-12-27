@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { CgCompress } from 'react-icons/cg';
@@ -21,94 +21,59 @@ import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
 
 type MarketsTableProps = {
-  sortColumn: number;
-  titleOnclick: (column: number) => void;
-  sortDirection: number;
   markets: Market[];
-  staredIds: string[];
-  unstarMarket: (id: string) => void;
-  starMarket: (id: string) => void;
   currentPage: number;
-  entriesPerPage: number;
   setCurrentPage: (value: number) => void;
   trustedVaults: TrustedVault[];
   className?: string;
-  wrapperClassName?: string;
   tableClassName?: string;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   isBlacklisted?: (uniqueKey: string) => boolean;
-  // Settings props
-  includeUnknownTokens: boolean;
-  setIncludeUnknownTokens: (value: boolean) => void;
-  showUnknownOracle: boolean;
-  setShowUnknownOracle: (value: boolean) => void;
-  showUnwhitelistedMarkets: boolean;
-  setShowUnwhitelistedMarkets: (value: boolean) => void;
-  trustedVaultsOnly: boolean;
-  setTrustedVaultsOnly: (value: boolean) => void;
-  minSupplyEnabled: boolean;
-  setMinSupplyEnabled: (value: boolean) => void;
-  minBorrowEnabled: boolean;
-  setMinBorrowEnabled: (value: boolean) => void;
-  minLiquidityEnabled: boolean;
-  setMinLiquidityEnabled: (value: boolean) => void;
-  thresholds: {
-    minSupply: number;
-    minBorrow: number;
-    minLiquidity: number;
-  };
   onOpenSettings: () => void;
   onRefresh: () => void;
   isRefetching: boolean;
-  tableViewMode: 'compact' | 'expanded';
-  setTableViewMode: (mode: 'compact' | 'expanded') => void;
   isMobile: boolean;
 };
 
 function MarketsTable({
-  staredIds,
-  sortColumn,
-  titleOnclick,
-  sortDirection,
   markets,
-  starMarket,
-  unstarMarket,
   currentPage,
-  entriesPerPage,
   setCurrentPage,
   trustedVaults,
   className,
-  wrapperClassName,
   tableClassName,
   addBlacklistedMarket,
   isBlacklisted,
-  includeUnknownTokens,
-  setIncludeUnknownTokens,
-  showUnknownOracle,
-  setShowUnknownOracle,
-  showUnwhitelistedMarkets,
-  setShowUnwhitelistedMarkets,
-  trustedVaultsOnly,
-  setTrustedVaultsOnly,
-  minSupplyEnabled,
-  setMinSupplyEnabled,
-  minBorrowEnabled,
-  setMinBorrowEnabled,
-  minLiquidityEnabled,
-  setMinLiquidityEnabled,
-  thresholds,
   onOpenSettings,
   onRefresh,
   isRefetching,
-  tableViewMode,
-  setTableViewMode,
   isMobile,
 }: MarketsTableProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 
-  const { columnVisibility } = useMarketPreferences();
+  const { columnVisibility, sortColumn, setSortColumn, sortDirection, setSortDirection, entriesPerPage, tableViewMode, setTableViewMode } =
+    useMarketPreferences();
+
+  // Handle column header clicks for sorting
+  const titleOnclick = useCallback(
+    (column: number) => {
+      // Validate that column is a valid SortColumn value
+      const isValidColumn = Object.values(SortColumn).includes(column);
+      if (!isValidColumn) {
+        console.warn('Invalid sort column:', column);
+        return;
+      }
+
+      setSortColumn(column);
+
+      if (column === sortColumn) {
+        setSortDirection(-sortDirection);
+      }
+    },
+    [sortColumn, sortDirection, setSortColumn, setSortDirection],
+  );
 
   const trustedVaultMap = useMemo(() => buildTrustedVaultMap(trustedVaults), [trustedVaults]);
 
@@ -126,24 +91,7 @@ function MarketsTable({
   // Header actions (filter, refresh, expand/compact, settings)
   const headerActions = (
     <>
-      <SuppliedAssetFilterCompactSwitch
-        includeUnknownTokens={includeUnknownTokens}
-        setIncludeUnknownTokens={setIncludeUnknownTokens}
-        showUnknownOracle={showUnknownOracle}
-        setShowUnknownOracle={setShowUnknownOracle}
-        showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-        setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-        trustedVaultsOnly={trustedVaultsOnly}
-        setTrustedVaultsOnly={setTrustedVaultsOnly}
-        minSupplyEnabled={minSupplyEnabled}
-        setMinSupplyEnabled={setMinSupplyEnabled}
-        minBorrowEnabled={minBorrowEnabled}
-        setMinBorrowEnabled={setMinBorrowEnabled}
-        minLiquidityEnabled={minLiquidityEnabled}
-        setMinLiquidityEnabled={setMinLiquidityEnabled}
-        thresholds={thresholds}
-        onOpenSettings={onOpenSettings}
-      />
+      <SuppliedAssetFilterCompactSwitch onOpenSettings={onOpenSettings} />
 
       <Tooltip
         content={
@@ -355,11 +303,8 @@ function MarketsTable({
           </TableHeader>
           <MarketTableBody
             currentEntries={currentEntries}
-            staredIds={staredIds}
             expandedRowId={expandedRowId}
             setExpandedRowId={setExpandedRowId}
-            starMarket={starMarket}
-            unstarMarket={unstarMarket}
             trustedVaultMap={trustedVaultMap}
             addBlacklistedMarket={addBlacklistedMarket}
             isBlacklisted={isBlacklisted}

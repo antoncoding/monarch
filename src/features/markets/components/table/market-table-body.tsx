@@ -19,11 +19,8 @@ import { TDAsset, TDTotalSupplyOrBorrow } from './market-table-utils';
 
 type MarketTableBodyProps = {
   currentEntries: Market[];
-  staredIds: string[];
   expandedRowId: string | null;
   setExpandedRowId: (id: string | null) => void;
-  starMarket: (id: string) => void;
-  unstarMarket: (id: string) => void;
   trustedVaultMap: Map<string, TrustedVault>;
   addBlacklistedMarket?: (uniqueKey: string, chainId: number, reason?: string) => boolean;
   isBlacklisted?: (uniqueKey: string) => boolean;
@@ -31,16 +28,13 @@ type MarketTableBodyProps = {
 
 export function MarketTableBody({
   currentEntries,
-  staredIds,
   expandedRowId,
   setExpandedRowId,
-  starMarket,
-  unstarMarket,
   trustedVaultMap,
   addBlacklistedMarket,
   isBlacklisted,
 }: MarketTableBodyProps) {
-  const { columnVisibility } = useMarketPreferences();
+  const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -91,7 +85,7 @@ export function MarketTableBody({
     <TableBody className="text-sm">
       {currentEntries.map((item, index) => {
         const collatToShow = item.collateralAsset.symbol.slice(0, 6).concat(item.collateralAsset.symbol.length > 6 ? '...' : '');
-        const isStared = staredIds.includes(item.uniqueKey);
+        const isStared = starredMarkets.includes(item.uniqueKey);
 
         return (
           <React.Fragment key={index}>
@@ -252,9 +246,6 @@ export function MarketTableBody({
                 <div className="flex items-center justify-center">
                   <MarketActionsDropdown
                     market={item}
-                    isStared={isStared}
-                    starMarket={starMarket}
-                    unstarMarket={unstarMarket}
                     addBlacklistedMarket={addBlacklistedMarket}
                     isBlacklisted={isBlacklisted}
                   />

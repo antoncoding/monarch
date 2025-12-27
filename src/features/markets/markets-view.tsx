@@ -11,7 +11,6 @@ import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
-import { useStaredMarkets } from '@/hooks/useStaredMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
@@ -45,16 +44,9 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     markets: rawMarkets,
     refetch,
     isRefetching,
-    showUnwhitelistedMarkets,
-    setShowUnwhitelistedMarkets,
-    addBlacklistedMarket: addBlacklistedMarketBase,
+    addBlacklistedMarket,
     isBlacklisted,
   } = useMarkets();
-  const { staredIds, starMarket, unstarMarket } = useStaredMarkets();
-
-  // Use addBlacklistedMarket directly from context
-  // The context automatically reapplies the filter when blacklist changes
-  const addBlacklistedMarket = addBlacklistedMarketBase;
 
   // Initialize state with server-parsed values
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
@@ -67,13 +59,9 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
   // Market preferences from Zustand store
   const {
     sortColumn,
-    setSortColumn,
     sortDirection,
-    setSortDirection,
     includeUnknownTokens,
-    setIncludeUnknownTokens,
     showUnknownOracle,
-    setShowUnknownOracle,
     usdMinSupply,
     setUsdMinSupply,
     usdMinBorrow,
@@ -81,13 +69,10 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     usdMinLiquidity,
     setUsdMinLiquidity,
     minSupplyEnabled,
-    setMinSupplyEnabled,
     minBorrowEnabled,
-    setMinBorrowEnabled,
     minLiquidityEnabled,
-    setMinLiquidityEnabled,
     trustedVaultsOnly,
-    setTrustedVaultsOnly,
+    starredMarkets,
   } = useMarketPreferences();
 
   const [filteredMarkets, setFilteredMarkets] = useState<Market[]>([]);
@@ -96,11 +81,11 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const [selectedOracles, setSelectedOracles] = useState<PriceFeedVendors[]>([]);
 
-  const { currentPage, setCurrentPage, entriesPerPage, resetPage } = usePagination();
+  const { currentPage, setCurrentPage, resetPage } = usePagination();
 
   const { allTokens, findToken } = useTokens();
 
-  const { tableViewMode, setTableViewMode } = useMarketPreferences();
+  const { tableViewMode } = useMarketPreferences();
 
   // Force compact mode on mobile - track window size
   const [isMobile, setIsMobile] = useState(false);
@@ -156,9 +141,9 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     [setUsdMinSupply, setUsdMinBorrow, setUsdMinLiquidity],
   );
 
-  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
-  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
-  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
+  const _effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
+  const _effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
+  const _effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   useEffect(() => {
     // return if no markets
@@ -279,7 +264,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     // Apply sorting
     let sorted: Market[];
     if (sortColumn === SortColumn.Starred) {
-      sorted = sortMarkets(filtered, createStarredSort(staredIds), 1);
+      sorted = sortMarkets(filtered, createStarredSort(starredMarkets), 1);
     } else if (sortColumn === SortColumn.TrustedBy) {
       sorted = sortMarkets(filtered, (a, b) => Number(hasTrustedVault(a)) - Number(hasTrustedVault(b)), sortDirection as 1 | -1);
     } else {
@@ -316,7 +301,7 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     selectedCollaterals,
     selectedLoanAssets,
     selectedOracles,
-    staredIds,
+    starredMarkets,
     findToken,
     usdFilters,
     minSupplyEnabled,
@@ -349,24 +334,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     searchQuery,
     resetPage,
   ]);
-
-  const titleOnclick = useCallback(
-    (column: number) => {
-      // Validate that column is a valid SortColumn value
-      const isValidColumn = Object.values(SortColumn).includes(column);
-      if (!isValidColumn) {
-        console.error(`Invalid sort column value: ${column}`);
-        return;
-      }
-
-      setSortColumn(column);
-
-      if (column === sortColumn) {
-        setSortDirection(-sortDirection);
-      }
-    },
-    [sortColumn, sortDirection, setSortColumn, setSortDirection],
-  );
 
   // Add keyboard shortcut for search
   useEffect(() => {
@@ -489,45 +456,16 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
             {filteredMarkets.length > 0 ? (
               <MarketsTable
                 markets={filteredMarkets}
-                titleOnclick={titleOnclick}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                staredIds={staredIds}
-                starMarket={starMarket}
-                unstarMarket={unstarMarket}
                 currentPage={currentPage}
-                entriesPerPage={entriesPerPage}
                 setCurrentPage={setCurrentPage}
                 trustedVaults={userTrustedVaults}
                 className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
-                wrapperClassName={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
                 tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
                 addBlacklistedMarket={addBlacklistedMarket}
                 isBlacklisted={isBlacklisted}
-                includeUnknownTokens={includeUnknownTokens}
-                setIncludeUnknownTokens={setIncludeUnknownTokens}
-                showUnknownOracle={showUnknownOracle}
-                setShowUnknownOracle={setShowUnknownOracle}
-                showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-                setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-                trustedVaultsOnly={trustedVaultsOnly}
-                setTrustedVaultsOnly={setTrustedVaultsOnly}
-                minSupplyEnabled={minSupplyEnabled}
-                setMinSupplyEnabled={setMinSupplyEnabled}
-                minBorrowEnabled={minBorrowEnabled}
-                setMinBorrowEnabled={setMinBorrowEnabled}
-                minLiquidityEnabled={minLiquidityEnabled}
-                setMinLiquidityEnabled={setMinLiquidityEnabled}
-                thresholds={{
-                  minSupply: effectiveMinSupply,
-                  minBorrow: effectiveMinBorrow,
-                  minLiquidity: effectiveMinLiquidity,
-                }}
                 onOpenSettings={() => openModal('marketSettings', {})}
                 onRefresh={handleRefresh}
                 isRefetching={isRefetching}
-                tableViewMode={tableViewMode}
-                setTableViewMode={setTableViewMode}
                 isMobile={isMobile}
               />
             ) : (

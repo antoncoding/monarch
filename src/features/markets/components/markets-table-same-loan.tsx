@@ -20,7 +20,6 @@ import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
-import { parseNumericThreshold } from '@/utils/markets';
 import { getViemChain } from '@/utils/networks';
 import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -50,8 +49,6 @@ type MarketsTableWithSameLoanAssetProps = {
   markets: MarketWithSelection[];
   onToggleMarket: (marketId: string) => void;
   disabled?: boolean;
-  // Optional: Render additional content for selected markets in the cart
-  renderCartItemExtra?: (market: Market) => React.ReactNode;
   // Optional: Pass unique tokens for better filter performance
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
@@ -623,13 +620,12 @@ export function MarketsTableWithSameLoanAsset({
   markets,
   onToggleMarket,
   disabled = false,
-  renderCartItemExtra,
   uniqueCollateralTokens,
   showSelectColumn = true,
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay } = useMarkets();
+  const { showUnwhitelistedMarkets, isAprDisplay } = useMarkets();
   const { findToken } = useTokens();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -664,23 +660,14 @@ export function MarketsTableWithSameLoanAsset({
   const {
     entriesPerPage,
     includeUnknownTokens,
-    setIncludeUnknownTokens,
     showUnknownOracle,
-    setShowUnknownOracle,
     trustedVaultsOnly,
-    setTrustedVaultsOnly,
     usdMinSupply,
-    setUsdMinSupply,
     usdMinBorrow,
-    setUsdMinBorrow,
     usdMinLiquidity,
-    setUsdMinLiquidity,
     minSupplyEnabled,
-    setMinSupplyEnabled,
     minBorrowEnabled,
-    setMinBorrowEnabled,
     minLiquidityEnabled,
-    setMinLiquidityEnabled,
     columnVisibility,
   } = useMarketPreferences();
 
@@ -711,19 +698,6 @@ export function MarketsTableWithSameLoanAsset({
     }),
     [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
-
-  const _setUsdFilters = useCallback(
-    (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
-      setUsdMinSupply(filters.minSupply);
-      setUsdMinBorrow(filters.minBorrow);
-      setUsdMinLiquidity(filters.minLiquidity);
-    },
-    [setUsdMinSupply, setUsdMinBorrow, setUsdMinLiquidity],
-  );
-
-  const effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
-  const effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
-  const effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -881,11 +855,6 @@ export function MarketsTableWithSameLoanAsset({
     trustedVaultsOnly,
   ]);
 
-  // Get selected markets
-  const _selectedMarkets = useMemo(() => {
-    return markets.filter((m) => m.isSelected);
-  }, [markets]);
-
   // Pagination with guards to prevent invalid states
   const safePerPage = Math.max(1, Math.floor(entriesPerPage));
   const totalPages = Math.max(1, Math.ceil(processedMarkets.length / safePerPage));
@@ -932,28 +901,7 @@ export function MarketsTableWithSameLoanAsset({
           />
         </div>
         <div className="flex items-center gap-3">
-          <SuppliedAssetFilterCompactSwitch
-            includeUnknownTokens={includeUnknownTokens}
-            setIncludeUnknownTokens={setIncludeUnknownTokens}
-            showUnknownOracle={showUnknownOracle}
-            setShowUnknownOracle={setShowUnknownOracle}
-            showUnwhitelistedMarkets={showUnwhitelistedMarkets}
-            setShowUnwhitelistedMarkets={setShowUnwhitelistedMarkets}
-            trustedVaultsOnly={trustedVaultsOnly}
-            setTrustedVaultsOnly={setTrustedVaultsOnly}
-            minSupplyEnabled={minSupplyEnabled}
-            setMinSupplyEnabled={setMinSupplyEnabled}
-            minBorrowEnabled={minBorrowEnabled}
-            setMinBorrowEnabled={setMinBorrowEnabled}
-            minLiquidityEnabled={minLiquidityEnabled}
-            setMinLiquidityEnabled={setMinLiquidityEnabled}
-            thresholds={{
-              minSupply: effectiveMinSupply,
-              minBorrow: effectiveMinBorrow,
-              minLiquidity: effectiveMinLiquidity,
-            }}
-            onOpenSettings={() => openModal('marketSettings', {})}
-          />
+          <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
           {showSettings && (
             <Button
               variant="ghost"
