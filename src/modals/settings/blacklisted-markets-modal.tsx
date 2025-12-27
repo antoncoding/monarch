@@ -23,7 +23,8 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
   const { rawMarketsUnfiltered } = useMarkets();
-  const { isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } = useBlacklistedMarkets();
+  const { customBlacklistedMarkets, isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } =
+    useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();
 
   // Reset to page 1 when search query changes
@@ -48,7 +49,7 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
       blacklistedMarkets: blacklisted.sort((a, b) => (a.loanAsset?.symbol ?? '').localeCompare(b.loanAsset?.symbol ?? '')),
       availableMarkets: available.sort((a, b) => (a.loanAsset?.symbol ?? '').localeCompare(b.loanAsset?.symbol ?? '')),
     };
-  }, [rawMarketsUnfiltered, isBlacklisted]);
+  }, [rawMarketsUnfiltered, customBlacklistedMarkets, isBlacklisted]);
 
   // Filter available markets based on search query
   // Only show results if user has typed at least 2 characters

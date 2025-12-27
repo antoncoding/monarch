@@ -101,7 +101,9 @@ function MarketsTable({
 
   const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
 
-  const containerClassName = ['flex flex-col gap-2 pb-4', className].filter((value): value is string => Boolean(value)).join(' ');
+  const containerClassName = ['flex flex-col gap-2 pb-4', loading || isEmpty || markets.length === 0 ? 'container items-center' : className]
+    .filter((value): value is string => Boolean(value))
+    .join(' ');
   const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
 
   // Header actions (filter, refresh, expand/compact, settings)
@@ -199,11 +201,12 @@ function MarketsTable({
         title=""
         actions={headerActions}
         noPadding={loading || isEmpty || markets.length === 0}
+        className="w-full"
       >
         {loading ? (
           <LoadingScreen
             message="Loading Morpho Blue Markets..."
-            className="min-h-[300px] w-full"
+            className="min-h-[300px] container px-[4%]"
           />
         ) : isEmpty ? (
           <div className="flex justify-center min-h-[200px] items-center">

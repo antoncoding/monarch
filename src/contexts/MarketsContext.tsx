@@ -42,10 +42,10 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Blacklisted markets management from Zustand store (internal use only for filtering)
-  const { getAllBlacklistedKeys } = useBlacklistedMarkets();
+  const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
 
   // Get all blacklisted keys for filtering - memoize to prevent infinite loops
-  const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [getAllBlacklistedKeys]);
+  const allBlacklistedMarketKeys = useMemo(() => getAllBlacklistedKeys(), [customBlacklistedMarkets, getAllBlacklistedKeys]);
 
   // Oracle data context for enriching markets
   const { getOracleData } = useOracleDataContext();
