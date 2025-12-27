@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { type ColumnVisibility, COLUMN_LABELS, COLUMN_DESCRIPTIONS, DEFAULT_COLUMN_VISIBILITY } from './column-visibility';
 
 type MarketSettingsModalProps = {
@@ -47,7 +47,7 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
   const [customEntries, setCustomEntries] = React.useState(entriesPerPage.toString());
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const totalVaults = userTrustedVaults.length;
-  const { showFullRewardAPY, setShowFullRewardAPY } = useMarkets();
+  const { showFullRewardAPY, setShowFullRewardAPY } = useAppSettings();
   const { open: openModal } = useModal();
 
   const handleCustomEntriesSubmit = () => {
@@ -84,7 +84,7 @@ export default function MarketSettingsModal({ isOpen, onOpenChange }: MarketSett
             mainIcon={<FiSliders className="h-5 w-5" />}
             onClose={onClose}
           />
-          <ModalBody className="flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
+          <ModalBody className="flex flex-col gap-5">
             <div className="bg-surface-soft flex flex-col gap-4 rounded p-4">
               <h3 className="text-xs uppercase text-secondary">Filter Thresholds</h3>
               <p className="-mt-3 mb-1 text-xs text-secondary">

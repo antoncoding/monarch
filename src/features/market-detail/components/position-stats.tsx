@@ -7,7 +7,7 @@ import { HiOutlineGlobeAsiaAustralia } from 'react-icons/hi2';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { getTruncatedAssetName } from '@/utils/oracle';
@@ -36,7 +36,7 @@ export function PositionStats({ market, userPosition, positionLoading, cardStyle
   // Default to user view if they have a position, otherwise global
   const [viewMode, setViewMode] = useState<'global' | 'user'>(userPosition && hasPosition(userPosition) ? 'user' : 'global');
 
-  const { showFullRewardAPY, isAprDisplay } = useMarkets();
+  const { showFullRewardAPY, isAprDisplay } = useAppSettings();
   const { label: rateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({

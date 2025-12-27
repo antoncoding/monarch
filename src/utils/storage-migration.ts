@@ -6,7 +6,6 @@ import storage from 'local-storage-fallback';
  * Purpose: Migrate from useLocalStorage to Zustand stores while preserving user data
  *
  * Timeline:
- * - Created: January Dec
  * - Expiry: February 1, 2026
  * - Delete after: February 2026 (1 month grace period)
  *

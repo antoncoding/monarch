@@ -20,6 +20,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -119,7 +120,7 @@ export function SuppliedMorphoBlueGroupedTable({
   const { showCollateralExposure, setShowCollateralExposure } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const toast = useStyledToast();

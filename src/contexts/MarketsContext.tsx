@@ -5,7 +5,7 @@ import { supportsMorphoApi } from '@/config/dataSources';
 import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { fetchMorphoMarkets } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarkets } from '@/data-sources/subgraph/market';
-import { useBlacklistedMarkets } from '@/hooks/useBlacklistedMarkets';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { ALL_SUPPORTED_NETWORKS, isSupportedChain } from '@/utils/networks';
 import type { Market } from '@/utils/types';
@@ -21,16 +21,6 @@ export type MarketsContextType = {
   error: unknown | null;
   refetch: (onSuccess?: () => void) => void;
   refresh: () => Promise<void>;
-  showUnwhitelistedMarkets: boolean;
-  setShowUnwhitelistedMarkets: (value: boolean) => void;
-  showFullRewardAPY: boolean;
-  setShowFullRewardAPY: (value: boolean) => void;
-  isAprDisplay: boolean;
-  setIsAprDisplay: (value: boolean) => void;
-  isBlacklisted: (uniqueKey: string) => boolean;
-  addBlacklistedMarket: (uniqueKey: string, chainId: number, reason?: string) => boolean;
-  removeBlacklistedMarket: (uniqueKey: string) => void;
-  isDefaultBlacklisted: (uniqueKey: string) => boolean;
 };
 
 const MarketsContext = createContext<MarketsContextType | undefined>(undefined);
@@ -52,9 +42,11 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, showFullRewardAPY, setShowFullRewardAPY, isAprDisplay, setIsAprDisplay } =
     useAppSettings();
 
-  // Blacklisted markets management
-  const { allBlacklistedMarketKeys, addBlacklistedMarket, removeBlacklistedMarket, isBlacklisted, isDefaultBlacklisted } =
-    useBlacklistedMarkets();
+  // Blacklisted markets management from Zustand store (internal use only for filtering)
+  const { getAllBlacklistedKeys } = useBlacklistedMarkets();
+
+  // Get all blacklisted keys for filtering
+  const allBlacklistedMarketKeys = getAllBlacklistedKeys();
 
   // Oracle data context for enriching markets
   const { getOracleData } = useOracleDataContext();
@@ -297,16 +289,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       error: combinedError,
       refetch,
       refresh,
-      showUnwhitelistedMarkets,
-      setShowUnwhitelistedMarkets,
-      showFullRewardAPY,
-      setShowFullRewardAPY,
-      isAprDisplay,
-      setIsAprDisplay,
-      isBlacklisted,
-      addBlacklistedMarket,
-      removeBlacklistedMarket,
-      isDefaultBlacklisted,
     }),
     [
       markets,
@@ -318,16 +300,6 @@ export function MarketsProvider({ children }: MarketsProviderProps) {
       combinedError,
       refetch,
       refresh,
-      showUnwhitelistedMarkets,
-      setShowUnwhitelistedMarkets,
-      showFullRewardAPY,
-      setShowFullRewardAPY,
-      isAprDisplay,
-      setIsAprDisplay,
-      isBlacklisted,
-      addBlacklistedMarket,
-      removeBlacklistedMarket,
-      isDefaultBlacklisted,
     ],
   );
 

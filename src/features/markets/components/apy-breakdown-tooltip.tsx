@@ -2,7 +2,7 @@ import type React from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useMarketCampaigns } from '@/hooks/useMarketCampaigns';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import type { SimplifiedCampaign } from '@/utils/merklTypes';
 import { convertApyToApr } from '@/utils/rateMath';
@@ -19,7 +19,7 @@ type APYCellProps = {
 };
 
 export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYBreakdownTooltipProps) {
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   // Convert base rate if APR display is enabled
@@ -70,7 +70,7 @@ export function APYBreakdownTooltip({ baseAPY, activeCampaigns, children }: APYB
 }
 
 export function APYCell({ market }: APYCellProps) {
-  const { showFullRewardAPY, isAprDisplay } = useMarkets();
+  const { showFullRewardAPY, isAprDisplay } = useAppSettings();
   const { activeCampaigns, hasActiveRewards } = useMarketCampaigns({
     marketId: market.uniqueKey,
     loanTokenAddress: market.loanAsset.address,

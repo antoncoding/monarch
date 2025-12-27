@@ -16,11 +16,6 @@ type PositionsPreferencesStore = PositionsPreferencesState & PositionsPreference
 
 /**
  * Zustand store for positions page preferences.
- * Persisted to localStorage to survive page refreshes.
- *
- * **Migration:** Handled by StorageMigrator component
- * **Store key:** `monarch_store_positionsPreferences`
- * **Old key:** `positions:show-collateral-exposure`
  *
  * @example
  * ```tsx

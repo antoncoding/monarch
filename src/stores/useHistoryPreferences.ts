@@ -18,13 +18,6 @@ type HistoryPreferencesStore = HistoryPreferencesState & HistoryPreferencesActio
 
 /**
  * Zustand store for history table preferences.
- * Persisted to localStorage to survive page refreshes.
- *
- * **Migration:** Handled by StorageMigrator component
- * **Store key:** `monarch_store_historyPreferences`
- * **Old keys:**
- * - `monarch_historyEntriesPerPage`
- * - `monarch_historyGroupedView`
  *
  * @example
  * ```tsx

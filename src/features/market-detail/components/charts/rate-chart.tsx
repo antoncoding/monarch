@@ -7,7 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import ButtonGroup from '@/components/ui/button-group';
 import { Spinner } from '@/components/ui/spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { MarketRates } from '@/utils/types';
@@ -23,7 +23,7 @@ type RateChartProps = {
 };
 
 function RateChart({ historicalData, market, isLoading, selectedTimeframe, selectedTimeRange, handleTimeframeChange }: RateChartProps) {
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
 
   const [visibleLines, setVisibleLines] = useState({

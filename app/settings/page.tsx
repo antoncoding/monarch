@@ -16,14 +16,13 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 export default function SettingsPage() {
   // App settings from Zustand store
-  const { usePermit2, setUsePermit2 } = useAppSettings();
+  const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useAppSettings();
 
   // Market preferences from Zustand store
   const { includeUnknownTokens, setIncludeUnknownTokens, showUnknownOracle, setShowUnknownOracle } = useMarketPreferences();
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
 
-  const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } = useMarkets();
   const { open: openModal } = useModal();
   const [mounted, setMounted] = React.useState(false);
 

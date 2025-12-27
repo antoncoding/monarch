@@ -13,11 +13,11 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
-import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { getViemChain } from '@/utils/networks';
@@ -625,7 +625,7 @@ export function MarketsTableWithSameLoanAsset({
   showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
-  const { showUnwhitelistedMarkets, isAprDisplay } = useMarkets();
+  const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
   const { findToken } = useTokens();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });

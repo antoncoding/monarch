@@ -10,6 +10,7 @@ import OracleVendorBadge from '@/features/markets/components/oracle-vendor-badge
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { APYCell } from '../apy-breakdown-tooltip';
@@ -35,6 +36,7 @@ export function MarketTableBody({
   isBlacklisted,
 }: MarketTableBodyProps) {
   const { columnVisibility, starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { success: toastSuccess } = useStyledToast();
 
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
@@ -105,8 +107,10 @@ export function MarketTableBody({
                     e.stopPropagation();
                     if (isStared) {
                       unstarMarket(item.uniqueKey);
+                      toastSuccess('Market unstarred', 'Removed from favorites');
                     } else {
                       starMarket(item.uniqueKey);
+                      toastSuccess('Market starred', 'Added to favorites');
                     }
                   }}
                 >

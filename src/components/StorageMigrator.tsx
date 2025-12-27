@@ -8,6 +8,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
+import { useBlacklistedMarkets, type BlacklistedMarket } from '@/stores/useBlacklistedMarkets';
 import { SortColumn } from '@/features/markets/components/constants';
 import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY } from '@/features/markets/components/column-visibility';
@@ -27,21 +28,12 @@ import {
  * **Timeline:**
  * - Created: January 2025
  * - Expires: February 1, 2025
- * - DELETE THIS FILE AFTER: February 2025
  *
- * **How it works:**
- * 1. Runs once on app load
- * 2. Checks if migrations already completed (via localStorage flag)
- * 3. Executes all defined migrations
- * 4. Logs progress to console
- * 5. Marks as complete
- * 6. Auto-disables after expiry date
  *
  * **To delete (after Feb 2025):**
  * 1. Remove `<StorageMigrator />` from `app/layout.tsx`
  * 2. Delete this file: `src/components/StorageMigrator.tsx`
  * 3. Delete `src/utils/storage-migration.ts`
- * 4. Remove any stores that were only created for migration
  *
  * @returns null - This component renders nothing
  */
@@ -270,6 +262,40 @@ export function StorageMigrator() {
             return true;
           } catch (error) {
             console.error('Error migrating positions preferences:', error);
+            return false;
+          }
+        },
+      },
+
+      // ========================================
+      // Migration 6: Blacklisted Markets
+      // ========================================
+      {
+        oldKey: 'customBlacklistedMarkets',
+        newKey: 'monarch_store_blacklistedMarkets',
+        storeName: 'useBlacklistedMarkets',
+        description: 'Migrated Blacklisted Markets to Zustand store',
+        validate: (data): data is BlacklistedMarket[] => {
+          if (!Array.isArray(data)) return false;
+          return data.every(
+            (item) =>
+              item &&
+              typeof item === 'object' &&
+              'uniqueKey' in item &&
+              'chainId' in item &&
+              'addedAt' in item &&
+              typeof item.uniqueKey === 'string' &&
+              typeof item.chainId === 'number' &&
+              typeof item.addedAt === 'number',
+          );
+        },
+        migrate: (oldData: BlacklistedMarket[]) => {
+          try {
+            const store = useBlacklistedMarkets.getState();
+            store.setAll({ customBlacklistedMarkets: oldData });
+            return true;
+          } catch (error) {
+            console.error('Error migrating blacklisted markets:', error);
             return false;
           }
         },

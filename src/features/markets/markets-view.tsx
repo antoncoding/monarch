@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 
 import Header from '@/components/layout/header/Header';
 import { useTokens } from '@/components/providers/TokenProvider';
-import EmptyScreen from '@/components/status/empty-screen';
-import LoadingScreen from '@/components/status/loading-screen';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
 import { useMarkets } from '@/hooks/useMarkets';
 import { useModal } from '@/hooks/useModal';
@@ -14,8 +12,8 @@ import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
-import { parseNumericThreshold } from '@/utils/markets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
@@ -39,14 +37,21 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
   const toast = useStyledToast();
 
-  const {
-    loading,
-    markets: rawMarkets,
-    refetch,
-    isRefetching,
-    addBlacklistedMarket,
-    isBlacklisted,
-  } = useMarkets();
+  const { loading, markets: rawMarkets, refetch, isRefetching } = useMarkets();
+
+  const { isBlacklisted, addBlacklistedMarket: addBlacklistedMarketStore } = useBlacklistedMarkets();
+
+  // Wrap addBlacklistedMarket with toast notification
+  const addBlacklistedMarket = useCallback(
+    (uniqueKey: string, chainId: number, reason?: string) => {
+      const success = addBlacklistedMarketStore(uniqueKey, chainId, reason);
+      if (success) {
+        toast.success('Market blacklisted', 'Market added to blacklist');
+      }
+      return success;
+    },
+    [addBlacklistedMarketStore, toast],
+  );
 
   // Initialize state with server-parsed values
   const [selectedCollaterals, setSelectedCollaterals] = useState<string[]>(initialCollaterals);
@@ -63,11 +68,8 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     includeUnknownTokens,
     showUnknownOracle,
     usdMinSupply,
-    setUsdMinSupply,
     usdMinBorrow,
-    setUsdMinBorrow,
     usdMinLiquidity,
-    setUsdMinLiquidity,
     minSupplyEnabled,
     minBorrowEnabled,
     minLiquidityEnabled,
@@ -131,19 +133,6 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
     }),
     [usdMinSupply, usdMinBorrow, usdMinLiquidity],
   );
-
-  const _setUsdFilters = useCallback(
-    (filters: { minSupply: string; minBorrow: string; minLiquidity: string }) => {
-      setUsdMinSupply(filters.minSupply);
-      setUsdMinBorrow(filters.minBorrow);
-      setUsdMinLiquidity(filters.minLiquidity);
-    },
-    [setUsdMinSupply, setUsdMinBorrow, setUsdMinLiquidity],
-  );
-
-  const _effectiveMinSupply = parseNumericThreshold(usdFilters.minSupply);
-  const _effectiveMinBorrow = parseNumericThreshold(usdFilters.minBorrow);
-  const _effectiveMinLiquidity = parseNumericThreshold(usdFilters.minLiquidity);
 
   useEffect(() => {
     // return if no markets
@@ -442,50 +431,24 @@ export default function Markets({ initialNetwork, initialCollaterals, initialLoa
 
       {/* Table Section - centered when expanded, full width when compact */}
       <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
-        {loading ? (
-          <div className={effectiveTableViewMode === 'expanded' ? 'container px-[4%]' : 'w-full'}>
-            <LoadingScreen
-              message="Loading Morpho Blue Markets..."
-              className="min-h-[300px] w-full"
-            />
-          </div>
-        ) : rawMarkets == null ? (
-          <div className="flex justify-center"> No data </div>
-        ) : (
-          <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
-            {filteredMarkets.length > 0 ? (
-              <MarketsTable
-                markets={filteredMarkets}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                trustedVaults={userTrustedVaults}
-                className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
-                tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
-                addBlacklistedMarket={addBlacklistedMarket}
-                isBlacklisted={isBlacklisted}
-                onOpenSettings={() => openModal('marketSettings', {})}
-                onRefresh={handleRefresh}
-                isRefetching={isRefetching}
-                isMobile={isMobile}
-              />
-            ) : (
-              <EmptyScreen
-                message="No markets found with the current filters"
-                hint={
-                  (selectedCollaterals.length > 0 || selectedLoanAssets.length > 0) && !includeUnknownTokens
-                    ? "Try enabling 'Show Unknown Tokens' in settings, or adjust your current filters."
-                    : selectedOracles.length > 0 && !showUnknownOracle
-                      ? "Try enabling 'Show Unknown Oracles' in settings, or adjust your oracle filters."
-                      : trustedVaultsOnly
-                        ? 'Disable the Trusted Vaults filter or update your trusted list in Settings.'
-                        : minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled
-                          ? 'Try disabling USD filters in settings, or adjust your filter thresholds.'
-                          : 'Try adjusting your filters or search query to see more results.'
-                }
-              />
-            )}
-          </div>
-        )}
+        <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
+          <MarketsTable
+            markets={filteredMarkets}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            trustedVaults={userTrustedVaults}
+            className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
+            tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
+            addBlacklistedMarket={addBlacklistedMarket}
+            isBlacklisted={isBlacklisted}
+            onOpenSettings={() => openModal('marketSettings', {})}
+            onRefresh={handleRefresh}
+            isRefetching={isRefetching}
+            isMobile={isMobile}
+            loading={loading}
+            isEmpty={rawMarkets == null}
+          />
+        </div>
       </div>
     </>
   );

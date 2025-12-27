@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useMarkets } from './useMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 
 type RateLabelOptions = {
   /**
@@ -44,7 +44,7 @@ type RateLabelReturn = {
  */
 export function useRateLabel(options: RateLabelOptions = {}): RateLabelReturn {
   const { prefix, suffix } = options;
-  const { isAprDisplay } = useMarkets();
+  const { isAprDisplay } = useAppSettings();
 
   return useMemo(() => {
     const short = isAprDisplay ? 'APR' : 'APY';

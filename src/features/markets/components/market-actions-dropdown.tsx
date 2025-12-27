@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import type { Market } from '@/utils/types';
 import { BlacklistConfirmationModal } from './blacklist-confirmation-modal';
 import { useModal } from '@/hooks/useModal';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 type MarketActionsDropdownProps = {
@@ -24,6 +25,7 @@ export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklis
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const { open: openModal } = useModal();
   const { starredMarkets, starMarket, unstarMarket } = useMarketPreferences();
+  const { success: toastSuccess } = useStyledToast();
 
   const router = useRouter();
   const isStared = starredMarkets.includes(market.uniqueKey);
@@ -92,8 +94,10 @@ export function MarketActionsDropdown({ market, addBlacklistedMarket, isBlacklis
             onClick={() => {
               if (isStared) {
                 unstarMarket(market.uniqueKey);
+                toastSuccess('Market unstarred', 'Removed from favorites');
               } else {
                 starMarket(market.uniqueKey);
+                toastSuccess('Market starred', 'Added to favorites');
               }
             }}
             startContent={isStared ? <GoStarFill className="h-4 w-4" /> : <GoStar className="h-4 w-4" />}

@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
 import { useMarkets } from '@/contexts/MarketsContext';
+import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { useStyledToast } from '@/hooks/useStyledToast';
 import type { Market } from '@/utils/types';
 
 type BlacklistedMarketsModalProps = {
@@ -20,7 +22,9 @@ const ITEMS_PER_PAGE = 20;
 export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMarketsModalProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
-  const { rawMarketsUnfiltered, isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } = useMarkets();
+  const { rawMarketsUnfiltered } = useMarkets();
+  const { isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } = useBlacklistedMarkets();
+  const { success: toastSuccess } = useStyledToast();
 
   // Reset to page 1 when search query changes
   React.useEffect(() => {
@@ -125,7 +129,10 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                           <Button
                             size="sm"
                             variant="default"
-                            onClick={() => removeBlacklistedMarket(market.uniqueKey)}
+                            onClick={() => {
+                              removeBlacklistedMarket(market.uniqueKey);
+                              toastSuccess('Market removed from blacklist', 'Market is now visible');
+                            }}
                             disabled={isDefault}
                             className="shrink-0"
                           >
@@ -193,7 +200,12 @@ export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMar
                           <Button
                             size="sm"
                             variant="default"
-                            onClick={() => addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id)}
+                            onClick={() => {
+                              const success = addBlacklistedMarket(market.uniqueKey, market.morphoBlue.chain.id);
+                              if (success) {
+                                toastSuccess('Market blacklisted', 'Market added to blacklist');
+                              }
+                            }}
                             className="shrink-0"
                           >
                             <FiPlus className="h-4 w-4" />

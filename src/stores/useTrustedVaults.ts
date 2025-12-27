@@ -7,24 +7,12 @@ type TrustedVaultsState = {
 };
 
 type TrustedVaultsActions = {
-  /**
-   * Add a vault to the trusted list
-   */
   addVault: (vault: TrustedVault) => void;
 
-  /**
-   * Remove a vault from the trusted list by address and chainId
-   */
   removeVault: (address: string, chainId: number) => void;
 
-  /**
-   * Set the entire trusted vaults list (useful for reset or bulk updates)
-   */
   setVaults: (vaults: TrustedVault[]) => void;
 
-  /**
-   * Check if a vault is in the trusted list
-   */
   isVaultTrusted: (address: string, chainId: number) => boolean;
 };
 
