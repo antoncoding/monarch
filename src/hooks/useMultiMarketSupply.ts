@@ -12,7 +12,7 @@ import type { Market } from '@/utils/types';
 import { GAS_COSTS, GAS_MULTIPLIER } from '@/features/markets/components/constants';
 import { useERC20Approval } from './useERC20Approval';
 import { useStyledToast } from './useStyledToast';
-import { useUserMarketsCache } from './useUserMarketsCache';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 export type MarketSupply = {
   market: Market;
   amount: bigint;

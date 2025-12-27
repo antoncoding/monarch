@@ -8,8 +8,8 @@ import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
 import { getClient } from '@/utils/rpc';
 import type { Market } from '@/utils/types';
-import { useUserMarketsCache } from '../hooks/useUserMarketsCache';
-import { useCustomRpc } from './useCustomRpc';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
+import { useCustomRpc } from '@/stores/useCustomRpc';
 import { useMarkets } from './useMarkets';
 
 // Type for market key and chain identifier

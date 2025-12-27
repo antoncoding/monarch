@@ -21,7 +21,7 @@ import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
-import { useTransactionFilters } from '@/hooks/useTransactionFilters';
+import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import useUserPositions from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';

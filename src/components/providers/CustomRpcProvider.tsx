@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode, useMemo } from 'react';
-import { useCustomRpc, type CustomRpcUrls } from '@/hooks/useCustomRpc';
+import { useCustomRpc, type CustomRpcUrls } from '@/stores/useCustomRpc';
 import type { SupportedNetworks } from '@/utils/networks';
 
 type CustomRpcContextType = {

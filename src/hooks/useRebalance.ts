@@ -11,7 +11,7 @@ import { useMorphoAuthorization } from './useMorphoAuthorization';
 import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
-import { useUserMarketsCache } from './useUserMarketsCache';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 
 // Define more specific step types
 export type RebalanceStepType =

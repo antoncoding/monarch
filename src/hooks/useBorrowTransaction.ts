@@ -11,7 +11,7 @@ import { usePermit2 } from './usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from './useStyledToast';
 import { useTransactionWithToast } from './useTransactionWithToast';
-import { useUserMarketsCache } from './useUserMarketsCache';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 
 type UseBorrowTransactionProps = {
   market: Market;

@@ -1,6 +1,6 @@
 import { createConfig, http } from 'wagmi';
 import { arbitrum, base, mainnet, monad, polygon, unichain } from 'wagmi/chains';
-import type { CustomRpcUrls } from '@/hooks/useCustomRpc';
+import type { CustomRpcUrls } from '@/stores/useCustomRpc';
 import { SupportedNetworks, getDefaultRPC, hyperEvm } from '@/utils/networks';
 
 /**

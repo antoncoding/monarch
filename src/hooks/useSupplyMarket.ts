@@ -7,7 +7,7 @@ import { usePermit2 } from '@/hooks/usePermit2';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { useTransactionWithToast } from '@/hooks/useTransactionWithToast';
-import { useUserMarketsCache } from '@/hooks/useUserMarketsCache';
+import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { formatBalance } from '@/utils/balance';
 import { getBundlerV2, MONARCH_TX_IDENTIFIER } from '@/utils/morpho';
 import type { Market } from '@/utils/types';

@@ -9,6 +9,9 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { useBlacklistedMarkets, type BlacklistedMarket } from '@/stores/useBlacklistedMarkets';
+import { useCustomRpc, type CustomRpcUrls } from '@/stores/useCustomRpc';
+import { useTransactionFiltersStore } from '@/stores/useTransactionFilters';
+import { useUserMarketsCacheStore } from '@/stores/useUserMarketsCache';
 import { SortColumn } from '@/features/markets/components/constants';
 import { DEFAULT_MIN_SUPPLY_USD } from '@/constants/markets';
 import { DEFAULT_COLUMN_VISIBILITY } from '@/features/markets/components/column-visibility';
@@ -37,6 +40,22 @@ import {
  *
  * @returns null - This component renders nothing
  */
+
+// Type definitions for migrations
+type SymbolFilters = Record<
+  string,
+  {
+    minSupplyAmount: string;
+    minBorrowAmount: string;
+  }
+>;
+
+type MarketIdentifier = {
+  marketUniqueKey: string;
+  chainId: number;
+};
+
+type UserMarketsCache = Record<string, MarketIdentifier[]>;
 
 /**
  * Helper: Safely parse JSON from localStorage
@@ -296,6 +315,75 @@ export function StorageMigrator() {
             return true;
           } catch (error) {
             console.error('Error migrating blacklisted markets:', error);
+            return false;
+          }
+        },
+      },
+
+      // ========================================
+      // Migration 7: Custom RPC URLs
+      // ========================================
+      {
+        oldKey: 'customRpcUrls',
+        newKey: 'monarch_store_customRpc',
+        storeName: 'useCustomRpc',
+        description: 'Migrated Custom RPC URLs to Zustand store',
+        validate: (data): data is CustomRpcUrls => {
+          return typeof data === 'object' && data !== null;
+        },
+        migrate: (oldData: CustomRpcUrls) => {
+          try {
+            const store = useCustomRpc.getState();
+            store.setAll({ customRpcUrls: oldData });
+            return true;
+          } catch (error) {
+            console.error('Error migrating custom RPC URLs:', error);
+            return false;
+          }
+        },
+      },
+
+      // ========================================
+      // Migration 8: Transaction Filters
+      // ========================================
+      {
+        oldKey: 'monarch_transaction_filters_v2',
+        newKey: 'monarch_store_transactionFilters',
+        storeName: 'useTransactionFilters',
+        description: 'Migrated Transaction Filters to Zustand store',
+        validate: (data): data is SymbolFilters => {
+          return typeof data === 'object' && data !== null;
+        },
+        migrate: (oldData: SymbolFilters) => {
+          try {
+            const store = useTransactionFiltersStore.getState();
+            store.setAll({ filters: oldData });
+            return true;
+          } catch (error) {
+            console.error('Error migrating transaction filters:', error);
+            return false;
+          }
+        },
+      },
+
+      // ========================================
+      // Migration 9: User Markets Cache
+      // ========================================
+      {
+        oldKey: 'monarch_cache_market_unique_keys',
+        newKey: 'monarch_store_userMarketsCache',
+        storeName: 'useUserMarketsCache',
+        description: 'Migrated User Markets Cache to Zustand store',
+        validate: (data): data is UserMarketsCache => {
+          return typeof data === 'object' && data !== null;
+        },
+        migrate: (oldData: UserMarketsCache) => {
+          try {
+            const store = useUserMarketsCacheStore.getState();
+            store.setAll({ cache: oldData });
+            return true;
+          } catch (error) {
+            console.error('Error migrating user markets cache:', error);
             return false;
           }
         },
