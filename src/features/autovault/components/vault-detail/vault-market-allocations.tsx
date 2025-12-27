@@ -5,7 +5,7 @@ import { MdOutlineAccountBalance } from 'react-icons/md';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import type { SupportedNetworks } from '@/utils/networks';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
 import { useVaultV2 } from '@/hooks/useVaultV2';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
@@ -42,7 +42,7 @@ export function VaultMarketAllocations({ vaultAddress, chainId, needsInitializat
 
   const isLoading = vaultDataLoading || allocationsLoading;
   const [viewMode, setViewMode] = useState<ViewMode>('market');
-  const { loading: marketsLoading } = useMarkets();
+  const { loading: marketsLoading } = useProcessedMarkets();
 
   // Calculate total allocation from market allocations (canonical source)
   // Note: collateralAllocations and marketAllocations are different VIEWS of the same data

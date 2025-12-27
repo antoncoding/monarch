@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { parseCapIdParams } from '@/utils/morpho';
 import { type WarningWithDetail, WarningCategory } from '@/utils/types';
@@ -15,7 +15,7 @@ type AggregatedVaultRiskIndicatorsProps = {
  * Similar to AggregatedRiskIndicators but works with vault data structure.
  */
 export function AggregatedVaultRiskIndicators({ vault }: AggregatedVaultRiskIndicatorsProps) {
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
 
   // Aggregate warnings from all markets in the vault
   const uniqueWarnings = useMemo((): WarningWithDetail[] => {

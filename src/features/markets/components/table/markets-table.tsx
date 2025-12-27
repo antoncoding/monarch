@@ -14,6 +14,7 @@ import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import type { TrustedVault } from '@/constants/vaults/known_vaults';
+import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -31,10 +32,7 @@ type MarketsTableProps = {
   tableClassName?: string;
   onOpenSettings: () => void;
   onRefresh: () => void;
-  isRefetching: boolean;
   isMobile: boolean;
-  loading?: boolean;
-  isEmpty?: boolean;
 };
 
 function MarketsTable({
@@ -46,11 +44,11 @@ function MarketsTable({
   tableClassName,
   onOpenSettings,
   onRefresh,
-  isRefetching,
   isMobile,
-  loading = false,
-  isEmpty = false,
 }: MarketsTableProps) {
+  // Get loading states directly from query (no prop drilling!)
+  const { isLoading: loading, isRefetching, data: rawMarkets } = useMarketsQuery();
+  const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });

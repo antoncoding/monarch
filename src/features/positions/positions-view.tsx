@@ -12,7 +12,7 @@ import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
@@ -25,7 +25,7 @@ export default function Positions() {
 
   const { account } = useParams<{ account: string }>();
 
-  const { loading: isMarketsLoading } = useMarkets();
+  const { loading: isMarketsLoading } = useProcessedMarkets();
 
   const {
     isPositionsLoading,

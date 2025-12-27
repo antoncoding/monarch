@@ -13,7 +13,7 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { fetchAllStatistics } from '@/services/statsService';
 import { SupportedNetworks, getNetworkImg, getNetworkName, getViemChain } from '@/utils/networks';
 import type { PlatformStats, TimeFrame, AssetVolumeData, Transaction } from '@/utils/statsUtils';
@@ -61,7 +61,7 @@ export default function StatsPage() {
     transactions: [],
   });
 
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
 
   useEffect(() => {
     const loadStats = async () => {

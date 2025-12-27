@@ -3,7 +3,6 @@
 import type { ReactNode } from 'react';
 import { GlobalModalProvider } from '@/contexts/GlobalModalContext';
 import { LiquidationsProvider } from '@/contexts/LiquidationsContext';
-import { MarketsProvider } from '@/contexts/MarketsContext';
 import { MerklCampaignsProvider } from '@/contexts/MerklCampaignsContext';
 import { OracleDataProvider } from '@/contexts/OracleDataContext';
 import { OnboardingProvider } from '@/features/positions/components/onboarding/onboarding-context';
@@ -18,13 +17,11 @@ export function ClientProviders({ children }: ClientProvidersProps) {
     <GlobalModalProvider>
       <TokenProvider>
         <OracleDataProvider>
-          <MarketsProvider>
-            <LiquidationsProvider>
-              <MerklCampaignsProvider>
-                <OnboardingProvider>{children}</OnboardingProvider>
-              </MerklCampaignsProvider>
-            </LiquidationsProvider>
-          </MarketsProvider>
+          <LiquidationsProvider>
+            <MerklCampaignsProvider>
+              <OnboardingProvider>{children}</OnboardingProvider>
+            </MerklCampaignsProvider>
+          </LiquidationsProvider>
         </OracleDataProvider>
       </TokenProvider>
     </GlobalModalProvider>

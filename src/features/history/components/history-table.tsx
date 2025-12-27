@@ -24,7 +24,7 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { RebalanceDetail } from './rebalance-detail';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
@@ -77,7 +77,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
   const [query, setQuery] = useState('');
   const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
   const toast = useStyledToast();
 
   const { loading, fetchTransactions } = useUserTransactions();
