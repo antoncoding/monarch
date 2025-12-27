@@ -1,29 +1,35 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoApiLiquidatedMarketKeys } from '@/data-sources/morpho-api/liquidations';
 import { fetchSubgraphLiquidatedMarketKeys } from '@/data-sources/subgraph/liquidations';
 import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
-const useLiquidations = () => {
-  const [loading, setLoading] = useState(true);
-  const [isRefetching, setIsRefetching] = useState(false);
-  const [liquidatedMarketKeys, setLiquidatedMarketKeys] = useState<Set<string>>(new Set());
-  const [error, setError] = useState<unknown | null>(null);
+/**
+ * Fetches liquidated market IDs from all supported networks using React Query.
+ *
+ * Data fetching strategy:
+ * - Tries Morpho API first (if supported)
+ * - Falls back to Subgraph if API fails
+ * - Combines liquidated market keys from all networks
+ *
+ * Cache behavior:
+ * - staleTime: 10 minutes (data considered fresh)
+ * - Auto-refetch: Every 10 minutes in background
+ * - Refetch on window focus: enabled
+ *
+ * @example
+ * ```tsx
+ * const { data, isLoading, refetch } = useLiquidationsQuery();
+ * const isProtected = data?.has(marketId) ?? false;
+ * ```
+ */
+export const useLiquidationsQuery = () => {
+  return useQuery({
+    queryKey: ['liquidations'],
+    queryFn: async () => {
+      const combinedLiquidatedKeys = new Set<string>();
+      const fetchErrors: unknown[] = [];
 
-  const fetchLiquidations = useCallback(async (isRefetch = false) => {
-    if (isRefetch) {
-      setIsRefetching(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null); // Reset error
-
-    // Define the networks to check for liquidations
-
-    const combinedLiquidatedKeys = new Set<string>();
-    const fetchErrors: unknown[] = [];
-
-    try {
       await Promise.all(
         ALL_SUPPORTED_NETWORKS.map(async (network) => {
           try {
@@ -37,7 +43,6 @@ const useLiquidations = () => {
                 networkLiquidatedKeys = await fetchMorphoApiLiquidatedMarketKeys(network);
               } catch (morphoError) {
                 console.error('Failed to fetch liquidated markets via Morpho API:', morphoError);
-                // Continue to Subgraph fallback
                 networkLiquidatedKeys = new Set();
                 trySubgraph = true;
               }
@@ -53,7 +58,7 @@ const useLiquidations = () => {
                 networkLiquidatedKeys = await fetchSubgraphLiquidatedMarketKeys(network);
               } catch (subgraphError) {
                 console.error('Failed to fetch liquidated markets via Subgraph:', subgraphError);
-                throw subgraphError; // Throw to be caught by outer catch
+                throw subgraphError;
               }
             }
 
@@ -66,37 +71,15 @@ const useLiquidations = () => {
         }),
       );
 
-      setLiquidatedMarketKeys(combinedLiquidatedKeys);
-
+      // If any network fetch failed, log but still return what we got
       if (fetchErrors.length > 0) {
-        setError(fetchErrors[0]);
+        console.warn(`Failed to fetch liquidations from ${fetchErrors.length} network(s)`, fetchErrors[0]);
       }
-    } catch (err) {
-      console.error('Error fetching liquidated markets:', err);
-      setError(err);
-    } finally {
-      if (isRefetch) {
-        setIsRefetching(false);
-      } else {
-        setLoading(false);
-      }
-    }
-  }, []);
 
-  useEffect(() => {
-    fetchLiquidations().catch((err) => {
-      console.error('Error in fetchLiquidations effect:', err);
-      // Explicitly catch and handle - prevents React error boundary from triggering
-    });
-  }, [fetchLiquidations]);
-
-  return {
-    loading,
-    isRefetching,
-    liquidatedMarketKeys,
-    error,
-    refetch: async () => fetchLiquidations(true),
-  };
+      return combinedLiquidatedKeys;
+    },
+    staleTime: 10 * 60 * 1000, // Data is fresh for 10 minutes
+    refetchInterval: 10 * 60 * 1000, // Auto-refetch every 10 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+  });
 };
-
-export default useLiquidations;

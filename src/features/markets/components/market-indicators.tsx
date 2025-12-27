@@ -2,7 +2,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useLiquidationsContext } from '@/contexts/LiquidationsContext';
+import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import type { Market } from '@/utils/types';
 import { RewardsIndicator } from '@/features/markets/components/rewards-indicator';
@@ -17,9 +17,9 @@ type MarketIndicatorsProps = {
 };
 
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
-  // Check liquidation protection status on-demand (like Merkl rewards pattern)
-  const { isProtectedByLiquidationBots } = useLiquidationsContext();
-  const hasLiquidationProtection = isProtectedByLiquidationBots(market.uniqueKey);
+  // Check liquidation protection status using React Query
+  const { data: liquidatedMarkets } = useLiquidationsQuery();
+  const hasLiquidationProtection = liquidatedMarkets?.has(market.uniqueKey) ?? false;
 
   // Compute risk warnings if needed
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];

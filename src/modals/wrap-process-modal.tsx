@@ -4,7 +4,6 @@ import { FaCheckCircle, FaCircle } from 'react-icons/fa';
 import { LuArrowRightLeft } from 'react-icons/lu';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import type { WrapStep } from '@/hooks/useWrapLegacyMorpho';
-import { formatBalance } from '@/utils/balance';
 
 type WrapProcessModalProps = {
   amount: bigint;
@@ -38,7 +37,7 @@ export function WrapProcessModal({ amount, currentStep, onOpenChange }: WrapProc
       backdrop="blur"
     >
       <ModalHeader
-        title={`Wrapping ${formatBalance(amount, 18)} MORPHO`}
+        title="Wrapping MORPHO"
         description="Track each step to move legacy MORPHO into the new token"
         mainIcon={<LuArrowRightLeft className="h-5 w-5" />}
       />
