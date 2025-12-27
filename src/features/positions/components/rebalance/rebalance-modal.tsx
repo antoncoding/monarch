@@ -8,7 +8,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { useAppSettings } from '@/stores/useAppSettings';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useRebalance } from '@/hooks/useRebalance';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { Market } from '@/utils/types';
@@ -36,7 +36,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
   // Use computed markets based on user setting
-  const { markets } = useMarkets();
+  const { markets } = useProcessedMarkets();
   const { rebalanceActions, addRebalanceAction, removeRebalanceAction, executeRebalance, isProcessing, currentStep } =
     useRebalance(groupedPosition);
 

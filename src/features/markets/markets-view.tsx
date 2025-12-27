@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
@@ -191,7 +191,10 @@ export default function Markets() {
 
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-col gap-4 lg:flex-row">
-              <NetworkFilter selectedNetwork={filters.selectedNetwork} setSelectedNetwork={filters.setSelectedNetwork} />
+              <NetworkFilter
+                selectedNetwork={filters.selectedNetwork}
+                setSelectedNetwork={filters.setSelectedNetwork}
+              />
 
               <AssetFilter
                 label="Loan Asset"
@@ -213,7 +216,10 @@ export default function Markets() {
                 updateFromSearch={filters.searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
               />
 
-              <OracleFilter selectedOracles={filters.selectedOracles} setSelectedOracles={filters.setSelectedOracles} />
+              <OracleFilter
+                selectedOracles={filters.selectedOracles}
+                setSelectedOracles={filters.setSelectedOracles}
+              />
             </div>
           </div>
         </div>

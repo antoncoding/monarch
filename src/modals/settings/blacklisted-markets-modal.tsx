@@ -7,7 +7,7 @@ import { MdBlockFlipped } from 'react-icons/md';
 import { Button } from '@/components/ui/button';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityMode, MarketIdentityFocus } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import type { Market } from '@/utils/types';
@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 20;
 export function BlacklistedMarketsModal({ isOpen, onOpenChange }: BlacklistedMarketsModalProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [currentPage, setCurrentPage] = React.useState(1);
-  const { rawMarketsUnfiltered } = useMarkets();
+  const { rawMarketsUnfiltered } = useProcessedMarkets();
   const { customBlacklistedMarkets, isBlacklisted, addBlacklistedMarket, removeBlacklistedMarket, isDefaultBlacklisted } =
     useBlacklistedMarkets();
   const { success: toastSuccess } = useStyledToast();

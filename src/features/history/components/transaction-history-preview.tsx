@@ -9,7 +9,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserTransactions from '@/hooks/useUserTransactions';
 import { formatReadable } from '@/utils/balance';
 import { groupTransactionsByHash, getWithdrawals, getSupplies } from '@/utils/transactionGrouping';
@@ -58,7 +58,7 @@ export function TransactionHistoryPreview({
   const [history, setHistory] = useState<ReturnType<typeof groupTransactionsByHash>>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isViewAllHovered, setIsViewAllHovered] = useState(false);
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
 
   useEffect(() => {
     const loadTransactions = async () => {

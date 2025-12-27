@@ -1,10 +1,9 @@
 import { useMemo } from 'react';
-import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
+import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { useOracleDataContext } from '@/contexts/OracleDataContext';
 import { useTokens } from '@/components/providers/TokenProvider';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
@@ -12,20 +11,18 @@ import { getVaultKey } from '@/constants/vaults/known_vaults';
 import type { Market } from '@/utils/types';
 
 /**
- * Combines raw markets data with all active filters and sorting preferences.
+ * Combines processed markets with all active filters and sorting preferences.
  *
  * Data Flow:
- * 1. Get raw markets from React Query (auto-cached, auto-refetched)
- * 2. Filter out blacklisted markets
- * 3. Enrich with oracle data
- * 4. Apply user filters (network, assets, USD thresholds, search)
- * 5. Filter by trusted vaults if enabled
- * 6. Apply sorting (starred, property-based, etc.)
+ * 1. Get processed markets (already blacklist filtered + oracle enriched)
+ * 2. Apply whitelist setting (show all or whitelisted only)
+ * 3. Apply user filters (network, assets, USD thresholds, search)
+ * 4. Filter by trusted vaults if enabled
+ * 5. Apply sorting (starred, property-based, etc.)
  *
  * Reactivity:
- * - Automatically recomputes when query data changes (refetch)
+ * - Automatically recomputes when processed data changes (refetch, blacklist)
  * - Automatically recomputes when any filter/preference changes
- * - Automatically recomputes when blacklist changes
  * - No manual synchronization needed!
  *
  * @returns Filtered and sorted markets ready for display
@@ -37,35 +34,20 @@ import type { Market } from '@/utils/types';
  * ```
  */
 export const useFilteredMarkets = (): Market[] => {
-  const { data: rawMarkets } = useMarketsQuery();
+  const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
   const filters = useMarketsFilters();
   const preferences = useMarketPreferences();
-  const { getAllBlacklistedKeys } = useBlacklistedMarkets();
+  const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
-  const { getOracleData } = useOracleDataContext();
   const { findToken } = useTokens();
 
   return useMemo(() => {
-    if (!rawMarkets) return [];
+    // 1. Start with allMarkets or whitelistedMarkets based on setting
+    let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
 
-    // 1. Filter out blacklisted markets
-    const blacklistedKeys = getAllBlacklistedKeys();
-    let markets = rawMarkets.filter((market) => !blacklistedKeys.has(market.uniqueKey));
+    if (markets.length === 0) return [];
 
-    // 2. Enrich with oracle data
-    markets = markets.map((market) => {
-      const oracleData = getOracleData(market.oracleAddress, market.morphoBlue.chain.id);
-      return oracleData
-        ? {
-            ...market,
-            oracle: {
-              data: oracleData,
-            },
-          }
-        : market;
-    });
-
-    // 3. Apply all filters (network, assets, USD thresholds, search, etc.)
+    // 2. Apply all filters (network, assets, USD thresholds, search, etc.)
     markets = filterMarkets(markets, {
       selectedNetwork: filters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens,
@@ -91,7 +73,7 @@ export const useFilteredMarkets = (): Market[] => {
       searchQuery: filters.searchQuery,
     });
 
-    // 4. Filter by trusted vaults if enabled
+    // 3. Filter by trusted vaults if enabled
     if (preferences.trustedVaultsOnly) {
       const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       markets = markets.filter((market) => {
@@ -104,7 +86,7 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    // 5. Apply sorting
+    // 4. Apply sorting
     if (preferences.sortColumn === SortColumn.Starred) {
       return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
     }
@@ -147,5 +129,5 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     return markets;
-  }, [rawMarkets, filters, preferences, getAllBlacklistedKeys, trustedVaults, getOracleData, findToken]);
+  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken]);
 };

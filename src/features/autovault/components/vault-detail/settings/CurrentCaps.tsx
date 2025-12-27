@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MarketDetailsBlock } from '@/features/markets/components/market-details-block';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import type { CapData } from '@/hooks/useVaultV2Data';
 import { parseCapIdParams } from '@/utils/morpho';
 import { findToken } from '@/utils/tokens';
@@ -21,7 +21,7 @@ type CurrentCapsProps = {
 };
 
 export function CurrentCaps({ existingCaps, isOwner, onStartEdit, chainId, vaultAsset }: CurrentCapsProps) {
-  const { markets, loading: marketsLoading } = useMarkets();
+  const { markets, loading: marketsLoading } = useProcessedMarkets();
   const [expandedCollaterals, setExpandedCollaterals] = useState<Set<string>>(new Set());
 
   const vaultAssetToken = vaultAsset ? findToken(vaultAsset, chainId) : undefined;

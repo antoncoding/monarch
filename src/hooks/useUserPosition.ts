@@ -7,7 +7,7 @@ import { fetchSubgraphUserPositionForMarket } from '@/data-sources/subgraph/posi
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionSnapshot } from '@/utils/positions';
 import type { MarketPosition } from '@/utils/types';
-import { useMarkets } from './useMarkets';
+import { useProcessedMarkets } from './useProcessedMarkets';
 
 /**
  * Hook to fetch a user's position in a specific market.
@@ -23,7 +23,7 @@ import { useMarkets } from './useMarkets';
 const useUserPosition = (user: string | undefined, chainId: SupportedNetworks | undefined, marketKey: string | undefined) => {
   const queryKey = ['userPosition', user, chainId, marketKey];
 
-  const { allMarkets: markets } = useMarkets();
+  const { allMarkets: markets } = useProcessedMarkets();
   const publicClient = usePublicClient({ chainId });
 
   const {

@@ -8,7 +8,7 @@ import { useTokens } from '@/components/providers/TokenProvider';
 import { TokenIcon } from '@/components/shared/token-icon';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import type { CapData } from '@/hooks/useVaultV2Data';
 import { getMarketCapId, getCollateralCapId, getAdapterCapId, parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -48,7 +48,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   const [collateralCaps, setCollateralCaps] = useState<Map<string, CollateralCapInfo>>(new Map());
   const [showAddMarketModal, setShowAddMarketModal] = useState(false);
 
-  const { markets, loading: marketsLoading } = useMarkets();
+  const { markets, loading: marketsLoading } = useProcessedMarkets();
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: chainId,
   });

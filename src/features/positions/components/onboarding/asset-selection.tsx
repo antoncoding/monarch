@@ -5,7 +5,7 @@ import { formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
@@ -28,7 +28,7 @@ function NetworkIcon({ networkId }: { networkId: number }) {
 
 export function AssetSelection() {
   const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
-  const { markets, loading: marketsLoading } = useMarkets();
+  const { markets, loading: marketsLoading } = useProcessedMarkets();
   const { setSelectedToken, setSelectedMarkets, goToNextStep } = useOnboarding();
 
   const tokensWithMarkets = useMemo(() => {

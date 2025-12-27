@@ -2,7 +2,7 @@
 
 import { formatUnits } from 'viem';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { formatReadable } from '@/utils/balance';
 import { getTruncatedAssetName } from '@/utils/oracle';
 import { getWithdrawals, getSupplies } from '@/utils/transactionGrouping';
@@ -14,7 +14,7 @@ type RebalanceDetailProps = {
 };
 
 export function RebalanceDetail({ groupedTransaction }: RebalanceDetailProps) {
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
 
   const withdrawals = getWithdrawals(groupedTransaction.transactions);
   const supplies = getSupplies(groupedTransaction.transactions);

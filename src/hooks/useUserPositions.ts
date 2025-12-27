@@ -10,7 +10,7 @@ import { getClient } from '@/utils/rpc';
 import type { Market } from '@/utils/types';
 import { useUserMarketsCache } from '@/stores/useUserMarketsCache';
 import { useCustomRpc } from '@/stores/useCustomRpc';
-import { useMarkets } from './useMarkets';
+import { useProcessedMarkets } from './useProcessedMarkets';
 
 // Type for market key and chain identifier
 type PositionMarket = {
@@ -102,7 +102,7 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
 
 const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?: SupportedNetworks[]) => {
   const queryClient = useQueryClient();
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
   const { getUserMarkets, batchAddUserMarkets } = useUserMarketsCache(user);
 
   const { customRpcUrls } = useCustomRpc();

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MarketsTableWithSameLoanAsset } from '@/features/markets/components/markets-table-same-loan';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { Spinner } from '@/components/ui/spinner';
-import { useMarkets } from '@/hooks/useMarkets';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';
 
@@ -39,7 +39,7 @@ export function MarketSelectionModal({
   confirmButtonText,
 }: MarketSelectionModalProps) {
   const [selectedMarkets, setSelectedMarkets] = useState<Set<string>>(new Set());
-  const { markets, loading: marketsLoading } = useMarkets();
+  const { markets, loading: marketsLoading } = useProcessedMarkets();
 
   // Filter available markets
   const availableMarkets = useMemo(() => {

@@ -5,7 +5,7 @@ import { FaCube, FaCheck } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
-import { useMarkets } from '@/contexts/MarketsContext';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import { useUserBalances } from '@/hooks/useUserBalances';
 import { ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from '@/features/autovault/components/deployment/deployment-context';
@@ -25,7 +25,7 @@ function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContent
   const { balances, loading: balancesLoading } = useUserBalances({
     networkIds: VAULT_SUPPORTED_NETWORKS,
   });
-  const { whitelistedMarkets, loading: marketsLoading } = useMarkets();
+  const { whitelistedMarkets, loading: marketsLoading } = useProcessedMarkets();
 
   const handleCreateVault = useCallback(() => {
     void createVault();

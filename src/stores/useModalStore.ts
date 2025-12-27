@@ -27,7 +27,7 @@ export type ModalProps = {
 
   trustedVaults: Record<string, never>; // No props needed - uses useTrustedVaults() store
 
-  blacklistedMarkets: Record<string, never>; // No props needed - uses useMarkets() context
+  blacklistedMarkets: Record<string, never>; // No props needed - uses useProcessedMarkets() context
 };
 
 export type ModalType = keyof ModalProps;

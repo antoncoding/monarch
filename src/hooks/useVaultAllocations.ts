@@ -6,7 +6,7 @@ import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
 import { useAllocations } from './useAllocations';
-import { useMarkets } from './useMarkets';
+import { useProcessedMarkets } from './useProcessedMarkets';
 import { useVaultV2Data } from './useVaultV2Data';
 
 type UseVaultAllocationsArgs = {
@@ -35,7 +35,7 @@ type UseVaultAllocationsReturn = {
  * 5. Returns typed, ready-to-use allocation structures
  */
 export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: UseVaultAllocationsArgs): UseVaultAllocationsReturn {
-  const { allMarkets } = useMarkets();
+  const { allMarkets } = useProcessedMarkets();
 
   // Pull vault data directly - TanStack Query handles deduplication
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
