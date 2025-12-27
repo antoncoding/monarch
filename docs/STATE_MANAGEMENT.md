@@ -9,7 +9,7 @@ Quick reference for choosing the right pattern.
 ```
 External Data (API, blockchain) → React Query
 User Preferences (persist across refresh) → Zustand + persist
-Global UI State (modals, no persistence) → Zustand
+Shared UI State (modals, selections, operations) → Zustand
 Computed/Derived → useMemo Hook
 Local UI State (single component) → useState
 ```
@@ -59,20 +59,38 @@ const network = useMarketsFilters((s) => s.selectedNetwork);
 const setNetwork = useMarketsFilters((s) => s.setSelectedNetwork);
 ```
 
-### 2b. Without Persist (Global UI State)
+### 2b. Without Persist (Shared UI State)
 
-**When:** Modals, global UI state accessed from multiple components
-**Location:** `src/stores/use{Feature}ModalStore.ts` or `src/stores/useModalStore.ts`
+**When:** State shared across components but doesn't need persistence
+**Use cases:** Modals, selections, operation states, multi-step flows
+**Location:** `src/stores/use{Feature}Store.ts`
 
 ```typescript
+// Modal state
 export const useVaultModalStore = create((set) => ({
   isOpen: false,
   open: () => set({ isOpen: true }),
   close: () => set({ isOpen: false }),
 }));
 
-// Usage
-const { isOpen, open, close } = useVaultModalStore();
+// Selection state
+export const useTableSelectionStore = create((set) => ({
+  selectedIds: [],
+  toggleSelection: (id) => set((state) => ({
+    selectedIds: state.selectedIds.includes(id)
+      ? state.selectedIds.filter((i) => i !== id)
+      : [...state.selectedIds, id]
+  })),
+  clearSelection: () => set({ selectedIds: [] }),
+}));
+
+// Operation state
+export const useOperationStore = create((set) => ({
+  isProcessing: false,
+  currentStep: 1,
+  setProcessing: (processing) => set({ isProcessing: processing }),
+  nextStep: () => set((state) => ({ currentStep: state.currentStep + 1 })),
+}));
 ```
 
 ---
@@ -134,10 +152,14 @@ const min = useStore((s) => s.filters?.min ?? '0');
 ```typescript
 // ❌ Don't use useState for shared state
 const [modalOpen, setModalOpen] = useState(false);
+const [selectedIds, setSelectedIds] = useState([]);
 // Then pass through 3 levels of props...
 
-// ✅ Use Zustand for global UI state
-const useModalStore = create((set) => ({ isOpen: false, open: () => set({ isOpen: true }) }));
+// ✅ Use Zustand for shared UI state
+const useModalStore = create((set) => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+}));
 ```
 
 ```typescript
@@ -156,14 +178,14 @@ const processed = useMemo(() => data.filter(...).sort(...), [data]);
 | Pattern | Use Case | Location |
 |---------|----------|----------|
 | React Query | External data | `src/hooks/queries/` |
-| Zustand + persist | User preferences (persist) | `src/stores/` |
-| Zustand | Global UI state (modals) | `src/stores/` |
+| Zustand + persist | User preferences | `src/stores/` |
+| Zustand | Shared UI state (modals, selections, operations) | `src/stores/` |
 | Derived Hook | Computed data | `src/hooks/` |
 | useState | Local component state | Component |
 
 **Before creating Context:**
 - External data? → React Query
 - Persisted preferences? → Zustand + persist
-- Global UI state? → Zustand
+- Shared UI state? → Zustand
 - Computed data? → Derived hook
 - Local UI? → useState
