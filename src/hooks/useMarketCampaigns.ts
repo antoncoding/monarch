@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { SimplifiedCampaign } from '@/utils/merklTypes';
-import { useMerklCampaigns } from './useMerklCampaigns';
+import { useMerklCampaignsQuery } from './queries/useMerklCampaignsQuery';
 
 type UseMarketCampaignsReturn = {
   campaigns: SimplifiedCampaign[];
@@ -19,7 +19,7 @@ type MarketCampaignsOptions = {
 };
 
 export function useMarketCampaigns(options: MarketCampaignsOptions): UseMarketCampaignsReturn {
-  const { campaigns: allCampaigns, loading, error } = useMerklCampaigns();
+  const { campaigns: allCampaigns, loading, error } = useMerklCampaignsQuery();
 
   const result = useMemo(() => {
     // Handle both string and object parameters for backward compatibility
