@@ -19,6 +19,8 @@ Monarch is an interface for Morpho Blue lending markets with maximized customiza
 
 **State management**: See [STATE_MANAGEMENT.md](./STATE_MANAGEMENT.md) for React Query + Zustand patterns
 
+**Data prefetching**: Critical queries (markets, tokens, campaigns, oracles) prefetch on app mount via `DataPrefetcher` component for instant navigation
+
 ---
 
 ## Data Sources
@@ -147,10 +149,10 @@ pnpm generate:redstone     # Redstone feeds
 
 ### Using Oracle Data
 
-**Context**: `src/contexts/OracleDataContext.tsx`
+**Hook**: `src/hooks/queries/useOracleDataQuery.ts`
 
 ```typescript
-const { getOracleData } = useOracleDataContext();
+const { getOracleData } = useOracleDataQuery();
 const oracleInfo = getOracleData(oracleAddress, network);
 ```
 
@@ -164,14 +166,14 @@ Returns oracle type (Chainlink/Redstone/Compound), feed details, deviation thres
 
 Fetches reward campaigns from Merkl API and matches them to Morpho markets.
 
-**Context**: `src/contexts/MerklCampaignsContext.tsx`
+**Hook**: `useMerklCampaignsQuery()` in `src/hooks/queries/useMerklCampaignsQuery.ts`
 
-**Hook**: `useMarketCampaigns(marketId, network)` in `src/hooks/useMarketCampaigns.ts`
+**Derived hook**: `useMarketCampaigns(marketId, network)` in `src/hooks/useMarketCampaigns.ts`
 
 **How it works**:
 1. Fetch all campaigns from Merkl API for supported networks
 2. Match campaigns to markets by checking campaign `mainParameter` (market address)
-3. Cache results with TanStack Query (5min stale time)
+3. Cache results with React Query (5min stale time)
 
 **Display**: Reward APRs shown on market cards and detail pages
 
