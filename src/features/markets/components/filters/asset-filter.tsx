@@ -187,7 +187,7 @@ export default function AssetFilter({
           </ul>
           <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
             <button
-              className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
+              className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary transition-colors duration-200 hover:text-normal"
               onClick={clearSelection}
               type="button"
             >
