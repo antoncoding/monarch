@@ -30,8 +30,6 @@ type TableContainerWithHeaderProps = {
  * </TableContainerWithHeader>
  */
 export function TableContainerWithHeader({ title, actions, children, className = '' }: TableContainerWithHeaderProps) {
-  console.log('no padding markets');
-
   return (
     <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-0.5">
