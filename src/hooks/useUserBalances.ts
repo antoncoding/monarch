@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useConnection } from 'wagmi';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { type SupportedNetworks, ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
 
 export type TokenBalance = {
@@ -29,7 +29,7 @@ export function useUserBalances(options: UseUserBalancesOptions = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   // Get networks to fetch from - either specified ones or agent-enabled networks
   const networksToFetch = useMemo(() => {

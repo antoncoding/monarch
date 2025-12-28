@@ -4,7 +4,7 @@ import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
@@ -39,7 +39,7 @@ export const useFilteredMarkets = (): Market[] => {
   const preferences = useMarketPreferences();
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   return useMemo(() => {
     // 1. Start with allMarkets or whitelistedMarkets based on setting
