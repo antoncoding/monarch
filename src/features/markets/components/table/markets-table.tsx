@@ -198,7 +198,6 @@ function MarketsTable({
       <TableContainerWithHeader
         title=""
         actions={headerActions}
-        noPadding={loading || isEmpty || markets.length === 0}
         className="w-full"
       >
         {loading ? (
@@ -214,6 +213,7 @@ function MarketsTable({
           <EmptyScreen
             message="No markets found with the current filters"
             hint={getEmptyStateHint()}
+            className="min-h-[300px] container px-[4%]"
           />
         ) : (
           <Table className={tableClassNames}>

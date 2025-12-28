@@ -3,7 +3,6 @@ type TableContainerWithHeaderProps = {
   actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
-  noPadding?: boolean;
 };
 
 /**
@@ -30,14 +29,16 @@ type TableContainerWithHeaderProps = {
  *   <Table>...</Table>
  * </TableContainerWithHeader>
  */
-export function TableContainerWithHeader({ title, actions, children, className = '', noPadding = false }: TableContainerWithHeaderProps) {
+export function TableContainerWithHeader({ title, actions, children, className = '' }: TableContainerWithHeaderProps) {
+  console.log('no padding markets');
+
   return (
     <div className={`bg-surface rounded-md font-zen shadow-sm ${className}`}>
       <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-0.5">
         <h3 className="font-monospace text-xs uppercase text-secondary">{title}</h3>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
-      <div className={`overflow-x-auto ${noPadding ? '' : 'pb-4'}`}>{children}</div>
+      <div className="overflow-x-auto pb-4">{children}</div>
     </div>
   );
 }

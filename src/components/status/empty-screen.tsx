@@ -9,9 +9,7 @@ type EmptyScreenProps = {
 
 export default function EmptyScreen({ message = 'No data', hint, className }: EmptyScreenProps) {
   return (
-    <div
-      className={`bg-surface my-4 flex min-h-48 w-full flex-col items-center justify-center space-y-4 rounded py-8 shadow-sm ${className}`}
-    >
+    <div className={`bg-surface my-4 flex min-h-48 w-full flex-col items-center justify-center space-y-4 rounded py-8 ${className}`}>
       <Image
         src={emptyImg}
         alt="Logo"
