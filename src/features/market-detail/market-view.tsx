@@ -42,7 +42,7 @@ import VolumeChart from './components/charts/volume-chart';
 
 function MarketContent() {
   // 1. Get URL params first
-  const { marketid : marketId, chainId } = useParams();
+  const { marketid: marketId, chainId } = useParams();
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
@@ -181,7 +181,6 @@ function MarketContent() {
       console.error('Failed to refresh data:', error);
     });
   }, [handleRefreshAll]);
-
 
   // 7. Early returns for loading/error states
   if (isMarketLoading) {
@@ -436,10 +435,18 @@ function MarketContent() {
 
           <TabsContent value="statistics">
             <h4 className="mb-4 text-lg text-secondary">Volume</h4>
-            <VolumeChart marketId={marketId as string} chainId={network} market={market} />
+            <VolumeChart
+              marketId={marketId as string}
+              chainId={network}
+              market={market}
+            />
 
             <h4 className="mb-4 mt-8 text-lg text-secondary">Rates</h4>
-            <RateChart marketId={marketId as string} chainId={network} market={market} />
+            <RateChart
+              marketId={marketId as string}
+              chainId={network}
+              market={market}
+            />
           </TabsContent>
 
           <TabsContent value="activities">

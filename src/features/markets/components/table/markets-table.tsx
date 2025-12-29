@@ -33,14 +33,7 @@ type MarketsTableProps = {
   isMobile: boolean;
 };
 
-function MarketsTable({
-  currentPage,
-  setCurrentPage,
-  className,
-  tableClassName,
-  onRefresh,
-  isMobile,
-}: MarketsTableProps) {
+function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, onRefresh, isMobile }: MarketsTableProps) {
   // Get loading states directly from query (no prop drilling!)
   const { isLoading: loading, isRefetching, data: rawMarkets } = useMarketsQuery();
 

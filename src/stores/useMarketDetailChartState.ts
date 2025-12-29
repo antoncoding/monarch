@@ -1,13 +1,12 @@
 import { create } from 'zustand';
 import type { TimeseriesOptions } from '@/utils/types';
 
-const NOW = Math.floor(Date.now() / 1000);
 const DAY_IN_SECONDS = 24 * 60 * 60;
 const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS;
 
 // Helper to calculate time range based on timeframe string
 const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions => {
-  const endTimestamp = NOW;
+  const endTimestamp = Math.floor(Date.now() / 1000);
   let startTimestamp;
   let interval: TimeseriesOptions['interval'] = 'HOUR';
   switch (timeframe) {
