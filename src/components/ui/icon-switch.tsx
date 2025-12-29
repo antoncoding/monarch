@@ -11,7 +11,7 @@ export type IconSwitchProps = {
   size?: 'xs' | 'sm' | 'md' | 'lg';
   color?: 'primary' | 'secondary' | 'accent' | 'destructive';
   onChange?: (selected: boolean) => void;
-  thumbIcon?: React.ComponentType<{ className?: string; isSelected?: boolean }> | null;
+  thumbIcon?: React.ComponentType<{ className?: string }> | null;
   thumbIconOn?: React.ComponentType<{ className?: string }>;
   thumbIconOff?: React.ComponentType<{ className?: string }>;
   classNames?: {
@@ -241,11 +241,7 @@ export function IconSwitch({
               classNames?.thumbIcon,
             )}
           >
-            {thumbIconOn && thumbIconOff ? (
-              <IconComponent className="h-[100%]" />
-            ) : (
-              <IconComponent className="h-[100%]" isSelected={isSelected} />
-            )}
+            <IconComponent className="h-[100%]" />
           </motion.div>
         )}
       </motion.div>
