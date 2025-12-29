@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { MorphoVault } from '@/data-sources/morpho-api/vaults';
-import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
+import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import type { Address } from 'viem';
 
 type VaultRegistryContextType = {
@@ -15,7 +15,7 @@ type VaultRegistryContextType = {
 const VaultRegistryContext = createContext<VaultRegistryContextType | undefined>(undefined);
 
 export function VaultRegistryProvider({ children }: { children: ReactNode }) {
-  const { vaults, loading, error } = useAllMorphoVaults();
+  const { data: vaults = [], isLoading: loading, error } = useAllMorphoVaultsQuery();
 
   const getVaultByAddress = useMemo(
     () => (address: Address, chainId?: number) => {

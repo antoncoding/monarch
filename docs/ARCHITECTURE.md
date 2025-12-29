@@ -185,7 +185,7 @@ Monarch allow users to choose which Morpho vaults they trust, and use them as fi
 
 **Registry**: `src/contexts/VaultRegistryContext.tsx`
 
-**Hook**: `useAllMorphoVaults()` in `src/hooks/useAllMorphoVaults.ts`
+**Hook**: `useAllMorphoVaultsQuery()` in `src/hooks/queries/useAllMorphoVaultsQuery.ts`
 - Fetches all vaults from Morpho API
 - Caches with TanStack Query
 

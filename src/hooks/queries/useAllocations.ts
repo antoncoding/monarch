@@ -18,7 +18,7 @@ type UseAllocationsArgs = {
   enabled?: boolean;
 };
 
-export function useAllocations({ vaultAddress, chainId, caps = [], enabled = true }: UseAllocationsArgs) {
+export function useAllocationsQuery({ vaultAddress, chainId, caps = [], enabled = true }: UseAllocationsArgs) {
   // Create a stable key from capIds to detect actual changes
   const capsKey = useMemo(() => {
     return caps

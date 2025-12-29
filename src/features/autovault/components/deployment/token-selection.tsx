@@ -4,7 +4,7 @@ import { type Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TokenIcon } from '@/components/shared/token-icon';
-import type { TokenBalance } from '@/hooks/useUserBalances';
+import type { TokenBalance } from '@/hooks/queries/useUserBalancesQuery';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, SupportedNetworks } from '@/utils/networks';
 import type { Market } from '@/utils/types';

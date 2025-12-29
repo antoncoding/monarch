@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { formatUnits } from 'viem';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TableContainerWithDescription } from '@/components/common/table-container-with-header';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import useUserTransactions from '@/hooks/useUserTransactions';
+import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { formatReadable } from '@/utils/balance';
 import { groupTransactionsByHash, getWithdrawals, getSupplies } from '@/utils/transactionGrouping';
 import { getTruncatedAssetName } from '@/utils/oracle';
@@ -54,32 +54,25 @@ export function TransactionHistoryPreview({
   limit = 10,
   emptyMessage,
 }: TransactionHistoryPreviewProps) {
-  const { loading, fetchTransactions } = useUserTransactions();
-  const [history, setHistory] = useState<ReturnType<typeof groupTransactionsByHash>>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
   const [isViewAllHovered, setIsViewAllHovered] = useState(false);
   const { allMarkets } = useProcessedMarkets();
 
-  useEffect(() => {
-    const loadTransactions = async () => {
-      if (!account || !fetchTransactions || allMarkets.length === 0) return;
+  const { data, isLoading: loading } = useUserTransactionsQuery({
+    filters: {
+      userAddress: account ? [account] : [],
+      first: limit,
+      skip: 0,
+      chainIds: chainId ? [chainId] : undefined,
+    },
+    enabled: Boolean(account) && allMarkets.length > 0,
+  });
 
-      const result = await fetchTransactions({
-        userAddress: [account],
-        first: limit,
-        skip: 0,
-        chainIds: chainId ? [chainId] : undefined,
-      });
+  const history = useMemo(() => {
+    if (!data) return [];
+    return groupTransactionsByHash(data.items);
+  }, [data]);
 
-      if (result) {
-        const grouped = groupTransactionsByHash(result.items);
-        setHistory(grouped);
-      }
-      setIsInitialized(true);
-    };
-
-    void loadTransactions();
-  }, [account, chainId, limit, fetchTransactions, allMarkets.length]);
+  const isInitialized = !loading;
 
   const historyLink = useMemo(() => {
     const params = new URLSearchParams();

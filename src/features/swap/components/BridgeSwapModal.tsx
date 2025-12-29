@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/Modal';
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
-import { useUserBalances } from '@/hooks/useUserBalances';
+import { useUserBalancesQuery } from '@/hooks/queries/useUserBalancesQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
 import { useCowBridge } from '../hooks/useCowBridge';
@@ -28,7 +28,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   const [slippage, _setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
   // Fetch user balances from CoW-supported chains
-  const { balances, loading: balancesLoading } = useUserBalances({
+  const { data: balances = [], isLoading: balancesLoading } = useUserBalancesQuery({
     networkIds: COW_BRIDGE_CHAINS as unknown as number[],
   });
 

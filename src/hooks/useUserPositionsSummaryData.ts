@@ -6,9 +6,9 @@ import { calculateEarningsFromSnapshot } from '@/utils/interest';
 import { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
-import type { MarketPositionWithEarnings } from '@/utils/types';
+import type { MarketPositionWithEarnings, UserTransaction } from '@/utils/types';
 import useUserPositions, { positionKeys } from './useUserPositions';
-import useUserTransactions from './useUserTransactions';
+import { fetchUserTransactions } from './queries/fetchUserTransactions';
 
 export type EarningsPeriod = 'all' | 'day' | 'week' | 'month';
 
@@ -68,7 +68,6 @@ const fetchPeriodBlockNumbers = async (period: EarningsPeriod, chainIds?: Suppor
 const useUserPositionsSummaryData = (user: string | undefined, period: EarningsPeriod = 'all', chainIds?: SupportedNetworks[]) => {
   const { data: positions, loading: positionsLoading, isRefetching, positionsError } = useUserPositions(user, true, chainIds);
 
-  const { fetchTransactions } = useUserTransactions();
   const queryClient = useQueryClient();
   const { customRpcUrls } = useCustomRpcContext();
 
@@ -133,26 +132,41 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
   });
 
   // Query for all transactions (independent of period)
-  const { data: allTransactions, isLoading: isLoadingTransactions } = useQuery({
-    queryKey: ['user-transactions-summary', user, positionsKey, chainIds?.join(',') ?? 'all'],
+  const uniqueChainIds = useMemo(
+    () => chainIds ?? [...new Set(positions?.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks) ?? [])],
+    [chainIds, positions],
+  );
+
+  const { data: transactionResponse, isLoading: isLoadingTransactions } = useQuery({
+    queryKey: [
+      'user-transactions',
+      user ? [user] : [],
+      positions?.map((p) => p.market.uniqueKey),
+      uniqueChainIds,
+      undefined, // timestampGte
+      undefined, // timestampLte
+      undefined, // skip
+      undefined, // first
+      undefined, // hash
+      undefined, // assetIds
+    ],
     queryFn: async () => {
-      if (!positions || !user) return [];
+      if (!positions || !user) return { items: [], pageInfo: { count: 0, countTotal: 0 }, error: null };
 
-      // Deduplicate chain IDs to avoid fetching same network multiple times
-      const uniqueChainIds = chainIds ?? [...new Set(positions.map((p) => p.market.morphoBlue.chain.id as SupportedNetworks))];
-
-      const result = await fetchTransactions({
+      const result = await fetchUserTransactions({
         userAddress: [user],
         marketUniqueKeys: positions.map((p) => p.market.uniqueKey),
         chainIds: uniqueChainIds,
       });
 
-      return result?.items ?? [];
+      return result;
     },
     enabled: !!positions && !!user,
     staleTime: 60_000, // 1 minute
     gcTime: 5 * 60 * 1000,
   });
+
+  const allTransactions = transactionResponse?.items ?? [];
 
   // Calculate earnings from snapshots + transactions
   const positionsWithEarnings = useMemo((): MarketPositionWithEarnings[] => {
@@ -183,7 +197,9 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       const pastBalance = pastSnapshot ? BigInt(pastSnapshot.supplyAssets) : 0n;
 
       // Filter transactions for this market (case-insensitive comparison)
-      const marketTxs = (allTransactions ?? []).filter((tx) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower);
+      const marketTxs = (allTransactions ?? []).filter(
+        (tx: UserTransaction) => tx.data?.market?.uniqueKey?.toLowerCase() === marketIdLower,
+      );
 
       // Calculate earnings
       const earnings = calculateEarningsFromSnapshot(currentBalance, pastBalance, marketTxs, startTimestamp, now);
@@ -210,7 +226,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
       });
       // Invalidate transactions
       await queryClient.invalidateQueries({
-        queryKey: ['user-transactions-summary', user],
+        queryKey: ['user-transactions', user ? [user] : []],
       });
 
       onSuccess?.();

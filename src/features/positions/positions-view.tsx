@@ -15,7 +15,7 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
-import { useUserVaultsV2 } from '@/hooks/useUserVaultsV2';
+import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
@@ -37,7 +37,11 @@ export default function Positions() {
   } = useUserPositionsSummaryData(account, earningsPeriod);
 
   // Fetch user's auto vaults
-  const { vaults, loading: isVaultsLoading, refetch: refetchVaults } = useUserVaultsV2(account);
+  const {
+    data: vaults = [],
+    isLoading: isVaultsLoading,
+    refetch: refetchVaults,
+  } = useUserVaultsV2Query({ userAddress: account as Address });
 
   // Calculate portfolio value from positions and vaults
   const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);

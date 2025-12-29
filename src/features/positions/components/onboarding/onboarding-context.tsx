@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useMemo, useCallback } from 'react';
-import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
+import { useUserBalancesAllNetworksQuery } from '@/hooks/queries/useUserBalancesQuery';
 import type { Market } from '@/utils/types';
 import type { TokenWithMarkets } from './types';
 
@@ -45,7 +45,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [currentStep, setStep] = useState<OnboardingStep>('asset-selection');
 
   // Fetch user balances once for the entire onboarding flow
-  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
+  const { data: balances = [], isLoading: balancesLoading } = useUserBalancesAllNetworksQuery();
 
   const currentStepIndex = ONBOARDING_STEPS.findIndex((s) => s.id === currentStep);
 

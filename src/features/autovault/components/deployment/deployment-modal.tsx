@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import { useUserBalances } from '@/hooks/useUserBalances';
+import { useUserBalancesQuery } from '@/hooks/queries/useUserBalancesQuery';
 import { ALL_SUPPORTED_NETWORKS, isAgentAvailable, SupportedNetworks } from '@/utils/networks';
 import { DeploymentProvider, useDeployment } from '@/features/autovault/components/deployment/deployment-context';
 import { TokenSelection } from './token-selection';
@@ -22,7 +22,7 @@ function DeploymentModalContent({ isOpen, onOpenChange }: DeploymentModalContent
   const { selectedTokenAndNetwork, createVault, isDeploying, deploymentPhase, deployedVaultAddress, navigateToVault } = useDeployment();
 
   // Load balances and tokens at modal level
-  const { balances, loading: balancesLoading } = useUserBalances({
+  const { data: balances = [], isLoading: balancesLoading } = useUserBalancesQuery({
     networkIds: VAULT_SUPPORTED_NETWORKS,
   });
   const { whitelistedMarkets, loading: marketsLoading } = useProcessedMarkets();
