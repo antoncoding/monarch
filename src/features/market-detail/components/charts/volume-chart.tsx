@@ -11,30 +11,39 @@ import { Spinner } from '@/components/ui/spinner';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
-import type { MarketVolumes } from '@/utils/types';
-import type { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
+import { formatChartTime } from '@/utils/chart';
+import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
+import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
+import type { Market } from '@/utils/types';
+import type { TimeseriesDataPoint } from '@/utils/types';
 
 type VolumeChartProps = {
-  historicalData: MarketVolumes | undefined;
+  marketId: string;
+  chainId: number;
   market: Market;
-  isLoading: boolean;
-  volumeView: 'USD' | 'Asset';
-  setVolumeView: (view: 'USD' | 'Asset') => void;
-  selectedTimeframe: '1d' | '7d' | '30d';
-  selectedTimeRange: TimeseriesOptions;
-  handleTimeframeChange: (timeframe: '1d' | '7d' | '30d') => void;
 };
 
-function VolumeChart({
-  historicalData,
-  market,
-  isLoading,
-  volumeView,
-  setVolumeView,
-  selectedTimeframe,
-  selectedTimeRange,
-  handleTimeframeChange,
-}: VolumeChartProps) {
+function VolumeChart({ marketId, chainId, market }: VolumeChartProps) {
+  // ✅ All hooks at top level - no conditional returns before hooks!
+  const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
+  const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
+  const volumeView = useMarketDetailChartState((s) => s.volumeView);
+  const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
+  const setVolumeView = useMarketDetailChartState((s) => s.setVolumeView);
+
+  // Component fetches its own data (React Query caches by marketId + chainId + timeRange)
+  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
+
+  const [visibleLines, setVisibleLines] = useState({
+    supply: true,
+    borrow: true,
+    liquidity: true,
+  });
+
+  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d') => {
+    setTimeframe(timeframe);
+  };
+
   const formatYAxis = (value: number) => {
     if (volumeView === 'USD') {
       return `$${formatReadable(value)}`;
@@ -42,26 +51,12 @@ function VolumeChart({
     return formatReadable(value);
   };
 
-  const formatTime = (unixTime: number) => {
-    const date = new Date(unixTime * 1000);
-    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 24 * 60 * 60) {
-      return date.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   const getVolumeChartData = () => {
-    if (!historicalData) return [];
+    if (!historicalData?.volumes) return [];
 
-    const supplyData = volumeView === 'USD' ? historicalData.supplyAssetsUsd : historicalData.supplyAssets;
-    const borrowData = volumeView === 'USD' ? historicalData.borrowAssetsUsd : historicalData.borrowAssets;
-    const liquidityData = volumeView === 'USD' ? historicalData.liquidityAssetsUsd : historicalData.liquidityAssets;
+    const supplyData = volumeView === 'USD' ? historicalData.volumes.supplyAssetsUsd : historicalData.volumes.supplyAssets;
+    const borrowData = volumeView === 'USD' ? historicalData.volumes.borrowAssetsUsd : historicalData.volumes.borrowAssets;
+    const liquidityData = volumeView === 'USD' ? historicalData.volumes.liquidityAssetsUsd : historicalData.volumes.liquidityAssets;
 
     // Process all data in a single loop
     return supplyData
@@ -78,7 +73,7 @@ function VolumeChart({
           volumeView === 'USD' ? liquidityPoint?.y || 0 : Number(formatUnits(BigInt(liquidityPoint?.y || 0), market.loanAsset.decimals));
 
         // Check if any timestamps has USD value exceeds 100B
-        if (historicalData.supplyAssetsUsd[index].y >= 100_000_000_000) {
+        if (historicalData.volumes.supplyAssetsUsd[index].y >= 100_000_000_000) {
           return null;
         }
 
@@ -98,7 +93,7 @@ function VolumeChart({
   };
 
   const getCurrentVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data = volumeView === 'USD' ? historicalData?.[`${type}AssetsUsd`] : historicalData?.[`${type}Assets`];
+    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
     if (!data || data.length === 0) return { current: 0, netChange: 0, netChangePercentage: 0 };
 
     const current =
@@ -113,7 +108,7 @@ function VolumeChart({
   };
 
   const getAverageVolumeStats = (type: 'supply' | 'borrow' | 'liquidity') => {
-    const data = volumeView === 'USD' ? historicalData?.[`${type}AssetsUsd`] : historicalData?.[`${type}Assets`];
+    const data = volumeView === 'USD' ? historicalData?.volumes[`${type}AssetsUsd`] : historicalData?.volumes[`${type}Assets`];
     if (!data || data.length === 0) return 0;
     const sum = data.reduce(
       (acc: number, point: TimeseriesDataPoint) =>
@@ -133,12 +128,6 @@ function VolumeChart({
     { key: '7d', label: '7D', value: '7d' },
     { key: '30d', label: '30D', value: '30d' },
   ];
-
-  const [visibleLines, setVisibleLines] = useState({
-    supply: true,
-    borrow: true,
-    liquidity: true,
-  });
 
   // This is only for adaptive curve
   const targetUtilizationData = useMemo(() => {
@@ -249,7 +238,7 @@ function VolumeChart({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="x"
-                    tickFormatter={formatTime}
+                    tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
                   />
                   <YAxis
                     tickFormatter={formatYAxis}
