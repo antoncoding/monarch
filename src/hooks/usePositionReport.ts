@@ -5,7 +5,7 @@ import { fetchPositionsSnapshots } from '@/utils/positions';
 import { estimatedBlockNumber, getClient } from '@/utils/rpc';
 import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from '@/stores/useCustomRpc';
-import useUserTransactions from './useUserTransactions';
+import { fetchUserTransactions } from './queries/fetchUserTransactions';
 
 export type PositionReport = {
   market: Market;
@@ -36,8 +36,6 @@ export const usePositionReport = (
   startDate?: Date,
   _endDate?: Date,
 ) => {
-  const { fetchTransactions } = useUserTransactions();
-
   const { customRpcUrls } = useCustomRpc();
 
   const generateReport = async (): Promise<ReportSummary | null> => {
@@ -75,7 +73,7 @@ export const usePositionReport = (
     let skip = 0;
 
     while (hasMore) {
-      const transactionResult = await fetchTransactions({
+      const transactionResult = await fetchUserTransactions({
         userAddress: [account],
         chainIds: [selectedAsset.chainId],
         timestampGte: startTimestamp,

@@ -71,7 +71,6 @@ export const useTransactionFiltersStore = create<TransactionFiltersStore>()(
 
 /**
  * Convenience hook with scoped API for a specific token symbol.
- * Maintains backward-compatible interface with the old useLocalStorage-based hook.
  *
  * FIX: Use separate selectors for primitives to avoid infinite loop from object creation.
  * The `??` operator with object literal creates a new reference every render!

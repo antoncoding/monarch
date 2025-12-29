@@ -25,7 +25,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { RebalanceDetail } from './rebalance-detail';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import useUserTransactions from '@/hooks/useUserTransactions';
+import { useUserTransactionsQuery } from '@/hooks/queries/useUserTransactionsQuery';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -80,11 +80,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
   const { allMarkets } = useProcessedMarkets();
   const toast = useStyledToast();
 
-  const { loading, fetchTransactions } = useUserTransactions();
   const [currentPage, setCurrentPage] = useState(1);
-  const [history, setHistory] = useState<UserTransaction[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [totalPages, setTotalPages] = useState(0);
 
   // Settings state from Zustand store
   const { entriesPerPage: pageSize, setEntriesPerPage: setPageSize, isGroupedView, setIsGroupedView } = useHistoryPreferences();
@@ -93,6 +89,34 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
 
   // Temporary input state for settings modal
   const [customPageSize, setCustomPageSize] = useState(pageSize.toString());
+
+  // Get filtered market IDs based on selected asset
+  const marketIdFilter = useMemo(() => {
+    if (!selectedAsset) return [];
+
+    return allMarkets
+      .filter((m) => m.loanAsset.symbol === selectedAsset.symbol && m.morphoBlue.chain.id === selectedAsset.chainId)
+      .map((m) => m.uniqueKey);
+  }, [selectedAsset, allMarkets]);
+
+  // Fetch transactions using React Query
+  const {
+    data,
+    isLoading: loading,
+    refetch,
+  } = useUserTransactionsQuery({
+    filters: {
+      userAddress: account ? [account] : [],
+      first: pageSize,
+      skip: (currentPage - 1) * pageSize,
+      marketUniqueKeys: marketIdFilter,
+    },
+    enabled: Boolean(account) && allMarkets.length > 0,
+  });
+
+  const history = data?.items ?? [];
+  const totalPages = data ? Math.ceil(data.pageInfo.countTotal / pageSize) : 0;
+  const isInitialized = !loading;
 
   // Group transactions for display (especially useful for vault adapter mode)
   const groupedHistory = useMemo(() => groupTransactionsByHash(history), [history]);
@@ -131,22 +155,12 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
 
   const handleManualRefresh = () => {
     void (async () => {
-      if (!account || !fetchTransactions || allMarkets.length === 0) return;
+      if (!account || allMarkets.length === 0) return;
 
-      const result = await fetchTransactions({
-        userAddress: [account],
-        first: pageSize,
-        skip: (currentPage - 1) * pageSize,
-        marketUniqueKeys: marketIdFilter,
+      await refetch();
+      toast.info('Data updated', 'Transaction history updated', {
+        icon: <span>🔄</span>,
       });
-
-      if (result) {
-        setHistory(result.items);
-        setTotalPages(Math.ceil(result.pageInfo.countTotal / pageSize));
-        toast.info('Data updated', 'Transaction history updated', {
-          icon: <span>🔄</span>,
-        });
-      }
     })();
   };
 
@@ -218,36 +232,6 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
   useEffect(() => {
     setCurrentPage(1);
   }, [isGroupedView, pageSize]);
-
-  // Get filtered market IDs based on selected asset
-  const marketIdFilter = useMemo(() => {
-    if (!selectedAsset) return [];
-
-    return allMarkets
-      .filter((m) => m.loanAsset.symbol === selectedAsset.symbol && m.morphoBlue.chain.id === selectedAsset.chainId)
-      .map((m) => m.uniqueKey);
-  }, [selectedAsset, allMarkets]);
-
-  useEffect(() => {
-    const loadTransactions = async () => {
-      if (!account || !fetchTransactions || allMarkets.length === 0) return;
-
-      const result = await fetchTransactions({
-        userAddress: [account],
-        first: pageSize,
-        skip: (currentPage - 1) * pageSize,
-        marketUniqueKeys: marketIdFilter,
-      });
-
-      if (result) {
-        setHistory(result.items);
-        setTotalPages(Math.ceil(result.pageInfo.countTotal / pageSize));
-      }
-      setIsInitialized(true);
-    };
-
-    void loadTransactions();
-  }, [account, currentPage, fetchTransactions, marketIdFilter]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

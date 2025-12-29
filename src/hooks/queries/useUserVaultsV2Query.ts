@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Address } from 'viem';
 import { useConnection } from 'wagmi';
 import { fetchMorphoMarketV1Adapters } from '@/data-sources/subgraph/morpho-market-v1-adapters';
@@ -8,11 +8,9 @@ import { getMorphoAddress } from '@/utils/morpho';
 import { getNetworkConfig } from '@/utils/networks';
 import { fetchUserVaultShares } from '@/utils/vaultAllocation';
 
-type UseUserVaultsV2Return = {
-  vaults: UserVaultV2[];
-  loading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
+type UseUserVaultsV2Options = {
+  userAddress?: Address;
+  enabled?: boolean;
 };
 
 function filterValidVaults(vaults: UserVaultV2[]): UserVaultV2[] {
@@ -83,45 +81,51 @@ async function fetchAndProcessVaults(userAddress: Address): Promise<UserVaultV2[
   return vaultsWithBalancesAndAdapters;
 }
 
-export function useUserVaultsV2(account?: string): UseUserVaultsV2Return {
+/**
+ * Fetches user's V2 vaults using React Query.
+ *
+ * Data fetching strategy:
+ * - Fetches vault addresses from subgraph across all networks
+ * - Enriches with vault details from Morpho API
+ * - Fetches adapter info from subgraph
+ * - Fetches user's share balances via multicall
+ * - Returns complete vault data with balances
+ *
+ * Cache behavior:
+ * - staleTime: 60 seconds (complex multi-step fetch)
+ * - Refetch on window focus: enabled
+ * - Only runs when userAddress is provided
+ *
+ * @example
+ * ```tsx
+ * const { data: vaults, isLoading, error } = useUserVaultsV2Query({
+ *   userAddress: '0x...',
+ * });
+ * ```
+ */
+export const useUserVaultsV2Query = (options: UseUserVaultsV2Options = {}) => {
   const { address: connectedAddress } = useConnection();
-  const [vaults, setVaults] = useState<UserVaultV2[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
 
-  // Use provided account or fall back to connected address
-  const targetAddress = account ?? connectedAddress;
+  const userAddress = (options.userAddress ?? connectedAddress) as Address;
+  const enabled = options.enabled ?? true;
 
-  const fetchVaults = useCallback(async () => {
-    if (!targetAddress) {
-      setVaults([]);
-      setLoading(false);
-      return;
-    }
+  return useQuery<UserVaultV2[], Error>({
+    queryKey: ['user-vaults-v2', userAddress],
+    queryFn: async () => {
+      if (!userAddress) {
+        return [];
+      }
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const vaultsWithBalances = await fetchAndProcessVaults(targetAddress as Address);
-      setVaults(vaultsWithBalances);
-    } catch (err) {
-      const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
-      setError(fetchError);
-      console.error('Error fetching user V2 vaults:', fetchError);
-    } finally {
-      setLoading(false);
-    }
-  }, [targetAddress]);
-
-  useEffect(() => {
-    void fetchVaults();
-  }, [fetchVaults]);
-
-  return {
-    vaults,
-    loading,
-    error,
-    refetch: fetchVaults,
-  };
-}
+      try {
+        return await fetchAndProcessVaults(userAddress);
+      } catch (err) {
+        const fetchError = err instanceof Error ? err : new Error('Failed to fetch user vaults');
+        console.error('Error fetching user V2 vaults:', fetchError);
+        throw fetchError;
+      }
+    },
+    enabled: enabled && Boolean(userAddress),
+    staleTime: 60_000, // 60 seconds - complex multi-step fetch
+    refetchOnWindowFocus: true,
+  });
+};

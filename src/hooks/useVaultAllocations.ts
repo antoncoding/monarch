@@ -5,7 +5,7 @@ import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
-import { useAllocations } from './useAllocations';
+import { useAllocationsQuery } from './queries/useAllocations';
 import { useProcessedMarkets } from './useProcessedMarkets';
 import { useVaultV2Data } from './useVaultV2Data';
 
@@ -108,7 +108,7 @@ export function useVaultAllocations({ vaultAddress, chainId, enabled = true }: U
   const allValidCaps = useMemo(() => [...validCollateralCaps, ...validMarketCaps], [validCollateralCaps, validMarketCaps]);
 
   // Fetch allocations only for valid, recognized caps
-  const { allocations, isLoading, error, refetch } = useAllocations({
+  const { allocations, isLoading, error, refetch } = useAllocationsQuery({
     vaultAddress,
     chainId,
     caps: allValidCaps,

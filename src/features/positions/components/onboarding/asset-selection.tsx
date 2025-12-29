@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import { useUserBalancesAllNetworks } from '@/hooks/useUserBalances';
+import { useUserBalancesAllNetworksQuery } from '@/hooks/queries/useUserBalancesQuery';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { findToken } from '@/utils/tokens';
@@ -27,7 +27,7 @@ function NetworkIcon({ networkId }: { networkId: number }) {
 }
 
 export function AssetSelection() {
-  const { balances, loading: balancesLoading } = useUserBalancesAllNetworks();
+  const { data: balances = [], isLoading: balancesLoading } = useUserBalancesAllNetworksQuery();
   const { markets, loading: marketsLoading } = useProcessedMarkets();
   const { setSelectedToken, setSelectedMarkets, goToNextStep } = useOnboarding();
 

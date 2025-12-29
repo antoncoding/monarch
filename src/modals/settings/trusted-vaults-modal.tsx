@@ -13,7 +13,7 @@ import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/
 import { NetworkIcon } from '@/components/shared/network-icon';
 import { VaultIdentity } from '@/features/autovault/components/vault-identity';
 import { known_vaults, type KnownVault, type TrustedVault } from '@/constants/vaults/known_vaults';
-import { useAllMorphoVaults } from '@/hooks/useAllMorphoVaults';
+import { useAllMorphoVaultsQuery } from '@/hooks/queries/useAllMorphoVaultsQuery';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 
 type TrustedVaultsModalProps = {
@@ -27,7 +27,7 @@ export default function TrustedVaultsModal({ isOpen, onOpenChange }: TrustedVaul
   const [morphoSectionOpen, setMorphoSectionOpen] = useState(false);
 
   // Fetch all Morpho vaults from API
-  const { vaults: morphoVaults, loading: morphoLoading } = useAllMorphoVaults();
+  const { data: morphoVaults = [], isLoading: morphoLoading } = useAllMorphoVaultsQuery();
 
   // Transform Morpho API vaults to TrustedVault format
   const morphoWhitelistedVaults = useMemo<KnownVault[]>(() => {

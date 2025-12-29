@@ -1,5 +1,5 @@
 import { subgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
-import type { TransactionFilters, TransactionResponse } from '@/hooks/useUserTransactions';
+import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/useUserTransactionsQuery';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
 import { type UserTransaction, UserTxTypes } from '@/utils/types';
