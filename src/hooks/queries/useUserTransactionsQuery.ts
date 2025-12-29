@@ -7,7 +7,6 @@ type UseUserTransactionsQueryOptions = {
   /**
    * When true, automatically paginates to fetch ALL transactions.
    * Use for report generation when complete accuracy is needed.
-   * Use for summary pages when speed is prioritized.
    */
   paginate?: boolean;
   /** Page size for pagination (default 1000) */
@@ -23,11 +22,6 @@ type UseUserTransactionsQueryOptions = {
  * - Combines transactions from all target networks
  * - Sorts by timestamp (descending)
  * - Supports auto-pagination when paginate=true
- *
- * Cache behavior:
- * - staleTime: 30 seconds (transactions change moderately frequently)
- * - Refetch on window focus: enabled
- * - Only runs when userAddress is provided
  * ```
  */
 export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOptions) => {
@@ -92,7 +86,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
       };
     },
     enabled: enabled && filters.userAddress.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
 };
