@@ -7,17 +7,15 @@ import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 // Simple helper for the period timestamp calculation
 export const getPeriodTimestamp = (period: EarningsPeriod): number => {
   const now = Math.floor(Date.now() / 1000);
-  const DAY = 86_400;
-
   switch (period) {
     case 'day':
-      return now - DAY;
+      return now - 86_400;
     case 'week':
-      return now - 7 * DAY;
+      return now - 7 * 86_400;
     case 'month':
-      return now - 30 * DAY;
+      return now - 30 * 86_400;
     default:
-      return now - DAY;
+      return now - 86_400;
   }
 };
 
