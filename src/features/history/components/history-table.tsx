@@ -116,7 +116,6 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
 
   const history = data?.items ?? [];
   const totalPages = data ? Math.ceil(data.pageInfo.countTotal / pageSize) : 0;
-  const isInitialized = !loading;
 
   // Group transactions for display (especially useful for vault adapter mode)
   const groupedHistory = useMemo(() => groupTransactionsByHash(history), [history]);
@@ -623,7 +622,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
             </TableRow>
           </TableHeader>
           <TableBody className="text-sm">
-            {!isInitialized || loading ? (
+            {loading ? (
               renderSkeletonRows(8)
             ) : (isGroupedView ? groupedHistory : ungroupedHistory).length === 0 ? (
               <TableRow>
@@ -981,7 +980,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
           </TableBody>
         </Table>
 
-        {isInitialized && !loading && totalPages > 1 && (
+        {!loading && totalPages > 1 && (
           <TablePagination
             currentPage={currentPage}
             totalPages={totalPages}
