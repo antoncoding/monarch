@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Menu from './Menu';
 
@@ -32,13 +34,17 @@ function Header({ ghost }: HeaderProps) {
 
   return (
     <>
-      <div className="h-[80px] w-full md:h-[120px]" /> {/* Spacer div */}
+      {/* Spacer div for non-ghost headers to prevent content overlap */}
+      {!ghost && <div className="h-[48px] w-full md:h-[56px]" />}
       <header
         data-scroll-state={scrollState}
-        className="bg-main fixed left-0 right-0 top-0 flex h-[60px] justify-center md:h-[120px] md:pt-4"
-        style={{ zIndex: 40 }} // Lower z-index to work with modal backdrop
+        className="fixed left-0 right-0 top-0 w-full bg-surface"
+        style={{ zIndex: 40 }}
       >
-        <Menu />
+        {/* Bottom border aligned with content container */}
+        <div className="w-full border-b border-dashed border-[var(--grid-cell-muted)]">
+          <Menu />
+        </div>
       </header>
     </>
   );

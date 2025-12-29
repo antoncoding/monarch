@@ -50,7 +50,7 @@ export default function NavbarMobile() {
   };
 
   return (
-    <nav className="bg-surface flex h-full w-full items-center justify-between px-4">
+    <nav className="flex h-full w-full items-center justify-between px-4">
       <div className="flex items-center gap-3">
         <Link
           href="/"
@@ -59,9 +59,11 @@ export default function NavbarMobile() {
           <Image
             src={logo}
             alt="logo"
-            height={24}
+            height={20}
           />
         </Link>
+
+        <span className="h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
 
         <DropdownMenu
           open={isMenuOpen}
@@ -80,8 +82,8 @@ export default function NavbarMobile() {
               )}
             >
               <HamburgerMenuIcon
-                width="20"
-                height="20"
+                width="18"
+                height="18"
               />
             </button>
           </DropdownMenuTrigger>
@@ -103,13 +105,6 @@ export default function NavbarMobile() {
             >
               <span className="font-medium">Portfolio</span>
             </DropdownMenuItem>
-            {/* <DropdownMenuItem
-              startContent={<RiSafeLine className="h-5 w-5" />}
-              onClick={() => handleNavigation('/autovault')}
-              className="py-3"
-            >
-              <span className="font-medium">Autovault</span>
-            </DropdownMenuItem> */}
             <DropdownMenuItem
               startContent={<RiGiftLine className="h-5 w-5" />}
               onClick={() => handleNavigation(address ? `/rewards/${address}` : '/rewards')}

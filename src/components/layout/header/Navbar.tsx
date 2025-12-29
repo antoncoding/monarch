@@ -36,10 +36,10 @@ export function NavbarLink({
     <Link
       href={href}
       className={clsx(
-        'px-2 py-1 text-center font-zen text-base font-normal text-primary no-underline',
-        'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-primary',
+        'px-3 py-1 text-center font-zen text-sm font-normal text-primary no-underline',
+        'relative after:absolute after:bottom-[-2px] after:left-0 after:h-[1.5px] after:w-full after:bg-primary',
         'no-underline transition-all duration-200',
-        isActive ? 'after:opacity-100' : 'after:opacity-0',
+        isActive ? 'after:opacity-100' : 'after:opacity-0 hover:text-primary/80',
       )}
       target={target}
     >
@@ -50,17 +50,17 @@ export function NavbarLink({
 
 export function NavbarTitle() {
   return (
-    <div className="flex h-8 items-center justify-start gap-4">
+    <div className="flex h-8 items-center justify-start gap-3">
       <Image
         src={logo}
         alt="logo"
-        height={30}
+        height={24}
       />
       <Link
         href="/"
         passHref
-        className="text-center font-zen text-lg font-medium text-primary no-underline"
-        aria-label="build-onchain-apps Github repository"
+        className="text-center font-zen text-base font-medium text-primary no-underline"
+        aria-label="Monarch home"
       >
         Monarch
       </Link>
@@ -84,21 +84,18 @@ export function Navbar() {
   };
 
   return (
-    <nav className="bg-surface flex h-full w-full items-center justify-between rounded px-4">
+    <nav className="flex h-full w-full items-center justify-between">
       <NavbarTitle />
 
-      <div className="flex items-center gap-8">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
+        {/* Nav links with dashed dividers */}
+        <div className="flex items-center">
           <NavbarLink href="/markets">Markets</NavbarLink>
+          <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           {mounted ? (
             <>
               <NavbarLink href={address ? `/positions/${address}` : '/positions'}>Portfolio</NavbarLink>
-              {/* <NavbarLink
-                href="/autovault"
-                matchKey="/autovault"
-              >
-                Autovault
-              </NavbarLink> */}
+              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href={address ? `/rewards/${address}` : '/rewards'}
                 matchKey="/rewards"
@@ -109,12 +106,14 @@ export function Navbar() {
           ) : (
             <>
               <NavbarLink href="/positions">Portfolio</NavbarLink>
+              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href="/autovault"
                 matchKey="/autovault"
               >
                 Autovault
               </NavbarLink>
+              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href="/rewards"
                 matchKey="/rewards"
@@ -123,23 +122,24 @@ export function Navbar() {
               </NavbarLink>
             </>
           )}
+          <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
 
           <DropdownMenu onOpenChange={setIsMoreOpen}>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={clsx(
-                  'px-2 py-1 text-center font-zen text-base font-normal text-primary',
+                  'px-3 py-1 text-center font-zen text-sm font-normal text-primary',
                   'border-none transition-all duration-200',
                   'inline-flex items-center gap-1',
                   'focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0',
                   'active:outline-none active:ring-0',
-                  'bg-transparent hover:bg-transparent active:bg-transparent',
+                  'bg-transparent hover:bg-transparent active:bg-transparent hover:text-primary/80',
                   '[&:not(:focus-visible)]:outline-none',
                 )}
               >
                 More
-                <ChevronDownIcon className={clsx('h-4 w-4 transition-transform duration-200 ease-in-out', isMoreOpen && 'rotate-180')} />
+                <ChevronDownIcon className={clsx('h-3 w-3 transition-transform duration-200 ease-in-out', isMoreOpen && 'rotate-180')} />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -188,7 +188,9 @@ export function Navbar() {
           </DropdownMenu>
         </div>
 
-        <div className="flex items-center gap-6">
+        <span className="mx-3 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
+
+        <div className="flex items-center">
           <AccountConnect />
         </div>
       </div>

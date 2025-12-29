@@ -4,10 +4,12 @@ import NavbarMobile from './NavbarMobile';
 function Menu() {
   return (
     <>
-      <div className="h-[56px] w-full md:hidden">
+      {/* Mobile: compact height */}
+      <div className="h-[48px] w-full md:hidden">
         <NavbarMobile />
       </div>
-      <div className="container hidden h-[72px] md:block">
+      {/* Desktop: compact height, container width for content alignment */}
+      <div className="container hidden h-[56px] md:block">
         <Navbar />
       </div>
     </>

@@ -132,6 +132,36 @@
     @apply mx-auto;
   }
 
+  /* Grid texture patterns for landing page */
+  .bg-dot-grid {
+    background-image: radial-gradient(var(--grid-dot-color) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .bg-line-grid {
+    background-image:
+      linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Grid mask effects */
+  .grid-corner-mask {
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, black 100%);
+  }
+
+  .grid-top-fade {
+    mask-image: linear-gradient(to bottom, black 0%, transparent 40%);
+  }
+
+  .grid-bottom-fade {
+    mask-image: linear-gradient(to top, black 0%, transparent 40%);
+  }
+
+  .grid-radial-fade {
+    mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 0%, transparent 70%);
+  }
+
   @media (width >= 640px) {
     .container {
       max-width: 640px;
@@ -162,6 +192,12 @@
   --component-highlights-item-width: calc(100vw - 100px);
   --developer-experience-code-window-background: var(--slate-12);
   --palette-orange: #f45f2d;
+
+  /* Grid texture colors */
+  --grid-line-color: rgba(0, 0, 0, 0.04);
+  --grid-dot-color: rgba(0, 0, 0, 0.08);
+  --grid-cell-active: rgba(244, 95, 45, 0.6);
+  --grid-cell-muted: rgba(142, 142, 142, 0.2);
 
   /* light theme variables */
   --palette-bg-hovered: #f6f8fb;
@@ -203,6 +239,12 @@
 /* dark theme variables */
 .dark {
   --quick-nav-display: none;
+
+  /* Grid texture colors (dark mode) */
+  --grid-line-color: rgba(255, 255, 255, 0.04);
+  --grid-dot-color: rgba(255, 255, 255, 0.08);
+  --grid-cell-active: rgba(244, 95, 45, 0.6);
+  --grid-cell-muted: rgba(142, 142, 142, 0.15);
 
   /* Palette - black */
   --palette-orange: #f45f2d;
