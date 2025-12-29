@@ -1,15 +1,11 @@
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { GearIcon } from '@radix-ui/react-icons';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { parseCapIdParams } from '@/utils/morpho';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
-import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 
 type VaultCollateralsCardProps = {
   vaultAddress: Address;
@@ -18,14 +14,8 @@ type VaultCollateralsCardProps = {
 };
 
 export function VaultCollateralsCard({ vaultAddress, chainId, needsInitialization }: VaultCollateralsCardProps) {
-  const { address: connectedAddress } = useConnection();
-
   // Pull data directly - TanStack Query deduplicates
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
-  const { isOwner } = useVaultV2({ vaultAddress, chainId, connectedAddress });
-
-  // UI state from Zustand
-  const { open: openSettings } = useVaultSettingsModalStore();
 
   const collateralCaps = vaultData?.capsData?.collateralCaps ?? [];
   const isLoading = vaultDataLoading;
@@ -47,14 +37,8 @@ export function VaultCollateralsCard({ vaultAddress, chainId, needsInitializatio
 
   return (
     <Card className={cardStyle}>
-      <CardHeader className="flex items-center justify-between pb-2">
+      <CardHeader className="pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Collaterals</span>
-        {isOwner && !needsInitialization && (
-          <GearIcon
-            className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={() => openSettings('caps')}
-          />
-        )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (

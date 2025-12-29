@@ -168,7 +168,7 @@ export default function Markets() {
       <div className="container h-full gap-8">
         <h1 className="py-8 font-zen"> Markets </h1>
 
-        <div className="flex flex-col gap-4 pb-4">
+        <div className="flex flex-col gap-4 pb-4 pt-4">
           <div className="w-full lg:w-1/2">
             <AdvancedSearchBar
               searchQuery={filters.searchQuery}

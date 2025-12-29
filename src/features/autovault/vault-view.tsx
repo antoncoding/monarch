@@ -178,7 +178,7 @@ export default function VaultContent() {
       <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
         <div className="space-y-8">
           {/* Vault Header */}
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <h1 className="font-zen text-2xl">{title}</h1>
               {symbolToDisplay && <span className="rounded bg-hovered px-2 py-1 text-xs text-secondary">{symbolToDisplay}</span>}
@@ -326,7 +326,6 @@ export default function VaultContent() {
               account={adapterQuery.morphoMarketV1Adapter}
               chainId={chainId}
               isVaultAdapter={true}
-              limit={10}
               emptyMessage="Setup complete, your automated rebalance will show up here once it's triggered."
             />
           )}

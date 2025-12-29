@@ -20,7 +20,6 @@ type TransactionHistoryPreviewProps = {
   account: string;
   chainId: number;
   isVaultAdapter?: boolean;
-  limit?: number;
   emptyMessage?: string;
 };
 
@@ -51,7 +50,6 @@ export function TransactionHistoryPreview({
   account,
   chainId,
   isVaultAdapter = false,
-  limit = 10,
   emptyMessage,
 }: TransactionHistoryPreviewProps) {
   const [isViewAllHovered, setIsViewAllHovered] = useState(false);
@@ -60,16 +58,16 @@ export function TransactionHistoryPreview({
   const { data, isLoading: loading } = useUserTransactionsQuery({
     filters: {
       userAddress: account ? [account] : [],
-      first: limit,
       skip: 0,
       chainId,
     },
     enabled: Boolean(account) && allMarkets.length > 0,
+    pageSize: 20,
   });
 
   const history = useMemo(() => {
     if (!data) return [];
-    return groupTransactionsByHash(data.items);
+    return groupTransactionsByHash(data.items).slice(0, 5);
   }, [data]);
 
   const isInitialized = !loading;
@@ -110,7 +108,7 @@ export function TransactionHistoryPreview({
   return (
     <TableContainerWithDescription
       title="Recent Activity"
-      description={`Last ${limit} transactions`}
+      description="Last 5 transactions"
       actions={actions}
     >
       <Table className="w-full font-zen">

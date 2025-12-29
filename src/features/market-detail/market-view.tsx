@@ -214,7 +214,7 @@ function MarketContent() {
   return (
     <>
       <Header />
-      <div className="mx-auto max-w-7xl px-6 py-4 pb-4 font-zen sm:px-8 md:px-12 lg:px-16">
+      <div className="font-zen container h-full gap-8 pb-12">
         {/* Market title and actions */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
