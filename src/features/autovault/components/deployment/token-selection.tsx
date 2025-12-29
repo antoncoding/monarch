@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import Image from 'next/image';
 import { type Address, formatUnits } from 'viem';
 import { Spinner } from '@/components/ui/spinner';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TokenIcon } from '@/components/shared/token-icon';
 import type { TokenBalance } from '@/hooks/useUserBalances';
 import { formatReadable } from '@/utils/balance';
@@ -48,7 +48,7 @@ type TokenSelectionProps = {
 export function TokenSelection({ balances, balancesLoading, whitelistedMarkets, marketsLoading }: TokenSelectionProps) {
   const { selectedTokenAndNetwork, setSelectedTokenAndNetwork } = useDeployment();
 
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   const availableTokenNetworks = useMemo(() => {
     if (!balances || !whitelistedMarkets) return [];

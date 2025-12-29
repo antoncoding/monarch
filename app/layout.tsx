@@ -8,6 +8,7 @@ import { VaultRegistryProvider } from '@/contexts/VaultRegistryContext';
 import OnchainProviders from '@/OnchainProviders';
 import { ModalRenderer } from '@/components/modals/ModalRenderer';
 import { StorageMigrator } from '@/components/StorageMigrator';
+import { DataPrefetcher } from '@/components/DataPrefetcher';
 
 import { initAnalytics } from '@/utils/analytics';
 import { ThemeProviders } from '../src/components/providers/ThemeProvider';
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <VaultRegistryProvider>
                 <ClientProviders>
                   <StorageMigrator />
+                  <DataPrefetcher />
                   {children}
                   <RiskNotificationModal />
                   <ModalRenderer />

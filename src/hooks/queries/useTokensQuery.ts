@@ -1,10 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { z } from 'zod';
 import { SupportedNetworks, getViemChain } from '@/utils/networks';
 import { supportedTokens } from '@/utils/tokens';
 import type { ERC20Token } from '@/utils/tokens';
 
-// Only parse the fields we need
 const PendleAssetSchema = z.object({
   address: z.string(),
   chainId: z.number(),
@@ -14,14 +14,6 @@ const PendleAssetSchema = z.object({
 });
 
 type PendleAsset = z.infer<typeof PendleAssetSchema>;
-
-type TokenContextType = {
-  allTokens: ERC20Token[];
-  findToken: (address: string, chainId: number) => ERC20Token | undefined;
-  getUniqueTokens: (tokenList: { address: string; chainId: number }[]) => ERC20Token[];
-};
-
-const TokenContext = createContext<TokenContextType | null>(null);
 
 const localTokensWithSource: ERC20Token[] = supportedTokens.map((token) => ({
   ...token,
@@ -59,11 +51,11 @@ function convertPendleAssetToToken(asset: PendleAsset, chainId: SupportedNetwork
   };
 }
 
-export function TokenProvider({ children }: { children: React.ReactNode }) {
-  const [allTokens, setAllTokens] = useState<ERC20Token[]>(localTokensWithSource);
-
-  useEffect(() => {
-    async function fetchAllAssets() {
+// Fetches tokens from Pendle API and merges with local tokens
+export const useTokensQuery = () => {
+  const query = useQuery({
+    queryKey: ['tokens'],
+    queryFn: async () => {
       try {
         const [mainnetAssets, baseAssets, arbitrumAssets, hyperevmAssets] = await Promise.all([
           fetchPendleAssets(SupportedNetworks.Mainnet),
@@ -71,6 +63,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
           fetchPendleAssets(SupportedNetworks.Arbitrum),
           fetchPendleAssets(SupportedNetworks.HyperEVM),
         ]);
+
         const pendleTokens = [
           ...mainnetAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Mainnet)),
           ...baseAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.Base)),
@@ -78,7 +71,6 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
           ...hyperevmAssets.map((a) => convertPendleAssetToToken(a, SupportedNetworks.HyperEVM)),
         ];
 
-        // Filter out Pendle tokens that have addresses already present in supportedTokens
         const filteredPendleTokens = pendleTokens.filter((pendleToken) => {
           return !pendleToken.networks.some((pendleNetwork) =>
             supportedTokens.some((supportedToken) =>
@@ -91,14 +83,18 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
           );
         });
 
-        setAllTokens([...localTokensWithSource, ...filteredPendleTokens]);
+        return [...localTokensWithSource, ...filteredPendleTokens];
       } catch (err) {
         console.error('Error fetching Pendle assets:', err);
+        throw err;
       }
-    }
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
 
-    void fetchAllAssets();
-  }, []);
+  const allTokens = query.data ?? localTokensWithSource;
 
   const findToken = useCallback(
     (address: string, chainId: number) => {
@@ -123,15 +119,13 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
     [allTokens],
   );
 
-  const value = useMemo(() => ({ allTokens, findToken, getUniqueTokens }), [allTokens, findToken, getUniqueTokens]);
-
-  return <TokenContext.Provider value={value}>{children}</TokenContext.Provider>;
-}
-
-export function useTokens() {
-  const context = useContext(TokenContext);
-  if (!context) {
-    throw new Error('useTokens must be used within a TokenProvider');
-  }
-  return context;
-}
+  return {
+    allTokens,
+    findToken,
+    getUniqueTokens,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+  };
+};

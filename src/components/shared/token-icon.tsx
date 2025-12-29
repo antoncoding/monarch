@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { FiExternalLink } from 'react-icons/fi';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { getExplorerUrl } from '@/utils/networks';
 
@@ -32,7 +32,7 @@ export function TokenIcon({
   showTokenSource = true,
   disableTooltip = false,
 }: TokenIconProps) {
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   const token = useMemo(() => findToken(address, chainId), [address, chainId, findToken]);
 

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { usePublicClient } from 'wagmi';
 import { supportsMorphoApi } from '@/config/dataSources';
-import { useOracleDataContext } from '@/contexts/OracleDataContext';
+import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { fetchMorphoMarket } from '@/data-sources/morpho-api/market';
 import { fetchSubgraphMarket } from '@/data-sources/subgraph/market';
 import type { SupportedNetworks } from '@/utils/networks';
@@ -12,7 +12,7 @@ import type { Market } from '@/utils/types';
 export const useMarketData = (uniqueKey: string | undefined, network: SupportedNetworks | undefined) => {
   const queryKey = ['marketData', uniqueKey, network];
   const publicClient = usePublicClient({ chainId: network });
-  const { getOracleData } = useOracleDataContext();
+  const { getOracleData } = useOracleDataQuery();
 
   const { data, isLoading, error, refetch } = useQuery<Market | null>({
     queryKey: queryKey,

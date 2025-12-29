@@ -12,7 +12,7 @@ import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import { TokenIcon } from '@/components/shared/token-icon';
-import { useMerklCampaigns } from '@/contexts/MerklCampaignsContext';
+import { useMerklCampaignsQuery } from '@/hooks/queries/useMerklCampaignsQuery';
 import type { DistributionResponseType, MerklRewardWithProofs } from '@/hooks/useRewards';
 import { useClaimMerklRewards } from '@/hooks/useClaimMerklRewards';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -43,7 +43,7 @@ export default function RewardTable({
   const { chainId } = useConnection();
   const currentChainId = useChainId();
   const toast = useStyledToast();
-  const { campaigns } = useMerklCampaigns();
+  const { campaigns } = useMerklCampaignsQuery();
   const [claimingRewardKey, setClaimingRewardKey] = useState<string | null>(null);
   const { mutateAsync: switchChainAsync } = useSwitchChain();
 

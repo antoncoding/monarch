@@ -9,7 +9,7 @@ import { IoHelpCircleOutline } from 'react-icons/io5';
 import { Button } from '@/components/ui/button';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import { TablePagination } from '@/components/shared/table-pagination';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
 import { getVaultKey, type TrustedVault } from '@/constants/vaults/known_vaults';
 import { useFreshMarketsState } from '@/hooks/useFreshMarketsState';
@@ -626,7 +626,7 @@ export function MarketsTableWithSameLoanAsset({
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
   const { label: borrowRateLabel } = useRateLabel({ prefix: 'Borrow' });
 

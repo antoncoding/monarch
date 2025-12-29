@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
-import { useOracleDataContext } from '@/contexts/OracleDataContext';
+import { useOracleDataQuery } from '@/hooks/queries/useOracleDataQuery';
 import { useBlacklistedMarkets } from '@/stores/useBlacklistedMarkets';
 import { useAppSettings } from '@/stores/useAppSettings';
 
@@ -27,7 +27,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 export const useProcessedMarkets = () => {
   const { data: rawMarketsFromQuery, isLoading, isRefetching, error, refetch } = useMarketsQuery();
   const { getAllBlacklistedKeys, customBlacklistedMarkets } = useBlacklistedMarkets();
-  const { getOracleData } = useOracleDataContext();
+  const { getOracleData } = useOracleDataQuery();
   const { showUnwhitelistedMarkets } = useAppSettings();
 
   // Get blacklisted keys (memoized to prevent infinite loops)

@@ -4,7 +4,7 @@ import { type Address, parseUnits, maxUint128 } from 'viem';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TokenIcon } from '@/components/shared/token-icon';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { useMarketNetwork } from '@/hooks/useMarketNetwork';
@@ -52,7 +52,7 @@ export function EditCaps({ existingCaps, vaultAsset, chainId, isOwner, isUpdatin
   const { needSwitchChain, switchToNetwork } = useMarketNetwork({
     targetChainId: chainId,
   });
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   // Get vault asset decimals and token
   const vaultAssetToken = useMemo(() => {

@@ -1,6 +1,6 @@
 import type { Address } from 'viem';
 import { useQuery } from '@tanstack/react-query';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { fetchVaultV2Details, type VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import { getSlicedAddress } from '@/utils/address';
 import { parseCapIdParams } from '@/utils/morpho';
@@ -36,7 +36,7 @@ export type VaultV2Data = {
 };
 
 export function useVaultV2Data({ vaultAddress, chainId, fallbackName = '', fallbackSymbol = '' }: UseVaultV2DataArgs) {
-  const { findToken } = useTokens();
+  const { findToken } = useTokensQuery();
 
   const query = useQuery({
     queryKey: ['vault-v2-data', vaultAddress, chainId],

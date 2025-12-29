@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Chain } from 'viem';
 
 import Header from '@/components/layout/header/Header';
-import { useTokens } from '@/components/providers/TokenProvider';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
@@ -39,7 +39,7 @@ export default function Markets() {
 
   // Store hooks
   const { currentPage, setCurrentPage, resetPage } = usePagination();
-  const { allTokens } = useTokens();
+  const { allTokens } = useTokensQuery();
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
   const { vaults: userTrustedVaults } = useTrustedVaults();
   const { open: openModal } = useModal();
