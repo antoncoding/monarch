@@ -107,7 +107,13 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     <div className={containerClassName}>
       <TableContainerWithHeader
         title=""
-        actions={<MarketsTableActions onRefresh={onRefresh} isRefetching={isRefetching} isMobile={isMobile} />}
+        actions={
+          <MarketsTableActions
+            onRefresh={onRefresh}
+            isRefetching={isRefetching}
+            isMobile={isMobile}
+          />
+        }
         className="w-full"
       >
         {loading ? (

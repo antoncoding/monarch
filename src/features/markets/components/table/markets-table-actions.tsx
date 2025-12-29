@@ -27,7 +27,12 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
       <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
 
       <Tooltip
-        content={<TooltipContent title="Refresh" detail="Fetch the latest market data" />}
+        content={
+          <TooltipContent
+            title="Refresh"
+            detail="Fetch the latest market data"
+          />
+        }
       >
         <Button
           variant="ghost"
@@ -67,7 +72,12 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
       )}
 
       <Tooltip
-        content={<TooltipContent title="Preferences" detail="Adjust thresholds and columns" />}
+        content={
+          <TooltipContent
+            title="Preferences"
+            detail="Adjust thresholds and columns"
+          />
+        }
       >
         <Button
           aria-label="Market Preferences"
