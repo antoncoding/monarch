@@ -22,7 +22,7 @@ import { useMarketData } from '@/hooks/useMarketData';
 import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
-import useUserPositions from '@/hooks/useUserPosition';
+import useUserPosition from '@/hooks/useUserPosition';
 import MORPHO_LOGO from '@/imgs/tokens/morpho.svg';
 import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
@@ -69,7 +69,7 @@ const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions =
 
 function MarketContent() {
   // 1. Get URL params first
-  const { marketid, chainId } = useParams();
+  const { marketid : marketId, chainId } = useParams();
 
   // 2. Network setup
   const network = Number(chainId as string) as SupportedNetworks;
@@ -96,7 +96,7 @@ function MarketContent() {
     isLoading: isMarketLoading,
     error: marketError,
     refetch: refetchMarket,
-  } = useMarketData(marketid as string, network);
+  } = useMarketData(marketId as string, network);
 
   // Transaction filters with localStorage persistence (per symbol)
   const { minSupplyAmount, minBorrowAmount, setMinSupplyAmount, setMinBorrowAmount } = useTransactionFilters(
@@ -107,7 +107,7 @@ function MarketContent() {
     data: historicalData,
     isLoading: isHistoricalLoading,
     // No need for manual refetch on time change, queryKey handles it
-  } = useMarketHistoricalData(marketid as string, network, selectedTimeRange); // Use selectedTimeRange
+  } = useMarketHistoricalData(marketId as string, network, selectedTimeRange); // Use selectedTimeRange
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
@@ -121,7 +121,7 @@ function MarketContent() {
     position: userPosition,
     loading: positionLoading,
     refetch: refetchUserPosition,
-  } = useUserPositions(address, network, marketid as string);
+  } = useUserPosition(address, network, marketId as string);
 
   // 6. All memoized values and callbacks
   const formattedOraclePrice = useMemo(() => {
@@ -267,7 +267,7 @@ function MarketContent() {
               {market.loanAsset.symbol}/{market.collateralAsset.symbol} Market
             </h1>
             <CampaignBadge
-              marketId={marketid as string}
+              marketId={marketId as string}
               loanTokenAddress={market.loanAsset.address}
               chainId={market.morphoBlue.chain.id}
               whitelisted={market.whitelisted}
