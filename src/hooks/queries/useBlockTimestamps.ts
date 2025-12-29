@@ -4,7 +4,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 
 /**
- * 
+ *
  * @param snapshotBlocks { chainId: blockNumber }
  */
 export const useBlockTimestamps = (snapshotBlocks: Record<number, number>) => {

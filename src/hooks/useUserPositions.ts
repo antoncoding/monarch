@@ -166,8 +166,6 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         marketsByChain.set(marketInfo.chainId, existing);
       });
 
-      console.log('All markets by chain', marketsByChain);
-
       // Build market data map from allMarkets context (no need to fetch individually)
       const marketDataMap = new Map<string, Market>();
       allMarkets.forEach((market) => {

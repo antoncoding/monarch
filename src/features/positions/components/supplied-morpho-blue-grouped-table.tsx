@@ -7,8 +7,6 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { BsQuestionCircle } from 'react-icons/bs';
-import { PiHandCoins } from 'react-icons/pi';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -102,7 +100,13 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   const period = usePositionsFilters((s) => s.period);
   const setPeriod = usePositionsFilters((s) => s.setPeriod);
 
-  const { positions: marketPositions, refetch, isRefetching, isEarningsLoading } = useUserPositionsSummaryData(account, period);
+  const {
+    positions: marketPositions,
+    refetch,
+    isRefetching,
+    isEarningsLoading,
+    actualBlockData,
+  } = useUserPositionsSummaryData(account, period);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -217,28 +221,7 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1">
-                  Interest Accrued ({period})
-                  <Tooltip
-                    className="max-w-[500px] rounded-sm"
-                    content={
-                      <TooltipContent
-                        title="Interest Accrued"
-                        detail="This amount is the sum of interest accrued from all active positions for the selected period. If you want a detailed breakdown including closed positions, go to Report"
-                        icon={<PiHandCoins size={16} />}
-                      />
-                    }
-                  >
-                    <div className="cursor-help">
-                      <BsQuestionCircle
-                        size={14}
-                        className="text-gray-400"
-                      />
-                    </div>
-                  </Tooltip>
-                </span>
-              </TableHead>
+              <TableHead>Interest Accrued ({period})</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>Risk Tiers</TableHead>
               <TableHead>Actions</TableHead>
@@ -296,17 +279,41 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                               margin={3}
                             />
                           </div>
+                        ) : earnings === 0n ? (
+                          <span className="font-medium">-</span>
                         ) : (
-                          <span className="font-medium">
-                            {(() => {
-                              if (earnings === 0n) return '-';
+                          <Tooltip
+                            content={(() => {
+                              const blockData = actualBlockData[groupedPosition.chainId];
+                              if (!blockData) return 'Loading timestamp data...';
+
+                              const startTimestamp = blockData.timestamp * 1000;
+                              const endTimestamp = Date.now();
+
+                              const formatDateTime = (timestamp: number) =>
+                                new Date(timestamp).toLocaleString('en-US', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit',
+                                  hour12: false,
+                                });
+
                               return (
-                                formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals))) +
-                                ' ' +
-                                groupedPosition.loanAsset
+                                <TooltipContent
+                                  title="Interest Accrued Time Period"
+                                  detail={`Calculated from ${formatDateTime(startTimestamp)} to ${formatDateTime(endTimestamp)}`}
+                                />
                               );
                             })()}
-                          </span>
+                          >
+                            <span className="font-medium cursor-help">
+                              {formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)))}{' '}
+                              {groupedPosition.loanAsset}
+                            </span>
+                          </Tooltip>
                         )}
                       </div>
                     </TableCell>
