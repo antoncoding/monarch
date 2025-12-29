@@ -7,8 +7,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { BsQuestionCircle } from 'react-icons/bs';
-import { PiHandCoins } from 'react-icons/pi';
+import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -19,16 +18,17 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { useDisclosure } from '@/hooks/useDisclosure';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
+import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import type { EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
 import { formatReadable, formatBalance } from '@/utils/balance';
 import { getNetworkImg } from '@/utils/networks';
 import { getGroupedEarnings, groupPositionsByLoanAsset, processCollaterals } from '@/utils/positions';
 import { convertApyToApr } from '@/utils/rateMath';
-import { type GroupedPosition, type MarketPositionWithEarnings, type WarningWithDetail, WarningCategory } from '@/utils/types';
+import { type GroupedPosition, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
 import { RebalanceModal } from './rebalance/rebalance-modal';
@@ -95,27 +95,23 @@ function AggregatedRiskIndicators({ groupedPosition }: { groupedPosition: Groupe
 
 type SuppliedMorphoBlueGroupedTableProps = {
   account: string;
-  marketPositions: MarketPositionWithEarnings[];
-  refetch: (onSuccess?: () => void) => void;
-  isRefetching: boolean;
-  isLoadingEarnings?: boolean;
-  earningsPeriod: EarningsPeriod;
-  setEarningsPeriod: (period: EarningsPeriod) => void;
 };
 
-export function SuppliedMorphoBlueGroupedTable({
-  marketPositions,
-  refetch,
-  isRefetching,
-  isLoadingEarnings,
-  account,
-  earningsPeriod,
-  setEarningsPeriod,
-}: SuppliedMorphoBlueGroupedTableProps) {
+export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGroupedTableProps) {
+  const period = usePositionsFilters((s) => s.period);
+  const setPeriod = usePositionsFilters((s) => s.setPeriod);
+
+  const {
+    positions: marketPositions,
+    refetch,
+    isRefetching,
+    isEarningsLoading,
+    actualBlockData,
+  } = useUserPositionsSummaryData(account, period);
+
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
   const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
-  // Positions preferences from Zustand store
   const { showCollateralExposure, setShowCollateralExposure } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
@@ -129,12 +125,11 @@ export function SuppliedMorphoBlueGroupedTable({
     return account === address;
   }, [account, address]);
 
-  const periodLabels: Record<EarningsPeriod, string> = {
-    all: 'All Time',
+  const periodLabels = {
     day: '1D',
     week: '7D',
     month: '30D',
-  };
+  } as const;
 
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
 
@@ -227,28 +222,7 @@ export function SuppliedMorphoBlueGroupedTable({
               <TableHead className="w-10">Network</TableHead>
               <TableHead>Size</TableHead>
               <TableHead>{rateLabel} (now)</TableHead>
-              <TableHead>
-                <span className="inline-flex items-center gap-1">
-                  Interest Accrued ({earningsPeriod})
-                  <Tooltip
-                    className="max-w-[500px] rounded-sm"
-                    content={
-                      <TooltipContent
-                        title="Interest Accrued"
-                        detail="This amount is the sum of interest accrued from all active positions for the selected period. If you want a detailed breakdown including closed positions, go to Report"
-                        icon={<PiHandCoins size={16} />}
-                      />
-                    }
-                  >
-                    <div className="cursor-help">
-                      <BsQuestionCircle
-                        size={14}
-                        className="text-gray-400"
-                      />
-                    </div>
-                  </Tooltip>
-                </span>
-              </TableHead>
+              <TableHead>Interest Accrued ({period})</TableHead>
               <TableHead>Collateral</TableHead>
               <TableHead>Risk Tiers</TableHead>
               <TableHead>Actions</TableHead>
@@ -296,9 +270,9 @@ export function SuppliedMorphoBlueGroupedTable({
                         <span className="font-medium">{formatReadable((isAprDisplay ? convertApyToApr(avgApy) : avgApy) * 100)}%</span>
                       </div>
                     </TableCell>
-                    <TableCell data-label={`Interest Accrued (${earningsPeriod})`}>
+                    <TableCell data-label={`Interest Accrued (${period})`}>
                       <div className="flex items-center justify-center gap-2">
-                        {isLoadingEarnings ? (
+                        {isEarningsLoading ? (
                           <div className="flex items-center justify-center">
                             <PulseLoader
                               size={4}
@@ -306,17 +280,30 @@ export function SuppliedMorphoBlueGroupedTable({
                               margin={3}
                             />
                           </div>
+                        ) : earnings === 0n ? (
+                          <span className="font-medium">-</span>
                         ) : (
-                          <span className="font-medium">
-                            {(() => {
-                              if (earnings === 0n) return '-';
+                          <Tooltip
+                            content={(() => {
+                              const blockData = actualBlockData[groupedPosition.chainId];
+                              if (!blockData) return 'Loading timestamp data...';
+
+                              const startTimestamp = blockData.timestamp * 1000;
+                              const endTimestamp = Date.now();
+
                               return (
-                                formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals))) +
-                                ' ' +
-                                groupedPosition.loanAsset
+                                <TooltipContent
+                                  title="Interest Accrued Time Period"
+                                  detail={`Calculated from ${moment(Number(startTimestamp)).format('MMM D, YYYY HH:mm')} to ${moment(Number(endTimestamp)).format('MMM D, YYYY HH:mm')}`}
+                                />
                               );
                             })()}
-                          </span>
+                          >
+                            <span className="font-medium cursor-help">
+                              {formatReadable(Number(formatBalance(earnings, groupedPosition.loanAssetDecimals)))}{' '}
+                              {groupedPosition.loanAsset}
+                            </span>
+                          </Tooltip>
                         )}
                       </div>
                     </TableCell>
@@ -421,17 +408,17 @@ export function SuppliedMorphoBlueGroupedTable({
                 helper="Select the time period for interest accrued calculations"
               >
                 <div className="flex flex-col gap-2">
-                  {Object.entries(periodLabels).map(([period, label]) => (
+                  {Object.entries(periodLabels).map(([periodKey, label]) => (
                     <label
-                      key={period}
+                      key={periodKey}
                       className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-gray-50"
                     >
                       <span className="text-sm font-medium">{label}</span>
                       <input
                         type="radio"
                         name="earningsPeriod"
-                        checked={earningsPeriod === period}
-                        onChange={() => setEarningsPeriod(period as EarningsPeriod)}
+                        checked={period === periodKey}
+                        onChange={() => setPeriod(periodKey as EarningsPeriod)}
                         className="h-4 w-4 cursor-pointer"
                       />
                     </label>

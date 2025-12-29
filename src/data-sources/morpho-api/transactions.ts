@@ -19,7 +19,6 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     chainId_in: filters.chainIds ?? [SupportedNetworks.Base, SupportedNetworks.Mainnet],
   };
 
-  // disable cuz it's too long
   if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
     whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
   }
@@ -33,7 +32,7 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     whereClause.hash = filters.hash;
   }
   if (filters.assetIds && filters.assetIds.length > 0) {
-    whereClause.assetId_in = filters.assetIds;
+    whereClause.assetAddress_in = filters.assetIds;
   }
 
   try {

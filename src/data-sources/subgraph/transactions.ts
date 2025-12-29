@@ -1,4 +1,4 @@
-import { subgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
+import { getSubgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
 import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
@@ -112,17 +112,12 @@ const transformSubgraphTransactions = (
 
   allTransactions.sort((a, b) => b.timestamp - a.timestamp);
 
-  // marketUniqueKeys is empty: all markets
-  const filteredTransactions =
-    filters.marketUniqueKeys?.length === 0
-      ? allTransactions
-      : allTransactions.filter((tx) => filters.marketUniqueKeys?.includes(tx.data.market.uniqueKey));
-
-  const count = filteredTransactions.length;
+  // No client-side filtering needed - filtering is done at GraphQL level via market_in
+  const count = allTransactions.length;
   const countTotal = count;
 
   return {
-    items: filteredTransactions,
+    items: allTransactions,
     pageInfo: {
       count: count,
       countTotal: countTotal,
@@ -167,6 +162,12 @@ export const fetchSubgraphTransactions = async (filters: TransactionFilters, net
     timestamp_lt: currentTimestamp, // Always end at current time
   };
 
+  // Add market_in filter if marketUniqueKeys are provided
+  if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
+    // Convert market keys to lowercase for subgraph compatibility
+    variables.market_in = filters.marketUniqueKeys.map((key) => key.toLowerCase());
+  }
+
   if (filters.timestampGte !== undefined && filters.timestampGte !== null) {
     variables.timestamp_gte = filters.timestampGte;
   }
@@ -174,8 +175,10 @@ export const fetchSubgraphTransactions = async (filters: TransactionFilters, net
     variables.timestamp_lte = filters.timestampLte;
   }
 
+  const useMarketFilter = variables.market_in !== undefined;
+
   const requestBody = {
-    query: subgraphUserTransactionsQuery,
+    query: getSubgraphUserTransactionsQuery(useMarketFilter),
     variables: variables,
   };
 
