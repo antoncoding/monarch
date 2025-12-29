@@ -36,8 +36,6 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
   }
 
   try {
-    console.log('try', whereClause);
-
     const result = await morphoGraphqlFetcher<MorphoTransactionsApiResponse>(userTransactionsQuery, {
       where: whereClause,
       first: filters.first ?? 1000,
