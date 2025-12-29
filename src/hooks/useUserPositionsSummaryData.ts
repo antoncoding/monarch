@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Address } from 'viem';
+import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getClient } from '@/utils/rpc';
 import { fetchPositionsSnapshots, type PositionSnapshot } from '@/utils/positions';
@@ -9,8 +10,6 @@ import { useUserTransactionsQuery } from './queries/useUserTransactionsQuery';
 import { usePositionsWithEarnings, getPeriodTimestamp } from './usePositionsWithEarnings';
 import type { EarningsPeriod } from '@/stores/usePositionsFilters';
 import { useCustomRpcContext } from '@/components/providers/CustomRpcProvider';
-import { useCurrentBlocks } from './queries/useCurrentBlocks';
-import { useBlocksAtTimestamp } from './queries/useBlocksAtTimestamp';
 
 // Re-export EarningsPeriod for backward compatibility
 export type { EarningsPeriod } from '@/stores/usePositionsFilters';
@@ -27,33 +26,92 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     [chainIds, positions],
   );
 
-  // Use extracted block hooks for cleaner code
-  const { data: currentBlocks } = useCurrentBlocks(uniqueChainIds, customRpcUrls);
+  const { data: currentBlocks } = useQuery({
+    queryKey: ['current-blocks', uniqueChainIds],
+    queryFn: async () => {
+      const blocks: Record<number, number> = {};
+      await Promise.all(
+        uniqueChainIds.map(async (chainId) => {
+          try {
+            const client = getClient(chainId, customRpcUrls[chainId]);
+            const blockNumber = await client.getBlockNumber();
+            blocks[chainId] = Number(blockNumber);
+          } catch (error) {
+            console.error(`Failed to get current block for chain ${chainId}:`, error);
+          }
+        }),
+      );
+      return blocks;
+    },
+    enabled: uniqueChainIds.length > 0,
+    staleTime: 30_000,
+    gcTime: 60_000,
+  });
 
-  const periodTimestamp = useMemo(() => getPeriodTimestamp(period), [period]);
-  const { data: actualBlockData } = useBlocksAtTimestamp(periodTimestamp, uniqueChainIds, currentBlocks, customRpcUrls);
+  const snapshotBlocks = useMemo(() => {
+    if (!currentBlocks) return {};
+
+    const timestamp = getPeriodTimestamp(period);
+    const blocks: Record<number, number> = {};
+
+    uniqueChainIds.forEach((chainId) => {
+      const currentBlock = currentBlocks[chainId];
+      if (currentBlock) {
+        blocks[chainId] = estimateBlockAtTimestamp(chainId, timestamp, currentBlock);
+      }
+    });
+
+    return blocks;
+  }, [period, uniqueChainIds, currentBlocks]);
+
+  const { data: actualBlockData } = useQuery({
+    queryKey: ['block-timestamps', snapshotBlocks],
+    queryFn: async () => {
+      const blockData: Record<number, { block: number; timestamp: number }> = {};
+
+      await Promise.all(
+        Object.entries(snapshotBlocks).map(async ([chainId, blockNum]) => {
+          try {
+            const client = getClient(Number(chainId) as SupportedNetworks, customRpcUrls[Number(chainId) as SupportedNetworks]);
+            const block = await client.getBlock({ blockNumber: BigInt(blockNum) });
+            blockData[Number(chainId)] = {
+              block: blockNum,
+              timestamp: Number(block.timestamp),
+            };
+          } catch (error) {
+            console.error(`Failed to get block ${blockNum} on chain ${chainId}:`, error);
+          }
+        }),
+      );
+
+      return blockData;
+    },
+    enabled: Object.keys(snapshotBlocks).length > 0,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
   const endTimestamp = useMemo(() => Math.floor(Date.now() / 1000), []);
 
   const { data: txData, isLoading: isLoadingTransactions } = useUserTransactionsQuery({
     filters: {
       userAddress: user ? [user] : [],
-      marketUniqueKeys: positions?.map((p) => p.market.uniqueKey),
+      marketUniqueKeys: positions?.map((p) => p.market.uniqueKey) ?? [],
       chainIds: uniqueChainIds,
     },
-    paginate: true, // Always fetch all transactions for accuracy
+    paginate: false,
     enabled: !!positions && !!user,
   });
 
   const { data: allSnapshots, isLoading: isLoadingSnapshots } = useQuery({
-    queryKey: ['all-position-snapshots', actualBlockData, user, positions?.map((p) => p.market.uniqueKey)],
+    queryKey: ['all-position-snapshots', snapshotBlocks, user, positions?.map((p) => p.market.uniqueKey)],
     queryFn: async () => {
-      if (!positions || !user || !actualBlockData) return {};
+      if (!positions || !user) return {};
 
       const snapshotsByChain: Record<number, Map<string, PositionSnapshot>> = {};
 
       await Promise.all(
-        Object.entries(actualBlockData).map(async ([chainId, blockData]) => {
+        Object.entries(snapshotBlocks).map(async ([chainId, blockNum]) => {
           const chainIdNum = Number(chainId);
           const chainPositions = positions.filter((p) => p.market.morphoBlue.chain.id === chainIdNum);
 
@@ -62,7 +120,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
           const client = getClient(chainIdNum as SupportedNetworks, customRpcUrls[chainIdNum as SupportedNetworks]);
           const marketIds = chainPositions.map((p) => p.market.uniqueKey);
 
-          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainIdNum, blockData.block, client);
+          const snapshots = await fetchPositionsSnapshots(marketIds, user as Address, chainIdNum, blockNum, client);
 
           snapshotsByChain[chainIdNum] = snapshots;
         }),
@@ -70,7 +128,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
 
       return snapshotsByChain;
     },
-    enabled: !!positions && !!user && !!actualBlockData && Object.keys(actualBlockData).length > 0,
+    enabled: !!positions && !!user && Object.keys(snapshotBlocks).length > 0,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
@@ -123,6 +181,7 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     isPositionsLoading: positionsLoading,
     isEarningsLoading,
     isRefetching,
+    isTruncated: txData?.isTruncated ?? false,
     error: positionsError,
     refetch,
     loadingStates,

@@ -34,6 +34,7 @@ export default function Positions() {
     positions: marketPositions,
     refetch,
     loadingStates,
+    isTruncated,
     actualBlockData,
   } = useUserPositionsSummaryData(account, earningsPeriod);
 
@@ -112,6 +113,7 @@ export default function Positions() {
               earningsPeriod={earningsPeriod}
               setEarningsPeriod={setEarningsPeriod}
               chainBlockData={actualBlockData}
+              isTruncated={isTruncated}
             />
           )}
 

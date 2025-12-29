@@ -19,9 +19,9 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     chainId_in: filters.chainIds ?? [SupportedNetworks.Base, SupportedNetworks.Mainnet],
   };
 
-  if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
-    whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
-  }
+  // if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
+  //   whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
+  // }
   if (filters.timestampGte !== undefined && filters.timestampGte !== null) {
     whereClause.timestamp_gte = filters.timestampGte;
   }
@@ -36,6 +36,8 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
   }
 
   try {
+    console.log('try', whereClause)
+
     const result = await morphoGraphqlFetcher<MorphoTransactionsApiResponse>(userTransactionsQuery, {
       where: whereClause,
       first: filters.first ?? 1000,

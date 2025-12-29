@@ -7,7 +7,7 @@ type UseUserTransactionsQueryOptions = {
   /**
    * When true, automatically paginates to fetch ALL transactions.
    * Use for report generation when complete accuracy is needed.
-   * When false (default), fetches up to 1000 transactions (single page).
+   * When false (default), fetches up to 1000 transactions and returns isTruncated flag.
    * Use for summary pages when speed is prioritized.
    */
   paginate?: boolean;
@@ -15,7 +15,10 @@ type UseUserTransactionsQueryOptions = {
   pageSize?: number;
 };
 
-type TransactionQueryResult = TransactionResponse;
+type TransactionQueryResult = TransactionResponse & {
+  /** Indicates if data was truncated due to pagination limits */
+  isTruncated: boolean;
+};
 
 /**
  * Fetches user transactions from Morpho API or Subgraph using React Query.
@@ -34,7 +37,7 @@ type TransactionQueryResult = TransactionResponse;
  *
  * @example
  * ```tsx
- * // Summary page (fast, single page)
+ * // Summary page (fast, may be truncated)
  * const { data, isLoading } = useUserTransactionsQuery({
  *   filters: {
  *     userAddress: ['0x...'],
@@ -42,8 +45,11 @@ type TransactionQueryResult = TransactionResponse;
  *   },
  *   paginate: false,
  * });
+ * if (data?.isTruncated) {
+ *   // Show warning to user
+ * }
  *
- * // Report page (complete data with auto-pagination)
+ * // Report page (complete data)
  * const { data } = useUserTransactionsQuery({
  *   filters: {
  *     userAddress: ['0x...'],
@@ -74,10 +80,20 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
     queryFn: async () => {
       if (!paginate) {
         // Simple case: fetch once with limit
-        return await fetchUserTransactions({
+        const response = await fetchUserTransactions({
           ...filters,
           first: pageSize,
         });
+
+        // Check if data was truncated
+        // Since we're now filtering at GraphQL level, if we get exactly pageSize items,
+        // there might be more available
+        const isTruncated = response.items.length >= pageSize;
+
+        return {
+          ...response,
+          isTruncated,
+        };
       }
 
       // Pagination mode: fetch all data across multiple requests
@@ -112,6 +128,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
           countTotal: allItems.length,
         },
         error: null,
+        isTruncated: false, // We fetched everything
       };
     },
     enabled: enabled && filters.userAddress.length > 0,
