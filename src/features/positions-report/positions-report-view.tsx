@@ -24,9 +24,9 @@ type ReportState = {
 };
 
 export default function ReportContent({ account }: { account: Address }) {
-  // Fetch ALL positions including closed ones (onlySupplied: false)
+  // Fetch ALL positions including closed ones (showEmpty: true)
   // This ensures report includes markets that were active during the selected period
-  const { loading, data: positions } = useUserPositions(account, false);
+  const { loading, data: positions } = useUserPositions(account, true);
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago

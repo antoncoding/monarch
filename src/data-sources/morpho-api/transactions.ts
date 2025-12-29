@@ -19,7 +19,6 @@ export const fetchMorphoTransactions = async (filters: TransactionFilters): Prom
     chainId_in: filters.chainIds ?? [SupportedNetworks.Base, SupportedNetworks.Mainnet],
   };
 
-  // disable cuz it's too long
   if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
     whereClause.marketUniqueKey_in = filters.marketUniqueKeys;
   }

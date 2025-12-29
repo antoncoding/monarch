@@ -83,7 +83,7 @@ type CollateralIconsDisplayProps = {
  */
 export function CollateralIconsDisplay({ collaterals, chainId, maxDisplay = 8, iconSize = 20 }: CollateralIconsDisplayProps) {
   if (collaterals.length === 0) {
-    return <span className="text-sm text-gray-500">No known collaterals</span>;
+    return <span className="text-sm text-gray-500"> - </span>;
   }
 
   // Sort by amount descending

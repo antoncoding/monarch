@@ -38,7 +38,8 @@ export const positionKeys = {
   snapshot: (marketKey: string, userAddress: string, chainId: number) =>
     [...positionKeys.all, 'snapshot', marketKey, userAddress, chainId] as const,
   // Key for the final enhanced position data, dependent on initialData result
-  enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined) =>
+  // marketsCount triggers re-fetch when markets finish loading
+  enhanced: (user: string | undefined, initialData: InitialDataResponse | undefined, marketsCount: number) =>
     [
       'enhanced-positions',
       user,
@@ -46,6 +47,7 @@ export const positionKeys = {
         .map((k) => `${k.marketUniqueKey.toLowerCase()}-${k.chainId}`)
         .sort()
         .join(','),
+      marketsCount,
     ] as const,
 };
 
@@ -67,6 +69,8 @@ const fetchSourceMarketKeys = async (user: string, chainIds?: SupportedNetworks[
         try {
           console.log(`Attempting to fetch positions via Morpho API for network ${network}`);
           markets = await fetchMorphoUserPositionMarkets(user, network);
+
+          console.log('Fetched market keys for network', network, markets.length)
         } catch (morphoError) {
           console.error(`Failed to fetch positions via Morpho API for network ${network}:`, morphoError);
           // Continue to Subgraph fallback
@@ -140,7 +144,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
       // console.log(`[Positions] Query 1: Final unique keys count: ${finalMarketKeys.length}`);
       return { finalMarketKeys };
     },
-    enabled: !!user && allMarkets.length > 0,
+    enabled: !!user,
     staleTime: 0,
   });
 
@@ -150,7 +154,7 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
     isLoading: isLoadingEnhanced,
     isRefetching: isRefetchingEnhanced,
   } = useQuery<EnhancedMarketPosition[]>({
-    queryKey: positionKeys.enhanced(user, initialData),
+    queryKey: positionKeys.enhanced(user, initialData, allMarkets.length),
     queryFn: async () => {
       if (!initialData || !user) throw new Error('Assertion failed: initialData/user should be defined here.');
 
@@ -165,6 +169,8 @@ const useUserPositions = (user: string | undefined, showEmpty = false, chainIds?
         existing.push(marketInfo);
         marketsByChain.set(marketInfo.chainId, existing);
       });
+
+      console.log('All markets by chain', marketsByChain)
 
       // Build market data map from allMarkets context (no need to fetch individually)
       const marketDataMap = new Map<string, Market>();

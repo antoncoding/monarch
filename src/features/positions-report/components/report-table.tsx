@@ -150,6 +150,11 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
                 Generated for <span className="font-medium text-gray-700 dark:text-gray-300">{asset.symbol}</span> from{' '}
                 {formatter.format(startDate.toDate(getLocalTimeZone()))} to {formatter.format(endDate.toDate(getLocalTimeZone()))}
               </p>
+              {report.startBlock && report.endBlock && (
+                <p className="text-xs text-gray-400">
+                  Calculated from block {report.startBlock.toLocaleString()} to {report.endBlock.toLocaleString()}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <NetworkIcon networkId={chainId} />

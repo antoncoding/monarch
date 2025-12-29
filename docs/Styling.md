@@ -889,7 +889,6 @@ This component follows the same overlapping icon pattern as `TrustedByCell` in `
 - First icon has `ml-0`, subsequent icons have `-ml-2` for overlapping effect
 - Z-index decreases from left to right for proper stacking
 - "+X more" badge shows remaining items in tooltip
-- Empty state shows "No known collaterals" message
 
 **Examples in codebase:**
 - `src/features/positions/components/supplied-morpho-blue-grouped-table.tsx`

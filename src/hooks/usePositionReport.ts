@@ -28,6 +28,10 @@ export type ReportSummary = {
   period: number;
   marketReports: PositionReport[];
   groupedEarnings: EarningsCalculation;
+  startBlock: number;
+  endBlock: number;
+  startTimestamp: number;
+  endTimestamp: number;
 };
 
 export const usePositionReport = (
@@ -182,6 +186,10 @@ export const usePositionReport = (
       period,
       marketReports,
       groupedEarnings,
+      startBlock: startBlockEstimate,
+      endBlock: endBlockEstimate,
+      startTimestamp: actualStartTimestamp,
+      endTimestamp: actualEndTimestamp,
     };
   };
 
