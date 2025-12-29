@@ -19,7 +19,6 @@ import { OracleTypeInfo } from '@/features/markets/components/oracle';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useModal } from '@/hooks/useModal';
 import { useMarketData } from '@/hooks/useMarketData';
-import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
 import { useOraclePrice } from '@/hooks/useOraclePrice';
 import { useTransactionFilters } from '@/stores/useTransactionFilters';
 import useUserPosition from '@/hooks/useUserPosition';
@@ -28,7 +27,6 @@ import { getExplorerURL, getMarketURL } from '@/utils/external';
 import { getIRMTitle } from '@/utils/morpho';
 import { getNetworkImg, getNetworkName, type SupportedNetworks } from '@/utils/networks';
 import { getTruncatedAssetName } from '@/utils/oracle';
-import type { TimeseriesOptions } from '@/utils/types';
 import { BorrowersTable } from '@/features/market-detail/components/borrowers-table';
 import { BorrowsTable } from '@/features/market-detail/components/borrows-table';
 import BorrowerFiltersModal from '@/features/market-detail/components/filters/borrower-filters-modal';
@@ -42,31 +40,6 @@ import TransactionFiltersModal from '@/features/market-detail/components/filters
 import RateChart from './components/charts/rate-chart';
 import VolumeChart from './components/charts/volume-chart';
 
-const NOW = Math.floor(Date.now() / 1000);
-const DAY_IN_SECONDS = 24 * 60 * 60;
-const WEEK_IN_SECONDS = 7 * DAY_IN_SECONDS;
-
-// Helper to calculate time range based on timeframe string
-const calculateTimeRange = (timeframe: '1d' | '7d' | '30d'): TimeseriesOptions => {
-  const endTimestamp = NOW;
-  let startTimestamp;
-  let interval: TimeseriesOptions['interval'] = 'HOUR';
-  switch (timeframe) {
-    case '1d':
-      startTimestamp = endTimestamp - DAY_IN_SECONDS;
-      break;
-    case '30d':
-      startTimestamp = endTimestamp - 30 * DAY_IN_SECONDS;
-      // Use DAY interval for longer ranges if desired, adjust as needed
-      interval = 'DAY';
-      break;
-    default:
-      startTimestamp = endTimestamp - WEEK_IN_SECONDS;
-      break;
-  }
-  return { startTimestamp, endTimestamp, interval };
-};
-
 function MarketContent() {
   // 1. Get URL params first
   const { marketid : marketId, chainId } = useParams();
@@ -78,11 +51,6 @@ function MarketContent() {
   // 3. Consolidated state
   const { open: openModal } = useModal();
   const [showBorrowModal, setShowBorrowModal] = useState(false);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'1d' | '7d' | '30d'>('7d');
-  const [selectedTimeRange, setSelectedTimeRange] = useState<TimeseriesOptions>(
-    calculateTimeRange('7d'), // Initialize based on default timeframe
-  );
-  const [volumeView, setVolumeView] = useState<'USD' | 'Asset'>('Asset');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showTransactionFiltersModal, setShowTransactionFiltersModal] = useState(false);
   const [showSupplierFiltersModal, setShowSupplierFiltersModal] = useState(false);
@@ -102,12 +70,6 @@ function MarketContent() {
   const { minSupplyAmount, minBorrowAmount, setMinSupplyAmount, setMinBorrowAmount } = useTransactionFilters(
     market?.loanAsset?.symbol ?? '',
   );
-
-  const {
-    data: historicalData,
-    isLoading: isHistoricalLoading,
-    // No need for manual refetch on time change, queryKey handles it
-  } = useMarketHistoricalData(marketId as string, network, selectedTimeRange); // Use selectedTimeRange
 
   // 5. Oracle price hook - safely handle undefined market
   const { price: oraclePrice } = useOraclePrice({
@@ -220,12 +182,6 @@ function MarketContent() {
     });
   }, [handleRefreshAll]);
 
-  // Unified handler for timeframe changes
-  const handleTimeframeChange = useCallback((timeframe: '1d' | '7d' | '30d') => {
-    setSelectedTimeframe(timeframe);
-    setSelectedTimeRange(calculateTimeRange(timeframe));
-    // No explicit refetch needed, change in selectedTimeRange (part of queryKey) triggers it
-  }, []);
 
   // 7. Early returns for loading/error states
   if (isMarketLoading) {
@@ -480,26 +436,10 @@ function MarketContent() {
 
           <TabsContent value="statistics">
             <h4 className="mb-4 text-lg text-secondary">Volume</h4>
-            <VolumeChart
-              historicalData={historicalData?.volumes}
-              market={market}
-              selectedTimeRange={selectedTimeRange}
-              isLoading={isHistoricalLoading}
-              volumeView={volumeView}
-              selectedTimeframe={selectedTimeframe}
-              handleTimeframeChange={handleTimeframeChange}
-              setVolumeView={setVolumeView}
-            />
+            <VolumeChart marketId={marketId as string} chainId={network} market={market} />
 
             <h4 className="mb-4 mt-8 text-lg text-secondary">Rates</h4>
-            <RateChart
-              historicalData={historicalData?.rates}
-              market={market}
-              selectedTimeRange={selectedTimeRange}
-              isLoading={isHistoricalLoading}
-              selectedTimeframe={selectedTimeframe}
-              handleTimeframeChange={handleTimeframeChange}
-            />
+            <RateChart marketId={marketId as string} chainId={network} market={market} />
           </TabsContent>
 
           <TabsContent value="activities">

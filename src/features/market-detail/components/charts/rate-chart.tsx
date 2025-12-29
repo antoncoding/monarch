@@ -9,22 +9,29 @@ import { Spinner } from '@/components/ui/spinner';
 import { CHART_COLORS } from '@/constants/chartColors';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { formatChartTime } from '@/utils/chart';
+import { useMarketHistoricalData } from '@/hooks/useMarketHistoricalData';
+import { useMarketDetailChartState } from '@/stores/useMarketDetailChartState';
 import { convertApyToApr } from '@/utils/rateMath';
-import type { MarketRates } from '@/utils/types';
-import type { TimeseriesDataPoint, Market, TimeseriesOptions } from '@/utils/types';
+import type { Market } from '@/utils/types';
+import type { TimeseriesDataPoint } from '@/utils/types';
 
 type RateChartProps = {
-  historicalData: MarketRates | undefined;
+  marketId: string;
+  chainId: number;
   market: Market;
-  isLoading: boolean;
-  selectedTimeframe: '1d' | '7d' | '30d';
-  selectedTimeRange: TimeseriesOptions;
-  handleTimeframeChange: (timeframe: '1d' | '7d' | '30d') => void;
 };
 
-function RateChart({ historicalData, market, isLoading, selectedTimeframe, selectedTimeRange, handleTimeframeChange }: RateChartProps) {
+function RateChart({ marketId, chainId, market }: RateChartProps) {
+  // ✅ All hooks at top level - no conditional returns before hooks!
+  const selectedTimeframe = useMarketDetailChartState((s) => s.selectedTimeframe);
+  const selectedTimeRange = useMarketDetailChartState((s) => s.selectedTimeRange);
+  const setTimeframe = useMarketDetailChartState((s) => s.setTimeframe);
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
+
+  // Component fetches its own data (React Query caches by marketId + chainId + timeRange)
+  const { data: historicalData, isLoading } = useMarketHistoricalData(marketId, chainId, selectedTimeRange);
 
   const [visibleLines, setVisibleLines] = useState({
     supplyApy: true,
@@ -32,9 +39,13 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
     apyAtTarget: true,
   });
 
+  const handleTimeframeChange = (timeframe: '1d' | '7d' | '30d') => {
+    setTimeframe(timeframe);
+  };
+
   const getChartData = useMemo(() => {
-    if (!historicalData) return [];
-    const { supplyApy, borrowApy, apyAtTarget } = historicalData;
+    if (!historicalData?.rates) return [];
+    const { supplyApy, borrowApy, apyAtTarget } = historicalData.rates;
 
     return supplyApy.map((point: TimeseriesDataPoint, index: number) => {
       // Convert values to APR if display mode is enabled
@@ -59,8 +70,8 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
   };
 
   const getAverageApyValue = (type: 'supply' | 'borrow') => {
-    if (!historicalData) return 0;
-    const data = type === 'supply' ? historicalData.supplyApy : historicalData.borrowApy;
+    if (!historicalData?.rates) return 0;
+    const data = type === 'supply' ? historicalData.rates.supplyApy : historicalData.rates.borrowApy;
     const avgApy = data.length > 0 ? data.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / data.length : 0;
     return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
@@ -71,9 +82,10 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
   };
 
   const getAverageapyAtTargetValue = () => {
-    if (!historicalData?.apyAtTarget || historicalData.apyAtTarget.length === 0) return 0;
+    if (!historicalData?.rates?.apyAtTarget || historicalData.rates.apyAtTarget.length === 0) return 0;
     const avgApy =
-      historicalData.apyAtTarget.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / historicalData.apyAtTarget.length;
+      historicalData.rates.apyAtTarget.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
+      historicalData.rates.apyAtTarget.length;
     return isAprDisplay ? convertApyToApr(avgApy) : avgApy;
   };
 
@@ -82,24 +94,11 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
   };
 
   const getAverageUtilizationRate = () => {
-    if (!historicalData?.utilization || historicalData.utilization.length === 0) return 0;
+    if (!historicalData?.rates?.utilization || historicalData.rates.utilization.length === 0) return 0;
     return (
-      historicalData.utilization.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) / historicalData.utilization.length
+      historicalData.rates.utilization.reduce((sum: number, point: TimeseriesDataPoint) => sum + point.y, 0) /
+      historicalData.rates.utilization.length
     );
-  };
-
-  const formatTime = (unixTime: number) => {
-    const date = new Date(unixTime * 1000);
-    if (selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp <= 86_400) {
-      return date.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    }
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   const timeframeOptions = [
@@ -192,7 +191,7 @@ function RateChart({ historicalData, market, isLoading, selectedTimeframe, selec
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis
                     dataKey="x"
-                    tickFormatter={formatTime}
+                    tickFormatter={(time) => formatChartTime(time, selectedTimeRange.endTimestamp - selectedTimeRange.startTimestamp)}
                   />
                   <YAxis tickFormatter={(value) => `${(value * 100).toFixed(2)}%`} />
                   <Tooltip

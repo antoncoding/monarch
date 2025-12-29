@@ -13,41 +13,45 @@ import { TableContainerWithHeader } from '@/components/common/table-container-wi
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
 import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
-import type { TrustedVault } from '@/constants/vaults/known_vaults';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
-import type { Market } from '@/utils/types';
+import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
 
 type MarketsTableProps = {
-  markets: Market[];
   currentPage: number;
   setCurrentPage: (value: number) => void;
-  trustedVaults: TrustedVault[];
   className?: string;
   tableClassName?: string;
-  onOpenSettings: () => void;
   onRefresh: () => void;
   isMobile: boolean;
 };
 
 function MarketsTable({
-  markets,
   currentPage,
   setCurrentPage,
-  trustedVaults,
   className,
   tableClassName,
-  onOpenSettings,
   onRefresh,
   isMobile,
 }: MarketsTableProps) {
   // Get loading states directly from query (no prop drilling!)
   const { isLoading: loading, isRefetching, data: rawMarkets } = useMarketsQuery();
+
+  // Get trusted vaults directly from store (no prop drilling!)
+  const { vaults: trustedVaults } = useTrustedVaults();
+
+  // Get modal management directly from store (no prop drilling!)
+  const { open: openModal } = useModal();
+
+  const markets = useFilteredMarkets();
+
   const isEmpty = !rawMarkets;
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
   const { label: supplyRateLabel } = useRateLabel({ prefix: 'Supply' });
@@ -107,7 +111,7 @@ function MarketsTable({
   // Header actions (filter, refresh, expand/compact, settings)
   const headerActions = (
     <>
-      <SuppliedAssetFilterCompactSwitch onOpenSettings={onOpenSettings} />
+      <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
 
       <Tooltip
         content={
@@ -168,7 +172,7 @@ function MarketsTable({
           variant="ghost"
           size="sm"
           className="text-secondary min-w-0 px-2"
-          onClick={onOpenSettings}
+          onClick={() => openModal('marketSettings', {})}
         >
           <FiSettings className="h-3 w-3" />
         </Button>

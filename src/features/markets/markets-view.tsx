@@ -5,12 +5,9 @@ import type { Chain } from 'viem';
 import Header from '@/components/layout/header/Header';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
-import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useMarketsFilters } from '@/stores/useMarketsFilters';
-import { useModal } from '@/hooks/useModal';
 import { usePagination } from '@/hooks/usePagination';
 import { useStyledToast } from '@/hooks/useStyledToast';
-import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 
@@ -29,9 +26,6 @@ export default function Markets() {
   // Filter state (persisted to localStorage)
   const filters = useMarketsFilters();
 
-  // Derived data (filtered + sorted markets)
-  const filteredMarkets = useFilteredMarkets();
-
   // UI state
   const [uniqueCollaterals, setUniqueCollaterals] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
   const [uniqueLoanAssets, setUniqueLoanAssets] = useState<(ERC20Token | UnknownERC20Token)[]>([]);
@@ -41,8 +35,6 @@ export default function Markets() {
   const { currentPage, setCurrentPage, resetPage } = usePagination();
   const { allTokens } = useTokensQuery();
   const { tableViewMode, includeUnknownTokens } = useMarketPreferences();
-  const { vaults: userTrustedVaults } = useTrustedVaults();
-  const { open: openModal } = useModal();
 
   // Force compact mode on mobile
   useEffect(() => {
@@ -229,13 +221,10 @@ export default function Markets() {
       <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
         <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
           <MarketsTable
-            markets={filteredMarkets}
             currentPage={currentPage}
             setCurrentPage={setCurrentPage}
-            trustedVaults={userTrustedVaults}
             className={effectiveTableViewMode === 'compact' ? 'w-full' : undefined}
             tableClassName={effectiveTableViewMode === 'compact' ? 'w-full min-w-full' : undefined}
-            onOpenSettings={() => openModal('marketSettings', {})}
             onRefresh={handleRefresh}
             isMobile={isMobile}
           />
