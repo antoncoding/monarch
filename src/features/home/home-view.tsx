@@ -60,13 +60,11 @@ function HomePage() {
               <div className="max-w-4xl">
                 {/* Section tag */}
                 <div className="flex items-center gap-4 mb-6">
-                  <SectionTag>Monarch</SectionTag>
+                  <SectionTag>DeFi Lending for Powerusers</SectionTag>
                 </div>
 
                 {/* Main headline */}
-                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">
-                  Lending, Unfiltered
-                </h2>
+                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Lending, Unfiltered</h2>
 
                 {/* Typing animation subtitle */}
                 <div className="mb-10 h-16 sm:h-20">
@@ -223,11 +221,8 @@ function HomePage() {
                   />
                 </div>
                 <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-4">Your Risk, Your Rules</h2>
-                <p className="text-lg text-secondary sm:text-xl md:text-2xl italic max-w-3xl mx-auto">
+                <p className="text-lg text-secondary sm:text-xl italic max-w-2xl mx-auto">
                   "When you don't understand the yield, you are the yield."
-                </p>
-                <p className="text-base text-secondary mt-4 max-w-2xl mx-auto">
-                  Monarch helps you avoid those pitfalls in DeFi, giving you full control over your positions.
                 </p>
               </div>
 
@@ -236,26 +231,21 @@ function HomePage() {
                 <FeatureCard
                   icon={<RiCodeSSlashLine className="h-6 w-6" />}
                   title="Open Source"
-                  description="Full code transparency. Community-driven development. Verify everything yourself."
+                  description="Full code transparency. Verify everything yourself."
+                  className="bg-main"
                 />
                 <FeatureCard
                   icon={<RiHandCoinLine className="h-6 w-6" />}
                   title="Zero Platform Fees"
-                  description="Direct protocol interaction. No middlemen taking a cut of your yield."
+                  description="Direct protocol interaction. No middlemen."
+                  className="bg-main"
                 />
                 <FeatureCard
                   icon={<RiUserSettingsLine className="h-6 w-6" />}
                   title="Be Your Own Curator"
-                  description="Define your risk parameters. See full market breakdown and find your own insights."
+                  description="Define your risk parameters. Find your own insights."
+                  className="bg-main"
                 />
-              </div>
-
-              {/* Philosophy text */}
-              <div className="mt-10 text-center max-w-3xl mx-auto">
-                <p className="text-base leading-relaxed text-secondary sm:text-lg">
-                  Most lending protocols force you to trust a committee or governance. Morpho's design changes that. Monarch is built on
-                  this principle — we don't hide risk, we show it to you so you can make the most risk-adjusted decisions.
-                </p>
               </div>
 
               {/* CTA */}

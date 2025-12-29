@@ -19,12 +19,11 @@ export function FeatureCard({ icon, title, description, href, className }: Featu
         'group p-5',
         // Grid-inspired border - all sides equal weight dashed
         'border border-dashed border-[var(--grid-cell-muted)]',
-        'bg-surface/30',
+        'bg-surface',
         // Transition
         'transition-all duration-300 ease-in-out',
         // Hover: solid border
         'hover:border-solid hover:border-primary/30',
-        'hover:bg-surface/60',
         className,
       )}
     >

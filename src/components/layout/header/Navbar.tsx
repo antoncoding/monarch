@@ -36,14 +36,19 @@ export function NavbarLink({
     <Link
       href={href}
       className={clsx(
-        'px-3 py-1 text-center font-zen text-sm font-normal text-primary no-underline',
-        'relative after:absolute after:bottom-[-2px] after:left-0 after:h-[1.5px] after:w-full after:bg-primary',
-        'no-underline transition-all duration-200',
-        isActive ? 'after:opacity-100' : 'after:opacity-0 hover:text-primary/80',
+        'px-3 py-1 text-center font-zen text-sm font-normal text-primary no-underline transition-all duration-200',
+        !isActive && 'hover:text-primary/80',
       )}
       target={target}
     >
-      {children}
+      <span
+        className={clsx(
+          'relative after:absolute after:bottom-[-4px] after:left-0 after:h-[1.5px] after:w-full after:bg-primary after:transition-opacity',
+          isActive ? 'after:opacity-100' : 'after:opacity-0',
+        )}
+      >
+        {children}
+      </span>
     </Link>
   );
 }
