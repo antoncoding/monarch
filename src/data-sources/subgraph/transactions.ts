@@ -1,4 +1,4 @@
-import { subgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
+import { getSubgraphUserTransactionsQuery } from '@/graphql/morpho-subgraph-queries';
 import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';
@@ -175,8 +175,10 @@ export const fetchSubgraphTransactions = async (filters: TransactionFilters, net
     variables.timestamp_lte = filters.timestampLte;
   }
 
+  const useMarketFilter = variables.market_in !== undefined;
+
   const requestBody = {
-    query: subgraphUserTransactionsQuery,
+    query: getSubgraphUserTransactionsQuery(useMarketFilter),
     variables: variables,
   };
 

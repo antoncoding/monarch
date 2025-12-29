@@ -85,9 +85,9 @@ export const usePositionReport = (
       const transactionResult = await fetchUserTransactions({
         userAddress: [account],
         chainIds: [selectedAsset.chainId],
-        timestampGte: actualStartTimestamp, // ✅ Use actual timestamp from block
-        timestampLte: actualEndTimestamp, // ✅ Use actual timestamp from block
-        assetIds: [selectedAsset.address], // Query by asset to find ALL markets
+        timestampGte: actualStartTimestamp,
+        timestampLte: actualEndTimestamp,
+        assetIds: [selectedAsset.address],
         first: PAGE_SIZE,
         skip,
       });

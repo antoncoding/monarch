@@ -26,7 +26,7 @@ type ReportState = {
 export default function ReportContent({ account }: { account: Address }) {
   // Fetch ALL positions including closed ones (onlySupplied: false)
   // This ensures report includes markets that were active during the selected period
-  const { loading, data: positions } = useUserPositions(account, false);
+  const { loading, data: positions } = useUserPositions(account, true);
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago
@@ -54,17 +54,6 @@ export default function ReportContent({ account }: { account: Address }) {
 
   // Calculate maximum allowed date (today)
   const maxDate = useMemo(() => now(getLocalTimeZone()), []);
-
-  // Check if current inputs match the report state
-  const isReportCurrent = useMemo(() => {
-    if (!reportState || !selectedAsset) return false;
-    return (
-      reportState.asset.address === selectedAsset.address &&
-      reportState.asset.chainId === selectedAsset.chainId &&
-      reportState.startDate.compare(startDate) === 0 &&
-      reportState.endDate.compare(endDate) === 0
-    );
-  }, [reportState, selectedAsset, startDate, endDate]);
 
   // Reset report when inputs change
   useEffect(() => {
@@ -103,7 +92,7 @@ export default function ReportContent({ account }: { account: Address }) {
 
   // Generate report
   const handleGenerateReport = async () => {
-    if (!selectedAsset || isGenerating || isReportCurrent) return;
+    if (!selectedAsset || isGenerating) return;
 
     setIsGenerating(true);
     try {
@@ -235,7 +224,7 @@ export default function ReportContent({ account }: { account: Address }) {
                 onClick={() => {
                   void handleGenerateReport();
                 }}
-                disabled={!selectedAsset || isGenerating || isReportCurrent || !!startDateError || !!endDateError}
+                disabled={!selectedAsset || isGenerating || !!startDateError || !!endDateError}
                 className="inline-flex h-14 min-w-[120px] items-center gap-2"
                 variant="primary"
               >

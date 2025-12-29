@@ -293,15 +293,18 @@ export const subgraphUserMarketPositionQuery = `
 `;
 // --- End Query ---
 
-// Note: The exact field names might need adjustment based on the specific Subgraph schema.
-export const subgraphUserTransactionsQuery = `
+export const getSubgraphUserTransactionsQuery = (useMarketFilter: boolean) => {
+  // only append this in where if marketIn is defined
+  const additionalQuery = useMarketFilter ? 'market_in: $market_in' : '';
+
+  return `
   query GetUserTransactions(
     $userId: ID!
     $first: Int!
     $skip: Int!
-    $timestamp_gt: BigInt! # Always filter from timestamp 0
-    $timestamp_lt: BigInt! # Always filter up to current time
-    $market_in: [Bytes!] # Optional market filter
+    $timestamp_gt: BigInt!
+    $timestamp_lt: BigInt!
+    ${useMarketFilter ? '$market_in: [Bytes!]}' : ''}
   ) {
     account(id: $userId) {
       deposits(
@@ -312,7 +315,7 @@ export const subgraphUserTransactionsQuery = `
         where: {
           timestamp_gt: $timestamp_gt
           timestamp_lt: $timestamp_lt
-          market_in: $market_in
+          ${additionalQuery}
         }
       ) {
         id
@@ -333,7 +336,7 @@ export const subgraphUserTransactionsQuery = `
         where: {
           timestamp_gt: $timestamp_gt
           timestamp_lt: $timestamp_lt
-          market_in: $market_in
+          ${additionalQuery}
         }
       ) {
         id
@@ -354,7 +357,7 @@ export const subgraphUserTransactionsQuery = `
         where: {
           timestamp_gt: $timestamp_gt
           timestamp_lt: $timestamp_lt
-          market_in: $market_in
+          ${additionalQuery}
         }
       ) {
         id
@@ -374,7 +377,7 @@ export const subgraphUserTransactionsQuery = `
         where: {
           timestamp_gt: $timestamp_gt
           timestamp_lt: $timestamp_lt
-          market_in: $market_in
+          ${additionalQuery}
         }
       ) {
         id
@@ -394,7 +397,7 @@ export const subgraphUserTransactionsQuery = `
         where: {
           timestamp_gt: $timestamp_gt
           timestamp_lt: $timestamp_lt
-          market_in: $market_in
+          ${additionalQuery}
         }
       ) {
         id
@@ -408,6 +411,7 @@ export const subgraphUserTransactionsQuery = `
     }
   }
 `;
+};
 
 export const marketPositionsQuery = `
   query getMarketPositions($market: String!, $minShares: BigInt!, $first: Int!, $skip: Int!) {
