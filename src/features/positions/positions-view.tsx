@@ -1,19 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Tooltip } from '@/components/ui/tooltip';
-import { IoRefreshOutline } from 'react-icons/io5';
-import { toast } from 'react-toastify';
 import type { Address } from 'viem';
 import { AccountIdentity } from '@/components/shared/account-identity';
-import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
-import useUserPositionsSummaryData, { type EarningsPeriod } from '@/hooks/useUserPositionsSummaryData';
+import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
@@ -21,20 +15,11 @@ import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
 
 export default function Positions() {
-  const [earningsPeriod, setEarningsPeriod] = useState<EarningsPeriod>('day');
-
   const { account } = useParams<{ account: string }>();
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
-  const {
-    isPositionsLoading,
-    isEarningsLoading,
-    isRefetching,
-    positions: marketPositions,
-    refetch,
-    loadingStates,
-  } = useUserPositionsSummaryData(account, earningsPeriod);
+  const { isPositionsLoading, positions: marketPositions } = useUserPositionsSummaryData(account, 'day');
 
   // Fetch user's auto vaults
   const {
@@ -48,22 +33,11 @@ export default function Positions() {
 
   const loading = isMarketsLoading || isPositionsLoading;
 
-  // Generate loading message based on current state
-  const loadingMessage = useMemo(() => {
-    if (isMarketsLoading) return 'Loading markets...';
-    if (loadingStates.positions) return 'Loading user positions...';
-    if (loadingStates.snapshots) return 'Loading historical snapshots...';
-    if (loadingStates.transactions) return 'Loading transaction history...';
-    return 'Loading...';
-  }, [isMarketsLoading, loadingStates]);
+  const loadingMessage = isMarketsLoading ? 'Loading markets...' : 'Loading user positions...';
 
   const hasSuppliedMarkets = marketPositions && marketPositions.length > 0;
   const hasVaults = vaults && vaults.length > 0;
   const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
-
-  const handleRefetch = () => {
-    void refetch(() => toast.info('Data refreshed', { icon: <span>🚀</span> }));
-  };
 
   return (
     <div className="flex flex-col justify-between font-zen">
@@ -101,17 +75,7 @@ export default function Positions() {
           )}
 
           {/* Morpho Blue Positions Section */}
-          {!loading && hasSuppliedMarkets && (
-            <SuppliedMorphoBlueGroupedTable
-              account={account}
-              marketPositions={marketPositions}
-              refetch={() => void refetch()}
-              isRefetching={isRefetching}
-              isLoadingEarnings={isEarningsLoading}
-              earningsPeriod={earningsPeriod}
-              setEarningsPeriod={setEarningsPeriod}
-            />
-          )}
+          {!loading && hasSuppliedMarkets && <SuppliedMorphoBlueGroupedTable account={account} />}
 
           {/* Auto Vaults Section (progressive loading) */}
           {isVaultsLoading && !loading && (
@@ -131,35 +95,10 @@ export default function Positions() {
 
           {/* Empty state (only if both finished loading and both empty) */}
           {showEmpty && (
-            <div className="container flex flex-col">
-              <div className="flex w-full justify-end">
-                <Tooltip
-                  content={
-                    <TooltipContent
-                      title="Refresh"
-                      detail="Fetch latest data"
-                    />
-                  }
-                >
-                  <span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRefetch}
-                      className="text-secondary min-w-0 px-2"
-                    >
-                      <IoRefreshOutline className="h-3 w-3" />
-                    </Button>
-                  </span>
-                </Tooltip>
-              </div>
-              <div className="flex justify-center">
-                <EmptyScreen
-                  message="No open positions. Start supplying!"
-                  className="mt-2"
-                />
-              </div>
-            </div>
+            <EmptyScreen
+              message="No open positions. Start supplying!"
+              className="mt-10"
+            />
           )}
         </div>
       </div>

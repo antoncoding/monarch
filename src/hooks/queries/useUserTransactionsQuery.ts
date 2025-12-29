@@ -28,32 +28,12 @@ type UseUserTransactionsQueryOptions = {
  * - staleTime: 30 seconds (transactions change moderately frequently)
  * - Refetch on window focus: enabled
  * - Only runs when userAddress is provided
- *
- * @example
- * ```tsx
- * // Summary page (fast, may be truncated)
- * const { data, isLoading } = useUserTransactionsQuery({
- *   filters: {
- *     userAddress: ['0x...'],
- *     timestampGte: oneDayAgo,
- *   },
- *   paginate: false,
- * });
- *
- * // Report page (complete data)
- * const { data } = useUserTransactionsQuery({
- *   filters: {
- *     userAddress: ['0x...'],
- *     assetIds: ['0xUSDC...'],
- *   },
- *   paginate: true,
- * });
  * ```
  */
 export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOptions) => {
   const { filters, enabled = true, paginate = false, pageSize = 1000 } = options;
 
-  return useQuery<TransactionQueryResult, Error>({
+  return useQuery<TransactionResponse, Error>({
     queryKey: [
       'user-transactions',
       filters.userAddress,
@@ -112,7 +92,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
       };
     },
     enabled: enabled && filters.userAddress.length > 0,
-    staleTime: 30_000, // 30 seconds - transactions change moderately frequently
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 };
