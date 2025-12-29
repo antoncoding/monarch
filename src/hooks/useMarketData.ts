@@ -93,6 +93,7 @@ export const useMarketData = (uniqueKey: string | undefined, network: SupportedN
     },
     enabled: !!uniqueKey && !!network,
     staleTime: 1000 * 60 * 2,
+    refetchInterval: 1000 * 60 * 2, // Match staleTime for consistency
     placeholderData: (previousData) => previousData ?? null,
     retry: 1,
   });
