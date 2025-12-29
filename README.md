@@ -55,9 +55,7 @@ pnpm lint
 
 ## Documentation
 
-- **[Architecture Guide](./docs/ARCHITECTURE.md)** - Tech stack, data fetching patterns, and developer guide
-- **[Styling Guide](./docs/Styling.md)** - UI component patterns and design system
-- **[Code Standards](./.claude/CLAUDE.md)** - Code quality guidelines (Biome/Ultracite)
+- **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Architecture, state management, components, and styling
 
 ## Security
 

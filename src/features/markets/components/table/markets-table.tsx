@@ -1,28 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FaRegStar, FaStar } from 'react-icons/fa';
-import { ReloadIcon } from '@radix-ui/react-icons';
-import { CgCompress } from 'react-icons/cg';
-import { FiSettings } from 'react-icons/fi';
-import { RiExpandHorizontalLine } from 'react-icons/ri';
 import { Table, TableHeader, TableRow, TableHead } from '@/components/ui/table';
 import { TablePagination } from '@/components/shared/table-pagination';
-import { Button } from '@/components/ui/button';
-import { Tooltip } from '@/components/ui/tooltip';
-import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
 import EmptyScreen from '@/components/status/empty-screen';
 import LoadingScreen from '@/components/status/loading-screen';
-import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
 import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
 import { useFilteredMarkets } from '@/hooks/useFilteredMarkets';
 import { useRateLabel } from '@/hooks/useRateLabel';
-import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { buildTrustedVaultMap } from '@/utils/vaults';
 import { SortColumn } from '../constants';
 import { MarketTableBody } from './market-table-body';
 import { HTSortable } from './market-table-utils';
+import { MarketsTableActions } from './markets-table-actions';
 
 type MarketsTableProps = {
   currentPage: number;
@@ -40,9 +32,6 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
   // Get trusted vaults directly from store (no prop drilling!)
   const { vaults: trustedVaults } = useTrustedVaults();
 
-  // Get modal management directly from store (no prop drilling!)
-  const { open: openModal } = useModal();
-
   const markets = useFilteredMarkets();
 
   const isEmpty = !rawMarkets;
@@ -57,8 +46,6 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     sortDirection,
     setSortDirection,
     entriesPerPage,
-    tableViewMode,
-    setTableViewMode,
     includeUnknownTokens,
     showUnknownOracle,
     trustedVaultsOnly,
@@ -94,84 +81,10 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
 
   const totalPages = Math.ceil(markets.length / entriesPerPage);
 
-  const effectiveTableViewMode = isMobile ? 'compact' : tableViewMode;
-
   const containerClassName = ['flex flex-col gap-2 pb-4', loading || isEmpty || markets.length === 0 ? 'container items-center' : className]
     .filter((value): value is string => Boolean(value))
     .join(' ');
   const tableClassNames = ['responsive', tableClassName].filter((value): value is string => Boolean(value)).join(' ');
-
-  // Header actions (filter, refresh, expand/compact, settings)
-  const headerActions = (
-    <>
-      <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
-
-      <Tooltip
-        content={
-          <TooltipContent
-            title="Refresh"
-            detail="Fetch the latest market data"
-          />
-        }
-      >
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isRefetching}
-          className="text-secondary min-w-0 px-2"
-        >
-          <ReloadIcon className={`${isRefetching ? 'animate-spin' : ''} h-3 w-3`} />
-        </Button>
-      </Tooltip>
-
-      {/* Hide expand/compact toggle on mobile */}
-      {!isMobile && (
-        <Tooltip
-          content={
-            <TooltipContent
-              icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
-              title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
-              detail={
-                effectiveTableViewMode === 'compact'
-                  ? 'Expand table to full width, useful when more columns are enabled.'
-                  : 'Restore compact table view'
-              }
-            />
-          }
-        >
-          <Button
-            aria-label="Toggle table width"
-            variant="ghost"
-            size="sm"
-            className="text-secondary min-w-0 px-2"
-            onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
-          >
-            {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
-          </Button>
-        </Tooltip>
-      )}
-
-      <Tooltip
-        content={
-          <TooltipContent
-            title="Preferences"
-            detail="Adjust thresholds and columns"
-          />
-        }
-      >
-        <Button
-          aria-label="Market Preferences"
-          variant="ghost"
-          size="sm"
-          className="text-secondary min-w-0 px-2"
-          onClick={() => openModal('marketSettings', {})}
-        >
-          <FiSettings className="h-3 w-3" />
-        </Button>
-      </Tooltip>
-    </>
-  );
 
   // Determine empty state hint based on active filters
   const getEmptyStateHint = () => {
@@ -194,7 +107,13 @@ function MarketsTable({ currentPage, setCurrentPage, className, tableClassName, 
     <div className={containerClassName}>
       <TableContainerWithHeader
         title=""
-        actions={headerActions}
+        actions={
+          <MarketsTableActions
+            onRefresh={onRefresh}
+            isRefetching={isRefetching}
+            isMobile={isMobile}
+          />
+        }
         className="w-full"
       >
         {loading ? (

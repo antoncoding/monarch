@@ -11,6 +11,8 @@ export type BlacklistedMarket = {
 
 type BlacklistedMarketsState = {
   customBlacklistedMarkets: BlacklistedMarket[];
+  /** Cached Set of all blacklisted keys (default + custom) */
+  _cachedBlacklistedKeys: Set<string> | null;
 };
 
 type BlacklistedMarketsActions = {
@@ -32,6 +34,7 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
   persist(
     (set, get) => ({
       customBlacklistedMarkets: [],
+      _cachedBlacklistedKeys: null,
 
       addBlacklistedMarket: (uniqueKey, chainId, reason) => {
         const state = get();
@@ -50,6 +53,7 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
 
         set((prevState) => ({
           customBlacklistedMarkets: [...prevState.customBlacklistedMarkets, newMarket],
+          _cachedBlacklistedKeys: null, // Invalidate cache
         }));
 
         return true;
@@ -58,6 +62,7 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
       removeBlacklistedMarket: (uniqueKey) => {
         set((state) => ({
           customBlacklistedMarkets: state.customBlacklistedMarkets.filter((m) => m.uniqueKey !== uniqueKey),
+          _cachedBlacklistedKeys: null, // Invalidate cache
         }));
       },
 
@@ -72,14 +77,26 @@ export const useBlacklistedMarkets = create<BlacklistedMarketsStore>()(
 
       getAllBlacklistedKeys: () => {
         const state = get();
+        // Return cached Set if available
+        if (state._cachedBlacklistedKeys) {
+          return state._cachedBlacklistedKeys;
+        }
+        // Compute and cache the Set
         const customKeys = state.customBlacklistedMarkets.map((m) => m.uniqueKey);
-        return new Set([...defaultBlacklistedMarkets, ...customKeys]);
+        const newSet = new Set([...defaultBlacklistedMarkets, ...customKeys]);
+        // Update cache (using set() to avoid mutation)
+        set({ _cachedBlacklistedKeys: newSet });
+        return newSet;
       },
 
-      setAll: (newState) => set(newState),
+      setAll: (newState) => set({ ...newState, _cachedBlacklistedKeys: null }),
     }),
     {
       name: 'monarch_store_blacklistedMarkets',
+      partialize: (state) => ({
+        // Only persist customBlacklistedMarkets, not the cache
+        customBlacklistedMarkets: state.customBlacklistedMarkets,
+      }),
     },
   ),
 );
