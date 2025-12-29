@@ -34,8 +34,6 @@ export default function Positions() {
     positions: marketPositions,
     refetch,
     loadingStates,
-    isTruncated,
-    actualBlockData,
   } = useUserPositionsSummaryData(account, earningsPeriod);
 
   // Fetch user's auto vaults
@@ -112,8 +110,6 @@ export default function Positions() {
               isLoadingEarnings={isEarningsLoading}
               earningsPeriod={earningsPeriod}
               setEarningsPeriod={setEarningsPeriod}
-              chainBlockData={actualBlockData}
-              isTruncated={isTruncated}
             />
           )}
 

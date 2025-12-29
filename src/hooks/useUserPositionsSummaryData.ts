@@ -181,7 +181,6 @@ const useUserPositionsSummaryData = (user: string | undefined, period: EarningsP
     isPositionsLoading: positionsLoading,
     isEarningsLoading,
     isRefetching,
-    isTruncated: txData?.isTruncated ?? false,
     error: positionsError,
     refetch,
     loadingStates,

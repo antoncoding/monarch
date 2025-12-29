@@ -7,17 +7,11 @@ type UseUserTransactionsQueryOptions = {
   /**
    * When true, automatically paginates to fetch ALL transactions.
    * Use for report generation when complete accuracy is needed.
-   * When false (default), fetches up to 1000 transactions and returns isTruncated flag.
    * Use for summary pages when speed is prioritized.
    */
   paginate?: boolean;
   /** Page size for pagination (default 1000) */
   pageSize?: number;
-};
-
-type TransactionQueryResult = TransactionResponse & {
-  /** Indicates if data was truncated due to pagination limits */
-  isTruncated: boolean;
 };
 
 /**
@@ -45,9 +39,6 @@ type TransactionQueryResult = TransactionResponse & {
  *   },
  *   paginate: false,
  * });
- * if (data?.isTruncated) {
- *   // Show warning to user
- * }
  *
  * // Report page (complete data)
  * const { data } = useUserTransactionsQuery({
@@ -80,20 +71,10 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
     queryFn: async () => {
       if (!paginate) {
         // Simple case: fetch once with limit
-        const response = await fetchUserTransactions({
+        return await fetchUserTransactions({
           ...filters,
           first: pageSize,
         });
-
-        // Check if data was truncated
-        // Since we're now filtering at GraphQL level, if we get exactly pageSize items,
-        // there might be more available
-        const isTruncated = response.items.length >= pageSize;
-
-        return {
-          ...response,
-          isTruncated,
-        };
       }
 
       // Pagination mode: fetch all data across multiple requests
@@ -128,7 +109,6 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
           countTotal: allItems.length,
         },
         error: null,
-        isTruncated: false, // We fetched everything
       };
     },
     enabled: enabled && filters.userAddress.length > 0,

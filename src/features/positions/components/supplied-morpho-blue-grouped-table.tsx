@@ -101,8 +101,6 @@ type SuppliedMorphoBlueGroupedTableProps = {
   isLoadingEarnings?: boolean;
   earningsPeriod: EarningsPeriod;
   setEarningsPeriod: (period: EarningsPeriod) => void;
-  chainBlockData?: Record<number, { block: number; timestamp: number }>;
-  isTruncated?: boolean;
 };
 
 export function SuppliedMorphoBlueGroupedTable({
@@ -113,8 +111,6 @@ export function SuppliedMorphoBlueGroupedTable({
   account,
   earningsPeriod,
   setEarningsPeriod,
-  chainBlockData,
-  isTruncated,
 }: SuppliedMorphoBlueGroupedTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -309,17 +305,6 @@ export function SuppliedMorphoBlueGroupedTable({
                               margin={3}
                             />
                           </div>
-                        ) : isTruncated ? (
-                          <Tooltip
-                            content={
-                              <TooltipContent
-                                title="Data Incomplete"
-                                detail="Transaction history exceeds 1,000 entries. Use Position Report for accurate earnings calculation."
-                              />
-                            }
-                          >
-                            <span className="font-medium cursor-help">-</span>
-                          </Tooltip>
                         ) : (
                           <span className="font-medium">
                             {(() => {
