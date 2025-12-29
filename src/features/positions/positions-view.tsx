@@ -34,6 +34,8 @@ export default function Positions() {
     positions: marketPositions,
     refetch,
     loadingStates,
+    isTruncated,
+    actualBlockData,
   } = useUserPositionsSummaryData(account, earningsPeriod);
 
   // Fetch user's auto vaults
@@ -52,7 +54,6 @@ export default function Positions() {
   const loadingMessage = useMemo(() => {
     if (isMarketsLoading) return 'Loading markets...';
     if (loadingStates.positions) return 'Loading user positions...';
-    if (loadingStates.blocks) return 'Fetching block numbers...';
     if (loadingStates.snapshots) return 'Loading historical snapshots...';
     if (loadingStates.transactions) return 'Loading transaction history...';
     return 'Loading...';
@@ -103,15 +104,40 @@ export default function Positions() {
 
           {/* Morpho Blue Positions Section */}
           {!loading && hasSuppliedMarkets && (
-            <SuppliedMorphoBlueGroupedTable
-              account={account}
-              marketPositions={marketPositions}
-              refetch={() => void refetch()}
-              isRefetching={isRefetching}
-              isLoadingEarnings={isEarningsLoading}
-              earningsPeriod={earningsPeriod}
-              setEarningsPeriod={setEarningsPeriod}
-            />
+            <>
+              {/* Data Truncation Warning */}
+              {isTruncated && (
+                <div className="mb-4 rounded-lg border border-warning/20 bg-warning/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-warning text-xl">⚠️</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-warning">Transaction history exceeds 1,000 entries</p>
+                      <p className="mt-1 text-xs text-secondary">
+                        Earnings calculations may be incomplete.{' '}
+                        <a
+                          href={`/positions-report/${account}`}
+                          className="text-primary underline hover:text-primary/80"
+                        >
+                          Use Position Report
+                        </a>{' '}
+                        for complete and accurate data.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <SuppliedMorphoBlueGroupedTable
+                account={account}
+                marketPositions={marketPositions}
+                refetch={() => void refetch()}
+                isRefetching={isRefetching}
+                isLoadingEarnings={isEarningsLoading}
+                earningsPeriod={earningsPeriod}
+                setEarningsPeriod={setEarningsPeriod}
+                chainBlockData={actualBlockData}
+              />
+            </>
           )}
 
           {/* Auto Vaults Section (progressive loading) */}

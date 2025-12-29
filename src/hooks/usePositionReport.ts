@@ -2,7 +2,8 @@ import type { Address } from 'viem';
 import { calculateEarningsFromSnapshot, type EarningsCalculation, filterTransactionsInPeriod } from '@/utils/interest';
 import type { SupportedNetworks } from '@/utils/networks';
 import { fetchPositionsSnapshots } from '@/utils/positions';
-import { estimatedBlockNumber, getClient } from '@/utils/rpc';
+import { getClient } from '@/utils/rpc';
+import { estimateBlockAtTimestamp } from '@/utils/blockEstimation';
 import type { Market, MarketPosition, UserTransaction } from '@/utils/types';
 import { useCustomRpc } from '@/stores/useCustomRpc';
 import { fetchUserTransactions } from './queries/fetchUserTransactions';
@@ -48,26 +49,30 @@ export const usePositionReport = (
       endDate = new Date();
     }
 
-    // fetch block number at start and end date
-    const { blockNumber: startBlockNumber, timestamp: startTimestamp } = await estimatedBlockNumber(
-      selectedAsset.chainId,
-      startDate.getTime() / 1000,
-    );
-    const { blockNumber: endBlockNumber, timestamp: endTimestamp } = await estimatedBlockNumber(
-      selectedAsset.chainId,
-      endDate.getTime() / 1000,
-    );
+    // Get current block number for client-side estimation
+    const client = getClient(selectedAsset.chainId as SupportedNetworks, customRpcUrls[selectedAsset.chainId as SupportedNetworks]);
+    const currentBlock = Number(await client.getBlockNumber());
+    const currentTimestamp = Math.floor(Date.now() / 1000);
 
-    const period = endTimestamp - startTimestamp;
+    // Estimate block numbers (client-side, instant!)
+    const targetStartTimestamp = Math.floor(startDate.getTime() / 1000);
+    const targetEndTimestamp = Math.floor(endDate.getTime() / 1000);
+    const startBlockEstimate = estimateBlockAtTimestamp(selectedAsset.chainId, targetStartTimestamp, currentBlock, currentTimestamp);
+    const endBlockEstimate = estimateBlockAtTimestamp(selectedAsset.chainId, targetEndTimestamp, currentBlock, currentTimestamp);
 
-    const relevantPositions = positions.filter(
-      (position) =>
-        position.market.loanAsset.address.toLowerCase() === selectedAsset.address.toLowerCase() &&
-        position.market.morphoBlue.chain.id === selectedAsset.chainId,
-    );
+    // Fetch ACTUAL timestamps for the estimated blocks (critical for accuracy)
+    const [startBlock, endBlock] = await Promise.all([
+      client.getBlock({ blockNumber: BigInt(startBlockEstimate) }),
+      client.getBlock({ blockNumber: BigInt(endBlockEstimate) }),
+    ]);
 
-    // Fetch all transactions with pagination
-    const PAGE_SIZE = 100;
+    const actualStartTimestamp = Number(startBlock.timestamp);
+    const actualEndTimestamp = Number(endBlock.timestamp);
+    const period = actualEndTimestamp - actualStartTimestamp;
+
+    // Fetch ALL transactions for this asset with auto-pagination
+    // Query by assetId to discover all markets (including closed ones)
+    const PAGE_SIZE = 1000; // Larger page size for report generation
     let allTransactions: UserTransaction[] = [];
     let hasMore = true;
     let skip = 0;
@@ -76,9 +81,9 @@ export const usePositionReport = (
       const transactionResult = await fetchUserTransactions({
         userAddress: [account],
         chainIds: [selectedAsset.chainId],
-        timestampGte: startTimestamp,
-        timestampLte: endTimestamp,
-        marketUniqueKeys: relevantPositions.map((position) => position.market.uniqueKey),
+        timestampGte: actualStartTimestamp, // ✅ Use actual timestamp from block
+        timestampLte: actualEndTimestamp, // ✅ Use actual timestamp from block
+        assetIds: [selectedAsset.address], // Query by asset to find ALL markets
         first: PAGE_SIZE,
         skip,
       });
@@ -93,24 +98,23 @@ export const usePositionReport = (
       hasMore = transactionResult.items.length === PAGE_SIZE;
       skip += PAGE_SIZE;
 
-      // Safety check to prevent infinite loops
-      if (skip > PAGE_SIZE * 100) {
-        console.warn('Reached maximum skip limit, some transactions might be missing');
+      // Safety check to prevent infinite loops (50 pages = 50k transactions)
+      if (skip > PAGE_SIZE * 50) {
+        console.warn('Reached maximum pagination limit (50k transactions), some data might be missing');
         break;
       }
     }
 
-    // Batch fetch all snapshots using multicall
-    const marketIds = relevantPositions.map((position) => position.market.uniqueKey);
-    const publicClient = getClient(
-      selectedAsset.chainId as SupportedNetworks,
-      customRpcUrls[selectedAsset.chainId as SupportedNetworks] ?? undefined,
-    );
+    // Discover unique markets from transactions (includes closed markets)
+    const discoveredMarketIds = [...new Set(allTransactions.map((tx) => tx.data?.market?.uniqueKey).filter((id): id is string => !!id))];
+
+    // Filter positions to only those that had activity (some might be closed now)
+    const relevantPositions = positions.filter((position) => discoveredMarketIds.includes(position.market.uniqueKey));
 
     // Fetch start and end snapshots in parallel (batched per block number)
     const [startSnapshots, endSnapshots] = await Promise.all([
-      fetchPositionsSnapshots(marketIds, account, selectedAsset.chainId, startBlockNumber, publicClient),
-      fetchPositionsSnapshots(marketIds, account, selectedAsset.chainId, endBlockNumber, publicClient),
+      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, startBlockEstimate, client),
+      fetchPositionsSnapshots(discoveredMarketIds, account, selectedAsset.chainId, endBlockEstimate, client),
     ]);
 
     // Process positions with their snapshots
@@ -126,16 +130,16 @@ export const usePositionReport = (
 
         const marketTransactions = filterTransactionsInPeriod(
           allTransactions.filter((tx) => tx.data?.market?.uniqueKey === marketKey),
-          startTimestamp,
-          endTimestamp,
+          actualStartTimestamp,
+          actualEndTimestamp,
         );
 
         const earnings = calculateEarningsFromSnapshot(
           BigInt(endSnapshot.supplyAssets),
           BigInt(startSnapshot.supplyAssets),
           marketTransactions,
-          startTimestamp,
-          endTimestamp,
+          actualStartTimestamp,
+          actualEndTimestamp,
         );
 
         return {
@@ -163,7 +167,13 @@ export const usePositionReport = (
 
     const endBalance = marketReports.reduce((sum, report) => sum + BigInt(report.endBalance), 0n);
 
-    const groupedEarnings = calculateEarningsFromSnapshot(endBalance, startBalance, allTransactions, startTimestamp, endTimestamp);
+    const groupedEarnings = calculateEarningsFromSnapshot(
+      endBalance,
+      startBalance,
+      allTransactions,
+      actualStartTimestamp,
+      actualEndTimestamp,
+    );
 
     return {
       totalInterestEarned,

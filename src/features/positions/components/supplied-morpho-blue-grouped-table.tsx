@@ -101,6 +101,7 @@ type SuppliedMorphoBlueGroupedTableProps = {
   isLoadingEarnings?: boolean;
   earningsPeriod: EarningsPeriod;
   setEarningsPeriod: (period: EarningsPeriod) => void;
+  chainBlockData?: Record<number, { block: number; timestamp: number }>;
 };
 
 export function SuppliedMorphoBlueGroupedTable({
@@ -111,6 +112,7 @@ export function SuppliedMorphoBlueGroupedTable({
   account,
   earningsPeriod,
   setEarningsPeriod,
+  chainBlockData,
 }: SuppliedMorphoBlueGroupedTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showRebalanceModal, setShowRebalanceModal] = useState(false);
@@ -130,7 +132,6 @@ export function SuppliedMorphoBlueGroupedTable({
   }, [account, address]);
 
   const periodLabels: Record<EarningsPeriod, string> = {
-    all: 'All Time',
     day: '1D',
     week: '7D',
     month: '30D',

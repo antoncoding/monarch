@@ -1,6 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchUserTransactions, type TransactionFilters, type TransactionResponse } from './fetchUserTransactions';
 
+type UseUserTransactionsQueryOptions = {
+  filters: TransactionFilters;
+  enabled?: boolean;
+  /**
+   * When true, automatically paginates to fetch ALL transactions.
+   * Use for report generation when complete accuracy is needed.
+   * When false (default), fetches up to 1000 transactions and returns isTruncated flag.
+   * Use for summary pages when speed is prioritized.
+   */
+  paginate?: boolean;
+  /** Page size for pagination (default 1000) */
+  pageSize?: number;
+};
+
+type TransactionQueryResult = TransactionResponse & {
+  /** Indicates if data was truncated due to pagination limits */
+  isTruncated: boolean;
+};
+
 /**
  * Fetches user transactions from Morpho API or Subgraph using React Query.
  *
@@ -9,7 +28,7 @@ import { fetchUserTransactions, type TransactionFilters, type TransactionRespons
  * - Falls back to Subgraph if API fails or not supported
  * - Combines transactions from all target networks
  * - Sorts by timestamp (descending)
- * - Applies client-side pagination
+ * - Supports auto-pagination when paginate=true
  *
  * Cache behavior:
  * - staleTime: 30 seconds (transactions change moderately frequently)
@@ -18,20 +37,32 @@ import { fetchUserTransactions, type TransactionFilters, type TransactionRespons
  *
  * @example
  * ```tsx
- * const { data, isLoading, error } = useUserTransactionsQuery({
+ * // Summary page (fast, may be truncated)
+ * const { data, isLoading } = useUserTransactionsQuery({
  *   filters: {
  *     userAddress: ['0x...'],
- *     chainIds: [1, 8453],
- *     first: 10,
- *     skip: 0,
+ *     timestampGte: oneDayAgo,
  *   },
+ *   paginate: false,
+ * });
+ * if (data?.isTruncated) {
+ *   // Show warning to user
+ * }
+ *
+ * // Report page (complete data)
+ * const { data } = useUserTransactionsQuery({
+ *   filters: {
+ *     userAddress: ['0x...'],
+ *     assetIds: ['0xUSDC...'],
+ *   },
+ *   paginate: true,
  * });
  * ```
  */
-export const useUserTransactionsQuery = (options: { filters: TransactionFilters; enabled?: boolean }) => {
-  const { filters, enabled = true } = options;
+export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOptions) => {
+  const { filters, enabled = true, paginate = false, pageSize = 1000 } = options;
 
-  return useQuery<TransactionResponse, Error>({
+  return useQuery<TransactionQueryResult, Error>({
     queryKey: [
       'user-transactions',
       filters.userAddress,
@@ -43,8 +74,61 @@ export const useUserTransactionsQuery = (options: { filters: TransactionFilters;
       filters.first,
       filters.hash,
       filters.assetIds,
+      paginate,
+      pageSize,
     ],
-    queryFn: () => fetchUserTransactions(filters),
+    queryFn: async () => {
+      if (!paginate) {
+        // Simple case: fetch once with limit
+        const response = await fetchUserTransactions({
+          ...filters,
+          first: pageSize,
+        });
+
+        // Check if data was truncated (fetched items equals page size, likely more exist)
+        const isTruncated = response.items.length >= pageSize || response.pageInfo.countTotal > response.items.length;
+
+        return {
+          ...response,
+          isTruncated,
+        };
+      }
+
+      // Pagination mode: fetch all data across multiple requests
+      let allItems: typeof filters extends TransactionFilters ? TransactionResponse['items'] : never = [];
+      let skip = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await fetchUserTransactions({
+          ...filters,
+          first: pageSize,
+          skip,
+        });
+
+        allItems = [...allItems, ...response.items];
+        skip += response.items.length;
+
+        // Stop if we got fewer items than requested (last page)
+        hasMore = response.items.length >= pageSize;
+
+        // Safety: max 50 pages to prevent infinite loops
+        if (skip >= 50 * pageSize) {
+          console.warn('Transaction pagination limit reached (50 pages)');
+          break;
+        }
+      }
+
+      return {
+        items: allItems,
+        pageInfo: {
+          count: allItems.length,
+          countTotal: allItems.length,
+        },
+        error: null,
+        isTruncated: false, // We fetched everything
+      };
+    },
     enabled: enabled && filters.userAddress.length > 0,
     staleTime: 30_000, // 30 seconds - transactions change moderately frequently
     refetchOnWindowFocus: true,
