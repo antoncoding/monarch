@@ -7,6 +7,7 @@ import { ReloadIcon } from '@radix-ui/react-icons';
 import { GearIcon } from '@radix-ui/react-icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import moment from 'moment';
 import { PulseLoader } from 'react-spinners';
 import { useConnection } from 'wagmi';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -290,21 +291,10 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                               const startTimestamp = blockData.timestamp * 1000;
                               const endTimestamp = Date.now();
 
-                              const formatDateTime = (timestamp: number) =>
-                                new Date(timestamp).toLocaleString('en-US', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                  hour12: false,
-                                });
-
                               return (
                                 <TooltipContent
                                   title="Interest Accrued Time Period"
-                                  detail={`Calculated from ${formatDateTime(startTimestamp)} to ${formatDateTime(endTimestamp)}`}
+                                  detail={`Calculated from ${moment(Number(startTimestamp)).format('MMM D, YYYY HH:mm')} to ${moment(Number(endTimestamp)).format('MMM D, YYYY HH:mm')}`}
                                 />
                               );
                             })()}
