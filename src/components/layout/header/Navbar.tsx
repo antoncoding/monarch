@@ -97,6 +97,13 @@ export function Navbar() {
         <div className="flex items-center">
           <NavbarLink href="/markets">Markets</NavbarLink>
           <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
+          <NavbarLink
+            href="/autovault"
+            matchKey="/autovault"
+          >
+            Autovault
+          </NavbarLink>
+          <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
           {mounted ? (
             <>
               <NavbarLink href={address ? `/positions/${address}` : '/positions'}>Portfolio</NavbarLink>
@@ -111,13 +118,6 @@ export function Navbar() {
           ) : (
             <>
               <NavbarLink href="/positions">Portfolio</NavbarLink>
-              <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
-              <NavbarLink
-                href="/autovault"
-                matchKey="/autovault"
-              >
-                Autovault
-              </NavbarLink>
               <span className="mx-1 h-4 border-l border-dashed border-[var(--grid-cell-muted)]" />
               <NavbarLink
                 href="/rewards"

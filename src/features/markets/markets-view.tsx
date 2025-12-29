@@ -165,7 +165,7 @@ export default function Markets() {
       <div className="flex w-full flex-col justify-between font-zen">
         <Header />
       </div>
-      <div className="container h-full gap-8 px-[4%]">
+      <div className="container h-full gap-8">
         <h1 className="py-8 font-zen"> Markets </h1>
 
         <div className="flex flex-col gap-4 pb-4">
@@ -218,7 +218,7 @@ export default function Markets() {
       </div>
 
       {/* Table Section - centered when expanded, full width when compact */}
-      <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 px-[2%]' : 'container px-[4%] mt-4'}>
+      <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 ' : 'container mt-4'}>
         <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
           <MarketsTable
             currentPage={currentPage}

@@ -42,7 +42,7 @@ export default function Positions() {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <div className="container h-full gap-8 px-[4%]">
+      <div className="container h-full gap-8">
         <div className="pb-4">
           <h1 className="font-zen">Portfolio</h1>
         </div>
