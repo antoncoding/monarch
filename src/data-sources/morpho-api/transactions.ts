@@ -1,5 +1,5 @@
 import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
-import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/useUserTransactionsQuery';
+import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
 import { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
