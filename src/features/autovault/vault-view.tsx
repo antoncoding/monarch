@@ -175,7 +175,7 @@ export default function VaultContent() {
   return (
     <div className="flex w-full flex-col font-zen">
       <Header />
-      <div className="mx-auto w-full max-w-6xl flex-1 px-6 pb-12 rounded">
+      <div className="mx-auto container flex-1 pb-12 rounded">
         <div className="space-y-8">
           {/* Vault Header */}
           <div className="flex items-center justify-between gap-4">
