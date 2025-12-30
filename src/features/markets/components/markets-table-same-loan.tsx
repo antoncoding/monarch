@@ -576,7 +576,6 @@ export function MarketsTableWithSameLoanAsset({
           placeholder="Search markets..."
         />
         <AssetFilter
-          variant="compact"
           showLabelPrefix
           label="Collateral"
           placeholder="All"
@@ -586,7 +585,6 @@ export function MarketsTableWithSameLoanAsset({
           loading={false}
         />
         <OracleFilter
-          variant="compact"
           showLabelPrefix
           selectedOracles={oracleFilter}
           setSelectedOracles={setOracleFilter}

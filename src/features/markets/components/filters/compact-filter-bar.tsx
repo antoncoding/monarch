@@ -79,7 +79,6 @@ export function CompactFilterBar({
       />
 
       <AssetFilter
-        variant="compact"
         showLabelPrefix
         label="Loan"
         placeholder="All"
@@ -90,7 +89,6 @@ export function CompactFilterBar({
       />
 
       <AssetFilter
-        variant="compact"
         showLabelPrefix
         label="Collateral"
         placeholder="All"
@@ -101,7 +99,6 @@ export function CompactFilterBar({
       />
 
       <OracleFilter
-        variant="compact"
         showLabelPrefix
         selectedOracles={selectedOracles}
         setSelectedOracles={setSelectedOracles}

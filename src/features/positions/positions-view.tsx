@@ -29,7 +29,7 @@ export default function Positions() {
   } = useUserVaultsV2Query({ userAddress: account as Address });
 
   // Calculate portfolio value from positions and vaults
-  const { totalUsd, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
+  const { totalUsd, assetBreakdown, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
 
   const loading = isMarketsLoading || isPositionsLoading;
 
@@ -52,15 +52,12 @@ export default function Positions() {
             variant="full"
             showAddress
           />
-          {!loading && (hasSuppliedMarkets || hasVaults) && (
+          {!loading && (
             <PortfolioValueBadge
               totalUsd={totalUsd}
+              assetBreakdown={assetBreakdown}
               isLoading={isPricesLoading}
               error={pricesError}
-              onClick={() => {
-                // TODO: Add click handler (show breakdown modal, navigate, etc.)
-                console.log('Portfolio value clicked');
-              }}
             />
           )}
         </div>
@@ -96,7 +93,7 @@ export default function Positions() {
           {/* Empty state (only if both finished loading and both empty) */}
           {showEmpty && (
             <EmptyScreen
-              message="No open positions. Start supplying!"
+              message="No open positions."
               className="mt-10"
             />
           )}

@@ -2,13 +2,20 @@ import { useMemo } from 'react';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import type { UserVaultV2 } from '@/data-sources/subgraph/v2-vaults';
 import type { MarketPositionWithEarnings } from '@/utils/types';
-import { calculatePortfolioValue, extractTokensFromPositions, extractTokensFromVaults } from '@/utils/portfolio';
+import {
+  type AssetBreakdownItem,
+  calculateAssetBreakdown,
+  calculatePortfolioValue,
+  extractTokensFromPositions,
+  extractTokensFromVaults,
+} from '@/utils/portfolio';
 import { useTokenPrices } from './useTokenPrices';
 
 type UsePortfolioValueReturn = {
   totalUsd: number;
   nativeSuppliesUsd: number;
   vaultsUsd: number;
+  assetBreakdown: AssetBreakdownItem[];
   isLoading: boolean;
   error: Error | null;
 };
@@ -32,25 +39,29 @@ export const usePortfolioValue = (positions: MarketPositionWithEarnings[], vault
   // Fetch prices for all tokens
   const { prices, isLoading, error } = useTokenPrices(tokens);
 
-  // Calculate portfolio value (memoized)
-  const portfolioValue = useMemo(() => {
+  // Calculate portfolio value and breakdown (memoized)
+  const { portfolioValue, assetBreakdown } = useMemo(() => {
     if (isLoading || prices.size === 0) {
       return {
-        total: 0,
-        breakdown: {
-          nativeSupplies: 0,
-          vaults: 0,
+        portfolioValue: {
+          total: 0,
+          breakdown: { nativeSupplies: 0, vaults: 0 },
         },
+        assetBreakdown: [],
       };
     }
 
-    return calculatePortfolioValue(positions, vaults, prices, findToken);
+    return {
+      portfolioValue: calculatePortfolioValue(positions, vaults, prices, findToken),
+      assetBreakdown: calculateAssetBreakdown(positions, vaults, prices, findToken),
+    };
   }, [positions, vaults, prices, isLoading, findToken]);
 
   return {
     totalUsd: portfolioValue.total,
     nativeSuppliesUsd: portfolioValue.breakdown.nativeSupplies,
     vaultsUsd: portfolioValue.breakdown.vaults,
+    assetBreakdown,
     isLoading,
     error,
   };
