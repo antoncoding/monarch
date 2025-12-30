@@ -124,7 +124,7 @@ function HomePage() {
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-line-grid opacity-30 pointer-events-none"
+            className="absolute inset-0 bg-line-grid opacity-50 pointer-events-none"
             aria-hidden="true"
           />
 
@@ -293,7 +293,7 @@ function HomePage() {
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-line-grid opacity-20 pointer-events-none"
+            className="absolute inset-0 bg-line-grid opacity-50 pointer-events-none"
             aria-hidden="true"
           />
 
