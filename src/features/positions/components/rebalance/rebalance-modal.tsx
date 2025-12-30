@@ -316,32 +316,30 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
           </ExecuteTransactionButton>
         </ModalFooter>
       </Modal>
-      {showProcessModal && (
-        <RebalanceProcessModal
-          currentStep={currentStep}
-          isPermit2Flow={usePermit2Setting}
-          onOpenChange={setShowProcessModal}
-          tokenSymbol={groupedPosition.loanAsset}
-          actionsCount={rebalanceActions.length}
-        />
-      )}
+      <RebalanceProcessModal
+        isOpen={showProcessModal}
+        currentStep={currentStep}
+        isPermit2Flow={usePermit2Setting}
+        onOpenChange={setShowProcessModal}
+        tokenSymbol={groupedPosition.loanAsset}
+        actionsCount={rebalanceActions.length}
+      />
 
-      {showToModal && (
-        <MarketSelectionModal
-          title="Select Destination Market"
-          description="Choose a market to rebalance funds to"
-          vaultAsset={groupedPosition.loanAssetAddress as `0x${string}`}
-          chainId={groupedPosition.chainId}
-          multiSelect={false}
-          onOpenChange={setShowToModal}
-          onSelect={(selectedMarkets) => {
-            if (selectedMarkets.length > 0) {
-              setSelectedToMarketUniqueKey(selectedMarkets[0].uniqueKey);
-            }
-          }}
-          confirmButtonText="Select Market"
-        />
-      )}
+      <MarketSelectionModal
+        isOpen={showToModal}
+        title="Select Destination Market"
+        description="Choose a market to rebalance funds to"
+        vaultAsset={groupedPosition.loanAssetAddress as `0x${string}`}
+        chainId={groupedPosition.chainId}
+        multiSelect={false}
+        onOpenChange={setShowToModal}
+        onSelect={(selectedMarkets) => {
+          if (selectedMarkets.length > 0) {
+            setSelectedToMarketUniqueKey(selectedMarkets[0].uniqueKey);
+          }
+        }}
+        confirmButtonText="Select Market"
+      />
     </>
   );
 }

@@ -8,6 +8,7 @@ import type { RebalanceStepType } from '@/hooks/useRebalance';
 type RebalanceProcessModalProps = {
   currentStep: RebalanceStepType;
   isPermit2Flow: boolean;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   tokenSymbol: string;
   actionsCount: number;
@@ -16,6 +17,7 @@ type RebalanceProcessModalProps = {
 export function RebalanceProcessModal({
   currentStep,
   isPermit2Flow,
+  isOpen,
   onOpenChange,
   tokenSymbol,
   actionsCount,
@@ -85,7 +87,7 @@ export function RebalanceProcessModal({
 
   return (
     <Modal
-      isOpen
+      isOpen={isOpen}
       onOpenChange={onOpenChange}
       size="lg"
       isDismissable={false}
