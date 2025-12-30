@@ -276,26 +276,24 @@ export default function ReportContent({ account }: { account: Address }) {
                   granularity="hour"
                 />
 
-              <Button
-                onClick={() => {
-                  void handleGenerateReport();
-                }}
-                disabled={!selectedAsset || isGenerating || !!startDateError || !!endDateError}
-                className="h-10 min-w-[100px]"
-                variant="primary"
-              >
-                {isGenerating ? (
-                  <Spinner
-                    size={16}
-                    color="currentColor"
-                  />
-                ) : (
-                  'Generate'
-                )}
-              </Button>
+                <Button
+                  onClick={() => {
+                    void handleGenerateReport();
+                  }}
+                  disabled={!selectedAsset || isGenerating || !!startDateError || !!endDateError}
+                  className="h-10 min-w-[100px]"
+                  variant="primary"
+                >
+                  {isGenerating ? (
+                    <Spinner
+                      size={16}
+                      color="currentColor"
+                    />
+                  ) : (
+                    'Generate'
+                  )}
+                </Button>
               </div>
-
-              
             </div>
 
             {/* Report Content */}

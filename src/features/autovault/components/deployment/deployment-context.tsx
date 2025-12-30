@@ -60,9 +60,10 @@ export function DeploymentProvider({ children }: { children: React.ReactNode }) 
 
     setDeploymentPhase('deploying');
 
+    const random = Math.floor(Math.random() * 100);
     try {
       // Execute deployment and get transaction hash
-      const txHash = await createVaultTx(selectedTokenAndNetwork.token.address);
+      const txHash = await createVaultTx(selectedTokenAndNetwork.token.address, `MONARCH_${random.toString()}`);
 
       if (!txHash) {
         setDeploymentPhase('selection');
