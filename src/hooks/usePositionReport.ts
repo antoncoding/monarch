@@ -84,7 +84,7 @@ export const usePositionReport = (
     while (hasMore) {
       const transactionResult = await fetchUserTransactions({
         userAddress: [account],
-        chainIds: [selectedAsset.chainId],
+        chainId: selectedAsset.chainId,
         timestampGte: actualStartTimestamp,
         timestampLte: actualEndTimestamp,
         assetIds: [selectedAsset.address],

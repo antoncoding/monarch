@@ -71,7 +71,6 @@ const formatTimeAgo = (timestamp: number): string => {
 };
 
 export function HistoryTable({ account, isVaultAdapter = false }: HistoryTableProps) {
-
   const { data: positions, loading: loadingPosition } = useUserPositions(account, true);
   const { allMarkets, loading: loadingMarkets } = useProcessedMarkets();
 
@@ -120,7 +119,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
       first: pageSize,
       skip: (currentPage - 1) * pageSize,
       marketUniqueKeys: isVaultAdapter ? [] : marketIdFilter,
-      chainIds: activeChainId ? [activeChainId] : undefined,
+      chainId: activeChainId ?? undefined,
     },
     enabled: Boolean(account) && allMarkets.length > 0 && Boolean(activeChainId),
   });

@@ -62,7 +62,7 @@ export function TransactionHistoryPreview({
       userAddress: account ? [account] : [],
       first: limit,
       skip: 0,
-      chainIds: [chainId],
+      chainId,
     },
     enabled: Boolean(account) && allMarkets.length > 0,
   });

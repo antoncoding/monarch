@@ -1,6 +1,5 @@
 import { userTransactionsQuery } from '@/graphql/morpho-api-queries';
 import type { TransactionFilters, TransactionResponse } from '@/hooks/queries/fetchUserTransactions';
-import { SupportedNetworks } from '@/utils/networks';
 import { morphoGraphqlFetcher } from './fetchers';
 
 // Define the expected shape of the GraphQL response for transactions
@@ -13,10 +12,9 @@ type MorphoTransactionsApiResponse = {
 
 export const fetchMorphoTransactions = async (filters: TransactionFilters): Promise<TransactionResponse> => {
   // Conditionally construct the 'where' object
-  const whereClause: Record<string, any> = {
+  const whereClause: Record<string, unknown> = {
     userAddress_in: filters.userAddress, // Assuming this is always required
-    // Default chainIds if none are provided in filters for Morpho API call context
-    chainId_in: filters.chainIds ?? [SupportedNetworks.Base, SupportedNetworks.Mainnet],
+    chainId_in: [filters.chainId],
   };
 
   if (filters.marketUniqueKeys && filters.marketUniqueKeys.length > 0) {
