@@ -11,6 +11,7 @@ import Header from '@/components/layout/header/Header';
 import LoadingScreen from '@/components/status/loading-screen';
 import { usePositionReport } from '@/hooks/usePositionReport';
 import type { ReportSummary } from '@/hooks/usePositionReport';
+import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositions from '@/hooks/useUserPositions';
 import { getMorphoGenesisDate } from '@/utils/morpho';
 import { AssetSelector, type AssetKey } from './components/asset-selector';
@@ -24,9 +25,16 @@ type ReportState = {
 };
 
 export default function ReportContent({ account }: { account: Address }) {
+  // Global markets loading state
+  const { loading: isMarketsLoading } = useProcessedMarkets();
+
   // Fetch ALL positions including closed ones (onlySupplied: false)
   // This ensures report includes markets that were active during the selected period
-  const { loading, data: positions } = useUserPositions(account, true);
+  const { loading: isPositionsLoading, data: positions } = useUserPositions(account, true);
+
+  // Combined loading state
+  const loading = isMarketsLoading || isPositionsLoading;
+
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
 
   // Get today's date and 2 months ago
@@ -175,13 +183,16 @@ export default function ReportContent({ account }: { account: Address }) {
         <h1 className="py-4 font-zen text-2xl">Position Report</h1>
 
         {loading ? (
-          <LoadingScreen message="Loading User Info..." />
+          <LoadingScreen
+            message={isMarketsLoading ? 'Loading markets...' : 'Loading positions...'}
+            className="mt-6"
+          />
         ) : positions.length === 0 ? (
-          <div className="bg-surface w-full items-center rounded p-12 text-center text-secondary">No positions available.</div>
+          <div className="bg-surface mt-6 w-full items-center rounded p-12 text-center text-secondary">No positions available.</div>
         ) : (
           <div className="mt-4 space-y-6">
             {/* Controls Row */}
-            <div className="flex h-[88px] items-start justify-between">
+            <div className="flex items-start justify-between gap-4">
               {/* Left side controls group */}
               <div className="flex items-start gap-4">
                 {/* Asset Selector */}
@@ -189,11 +200,11 @@ export default function ReportContent({ account }: { account: Address }) {
                   selectedAsset={selectedAsset}
                   assets={uniqueAssets}
                   onSelect={handleAssetChange}
+                  variant="compact"
                 />
 
                 {/* Date Pickers */}
                 <DatePicker
-                  label="Start Date"
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   value={startDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -206,7 +217,6 @@ export default function ReportContent({ account }: { account: Address }) {
                 />
 
                 <DatePicker
-                  label="End Date"
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                   value={endDate as any}
                   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -225,12 +235,12 @@ export default function ReportContent({ account }: { account: Address }) {
                   void handleGenerateReport();
                 }}
                 disabled={!selectedAsset || isGenerating || !!startDateError || !!endDateError}
-                className="inline-flex h-14 min-w-[120px] items-center gap-2"
+                className="h-10 min-w-[100px]"
                 variant="primary"
               >
                 {isGenerating ? (
                   <Spinner
-                    size={20}
+                    size={16}
                     color="currentColor"
                   />
                 ) : (

@@ -309,7 +309,7 @@ export function ReportTable({ report, asset, startDate, endDate, chainId }: Repo
   return (
     <div className="space-y-6">
       {/* Summary Banner */}
-      <div className="bg-surface rounded p-5">
+      <div className="bg-surface rounded-sm p-5">
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-secondary">
             <span>From</span>

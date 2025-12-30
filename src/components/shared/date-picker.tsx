@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { format } from 'date-fns';
 import { FiCalendar } from 'react-icons/fi';
+import { ChevronDownIcon } from '@radix-ui/react-icons';
 import type { DateValue, ZonedDateTime } from '@internationalized/date';
 import { fromDate, getLocalTimeZone, toCalendarDate } from '@internationalized/date';
 
@@ -120,7 +121,7 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
   }, [value, granularity, timezone]);
 
   return (
-    <div className={cn('flex flex-col gap-1', isInvalid && 'h-[88px]', !isInvalid && 'h-14')}>
+    <div className="flex flex-col gap-1">
       <Popover
         open={open}
         onOpenChange={setOpen}
@@ -129,15 +130,22 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
           <button
             type="button"
             className={cn(
-              'bg-surface relative flex h-14 w-full flex-col items-start justify-center rounded-sm px-4 shadow-sm',
+              'bg-surface flex h-10 w-full items-center justify-between gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
               isInvalid && 'border border-red-500',
             )}
           >
-            {label && <span className="absolute left-4 top-2 text-xs text-gray-500">{label}</span>}
-            <div className="flex w-full items-center justify-start gap-2 pt-4 text-sm">
-              <FiCalendar className="h-4 w-4 text-gray-500" />
-              <span className={cn(!value && 'text-secondary')}>{displayValue ?? <span className="text-secondary">Pick a date</span>}</span>
+            <div className="flex items-center gap-2 text-sm">
+              <FiCalendar className="h-4 w-4 text-secondary" />
+              <span className={cn(!value && 'text-secondary')}>
+                {displayValue ?? 'Pick a date'}
+              </span>
             </div>
+            <ChevronDownIcon
+              className={cn(
+                'h-4 w-4 text-secondary transition-transform duration-200',
+                open && 'rotate-180',
+              )}
+            />
           </button>
         </PopoverTrigger>
         <PopoverContent
@@ -157,11 +165,11 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
           />
           {granularity === 'hour' && (
             <div className="border-t border-border p-2">
-              <label className="text-xs font-normal text-secondary font-zen mb-1.5 block">Hour</label>
+              <label className="mb-1.5 block font-zen text-xs font-normal text-secondary">Hour</label>
               <select
                 value={selectedHour}
                 onChange={(e) => handleHourChange(Number(e.target.value))}
-                className="w-full bg-hovered h-8 rounded-sm px-2 text-xs text-primary font-zen focus:border-primary focus:outline-none"
+                className="h-8 w-full rounded-sm bg-hovered px-2 font-zen text-xs text-primary focus:border-primary focus:outline-none"
               >
                 {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
                   <option
@@ -177,7 +185,7 @@ function DatePicker({ label, value, onChange, minValue, maxValue, isInvalid, err
         </PopoverContent>
       </Popover>
 
-      {isInvalid && errorMessage && <p className={cn('text-xs text-red-500 font-zen')}>{errorMessage}</p>}
+      {isInvalid && errorMessage && <p className="font-zen text-xs text-red-500">{errorMessage}</p>}
     </div>
   );
 }
