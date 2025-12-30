@@ -46,12 +46,7 @@ const formatTimeAgo = (timestamp: number): string => {
   return `${diffInYears}y ago`;
 };
 
-export function TransactionHistoryPreview({
-  account,
-  chainId,
-  isVaultAdapter = false,
-  emptyMessage,
-}: TransactionHistoryPreviewProps) {
+export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = false, emptyMessage }: TransactionHistoryPreviewProps) {
   const [isViewAllHovered, setIsViewAllHovered] = useState(false);
   const { allMarkets } = useProcessedMarkets();
 

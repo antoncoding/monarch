@@ -16,7 +16,7 @@ export function FeatureCard({ icon, title, description, href, className }: Featu
   const content = (
     <div
       className={cn(
-        'group p-5',
+        'group p-5 h-full',
         // Grid-inspired border - all sides equal weight dashed
         'border border-dashed border-[var(--grid-cell-muted)]',
         'bg-surface',

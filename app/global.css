@@ -134,7 +134,10 @@
 
   /* Grid texture patterns for landing page */
   .bg-dot-grid {
-    background-image: radial-gradient(var(--grid-dot-color) 1px, transparent 1px);
+    background-image: radial-gradient(
+      var(--grid-dot-color) 1px,
+      transparent 1px
+    );
     background-size: 20px 20px;
   }
 
@@ -147,7 +150,11 @@
 
   /* Grid mask effects */
   .grid-corner-mask {
-    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 50%, black 100%);
+    mask-image: radial-gradient(
+      ellipse 80% 80% at 50% 50%,
+      transparent 50%,
+      black 100%
+    );
   }
 
   .grid-top-fade {
@@ -159,7 +166,11 @@
   }
 
   .grid-radial-fade {
-    mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 0%, transparent 70%);
+    mask-image: radial-gradient(
+      ellipse 60% 60% at 50% 50%,
+      black 0%,
+      transparent 70%
+    );
   }
 
   @media (width >= 640px) {

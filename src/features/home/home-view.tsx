@@ -10,12 +10,12 @@ import {
   RiSearchLine,
   RiLineChartLine,
   RiShieldCheckLine,
-  RiCodeSSlashLine,
   RiHandCoinLine,
   RiUserSettingsLine,
-  RiRobot2Line,
-  RiEyeLine,
   RiSettings4Line,
+  RiExchangeLine,
+  RiRocketLine,
+  RiUmbrellaLine,
 } from 'react-icons/ri';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
@@ -73,6 +73,14 @@ function HomePage() {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full sm:w-auto min-w-[180px] font-zen"
+                    onClick={() => scrollToSection('section-1')}
+                  >
+                    Learn More
+                  </Button>
                   <Link
                     href="/markets"
                     className="block no-underline"
@@ -86,14 +94,6 @@ function HomePage() {
                       <RiArrowRightLine className="h-5 w-5 ml-2" />
                     </Button>
                   </Link>
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[180px] font-zen"
-                    onClick={() => scrollToSection('section-1')}
-                  >
-                    Learn More
-                  </Button>
                 </div>
               </div>
 
@@ -139,34 +139,43 @@ function HomePage() {
                   />
                   <SectionTag>Market Analysis</SectionTag>
                 </div>
-                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Discover Alpha</h2>
-                <p className="text-lg text-secondary sm:text-xl md:text-2xl max-w-2xl">Navigate DeFi with Complete Risk Visibility</p>
+                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Fully Customizable</h2>
+                <p className="text-lg text-secondary sm:text-xl md:text-2xl max-w-2xl">Permission-less Access to Every Morpho Market</p>
               </div>
 
               {/* Feature cards grid */}
               <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <FeatureCard
-                  icon={<RiLineChartLine className="h-6 w-6" />}
-                  title="Smart Rebalancing"
-                  description="Identify optimal yield opportunities across Morpho markets. Move your positions with ease to maximize returns."
+                  icon={<RiSearchLine className="h-6 w-6" />}
+                  title="Advanced Filtering"
+                  description="Search by asset, oracle, network. Filter by LLTV, utilization, and risk metrics."
                   href="/markets"
                 />
                 <FeatureCard
-                  icon={<RiSearchLine className="h-6 w-6" />}
-                  title="Yield Discovery"
-                  description="Compare APY across all markets with full risk context. Find the best returns while understanding the trade-offs."
+                  icon={<RiLineChartLine className="h-6 w-6" />}
+                  title="Full Transparency"
+                  description="Compare APY, utilization, oracle feeds, and risk breakdowns across all markets."
                   href="/markets"
                 />
                 <FeatureCard
                   icon={<RiShieldCheckLine className="h-6 w-6" />}
-                  title="Risk Breakdown"
-                  description="Oracle analysis, market participant breakdown, and trending data. Make informed decisions with complete transparency."
+                  title="Risk Visibility"
+                  description="Asset risk, oracle risk, and debt indicators. Make informed decisions."
                   href="/markets"
                 />
               </div>
 
               {/* CTA */}
               <div className="mt-8 flex flex-col items-center gap-3 sm:mt-12 sm:flex-row sm:gap-4">
+                <Button
+                  variant="default"
+                  size="lg"
+                  className="font-zen flex w-auto min-w-[200px] items-center justify-center gap-2"
+                  onClick={() => scrollToSection('section-2')}
+                >
+                  Continue
+                  <RiArrowDownLine className="h-5 w-5" />
+                </Button>
                 <Link
                   href="/markets"
                   className="inline-block no-underline"
@@ -180,15 +189,6 @@ function HomePage() {
                     <RiArrowRightLine className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="font-zen flex w-auto min-w-[200px] items-center justify-center gap-2"
-                  onClick={() => scrollToSection('section-2')}
-                >
-                  Continue
-                  <RiArrowDownLine className="h-5 w-5" />
-                </Button>
               </div>
             </div>
           </div>
@@ -214,7 +214,7 @@ function HomePage() {
                     direction="center-out"
                     cellCount={12}
                   />
-                  <SectionTag>Transparency</SectionTag>
+                  <SectionTag>Portfolio</SectionTag>
                   <ScrollGridReveal
                     direction="center-out"
                     cellCount={12}
@@ -229,31 +229,31 @@ function HomePage() {
               {/* Feature cards */}
               <div className="grid gap-4 sm:gap-6 md:grid-cols-3 max-w-4xl mx-auto">
                 <FeatureCard
-                  icon={<RiCodeSSlashLine className="h-6 w-6" />}
-                  title="Open Source"
-                  description="Full code transparency. Verify everything yourself."
+                  icon={<RiExchangeLine className="h-6 w-6" />}
+                  title="Smart Rebalancing"
+                  description="Move positions between markets with the same loan asset. Batch multiple actions in one transaction."
+                  href="/positions"
                   className="bg-main"
                 />
                 <FeatureCard
                   icon={<RiHandCoinLine className="h-6 w-6" />}
                   title="Zero Platform Fees"
-                  description="Direct protocol interaction. No middlemen."
+                  description="Direct protocol interaction. No middlemen, no hidden costs."
                   className="bg-main"
                 />
                 <FeatureCard
                   icon={<RiUserSettingsLine className="h-6 w-6" />}
-                  title="Be Your Own Curator"
-                  description="Define your risk parameters. Find your own insights."
+                  title="Full Risk Control"
+                  description="Monitor risk indicators, collateral exposure, and accrued interest across all positions."
+                  href="/positions"
                   className="bg-main"
                 />
               </div>
 
               {/* CTA */}
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4">
-                <a
-                  href={EXTERNAL_LINKS.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/positions"
                   className="inline-block no-underline"
                 >
                   <Button
@@ -261,10 +261,10 @@ function HomePage() {
                     size="lg"
                     className="font-zen flex w-auto min-w-[200px] items-center justify-center gap-2"
                   >
-                    <RiGithubFill className="h-5 w-5" />
-                    View Source
+                    Manage Positions
+                    <RiArrowRightLine className="h-5 w-5" />
                   </Button>
-                </a>
+                </Link>
                 <Button
                   variant="primary"
                   size="lg"
@@ -315,25 +315,25 @@ function HomePage() {
               {/* Feature cards */}
               <div className="grid gap-4 sm:gap-6 md:grid-cols-3 max-w-4xl mx-auto">
                 <FeatureCard
-                  icon={<RiRobot2Line className="h-6 w-6" />}
-                  title="AutoVault"
-                  description="Deploy your personal vault with custom risk rules. No performance fees, no dependency changes."
+                  icon={<RiRocketLine className="h-6 w-6" />}
+                  title="Deploy"
+                  description="Launch your own vault in one click. Full ownership, no middlemen."
                   href="/autovault"
                 />
                 <FeatureCard
-                  icon={<RiEyeLine className="h-6 w-6" />}
-                  title="Guardian Services"
-                  description="Automated position monitoring. See market state changes and meta events before the wave."
+                  icon={<RiSettings4Line className="h-6 w-6" />}
+                  title="Configure"
+                  description="Set allocation caps, choose agents, define collateral limits. Your rules."
                 />
                 <FeatureCard
-                  icon={<RiSettings4Line className="h-6 w-6" />}
-                  title="Smart Agents"
-                  description="Choose agents that balance between yield and risk within your boundaries. Full control maintained."
+                  icon={<RiUmbrellaLine className="h-6 w-6" />}
+                  title="Enjoy"
+                  description="Sit back while agents optimize yield. Zero hassle, hundred percent control."
                 />
               </div>
 
-              {/* CTA Buttons */}
-              <div className="mt-8 mx-auto flex flex-col items-center justify-center gap-3 sm:mt-12 sm:flex-row sm:gap-4">
+              {/* CTA Button */}
+              <div className="mt-8 mx-auto flex justify-center sm:mt-12">
                 <Link
                   href="/autovault"
                   className="block no-underline"
@@ -344,18 +344,6 @@ function HomePage() {
                     className="w-auto min-w-[200px] font-zen"
                   >
                     Try AutoVault
-                  </Button>
-                </Link>
-                <Link
-                  href="/markets"
-                  className="block no-underline"
-                >
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-auto min-w-[200px] font-zen"
-                  >
-                    Explore Markets
                   </Button>
                 </Link>
               </div>
