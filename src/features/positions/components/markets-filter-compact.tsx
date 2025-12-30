@@ -69,9 +69,9 @@ export function MarketFilter({ onOpenSettings, className }: MarketFilterProps) {
     onOpenSettings();
   };
 
-  const basicFilterActive = includeUnknownTokens || showUnknownOracle || showUnwhitelistedMarkets;
+  const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets;
   const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled;
-  const hasActiveFilters = basicFilterActive || advancedFilterActive;
+  const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
   return (
     <div className={className}>
