@@ -21,15 +21,19 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
 
-import { SectionTag, PoweredByBadge, GridAccent, FeatureCard, ResponsiveGridDivider, ScrollGridReveal } from '@/components/landing';
+import { SectionTag, GridAccent, FeatureCard, ResponsiveGridDivider, ScrollGridReveal } from '@/components/landing';
 
 import { CustomTypingAnimation } from './typing-title';
-
+import { useTheme } from 'next-themes';
 function HomePage() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const { theme } = useTheme()
+
+  console.log('theme', theme)
 
   return (
     <div className="bg-main min-h-screen font-zen relative">
@@ -115,11 +119,6 @@ function HomePage() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Powered by Morpho - visible at bottom of first screen */}
-          <div className="pb-8 flex justify-center">
-            <PoweredByBadge />
           </div>
         </section>
 
