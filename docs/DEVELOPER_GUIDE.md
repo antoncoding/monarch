@@ -250,11 +250,13 @@ const [showModal, setShowModal] = useState(false);
 
 **Pattern 2: Global State (Zustand)**
 ```tsx
-const { open } = useModal();
+const { open } = useModalStore();
 <Button onClick={() => open('supply', { market, position })}>Supply</Button>
 ```
 
-Use Pattern 2 only when: multi-trigger (2+ places), props drilling pain, or modal chaining.
+Use Pattern 2 when: multi-trigger (2+ places), props drilling pain, modal chaining, or **nested modals**.
+
+⚠️ **Nested modals must use Pattern 2.** Radix-UI crashes with "Maximum update depth exceeded" when multiple Dialogs are mounted simultaneously ([#3675](https://github.com/radix-ui/primitives/issues/3675)). The modal store avoids this by only mounting visible modals.
 
 ---
 
