@@ -30,6 +30,7 @@ export function CompactSearchInput({ value, onChange, placeholder = 'Search...',
       />
       {value && (
         <button
+          aria-label='clear search'
           type="button"
           onClick={() => onChange('')}
           className="shrink-0 text-secondary transition-colors duration-150 hover:text-primary"
