@@ -14,6 +14,12 @@ export type TransactionFilters = {
   first?: number;
   hash?: string;
   assetIds?: string[];
+  /**
+   * When true, pass skip directly to API and skip client-side pagination.
+   * Use for paginated loops that fetch all data across multiple requests.
+   * When false (default), use client-side pagination for correct multi-network sorting.
+   */
+  useServerSidePagination?: boolean;
 };
 
 export type TransactionResponse = {
@@ -76,11 +82,17 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
       // Try Morpho API first if supported
       if (supportsMorphoApi(network)) {
         try {
+          // For server-side pagination: pass skip/first directly to API
+          // For client-side pagination (default): fetch enough items for skip+first, apply slice later
+          const useServerPagination = filters.useServerSidePagination ?? false;
+          const itemsNeeded = useServerPagination
+            ? (filters.first ?? MAX_ITEMS_PER_SOURCE)
+            : (filters.skip ?? 0) + (filters.first ?? MAX_ITEMS_PER_SOURCE);
           const morphoFilters = {
             ...filters,
             chainIds: [network],
-            first: MAX_ITEMS_PER_SOURCE,
-            skip: 0,
+            first: Math.min(itemsNeeded, MAX_ITEMS_PER_SOURCE),
+            skip: useServerPagination ? (filters.skip ?? 0) : 0,
           };
           const morphoResponse = await fetchMorphoTransactions(morphoFilters);
           if (!morphoResponse.error) {
@@ -89,7 +101,7 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
               items: networkItems,
               pageInfo: {
                 count: networkItems.length,
-                countTotal: networkItems.length,
+                countTotal: morphoResponse.pageInfo.countTotal,
               },
               error: null,
             };
@@ -161,10 +173,11 @@ export async function fetchUserTransactions(filters: TransactionFilters): Promis
   // 4. Sort combined results by timestamp
   combinedItems.sort((a, b) => b.timestamp - a.timestamp);
 
-  // 5. Apply client-side pagination
-  const skip = filters.skip ?? 0;
-  const first = filters.first ?? combinedItems.length;
-  const paginatedItems = combinedItems.slice(skip, skip + first);
+  // 5. Apply client-side pagination (skip when using server-side pagination)
+  const useServerPagination = filters.useServerSidePagination ?? false;
+  const paginatedItems = useServerPagination
+    ? combinedItems
+    : combinedItems.slice(filters.skip ?? 0, (filters.skip ?? 0) + (filters.first ?? combinedItems.length));
 
   const finalError = errors.length > 0 ? errors.join('; ') : null;
 

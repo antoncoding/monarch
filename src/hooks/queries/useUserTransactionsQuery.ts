@@ -47,7 +47,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
         // Simple case: fetch once with limit
         return await fetchUserTransactions({
           ...filters,
-          first: pageSize,
+          first: filters.first ?? pageSize,
         });
       }
 
@@ -61,6 +61,7 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
           ...filters,
           first: pageSize,
           skip,
+          useServerSidePagination: true,
         });
 
         allItems = [...allItems, ...response.items];
