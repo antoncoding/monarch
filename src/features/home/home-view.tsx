@@ -48,6 +48,16 @@ function HomePage() {
       <main className="relative z-10 mx-auto w-full pt-[48px] md:pt-[56px]">
         {/* Hero Section - Clean Greptile-style layout */}
         <section className="relative min-h-[calc(100vh-48px)] md:min-h-[calc(100vh-56px)] flex flex-col">
+          {/* Subtle dot grid with radial focus gradient */}
+          <div
+            className="absolute inset-0 z-0 bg-dot-grid pointer-events-none"
+            style={{
+              opacity: 1,
+              maskImage: 'radial-gradient(ellipse 90% 80% at 30% 50%, black 0%, transparent 70%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 90% 80% at 30% 50%, black 0%, transparent 70%)',
+            }}
+            aria-hidden="true"
+          />
           <GridAccent
             position="top-right"
             variant="dots"
@@ -124,7 +134,7 @@ function HomePage() {
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-line-grid opacity-50 pointer-events-none"
+            className="absolute inset-0 bg-line-grid opacity-40 pointer-events-none"
             aria-hidden="true"
           />
 
@@ -293,7 +303,7 @@ function HomePage() {
             aria-hidden="true"
           />
           <div
-            className="absolute inset-0 bg-line-grid opacity-50 pointer-events-none"
+            className="absolute inset-0 bg-line-grid opacity-40 pointer-events-none"
             aria-hidden="true"
           />
 
