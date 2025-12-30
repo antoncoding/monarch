@@ -23,6 +23,7 @@ export function CompactSearchInput({ value, onChange, placeholder = 'Search...',
       <FiSearch className="h-4 w-4 shrink-0 text-secondary" />
       <input
         type="text"
+        aria-label='search input'
         className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-secondary"
         placeholder={placeholder}
         value={value}
@@ -30,7 +31,7 @@ export function CompactSearchInput({ value, onChange, placeholder = 'Search...',
       />
       {value && (
         <button
-          aria-label='clear search'
+          aria-label="clear search"
           type="button"
           onClick={() => onChange('')}
           className="shrink-0 text-secondary transition-colors duration-150 hover:text-primary"

@@ -40,8 +40,7 @@ export default function AssetFilter({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getTokenKey = (token: ERC20Token | UnknownERC20Token) =>
-    token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
+  const getTokenKey = (token: ERC20Token | UnknownERC20Token) => token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
