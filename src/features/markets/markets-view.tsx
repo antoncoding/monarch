@@ -20,7 +20,6 @@ export default function Markets() {
   // Data fetching with React Query
   const { data: rawMarkets, isLoading: loading, refetch } = useMarketsQuery();
 
-  // Filter state (persisted to localStorage)
   const filters = useMarketsFilters();
 
   // UI state
