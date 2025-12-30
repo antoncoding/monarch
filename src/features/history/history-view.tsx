@@ -6,8 +6,6 @@ import Header from '@/components/layout/header/Header';
 import { HistoryTable } from './components/history-table';
 
 export default function HistoryContent({ account }: { account: string }) {
-  
-
   const searchParams = useSearchParams();
   const isVaultAdapter = searchParams.get('isVaultAdapter') === 'true';
 
