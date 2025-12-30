@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Tooltip } from '@/components/ui/tooltip';
 import { IconSwitch } from '@/components/ui/icon-switch';
 import { Divider } from '@/components/ui/divider';
@@ -20,6 +20,7 @@ import { useDisclosure } from '@/hooks/useDisclosure';
 import { usePositionsPreferences } from '@/stores/usePositionsPreferences';
 import { usePositionsFilters } from '@/stores/usePositionsFilters';
 import { useAppSettings } from '@/stores/useAppSettings';
+import { useModalStore } from '@/stores/useModalStore';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useRateLabel } from '@/hooks/useRateLabel';
 import { useStyledToast } from '@/hooks/useStyledToast';
@@ -31,7 +32,6 @@ import { convertApyToApr } from '@/utils/rateMath';
 import { type GroupedPosition, type WarningWithDetail, WarningCategory } from '@/utils/types';
 import { RiskIndicator } from '@/features/markets/components/risk-indicator';
 import { PositionActionsDropdown } from './position-actions-dropdown';
-import { RebalanceModal } from './rebalance/rebalance-modal';
 import { SuppliedMarketsDetail } from './supplied-markets-detail';
 import { CollateralIconsDisplay } from './collateral-icons-display';
 
@@ -110,13 +110,12 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   } = useUserPositionsSummaryData(account, period);
 
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [showRebalanceModal, setShowRebalanceModal] = useState(false);
-  const [selectedGroupedPosition, setSelectedGroupedPosition] = useState<GroupedPosition | null>(null);
   const { showCollateralExposure, setShowCollateralExposure } = usePositionsPreferences();
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onOpenChange: onSettingsOpenChange } = useDisclosure();
   const { address } = useConnection();
   const { isAprDisplay } = useAppSettings();
   const { short: rateLabel } = useRateLabel();
+  const { open: openModal } = useModalStore();
 
   const toast = useStyledToast();
 
@@ -134,18 +133,6 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
   const groupedPositions = useMemo(() => groupPositionsByLoanAsset(marketPositions), [marketPositions]);
 
   const processedPositions = useMemo(() => processCollaterals(groupedPositions), [groupedPositions]);
-
-  useEffect(() => {
-    if (selectedGroupedPosition) {
-      const updatedPosition = processedPositions.find(
-        (position) =>
-          position.loanAssetAddress === selectedGroupedPosition.loanAssetAddress && position.chainId === selectedGroupedPosition.chainId,
-      );
-      if (updatedPosition) {
-        setSelectedGroupedPosition(updatedPosition);
-      }
-    }
-  }, [processedPositions]);
 
   const toggleRow = (rowKey: string) => {
     setExpandedRows((prev) => {
@@ -338,8 +325,11 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
                               toast.error('No authorization', 'You can only rebalance your own positions');
                               return;
                             }
-                            setSelectedGroupedPosition(groupedPosition);
-                            setShowRebalanceModal(true);
+                            openModal('rebalance', {
+                              groupedPosition,
+                              refetch,
+                              isRefetching,
+                            });
                           }}
                         />
                       </div>
@@ -374,15 +364,6 @@ export function SuppliedMorphoBlueGroupedTable({ account }: SuppliedMorphoBlueGr
           </TableBody>
         </Table>
       </TableContainerWithHeader>
-      {showRebalanceModal && selectedGroupedPosition && (
-        <RebalanceModal
-          groupedPosition={selectedGroupedPosition}
-          onOpenChange={setShowRebalanceModal}
-          isOpen={showRebalanceModal}
-          refetch={refetch}
-          isRefetching={isRefetching}
-        />
-      )}
       <Modal
         isOpen={isSettingsOpen}
         onOpenChange={onSettingsOpenChange}

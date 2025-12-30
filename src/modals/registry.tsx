@@ -16,6 +16,19 @@ const BridgeSwapModal = lazy(() => import('@/features/swap/components/BridgeSwap
 // Supply & Withdraw
 const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m) => ({ default: m.SupplyModalV2 })));
 
+// Rebalance
+const RebalanceModal = lazy(() =>
+  import('@/features/positions/components/rebalance/rebalance-modal').then((m) => ({ default: m.RebalanceModal })),
+);
+
+const RebalanceProcessModal = lazy(() =>
+  import('@/features/positions/components/rebalance/rebalance-process-modal').then((m) => ({ default: m.RebalanceProcessModal })),
+);
+
+const RebalanceMarketSelectionModal = lazy(() =>
+  import('@/features/markets/components/market-selection-modal').then((m) => ({ default: m.MarketSelectionModal })),
+);
+
 // Settings & Configuration
 const BlacklistedMarketsModal = lazy(() =>
   import('@/modals/settings/blacklisted-markets-modal').then((m) => ({
@@ -38,6 +51,9 @@ export const MODAL_REGISTRY: {
 } = {
   bridgeSwap: BridgeSwapModal,
   supply: SupplyModalV2,
+  rebalance: RebalanceModal,
+  rebalanceProcess: RebalanceProcessModal,
+  rebalanceMarketSelection: RebalanceMarketSelectionModal,
   marketSettings: MarketSettingsModal,
   trustedVaults: TrustedVaultsModal,
   blacklistedMarkets: BlacklistedMarketsModal,
