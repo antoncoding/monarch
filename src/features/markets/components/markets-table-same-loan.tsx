@@ -6,7 +6,7 @@ import { CompactSearchInput } from '@/components/shared/compact-search-input';
 import EmptyScreen from '@/components/status/empty-screen';
 import AssetFilter from '@/features/markets/components/filters/asset-filter';
 import OracleFilter from '@/features/markets/components/filters/oracle-filter';
-import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
+import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
@@ -587,7 +587,7 @@ export function MarketsTableWithSameLoanAsset({
           availableOracles={availableOracles}
         />
         <div className="ml-auto flex items-center gap-2">
-          <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
+          <MarketFilter onOpenSettings={() => openModal('marketSettings', {})} />
           {showSettings && (
             <Button
               variant="ghost"

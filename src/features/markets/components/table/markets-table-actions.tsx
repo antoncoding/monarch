@@ -7,7 +7,7 @@ import { RiExpandHorizontalLine } from 'react-icons/ri';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
+import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
 import { useModal } from '@/hooks/useModal';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
@@ -24,7 +24,7 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
 
   return (
     <>
-      <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
+      <MarketFilter onOpenSettings={() => openModal('marketSettings', {})} />
 
       <Tooltip
         content={

@@ -16,12 +16,12 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { parseNumericThreshold } from '@/utils/markets';
 
-type SuppliedAssetFilterCompactSwitchProps = {
+type MarketFilterProps = {
   onOpenSettings: () => void;
   className?: string;
 };
 
-export function SuppliedAssetFilterCompactSwitch({ onOpenSettings, className }: SuppliedAssetFilterCompactSwitchProps) {
+export function MarketFilter({ onOpenSettings, className }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
   // Get all filter values from stores
