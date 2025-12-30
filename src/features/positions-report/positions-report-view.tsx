@@ -177,7 +177,7 @@ export default function ReportContent({ account }: { account: Address }) {
         {loading ? (
           <LoadingScreen message="Loading User Info..." />
         ) : positions.length === 0 ? (
-          <div className="w-full items-center rounded-md p-12 text-center text-secondary">No positions available.</div>
+          <div className="bg-surface w-full items-center rounded p-12 text-center text-secondary">No positions available.</div>
         ) : (
           <div className="mt-4 space-y-6">
             {/* Controls Row */}
