@@ -18,7 +18,7 @@ import type { Market } from '@/utils/types';
 
 type TransactionHistoryPreviewProps = {
   account: string;
-  chainId?: number;
+  chainId: number;
   isVaultAdapter?: boolean;
   limit?: number;
   emptyMessage?: string;
@@ -62,7 +62,7 @@ export function TransactionHistoryPreview({
       userAddress: account ? [account] : [],
       first: limit,
       skip: 0,
-      chainIds: chainId ? [chainId] : undefined,
+      chainId,
     },
     enabled: Boolean(account) && allMarkets.length > 0,
   });
@@ -76,9 +76,9 @@ export function TransactionHistoryPreview({
 
   const historyLink = useMemo(() => {
     const params = new URLSearchParams();
-    if (chainId) params.set('chainId', chainId.toString());
+    params.set('chainId', chainId.toString());
     if (isVaultAdapter) params.set('isVaultAdapter', 'true');
-    return `/history/${account}${params.toString() ? `?${params.toString()}` : ''}`;
+    return `/history/${account}?${params.toString()}`;
   }, [account, chainId, isVaultAdapter]);
 
   const actions = (

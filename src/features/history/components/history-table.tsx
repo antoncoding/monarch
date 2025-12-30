@@ -5,8 +5,9 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { ChevronDownIcon, TrashIcon, ReloadIcon, GearIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, ReloadIcon, GearIcon } from '@radix-ui/react-icons';
 import { IoIosArrowRoundForward } from 'react-icons/io';
+import useUserPositions from '@/hooks/useUserPositions';
 import Image from 'next/image';
 import { formatUnits } from 'viem';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,11 +33,10 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
 import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { groupTransactionsByHash, getWithdrawals, getSupplies, type GroupedTransaction } from '@/utils/transactionGrouping';
-import { UserTxTypes, type Market, type MarketPosition, type UserTransaction } from '@/utils/types';
+import { UserTxTypes, type Market, type UserTransaction } from '@/utils/types';
 
 type HistoryTableProps = {
   account: string | undefined;
-  positions: MarketPosition[];
   isVaultAdapter?: boolean;
 };
 
@@ -70,15 +70,20 @@ const formatTimeAgo = (timestamp: number): string => {
   return `${diffInYears}y ago`;
 };
 
-export function HistoryTable({ account, positions, isVaultAdapter = false }: HistoryTableProps) {
+export function HistoryTable({ account, isVaultAdapter = false }: HistoryTableProps) {
+  const { data: positions, loading: loadingPosition } = useUserPositions(account, true);
+  const { allMarkets, loading: loadingMarkets } = useProcessedMarkets();
+
   const searchParams = useSearchParams();
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { allMarkets } = useProcessedMarkets();
   const toast = useStyledToast();
+
+  // For vault adapter, get chainId from URL params
+  const vaultAdapterChainId = isVaultAdapter ? Number(searchParams.get('chainId')) : null;
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -99,20 +104,27 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
       .map((m) => m.uniqueKey);
   }, [selectedAsset, allMarkets]);
 
+  // Determine chainId: from vault adapter URL param or selected asset
+  const activeChainId = isVaultAdapter ? vaultAdapterChainId : selectedAsset?.chainId;
+
   // Fetch transactions using React Query
+  // Single-chain queries for correct pagination
   const {
     data,
-    isLoading: loading,
+    isLoading: loadingHistory,
     refetch,
   } = useUserTransactionsQuery({
     filters: {
       userAddress: account ? [account] : [],
       first: pageSize,
       skip: (currentPage - 1) * pageSize,
-      marketUniqueKeys: marketIdFilter,
+      marketUniqueKeys: isVaultAdapter ? [] : marketIdFilter,
+      chainId: activeChainId ?? undefined,
     },
-    enabled: Boolean(account) && allMarkets.length > 0,
+    enabled: Boolean(account) && allMarkets.length > 0 && Boolean(activeChainId),
   });
+
+  const loading = loadingHistory || loadingMarkets || loadingPosition;
 
   const history = data?.items ?? [];
   const totalPages = data ? Math.ceil(data.pageInfo.countTotal / pageSize) : 0;
@@ -133,11 +145,6 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
       ),
     [history],
   );
-
-  // Determine MarketIdentity mode based on context
-  // Use Badge mode when showing single loan asset context (vault adapter or filtered by asset)
-  // Use Normal mode with Collateral focus when showing all history
-  const shouldUseBadgeMode = isVaultAdapter || selectedAsset !== null;
 
   // Helper functions
   const toggleRow = (rowKey: string) => {
@@ -192,34 +199,32 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
     return Array.from(assetMap.values());
   }, [positions, allMarkets]);
 
-  // Handle initial URL parameters for pre-filtering (only once)
+  // Handle initial position selection (from URL params or default to first position)
   useEffect(() => {
-    // Only initialize once and only if we have URL params
+    // Only initialize once
     if (hasInitializedFromUrl) return;
+    // Wait for positions/markets to load
+    if (allMarkets.length === 0 || uniqueAssets.length === 0) return;
 
     const chainIdParam = searchParams.get('chainId');
     const tokenAddressParam = searchParams.get('tokenAddress');
 
-    // If no URL params, we're done initializing
-    if (!chainIdParam || !tokenAddressParam) {
-      setHasInitializedFromUrl(true);
-      return;
+    // Try to match URL params first
+    if (chainIdParam && tokenAddressParam) {
+      const chainId = Number.parseInt(chainIdParam, 10);
+      const matchingAsset = uniqueAssets.find(
+        (asset) => asset.chainId === chainId && asset.address.toLowerCase() === tokenAddressParam.toLowerCase(),
+      );
+      if (matchingAsset) {
+        setSelectedAsset(matchingAsset);
+        setHasInitializedFromUrl(true);
+        return;
+      }
     }
 
-    // Wait for markets to load before initializing
-    if (allMarkets.length === 0) return;
-
-    const chainId = Number.parseInt(chainIdParam, 10);
-
-    // Try to find in uniqueAssets first (from user positions)
-    const matchingAsset = uniqueAssets.find(
-      (asset) => asset.chainId === chainId && asset.address.toLowerCase() === tokenAddressParam.toLowerCase(),
-    );
-
-    if (matchingAsset) {
-      setSelectedAsset(matchingAsset);
-      setHasInitializedFromUrl(true);
-    }
+    // Default to first position if no URL params or no match
+    setSelectedAsset(uniqueAssets[0]);
+    setHasInitializedFromUrl(true);
   }, [searchParams, uniqueAssets, allMarkets, hasInitializedFromUrl]);
 
   // Reset page when filter changes
@@ -343,10 +348,9 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
               <MarketIdentity
                 market={market}
                 chainId={market.morphoBlue.chain.id}
-                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                mode={MarketIdentityMode.Badge}
                 focus={MarketIdentityFocus.Collateral}
                 showOracle={false}
-                showLltv={!shouldUseBadgeMode}
               />
             </div>
           </Link>
@@ -490,7 +494,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                   </div>
                 </div>
               ) : (
-                <span className="p-[2px] text-sm text-gray-400"> All positions</span>
+                <span className="p-[2px] text-sm text-gray-400">Select a position</span>
               )}
               <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
                 <ChevronDownIcon />
@@ -508,7 +512,7 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
               />
               <div className="relative">
                 <ul
-                  className="custom-scrollbar max-h-60 overflow-auto pb-12"
+                  className="custom-scrollbar max-h-60 overflow-auto"
                   role="listbox"
                 >
                   {filteredAssets.map((asset, idx) => (
@@ -561,21 +565,6 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                     </li>
                   ))}
                 </ul>
-                <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-2">
-                  <button
-                    className="hover:bg-main flex w-full items-center justify-between rounded-sm p-2 text-left text-xs text-secondary"
-                    onClick={() => {
-                      setSelectedAsset(null);
-                      setQuery('');
-                      setIsOpen(false);
-                      setCurrentPage(1);
-                    }}
-                    type="button"
-                  >
-                    <span>Clear Filter</span>
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
-                </div>
               </div>
             </div>
           )}
@@ -684,10 +673,9 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                                 <MarketIdentity
                                   market={fromMarket}
                                   chainId={market?.morphoBlue.chain.id ?? 1}
-                                  mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                  mode={MarketIdentityMode.Badge}
                                   focus={MarketIdentityFocus.Collateral}
                                   showOracle={false}
-                                  showLltv={!shouldUseBadgeMode}
                                 />
                                 {hasMoreWithdrawals && <span className="text-secondary text-[10px]">+{withdrawals.length - 1}</span>}
                               </div>
@@ -700,10 +688,9 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                                 <MarketIdentity
                                   market={toMarket}
                                   chainId={market?.morphoBlue.chain.id ?? 1}
-                                  mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                  mode={MarketIdentityMode.Badge}
                                   focus={MarketIdentityFocus.Collateral}
                                   showOracle={false}
-                                  showLltv={!shouldUseBadgeMode}
                                 />
                                 {hasMoreSupplies && <span className="text-secondary text-[10px]">+{supplies.length - 1}</span>}
                               </div>
@@ -819,10 +806,9 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                               <MarketIdentity
                                 market={market}
                                 chainId={market.morphoBlue.chain.id}
-                                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                mode={MarketIdentityMode.Badge}
                                 focus={MarketIdentityFocus.Collateral}
                                 showOracle={false}
-                                showLltv={!shouldUseBadgeMode}
                               />
                               {hasMoreMarkets && <span className="text-secondary text-[10px]">+{marketCount - 1} more</span>}
                             </>
@@ -913,10 +899,9 @@ export function HistoryTable({ account, positions, isVaultAdapter = false }: His
                               <MarketIdentity
                                 market={market}
                                 chainId={market.morphoBlue.chain.id}
-                                mode={shouldUseBadgeMode ? MarketIdentityMode.Badge : MarketIdentityMode.Normal}
+                                mode={MarketIdentityMode.Badge}
                                 focus={MarketIdentityFocus.Collateral}
                                 showOracle={false}
-                                showLltv={!shouldUseBadgeMode}
                               />
                               {hasMoreMarkets && <span className="text-secondary text-[10px]">+{marketCount - 1} more</span>}
                             </>

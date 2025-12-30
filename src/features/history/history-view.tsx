@@ -2,11 +2,10 @@
 
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/layout/header/Header';
-import useUserPositions from '@/hooks/useUserPositions';
+
 import { HistoryTable } from './components/history-table';
 
 export default function HistoryContent({ account }: { account: string }) {
-  const { data: positions } = useUserPositions(account, true);
   const searchParams = useSearchParams();
   const isVaultAdapter = searchParams.get('isVaultAdapter') === 'true';
 
@@ -19,7 +18,6 @@ export default function HistoryContent({ account }: { account: string }) {
         <div className="mt-4">
           <HistoryTable
             account={account}
-            positions={positions}
             isVaultAdapter={isVaultAdapter}
           />
         </div>
