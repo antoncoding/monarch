@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { cn } from '@/utils/components';

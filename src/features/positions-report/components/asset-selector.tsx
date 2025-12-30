@@ -84,12 +84,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect, variant = 'defa
               <span className="text-secondary">Select asset...</span>
             )}
           </div>
-          <ChevronDownIcon
-            className={cn(
-              'h-4 w-4 text-secondary transition-transform duration-200',
-              isOpen && 'rotate-180',
-            )}
-          />
+          <ChevronDownIcon className={cn('h-4 w-4 text-secondary transition-transform duration-200', isOpen && 'rotate-180')} />
         </button>
 
         <div
@@ -201,12 +196,7 @@ export function AssetSelector({ selectedAsset, assets, onSelect, variant = 'defa
               </>
             )}
           </div>
-          <ChevronDownIcon
-            className={cn(
-              'h-4 w-4 text-gray-500 transition-transform duration-200',
-              isOpen && 'rotate-180',
-            )}
-          />
+          <ChevronDownIcon className={cn('h-4 w-4 text-gray-500 transition-transform duration-200', isOpen && 'rotate-180')} />
         </div>
       </button>
 

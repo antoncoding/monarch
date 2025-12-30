@@ -170,7 +170,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
     setCurrentPage(1);
   };
 
-  const clearDateFilters = () => {
+  const _clearDateFilters = () => {
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
@@ -411,7 +411,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
       >
         <span>
           <Button
-            variant="default"
+            variant="ghost"
             size="sm"
             onClick={handleManualRefresh}
             disabled={loading}

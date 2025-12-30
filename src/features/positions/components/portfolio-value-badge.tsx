@@ -33,7 +33,10 @@ function BreakdownTooltipContent({ items }: { items: AssetBreakdownItem[] }) {
   return (
     <div className="space-y-2 min-w-[180px]">
       {items.map((item) => (
-        <div key={`${item.tokenAddress}-${item.chainId}`} className="flex items-center justify-between text-xs">
+        <div
+          key={`${item.tokenAddress}-${item.chainId}`}
+          className="flex items-center justify-between text-xs"
+        >
           <div className="flex items-center gap-2">
             <TokenIcon
               address={item.tokenAddress}
@@ -59,7 +62,11 @@ export function PortfolioValueBadge({ totalUsd, assetBreakdown, isLoading, error
       <span className="text-xs text-secondary">Total Value</span>
       {isLoading ? (
         <div className="font-zen text-2xl font-normal sm:text-3xl min-h-8 sm:min-h-9 flex items-center justify-end">
-          <PulseLoader size={4} color="#f45f2d" margin={2} />
+          <PulseLoader
+            size={4}
+            color="#f45f2d"
+            margin={2}
+          />
         </div>
       ) : error ? (
         <span className="font-zen text-2xl font-normal text-secondary sm:text-2xl">—</span>
@@ -74,7 +81,10 @@ export function PortfolioValueBadge({ totalUsd, assetBreakdown, isLoading, error
   }
 
   return (
-    <Tooltip content={<BreakdownTooltipContent items={assetBreakdown} />} placement="bottom">
+    <Tooltip
+      content={<BreakdownTooltipContent items={assetBreakdown} />}
+      placement="bottom"
+    >
       <span>{content}</span>
     </Tooltip>
   );

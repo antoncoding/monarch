@@ -227,7 +227,7 @@ export default function ReportContent({ account }: { account: Address }) {
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
-      <div className="mx-auto w-full max-w-7xl px-4 py-8">
+      <div className="mx-auto w-full max-w-7xl px-4">
         <h1 className="py-4 font-zen text-2xl">Position Report</h1>
 
         {loading ? (
@@ -275,9 +275,7 @@ export default function ReportContent({ account }: { account: Address }) {
                   errorMessage={endDateError}
                   granularity="hour"
                 />
-              </div>
 
-              {/* Generate Button */}
               <Button
                 onClick={() => {
                   void handleGenerateReport();
@@ -295,6 +293,9 @@ export default function ReportContent({ account }: { account: Address }) {
                   'Generate'
                 )}
               </Button>
+              </div>
+
+              
             </div>
 
             {/* Report Content */}

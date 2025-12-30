@@ -11,12 +11,7 @@ type CompactSearchInputProps = {
   className?: string;
 };
 
-export function CompactSearchInput({
-  value,
-  onChange,
-  placeholder = 'Search...',
-  className,
-}: CompactSearchInputProps) {
+export function CompactSearchInput({ value, onChange, placeholder = 'Search...', className }: CompactSearchInputProps) {
   return (
     <div
       className={cn(

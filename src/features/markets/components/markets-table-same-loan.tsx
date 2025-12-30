@@ -593,7 +593,10 @@ export function MarketsTableWithSameLoanAsset({
         />
         {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
         <div className="flex items-center gap-2 sm:ml-auto">
-          <MarketFilter variant="button" onOpenSettings={() => openModal('marketSettings', {})} />
+          <MarketFilter
+            variant="button"
+            onOpenSettings={() => openModal('marketSettings', {})}
+          />
           <Button
             variant="default"
             size="md"

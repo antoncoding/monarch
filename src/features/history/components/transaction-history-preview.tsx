@@ -201,7 +201,9 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
+                      {moment.unix(group.timestamp).fromNow()}
+                    </TableCell>
                   </TableRow>
                 );
               }
@@ -252,7 +254,9 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
+                      {moment.unix(group.timestamp).fromNow()}
+                    </TableCell>
                   </TableRow>
                 );
               }
@@ -303,7 +307,9 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">
+                      {moment.unix(group.timestamp).fromNow()}
+                    </TableCell>
                   </TableRow>
                 );
               }
