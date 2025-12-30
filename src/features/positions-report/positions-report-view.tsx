@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { parseDate, getLocalTimeZone, today, parseAbsoluteToLocal, type ZonedDateTime, now, type DateValue } from '@internationalized/date';
 import { useDateFormatter } from '@react-aria/i18n';
 import type { Address } from 'viem';
@@ -175,6 +176,53 @@ export default function ReportContent({ account }: { account: Address }) {
 
     return Array.from(assetMap.values());
   }, [positions]);
+
+  // URL params for pre-population from history page
+  const searchParams = useSearchParams();
+  const hasInitializedFromUrl = useRef(false);
+
+  // Initialize from URL params if provided (from history page navigation)
+  useEffect(() => {
+    if (hasInitializedFromUrl.current) return;
+    if (positions.length === 0 || uniqueAssets.length === 0) return;
+
+    const chainIdParam = searchParams.get('chainId');
+    const tokenAddressParam = searchParams.get('tokenAddress');
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
+
+    // Set asset from URL params
+    if (chainIdParam && tokenAddressParam) {
+      const chainId = Number.parseInt(chainIdParam, 10);
+      const matchingAsset = uniqueAssets.find(
+        (asset) => asset.chainId === chainId && asset.address.toLowerCase() === tokenAddressParam.toLowerCase(),
+      );
+      if (matchingAsset) {
+        setSelectedAsset(matchingAsset);
+      }
+    }
+
+    // Set dates from URL params
+    if (startDateParam) {
+      try {
+        const parsed = parseAbsoluteToLocal(startDateParam);
+        setStartDate(parsed);
+      } catch {
+        // Invalid date format, ignore
+      }
+    }
+
+    if (endDateParam) {
+      try {
+        const parsed = parseAbsoluteToLocal(endDateParam);
+        setEndDate(parsed);
+      } catch {
+        // Invalid date format, ignore
+      }
+    }
+
+    hasInitializedFromUrl.current = true;
+  }, [searchParams, positions.length, uniqueAssets]);
 
   return (
     <div className="flex flex-col justify-between font-zen">

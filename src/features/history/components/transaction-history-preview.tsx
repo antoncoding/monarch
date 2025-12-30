@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import moment from 'moment';
 import { formatUnits } from 'viem';
 import { motion } from 'framer-motion';
 import { IoIosArrowRoundForward } from 'react-icons/io';
@@ -21,29 +22,6 @@ type TransactionHistoryPreviewProps = {
   chainId: number;
   isVaultAdapter?: boolean;
   emptyMessage?: string;
-};
-
-const formatTimeAgo = (timestamp: number): string => {
-  const now = Date.now();
-  const txTime = timestamp * 1000;
-  const diffInSeconds = Math.floor((now - txTime) / 1000);
-
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays}d ago`;
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears}y ago`;
 };
 
 export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = false, emptyMessage }: TransactionHistoryPreviewProps) {
@@ -223,7 +201,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{formatTimeAgo(group.timestamp)}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
                   </TableRow>
                 );
               }
@@ -274,7 +252,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{formatTimeAgo(group.timestamp)}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
                   </TableRow>
                 );
               }
@@ -325,7 +303,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                         chainId={chainIdForTx ?? 1}
                       />
                     </TableCell>
-                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{formatTimeAgo(group.timestamp)}</TableCell>
+                    <TableCell className="p-3 rounded-r text-right text-xs text-secondary">{moment.unix(group.timestamp).fromNow()}</TableCell>
                   </TableRow>
                 );
               }
@@ -363,7 +341,7 @@ export function TransactionHistoryPreview({ account, chainId, isVaultAdapter = f
                     />
                   </TableCell>
                   <TableCell className="p-3 rounded-r text-right text-xs text-secondary whitespace-nowrap">
-                    {formatTimeAgo(group.timestamp)}
+                    {moment.unix(group.timestamp).fromNow()}
                   </TableCell>
                 </TableRow>
               );

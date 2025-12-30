@@ -1,15 +1,17 @@
 'use client';
 
 import React from 'react';
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { now, getLocalTimeZone, type ZonedDateTime } from '@internationalized/date';
+import moment from 'moment';
+import { TbReport } from 'react-icons/tb';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { ChevronDownIcon, ReloadIcon, GearIcon } from '@radix-ui/react-icons';
+import { ReloadIcon, GearIcon } from '@radix-ui/react-icons';
 import { IoIosArrowRoundForward } from 'react-icons/io';
 import useUserPositions from '@/hooks/useUserPositions';
-import Image from 'next/image';
-import { formatUnits } from 'viem';
+import { formatUnits, type Address } from 'viem';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -21,7 +23,10 @@ import { TablePagination } from '@/components/shared/table-pagination';
 import { TransactionIdentity } from '@/components/shared/transaction-identity';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { TokenIcon } from '@/components/shared/token-icon';
+import DatePicker from '@/components/shared/date-picker';
+import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TableContainerWithHeader } from '@/components/common/table-container-with-header';
+import { AssetSelector, type AssetKey } from '@/features/positions-report/components/asset-selector';
 import { Modal, ModalHeader, ModalBody, ModalFooter } from '@/components/common/Modal';
 import { MarketIdentity, MarketIdentityFocus, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { RebalanceDetail } from './rebalance-detail';
@@ -31,7 +36,6 @@ import { useDisclosure } from '@/hooks/useDisclosure';
 import { useHistoryPreferences } from '@/stores/useHistoryPreferences';
 import { useStyledToast } from '@/hooks/useStyledToast';
 import { formatReadable } from '@/utils/balance';
-import { getNetworkImg, getNetworkName } from '@/utils/networks';
 import { groupTransactionsByHash, getWithdrawals, getSupplies, type GroupedTransaction } from '@/utils/transactionGrouping';
 import { UserTxTypes, type Market, type UserTransaction } from '@/utils/types';
 
@@ -40,46 +44,16 @@ type HistoryTableProps = {
   isVaultAdapter?: boolean;
 };
 
-type AssetKey = {
-  symbol: string;
-  chainId: number;
-  address: string;
-  decimals: number;
-};
-
-const formatTimeAgo = (timestamp: number): string => {
-  const now = Date.now();
-  const txTime = timestamp * 1000;
-  const diffInSeconds = Math.floor((now - txTime) / 1000);
-
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays}d ago`;
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears}y ago`;
-};
-
 export function HistoryTable({ account, isVaultAdapter = false }: HistoryTableProps) {
   const { data: positions, loading: loadingPosition } = useUserPositions(account, true);
   const { allMarkets, loading: loadingMarkets } = useProcessedMarkets();
 
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [selectedAsset, setSelectedAsset] = useState<AssetKey | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
+  const [startDate, setStartDate] = useState<ZonedDateTime | null>(null);
+  const [endDate, setEndDate] = useState<ZonedDateTime | null>(null);
   const [hasInitializedFromUrl, setHasInitializedFromUrl] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const toast = useStyledToast();
 
   // For vault adapter, get chainId from URL params
@@ -120,6 +94,8 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
       skip: (currentPage - 1) * pageSize,
       marketUniqueKeys: isVaultAdapter ? [] : marketIdFilter,
       chainId: activeChainId ?? undefined,
+      timestampGte: startDate ? Math.floor(startDate.toDate().getTime() / 1000) : undefined,
+      timestampLte: endDate ? Math.floor(endDate.toDate().getTime() / 1000) : undefined,
     },
     enabled: Boolean(account) && allMarkets.length > 0 && Boolean(activeChainId),
   });
@@ -179,6 +155,39 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
     setCustomPageSize(value > 0 ? String(value) : pageSize.toString());
   };
 
+  // Date filter handlers
+  const maxDate = useMemo(() => now(getLocalTimeZone()), []);
+
+  const handleStartDateChange = (date: ZonedDateTime) => {
+    if (endDate && date > endDate) setEndDate(date);
+    setStartDate(date);
+    setCurrentPage(1);
+  };
+
+  const handleEndDateChange = (date: ZonedDateTime) => {
+    if (startDate && date < startDate) setStartDate(date);
+    setEndDate(date);
+    setCurrentPage(1);
+  };
+
+  const clearDateFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setCurrentPage(1);
+  };
+
+  const handleViewReport = () => {
+    if (!selectedAsset || !account) return;
+
+    const params = new URLSearchParams();
+    params.set('chainId', String(selectedAsset.chainId));
+    params.set('tokenAddress', selectedAsset.address);
+    if (startDate) params.set('startDate', startDate.toDate().toISOString());
+    if (endDate) params.set('endDate', endDate.toDate().toISOString());
+
+    router.push(`/positions/report/${account}?${params.toString()}`);
+  };
+
   // Get unique assets with their chain IDs
   const uniqueAssets = useMemo(() => {
     const assetMap = new Map<string, AssetKey>();
@@ -191,7 +200,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
         assetMap.set(key, {
           symbol: market.loanAsset.symbol,
           chainId: market.morphoBlue.chain.id,
-          address: market.loanAsset.address,
+          address: market.loanAsset.address as Address,
           decimals: market.loanAsset.decimals,
         });
       }
@@ -237,28 +246,14 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
     setCurrentPage(1);
   }, [isGroupedView, pageSize]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
+  // hasActiveFilters for clear button
+  const hasActiveFilters = startDate !== null || endDate !== null;
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      setIsOpen(false);
-    }
+  const clearAllFilters = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setCurrentPage(1);
   };
-
-  const filteredAssets = uniqueAssets.filter((asset) => asset.symbol.toLowerCase().includes(query.toLowerCase()));
-
-  const toggleDropdown = () => setIsOpen(!isOpen);
 
   // Skeleton loading rows
   const renderSkeletonRows = (count = 5) => {
@@ -397,7 +392,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
           className="z-10 text-right"
           style={{ minWidth: '90px' }}
         >
-          <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(tx.timestamp)}</span>
+          <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(tx.timestamp).fromNow()}</span>
         </TableCell>
       </TableRow>
     );
@@ -416,7 +411,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
       >
         <span>
           <Button
-            variant="ghost"
+            variant="default"
             size="sm"
             onClick={handleManualRefresh}
             disabled={loading}
@@ -455,119 +450,60 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
         </div>
       )}
       {!isVaultAdapter && (
-        <div
-          className="relative w-fit max-w-md z-10"
-          ref={dropdownRef}
-        >
-          <div
-            className={`bg-surface min-w-64 cursor-pointer rounded-sm p-2 shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-              isOpen ? 'bg-surface-dark' : ''
-            }`}
-            role="button"
-            tabIndex={0}
-            onClick={toggleDropdown}
-            onKeyDown={handleKeyDown}
-            aria-haspopup="listbox"
-            aria-expanded={isOpen}
-          >
-            <span className="absolute top-2 px-4 pt-1 text-xs text-secondary"> Position Filter </span>
-            <div className="flex items-center justify-between px-3 pt-6">
-              {selectedAsset ? (
-                <div className="flex items-center gap-2 pt-1">
-                  <TokenIcon
-                    address={selectedAsset.address}
-                    chainId={selectedAsset.chainId}
-                    symbol={selectedAsset.symbol}
-                    width={18}
-                    height={18}
-                  />
-                  <span className="text-sm">{selectedAsset.symbol}</span>
-                  <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                    <Image
-                      src={getNetworkImg(selectedAsset.chainId) as string}
-                      alt="network"
-                      width="16"
-                      height="16"
-                      className="rounded-full"
-                    />
-                    <span className="text-xs text-gray-600 dark:text-gray-300">{getNetworkName(selectedAsset.chainId)}</span>
-                  </div>
-                </div>
-              ) : (
-                <span className="p-[2px] text-sm text-gray-400">Select a position</span>
-              )}
-              <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-                <ChevronDownIcon />
-              </span>
-            </div>
-          </div>
-          {isOpen && (
-            <div className="bg-surface absolute z-10 mt-1 min-w-64 rounded-sm shadow-lg">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search positions..."
-                className="w-full border-none bg-transparent p-3 text-sm focus:outline-none"
-              />
-              <div className="relative">
-                <ul
-                  className="custom-scrollbar max-h-60 overflow-auto"
-                  role="listbox"
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Position Filter - using compact AssetSelector */}
+          <AssetSelector
+            selectedAsset={selectedAsset}
+            assets={uniqueAssets}
+            onSelect={(asset) => {
+              setSelectedAsset(asset);
+              setCurrentPage(1);
+            }}
+            variant="compact"
+          />
+
+          {/* Date Filters */}
+          <DatePicker
+            value={startDate ?? undefined}
+            onChange={handleStartDateChange}
+            maxValue={maxDate}
+            granularity="day"
+          />
+          <span className="text-secondary text-sm">to</span>
+          <DatePicker
+            value={endDate ?? undefined}
+            onChange={handleEndDateChange}
+            minValue={startDate ?? undefined}
+            maxValue={maxDate}
+            granularity="day"
+          />
+
+          {/* Clear Filters Button */}
+          {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
+
+          {/* Report Button - pushed to right */}
+          <div className="ml-auto">
+            <Tooltip
+              content={
+                <TooltipContent
+                  title="View Report"
+                  detail="Generate position report for this asset"
+                />
+              }
+            >
+              <span>
+                <Button
+                  variant="default"
+                  size="md"
+                  onClick={handleViewReport}
+                  disabled={!selectedAsset}
+                  className="text-secondary min-w-0"
                 >
-                  {filteredAssets.map((asset, idx) => (
-                    <li
-                      key={`${asset.symbol}-${asset.chainId}-${idx}`}
-                      className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-sm hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                        selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId
-                          ? 'bg-gray-300 dark:bg-gray-700'
-                          : ''
-                      }`}
-                      onClick={() => {
-                        setSelectedAsset(asset);
-                        setIsOpen(false);
-                        setQuery('');
-                        setCurrentPage(1);
-                      }}
-                      role="option"
-                      aria-selected={selectedAsset?.symbol === asset.symbol && selectedAsset?.chainId === asset.chainId}
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedAsset(asset);
-                          setIsOpen(false);
-                          setQuery('');
-                          setCurrentPage(1);
-                        }
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <TokenIcon
-                          address={asset.address}
-                          chainId={asset.chainId}
-                          symbol={asset.symbol}
-                          width={18}
-                          height={18}
-                        />
-                        <span>{asset.symbol}</span>
-                        <div className="flex items-center gap-1 rounded bg-gray-100 px-2 py-0.5 dark:bg-gray-700">
-                          <Image
-                            src={getNetworkImg(asset.chainId) as string}
-                            alt="network"
-                            width="16"
-                            height="16"
-                            className="rounded-full"
-                          />
-                          <span className="text-xs text-gray-600 dark:text-gray-300">{getNetworkName(asset.chainId)}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
+                  <TbReport className="h-4 w-4" />
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
         </div>
       )}
 
@@ -742,7 +678,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
                           className="z-10 text-right"
                           style={{ minWidth: '90px' }}
                         >
-                          <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
+                          <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(group.timestamp).fromNow()}</span>
                         </TableCell>
                       </TableRow>
 
@@ -858,7 +794,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
                         className="z-10 text-right"
                         style={{ minWidth: '90px' }}
                       >
-                        <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
+                        <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(group.timestamp).fromNow()}</span>
                       </TableCell>
                     </TableRow>
                   );
@@ -951,7 +887,7 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
                         className="z-10 text-right"
                         style={{ minWidth: '90px' }}
                       >
-                        <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(group.timestamp)}</span>
+                        <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(group.timestamp).fromNow()}</span>
                       </TableCell>
                     </TableRow>
                   );
@@ -964,19 +900,19 @@ export function HistoryTable({ account, isVaultAdapter = false }: HistoryTablePr
             )}
           </TableBody>
         </Table>
-
-        {!loading && totalPages > 1 && (
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalEntries={totalPages * pageSize}
-            pageSize={pageSize}
-            onPageChange={setCurrentPage}
-            isLoading={loading}
-            showEntryCount={false}
-          />
-        )}
       </TableContainerWithHeader>
+
+      {!loading && totalPages > 1 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalEntries={totalPages * pageSize}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          isLoading={loading}
+          showEntryCount={false}
+        />
+      )}
 
       {/* Settings Modal */}
       <Modal

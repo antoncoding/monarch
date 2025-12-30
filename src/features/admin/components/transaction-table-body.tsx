@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import moment from 'moment';
 import { formatUnits } from 'viem';
 import { TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { AccountIdentity } from '@/components/shared/account-identity';
@@ -28,29 +29,6 @@ type TransactionOperation = {
 type TransactionTableBodyProps = {
   operations: TransactionOperation[];
   selectedNetwork: SupportedNetworks;
-};
-
-const formatTimeAgo = (timestamp: string): string => {
-  const now = Date.now();
-  const txTime = Number(timestamp) * 1000;
-  const diffInSeconds = Math.floor((now - txTime) / 1000);
-
-  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 30) return `${diffInDays}d ago`;
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) return `${diffInMonths}mo ago`;
-
-  const diffInYears = Math.floor(diffInMonths / 12);
-  return `${diffInYears}y ago`;
 };
 
 const formatAmount = (amount: string, side: 'Supply' | 'Withdraw', loanAddress: string, chainId: number): string => {
@@ -179,7 +157,7 @@ export function TransactionTableBody({ operations, selectedNetwork }: Transactio
               className="z-50"
               style={{ minWidth: '90px' }}
             >
-              <span className="text-xs text-secondary whitespace-nowrap">{formatTimeAgo(op.timestamp)}</span>
+              <span className="text-xs text-secondary whitespace-nowrap">{moment.unix(Number(op.timestamp)).fromNow()}</span>
             </TableCell>
           </TableRow>
         );

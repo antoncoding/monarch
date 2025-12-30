@@ -1,12 +1,13 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowDownIcon, ArrowUpIcon, GearIcon, TrashIcon } from '@radix-ui/react-icons';
+import { ArrowDownIcon, ArrowUpIcon, GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
 import { ExpandableSearchInput } from '@/features/markets/components/filters/expandable-search-input';
 import EmptyScreen from '@/components/status/empty-screen';
 import AssetFilter from '@/features/markets/components/filters/asset-filter';
 import OracleFilter from '@/features/markets/components/filters/oracle-filter';
 import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
+import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
@@ -590,17 +591,7 @@ export function MarketsTableWithSameLoanAsset({
           setSelectedOracles={setOracleFilter}
           availableOracles={availableOracles}
         />
-        {hasActiveFilters && (
-          <Button
-            variant="default"
-            size="md"
-            onClick={clearAllFilters}
-            className="w-10 min-w-10 px-0"
-            aria-label="Clear all filters"
-          >
-            <TrashIcon />
-          </Button>
-        )}
+        {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
         <div className="flex items-center gap-2 sm:ml-auto">
           <MarketFilter variant="button" onOpenSettings={() => openModal('marketSettings', {})} />
           <Button
