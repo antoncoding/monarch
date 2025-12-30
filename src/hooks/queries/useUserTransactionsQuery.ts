@@ -61,7 +61,6 @@ export const useUserTransactionsQuery = (options: UseUserTransactionsQueryOption
           ...filters,
           first: pageSize,
           skip,
-          useServerSidePagination: true,
         });
 
         allItems = [...allItems, ...response.items];
