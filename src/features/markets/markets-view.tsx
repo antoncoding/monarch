@@ -11,11 +11,8 @@ import { useStyledToast } from '@/hooks/useStyledToast';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { ERC20Token, UnknownERC20Token } from '@/utils/tokens';
 
-import AdvancedSearchBar, { ShortcutType } from './components/advanced-search-bar';
-import AssetFilter from './components/filters/asset-filter';
+import { CompactFilterBar } from './components/filters/compact-filter-bar';
 import MarketsTable from './components/table/markets-table';
-import NetworkFilter from './components/filters/network-filter';
-import OracleFilter from './components/filters/oracle-filter';
 
 export default function Markets() {
   const toast = useStyledToast();
@@ -143,19 +140,6 @@ export default function Markets() {
     };
   }, []);
 
-  // Handlers
-  const handleFilterUpdate = useCallback(
-    (type: ShortcutType, tokens: string[]) => {
-      const uniqueTokens = [...new Set(tokens)];
-      if (type === ShortcutType.Collateral) {
-        filters.setSelectedCollaterals(uniqueTokens);
-      } else {
-        filters.setSelectedLoanAssets(uniqueTokens);
-      }
-    },
-    [filters],
-  );
-
   const handleRefresh = useCallback(() => {
     refetch().then(() => toast.success('Markets refreshed', 'Markets refreshed successfully'));
   }, [refetch, toast]);
@@ -166,59 +150,30 @@ export default function Markets() {
         <Header />
       </div>
       <div className="container h-full gap-8">
-        <h1 className="py-8 font-zen"> Markets </h1>
+        <h1 className="pt-12 pb-4 font-zen"> Markets </h1>
 
-        <div className="flex flex-col gap-4 pb-4 pt-4">
-          <div className="w-full lg:w-1/2">
-            <AdvancedSearchBar
-              searchQuery={filters.searchQuery}
-              onSearch={filters.setSearchQuery}
-              onFilterUpdate={handleFilterUpdate}
-              selectedCollaterals={filters.selectedCollaterals}
-              selectedLoanAssets={filters.selectedLoanAssets}
-              uniqueCollaterals={uniqueCollaterals}
-              uniqueLoanAssets={uniqueLoanAssets}
-            />
-          </div>
-
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-4 lg:flex-row">
-              <NetworkFilter
-                selectedNetwork={filters.selectedNetwork}
-                setSelectedNetwork={filters.setSelectedNetwork}
-              />
-
-              <AssetFilter
-                label="Loan Asset"
-                placeholder="All loan asset"
-                selectedAssets={filters.selectedLoanAssets}
-                setSelectedAssets={filters.setSelectedLoanAssets}
-                items={uniqueLoanAssets}
-                loading={loading}
-                updateFromSearch={filters.searchQuery.match(/loan:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <AssetFilter
-                label="Collateral"
-                placeholder="All collateral"
-                selectedAssets={filters.selectedCollaterals}
-                setSelectedAssets={filters.setSelectedCollaterals}
-                items={uniqueCollaterals}
-                loading={loading}
-                updateFromSearch={filters.searchQuery.match(/collateral:(\w+)/)?.[1]?.split(',')}
-              />
-
-              <OracleFilter
-                selectedOracles={filters.selectedOracles}
-                setSelectedOracles={filters.setSelectedOracles}
-              />
-            </div>
-          </div>
+        <div className="pb-2 pt-2">
+          <CompactFilterBar
+            searchQuery={filters.searchQuery}
+            onSearch={filters.setSearchQuery}
+            selectedNetwork={filters.selectedNetwork}
+            setSelectedNetwork={filters.setSelectedNetwork}
+            selectedLoanAssets={filters.selectedLoanAssets}
+            setSelectedLoanAssets={filters.setSelectedLoanAssets}
+            loanAssetItems={uniqueLoanAssets}
+            selectedCollaterals={filters.selectedCollaterals}
+            setSelectedCollaterals={filters.setSelectedCollaterals}
+            collateralItems={uniqueCollaterals}
+            selectedOracles={filters.selectedOracles}
+            setSelectedOracles={filters.setSelectedOracles}
+            loading={loading}
+            onClearAll={filters.resetFilters}
+          />
         </div>
       </div>
 
       {/* Table Section - centered when expanded, full width when compact */}
-      <div className={effectiveTableViewMode === 'expanded' ? 'mt-4 ' : 'container mt-4'}>
+      <div className={effectiveTableViewMode === 'expanded' ? 'mt-2 ' : 'container mt-2'}>
         <div className={effectiveTableViewMode === 'expanded' ? 'flex justify-center' : 'w-full'}>
           <MarketsTable
             currentPage={currentPage}

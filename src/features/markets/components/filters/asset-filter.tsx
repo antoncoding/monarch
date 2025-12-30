@@ -14,6 +14,7 @@ type FilterProps = {
   loading: boolean;
   updateFromSearch?: string[];
   variant?: 'default' | 'compact';
+  showLabelPrefix?: boolean;
 };
 
 export default function AssetFilter({
@@ -25,6 +26,7 @@ export default function AssetFilter({
   loading,
   updateFromSearch,
   variant = 'default',
+  showLabelPrefix = false,
 }: FilterProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -84,12 +86,16 @@ export default function AssetFilter({
   if (isCompact) {
     return (
       <div
-        className="relative min-w-[140px]"
+        className="relative font-zen"
         ref={dropdownRef}
       >
         <button
           type="button"
-          className="bg-surface flex h-10 w-full items-center justify-between gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered"
+          className={cn(
+            'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
+            'min-w-[120px] max-w-[200px]',
+            isOpen && 'min-w-[180px]',
+          )}
           onClick={toggleDropdown}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
@@ -100,46 +106,42 @@ export default function AssetFilter({
           aria-haspopup="listbox"
           aria-expanded={isOpen}
         >
-          <div className="flex items-center gap-2 text-sm">
-            {loading ? (
-              <span className="text-secondary">Loading...</span>
-            ) : selectedAssets.length > 0 ? (
-              <div className="flex items-center gap-1">
-                {selectedAssets.slice(0, 3).map((asset) => {
-                  const token = items.find((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset);
-                  return token ? (
-                    token.img ? (
-                      <Image
-                        key={asset}
-                        src={token.img}
-                        alt={token.symbol}
-                        width={14}
-                        height={14}
-                      />
-                    ) : (
-                      <div
-                        key={asset}
-                        className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-gray-200 text-[10px] dark:bg-gray-700"
-                      >
-                        ?
-                      </div>
-                    )
-                  ) : null;
-                })}
-                {selectedAssets.length > 3 && (
-                  <span className="text-xs text-secondary">+{selectedAssets.length - 3}</span>
-                )}
-              </div>
-            ) : (
-              <span className="text-secondary">{placeholder}</span>
-            )}
+          <div className="flex flex-1 items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              {showLabelPrefix && <span className="text-secondary">{label}:</span>}
+              {loading ? (
+                <span className="text-secondary">Loading...</span>
+              ) : selectedAssets.length > 0 ? (
+                <div className="flex items-center gap-1">
+                  {selectedAssets.slice(0, 3).map((asset) => {
+                    const token = items.find((item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === asset);
+                    return token ? (
+                      token.img ? (
+                        <Image
+                          key={asset}
+                          src={token.img}
+                          alt={token.symbol}
+                          width={14}
+                          height={14}
+                        />
+                      ) : (
+                        <div
+                          key={asset}
+                          className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-gray-200 text-[10px] dark:bg-gray-700"
+                        >
+                          ?
+                        </div>
+                      )
+                    ) : null;
+                  })}
+                  {selectedAssets.length > 3 && <span className="text-xs text-secondary">+{selectedAssets.length - 3}</span>}
+                </div>
+              ) : (
+                <span className="text-secondary">All</span>
+              )}
+            </div>
           </div>
-          <ChevronDownIcon
-            className={cn(
-              'h-4 w-4 text-secondary transition-transform duration-200',
-              isOpen && 'rotate-180',
-            )}
-          />
+          <ChevronDownIcon className={cn('h-4 w-4 text-secondary transition-transform duration-200', isOpen && 'rotate-180')} />
         </button>
 
         <div
@@ -262,12 +264,7 @@ export default function AssetFilter({
           ) : (
             <span className="p-[2px] text-sm text-secondary font-zen">{placeholder}</span>
           )}
-          <ChevronDownIcon
-            className={cn(
-              'transition-transform duration-300',
-              isOpen && 'rotate-180',
-            )}
-          />
+          <ChevronDownIcon className={cn('transition-transform duration-300', isOpen && 'rotate-180')} />
         </div>
       </div>
       <div
