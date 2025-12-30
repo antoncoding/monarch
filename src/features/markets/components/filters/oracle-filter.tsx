@@ -81,7 +81,7 @@ export default function OracleFilter({
         >
           <div className="flex flex-1 items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              {showLabelPrefix && <span className="text-secondary">Oracle:</span>}
+              {showLabelPrefix && <span className="text-sm text-secondary">Oracle:</span>}
               {selectedOracles.length > 0 ? (
                 <div className="flex items-center gap-1">
                   {selectedOracles.slice(0, 3).map((oracle) => (
@@ -104,7 +104,7 @@ export default function OracleFilter({
                   {selectedOracles.length > 3 && <span className="text-xs text-secondary">+{selectedOracles.length - 3}</span>}
                 </div>
               ) : (
-                <span className="text-secondary">All</span>
+                <span className="text-sm text-secondary">All</span>
               )}
             </div>
           </div>

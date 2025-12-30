@@ -108,7 +108,7 @@ export default function AssetFilter({
         >
           <div className="flex flex-1 items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              {showLabelPrefix && <span className="text-secondary">{label}:</span>}
+              {showLabelPrefix && <span className="text-sm text-secondary">{label}:</span>}
               {loading ? (
                 <span className="text-secondary">Loading...</span>
               ) : selectedAssets.length > 0 ? (
@@ -137,7 +137,7 @@ export default function AssetFilter({
                   {selectedAssets.length > 3 && <span className="text-xs text-secondary">+{selectedAssets.length - 3}</span>}
                 </div>
               ) : (
-                <span className="text-secondary">All</span>
+                <span className="text-sm text-secondary">All</span>
               )}
             </div>
           </div>

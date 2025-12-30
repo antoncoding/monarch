@@ -1,8 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowDownIcon, ArrowUpIcon, GearIcon } from '@radix-ui/react-icons';
+import { ArrowDownIcon, ArrowUpIcon, GearIcon, TrashIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { CompactSearchInput } from '@/components/shared/compact-search-input';
+import { ExpandableSearchInput } from '@/features/markets/components/filters/expandable-search-input';
 import EmptyScreen from '@/components/status/empty-screen';
 import AssetFilter from '@/features/markets/components/filters/asset-filter';
 import OracleFilter from '@/features/markets/components/filters/oracle-filter';
@@ -52,8 +52,6 @@ type MarketsTableWithSameLoanAssetProps = {
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
   showSelectColumn?: boolean;
-  // Optional: Show the settings button (default: true)
-  showSettings?: boolean;
 };
 
 enum SortColumn {
@@ -310,7 +308,6 @@ export function MarketsTableWithSameLoanAsset({
   disabled = false,
   uniqueCollateralTokens,
   showSelectColumn = true,
-  showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
@@ -561,20 +558,28 @@ export function MarketsTableWithSameLoanAsset({
     }
   }, [totalPages, currentPage]);
 
+  const hasActiveFilters = collateralFilter.length > 0 || oracleFilter.length > 0 || searchQuery.length > 0;
+
+  const clearAllFilters = () => {
+    setCollateralFilter([]);
+    setOracleFilter([]);
+    setSearchQuery('');
+  };
+
   return (
-    <div className="space-y-3">
+    <div className=" space-y-3">
       {/* Search + Filters + Controls - All on one line */}
-      <div className="flex flex-wrap items-center gap-2">
-        <CompactSearchInput
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap lg:min-w-[800px]">
+        <ExpandableSearchInput
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="Search markets..."
-          className="w-64"
         />
         <AssetFilter
           variant="compact"
+          showLabelPrefix
           label="Collateral"
-          placeholder="All collaterals"
+          placeholder="All"
           selectedAssets={collateralFilter}
           setSelectedAssets={setCollateralFilter}
           items={availableCollaterals}
@@ -582,22 +587,33 @@ export function MarketsTableWithSameLoanAsset({
         />
         <OracleFilter
           variant="compact"
+          showLabelPrefix
           selectedOracles={oracleFilter}
           setSelectedOracles={setOracleFilter}
           availableOracles={availableOracles}
         />
-        <div className="ml-auto flex items-center gap-2">
-          <MarketFilter onOpenSettings={() => openModal('marketSettings', {})} />
-          {showSettings && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openModal('marketSettings', {})}
-              className="min-w-0 px-2"
-            >
-              <GearIcon className="h-4 w-4" />
-            </Button>
-          )}
+        {hasActiveFilters && (
+          <Button
+            variant="default"
+            size="md"
+            onClick={clearAllFilters}
+            className="w-10 min-w-10 px-0"
+            aria-label="Clear all filters"
+          >
+            <TrashIcon />
+          </Button>
+        )}
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <MarketFilter variant="button" onOpenSettings={() => openModal('marketSettings', {})} />
+          <Button
+            variant="default"
+            size="md"
+            onClick={() => openModal('marketSettings', {})}
+            className="w-10 min-w-10 px-0"
+            aria-label="Market settings"
+          >
+            <GearIcon />
+          </Button>
         </div>
       </div>
 
