@@ -1,6 +1,8 @@
 import { create } from 'zustand';
-import type { Market, MarketPosition } from '@/utils/types';
+import type { Market, MarketPosition, GroupedPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
+import type { RebalanceStepType } from '@/hooks/useRebalance';
+import type { SupportedNetworks } from '@/utils/networks';
 
 /**
  * Registry of Zustand-managed modals (Pattern 2).
@@ -20,6 +22,27 @@ export type ModalProps = {
     defaultMode?: 'supply' | 'withdraw';
     isMarketPage?: boolean;
     refetch?: () => void;
+  };
+
+  // Rebalance
+  rebalance: {
+    groupedPosition: GroupedPosition;
+    refetch: (onSuccess?: () => void) => void;
+    isRefetching: boolean;
+  };
+
+  rebalanceProcess: {
+    currentStep: RebalanceStepType;
+    isPermit2Flow: boolean;
+    tokenSymbol: string;
+    actionsCount: number;
+  };
+
+  rebalanceMarketSelection: {
+    vaultAsset: `0x${string}`;
+    chainId: SupportedNetworks;
+    multiSelect?: boolean;
+    onSelect: (markets: Market[]) => void;
   };
 
   // Settings & Configuration
@@ -58,6 +81,12 @@ type ModalActions = {
    * Close all modals.
    */
   closeAll: () => void;
+
+  /**
+   * Update props for an existing modal by type.
+   * Useful for modals that need dynamic prop updates while open.
+   */
+  update: <T extends ModalType>(type: T, props: Partial<ModalProps[T]>) => void;
 
   /**
    * Get props for a specific modal type (useful for modal components).
@@ -120,6 +149,17 @@ export const useModalStore = create<ModalStore>((set, get) => ({
 
   closeAll: () => {
     set({ stack: [] });
+  },
+
+  update: (type, props) => {
+    set((state) => ({
+      stack: state.stack.map((modal) => {
+        if (modal.type === type) {
+          return { ...modal, props: { ...modal.props, ...props } };
+        }
+        return modal;
+      }),
+    }));
   },
 
   getModalProps: (type) => {
