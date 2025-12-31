@@ -1,7 +1,9 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { MdOutlineCurrencyExchange } from 'react-icons/md';
+import { useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { IoIosSwap } from "react-icons/io";
+import { GoHistory } from 'react-icons/go';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/shared/account-identity';
@@ -32,6 +34,8 @@ export default function Positions() {
     refetch: refetchVaults,
   } = useUserVaultsV2Query({ userAddress: account as Address });
 
+  const router = useRouter();
+
   // Calculate portfolio value from positions and vaults
   const { totalUsd, assetBreakdown, isLoading: isPricesLoading, error: pricesError } = usePortfolioValue(marketPositions, vaults);
 
@@ -43,6 +47,10 @@ export default function Positions() {
   const hasVaults = vaults && vaults.length > 0;
   const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
 
+  const handleClickHistory = useCallback(() => {  
+    router.push(`/history/${account}`);
+  } , [router, account]);
+
   return (
     <div className="flex flex-col justify-between font-zen">
       <Header />
@@ -50,7 +58,7 @@ export default function Positions() {
         <div className="pb-4 flex items-center justify-between">
           <h1 className="font-zen">Portfolio</h1>
 
-          <div className="mt-8">
+          <div className="flex mt-8 gap-2">
             {' '}
             {/* aligned with portfolio  */}
             <Button
@@ -58,8 +66,16 @@ export default function Positions() {
               onClick={() => open('bridgeSwap', {})}
               title="Swap tokens"
             >
-              <MdOutlineCurrencyExchange className="h-4 w-4" />
+              <IoIosSwap className="h-4 w-4" />
               Swap
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleClickHistory}
+              title="Swap tokens"
+            >
+              <GoHistory className="h-4 w-4" />
+              History
             </Button>
           </div>
         </div>
