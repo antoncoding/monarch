@@ -260,6 +260,27 @@ Use Pattern 2 when: multi-trigger (2+ places), props drilling pain, modal chaini
 
 ---
 
+### SectionTag
+
+**Import:** `@/components/landing`
+
+A minimal label component for section headers with a technical, bracketed style.
+
+```tsx
+import { SectionTag } from '@/components/landing';
+
+// Basic usage
+<SectionTag>Account Access</SectionTag>
+
+// With custom className
+<SectionTag className="mb-4">Market Analysis</SectionTag>
+```
+
+**Use cases:**
+- Landing page section labels
+
+---
+
 ### Button
 
 **Import:** `@/components/ui/button`

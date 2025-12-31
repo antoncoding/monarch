@@ -9,5 +9,10 @@ export const metadata = generateMetadata({
 });
 
 export default function LogIn() {
-  return <SearchOrConnect path="rewards" />;
+  return (
+    <SearchOrConnect
+      path="rewards"
+      title="Rewards"
+    />
+  );
 }

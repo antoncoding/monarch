@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { IoIosSwap } from "react-icons/io";
+import { IoIosSwap } from 'react-icons/io';
 import { GoHistory } from 'react-icons/go';
 import type { Address } from 'viem';
 import { Button } from '@/components/ui/button';
@@ -47,9 +47,9 @@ export default function Positions() {
   const hasVaults = vaults && vaults.length > 0;
   const showEmpty = !loading && !isVaultsLoading && !hasSuppliedMarkets && !hasVaults;
 
-  const handleClickHistory = useCallback(() => {  
+  const handleClickHistory = useCallback(() => {
     router.push(`/history/${account}`);
-  } , [router, account]);
+  }, [router, account]);
 
   return (
     <div className="flex flex-col justify-between font-zen">
