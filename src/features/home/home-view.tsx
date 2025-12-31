@@ -24,16 +24,11 @@ import { EXTERNAL_LINKS } from '@/utils/external';
 import { SectionTag, GridAccent, FeatureCard, ResponsiveGridDivider, ScrollGridReveal } from '@/components/landing';
 
 import { CustomTypingAnimation } from './typing-title';
-import { useTheme } from 'next-themes';
 function HomePage() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     element?.scrollIntoView({ behavior: 'smooth' });
   };
-
-  const { theme } = useTheme()
-
-  console.log('theme', theme)
 
   return (
     <div className="bg-main min-h-screen font-zen relative">

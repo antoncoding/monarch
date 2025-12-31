@@ -17,12 +17,13 @@ import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
 type BridgeSwapModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  targetToken: SwapToken;
+  defaultTargetToken?: SwapToken;
 };
 
-export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModalProps) {
+export function BridgeSwapModal({ isOpen, onClose, defaultTargetToken }: BridgeSwapModalProps) {
   const { address: account } = useConnection();
   const [sourceToken, setSourceToken] = useState<SwapToken | null>(null);
+  const [targetToken, setTargetToken] = useState<SwapToken | null>(defaultTargetToken ?? null);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, _setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
@@ -41,14 +42,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     tokenSymbol: sourceToken?.symbol,
   });
 
-  // Convert balances to SwapTokens (support cross-chain)
-  const availableTokens = useMemo<SwapToken[]>(() => {
+  // Convert balances to SwapTokens
+  const allTokens = useMemo<SwapToken[]>(() => {
     return balances
-      .filter((b) => BigInt(b.balance) > BigInt(0)) // Only show tokens with balance
-      .filter(
-        // Not the same token as target
-        (b) => !(b.chainId === targetToken.chainId && b.address.toLowerCase() === targetToken.address.toLowerCase()),
-      )
+      .filter((b) => BigInt(b.balance) > BigInt(0))
       .map((b) => ({
         address: b.address,
         symbol: b.symbol,
@@ -57,12 +54,23 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
         balance: BigInt(b.balance),
       }))
       .sort((a, b) => {
-        // Sort by balance (descending)
         const aValue = Number(formatUnits(a.balance ?? BigInt(0), a.decimals));
         const bValue = Number(formatUnits(b.balance ?? BigInt(0), b.decimals));
         return bValue - aValue;
       });
-  }, [balances, targetToken.chainId, targetToken.address]);
+  }, [balances]);
+
+  // Source tokens: exclude selected target
+  const availableSourceTokens = useMemo<SwapToken[]>(() => {
+    if (!targetToken) return allTokens;
+    return allTokens.filter((t) => !(t.chainId === targetToken.chainId && t.address.toLowerCase() === targetToken.address.toLowerCase()));
+  }, [allTokens, targetToken]);
+
+  // Target tokens: exclude selected source
+  const availableTargetTokens = useMemo<SwapToken[]>(() => {
+    if (!sourceToken) return allTokens;
+    return allTokens.filter((t) => !(t.chainId === sourceToken.chainId && t.address.toLowerCase() === sourceToken.address.toLowerCase()));
+  }, [allTokens, sourceToken]);
 
   // CoW Bridge hook
   const { quote, isQuoting, isExecuting, error, orderUid, executeSwap, reset } = useCowBridge({
@@ -79,6 +87,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     setSourceToken(token);
     setAmount(BigInt(0));
     setInputAmount('0');
+  };
+
+  const handleTargetTokenSelect = (token: SwapToken) => {
+    setTargetToken(token);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +117,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   const handleClose = () => {
     reset();
     setSourceToken(null);
+    setTargetToken(defaultTargetToken ?? null);
     setAmount(BigInt(0));
     setInputAmount('0');
     onClose();
@@ -130,6 +143,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
 
   // Determine output display text
   const getOutputDisplay = () => {
+    if (!targetToken) return 'Select token below';
     if (!sourceToken) return 'Select token above';
     if (amount === BigInt(0)) return '0';
     if (isQuoting) return 'Loading...';
@@ -152,7 +166,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     >
       <ModalHeader
         title="Swap Tokens"
-        description={`Swap to ${targetToken.symbol} via CoW Protocol`}
+        description={targetToken ? `Swap to ${targetToken.symbol} via CoW Protocol` : 'Select tokens to swap via CoW Protocol'}
       />
 
       <ModalBody>
@@ -182,10 +196,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
               />
               <TokenNetworkDropdown
                 selectedToken={sourceToken}
-                tokens={availableTokens}
+                tokens={availableSourceTokens}
                 onSelect={handleSourceTokenSelect}
                 placeholder="Select"
-                disabled={availableTokens.length === 0}
+                disabled={availableSourceTokens.length === 0}
               />
             </div>
           </div>
@@ -202,13 +216,14 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
               <div className="bg-hovered flex h-10 flex-1 items-center rounded-sm px-3 text-xs text-secondary">{getOutputDisplay()}</div>
               <TokenNetworkDropdown
                 selectedToken={targetToken}
-                tokens={[targetToken]}
-                onSelect={() => {}}
-                disabled
+                tokens={availableTargetTokens}
+                onSelect={handleTargetTokenSelect}
+                placeholder="Select"
+                disabled={availableTargetTokens.length === 0}
               />
             </div>
             <div className="mt-1.5 text-xs text-secondary">
-              {quote && sourceToken && !error && (
+              {quote && sourceToken && targetToken && !error && (
                 <span>
                   1 {sourceToken.symbol} ≈{' '}
                   {(
@@ -282,7 +297,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
           )}
 
           {/* Empty State */}
-          {!balancesLoading && availableTokens.length === 0 && !sourceToken && (
+          {!balancesLoading && allTokens.length === 0 && (
             <div className="text-secondary py-6 text-center text-sm">
               <p>No tokens found on supported chains</p>
               <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Base, Polygon, Arbitrum</p>
@@ -301,9 +316,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
         {!orderUid && (
           <ExecuteTransactionButton
             targetChainId={sourceToken?.chainId ?? 1}
+            skipChainCheck={!sourceToken || !targetToken || amount === BigInt(0)}
             onClick={() => void handleSwap()}
             isLoading={isLoading}
-            disabled={!quote || amount === BigInt(0) || !!error}
+            disabled={!sourceToken || !targetToken || !quote || amount === BigInt(0) || !!error}
             variant="primary"
           >
             {needsApproval ? 'Approve & Swap' : 'Swap'}

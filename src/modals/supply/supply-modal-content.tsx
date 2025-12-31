@@ -126,7 +126,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                       type="button"
                       onClick={() =>
                         openModal('bridgeSwap', {
-                          targetToken: {
+                          defaultTargetToken: {
                             address: market.loanAsset.address,
                             symbol: market.loanAsset.symbol,
                             chainId: market.morphoBlue.chain.id,

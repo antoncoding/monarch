@@ -14,7 +14,7 @@ import { SWAP_APP_CODE } from '../constants';
 
 type UseCowBridgeParams = {
   sourceToken: SwapToken | null;
-  targetToken: SwapToken;
+  targetToken: SwapToken | null;
   amount: bigint;
   slippageBps: number;
 };
@@ -81,7 +81,7 @@ export function useCowBridge({ sourceToken, targetToken, amount, slippageBps }: 
    * Get quote for swap/bridge
    */
   const getQuote = useCallback(async () => {
-    if (!sourceToken || !account || amount === BigInt(0)) {
+    if (!sourceToken || !targetToken || !account || amount === BigInt(0)) {
       setQuote(null);
       setRawQuote(null);
       return;

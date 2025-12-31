@@ -1,7 +1,9 @@
 'use client';
 
 import { useParams } from 'next/navigation';
+import { MdOutlineCurrencyExchange } from 'react-icons/md';
 import type { Address } from 'viem';
+import { Button } from '@/components/ui/button';
 import { AccountIdentity } from '@/components/shared/account-identity';
 import Header from '@/components/layout/header/Header';
 import EmptyScreen from '@/components/status/empty-screen';
@@ -10,12 +12,14 @@ import { useProcessedMarkets } from '@/hooks/useProcessedMarkets';
 import useUserPositionsSummaryData from '@/hooks/useUserPositionsSummaryData';
 import { usePortfolioValue } from '@/hooks/usePortfolioValue';
 import { useUserVaultsV2Query } from '@/hooks/queries/useUserVaultsV2Query';
+import { useModal } from '@/hooks/useModal';
 import { SuppliedMorphoBlueGroupedTable } from './components/supplied-morpho-blue-grouped-table';
 import { PortfolioValueBadge } from './components/portfolio-value-badge';
 import { UserVaultsTable } from './components/user-vaults-table';
 
 export default function Positions() {
   const { account } = useParams<{ account: string }>();
+  const { open } = useModal();
 
   const { loading: isMarketsLoading } = useProcessedMarkets();
 
@@ -43,8 +47,21 @@ export default function Positions() {
     <div className="flex flex-col justify-between font-zen">
       <Header />
       <div className="container h-full gap-8">
-        <div className="pb-4">
+        <div className="pb-4 flex items-center justify-between">
           <h1 className="font-zen">Portfolio</h1>
+
+          <div className="mt-8">
+            {' '}
+            {/* aligned with portfolio  */}
+            <Button
+              variant="default"
+              onClick={() => open('bridgeSwap', {})}
+              title="Swap tokens"
+            >
+              <MdOutlineCurrencyExchange className="h-4 w-4" />
+              Swap
+            </Button>
+          </div>
         </div>
         <div className="flex flex-col items-center justify-between gap-4 pb-4 sm:flex-row">
           <AccountIdentity
