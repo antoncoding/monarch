@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/header/Header';
 import { EXTERNAL_LINKS } from '@/utils/external';
 
-import { SectionTag, GridAccent, FeatureCard, ResponsiveGridDivider, ScrollGridReveal } from '@/components/landing';
+import { SectionTag, GridAccent, FeatureCard, ResponsiveGridDivider, ScrollGridReveal, HalftoneImage } from '@/components/landing';
 
 import { CustomTypingAnimation } from './typing-title';
 function HomePage() {
@@ -66,43 +66,57 @@ function HomePage() {
           {/* Main hero content */}
           <div className="flex-1 flex items-center">
             <div className="container mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
-              <div className="max-w-4xl">
-                {/* Section tag */}
-                <div className="flex items-center gap-4 mb-6">
-                  <SectionTag>DeFi Lending for Powerusers</SectionTag>
-                </div>
+              {/* Two-column grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+                {/* Left column - content */}
+                <div className="max-w-xl">
+                  {/* Section tag */}
+                  <div className="flex items-center gap-4 mb-6">
+                    <SectionTag>DeFi Lending for Powerusers</SectionTag>
+                  </div>
 
-                {/* Main headline */}
-                <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Lending, Unfiltered</h2>
+                  {/* Main headline */}
+                  <h2 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Lending, Unfiltered</h2>
 
-                {/* Typing animation subtitle */}
-                <div className="mb-10 h-16 sm:h-20">
-                  <CustomTypingAnimation />
-                </div>
+                  {/* Typing animation subtitle */}
+                  <div className="mb-10 h-16 sm:h-20">
+                    <CustomTypingAnimation />
+                  </div>
 
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Button
-                    variant="default"
-                    size="lg"
-                    className="w-full sm:w-auto min-w-[180px] font-zen"
-                    onClick={() => scrollToSection('section-1')}
-                  >
-                    Learn More
-                  </Button>
-                  <Link
-                    href="/markets"
-                    className="block no-underline"
-                  >
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <Button
-                      variant="primary"
+                      variant="default"
                       size="lg"
                       className="w-full sm:w-auto min-w-[180px] font-zen"
+                      onClick={() => scrollToSection('section-1')}
                     >
-                      Explore Markets
-                      <RiArrowRightLine className="h-5 w-5 ml-2" />
+                      Learn More
                     </Button>
-                  </Link>
+                    <Link
+                      href="/markets"
+                      className="block no-underline"
+                    >
+                      <Button
+                        variant="primary"
+                        size="lg"
+                        className="w-full sm:w-auto min-w-[180px] font-zen"
+                      >
+                        Explore Markets
+                        <RiArrowRightLine className="h-5 w-5 ml-2" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Right column - halftone image (hidden on mobile/tablet) */}
+                <div className="hidden lg:flex justify-end">
+                  <HalftoneImage
+                    image="/imgs/home/landing.png"
+                    width={560}
+                    height={340}
+                    className="rounded-lg"
+                  />
                 </div>
               </div>
 
@@ -152,7 +166,7 @@ function HomePage() {
                 <FeatureCard
                   icon={<RiSearchLine className="h-6 w-6" />}
                   title="Advanced Filtering"
-                  description="Search by asset, oracle, network. Filter by LLTV, utilization, and risk metrics."
+                  description="Search by asset, oracle, network. Filter by volume, assets, and risk metrics."
                   href="/markets"
                 />
                 <FeatureCard
