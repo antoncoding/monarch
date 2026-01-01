@@ -1,66 +1,62 @@
 <div align="center">
-  <h1>Monarch</h1>
-  <img height=80 src="./imgs/logo.png"/>
-  <h5>Customized lending on Morpho Blue</h5>
-
-  <img src="https://img.shields.io/github/license/antoncoding/monarch?style=flat-square" alt="LICENSE" />
-  <img src="https://img.shields.io/badge/code_style-biome-js?style=flat-square" alt="style" />
-  <img src="https://img.shields.io/github/languages/top/antoncoding/monarch?style=flat-square" alt="GitHub top language" />
-
   <br/>
+  <h1> Monarch </h1>
   <br/>
+  <p><strong>Lending with full control</strong></p>
+  <p align="center">
+    <img src="./imgs/bg.png" alt="Monarch Interface" width="720"/>
+  </p>
+
+  <p>
+    <img src="https://img.shields.io/github/license/antoncoding/monarch?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/code_style-biome-js?style=flat-square" alt="Biome" />
+  </p>
 </div>
 
-Monarch is an open, verifiable interface for Morpho Blue markets. Interact directly with battle-tested Morpho contracts while maintaining full control and visibility over your lending positions.
+<br/>
 
-## Key Features
 
-- **Direct Market Operations**: Supply, withdraw, borrow, and repay with real-time APY previews
-- **Smart Rebalancing**: Move positions between markets with batched transactions
-- **Market Analytics**: Track history, rate changes, and volume with comprehensive data
-- **Oracle Integration**: Deep dive into Chainlink, Compound, and Redstone price feeds
-- **AutoVaults** (Beta): Create and manage automated lending strategies
+<br/>
+
+## What is Monarch?
+
+An open interface for [Morpho Blue](https://github.com/morpho-org/morpho-blue) markets. Direct protocol access. Full transparency. Zero platform fees.
+
+## Features
+
+| | |
+|---|---|
+| **Markets** | Find best morpho markets with advanced filters. Compare APY, utilization, and risk metrics. |
+| **Positions** | Supply, borrow, withdraw, repay. Batch rebalancing across markets. |
+| **AutoVaults** | Deploy automated lending strategies with custom allocation rules. |
 
 ## Quick Start
 
-### Prerequisites
-
-- Node.js 20+
-- pnpm 9.15+
-
-### Installation & Development
-
 ```bash
-# Install dependencies
 pnpm install
-
-# Start development server
 pnpm dev
 ```
 
-Visit `http://localhost:3000` to see the app.
+Open [localhost:3000](http://localhost:3000)
 
-### Building
+## Build
 
 ```bash
-# Build for production
-pnpm build
-
-# Check code quality
-pnpm lint:check
-
-# Auto-fix linting issues
-pnpm lint
+pnpm build        # Production build
+pnpm lint:check   # Check code quality
+pnpm lint         # Auto-fix issues
 ```
 
-## Documentation
+## Contracts
 
-- **[Developer Guide](./docs/DEVELOPER_GUIDE.md)** - Architecture, state management, components, and styling
+No additional dependencies. Direct interaction with audited Morpho contracts:
 
-## Security
+- [morpho-blue](https://github.com/morpho-org/morpho-blue) — Core protocol
+- [morpho-blue-bundlers](https://github.com/morpho-org/morpho-blue-bundlers) — Transaction batching
+- [vault-v2](https://github.com/morpho-org/vault-v2) — AutoVault infrastructure
 
-This project has **no additional contract dependencies** beyond official Morpho contracts:
+---
 
-- [Morpho Blue](https://github.com/morpho-org/morpho-blue) - Core lending protocol
-- [Morpho Bundler V2](https://github.com/morpho-org/morpho-blue-bundlers) - Transaction batching
-- [Morpho Vaults V2](https://github.com/morpho-org/vault-v2) - Infrastructure for Auto Vaults
+<p align="center">
+  <a href="./docs/DEVELOPER_GUIDE.md">Developer Guide</a>
+</p>
