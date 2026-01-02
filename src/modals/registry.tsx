@@ -10,8 +10,8 @@ import { lazy } from 'react';
  * Components are lazy-loaded for optimal code splitting.
  */
 
-// Swap & Bridge
-const BridgeSwapModal = lazy(() => import('@/features/swap/components/BridgeSwapModal').then((m) => ({ default: m.BridgeSwapModal })));
+// Swap
+const SwapModal = lazy(() => import('@/features/swap/components/SwapModal').then((m) => ({ default: m.SwapModal })));
 
 // Supply & Withdraw
 const SupplyModalV2 = lazy(() => import('@/modals/supply/supply-modal').then((m) => ({ default: m.SupplyModalV2 })));
@@ -49,7 +49,7 @@ const MarketSettingsModal = lazy(() => import('@/features/markets/components/mar
 export const MODAL_REGISTRY: {
   [K in ModalType]: ComponentType<any>;
 } = {
-  bridgeSwap: BridgeSwapModal,
+  bridgeSwap: SwapModal,
   supply: SupplyModalV2,
   rebalance: RebalanceModal,
   rebalanceProcess: RebalanceProcessModal,

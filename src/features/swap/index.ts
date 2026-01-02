@@ -1,13 +1,13 @@
 /**
- * CoW Protocol Swap & Bridge Feature
+ * CoW Protocol Swap Feature
  *
- * Provides same-chain and cross-chain token swaps via CoW Protocol
+ * Provides same-chain token swaps via CoW Protocol
  */
 
-export { BridgeSwapModal } from './components/BridgeSwapModal';
+export { SwapModal } from './components/SwapModal';
 export { TokenNetworkDropdown } from './components/TokenNetworkDropdown';
-export { useCowBridge } from './hooks/useCowBridge';
-export { bridgingSdk, bungeeBridgeProvider } from './cowBridgingSdk';
-export type { SwapToken, SwapQuoteDisplay, CowBridgeChainId } from './types';
-export { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, isCowBridgeChain } from './types';
+export { useCowSwap } from './hooks/useCowSwap';
+export { tradingSdk } from './cowSwapSdk';
+export type { SwapToken, SwapQuoteDisplay, CowSwapChainId } from './types';
+export { COW_SWAP_CHAINS, COW_VAULT_RELAYER, isCowSwapChain } from './types';
 export { SWAP_APP_CODE, DEFAULT_SLIPPAGE_PERCENT } from './constants';

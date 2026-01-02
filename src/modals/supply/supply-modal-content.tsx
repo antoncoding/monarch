@@ -11,6 +11,9 @@ import type { Market } from '@/utils/types';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { SupplyProcessModal } from './supply-process-modal';
 import { useModal } from '@/hooks/useModal';
+import { RiSparklingFill } from "react-icons/ri";
+import { MONARCH_PRIMARY } from '@/constants/chartColors';
+
 
 type SupplyModalContentProps = {
   market: Market;
@@ -103,6 +106,26 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
             )}
 
             <div>
+              <div className="mb-1 flex items-center justify-between">
+                <div/>
+                <button
+                    type="button"
+                    onClick={() =>
+                      openModal('bridgeSwap', {
+                        defaultTargetToken: {
+                          address: market.loanAsset.address,
+                          symbol: market.loanAsset.symbol,
+                          chainId: market.morphoBlue.chain.id,
+                          decimals: market.loanAsset.decimals,
+                        },
+                      })
+                    }
+                    className="text-xs transition hover:opacity-70 flex items-center gap-1"
+                  >
+                    <span> Swap to {market.loanAsset.symbol} </span>
+                    <RiSparklingFill className="h-3 w-3" color={MONARCH_PRIMARY} />
+                  </button>
+              </div>
               <div className="flex items-center justify-between">
                 <span className="opacity-80">Supply amount</span>
                 <div className="flex items-center gap-2">
@@ -121,24 +144,7 @@ export function SupplyModalContent({ onClose, market, refetch, onAmountChange }:
                   >
                     <ReloadIcon className="h-3 w-3" />
                   </button>
-                  {((useEth && (ethBalance ?? BigInt(0)) === BigInt(0)) || (!useEth && (tokenBalance ?? BigInt(0)) === BigInt(0))) && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openModal('bridgeSwap', {
-                          defaultTargetToken: {
-                            address: market.loanAsset.address,
-                            symbol: market.loanAsset.symbol,
-                            chainId: market.morphoBlue.chain.id,
-                            decimals: market.loanAsset.decimals,
-                          },
-                        })
-                      }
-                      className="text-primary text-xs transition hover:opacity-70"
-                    >
-                      Swap or Bridge
-                    </button>
-                  )}
+                  
                 </div>
               </div>
 

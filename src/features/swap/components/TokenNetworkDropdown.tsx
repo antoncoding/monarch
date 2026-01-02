@@ -13,21 +13,40 @@ type TokenNetworkDropdownProps = {
   onSelect: (token: SwapToken) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Optional chain ID to highlight tokens on (e.g., to show matching network) */
+  highlightChainId?: number;
 };
 
 /**
  * Compact inline token + network selector for swap interface
  * Displays token icon with small network icon, opens searchable dropdown
  */
-export function TokenNetworkDropdown({ selectedToken, tokens, onSelect, placeholder = 'Select', disabled }: TokenNetworkDropdownProps) {
+export function TokenNetworkDropdown({
+  selectedToken,
+  tokens,
+  onSelect,
+  placeholder = 'Select',
+  disabled,
+  highlightChainId,
+}: TokenNetworkDropdownProps) {
   const [query, setQuery] = useState('');
 
   // Filter tokens by search query
-  const filteredTokens = tokens.filter(
-    (token) =>
-      token.symbol.toLowerCase().includes(query.toLowerCase()) ||
-      (getNetworkName(token.chainId)?.toLowerCase() ?? '').includes(query.toLowerCase()),
-  );
+  const filteredTokens = tokens
+    .filter(
+      (token) =>
+        token.symbol.toLowerCase().includes(query.toLowerCase()) ||
+        (getNetworkName(token.chainId)?.toLowerCase() ?? '').includes(query.toLowerCase()),
+    )
+    // Sort highlighted chain tokens first
+    .sort((a, b) => {
+      if (highlightChainId) {
+        const aMatch = a.chainId === highlightChainId ? 0 : 1;
+        const bMatch = b.chainId === highlightChainId ? 0 : 1;
+        if (aMatch !== bMatch) return aMatch - bMatch;
+      }
+      return 0;
+    });
 
   return (
     <DropdownMenu>
@@ -104,7 +123,11 @@ export function TokenNetworkDropdown({ selectedToken, tokens, onSelect, placehol
               >
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{token.symbol}</span>
-                  <div className="badge flex items-center gap-1">
+                  <div
+                    className={`badge flex items-center gap-1 ${
+                      highlightChainId && token.chainId === highlightChainId ? 'bg-green-100 dark:bg-green-900/30' : ''
+                    }`}
+                  >
                     <NetworkIcon networkId={token.chainId} />
                     <span className="text-xs">{getNetworkName(token.chainId)}</span>
                   </div>
