@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Menu from './Menu';
+import { NotificationBanner, useNotificationBannerVisible } from '../notification-banner';
 
 export type HeaderProps = {
   ghost?: boolean;
@@ -11,6 +12,7 @@ type ScrollState = 'at-top' | 'scrolling-up' | 'scrolling-down';
 
 function Header({ ghost }: HeaderProps) {
   const [scrollState, setScrollState] = useState<ScrollState>('at-top');
+  const showBanner = useNotificationBannerVisible();
 
   useEffect(() => {
     let previousScrollY = window.scrollY;
@@ -32,10 +34,13 @@ function Header({ ghost }: HeaderProps) {
     return () => removeEventListener('scroll', handleScroll);
   }, [ghost]);
 
+  // Spacer height: header (48/56px) + banner (48/56px if visible)
+  const spacerClass = showBanner ? 'h-[96px] md:h-[112px]' : 'h-[48px] md:h-[56px]';
+
   return (
     <>
       {/* Spacer div for non-ghost headers to prevent content overlap */}
-      {!ghost && <div className="h-[48px] w-full md:h-[56px]" />}
+      {!ghost && <div className={`w-full ${spacerClass}`} />}
       <header
         data-scroll-state={scrollState}
         className="fixed left-0 right-0 top-0 w-full bg-surface"
@@ -45,6 +50,8 @@ function Header({ ghost }: HeaderProps) {
         <div className="w-full border-b border-dashed border-[var(--grid-cell-muted)]">
           <Menu />
         </div>
+        {/* Notification banner below navbar */}
+        <NotificationBanner />
       </header>
     </>
   );
