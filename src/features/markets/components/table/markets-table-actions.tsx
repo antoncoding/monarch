@@ -1,7 +1,6 @@
 'use client';
 
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { CgCompress } from 'react-icons/cg';
 import { CgDisplayFullwidth } from "react-icons/cg";
 import { FiSettings } from 'react-icons/fi';
 import { TbArrowAutofitWidth } from 'react-icons/tb';
