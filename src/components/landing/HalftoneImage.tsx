@@ -14,7 +14,7 @@ type HalftoneImageProps = {
 // Theme-based background colors (from global.css)
 const THEME_COLORS = {
   light: '#f0f2f7', // --palette-white
-  dark: '#16181a',  // --palette-bg-black
+  dark: '#16181a', // --palette-bg-black
 } as const;
 
 // Stored halftone filter params
@@ -33,12 +33,7 @@ const HALFTONE_CONFIG = {
   fit: 'cover' as const,
 };
 
-export function HalftoneImage({
-  image,
-  width = 640,
-  height = 400,
-  className,
-}: HalftoneImageProps) {
+export function HalftoneImage({ image, width = 640, height = 400, className }: HalftoneImageProps) {
   const { resolvedTheme } = useTheme();
   const colorBack = THEME_COLORS[resolvedTheme as keyof typeof THEME_COLORS] ?? THEME_COLORS.light;
 
