@@ -53,7 +53,7 @@ export function AllocationCell({ amount, symbol, percentage }: AllocationCellPro
               fill="none"
               stroke="currentColor"
               strokeWidth="3"
-              className="text-gray-200"
+              className="text-gray-200 dark:text-gray-700"
             />
             {/* Progress circle */}
             <circle
@@ -65,7 +65,7 @@ export function AllocationCell({ amount, symbol, percentage }: AllocationCellPro
               strokeWidth="3"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
-              className={isZero ? 'text-gray-300' : ''}
+              className={isZero ? 'text-gray-300 dark:text-gray-600' : ''}
               strokeLinecap="round"
             />
           </svg>

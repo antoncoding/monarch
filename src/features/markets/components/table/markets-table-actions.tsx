@@ -1,9 +1,9 @@
 'use client';
 
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { CgCompress } from 'react-icons/cg';
+import { CgDisplayFullwidth } from "react-icons/cg";
 import { FiSettings } from 'react-icons/fi';
-import { RiExpandHorizontalLine } from 'react-icons/ri';
+import { TbArrowAutofitWidth } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent } from '@/components/shared/tooltip-content';
@@ -49,24 +49,24 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
         <Tooltip
           content={
             <TooltipContent
-              icon={effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine size={14} /> : <CgCompress size={14} />}
-              title={effectiveTableViewMode === 'compact' ? 'Expand Table' : 'Compact Table'}
+              icon={effectiveTableViewMode === 'compact' ? <CgDisplayFullwidth size={14} /> : <TbArrowAutofitWidth size={14} />}
+              title={effectiveTableViewMode === 'compact' ? 'Full Width' : 'Responsive'}
               detail={
                 effectiveTableViewMode === 'compact'
-                  ? 'Expand table to full width, useful when more columns are enabled.'
-                  : 'Restore compact table view'
+                  ? 'Table matches page layout width. Click to switch to Responsive.'
+                  : 'Table adjusts width based on content. Click to switch to Full Width.'
               }
             />
           }
         >
           <Button
-            aria-label="Toggle table width"
+            aria-label="Toggle table view mode"
             variant="ghost"
             size="sm"
             className="text-secondary min-w-0 px-2"
             onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
           >
-            {effectiveTableViewMode === 'compact' ? <RiExpandHorizontalLine className="h-3 w-3" /> : <CgCompress className="h-3 w-3" />}
+            {effectiveTableViewMode === 'compact' ? <CgDisplayFullwidth className="h-3 w-3" /> : <TbArrowAutofitWidth className="h-3 w-3" />}
           </Button>
         </Tooltip>
       )}
