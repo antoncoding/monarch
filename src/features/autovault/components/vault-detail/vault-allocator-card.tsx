@@ -1,17 +1,13 @@
 import { useMemo } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Tooltip } from '@/components/ui/tooltip';
-import { GearIcon } from '@radix-ui/react-icons';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { GrStatusGood } from 'react-icons/gr';
 import type { Address } from 'viem';
-import { useConnection } from 'wagmi';
 import { AgentIcon } from '@/components/shared/agent-icon';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { findAgent } from '@/utils/monarch-agent';
 import { useVaultV2Data } from '@/hooks/useVaultV2Data';
-import { useVaultV2 } from '@/hooks/useVaultV2';
-import { useVaultSettingsModalStore } from '@/stores/vault-settings-modal-store';
 import type { SupportedNetworks } from '@/utils/networks';
 
 type VaultAllocatorCardProps = {
@@ -21,14 +17,8 @@ type VaultAllocatorCardProps = {
 };
 
 export function VaultAllocatorCard({ vaultAddress, chainId, needsInitialization }: VaultAllocatorCardProps) {
-  const { address: connectedAddress } = useConnection();
-
   // Pull data directly - TanStack Query deduplicates
   const { data: vaultData, isLoading: vaultDataLoading } = useVaultV2Data({ vaultAddress, chainId });
-  const { isOwner } = useVaultV2({ vaultAddress, chainId, connectedAddress });
-
-  // UI state from Zustand
-  const { open: openSettings } = useVaultSettingsModalStore();
 
   const allocators = vaultData?.allocators ?? [];
   const isLoading = vaultDataLoading;
@@ -52,14 +42,8 @@ export function VaultAllocatorCard({ vaultAddress, chainId, needsInitialization 
 
   return (
     <Card className={cardStyle}>
-      <CardHeader className="flex items-center justify-between pb-2">
+      <CardHeader className="pb-2">
         <span className="text-xs uppercase tracking-wide text-secondary">Allocators</span>
-        {isOwner && !needsInitialization && (
-          <GearIcon
-            className="h-4 w-4 cursor-pointer text-secondary hover:text-primary"
-            onClick={() => openSettings('agents')}
-          />
-        )}
       </CardHeader>
       <CardBody className="flex items-center justify-center py-3">
         {isLoading ? (

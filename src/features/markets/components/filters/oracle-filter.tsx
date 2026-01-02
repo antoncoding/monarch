@@ -1,15 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon } from '@radix-ui/react-icons';
+import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
 import { IoHelpCircleOutline } from 'react-icons/io5';
+import { cn } from '@/utils/components';
 import { PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
 
 type OracleFilterProps = {
   selectedOracles: PriceFeedVendors[];
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
+  availableOracles?: PriceFeedVendors[];
+  showLabelPrefix?: boolean;
 };
 
-export default function OracleFilter({ selectedOracles, setSelectedOracles }: OracleFilterProps) {
+export default function OracleFilter({
+  selectedOracles,
+  setSelectedOracles,
+  availableOracles,
+  showLabelPrefix = false,
+}: OracleFilterProps) {
+  // Use provided oracles or default to all
+  const oraclesToShow = availableOracles ?? Object.values(PriceFeedVendors);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -36,38 +46,101 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
     }
   };
 
+  const clearSelection = () => {
+    setSelectedOracles([]);
+    setIsOpen(false);
+  };
+
   return (
     <div
-      className="relative w-full font-zen"
+      className="relative font-zen"
       ref={dropdownRef}
     >
-      <div
-        className={`bg-surface min-w-48 cursor-pointer rounded-sm p-2 shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-          isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
-        }`}
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
+        className={cn(
+          'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
+          'min-w-[120px] max-w-[220px]',
+          isOpen && 'min-w-[180px]',
+        )}
         onClick={toggleDropdown}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
             toggleDropdown();
           }
         }}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span className="absolute left-2 top-2 px-1 text-xs text-secondary">Oracle</span>
-        <div className="flex items-center justify-between pt-4">
-          {selectedOracles.length > 0 ? (
-            <div className="flex-scroll flex gap-2 p-1">
-              {selectedOracles.map((oracle, index) => (
-                <div key={index}>
+        <div className="flex flex-1 items-center justify-between text-sm">
+          <div className="flex items-center gap-2">
+            {showLabelPrefix && <span className="text-sm text-secondary">Oracle:</span>}
+            {selectedOracles.length > 0 ? (
+              <div className="flex items-center gap-1">
+                {selectedOracles.slice(0, 3).map((oracle) => (
+                  <div key={oracle}>
+                    {OracleVendorIcons[oracle] ? (
+                      <Image
+                        src={OracleVendorIcons[oracle]}
+                        alt={oracle}
+                        height={14}
+                        width={14}
+                      />
+                    ) : (
+                      <IoHelpCircleOutline
+                        className="text-secondary"
+                        size={14}
+                      />
+                    )}
+                  </div>
+                ))}
+                {selectedOracles.length > 3 && <span className="text-xs text-secondary">+{selectedOracles.length - 3}</span>}
+              </div>
+            ) : (
+              <span className="text-sm text-secondary">All</span>
+            )}
+          </div>
+        </div>
+        <ChevronDownIcon className={cn('h-4 w-4 text-secondary transition-transform duration-200', isOpen && 'rotate-180')} />
+      </button>
+
+      <div
+        className={cn(
+          'bg-surface absolute z-10 mt-1 min-w-[200px] rounded-sm shadow-lg transition-all duration-200',
+          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0',
+        )}
+      >
+        <div className="relative">
+          <ul
+            className="custom-scrollbar max-h-60 overflow-auto pb-10"
+            role="listbox"
+          >
+            {oraclesToShow.map((oracle) => (
+              <li
+                key={oracle}
+                className={cn(
+                  'm-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
+                  selectedOracles.includes(oracle) && 'bg-gray-100 dark:bg-gray-800',
+                )}
+                onClick={() => toggleOracle(oracle)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    toggleOracle(oracle);
+                  }
+                }}
+                role="option"
+                aria-selected={selectedOracles.includes(oracle)}
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-2">
                   {OracleVendorIcons[oracle] ? (
                     <Image
                       src={OracleVendorIcons[oracle]}
                       alt={oracle}
-                      height={16}
                       width={16}
+                      height={16}
+                      className="rounded-full"
                     />
                   ) : (
                     <IoHelpCircleOutline
@@ -75,62 +148,22 @@ export default function OracleFilter({ selectedOracles, setSelectedOracles }: Or
                       size={16}
                     />
                   )}
+                  <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <span className="p-[2px] text-sm text-gray-400">All oracles</span>
-          )}
-          <span className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-            <ChevronDownIcon />
-          </span>
-        </div>
-      </div>
-      <div
-        className={`bg-surface absolute z-10 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
-          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
-        }`}
-      >
-        <ul
-          className="custom-scrollbar max-h-60 overflow-auto"
-          role="listbox"
-        >
-          {Object.values(PriceFeedVendors).map((oracle) => (
-            <li
-              key={oracle}
-              className={`m-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                selectedOracles.includes(oracle) ? 'bg-gray-300 dark:bg-gray-700' : ''
-              }`}
-              onClick={() => toggleOracle(oracle)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  toggleOracle(oracle);
-                }
-              }}
-              role="option"
-              aria-selected={selectedOracles.includes(oracle)}
-              tabIndex={0}
+              </li>
+            ))}
+          </ul>
+          <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-1.5">
+            <button
+              className="hover:bg-main flex w-full items-center justify-between rounded-sm p-1.5 text-left text-xs text-secondary transition-colors duration-200 hover:text-normal"
+              onClick={clearSelection}
+              type="button"
             >
-              <div className="flex items-center gap-2">
-                {OracleVendorIcons[oracle] ? (
-                  <Image
-                    src={OracleVendorIcons[oracle]}
-                    alt={oracle}
-                    width={16}
-                    height={16}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <IoHelpCircleOutline
-                    className="text-secondary"
-                    size={16}
-                  />
-                )}
-                <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
+              <span>Clear All</span>
+              <TrashIcon className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

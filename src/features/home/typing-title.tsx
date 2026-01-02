@@ -149,7 +149,7 @@ export function CustomTypingAnimation() {
   };
 
   return (
-    <div className="text-center font-zen text-base leading-relaxed text-secondary sm:text-xl md:text-left md:text-3xl">
+    <div className="text-center font-zen text-base leading-relaxed text-secondary sm:text-xl md:text-left md:text-2xl">
       {renderColoredText()}
       <span
         className="ml-1 inline-block"

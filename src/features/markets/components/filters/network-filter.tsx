@@ -2,14 +2,17 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { ChevronDownIcon, TrashIcon } from '@radix-ui/react-icons';
 import Image from 'next/image';
+import { cn } from '@/utils/components';
 import { type SupportedNetworks, getNetworkImg, networks } from '@/utils/networks';
 
 type FilterProps = {
   selectedNetwork: SupportedNetworks | null;
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
+  variant?: 'default' | 'compact';
+  showLabelPrefix?: boolean;
 };
 
-export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: FilterProps) {
+export default function NetworkFilter({ setSelectedNetwork, selectedNetwork, variant = 'default', showLabelPrefix = false }: FilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +48,110 @@ export default function NetworkFilter({ setSelectedNetwork, selectedNetwork }: F
   };
 
   const selectedNetworkData = networks.find((n) => n.network === selectedNetwork);
+  const isCompact = variant === 'compact';
 
+  // Compact variant
+  if (isCompact) {
+    return (
+      <div
+        className="relative font-zen"
+        ref={dropdownRef}
+      >
+        <button
+          type="button"
+          className={cn(
+            'bg-surface flex h-10 items-center gap-2 rounded-sm px-3 shadow-sm transition-all duration-200 hover:bg-hovered',
+            'min-w-[120px] max-w-[200px]',
+            isOpen && 'min-w-[180px]',
+          )}
+          onClick={toggleDropdown}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              toggleDropdown();
+            }
+          }}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+        >
+          <div className="flex flex-1 items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              {showLabelPrefix && <span className="text-secondary">Network:</span>}
+              {selectedNetworkData ? (
+                <div className="flex items-center gap-1.5">
+                  {selectedNetwork && getNetworkImg(selectedNetwork) && (
+                    <Image
+                      src={getNetworkImg(selectedNetwork)!}
+                      alt={selectedNetworkData.name}
+                      width={14}
+                      height={14}
+                    />
+                  )}
+                  <span className="text-primary">{selectedNetworkData.name}</span>
+                </div>
+              ) : (
+                <span className="text-secondary">All</span>
+              )}
+            </div>
+          </div>
+          <ChevronDownIcon className={cn('h-4 w-4 text-secondary transition-transform duration-200', isOpen && 'rotate-180')} />
+        </button>
+
+        <div
+          className={cn(
+            'bg-surface absolute z-50 mt-1 min-w-full rounded-sm shadow-lg transition-all duration-200',
+            isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0',
+          )}
+        >
+          <ul
+            className="custom-scrollbar max-h-60 overflow-auto"
+            role="listbox"
+          >
+            {networks.map((network) => (
+              <li
+                key={network.network}
+                className={cn(
+                  'm-2 flex cursor-pointer items-center justify-between rounded p-2 text-sm transition-colors duration-150 hover:bg-gray-100 dark:hover:bg-gray-800',
+                  selectedNetwork === network.network && 'bg-gray-100 dark:bg-gray-800',
+                )}
+                onClick={() => selectNetwork(network.network)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    selectNetwork(network.network);
+                  }
+                }}
+                role="option"
+                aria-selected={selectedNetwork === network.network}
+                tabIndex={0}
+              >
+                <span>{network.name}</span>
+                <Image
+                  src={network.logo}
+                  alt={network.name}
+                  width={16}
+                  height={16}
+                />
+              </li>
+            ))}
+          </ul>
+          {selectedNetwork && (
+            <div className="bg-surface border-t border-border p-1.5">
+              <button
+                className="hover:bg-main flex w-full items-center justify-between rounded-sm p-1.5 text-left text-xs text-secondary transition-colors duration-200 hover:text-normal"
+                onClick={clearSelection}
+                type="button"
+              >
+                <span>Clear</span>
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default variant
   return (
     <div
       className="relative w-full"

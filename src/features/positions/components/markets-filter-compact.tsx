@@ -16,12 +16,14 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { parseNumericThreshold } from '@/utils/markets';
 
-type SuppliedAssetFilterCompactSwitchProps = {
+type MarketFilterProps = {
   onOpenSettings: () => void;
   className?: string;
+  /** Use 'button' variant for a styled button appearance (default: 'ghost') */
+  variant?: 'ghost' | 'button';
 };
 
-export function SuppliedAssetFilterCompactSwitch({ onOpenSettings, className }: SuppliedAssetFilterCompactSwitchProps) {
+export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: MarketFilterProps) {
   const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
 
   // Get all filter values from stores
@@ -69,9 +71,9 @@ export function SuppliedAssetFilterCompactSwitch({ onOpenSettings, className }: 
     onOpenSettings();
   };
 
-  const basicFilterActive = includeUnknownTokens || showUnknownOracle || showUnwhitelistedMarkets;
+  const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets;
   const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled;
-  const hasActiveFilters = basicFilterActive || advancedFilterActive;
+  const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
   return (
     <div className={className}>
@@ -85,14 +87,14 @@ export function SuppliedAssetFilterCompactSwitch({ onOpenSettings, className }: 
         }
       >
         <Button
-          variant="ghost"
-          size="sm"
-          className="min-w-0 px-2 text-secondary"
+          variant={variant === 'button' ? 'default' : 'ghost'}
+          size={variant === 'button' ? 'md' : 'sm'}
+          className={variant === 'button' ? 'w-10 min-w-10 px-0' : 'min-w-0 px-2 text-secondary'}
           aria-label="Market filters"
           onClick={onOpen}
         >
           <FiFilter
-            size={14}
+            size={variant === 'button' ? 16 : 14}
             style={{ color: hasActiveFilters ? MONARCH_PRIMARY : undefined }}
           />
         </Button>

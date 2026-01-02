@@ -12,7 +12,7 @@ import type { SupportedNetworks } from '@/utils/networks';
 export type ModalProps = {
   // Swap & Bridge
   bridgeSwap: {
-    targetToken: SwapToken;
+    defaultTargetToken?: SwapToken;
   };
 
   // Supply & Withdraw

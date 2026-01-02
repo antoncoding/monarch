@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { ArrowDownIcon, ExternalLinkIcon } from '@radix-ui/react-icons';
 import { formatUnits, parseUnits } from 'viem';
 import { useConnection } from 'wagmi';
@@ -7,30 +8,40 @@ import { Modal, ModalBody, ModalFooter, ModalHeader } from '@/components/common/
 import { Button } from '@/components/ui/button';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
 import { useUserBalancesQuery } from '@/hooks/queries/useUserBalancesQuery';
+import { useMarketsQuery } from '@/hooks/queries/useMarketsQuery';
+import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { useAllowance } from '@/hooks/useAllowance';
 import { formatBalance } from '@/utils/balance';
-import { useCowBridge } from '../hooks/useCowBridge';
+import { getNetworkName } from '@/utils/networks';
+import { useCowSwap } from '../hooks/useCowSwap';
 import { TokenNetworkDropdown } from './TokenNetworkDropdown';
-import { COW_BRIDGE_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
+import { COW_SWAP_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
 import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
 
-type BridgeSwapModalProps = {
+type SwapModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  targetToken: SwapToken;
+  defaultTargetToken?: SwapToken;
 };
 
-export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModalProps) {
+export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProps) {
   const { address: account } = useConnection();
   const [sourceToken, setSourceToken] = useState<SwapToken | null>(null);
+  const [targetToken, setTargetToken] = useState<SwapToken | null>(defaultTargetToken ?? null);
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [amount, setAmount] = useState<bigint>(BigInt(0));
   const [slippage, _setSlippage] = useState<number>(DEFAULT_SLIPPAGE_PERCENT);
 
   // Fetch user balances from CoW-supported chains
   const { data: balances = [], isLoading: balancesLoading } = useUserBalancesQuery({
-    networkIds: COW_BRIDGE_CHAINS as unknown as number[],
+    networkIds: COW_SWAP_CHAINS as unknown as number[],
   });
+
+  // Fetch all tokens for target selection
+  const { allTokens } = useTokensQuery();
+
+  // Fetch markets to filter target tokens
+  const { data: markets } = useMarketsQuery();
 
   // Handle approval for source token
   const { allowance, approveInfinite, approvePending } = useAllowance({
@@ -41,14 +52,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
     tokenSymbol: sourceToken?.symbol,
   });
 
-  // Convert balances to SwapTokens (support cross-chain)
-  const availableTokens = useMemo<SwapToken[]>(() => {
+  // Convert balances to SwapTokens (for source selection)
+  const sourceTokens = useMemo<SwapToken[]>(() => {
     return balances
-      .filter((b) => BigInt(b.balance) > BigInt(0)) // Only show tokens with balance
-      .filter(
-        // Not the same token as target
-        (b) => !(b.chainId === targetToken.chainId && b.address.toLowerCase() === targetToken.address.toLowerCase()),
-      )
+      .filter((b) => BigInt(b.balance) > BigInt(0))
       .map((b) => ({
         address: b.address,
         symbol: b.symbol,
@@ -57,15 +64,54 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
         balance: BigInt(b.balance),
       }))
       .sort((a, b) => {
-        // Sort by balance (descending)
         const aValue = Number(formatUnits(a.balance ?? BigInt(0), a.decimals));
         const bValue = Number(formatUnits(b.balance ?? BigInt(0), b.decimals));
         return bValue - aValue;
       });
-  }, [balances, targetToken.chainId, targetToken.address]);
+  }, [balances]);
 
-  // CoW Bridge hook
-  const { quote, isQuoting, isExecuting, error, orderUid, executeSwap, reset } = useCowBridge({
+  // Target tokens: all tokens with Morpho markets on CoW-supported chains
+  const targetTokens = useMemo<SwapToken[]>(() => {
+    if (!markets) return [];
+
+    // Get unique loan asset keys (address-chainId) that have markets
+    const loanAssetKeys = new Set(markets.map((m) => `${m.loanAsset.address.toLowerCase()}-${m.morphoBlue.chain.id}`));
+
+    // Filter allTokens to only those with markets on CoW-supported chains
+    return allTokens
+      .flatMap((token) =>
+        token.networks
+          .filter((net) => COW_SWAP_CHAINS.includes(net.chain.id as (typeof COW_SWAP_CHAINS)[number]))
+          .filter((net) => loanAssetKeys.has(`${net.address.toLowerCase()}-${net.chain.id}`))
+          .map((net) => ({
+            address: net.address,
+            symbol: token.symbol,
+            chainId: net.chain.id,
+            decimals: token.decimals,
+            img: token.img,
+          })),
+      )
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+  }, [allTokens, markets]);
+
+  // Filter source tokens: exclude selected target (same token on same chain)
+  const availableSourceTokens = useMemo<SwapToken[]>(() => {
+    if (!targetToken) return sourceTokens;
+    return sourceTokens.filter(
+      (t) => !(t.chainId === targetToken.chainId && t.address.toLowerCase() === targetToken.address.toLowerCase()),
+    );
+  }, [sourceTokens, targetToken]);
+
+  // Filter target tokens: exclude selected source (same token on same chain)
+  const availableTargetTokens = useMemo<SwapToken[]>(() => {
+    if (!sourceToken) return targetTokens;
+    return targetTokens.filter(
+      (t) => !(t.chainId === sourceToken.chainId && t.address.toLowerCase() === sourceToken.address.toLowerCase()),
+    );
+  }, [targetTokens, sourceToken]);
+
+  // CoW Swap hook
+  const { quote, isQuoting, isExecuting, error, orderUid, chainsMatch, executeSwap, reset } = useCowSwap({
     sourceToken,
     targetToken,
     amount,
@@ -75,10 +121,17 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   // Check if approval is needed
   const needsApproval = allowance < amount && amount > BigInt(0);
 
+  // Check if chains match (for showing warning)
+  const showChainMismatch = sourceToken && targetToken && !chainsMatch;
+
   const handleSourceTokenSelect = (token: SwapToken) => {
     setSourceToken(token);
     setAmount(BigInt(0));
     setInputAmount('0');
+  };
+
+  const handleTargetTokenSelect = (token: SwapToken) => {
+    setTargetToken(token);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +158,7 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
   const handleClose = () => {
     reset();
     setSourceToken(null);
+    setTargetToken(defaultTargetToken ?? null);
     setAmount(BigInt(0));
     setInputAmount('0');
     onClose();
@@ -130,18 +184,16 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
 
   // Determine output display text
   const getOutputDisplay = () => {
+    if (!targetToken) return 'Select token below';
     if (!sourceToken) return 'Select token above';
+    if (showChainMismatch) {
+      return <span className="text-xs text-orange-600 dark:text-orange-400">Select source on {getNetworkName(targetToken.chainId)}</span>;
+    }
     if (amount === BigInt(0)) return '0';
     if (isQuoting) return 'Loading...';
     if (error) return <span className="text-xs text-orange-600 dark:text-orange-400">{formatErrorMessage(error)}</span>;
     if (quote) return <span className="text-lg">{Number(formatUnits(quote.buyAmount, targetToken.decimals)).toFixed(6)}</span>;
     return '0';
-  };
-
-  // Truncate order hash for display (e.g., "0x1234...5678")
-  const _truncateHash = (hash: string) => {
-    if (hash.length <= 16) return hash;
-    return `${hash.slice(0, 8)}...${hash.slice(-6)}`;
   };
 
   return (
@@ -151,13 +203,24 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
       size="lg"
     >
       <ModalHeader
-        title="Swap Tokens"
-        description={`Swap to ${targetToken.symbol} via CoW Protocol`}
+        title="Swap"
+        description={targetToken ? `Swap to ${targetToken.symbol} via CoW Protocol` : 'Swap tokens via CoW Protocol'}
+        mainIcon={
+          <div className="h-8 w-8 overflow-hidden rounded-full">
+            <Image
+              src="/imgs/protocols/cow.png"
+              alt="CoW Protocol"
+              width={32}
+              height={32}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        }
       />
 
       <ModalBody>
         <div className="space-y-4">
-          {/* From Section - Always visible */}
+          {/* From Section */}
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <span className="text-xs text-secondary">From</span>
@@ -178,37 +241,39 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
                 onChange={handleInputChange}
                 placeholder="0"
                 disabled={!sourceToken}
-                className="bg-hovered h-10 flex-1 rounded-sm px-3 text-lg focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-10 flex-1 rounded-sm bg-hovered px-3 text-lg focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               />
               <TokenNetworkDropdown
                 selectedToken={sourceToken}
-                tokens={availableTokens}
+                tokens={availableSourceTokens}
                 onSelect={handleSourceTokenSelect}
                 placeholder="Select"
-                disabled={availableTokens.length === 0}
+                disabled={availableSourceTokens.length === 0}
+                highlightChainId={targetToken?.chainId}
               />
             </div>
           </div>
 
           {/* Arrow */}
           <div className="flex justify-center">
-            <ArrowDownIcon className="text-secondary h-5 w-5" />
+            <ArrowDownIcon className="h-5 w-5 text-secondary" />
           </div>
 
-          {/* To Section - Always visible */}
+          {/* To Section */}
           <div>
             <div className="mb-1.5 text-xs text-secondary">To</div>
             <div className="flex items-center gap-2">
-              <div className="bg-hovered flex h-10 flex-1 items-center rounded-sm px-3 text-xs text-secondary">{getOutputDisplay()}</div>
+              <div className="flex h-10 flex-1 items-center rounded-sm bg-hovered px-3 text-xs text-secondary">{getOutputDisplay()}</div>
               <TokenNetworkDropdown
                 selectedToken={targetToken}
-                tokens={[targetToken]}
-                onSelect={() => {}}
-                disabled
+                tokens={availableTargetTokens}
+                onSelect={handleTargetTokenSelect}
+                placeholder="Select"
+                disabled={availableTargetTokens.length === 0}
               />
             </div>
             <div className="mt-1.5 text-xs text-secondary">
-              {quote && sourceToken && !error && (
+              {quote && sourceToken && targetToken && !error && chainsMatch && (
                 <span>
                   1 {sourceToken.symbol} ≈{' '}
                   {(
@@ -220,42 +285,30 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
             </div>
           </div>
 
-          {/* Error Display */}
-          {error && (
+          {/* Chain Mismatch Warning */}
+          {showChainMismatch && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
               className="rounded bg-orange-50 p-3 text-sm dark:bg-orange-900/20"
             >
-              <span className="text-orange-700 dark:text-orange-300 text-xs">{formatErrorMessage(error)}</span>
+              <span className="text-xs text-orange-700 dark:text-orange-300">
+                Select a source token on {getNetworkName(targetToken.chainId)} to swap
+              </span>
             </motion.div>
           )}
 
-          {/* Quote Details */}
-          {quote && sourceToken && !error && quote.type === 'cross-chain' && (
-            <div className="bg-surface space-y-2 rounded p-3 text-sm">
-              {quote.bridgeProvider && (
-                <div className="flex justify-between">
-                  <span className="text-secondary">Bridge</span>
-                  <span className="font-medium">{quote.bridgeProvider}</span>
-                </div>
-              )}
-              {quote.estimatedTimeSeconds && (
-                <div className="flex justify-between">
-                  <span className="text-secondary">Estimated time</span>
-                  <span className="font-medium">~{Math.ceil(quote.estimatedTimeSeconds / 60)} min</span>
-                </div>
-              )}
-              {quote.bridgeFee && (
-                <div className="flex justify-between">
-                  <span className="text-secondary">Bridge fee</span>
-                  <span className="font-medium">
-                    {Number(formatUnits(quote.bridgeFee, sourceToken.decimals)).toFixed(6)} {sourceToken.symbol}
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* Error Display */}
+          {error && !showChainMismatch && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="rounded bg-orange-50 p-3 text-sm dark:bg-orange-900/20"
+            >
+              <span className="text-xs text-orange-700 dark:text-orange-300">{formatErrorMessage(error)}</span>
+            </motion.div>
           )}
 
           {/* Success Message */}
@@ -267,12 +320,12 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
               className="rounded bg-green-50 p-3 text-sm dark:bg-green-900/20"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-secondary text-xs">Order Created 🎉</span>
+                <span className="text-xs text-secondary">Order Created</span>
                 <a
                   href={`https://explorer.cow.fi/orders/${orderUid}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary inline-flex items-center gap-1 text-xs underline hover:opacity-80"
+                  className="inline-flex items-center gap-1 text-xs text-primary underline hover:opacity-80"
                 >
                   View in CoW Explorer
                   <ExternalLinkIcon className="h-3 w-3" />
@@ -282,10 +335,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
           )}
 
           {/* Empty State */}
-          {!balancesLoading && availableTokens.length === 0 && !sourceToken && (
-            <div className="text-secondary py-6 text-center text-sm">
+          {!balancesLoading && sourceTokens.length === 0 && (
+            <div className="py-6 text-center text-sm text-secondary">
               <p>No tokens found on supported chains</p>
-              <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Base, Polygon, Arbitrum</p>
+              <p className="mt-1 text-xs opacity-70">Supported: Ethereum, Base, Arbitrum</p>
             </div>
           )}
         </div>
@@ -301,9 +354,10 @@ export function BridgeSwapModal({ isOpen, onClose, targetToken }: BridgeSwapModa
         {!orderUid && (
           <ExecuteTransactionButton
             targetChainId={sourceToken?.chainId ?? 1}
+            skipChainCheck={!sourceToken || !targetToken || amount === BigInt(0) || !chainsMatch}
             onClick={() => void handleSwap()}
             isLoading={isLoading}
-            disabled={!quote || amount === BigInt(0) || !!error}
+            disabled={!sourceToken || !targetToken || !quote || amount === BigInt(0) || !!error || !chainsMatch}
             variant="primary"
           >
             {needsApproval ? 'Approve & Swap' : 'Swap'}

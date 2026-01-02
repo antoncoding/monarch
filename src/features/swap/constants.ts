@@ -1,8 +1,4 @@
 /**
- * CoW Protocol swap configuration constants
- */
-
-/**
  * Application identifier for CoW Protocol integration
  */
 export const SWAP_APP_CODE = 'monarch-swap';

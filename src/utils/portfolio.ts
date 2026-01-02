@@ -23,6 +23,16 @@ export type PortfolioValue = {
   breakdown: PortfolioBreakdown;
 };
 
+// Per-asset breakdown item for tooltip display
+export type AssetBreakdownItem = {
+  symbol: string;
+  tokenAddress: string;
+  chainId: number;
+  balance: number;
+  price: number;
+  usdValue: number;
+};
+
 /**
  * Extract unique tokens from native Morpho Blue positions
  * @param positions - Array of market positions with earnings
@@ -166,6 +176,84 @@ export const calculatePortfolioValue = (
       vaults: vaultsUsd,
     },
   };
+};
+
+/**
+ * Calculate per-asset breakdown for tooltip display
+ * Aggregates holdings by token across positions and vaults
+ */
+export const calculateAssetBreakdown = (
+  positions: MarketPositionWithEarnings[],
+  vaults: UserVaultV2[] | undefined,
+  prices: Map<string, number>,
+  findToken?: (address: string, chainId: number) => { decimals: number; symbol?: string } | undefined,
+): AssetBreakdownItem[] => {
+  const aggregated = new Map<string, { symbol: string; tokenAddress: string; chainId: number; balance: bigint; decimals: number }>();
+
+  // Aggregate positions by token
+  for (const position of positions) {
+    const { address, symbol, decimals } = position.market.loanAsset;
+    const chainId = position.market.morphoBlue.chain.id;
+    const key = getTokenPriceKey(address, chainId);
+    const existing = aggregated.get(key);
+
+    if (existing) {
+      existing.balance += BigInt(position.state.supplyAssets);
+    } else {
+      aggregated.set(key, {
+        symbol,
+        tokenAddress: address,
+        chainId,
+        balance: BigInt(position.state.supplyAssets),
+        decimals,
+      });
+    }
+  }
+
+  // Aggregate vaults by token
+  if (vaults && findToken) {
+    for (const vault of vaults) {
+      if (!vault.balance || vault.balance <= 0n) continue;
+
+      const key = getTokenPriceKey(vault.asset, vault.networkId);
+      const existing = aggregated.get(key);
+      const token = findToken(vault.asset, vault.networkId);
+      const decimals = token?.decimals ?? 18;
+      const symbol = token?.symbol ?? 'Unknown';
+
+      if (existing) {
+        existing.balance += vault.balance;
+      } else {
+        aggregated.set(key, {
+          symbol,
+          tokenAddress: vault.asset,
+          chainId: vault.networkId,
+          balance: vault.balance,
+          decimals,
+        });
+      }
+    }
+  }
+
+  // Convert to breakdown items with USD values
+  const items: AssetBreakdownItem[] = [];
+  for (const [key, data] of aggregated) {
+    const price = prices.get(key) ?? 0;
+    const balance = Number.parseFloat(formatUnits(data.balance, data.decimals));
+    const usdValue = balance * price;
+
+    items.push({
+      symbol: data.symbol,
+      tokenAddress: data.tokenAddress,
+      chainId: data.chainId,
+      balance,
+      price,
+      usdValue,
+    });
+  }
+
+  // Sort by USD value descending
+  return items.sort((a, b) => b.usdValue - a.usdValue);
 };
 
 /**

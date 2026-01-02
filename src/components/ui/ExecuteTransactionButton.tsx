@@ -37,6 +37,12 @@ type ExecuteTransactionButtonProps = Omit<ButtonProps, 'onClick' | 'children'> &
    * Optional custom text for the switch chain state
    */
   switchChainText?: string;
+
+  /**
+   * Skip chain validation entirely. Use when the form is incomplete
+   * @default false
+   */
+  skipChainCheck?: boolean;
 };
 
 /**
@@ -68,6 +74,7 @@ export function ExecuteTransactionButton({
   children,
   connectText = 'Connect Wallet',
   switchChainText,
+  skipChainCheck = false,
   disabled,
   variant = 'primary',
   ...buttonProps
@@ -112,7 +119,7 @@ export function ExecuteTransactionButton({
     );
   }
 
-  if (needSwitchChain) {
+  if (needSwitchChain && !skipChainCheck) {
     const defaultSwitchText = `Switch to ${getNetworkName(targetChainId)}`;
     return (
       <Button

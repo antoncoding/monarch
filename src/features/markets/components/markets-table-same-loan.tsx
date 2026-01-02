@@ -1,13 +1,13 @@
-import React, { useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { Input } from '@/components/ui/input';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowDownIcon, ArrowUpIcon, ChevronDownIcon, TrashIcon, GearIcon } from '@radix-ui/react-icons';
-import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { FaSearch } from 'react-icons/fa';
-import { IoHelpCircleOutline } from 'react-icons/io5';
+import { ArrowDownIcon, ArrowUpIcon, GearIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
-import { SuppliedAssetFilterCompactSwitch } from '@/features/positions/components/supplied-asset-filter-compact-switch';
+import { ExpandableSearchInput } from '@/features/markets/components/filters/expandable-search-input';
+import EmptyScreen from '@/components/status/empty-screen';
+import AssetFilter from '@/features/markets/components/filters/asset-filter';
+import OracleFilter from '@/features/markets/components/filters/oracle-filter';
+import { MarketFilter } from '@/features/positions/components/markets-filter-compact';
+import { ClearFiltersButton } from '@/components/shared/clear-filters-button';
 import { TablePagination } from '@/components/shared/table-pagination';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
 import { TrustedByCell } from '@/features/autovault/components/trusted-vault-badges';
@@ -21,7 +21,7 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import { filterMarkets, sortMarkets, createPropertySort } from '@/utils/marketFilters';
 import { getViemChain } from '@/utils/networks';
-import { parsePriceFeedVendors, PriceFeedVendors, OracleVendorIcons } from '@/utils/oracle';
+import { parsePriceFeedVendors, type PriceFeedVendors } from '@/utils/oracle';
 import { convertApyToApr } from '@/utils/rateMath';
 import { type ERC20Token, type UnknownERC20Token, infoToKey } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
@@ -53,8 +53,6 @@ type MarketsTableWithSameLoanAssetProps = {
   uniqueCollateralTokens?: ERC20Token[];
   // Optional: Hide the select column (useful for single-select mode)
   showSelectColumn?: boolean;
-  // Optional: Show the settings button (default: true)
-  showSettings?: boolean;
 };
 
 enum SortColumn {
@@ -125,317 +123,6 @@ function HTSortable({
         {isSorting && (sortDirection === 1 ? <ArrowDownIcon /> : <ArrowUpIcon />)}
       </div>
     </th>
-  );
-}
-
-// Compact Collateral Filter
-function CollateralFilter({
-  selectedCollaterals,
-  setSelectedCollaterals,
-  availableCollaterals,
-}: {
-  selectedCollaterals: string[];
-  setSelectedCollaterals: (collaterals: string[]) => void;
-  availableCollaterals: (ERC20Token | UnknownERC20Token)[];
-}) {
-  const [query, setQuery] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const toggleDropdown = () => setIsOpen(!isOpen);
-
-  const selectOption = (token: ERC20Token | UnknownERC20Token) => {
-    const tokenKey = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-    if (selectedCollaterals.includes(tokenKey)) {
-      setSelectedCollaterals(selectedCollaterals.filter((c) => c !== tokenKey));
-    } else {
-      setSelectedCollaterals([...selectedCollaterals, tokenKey]);
-    }
-  };
-
-  const clearSelection = () => {
-    setSelectedCollaterals([]);
-    setQuery('');
-    setIsOpen(false);
-  };
-
-  const filteredItems = availableCollaterals.filter((token) => token.symbol.toLowerCase().includes(query.toLowerCase()));
-
-  return (
-    <div
-      className="relative z-30 w-full max-w-xs"
-      ref={dropdownRef}
-    >
-      <div
-        className={`bg-surface min-w-32 cursor-pointer rounded-sm p-2 text-sm shadow-sm transition-colors duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-          isOpen ? 'bg-surface-dark' : ''
-        }`}
-        role="button"
-        tabIndex={0}
-        onClick={toggleDropdown}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleDropdown();
-          }
-        }}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <div className="flex items-center justify-between">
-          {selectedCollaterals.length > 0 ? (
-            <div className="flex-scroll flex gap-1.5">
-              {selectedCollaterals.map((key) => {
-                const token = availableCollaterals.find(
-                  (item) => item.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|') === key,
-                );
-                return token ? (
-                  token.img ? (
-                    <Image
-                      key={key}
-                      src={token.img}
-                      alt={token.symbol}
-                      width={14}
-                      height={14}
-                    />
-                  ) : (
-                    <div
-                      key={key}
-                      className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-gray-200 text-[10px] dark:bg-gray-700"
-                    >
-                      ?
-                    </div>
-                  )
-                ) : null;
-              })}
-            </div>
-          ) : (
-            <span className="text-xs text-gray-400">Filter collaterals</span>
-          )}
-          <span className={`ml-auto transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-            <ChevronDownIcon className="h-3 w-3" />
-          </span>
-        </div>
-      </div>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
-            className="bg-surface absolute z-50 mt-1 w-full rounded-sm shadow-lg"
-          >
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full border-none bg-transparent p-2 text-xs focus:outline-none"
-            />
-            <div className="relative">
-              <ul
-                className="custom-scrollbar max-h-60 overflow-auto pb-10"
-                role="listbox"
-              >
-                {filteredItems.map((token) => {
-                  const tokenKey = token.networks.map((n) => infoToKey(n.address, n.chain.id)).join('|');
-                  return (
-                    <li
-                      key={tokenKey}
-                      className={`m-2 flex cursor-pointer items-center justify-between rounded-md p-2 text-xs hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                        selectedCollaterals.includes(tokenKey) ? 'bg-gray-300 dark:bg-gray-700' : ''
-                      }`}
-                      onClick={() => selectOption(token)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          selectOption(token);
-                        }
-                      }}
-                      role="option"
-                      aria-selected={selectedCollaterals.includes(tokenKey)}
-                      tabIndex={0}
-                    >
-                      <span title={token.symbol}>{token.symbol.length > 8 ? `${token.symbol.slice(0, 8)}...` : token.symbol}</span>
-                      {token.img ? (
-                        <Image
-                          src={token.img}
-                          alt={token.symbol}
-                          width={14}
-                          height={14}
-                        />
-                      ) : (
-                        <div className="flex h-[14px] w-[14px] items-center justify-center rounded-full bg-gray-200 text-[10px] dark:bg-gray-700">
-                          ?
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-              <div className="bg-surface absolute bottom-0 left-0 right-0 border-gray-700 p-1.5">
-                <button
-                  className="hover:bg-main flex w-full items-center justify-between rounded-sm p-1.5 text-left text-[10px] "
-                  style={{ color: 'var(--color-text-secondary)' }}
-                  onClick={clearSelection}
-                  type="button"
-                >
-                  <span>Clear All</span>
-                  <TrashIcon className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-// Compact Oracle Filter
-function OracleFilterComponent({
-  selectedOracles,
-  setSelectedOracles,
-  availableOracles,
-}: {
-  selectedOracles: PriceFeedVendors[];
-  setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
-  availableOracles: PriceFeedVendors[];
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  const toggleDropdown = () => setIsOpen(!isOpen);
-
-  const toggleOracle = (oracle: PriceFeedVendors) => {
-    if (selectedOracles.includes(oracle)) {
-      setSelectedOracles(selectedOracles.filter((o) => o !== oracle));
-    } else {
-      setSelectedOracles([...selectedOracles, oracle]);
-    }
-  };
-
-  return (
-    <div
-      className="relative z-30 w-full max-w-xs"
-      ref={dropdownRef}
-    >
-      <div
-        className={`bg-surface min-w-32 cursor-pointer rounded-sm p-2 text-sm shadow-sm transition-all duration-200 hover:bg-gray-200 dark:hover:bg-gray-700 ${
-          isOpen ? 'bg-gray-200 dark:bg-gray-700' : ''
-        }`}
-        role="button"
-        tabIndex={0}
-        onClick={toggleDropdown}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleDropdown();
-          }
-        }}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
-        <div className="flex items-center justify-between">
-          {selectedOracles.length > 0 ? (
-            <div className="flex-scroll flex gap-1.5">
-              {selectedOracles.map((oracle, index) => (
-                <div key={index}>
-                  {OracleVendorIcons[oracle] ? (
-                    <Image
-                      src={OracleVendorIcons[oracle]}
-                      alt={oracle}
-                      height={14}
-                      width={14}
-                    />
-                  ) : (
-                    <IoHelpCircleOutline
-                      style={{ color: 'var(--color-text-secondary)' }}
-                      size={14}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span className="text-xs text-gray-400">Filter oracles</span>
-          )}
-          <span className={`ml-auto transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
-            <ChevronDownIcon className="h-3 w-3" />
-          </span>
-        </div>
-      </div>
-      <div
-        className={`bg-surface absolute z-50 mt-1 w-full transform rounded-sm shadow-lg transition-all duration-200 ${
-          isOpen ? 'visible translate-y-0 opacity-100' : 'invisible -translate-y-2 opacity-0'
-        }`}
-      >
-        <ul
-          className="custom-scrollbar max-h-60 overflow-auto"
-          role="listbox"
-        >
-          {availableOracles.map((oracle) => (
-            <li
-              key={oracle}
-              className={`m-2 flex cursor-pointer items-center justify-between rounded p-1.5 text-xs transition-colors duration-200 hover:bg-gray-300 dark:hover:bg-gray-700 ${
-                selectedOracles.includes(oracle) ? 'bg-gray-300 dark:bg-gray-700' : ''
-              }`}
-              onClick={() => toggleOracle(oracle)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  toggleOracle(oracle);
-                }
-              }}
-              role="option"
-              aria-selected={selectedOracles.includes(oracle)}
-              tabIndex={0}
-            >
-              <div className="flex items-center gap-2">
-                {OracleVendorIcons[oracle] ? (
-                  <Image
-                    src={OracleVendorIcons[oracle]}
-                    alt={oracle}
-                    width={14}
-                    height={14}
-                    className="rounded-full"
-                  />
-                ) : (
-                  <IoHelpCircleOutline
-                    style={{ color: 'var(--color-text-secondary)' }}
-                    size={14}
-                  />
-                )}
-                <span>{oracle === PriceFeedVendors.Unknown ? 'Unknown Feed' : oracle}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
   );
 }
 
@@ -622,7 +309,6 @@ export function MarketsTableWithSameLoanAsset({
   disabled = false,
   uniqueCollateralTokens,
   showSelectColumn = true,
-  showSettings = true,
 }: MarketsTableWithSameLoanAssetProps): JSX.Element {
   // Get global market settings
   const { showUnwhitelistedMarkets, isAprDisplay } = useAppSettings();
@@ -861,16 +547,6 @@ export function MarketsTableWithSameLoanAsset({
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const startIndex = (safePage - 1) * safePerPage;
   const paginatedMarkets = processedMarkets.slice(startIndex, startIndex + safePerPage);
-  const emptyStateColumns =
-    (showSelectColumn ? 7 : 6) +
-    (columnVisibility.trustedBy ? 1 : 0) +
-    (columnVisibility.totalSupply ? 1 : 0) +
-    (columnVisibility.totalBorrow ? 1 : 0) +
-    (columnVisibility.liquidity ? 1 : 0) +
-    (columnVisibility.supplyAPY ? 1 : 0) +
-    (columnVisibility.borrowAPY ? 1 : 0) +
-    (columnVisibility.rateAtTarget ? 1 : 0) +
-    (columnVisibility.utilizationRate ? 1 : 0);
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -883,58 +559,80 @@ export function MarketsTableWithSameLoanAsset({
     }
   }, [totalPages, currentPage]);
 
-  return (
-    <div className="space-y-3">
-      {/* Search and Controls */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <div className="w-80">
-          <Input
-            placeholder="Search by collateral symbol or market ID..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            endContent={<FaSearch style={{ color: 'var(--color-text-secondary)' }} />}
-            classNames={{
-              inputWrapper: 'bg-surface rounded-sm focus-within:outline-none',
-              input: 'bg-surface rounded-sm text-xs focus:outline-none',
-            }}
-            size="sm"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <SuppliedAssetFilterCompactSwitch onOpenSettings={() => openModal('marketSettings', {})} />
-          {showSettings && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => openModal('marketSettings', {})}
-              className="min-w-0 px-2"
-            >
-              <GearIcon className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
+  const hasActiveFilters = collateralFilter.length > 0 || oracleFilter.length > 0 || searchQuery.length > 0;
 
-      {/* Filters */}
-      <div className="flex items-center gap-2">
-        <CollateralFilter
-          selectedCollaterals={collateralFilter}
-          setSelectedCollaterals={setCollateralFilter}
-          availableCollaterals={availableCollaterals}
+  const clearAllFilters = () => {
+    setCollateralFilter([]);
+    setOracleFilter([]);
+    setSearchQuery('');
+  };
+
+  return (
+    <div className=" space-y-3">
+      {/* Search + Filters + Controls - All on one line */}
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap lg:min-w-[800px]">
+        <ExpandableSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search markets..."
         />
-        <OracleFilterComponent
+        <AssetFilter
+          showLabelPrefix
+          label="Collateral"
+          placeholder="All"
+          selectedAssets={collateralFilter}
+          setSelectedAssets={setCollateralFilter}
+          items={availableCollaterals}
+          loading={false}
+        />
+        <OracleFilter
+          showLabelPrefix
           selectedOracles={oracleFilter}
           setSelectedOracles={setOracleFilter}
           availableOracles={availableOracles}
         />
+        {hasActiveFilters && <ClearFiltersButton onClick={clearAllFilters} />}
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <MarketFilter
+            variant="button"
+            onOpenSettings={() => openModal('marketSettings', {})}
+          />
+          <Button
+            variant="default"
+            size="md"
+            onClick={() => openModal('marketSettings', {})}
+            className="w-10 min-w-10 px-0"
+            aria-label="Market settings"
+          >
+            <GearIcon />
+          </Button>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="responsive rounded-md font-zen text-sm">
-          <thead className="">
-            <tr>
-              {showSelectColumn && (
+      {/* Table or Empty State */}
+      {paginatedMarkets.length === 0 ? (
+        <EmptyScreen
+          message="No markets found"
+          hint="Try adjusting your filter settings or search query"
+          className="min-h-64"
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="responsive rounded-md font-zen text-sm">
+            <thead className="">
+              <tr>
+                {showSelectColumn && (
+                  <th
+                    className="text-center font-normal px-2 py-2"
+                    style={{
+                      padding: '0.5rem',
+                      paddingTop: '1rem',
+                      paddingBottom: '1rem',
+                    }}
+                  >
+                    Select
+                  </th>
+                )}
                 <th
                   className="text-center font-normal px-2 py-2"
                   style={{
@@ -943,119 +641,97 @@ export function MarketsTableWithSameLoanAsset({
                     paddingBottom: '1rem',
                   }}
                 >
-                  Select
+                  Id
                 </th>
-              )}
-              <th
-                className="text-center font-normal px-2 py-2"
-                style={{
-                  padding: '0.5rem',
-                  paddingTop: '1rem',
-                  paddingBottom: '1rem',
-                }}
-              >
-                Id
-              </th>
-              <HTSortable
-                label="Market"
-                column={SortColumn.COLLATSYMBOL}
-                sortColumn={sortColumn}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-              />
-              {columnVisibility.trustedBy && (
                 <HTSortable
-                  label="Trusted By"
-                  column={SortColumn.TrustedBy}
+                  label="Market"
+                  column={SortColumn.COLLATSYMBOL}
                   sortColumn={sortColumn}
                   sortDirection={sortDirection}
                   onSort={handleSort}
                 />
-              )}
-              {columnVisibility.totalSupply && (
-                <HTSortable
-                  label="Total Supply"
-                  column={SortColumn.Supply}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.totalBorrow && (
-                <HTSortable
-                  label="Total Borrow"
-                  column={SortColumn.Borrow}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.liquidity && (
-                <HTSortable
-                  label="Liquidity"
-                  column={SortColumn.Liquidity}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.supplyAPY && (
-                <HTSortable
-                  label={supplyRateLabel}
-                  column={SortColumn.APY}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.borrowAPY && (
-                <HTSortable
-                  label={borrowRateLabel}
-                  column={SortColumn.BorrowAPY}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.rateAtTarget && (
-                <HTSortable
-                  label="Rate at Target"
-                  column={SortColumn.RateAtTarget}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              {columnVisibility.utilizationRate && (
-                <HTSortable
-                  label="Utilization"
-                  column={SortColumn.UtilizationRate}
-                  sortColumn={sortColumn}
-                  sortDirection={sortDirection}
-                  onSort={handleSort}
-                />
-              )}
-              <th
-                className="text-center font-normal px-2 py-2"
-                style={{ padding: '0.5rem' }}
-              >
-                Indicators
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedMarkets.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={emptyStateColumns}
-                  className="py-8 text-center "
-                  style={{ color: 'var(--color-text-secondary)' }}
+                {columnVisibility.trustedBy && (
+                  <HTSortable
+                    label="Trusted By"
+                    column={SortColumn.TrustedBy}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.totalSupply && (
+                  <HTSortable
+                    label="Total Supply"
+                    column={SortColumn.Supply}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.totalBorrow && (
+                  <HTSortable
+                    label="Total Borrow"
+                    column={SortColumn.Borrow}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.liquidity && (
+                  <HTSortable
+                    label="Liquidity"
+                    column={SortColumn.Liquidity}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.supplyAPY && (
+                  <HTSortable
+                    label={supplyRateLabel}
+                    column={SortColumn.APY}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.borrowAPY && (
+                  <HTSortable
+                    label={borrowRateLabel}
+                    column={SortColumn.BorrowAPY}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.rateAtTarget && (
+                  <HTSortable
+                    label="Rate at Target"
+                    column={SortColumn.RateAtTarget}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                {columnVisibility.utilizationRate && (
+                  <HTSortable
+                    label="Utilization"
+                    column={SortColumn.UtilizationRate}
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                )}
+                <th
+                  className="text-center font-normal px-2 py-2"
+                  style={{ padding: '0.5rem' }}
                 >
-                  No markets found
-                </td>
+                  Indicators
+                </th>
               </tr>
-            ) : (
-              paginatedMarkets.map((marketWithSelection) => (
+            </thead>
+            <tbody>
+              {paginatedMarkets.map((marketWithSelection) => (
                 <MarketRow
                   key={marketWithSelection.market.uniqueKey}
                   marketWithSelection={marketWithSelection}
@@ -1067,11 +743,11 @@ export function MarketsTableWithSameLoanAsset({
                   borrowRateLabel={borrowRateLabel}
                   isAprDisplay={isAprDisplay}
                 />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Pagination */}
       <TablePagination

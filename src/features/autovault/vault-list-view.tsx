@@ -14,6 +14,7 @@ import Header from '@/components/layout/header/Header';
 import { fetchUserVaultV2AddressesAllNetworks } from '@/data-sources/subgraph/v2-vaults';
 import { getDeployedVaults } from '@/utils/vault-storage';
 import { DeploymentModal } from './components/deployment/deployment-modal';
+import { SectionTag, FeatureCard } from '@/components/landing';
 
 // Skeleton component for loading state
 function PageSkeleton() {
@@ -31,7 +32,7 @@ function PageSkeleton() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="bg-surface space-y-3 rounded shadow-sm p-6"
+            className="bg-surface space-y-3 rounded p-6"
           >
             <div className="bg-hovered h-10 w-10 rounded-full" />
             <div className="bg-hovered h-6 w-32 rounded" />
@@ -39,17 +40,6 @@ function PageSkeleton() {
           </div>
         ))}
       </div>
-    </div>
-  );
-}
-
-// Benefit card component
-function BenefitCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
-  return (
-    <div className="bg-surface space-y-3 rounded shadow-sm p-6 transition-all hover:shadow-md">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</div>
-      <h3 className="font-zen text-lg text-primary">{title}</h3>
-      <p className="text-sm leading-relaxed text-secondary">{description}</p>
     </div>
   );
 }
@@ -150,15 +140,26 @@ export default function AutovaultListContent() {
   const hasMultipleVaults = mergedVaultAddresses.length > 1;
 
   return (
-    <div className="flex w-full flex-col justify-between font-zen">
+    <div className="bg-main min-h-screen font-zen relative flex flex-col">
+      {/* Subtle dot grid background */}
+      <div
+        className="fixed inset-0 bg-dot-grid pointer-events-none opacity-40"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.2) 60%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, rgba(0,0,0,0.2) 60%, transparent 100%)',
+        }}
+        aria-hidden="true"
+      />
+
       <Header />
-      <div className="container h-full gap-8 px-[4%] pb-20">
+
+      <main className="relative z-10 container mx-auto py-12">
         {/* Loading State */}
         {hasMounted && isConnected && vaultsLoading && <PageSkeleton />}
 
         {/* Error Banner */}
         {fetchError && (
-          <div className="mx-auto max-w-3xl rounded border border-red-500/40 bg-red-500/10 p-4 flex items-center justify-between">
+          <div className="mx-auto max-w-3xl rounded border border-red-500/40 bg-red-500/10 p-4 flex items-center justify-between mb-8">
             <p className="text-sm text-red-600 dark:text-red-400">{fetchError}</p>
             <Button
               variant="default"
@@ -173,17 +174,20 @@ export default function AutovaultListContent() {
 
         {/* Content - shown to all users (connected or not, after loading) */}
         {hasMounted && (!isConnected || !vaultsLoading) && (
-          <div className="space-y-12 pt-8">
+          <div className="space-y-20">
             {/* Hero Section */}
             <div className="mx-auto max-w-3xl space-y-4 text-center">
-              <h1 className="font-zen text-3xl text-primary md:text-4xl">Be Your Own Risk Curator</h1>
-              <p className="mx-auto max-w-2xl text-lg text-secondary">
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <SectionTag>AutoVault</SectionTag>
+              </div>
+              <h1 className="font-zen text-3xl text-primary sm:text-4xl md:text-5xl mb-3">Be Your Own Risk Curator</h1>
+              <p className="mx-auto max-w-2xl text-lg text-secondary sm:text-xl">
                 Deploy your own vault, define your risk parameters, and keep full control.
               </p>
 
               {/* Actions for users with existing vaults */}
               {isConnected && hasVaults && (
-                <div className="flex items-center justify-center gap-3 pt-4">
+                <div className="flex items-center justify-center gap-3 pt-6">
                   {/* Single vault - show avatar with address */}
                   {hasSingleVault && (
                     <Button
@@ -252,7 +256,7 @@ export default function AutovaultListContent() {
 
               {/* Primary CTA - changes based on connection status and vault ownership */}
               {(!isConnected || !hasVaults) && (
-                <div className="flex items-center justify-center pt-4">
+                <div className="flex items-center justify-center pt-6">
                   {isConnected ? (
                     <Button
                       variant="primary"
@@ -281,21 +285,21 @@ export default function AutovaultListContent() {
             </div>
 
             {/* Benefits Section */}
-            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3">
-              <BenefitCard
-                icon={<FiShield className="h-5 w-5" />}
+            <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-3">
+              <FeatureCard
+                icon={<FiSettings className="h-6 w-6" />}
                 title="Full Ownership"
-                description="Your vault, your rules. No middlemen, no hidden fees. Complete control over your assets and strategy."
+                description="Your vault, your rules. No middlemen, no hidden fees. Complete control over your assets."
               />
-              <BenefitCard
-                icon={<FiZap className="h-5 w-5" />}
+              <FeatureCard
+                icon={<FiZap className="h-6 w-6" />}
                 title="Smart Automation"
-                description="Set your strategy once. Let agents optimize yields within your defined boundaries automatically."
+                description="Set your strategy once. Let agents optimize yields within your defined boundaries."
               />
-              <BenefitCard
-                icon={<FiSettings className="h-5 w-5" />}
-                title="Maximum Control"
-                description="Choose your markets, set allocation caps, and stay in full command of your risk parameters."
+              <FeatureCard
+                icon={<FiShield className="h-6 w-6" />}
+                title="Top Level Security"
+                description="Built on Morpho V2 vault infrastructure, audited by Spearbit, Cantina, Blackthorn and more."
               />
             </div>
           </div>
@@ -306,7 +310,7 @@ export default function AutovaultListContent() {
           isOpen={showDeploymentModal}
           onOpenChange={setShowDeploymentModal}
         />
-      </div>
+      </main>
     </div>
   );
 }
