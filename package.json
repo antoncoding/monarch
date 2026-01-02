@@ -1,6 +1,6 @@
 {
   "name": "monarch",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "build": "rm -rf .next && next build",
