@@ -72,7 +72,7 @@ export default function Positions() {
             <Button
               variant="default"
               onClick={handleClickHistory}
-              title="Swap tokens"
+              title="history"
             >
               <GoHistory className="h-4 w-4" />
               History
