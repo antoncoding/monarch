@@ -18,6 +18,8 @@ import { TokenNetworkDropdown } from './TokenNetworkDropdown';
 import { COW_SWAP_CHAINS, COW_VAULT_RELAYER, type SwapToken } from '../types';
 import { DEFAULT_SLIPPAGE_PERCENT } from '../constants';
 
+const img = '/imgs/protocols/cow.svg';
+
 type SwapModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -208,7 +210,7 @@ export function SwapModal({ isOpen, onClose, defaultTargetToken }: SwapModalProp
         mainIcon={
           <div className="h-8 w-8 overflow-hidden rounded-full">
             <Image
-              src="/imgs/protocols/cow.png"
+              src={img}
               alt="CoW Protocol"
               width={32}
               height={32}
