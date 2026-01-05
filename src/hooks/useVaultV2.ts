@@ -5,6 +5,8 @@ import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
+import { Market } from "@/utils/types"
+import { encodeMarketParams } from '@/utils/morpho';
 
 /**
  * @notice Reading and Writing hook (via wagmi) for Morpho V2 Vaults
@@ -215,7 +217,22 @@ export function useVaultV2({
 
       txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
-      // Step 6 (Optional). Set initial allocator if provided.
+      // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data) 
+      const setAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'setIsAllocator',
+        args: [account, true],
+      });
+
+      const submitSetAllocatorTx = encodeFunctionData({
+        abi: vaultv2Abi,
+        functionName: 'submit',
+        args: [setAllocatorTx],
+      });
+
+      txs.push(submitSetAllocatorTx, setAllocatorTx);
+
+      // Step 6.2 (Optional). Set initial allocator if provided.
       if (allocator && allocator !== zeroAddress) {
         const setAllocatorTx = encodeFunctionData({
           abi: vaultv2Abi,
@@ -519,29 +536,108 @@ export function useVaultV2({
     [account, chainIdToUse, sendDepositTx, vaultAddress],
   );
 
+  /**
+   * Simple withdraw - no market deallocation.
+   * Used by regular depositors who just want to withdraw their assets.
+   */
   const withdraw = useCallback(
-    async (amount: bigint, receiver: Address, _account: Address): Promise<boolean> => {
+    async (amount: bigint, receiver: Address): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
-      const withdrawTx = encodeFunctionData({
-        abi: vaultv2Abi,
-        functionName: 'withdraw',
-        args: [amount, receiver, _account],
-      });
-
       try {
+        const withdrawTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'withdraw',
+          args: [amount, receiver, account],
+        });
+
         await sendWithdrawTx({
           account,
           to: vaultAddress,
           data: withdrawTx,
           chainId: chainIdToUse,
         });
+
         return true;
       } catch (withdrawError) {
         if (withdrawError instanceof Error && withdrawError.message.toLowerCase().includes('reject')) {
           return false;
         }
         console.error('Failed to withdraw from vault', withdrawError);
+        throw withdrawError;
+      }
+    },
+    [account, chainIdToUse, sendWithdrawTx, vaultAddress],
+  );
+
+  /**
+   * Withdraw from a specific market.
+   * Sets liquidityAdapter to deallocate from the specified market before withdrawing.
+   * Optionally sets caller as allocator if they're not already.
+   */
+  const withdrawFromMarket = useCallback(
+    async (
+      amount: bigint,
+      receiver: Address,
+      market: Market,
+      liquidityAdapter: Address,
+      setSelfAsAllocator: boolean,
+    ): Promise<boolean> => {
+      if (!account || !vaultAddress) return false;
+
+      const txs: `0x${string}`[] = [];
+
+      try {
+        // Step 1: Set self as allocator if needed
+        if (setSelfAsAllocator) {
+          const setAllocatorTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'setIsAllocator',
+            args: [account, true],
+          });
+          const submitSetAllocatorTx = encodeFunctionData({
+            abi: vaultv2Abi,
+            functionName: 'submit',
+            args: [setAllocatorTx],
+          });
+          txs.push(submitSetAllocatorTx, setAllocatorTx);
+        }
+
+        // Step 2: Set liquidity adapter to deallocate from the market
+        const liquidityAdapterTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'setLiquidityAdapterAndData',
+          args: [liquidityAdapter, encodeMarketParams(market)],
+        });
+        txs.push(liquidityAdapterTx);
+
+        // Step 3: Execute the withdraw
+        const withdrawTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'withdraw',
+          args: [amount, receiver, account],
+        });
+        txs.push(withdrawTx);
+
+        const multicallTx = encodeFunctionData({
+          abi: vaultv2Abi,
+          functionName: 'multicall',
+          args: [txs],
+        });
+
+        await sendWithdrawTx({
+          account,
+          to: vaultAddress,
+          data: multicallTx,
+          chainId: chainIdToUse,
+        });
+
+        return true;
+      } catch (withdrawError) {
+        if (withdrawError instanceof Error && withdrawError.message.toLowerCase().includes('reject')) {
+          return false;
+        }
+        console.error('Failed to withdraw from market', withdrawError);
         throw withdrawError;
       }
     },
@@ -571,6 +667,7 @@ export function useVaultV2({
     deposit,
     isDepositing,
     withdraw,
+    withdrawFromMarket,
     isWithdrawing,
     totalAssets,
   };

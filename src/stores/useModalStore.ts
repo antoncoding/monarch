@@ -1,3 +1,4 @@
+import type { Address } from 'viem';
 import { create } from 'zustand';
 import type { Market, MarketPosition, GroupedPosition } from '@/utils/types';
 import type { SwapToken } from '@/features/swap/types';
@@ -51,6 +52,27 @@ export type ModalProps = {
   trustedVaults: Record<string, never>; // No props needed - uses useTrustedVaults() store
 
   blacklistedMarkets: Record<string, never>; // No props needed - uses useProcessedMarkets() context
+
+  // Vault Operations
+  vaultDeposit: {
+    vaultAddress: Address;
+    vaultName: string;
+    assetAddress: Address;
+    assetSymbol: string;
+    assetDecimals: number;
+    chainId: SupportedNetworks;
+    onSuccess?: () => void;
+  };
+
+  vaultWithdraw: {
+    vaultAddress: Address;
+    vaultName: string;
+    assetAddress: Address;
+    assetSymbol: string;
+    assetDecimals: number;
+    chainId: SupportedNetworks;
+    onSuccess?: () => void;
+  };
 };
 
 export type ModalType = keyof ModalProps;
