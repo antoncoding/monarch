@@ -7,7 +7,6 @@ import { FiArrowUpRight } from 'react-icons/fi';
 import { Modal, ModalBody, ModalHeader } from '@/components/common/Modal';
 import Input from '@/components/Input/Input';
 import { ExecuteTransactionButton } from '@/components/ui/ExecuteTransactionButton';
-import { TokenIcon } from '@/components/shared/token-icon';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { useVaultAllocations } from '@/hooks/useVaultAllocations';
 import { useVaultV2 } from '@/hooks/useVaultV2';
@@ -16,7 +15,6 @@ import { useMorphoMarketV1Adapters } from '@/hooks/useMorphoMarketV1Adapters';
 import { formatBalance, formatReadable } from '@/utils/balance';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { MarketAllocation } from '@/types/vaultAllocations';
-import { VaultWithdrawProcessModal } from './vault-withdraw-process-modal';
 
 type VaultWithdrawModalProps = {
   vaultAddress: Address;
@@ -45,8 +43,6 @@ export function VaultWithdrawModal({
   const [selectedMarket, setSelectedMarket] = useState<MarketAllocation | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState<bigint>(BigInt(0));
   const [inputError, setInputError] = useState<string | null>(null);
-  const [showProcessModal, setShowProcessModal] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<'preparing' | 'withdrawing'>('preparing');
 
   // Fetch vault data
   const { data: vaultData } = useVaultV2Data({ vaultAddress, chainId });
@@ -59,7 +55,6 @@ export function VaultWithdrawModal({
     chainId,
     connectedAddress,
     onTransactionSuccess: () => {
-      setShowProcessModal(false);
       onSuccess?.();
       onClose();
     },
@@ -97,33 +92,22 @@ export function VaultWithdrawModal({
   const handleWithdraw = useCallback(async () => {
     if (!connectedAddress || !selectedMarket || !morphoMarketV1Adapter) return;
 
-    try {
-      setShowProcessModal(true);
-      setCurrentStep('preparing');
+    // Determine if we need to set self as allocator
+    const needsAllocatorSetup = isOwner && !isAllocator;
 
-      // Determine if we need to set self as allocator
-      const needsAllocatorSetup = isOwner && !isAllocator;
-
-      setCurrentStep('withdrawing');
-
-      await withdrawFromMarket(
-        withdrawAmount,
-        connectedAddress,
-        selectedMarket.market,
-        morphoMarketV1Adapter,
-        needsAllocatorSetup,
-      );
-    } catch (error) {
-      console.error('Withdraw failed:', error);
-      setShowProcessModal(false);
-    }
+    await withdrawFromMarket(
+      withdrawAmount,
+      connectedAddress,
+      selectedMarket.market,
+      morphoMarketV1Adapter,
+      needsAllocatorSetup,
+    );
   }, [connectedAddress, selectedMarket, morphoMarketV1Adapter, isOwner, isAllocator, withdrawFromMarket, withdrawAmount]);
 
   const isLoading = allocationsLoading || adaptersLoading;
 
   return (
-    <>
-      <Modal
+    <Modal
         isOpen
         onOpenChange={(open) => {
           if (!open) onClose();
@@ -229,20 +213,6 @@ export function VaultWithdrawModal({
           )}
         </ModalBody>
       </Modal>
-
-      {showProcessModal && selectedMarket && (
-        <VaultWithdrawProcessModal
-          currentStep={currentStep}
-          onClose={() => setShowProcessModal(false)}
-          vaultName={vaultName}
-          assetSymbol={assetSymbol}
-          amount={withdrawAmount}
-          assetDecimals={assetDecimals}
-          marketSymbol={`${selectedMarket.market.collateralAsset.symbol}/${selectedMarket.market.loanAsset.symbol}`}
-          needsAllocatorSetup={isOwner && !isAllocator}
-        />
-      )}
-    </>
   );
 }
 
