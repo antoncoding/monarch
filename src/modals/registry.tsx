@@ -40,6 +40,10 @@ const TrustedVaultsModal = lazy(() => import('@/modals/settings/trusted-vaults-m
 
 const MarketSettingsModal = lazy(() => import('@/features/markets/components/market-settings-modal'));
 
+// Vault Operations
+const VaultDepositModal = lazy(() => import('@/modals/vault/vault-deposit-modal'));
+const VaultWithdrawModal = lazy(() => import('@/modals/vault/vault-withdraw-modal'));
+
 /**
  * Central modal registry mapping modal types to their components.
  *
@@ -57,4 +61,6 @@ export const MODAL_REGISTRY: {
   marketSettings: MarketSettingsModal,
   trustedVaults: TrustedVaultsModal,
   blacklistedMarkets: BlacklistedMarketsModal,
+  vaultDeposit: VaultDepositModal,
+  vaultWithdraw: VaultWithdrawModal,
 };

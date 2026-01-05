@@ -9,29 +9,31 @@ import { TokenIcon } from '@/components/shared/token-icon';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useVaultV2Deposit } from '@/hooks/useVaultV2Deposit';
 import { formatBalance } from '@/utils/balance';
+import type { SupportedNetworks } from '@/utils/networks';
 import { VaultDepositProcessModal } from './vault-deposit-process-modal';
 
-type DepositToVaultModalProps = {
+type VaultDepositModalProps = {
   vaultAddress: Address;
   vaultName: string;
   assetAddress: Address;
   assetSymbol: string;
   assetDecimals: number;
-  chainId: number;
-  onClose: () => void;
+  chainId: SupportedNetworks;
   onSuccess?: () => void;
+  onClose: () => void;
+  onOpenChange: (open: boolean) => void;
 };
 
-export function DepositToVaultModal({
+export function VaultDepositModal({
   vaultAddress,
   vaultName,
   assetAddress,
   assetSymbol,
   assetDecimals,
   chainId,
-  onClose,
   onSuccess,
-}: DepositToVaultModalProps): JSX.Element {
+  onClose,
+}: VaultDepositModalProps): JSX.Element {
   const { usePermit2: usePermit2Setting } = useAppSettings();
 
   const {
@@ -144,3 +146,5 @@ export function DepositToVaultModal({
     </>
   );
 }
+
+export default VaultDepositModal;

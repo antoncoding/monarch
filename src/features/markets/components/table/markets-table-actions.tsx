@@ -1,7 +1,7 @@
 'use client';
 
 import { ReloadIcon } from '@radix-ui/react-icons';
-import { CgDisplayFullwidth } from "react-icons/cg";
+import { CgDisplayFullwidth } from 'react-icons/cg';
 import { FiSettings } from 'react-icons/fi';
 import { TbArrowAutofitWidth } from 'react-icons/tb';
 import { Button } from '@/components/ui/button';
@@ -66,7 +66,11 @@ export function MarketsTableActions({ onRefresh, isRefetching, isMobile }: Marke
             className="text-secondary min-w-0 px-2"
             onClick={() => setTableViewMode(tableViewMode === 'compact' ? 'expanded' : 'compact')}
           >
-            {effectiveTableViewMode === 'compact' ? <CgDisplayFullwidth className="h-3 w-3" /> : <TbArrowAutofitWidth className="h-3 w-3" />}
+            {effectiveTableViewMode === 'compact' ? (
+              <CgDisplayFullwidth className="h-3 w-3" />
+            ) : (
+              <TbArrowAutofitWidth className="h-3 w-3" />
+            )}
           </Button>
         </Tooltip>
       )}

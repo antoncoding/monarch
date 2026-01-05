@@ -128,7 +128,10 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
                     key={address}
                     className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
                   >
-                    <AgentListItem address={address as Address} />
+                    <AgentListItem
+                      address={address as Address}
+                      ownerAddress={owner as Address}
+                    />
                     <Button
                       variant="default"
                       size="sm"
@@ -159,7 +162,10 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
                     className="flex items-center justify-between rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
                   >
                     <div className="flex flex-col gap-2">
-                      <AgentListItem address={agent.address as Address} />
+                      <AgentListItem
+                        address={agent.address as Address}
+                        ownerAddress={owner as Address}
+                      />
                       <p className="ml-8 text-xs text-secondary">{agent.strategyDescription}</p>
                     </div>
                     <Button
@@ -203,7 +209,10 @@ export function AgentsTab({ vaultAddress, chainId }: AgentsTabProps) {
                 key={address}
                 className="rounded border border-gray-100 bg-gray-50/50 p-3 dark:border-gray-700 dark:bg-gray-900/50"
               >
-                <AgentListItem address={address as Address} />
+                <AgentListItem
+                  address={address as Address}
+                  ownerAddress={owner as Address}
+                />
               </div>
             ))}
           </div>

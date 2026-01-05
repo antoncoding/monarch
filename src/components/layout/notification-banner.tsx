@@ -32,14 +32,10 @@ export function NotificationBanner() {
       <div className="relative flex h-[48px] items-center md:h-[56px]">
         <div className="container mx-auto flex items-center justify-center gap-4 px-4 sm:px-6 md:px-8">
           {/* Badge for multiple notifications */}
-          {totalCount > 1 && (
-            <span className="font-zen text-xs text-primary-foreground/80">1/{totalCount}</span>
-          )}
+          {totalCount > 1 && <span className="font-zen text-xs text-primary-foreground/80">1/{totalCount}</span>}
 
           {/* Custom icon if provided */}
-          {currentNotification.icon && (
-            <span className="text-primary-foreground">{currentNotification.icon}</span>
-          )}
+          {currentNotification.icon && <span className="text-primary-foreground">{currentNotification.icon}</span>}
 
           {/* Message */}
           <p className="font-zen text-sm text-primary-foreground">{currentNotification.message}</p>
