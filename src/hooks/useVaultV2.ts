@@ -5,7 +5,7 @@ import { vaultv2Abi } from '@/abis/vaultv2';
 import type { VaultV2Cap } from '@/data-sources/morpho-api/v2-vaults';
 import type { SupportedNetworks } from '@/utils/networks';
 import { useTransactionWithToast } from './useTransactionWithToast';
-import { Market } from "@/utils/types"
+import type { Market } from '@/utils/types';
 import { encodeMarketParams } from '@/utils/morpho';
 
 /**
@@ -217,20 +217,20 @@ export function useVaultV2({
 
       txs.push(submitAbdicateSetAdapterRegistryTx, abdicateSetAdapterRegistryTx);
 
-      // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data) 
-      const setAllocatorTx = encodeFunctionData({
+      // Step 6.1 Set user as allocator (for withdrawal / setting Withdrawal Data)
+      const setSelfAllocatorTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'setIsAllocator',
         args: [account, true],
       });
 
-      const submitSetAllocatorTx = encodeFunctionData({
+      const submitSetSelfAllocatorTx = encodeFunctionData({
         abi: vaultv2Abi,
         functionName: 'submit',
-        args: [setAllocatorTx],
+        args: [setSelfAllocatorTx],
       });
 
-      txs.push(submitSetAllocatorTx, setAllocatorTx);
+      txs.push(submitSetSelfAllocatorTx, setSelfAllocatorTx);
 
       // Step 6.2 (Optional). Set initial allocator if provided.
       if (allocator && allocator !== zeroAddress) {
@@ -576,13 +576,7 @@ export function useVaultV2({
    * Optionally sets caller as allocator if they're not already.
    */
   const withdrawFromMarket = useCallback(
-    async (
-      amount: bigint,
-      receiver: Address,
-      market: Market,
-      liquidityAdapter: Address,
-      setSelfAsAllocator: boolean,
-    ): Promise<boolean> => {
+    async (amount: bigint, receiver: Address, market: Market, liquidityAdapter: Address, setSelfAsAllocator: boolean): Promise<boolean> => {
       if (!account || !vaultAddress) return false;
 
       const txs: `0x${string}`[] = [];

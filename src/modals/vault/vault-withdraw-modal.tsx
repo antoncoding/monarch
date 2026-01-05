@@ -95,124 +95,115 @@ export function VaultWithdrawModal({
     // Determine if we need to set self as allocator
     const needsAllocatorSetup = isOwner && !isAllocator;
 
-    await withdrawFromMarket(
-      withdrawAmount,
-      connectedAddress,
-      selectedMarket.market,
-      morphoMarketV1Adapter,
-      needsAllocatorSetup,
-    );
+    await withdrawFromMarket(withdrawAmount, connectedAddress, selectedMarket.market, morphoMarketV1Adapter, needsAllocatorSetup);
   }, [connectedAddress, selectedMarket, morphoMarketV1Adapter, isOwner, isAllocator, withdrawFromMarket, withdrawAmount]);
 
   const isLoading = allocationsLoading || adaptersLoading;
 
   return (
     <Modal
-        isOpen
-        onOpenChange={(open) => {
-          if (!open) onClose();
-        }}
-        size="xl"
-        scrollBehavior="inside"
-        backdrop="blur"
-      >
-        <ModalHeader
-          title={`Withdraw ${assetSymbol}`}
-          description={`Withdraw from ${vaultName}`}
-          mainIcon={<FiArrowUpRight className="h-5 w-5" />}
-          onClose={onClose}
-        />
-        <ModalBody className="gap-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : marketsWithAllocation.length === 0 ? (
-            <div className="py-8 text-center text-secondary">No markets with allocations to withdraw from.</div>
-          ) : (
-            <div className="space-y-6">
-              {/* Market Selection */}
-              <div>
-                <div className="mb-3 text-sm text-secondary">Select market to withdraw from</div>
-                <div className="space-y-2">
-                  {marketsWithAllocation.map((marketAllocation) => {
-                    const isSelected = selectedMarket?.marketId === marketAllocation.marketId;
-                    const liquidity = BigInt(marketAllocation.market.state?.liquidityAssets ?? '0');
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      size="xl"
+      scrollBehavior="inside"
+      backdrop="blur"
+    >
+      <ModalHeader
+        title={`Withdraw ${assetSymbol}`}
+        description={`Withdraw from ${vaultName}`}
+        mainIcon={<FiArrowUpRight className="h-5 w-5" />}
+        onClose={onClose}
+      />
+      <ModalBody className="gap-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        ) : marketsWithAllocation.length === 0 ? (
+          <div className="py-8 text-center text-secondary">No markets with allocations to withdraw from.</div>
+        ) : (
+          <div className="space-y-6">
+            {/* Market Selection */}
+            <div>
+              <div className="mb-3 text-sm text-secondary">Select market to withdraw from</div>
+              <div className="space-y-2">
+                {marketsWithAllocation.map((marketAllocation) => {
+                  const isSelected = selectedMarket?.marketId === marketAllocation.marketId;
+                  const liquidity = BigInt(marketAllocation.market.state?.liquidityAssets ?? '0');
 
-                    return (
-                      <button
-                        key={marketAllocation.marketId}
-                        type="button"
-                        onClick={() => handleSelectMarket(marketAllocation)}
-                        className={`w-full rounded border p-3 text-left transition-colors ${
-                          isSelected
-                            ? 'border-primary bg-primary/5'
-                            : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <MarketIdentity
-                            market={marketAllocation.market}
-                            chainId={chainId}
-                            mode={MarketIdentityMode.Normal}
-                          />
-                          <div className="text-right">
-                            <div className="text-sm">
-                              {formatBalance(marketAllocation.allocation, assetDecimals).toFixed(4)} {assetSymbol}
-                            </div>
-                            <div className="text-xs text-secondary">
-                              Global Liquidity: {formatReadable(formatBalance(liquidity, assetDecimals))}
-                            </div>
+                  return (
+                    <button
+                      key={marketAllocation.marketId}
+                      type="button"
+                      onClick={() => handleSelectMarket(marketAllocation)}
+                      className={`w-full rounded border p-3 text-left transition-colors ${
+                        isSelected
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <MarketIdentity
+                          market={marketAllocation.market}
+                          chainId={chainId}
+                          mode={MarketIdentityMode.Normal}
+                        />
+                        <div className="text-right">
+                          <div className="text-sm">
+                            {formatBalance(marketAllocation.allocation, assetDecimals).toFixed(4)} {assetSymbol}
+                          </div>
+                          <div className="text-xs text-secondary">
+                            Global Liquidity: {formatReadable(formatBalance(liquidity, assetDecimals))}
                           </div>
                         </div>
-                      </button>
-                    );
-                  })}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Amount Input - only show when market is selected */}
+            {selectedMarket && (
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-secondary">Withdraw amount</span>
+                  <p className="font-inter text-xs text-secondary">
+                    Max: {formatBalance(maxWithdrawable, assetDecimals).toFixed(4)} {assetSymbol}
+                  </p>
+                </div>
+
+                <div className="mt-2 flex items-start justify-between">
+                  <div className="relative grow">
+                    <Input
+                      decimals={assetDecimals}
+                      max={maxWithdrawable}
+                      setValue={setWithdrawAmount}
+                      setError={setInputError}
+                      exceedMaxErrMessage="Exceeds available amount"
+                    />
+                    {inputError && <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>}
+                  </div>
+
+                  <ExecuteTransactionButton
+                    targetChainId={chainId}
+                    onClick={handleWithdraw}
+                    isLoading={isWithdrawing}
+                    disabled={inputError !== null || !withdrawAmount || withdrawAmount === 0n}
+                    variant="primary"
+                    className="ml-2 min-w-32"
+                  >
+                    Withdraw
+                  </ExecuteTransactionButton>
                 </div>
               </div>
-
-              {/* Amount Input - only show when market is selected */}
-              {selectedMarket && (
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-secondary">Withdraw amount</span>
-                    <p className="font-inter text-xs text-secondary">
-                      Max: {formatBalance(maxWithdrawable, assetDecimals).toFixed(4)} {assetSymbol}
-                    </p>
-                  </div>
-
-                  <div className="mt-2 flex items-start justify-between">
-                    <div className="relative grow">
-                      <Input
-                        decimals={assetDecimals}
-                        max={maxWithdrawable}
-                        setValue={setWithdrawAmount}
-                        setError={setInputError}
-                        exceedMaxErrMessage="Exceeds available amount"
-                      />
-                      {inputError && (
-                        <p className="p-1 text-sm text-red-500 transition-opacity duration-200 ease-in-out">{inputError}</p>
-                      )}
-                    </div>
-
-                    <ExecuteTransactionButton
-                      targetChainId={chainId}
-                      onClick={handleWithdraw}
-                      isLoading={isWithdrawing}
-                      disabled={inputError !== null || !withdrawAmount || withdrawAmount === 0n}
-                      variant="primary"
-                      className="ml-2 min-w-32"
-                    >
-                      Withdraw
-                    </ExecuteTransactionButton>
-                  </div>
-                </div>
-              )}
-
-            </div>
-          )}
-        </ModalBody>
-      </Modal>
+            )}
+          </div>
+        )}
+      </ModalBody>
+    </Modal>
   );
 }
 

@@ -245,24 +245,29 @@ export function parseCapIdParams(idParams: string): {
 }
 
 export function encodeMarketParams(marketParams: Market): `0x${string}` {
-  return encodeAbiParameters([{
-      type: 'tuple',
-      components: [
-        { type: 'address', name: 'loanToken' },
-        { type: 'address', name: 'collateralToken' },
-        { type: 'address', name: 'oracle' },
-        { type: 'address', name: 'irm' },
-        { type: 'uint256', name: 'lltv' }
-      ]
-    }], [
+  return encodeAbiParameters(
+    [
       {
-          loanToken: marketParams.loanAsset.address as Address,
-          collateralToken: marketParams.collateralAsset.address as Address,
-          oracle: marketParams.oracleAddress as Address,
-          irm: marketParams.irmAddress as Address,  
-          lltv: BigInt(marketParams.lltv)
-        }
-    ])
+        type: 'tuple',
+        components: [
+          { type: 'address', name: 'loanToken' },
+          { type: 'address', name: 'collateralToken' },
+          { type: 'address', name: 'oracle' },
+          { type: 'address', name: 'irm' },
+          { type: 'uint256', name: 'lltv' },
+        ],
+      },
+    ],
+    [
+      {
+        loanToken: marketParams.loanAsset.address as Address,
+        collateralToken: marketParams.collateralAsset.address as Address,
+        oracle: marketParams.oracleAddress as Address,
+        irm: marketParams.irmAddress as Address,
+        lltv: BigInt(marketParams.lltv),
+      },
+    ],
+  );
 }
 
 // ============================================================================
