@@ -70,7 +70,9 @@ const commonMarketFields = `
 lltv
 uniqueKey
 irmAddress
-oracleAddress
+oracle {
+  address
+}
 collateralPrice
 whitelisted
 morphoBlue {
@@ -169,7 +171,9 @@ export const marketsQuery = `
     lltv
     uniqueKey
     irmAddress
-    oracleAddress
+    oracle {
+      address
+    }
     collateralPrice
     whitelisted
     morphoBlue {
