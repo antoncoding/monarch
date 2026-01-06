@@ -3,10 +3,16 @@ import type { SupportedNetworks } from '@/utils/networks';
 import { blacklistTokens } from '@/utils/tokens';
 import type { Market } from '@/utils/types';
 import { morphoGraphqlFetcher } from './fetchers';
+import { zeroAddress } from 'viem';
+
+// API response type - matches the new Morpho API shape where oracleAddress is nested
+type MorphoApiMarket = Omit<Market, 'oracleAddress'> & {
+  oracle: { address: string } | null;
+};
 
 type MarketGraphQLResponse = {
   data: {
-    marketByUniqueKey: Market;
+    marketByUniqueKey: MorphoApiMarket;
   };
   errors?: { message: string }[];
 };
@@ -15,7 +21,7 @@ type MarketGraphQLResponse = {
 type MarketsGraphQLResponse = {
   data: {
     markets: {
-      items: Market[];
+      items: MorphoApiMarket[];
       pageInfo: {
         countTotal: number;
         count: number;
@@ -27,10 +33,12 @@ type MarketsGraphQLResponse = {
   errors?: { message: string }[];
 };
 
-const processMarketData = (market: Market): Market => {
+// Transform API response to internal Market type
+const processMarketData = (market: MorphoApiMarket): Market => {
+  const { oracle, ...rest } = market;
   return {
-    ...market,
-    // Standard API always have USD price!
+    ...rest,
+    oracleAddress: oracle?.address ?? zeroAddress,
     hasUSDPrice: true,
   };
 };
