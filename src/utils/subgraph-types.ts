@@ -48,7 +48,6 @@ export type SubgraphMarket = {
   lltv: string;
   irm: Address;
   inputToken: SubgraphToken;
-  inputTokenPriceUSD: string; // BigDecimal (collateralPrice)
   borrowedToken: SubgraphToken; // loanAsset
 
   // note: these 2 are weird

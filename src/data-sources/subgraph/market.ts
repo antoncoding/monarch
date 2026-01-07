@@ -84,7 +84,6 @@ const transformSubgraphMarketToMarket = (
   const marketId = subgraphMarket.id ?? '';
   const lltv = subgraphMarket.lltv ?? '0';
   const irmAddress = subgraphMarket.irm ?? '0x';
-  const inputTokenPriceUSD = subgraphMarket.inputTokenPriceUSD ?? '0';
   const oracleAddress = (subgraphMarket.oracle?.oracleAddress ?? '0x') as Address;
 
   const totalSupplyShares = subgraphMarket.totalSupplyShares ?? '0';
@@ -175,7 +174,6 @@ const transformSubgraphMarketToMarket = (
     uniqueKey: marketId,
     lltv: lltv,
     irmAddress: irmAddress as Address,
-    collateralPrice: inputTokenPriceUSD,
     whitelisted: true, // All subgraph markets are considered whitelisted
     loanAsset: loanAsset,
     collateralAsset: collateralAsset,

@@ -15,6 +15,7 @@ type MarketsFiltersState = {
   selectedNetwork: SupportedNetworks | null;
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
+  trendingMode: boolean;
 };
 
 type MarketsFiltersActions = {
@@ -23,6 +24,7 @@ type MarketsFiltersActions = {
   setSelectedNetwork: (network: SupportedNetworks | null) => void;
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
   setSearchQuery: (query: string) => void;
+  toggleTrendingMode: () => void;
   resetFilters: () => void;
 };
 
@@ -34,6 +36,7 @@ const DEFAULT_STATE: MarketsFiltersState = {
   selectedNetwork: null,
   selectedOracles: [],
   searchQuery: '',
+  trendingMode: false,
 };
 
 /**
@@ -74,6 +77,11 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
     set({
       searchQuery: query,
     }),
+
+  toggleTrendingMode: () =>
+    set((state) => ({
+      trendingMode: !state.trendingMode,
+    })),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

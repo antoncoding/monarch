@@ -73,7 +73,6 @@ irmAddress
 oracle {
   address
 }
-collateralPrice
 whitelisted
 morphoBlue {
   id
@@ -174,7 +173,6 @@ export const marketsQuery = `
     oracle {
       address
     }
-    collateralPrice
     whitelisted
     morphoBlue {
       id

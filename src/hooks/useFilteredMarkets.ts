@@ -5,6 +5,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
@@ -40,6 +41,11 @@ export const useFilteredMarkets = (): Market[] => {
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
+  // Fetch trending market keys from market metrics (pre-cached, 15-min stale time)
+  const { trendingKeys } = useTrendingMarketKeys({
+    timeWindow: '24h',
+    topN: 10,
+  });
 
   return useMemo(() => {
     // 1. Start with allMarkets or whitelistedMarkets based on setting
@@ -86,7 +92,20 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    // 4. Apply sorting
+    // 4. Filter by trending mode - show only hot markets
+    if (filters.trendingMode) {
+      // If still loading or no trending data, return empty to indicate "loading trending"
+      if (trendingKeys.size === 0) {
+        return [];
+      }
+
+      markets = markets.filter((market) => {
+        const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+        return trendingKeys.has(key);
+      });
+    }
+
+    // 5. Apply sorting
     if (preferences.sortColumn === SortColumn.Starred) {
       return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
     }
@@ -121,6 +140,7 @@ export const useFilteredMarkets = (): Market[] => {
       [SortColumn.RateAtTarget]: 'state.apyAtTarget',
       [SortColumn.TrustedBy]: '',
       [SortColumn.UtilizationRate]: 'state.utilization',
+      [SortColumn.Trend]: '', // Trend is a filter mode, not a sort
     };
 
     const propertyPath = sortPropertyMap[preferences.sortColumn];
@@ -129,5 +149,5 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     return markets;
-  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken]);
+  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken, trendingKeys]);
 };
