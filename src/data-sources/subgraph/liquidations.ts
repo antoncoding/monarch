@@ -1,3 +1,11 @@
+/**
+ * @deprecated_after_monarch_api_stable
+ * This fetcher is kept as a fallback while Monarch Metrics API is being validated.
+ * Used by useLiquidationsQuery.ts which is also deprecated.
+ *
+ * Once the Monarch API is confirmed stable, this file can be removed.
+ * See useLiquidationsQuery.ts for the full list of related files.
+ */
 import { subgraphMarketsWithLiquidationCheckQuery } from '@/graphql/morpho-subgraph-queries';
 import type { SupportedNetworks } from '@/utils/networks';
 import { getSubgraphUrl } from '@/utils/subgraph-urls';

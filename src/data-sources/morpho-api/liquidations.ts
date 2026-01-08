@@ -1,3 +1,11 @@
+/**
+ * @deprecated_after_monarch_api_stable
+ * This fetcher is kept as a fallback while Monarch Metrics API is being validated.
+ * Used by useLiquidationsQuery.ts which is also deprecated.
+ *
+ * Once the Monarch API is confirmed stable, this file can be removed.
+ * See useLiquidationsQuery.ts for the full list of related files.
+ */
 import type { SupportedNetworks } from '@/utils/networks';
 import { URLS } from '@/utils/urls';
 

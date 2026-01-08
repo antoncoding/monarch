@@ -3,8 +3,7 @@ import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
 import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
-import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
-import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
+import { useTrendingMarketKeys, getMetricsKey, useEverLiquidated } from '@/hooks/queries/useMarketMetricsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
@@ -20,9 +19,8 @@ type MarketIndicatorsProps = {
 };
 
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
-  // Check liquidation protection status using React Query
-  const { data: liquidatedMarkets } = useLiquidationsQuery();
-  const hasLiquidationProtection = liquidatedMarkets?.has(market.uniqueKey) ?? false;
+  // Check liquidation protection status (uses Monarch Metrics API with fallback)
+  const hasLiquidationProtection = useEverLiquidated(market.morphoBlue.chain.id, market.uniqueKey);
 
   // Check trending status
   const { trendingConfig } = useMarketPreferences();

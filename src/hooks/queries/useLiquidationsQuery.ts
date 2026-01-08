@@ -1,3 +1,15 @@
+/**
+ * @deprecated_after_monarch_api_stable
+ * This query is kept as a fallback while Monarch Metrics API is being validated.
+ * The primary source is now useEverLiquidated() in useMarketMetricsQuery.ts.
+ *
+ * Once the Monarch API is confirmed stable, this file and related data sources can be removed:
+ * - src/hooks/queries/useLiquidationsQuery.ts (this file)
+ * - src/data-sources/morpho-api/liquidations.ts
+ * - src/data-sources/subgraph/liquidations.ts
+ *
+ * Note: useMarketLiquidations.ts (detailed transactions) is SEPARATE and should be kept.
+ */
 import { useQuery } from '@tanstack/react-query';
 import { supportsMorphoApi } from '@/config/dataSources';
 import { fetchMorphoApiLiquidatedMarketKeys } from '@/data-sources/morpho-api/liquidations';
@@ -23,9 +35,12 @@ import { ALL_SUPPORTED_NETWORKS } from '@/utils/networks';
  * const isProtected = data?.has(marketId) ?? false;
  * ```
  */
-export const useLiquidationsQuery = () => {
+export const useLiquidationsQuery = (options: { enabled?: boolean } = {}) => {
+  const { enabled = true } = options;
+
   return useQuery({
     queryKey: ['liquidations'],
+    enabled,
     queryFn: async () => {
       const combinedLiquidatedKeys = new Set<string>();
       const fetchErrors: unknown[] = [];

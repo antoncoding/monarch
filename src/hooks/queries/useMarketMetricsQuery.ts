@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMarketPreferences, type TrendingConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
+import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
+import { useMonarchLiquidatedKeys } from '@/hooks/queries/useMonarchLiquidationsQuery';
 
 // Re-export types for convenience
 export type { FlowTimeWindow } from '@/stores/useMarketPreferences';
@@ -271,4 +273,43 @@ export const useTrendingMarketKeys = () => {
     }
     return keys;
   }, [metricsMap, trendingConfig]);
+};
+
+// Staleness threshold for liquidations data (1 hour)
+const LIQUIDATIONS_STALE_THRESHOLD_MS = 60 * 60 * 1000;
+
+/**
+ * Returns whether a market has ever been liquidated.
+ * Primary: Uses Monarch API /v1/liquidations endpoint
+ * Fallback: Uses old Morpho API/Subgraph if Monarch data is stale (>1 hour)
+ *
+ * @deprecated_fallback The fallback to useLiquidationsQuery can be removed
+ * once Monarch API stability is confirmed.
+ */
+export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
+  // Primary: Monarch API liquidations endpoint
+  const { liquidatedKeys, lastUpdatedAt, isLoading } = useMonarchLiquidatedKeys();
+
+  // Check if data is stale (>1 hour old)
+  const isStale = lastUpdatedAt * 1000 < Date.now() - LIQUIDATIONS_STALE_THRESHOLD_MS;
+
+  // Only enable fallback AFTER Monarch query completes AND data is stale/missing
+  // This prevents triggering fallback on first render when data hasn't loaded yet
+  const needsFallback = !isLoading && (isStale || liquidatedKeys.size === 0);
+
+  // @deprecated_fallback - Only fetch if Monarch data is stale/empty
+  const { data: fallbackKeys } = useLiquidationsQuery({ enabled: needsFallback });
+
+  return useMemo(() => {
+    const key = `${chainId}-${uniqueKey.toLowerCase()}`;
+
+    // Use Monarch data if fresh and available
+    if (!needsFallback) {
+      return liquidatedKeys.has(key);
+    }
+
+    // Fallback to old Morpho API
+    // @deprecated_fallback - Remove after Monarch API stability confirmed
+    return fallbackKeys?.has(uniqueKey) ?? false;
+  }, [liquidatedKeys, needsFallback, chainId, uniqueKey, fallbackKeys]);
 };
