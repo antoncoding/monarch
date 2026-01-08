@@ -261,7 +261,10 @@ const supportedTokens = [
     symbol: 'sDAI',
     img: require('../imgs/tokens/sdai.svg') as string,
     decimals: 18,
-    networks: [{ chain: mainnet, address: '0x83F20F44975D03b1b09e64809B757c47f942BEeA' }],
+    networks: [
+      { chain: mainnet, address: '0x83F20F44975D03b1b09e64809B757c47f942BEeA' },
+      { chain: base, address: '0x50c5725949a6f0c72e6c4a641f24049a917db0cb' },
+    ],
   },
   {
     symbol: 'wstETH',

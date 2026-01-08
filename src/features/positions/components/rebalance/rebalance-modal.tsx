@@ -54,16 +54,16 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   }, [markets, groupedPosition.loanAssetAddress, groupedPosition.chainId]);
 
   const getPendingDelta = useCallback(
-    (marketUniqueKey: string) => {
-      return rebalanceActions.reduce((acc: number, action: RebalanceAction) => {
+    (marketUniqueKey: string): bigint => {
+      return rebalanceActions.reduce((acc: bigint, action: RebalanceAction) => {
         if (action.fromMarket.uniqueKey === marketUniqueKey) {
-          return acc - Number(action.amount);
+          return acc - BigInt(action.amount);
         }
         if (action.toMarket.uniqueKey === marketUniqueKey) {
-          return acc + Number(action.amount);
+          return acc + BigInt(action.amount);
         }
         return acc;
-      }, 0);
+      }, 0n);
     },
     [rebalanceActions],
   );
@@ -107,7 +107,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     const oldBalance = groupedPosition.markets.find((m) => m.market.uniqueKey === selectedFromMarketUniqueKey)?.state.supplyAssets;
 
     const pendingDelta = getPendingDelta(selectedFromMarketUniqueKey);
-    const pendingBalance = BigInt(oldBalance ?? 0) + BigInt(pendingDelta);
+    const pendingBalance = BigInt(oldBalance ?? 0) + pendingDelta;
 
     const scaledAmount = parseUnits(amount, groupedPosition.loanAssetDecimals);
     if (scaledAmount > pendingBalance) {
@@ -147,13 +147,13 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
   }, []);
 
   const handleMaxSelect = useCallback(
-    (marketUniqueKey: string, maxAmount: number) => {
+    (marketUniqueKey: string, maxAmount: bigint) => {
       const market = eligibleMarkets.find((m) => m.uniqueKey === marketUniqueKey);
       if (!market) return;
 
       setSelectedFromMarketUniqueKey(marketUniqueKey);
-      // Convert the amount to a string with the correct number of decimals
-      const formattedAmount = formatUnits(BigInt(Math.floor(maxAmount)), groupedPosition.loanAssetDecimals);
+      // Convert the bigint amount to a string with the correct number of decimals
+      const formattedAmount = formatUnits(maxAmount, groupedPosition.loanAssetDecimals);
       setAmount(formattedAmount);
     },
     [eligibleMarkets, groupedPosition.loanAssetDecimals],
@@ -175,11 +175,11 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     const selectedPosition = groupedPosition.markets.find((p) => p.market.uniqueKey === selectedFromMarketUniqueKey);
 
     // Get the pending delta for this market
-    const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0;
+    const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0n;
 
     // Check if this is a max amount considering pending delta
     const isMaxAmount =
-      selectedPosition !== undefined && BigInt(selectedPosition.state.supplyAssets) + BigInt(pendingDelta) === scaledAmount;
+      selectedPosition !== undefined && BigInt(selectedPosition.state.supplyAssets) + pendingDelta === scaledAmount;
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);

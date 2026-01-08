@@ -10,13 +10,13 @@ import { previewMarketState } from '@/utils/morpho';
 import { convertApyToApr } from '@/utils/rateMath';
 import type { MarketPosition } from '@/utils/types';
 
-type PositionWithPendingDelta = MarketPosition & { pendingDelta: number };
+type PositionWithPendingDelta = MarketPosition & { pendingDelta: bigint };
 
 type FromMarketsTableProps = {
   positions: PositionWithPendingDelta[];
   selectedMarketUniqueKey: string;
   onSelectMarket: (marketUniqueKey: string) => void;
-  onSelectMax?: (marketUniqueKey: string, amount: number) => void;
+  onSelectMax?: (marketUniqueKey: string, amount: bigint) => void;
 };
 
 const PER_PAGE = 5;
@@ -30,11 +30,10 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
   const paginatedPositions = positions.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
 
   const getApyPreview = (position: PositionWithPendingDelta) => {
-    if (position.pendingDelta === 0) return null;
+    if (position.pendingDelta === 0n) return null;
 
     try {
-      const deltaBigInt = BigInt(Math.floor(position.pendingDelta));
-      return previewMarketState(position.market, deltaBigInt, undefined);
+      return previewMarketState(position.market, position.pendingDelta, undefined);
     } catch {
       return null;
     }
@@ -67,11 +66,10 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
               <TableBody>
                 {paginatedPositions.map((position) => {
                   const userConfirmedSupply = BigInt(position.state.supplyAssets);
-                  const pendingDeltaBigInt = BigInt(position.pendingDelta);
-                  const userNetSupply = userConfirmedSupply + pendingDeltaBigInt;
+                  const userNetSupply = userConfirmedSupply + position.pendingDelta;
 
                   const rawMarketLiquidity = BigInt(position.market.state.liquidityAssets);
-                  const adjustedMarketLiquidity = rawMarketLiquidity + pendingDeltaBigInt;
+                  const adjustedMarketLiquidity = rawMarketLiquidity + position.pendingDelta;
 
                   const maxTransferableAmount = userNetSupply < adjustedMarketLiquidity ? userNetSupply : adjustedMarketLiquidity;
 
@@ -154,7 +152,7 @@ export function FromMarketsTable({ positions, selectedMarketUniqueKey, onSelectM
                               e.stopPropagation();
                               onSelectMarket(position.market.uniqueKey);
                               if (onSelectMax && maxTransferableAmount > 0n) {
-                                onSelectMax(position.market.uniqueKey, Number(maxTransferableAmount));
+                                onSelectMax(position.market.uniqueKey, maxTransferableAmount);
                               }
                             }}
                           >
