@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useMarketsFilters, type TrendingThresholds } from '@/stores/useMarketsFilters';
+import { useMarketPreferences, type TrendingConfig, type FlowTimeWindow } from '@/stores/useMarketPreferences';
 
-// Time windows available for flow data
-export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
+// Re-export types for convenience
+export type { FlowTimeWindow } from '@/stores/useMarketPreferences';
 
 // Flow data for a specific time window
 export type MarketFlowData = {
@@ -66,11 +66,7 @@ type MarketMetricsParams = {
 
 const PAGE_SIZE = 1000;
 
-const fetchMarketMetricsPage = async (
-  params: MarketMetricsParams,
-  limit: number,
-  offset: number,
-): Promise<MarketMetricsResponse> => {
+const fetchMarketMetricsPage = async (params: MarketMetricsParams, limit: number, offset: number): Promise<MarketMetricsResponse> => {
   const searchParams = new URLSearchParams();
 
   if (params.chainId !== undefined) {
@@ -197,41 +193,82 @@ export const parseFlowAssets = (flowAssets: string, decimals: number): number =>
 
 /**
  * Determines if a market is trending based on flow thresholds.
- * All criteria must be met (AND logic).
+ * All non-empty thresholds must be met (AND logic).
+ * Only positive flows (inflows) are considered.
  */
-export const isMarketTrending = (
-  metrics: MarketMetrics,
-  timeWindow: FlowTimeWindow,
-  thresholds: TrendingThresholds,
-): boolean => {
-  const flow = metrics.flows[timeWindow];
+export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: TrendingConfig): boolean => {
+  if (!trendingConfig.enabled) return false;
 
-  if (!flow) return false;
+  // Check all windows - ALL non-empty thresholds must be met
+  for (const [window, config] of Object.entries(trendingConfig.windows)) {
+    // Defensive access for potentially undefined config fields (old stored data)
+    const supplyPct = config?.minSupplyFlowPct ?? '';
+    const supplyUsd = config?.minSupplyFlowUsd ?? '';
+    const borrowPct = config?.minBorrowFlowPct ?? '';
+    const borrowUsd = config?.minBorrowFlowUsd ?? '';
 
-  return flow.supplyFlowUsd >= thresholds.minSupplyFlowUsd &&
-    flow.borrowFlowUsd >= thresholds.minBorrowFlowUsd &&
-    flow.individualSupplyFlowUsd >= thresholds.minIndividualSupplyFlowUsd;
+    const hasSupplyThreshold = supplyPct || supplyUsd;
+    const hasBorrowThreshold = borrowPct || borrowUsd;
+
+    // Skip windows with no thresholds
+    if (!hasSupplyThreshold && !hasBorrowThreshold) continue;
+
+    const flow = metrics.flows[window as FlowTimeWindow];
+
+    // If threshold is set but flow data is missing, market doesn't qualify
+    if (!flow) return false;
+
+    // Supply flow checks - use API's supplyFlowPct directly for percentage
+    if (supplyPct) {
+      const actualPct = flow.supplyFlowPct ?? 0;
+      if (actualPct < Number(supplyPct)) return false;
+    }
+    if (supplyUsd) {
+      const actualUsd = flow.supplyFlowUsd ?? 0;
+      if (actualUsd < Number(supplyUsd)) return false;
+    }
+
+    // Borrow flow checks - compute percentage since API doesn't provide it
+    if (borrowPct) {
+      const borrowBase = metrics.currentState.borrowUsd;
+      const actualPct = borrowBase > 0 ? ((flow.borrowFlowUsd ?? 0) / borrowBase) * 100 : 0;
+      if (actualPct < Number(borrowPct)) return false;
+    }
+    if (borrowUsd) {
+      const actualUsd = flow.borrowFlowUsd ?? 0;
+      if (actualUsd < Number(borrowUsd)) return false;
+    }
+  }
+
+  // At least one threshold must be set for the market to be considered trending
+  const hasAnyThreshold = Object.values(trendingConfig.windows).some((c) => {
+    const supplyPct = c?.minSupplyFlowPct ?? '';
+    const supplyUsd = c?.minSupplyFlowUsd ?? '';
+    const borrowPct = c?.minBorrowFlowPct ?? '';
+    const borrowUsd = c?.minBorrowFlowUsd ?? '';
+    return supplyPct || supplyUsd || borrowPct || borrowUsd;
+  });
+
+  return hasAnyThreshold;
 };
 
 /**
  * Returns a Set of market keys that are currently trending.
- * Uses metricsMap for O(1) lookup and filters based on trending thresholds.
+ * Uses metricsMap for O(1) lookup and filters based on trending config from preferences.
  */
 export const useTrendingMarketKeys = () => {
   const { metricsMap } = useMarketMetricsMap();
-  const { trendingTimeWindow, trendingThresholds } = useMarketsFilters();
-
-  console.log('trendingThresholds', trendingThresholds)
+  const { trendingConfig } = useMarketPreferences();
 
   return useMemo(() => {
     const keys = new Set<string>();
+    if (!trendingConfig.enabled) return keys;
+
     for (const [key, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingTimeWindow, trendingThresholds)) {
-        console.log('market trending', key, metrics.flows[trendingTimeWindow]); 
+      if (isMarketTrending(metrics, trendingConfig)) {
         keys.add(key);
       }
     }
-    console.log(`[Trending] Found ${keys.size} trending markets (${trendingTimeWindow})`);
     return keys;
-  }, [metricsMap, trendingTimeWindow, trendingThresholds]);
+  }, [metricsMap, trendingConfig]);
 };

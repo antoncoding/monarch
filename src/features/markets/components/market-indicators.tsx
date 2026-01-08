@@ -1,9 +1,12 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
+import { AiOutlineFire } from "react-icons/ai";
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
+import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { computeMarketWarnings } from '@/hooks/useMarketWarnings';
+import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import type { Market } from '@/utils/types';
 import { RewardsIndicator } from '@/features/markets/components/rewards-indicator';
 
@@ -20,6 +23,12 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
   // Check liquidation protection status using React Query
   const { data: liquidatedMarkets } = useLiquidationsQuery();
   const hasLiquidationProtection = liquidatedMarkets?.has(market.uniqueKey) ?? false;
+
+  // Check trending status
+  const { trendingConfig } = useMarketPreferences();
+  const trendingKeys = useTrendingMarketKeys();
+  const isTrending =
+    trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
 
   // Compute risk warnings if needed
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
@@ -113,6 +122,22 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         loanTokenAddress={market.loanAsset.address}
         whitelisted={market.whitelisted}
       />
+
+      {/* Trending Indicator */}
+      {isTrending && (
+        <Tooltip
+          content={
+            <TooltipContent
+              icon={<AiOutlineFire size={ICON_SIZE + 2} className="text-orange-500" />}
+              detail="This market is trending based on flow metrics"
+            />
+          }
+        >
+          <div className="flex-shrink-0">
+            <AiOutlineFire size={ICON_SIZE + 2} className="text-orange-500" />
+          </div>
+        </Tooltip>
+      )}
 
       {/* Risk Warnings */}
       {showRisk && hasWarnings && (

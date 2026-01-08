@@ -13,6 +13,7 @@ import { TooltipContent } from '@/components/shared/tooltip-content';
 import { MONARCH_PRIMARY } from '@/constants/chartColors';
 import { formatReadable } from '@/utils/balance';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
+import { useMarketsFilters } from '@/stores/useMarketsFilters';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { parseNumericThreshold } from '@/utils/markets';
 
@@ -43,8 +44,10 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
     usdMinSupply,
     usdMinBorrow,
     usdMinLiquidity,
+    trendingConfig,
   } = useMarketPreferences();
 
+  const { trendingMode, toggleTrendingMode } = useMarketsFilters();
   const { showUnwhitelistedMarkets, setShowUnwhitelistedMarkets } = useAppSettings();
 
   // Compute thresholds from store values
@@ -72,7 +75,7 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
   };
 
   const basicGuardianAllAllowed = includeUnknownTokens && showUnknownOracle && showUnwhitelistedMarkets;
-  const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled;
+  const advancedFilterActive = trustedVaultsOnly || minSupplyEnabled || minBorrowEnabled || minLiquidityEnabled || trendingMode;
   const hasActiveFilters = advancedFilterActive || !basicGuardianAllAllowed;
 
   return (
@@ -175,6 +178,19 @@ export function MarketFilter({ onOpenSettings, className, variant = 'ghost' }: M
                     />
                   </div>
                 </FilterRow>
+                {trendingConfig.enabled && (
+                  <FilterRow
+                    title="Trending Only"
+                    description="Show only markets with high flow activity."
+                  >
+                    <IconSwitch
+                      selected={trendingMode}
+                      onChange={toggleTrendingMode}
+                      size="xs"
+                      color="primary"
+                    />
+                  </FilterRow>
+                )}
                 <FilterRow
                   title="Min Supply"
                   description={`Require ≥ $${thresholdCopy.minSupply} supplied.`}

@@ -171,6 +171,33 @@ export default function SettingsPage() {
             </div>
           </div>
 
+          {/* Trending Markets (Beta) Section */}
+          <div className="flex flex-col gap-4 pt-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text font-monospace text-secondary">Trending Markets</h2>
+              <span className="rounded-sm bg-orange-500/20 px-2 py-0.5 text-xs text-orange-500">Beta</span>
+            </div>
+
+            <div className="bg-surface rounded p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-lg font-medium text-primary">Configure Trending Criteria</h3>
+                  <p className="text-sm text-secondary">
+                    Define thresholds for market flow metrics to identify trending markets. Markets meeting all criteria will show a
+                    fire indicator.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={() => openModal('trendingSettings', {})}
+                >
+                  Configure
+                </Button>
+              </div>
+            </div>
+          </div>
+
           {/* Trusted Vaults Section */}
           <div className="flex flex-col gap-4 pt-4">
             <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
