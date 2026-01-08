@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MarketIdentity, MarketIdentityMode } from '@/features/markets/components/market-identity';
 import { TokenIcon } from '@/components/shared/token-icon';
 import { useRateLabel } from '@/hooks/useRateLabel';
+import { formatReadable } from '@/utils/balance';
 import { previewMarketState } from '@/utils/morpho';
 import type { GroupedPosition, Market } from '@/utils/types';
 import { ApyPreview } from '../preview/apy-preview';
@@ -75,7 +76,9 @@ export function RebalanceActionRow({
   }, [toMarket, amount, groupedPosition.loanAssetDecimals]);
 
   // Format amount for display
-  const displayAmount = typeof amount === 'string' ? amount : formatUnits(amount, groupedPosition.loanAssetDecimals);
+  const rawAmount = typeof amount === 'string' ? amount : formatUnits(amount, groupedPosition.loanAssetDecimals);
+  // In display mode (bigint), format nicely; in input mode (string), show raw value for editing
+  const displayAmount = typeof amount === 'string' ? rawAmount : formatReadable(rawAmount, 4);
 
   return (
     <div className="flex items-center gap-4">

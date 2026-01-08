@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { toast, type ToastOptions } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import { StyledToast } from '../components/ui/styled-toast';
 
 export function useStyledToast() {
