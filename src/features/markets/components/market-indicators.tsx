@@ -1,7 +1,7 @@
 import { Tooltip } from '@/components/ui/tooltip';
 import { FaShieldAlt, FaStar, FaUser } from 'react-icons/fa';
 import { FiAlertCircle } from 'react-icons/fi';
-import { AiOutlineFire } from "react-icons/ai";
+import { AiOutlineFire } from 'react-icons/ai';
 import { TooltipContent } from '@/components/shared/tooltip-content';
 import { useLiquidationsQuery } from '@/hooks/queries/useLiquidationsQuery';
 import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
@@ -27,8 +27,7 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
   // Check trending status
   const { trendingConfig } = useMarketPreferences();
   const trendingKeys = useTrendingMarketKeys();
-  const isTrending =
-    trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
+  const isTrending = trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
 
   // Compute risk warnings if needed
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
@@ -128,13 +127,21 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         <Tooltip
           content={
             <TooltipContent
-              icon={<AiOutlineFire size={ICON_SIZE + 2} className="text-orange-500" />}
+              icon={
+                <AiOutlineFire
+                  size={ICON_SIZE + 2}
+                  className="text-orange-500"
+                />
+              }
               detail="This market is trending based on flow metrics"
             />
           }
         >
           <div className="flex-shrink-0">
-            <AiOutlineFire size={ICON_SIZE + 2} className="text-orange-500" />
+            <AiOutlineFire
+              size={ICON_SIZE + 2}
+              className="text-orange-500"
+            />
           </div>
         </Tooltip>
       )}

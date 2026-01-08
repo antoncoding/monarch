@@ -120,16 +120,11 @@ export default function TrendingSettingsModal({ isOpen, onOpenChange }: Trending
       }
     }
 
-    return matches.sort((a, b) => (b.market.state?.supplyAssetsUsd ?? 0) - (a.market.state?.supplyAssetsUsd ?? 0)).slice(0, 10);
+    return matches.sort((a, b) => (b.market.state?.supplyAssetsUsd ?? 0) - (a.market.state?.supplyAssetsUsd ?? 0));
   }, [isEnabled, metricsMap, trendingConfig, allMarkets]);
 
   const totalMatches = useMemo(() => {
-    if (!isEnabled || metricsMap.size === 0) return 0;
-    let count = 0;
-    for (const [, metrics] of metricsMap) {
-      if (isMarketTrending(metrics, trendingConfig)) count++;
-    }
-    return count;
+    return matchingMarkets.length;
   }, [isEnabled, metricsMap, trendingConfig]);
 
   const handleChange = (window: FlowTimeWindow, field: keyof TrendingWindowConfig, value: string) => {
@@ -249,7 +244,7 @@ export default function TrendingSettingsModal({ isOpen, onOpenChange }: Trending
                           <MarketIdentity
                             market={m.market}
                             chainId={m.market.morphoBlue.chain.id}
-                            mode={MarketIdentityMode.Minimum}
+                            mode={MarketIdentityMode.Normal}
                             showLltv={false}
                             showOracle={false}
                             iconSize={16}

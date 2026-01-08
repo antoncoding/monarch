@@ -183,8 +183,8 @@ export default function SettingsPage() {
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Configure Trending Criteria</h3>
                   <p className="text-sm text-secondary">
-                    Define thresholds for market flow metrics to identify trending markets. Markets meeting all criteria will show a
-                    fire indicator.
+                    Define thresholds for market flow metrics to identify trending markets. Markets meeting all criteria will show a fire
+                    indicator.
                   </p>
                 </div>
                 <Button

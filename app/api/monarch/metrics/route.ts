@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: response.status });
     }
 
-    
     const data = await response.json();
     console.log('data', data.markets?.length);
     return NextResponse.json(data);
