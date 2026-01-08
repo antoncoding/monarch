@@ -14,6 +14,8 @@ export async function GET(req: NextRequest) {
   const limit = searchParams.get('limit');
   const offset = searchParams.get('offset');
 
+  console.log('getting limit', limit, 'offset', offset);
+
   if (chainId) params.set('chain_id', chainId);
   if (sortBy) params.set('sort_by', sortBy);
   if (sortOrder) params.set('sort_order', sortOrder);
@@ -37,7 +39,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch market metrics' }, { status: response.status });
     }
 
+    
     const data = await response.json();
+    console.log('data', data.markets?.length);
     return NextResponse.json(data);
   } catch (error) {
     console.error('[Monarch Metrics API] Failed to fetch:', error);

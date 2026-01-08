@@ -60,12 +60,16 @@ type MarketMetricsParams = {
   chainId?: number | number[];
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  limit?: number;
-  offset?: number;
   enabled?: boolean;
 };
 
-const fetchMarketMetrics = async (params: MarketMetricsParams): Promise<MarketMetricsResponse> => {
+const PAGE_SIZE = 1000;
+
+const fetchMarketMetricsPage = async (
+  params: MarketMetricsParams,
+  limit: number,
+  offset: number,
+): Promise<MarketMetricsResponse> => {
   const searchParams = new URLSearchParams();
 
   if (params.chainId !== undefined) {
@@ -74,8 +78,8 @@ const fetchMarketMetrics = async (params: MarketMetricsParams): Promise<MarketMe
   }
   if (params.sortBy) searchParams.set('sort_by', params.sortBy);
   if (params.sortOrder) searchParams.set('sort_order', params.sortOrder);
-  if (params.limit) searchParams.set('limit', String(params.limit));
-  if (params.offset) searchParams.set('offset', String(params.offset));
+  searchParams.set('limit', String(limit));
+  searchParams.set('offset', String(offset));
 
   const response = await fetch(`/api/monarch/metrics?${searchParams.toString()}`);
 
@@ -84,6 +88,44 @@ const fetchMarketMetrics = async (params: MarketMetricsParams): Promise<MarketMe
   }
 
   return response.json();
+};
+
+/**
+ * Fetches all market metrics by paginating through the API.
+ * Uses PAGE_SIZE per request to minimize number of calls.
+ */
+const fetchAllMarketMetrics = async (params: MarketMetricsParams): Promise<MarketMetricsResponse> => {
+  // First request to get total count
+  const firstPage = await fetchMarketMetricsPage(params, PAGE_SIZE, 0);
+  const allMarkets = [...firstPage.markets];
+  const total = firstPage.total;
+
+  // If we got all markets in first request, return early
+  if (allMarkets.length >= total) {
+    return { ...firstPage, markets: allMarkets };
+  }
+
+  // Fetch remaining pages in parallel
+  const remainingPages = Math.ceil((total - PAGE_SIZE) / PAGE_SIZE);
+  const pagePromises: Promise<MarketMetricsResponse>[] = [];
+
+  for (let i = 1; i <= remainingPages; i++) {
+    pagePromises.push(fetchMarketMetricsPage(params, PAGE_SIZE, i * PAGE_SIZE));
+  }
+
+  const pages = await Promise.all(pagePromises);
+  for (const page of pages) {
+    allMarkets.push(...page.markets);
+  }
+
+  console.log(`[Metrics] Fetched ${allMarkets.length} markets in ${remainingPages + 1} requests`);
+
+  return {
+    total,
+    limit: total,
+    offset: 0,
+    markets: allMarkets,
+  };
 };
 
 /**
@@ -102,13 +144,13 @@ const fetchMarketMetrics = async (params: MarketMetricsParams): Promise<MarketMe
  * ```
  */
 export const useMarketMetricsQuery = (params: MarketMetricsParams = {}) => {
-  const { chainId, sortBy, sortOrder, limit = 500, offset = 0, enabled = true } = params;
+  const { chainId, sortBy, sortOrder, enabled = true } = params;
 
   return useQuery({
-    queryKey: ['market-metrics', { chainId, sortBy, sortOrder, limit, offset }],
-    queryFn: () => fetchMarketMetrics({ chainId, sortBy, sortOrder, limit, offset }),
-    staleTime: 15 * 60 * 1000, // 15 minutes - matches API update frequency
-    refetchInterval: 15 * 60 * 1000,
+    queryKey: ['market-metrics', { chainId, sortBy, sortOrder }],
+    queryFn: () => fetchAllMarketMetrics({ chainId, sortBy, sortOrder }),
+    staleTime: 1 * 60 * 1000, // 15 minutes - matches API update frequency
+    refetchInterval: 1 * 60 * 1000,
     refetchOnWindowFocus: false, // Don't refetch on focus since data is slow-changing
     enabled,
   });
@@ -136,30 +178,11 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
       const key = getMetricsKey(market.chainId, market.marketUniqueKey);
       map.set(key, market);
     }
+    console.log('[Metrics] Loaded', map.size, 'of', data.total, 'markets');
     return map;
-  }, [data?.markets]);
+  }, [data?.markets, data?.total]);
 
   return { metricsMap, isLoading, data, ...rest };
-};
-
-/**
- * Returns a Set of market keys that have ever been liquidated.
- * Can be used to replace the existing useLiquidationsQuery.
- */
-export const useLiquidatedMarketsSet = (params: MarketMetricsParams = {}) => {
-  const { metricsMap, isLoading, ...rest } = useMarketMetricsMap(params);
-
-  const liquidatedKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const [key, metrics] of metricsMap) {
-      if (metrics.everLiquidated) {
-        keys.add(key);
-      }
-    }
-    return keys;
-  }, [metricsMap]);
-
-  return { liquidatedKeys, isLoading, ...rest };
 };
 
 /**
@@ -169,31 +192,4 @@ export const useLiquidatedMarketsSet = (params: MarketMetricsParams = {}) => {
  */
 export const parseFlowAssets = (flowAssets: string, decimals: number): number => {
   return Number(flowAssets) / 10 ** decimals;
-};
-
-/**
- * Returns top N trending markets by supply flow for a given time window.
- * Filters to markets with positive inflow.
- */
-export const useTrendingMarketKeys = (params: MarketMetricsParams & { timeWindow?: FlowTimeWindow; topN?: number } = {}) => {
-  const { timeWindow = '24h', topN = 10, ...queryParams } = params;
-  const { data, isLoading, ...rest } = useMarketMetricsQuery(queryParams);
-
-  const trendingKeys = useMemo(() => {
-    const keys = new Set<string>();
-    if (!data?.markets) return keys;
-
-    // Sort by supply flow for the time window, filter positive, take top N
-    const sorted = [...data.markets]
-      .filter((m) => m.flows[timeWindow]?.supplyFlowUsd > 0)
-      .sort((a, b) => (b.flows[timeWindow]?.supplyFlowUsd ?? 0) - (a.flows[timeWindow]?.supplyFlowUsd ?? 0))
-      .slice(0, topN);
-
-    for (const market of sorted) {
-      keys.add(getMetricsKey(market.chainId, market.marketUniqueKey));
-    }
-    return keys;
-  }, [data?.markets, timeWindow, topN]);
-
-  return { trendingKeys, isLoading, data, ...rest };
 };
