@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchActiveCampaigns, simplifyMerklCampaign } from '@/utils/merklApi';
-import type { SimplifiedCampaign } from '@/utils/merklTypes';
+import type { SimplifiedCampaign, MerklCampaignType } from '@/utils/merklTypes';
 
 export const useMerklCampaignsQuery = () => {
   const query = useQuery({
@@ -11,7 +11,15 @@ export const useMerklCampaignsQuery = () => {
         fetchActiveCampaigns({ type: 'MORPHOSUPPLY_SINGLETOKEN' }),
       ]);
 
-      const allRawCampaigns = [...supplyCampaigns, ...singleTokenCampaigns];
+      // Hot Fix: the returned format changed and type no longer in current form. Insert it back
+      const transformedSupplyCampaigns = supplyCampaigns.map((campaign) => {
+        return { ...campaign, type: 'MORPHOSUPPLY' as MerklCampaignType };
+      });
+      const transformedSingleTokenCampaigns = singleTokenCampaigns.map((campaign) => {
+        return { ...campaign, type: 'MORPHOSUPPLY_SINGLETOKEN' as MerklCampaignType };
+      });
+
+      const allRawCampaigns = [...transformedSupplyCampaigns, ...transformedSingleTokenCampaigns];
       return allRawCampaigns.map((campaign) => simplifyMerklCampaign(campaign));
     },
     staleTime: 5 * 60 * 1000,

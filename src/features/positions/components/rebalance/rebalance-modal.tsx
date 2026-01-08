@@ -178,8 +178,7 @@ export function RebalanceModal({ groupedPosition, isOpen, onOpenChange, refetch,
     const pendingDelta = selectedPosition ? getPendingDelta(selectedPosition.market.uniqueKey) : 0n;
 
     // Check if this is a max amount considering pending delta
-    const isMaxAmount =
-      selectedPosition !== undefined && BigInt(selectedPosition.state.supplyAssets) + pendingDelta === scaledAmount;
+    const isMaxAmount = selectedPosition !== undefined && BigInt(selectedPosition.state.supplyAssets) + pendingDelta === scaledAmount;
 
     // Create the action using the helper function
     const action = createAction(fromMarket, toMarket, scaledAmount, isMaxAmount);
