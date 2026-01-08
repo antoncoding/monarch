@@ -5,6 +5,7 @@ import { useMarketPreferences } from '@/stores/useMarketPreferences';
 import { useAppSettings } from '@/stores/useAppSettings';
 import { useTrustedVaults } from '@/stores/useTrustedVaults';
 import { useTokensQuery } from '@/hooks/queries/useTokensQuery';
+import { useTrendingMarketKeys, getMetricsKey } from '@/hooks/queries/useMarketMetricsQuery';
 import { filterMarkets, sortMarkets, createPropertySort, createStarredSort } from '@/utils/marketFilters';
 import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
@@ -40,6 +41,7 @@ export const useFilteredMarkets = (): Market[] => {
   const { showUnwhitelistedMarkets } = useAppSettings();
   const { vaults: trustedVaults } = useTrustedVaults();
   const { findToken } = useTokensQuery();
+  const trendingKeys = useTrendingMarketKeys();
 
   return useMemo(() => {
     // 1. Start with allMarkets or whitelistedMarkets based on setting
@@ -86,7 +88,15 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    // 4. Apply sorting
+    // 4. Filter by trending if enabled
+    if (filters.trendingMode && trendingKeys.size > 0) {
+      markets = markets.filter((market) => {
+        const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
+        return trendingKeys.has(key);
+      });
+    }
+
+    // 5. Apply sorting
     if (preferences.sortColumn === SortColumn.Starred) {
       return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
     }
@@ -130,5 +140,5 @@ export const useFilteredMarkets = (): Market[] => {
     }
 
     return markets;
-  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken]);
+  }, [allMarkets, whitelistedMarkets, showUnwhitelistedMarkets, filters, preferences, trustedVaults, findToken, trendingKeys]);
 };

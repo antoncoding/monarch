@@ -1,6 +1,13 @@
 import { create } from 'zustand';
 import type { SupportedNetworks } from '@/utils/networks';
 import type { PriceFeedVendors } from '@/utils/oracle';
+import type { FlowTimeWindow } from '@/hooks/queries/useMarketMetricsQuery';
+
+export type TrendingThresholds = {
+  minSupplyFlowUsd: number;
+  minBorrowFlowUsd: number;
+  minIndividualSupplyFlowUsd: number;
+};
 
 /**
  * Temporary filter state for markets page (resets on refresh for lightning-fast UX).
@@ -16,6 +23,8 @@ type MarketsFiltersState = {
   selectedOracles: PriceFeedVendors[];
   searchQuery: string;
   trendingMode: boolean;
+  trendingTimeWindow: FlowTimeWindow;
+  trendingThresholds: TrendingThresholds;
 };
 
 type MarketsFiltersActions = {
@@ -25,6 +34,7 @@ type MarketsFiltersActions = {
   setSelectedOracles: (oracles: PriceFeedVendors[]) => void;
   setSearchQuery: (query: string) => void;
   toggleTrendingMode: () => void;
+  setTrendingTimeWindow: (window: FlowTimeWindow) => void;
   resetFilters: () => void;
 };
 
@@ -37,6 +47,12 @@ const DEFAULT_STATE: MarketsFiltersState = {
   selectedOracles: [],
   searchQuery: '',
   trendingMode: false,
+  trendingTimeWindow: '24h',
+  trendingThresholds: {
+    minSupplyFlowUsd: 30000,
+    minBorrowFlowUsd: 20000,
+    minIndividualSupplyFlowUsd: 10000,
+  },
 };
 
 /**
@@ -82,6 +98,11 @@ export const useMarketsFilters = create<MarketsFiltersStore>()((set) => ({
     set((state) => ({
       trendingMode: !state.trendingMode,
     })),
+
+  setTrendingTimeWindow: (window) =>
+    set({
+      trendingTimeWindow: window,
+    }),
 
   resetFilters: () => set(DEFAULT_STATE),
 }));

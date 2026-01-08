@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMarketsFilters, type TrendingThresholds } from '@/stores/useMarketsFilters';
 
 // Time windows available for flow data
 export type FlowTimeWindow = '1h' | '24h' | '7d' | '30d';
@@ -192,4 +193,45 @@ export const useMarketMetricsMap = (params: MarketMetricsParams = {}) => {
  */
 export const parseFlowAssets = (flowAssets: string, decimals: number): number => {
   return Number(flowAssets) / 10 ** decimals;
+};
+
+/**
+ * Determines if a market is trending based on flow thresholds.
+ * All criteria must be met (AND logic).
+ */
+export const isMarketTrending = (
+  metrics: MarketMetrics,
+  timeWindow: FlowTimeWindow,
+  thresholds: TrendingThresholds,
+): boolean => {
+  const flow = metrics.flows[timeWindow];
+
+  if (!flow) return false;
+
+  return flow.supplyFlowUsd >= thresholds.minSupplyFlowUsd &&
+    flow.borrowFlowUsd >= thresholds.minBorrowFlowUsd &&
+    flow.individualSupplyFlowUsd >= thresholds.minIndividualSupplyFlowUsd;
+};
+
+/**
+ * Returns a Set of market keys that are currently trending.
+ * Uses metricsMap for O(1) lookup and filters based on trending thresholds.
+ */
+export const useTrendingMarketKeys = () => {
+  const { metricsMap } = useMarketMetricsMap();
+  const { trendingTimeWindow, trendingThresholds } = useMarketsFilters();
+
+  console.log('trendingThresholds', trendingThresholds)
+
+  return useMemo(() => {
+    const keys = new Set<string>();
+    for (const [key, metrics] of metricsMap) {
+      if (isMarketTrending(metrics, trendingTimeWindow, trendingThresholds)) {
+        console.log('market trending', key, metrics.flows[trendingTimeWindow]); 
+        keys.add(key);
+      }
+    }
+    console.log(`[Trending] Found ${keys.size} trending markets (${trendingTimeWindow})`);
+    return keys;
+  }, [metricsMap, trendingTimeWindow, trendingThresholds]);
 };
