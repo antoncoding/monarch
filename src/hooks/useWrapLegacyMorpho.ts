@@ -41,8 +41,8 @@ export function useWrapLegacyMorpho(amount: bigint, onSuccess?: () => void) {
 
   const getStepsForFlow = useCallback(() => {
     return [
-      { key: 'approve', label: 'Approve MORPHO', detail: 'Approve legacy MORPHO tokens for wrapping' },
-      { key: 'wrap', label: 'Wrap MORPHO', detail: 'Confirm transaction to wrap your MORPHO tokens' },
+      { id: 'approve', title: 'Approve MORPHO', description: 'Approve legacy MORPHO tokens for wrapping' },
+      { id: 'wrap', title: 'Wrap MORPHO', description: 'Confirm transaction to wrap your MORPHO tokens' },
     ];
   }, []);
 

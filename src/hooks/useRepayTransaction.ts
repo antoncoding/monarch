@@ -97,17 +97,17 @@ export function useRepayTransaction({
       if (isPermit2) {
         return [
           {
-            key: 'approve',
-            label: 'Authorize Permit2',
-            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+            id: 'approve',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
           },
-          { key: 'signing', label: 'Sign message in wallet', detail: 'Sign a Permit2 signature to authorize the repayment' },
-          { key: 'repaying', label: 'Confirm Repay', detail: 'Confirm transaction in wallet to complete the repayment' },
+          { id: 'signing', title: 'Sign message in wallet', description: 'Sign a Permit2 signature to authorize the repayment' },
+          { id: 'repaying', title: 'Confirm Repay', description: 'Confirm transaction in wallet to complete the repayment' },
         ];
       }
       return [
-        { key: 'approve', label: 'Approve Token', detail: `Approve ${market.loanAsset.symbol} for spending` },
-        { key: 'repaying', label: 'Confirm Repay', detail: 'Confirm transaction in wallet to complete the repayment' },
+        { id: 'approve', title: 'Approve Token', description: `Approve ${market.loanAsset.symbol} for spending` },
+        { id: 'repaying', title: 'Confirm Repay', description: 'Confirm transaction in wallet to complete the repayment' },
       ];
     },
     [market.loanAsset.symbol],

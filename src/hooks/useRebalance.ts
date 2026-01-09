@@ -110,31 +110,31 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
       if (isPermit2) {
         return [
           {
-            key: 'approve_permit2',
-            label: 'Authorize Permit2',
-            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+            id: 'approve_permit2',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
           },
           {
-            key: 'authorize_bundler_sig',
-            label: 'Authorize Morpho Bundler (Signature)',
-            detail: 'Sign a message to authorize the Morpho bundler if needed.',
+            id: 'authorize_bundler_sig',
+            title: 'Authorize Morpho Bundler (Signature)',
+            description: 'Sign a message to authorize the Morpho bundler if needed.',
           },
-          { key: 'sign_permit', label: 'Sign Token Permit', detail: 'Sign a Permit2 signature to authorize the token transfer' },
-          { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
+          { id: 'sign_permit', title: 'Sign Token Permit', description: 'Sign a Permit2 signature to authorize the token transfer' },
+          { id: 'execute', title: 'Confirm Rebalance', description: 'Confirm transaction in wallet to complete the rebalance' },
         ];
       }
       return [
         {
-          key: 'authorize_bundler_tx',
-          label: 'Authorize Morpho Bundler (Transaction)',
-          detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+          id: 'authorize_bundler_tx',
+          title: 'Authorize Morpho Bundler (Transaction)',
+          description: 'Submit a transaction to authorize the Morpho bundler if needed.',
         },
         {
-          key: 'approve_token',
-          label: `Approve ${groupedPosition.loanAsset}`,
-          detail: `Approve ${groupedPosition.loanAsset} for spending`,
+          id: 'approve_token',
+          title: `Approve ${groupedPosition.loanAsset}`,
+          description: `Approve ${groupedPosition.loanAsset} for spending`,
         },
-        { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
+        { id: 'execute', title: 'Confirm Rebalance', description: 'Confirm transaction in wallet to complete the rebalance' },
       ];
     },
     [groupedPosition.loanAsset],

@@ -5,14 +5,14 @@ import type { WrapStep } from '@/hooks/useWrapLegacyMorpho';
 
 const WRAP_STEPS = [
   {
-    key: 'approve',
-    label: 'Approve Wrapper',
-    detail: 'Approve the wrapper contract to spend your legacy MORPHO tokens',
+    id: 'approve',
+    title: 'Approve Wrapper',
+    description: 'Approve the wrapper contract to spend your legacy MORPHO tokens',
   },
   {
-    key: 'wrap',
-    label: 'Wrap MORPHO',
-    detail: 'Confirm transaction to wrap your legacy MORPHO tokens',
+    id: 'wrap',
+    title: 'Wrap MORPHO',
+    description: 'Confirm transaction to wrap your legacy MORPHO tokens',
   },
 ];
 

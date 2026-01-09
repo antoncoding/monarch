@@ -1,16 +1,14 @@
 import { create } from 'zustand';
 
-export type TransactionType = 'supply' | 'borrow' | 'repay' | 'vaultDeposit' | 'wrap' | 'rebalance';
-
 export type TransactionStep = {
-  key: string;
-  label: string;
-  detail: string;
+  id: string;
+  title: string;
+  description: string;
 };
 
 export type ActiveTransaction = {
   id: string;
-  type: TransactionType;
+  type: string;
   currentStep: string;
   steps: TransactionStep[];
   metadata: {

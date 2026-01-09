@@ -33,9 +33,9 @@ export function BorrowProcessModal({
     if (useEth) {
       return [
         {
-          key: 'execute',
-          label: 'Confirm Borrow',
-          detail: 'Confirm transaction in wallet to complete the borrow',
+          id: 'execute',
+          title: 'Confirm Borrow',
+          description: 'Confirm transaction in wallet to complete the borrow',
         },
       ];
     }
@@ -43,24 +43,24 @@ export function BorrowProcessModal({
     if (usePermit2) {
       return [
         {
-          key: 'approve_permit2',
-          label: 'Authorize Permit2',
-          detail: `This one-time approval makes sure you don't need to send approval tx again in the future.`,
+          id: 'approve_permit2',
+          title: 'Authorize Permit2',
+          description: `This one-time approval makes sure you don't need to send approval tx again in the future.`,
         },
         {
-          key: 'authorize_bundler_sig',
-          label: 'Authorize Morpho Bundler (Signature)',
-          detail: 'Sign a message to authorize the Morpho bundler if needed.',
+          id: 'authorize_bundler_sig',
+          title: 'Authorize Morpho Bundler (Signature)',
+          description: 'Sign a message to authorize the Morpho bundler if needed.',
         },
         {
-          key: 'sign_permit',
-          label: 'Sign Token Permit',
-          detail: 'Sign a Permit2 signature to authorize the collateral',
+          id: 'sign_permit',
+          title: 'Sign Token Permit',
+          description: 'Sign a Permit2 signature to authorize the collateral',
         },
         {
-          key: 'execute',
-          label: 'Confirm Borrow',
-          detail: 'Confirm transaction in wallet to complete the borrow',
+          id: 'execute',
+          title: 'Confirm Borrow',
+          description: 'Confirm transaction in wallet to complete the borrow',
         },
       ];
     }
@@ -68,19 +68,19 @@ export function BorrowProcessModal({
     // Standard ERC20 approval flow
     return [
       {
-        key: 'authorize_bundler_tx',
-        label: 'Authorize Morpho Bundler (Transaction)',
-        detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+        id: 'authorize_bundler_tx',
+        title: 'Authorize Morpho Bundler (Transaction)',
+        description: 'Submit a transaction to authorize the Morpho bundler if needed.',
       },
       {
-        key: 'approve_token',
-        label: `Approve ${tokenSymbol}`,
-        detail: `Approve ${tokenSymbol} for spending`,
+        id: 'approve_token',
+        title: `Approve ${tokenSymbol}`,
+        description: `Approve ${tokenSymbol} for spending`,
       },
       {
-        key: 'execute',
-        label: 'Confirm Borrow',
-        detail: 'Confirm transaction in wallet to complete the borrow',
+        id: 'execute',
+        title: 'Confirm Borrow',
+        description: 'Confirm transaction in wallet to complete the borrow',
       },
     ];
   }, [useEth, usePermit2, tokenSymbol]);

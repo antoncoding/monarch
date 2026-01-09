@@ -25,42 +25,42 @@ export function RebalanceProcessModal({
   const steps = useMemo(() => {
     const permit2Steps = [
       {
-        key: 'approve_permit2',
-        label: 'Authorize Permit2',
-        detail: 'Approve the Permit2 contract if this is your first time using it.',
+        id: 'approve_permit2',
+        title: 'Authorize Permit2',
+        description: 'Approve the Permit2 contract if this is your first time using it.',
       },
       {
-        key: 'authorize_bundler_sig',
-        label: 'Authorize Morpho Bundler (Signature)',
-        detail: 'Sign a message to authorize the Morpho bundler if needed.',
+        id: 'authorize_bundler_sig',
+        title: 'Authorize Morpho Bundler (Signature)',
+        description: 'Sign a message to authorize the Morpho bundler if needed.',
       },
       {
-        key: 'sign_permit',
-        label: 'Sign Token Permit',
-        detail: 'Sign a Permit2 signature to authorize the token transfer.',
+        id: 'sign_permit',
+        title: 'Sign Token Permit',
+        description: 'Sign a Permit2 signature to authorize the token transfer.',
       },
       {
-        key: 'execute',
-        label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
+        id: 'execute',
+        title: 'Confirm Rebalance',
+        description: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
       },
     ];
 
     const standardSteps = [
       {
-        key: 'authorize_bundler_tx',
-        label: 'Authorize Morpho Bundler (Transaction)',
-        detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+        id: 'authorize_bundler_tx',
+        title: 'Authorize Morpho Bundler (Transaction)',
+        description: 'Submit a transaction to authorize the Morpho bundler if needed.',
       },
       {
-        key: 'approve_token',
-        label: `Approve ${tokenSymbol}`,
-        detail: `Approve the bundler contract to spend your ${tokenSymbol}.`,
+        id: 'approve_token',
+        title: `Approve ${tokenSymbol}`,
+        description: `Approve the bundler contract to spend your ${tokenSymbol}.`,
       },
       {
-        key: 'execute',
-        label: 'Confirm Rebalance',
-        detail: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
+        id: 'execute',
+        title: 'Confirm Rebalance',
+        description: `Confirm transaction in wallet to execute ${actionsCount} rebalance action${actionsCount > 1 ? 's' : ''}.`,
       },
     ];
 
@@ -68,7 +68,7 @@ export function RebalanceProcessModal({
   }, [isPermit2Flow, actionsCount, tokenSymbol]);
 
   // Handle 'idle' step specially - treat it as first step
-  const effectiveCurrentStep = currentStep === 'idle' ? steps[0].key : currentStep;
+  const effectiveCurrentStep = currentStep === 'idle' ? steps[0].id : currentStep;
 
   return (
     <Modal

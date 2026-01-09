@@ -31,9 +31,9 @@ export function SupplyProcessModal({
     if (useEth) {
       return [
         {
-          key: 'supplying',
-          label: 'Confirm Supply',
-          detail: 'Confirm transaction in wallet to complete the supply',
+          id: 'supplying',
+          title: 'Confirm Supply',
+          description: 'Confirm transaction in wallet to complete the supply',
         },
       ];
     }
@@ -41,19 +41,19 @@ export function SupplyProcessModal({
     if (usePermit2) {
       return [
         {
-          key: 'approve',
-          label: 'Authorize Permit2',
-          detail: `This one-time approval makes sure you don't need to send approval tx again in the future.`,
+          id: 'approve',
+          title: 'Authorize Permit2',
+          description: `This one-time approval makes sure you don't need to send approval tx again in the future.`,
         },
         {
-          key: 'signing',
-          label: 'Sign message in wallet',
-          detail: 'Sign a Permit2 signature to authorize the supply',
+          id: 'signing',
+          title: 'Sign message in wallet',
+          description: 'Sign a Permit2 signature to authorize the supply',
         },
         {
-          key: 'supplying',
-          label: 'Confirm Supply',
-          detail: 'Confirm transaction in wallet to complete the supply',
+          id: 'supplying',
+          title: 'Confirm Supply',
+          description: 'Confirm transaction in wallet to complete the supply',
         },
       ];
     }
@@ -61,14 +61,14 @@ export function SupplyProcessModal({
     // Standard ERC20 approval flow
     return [
       {
-        key: 'approve',
-        label: 'Approve Token',
-        detail: `Approve ${tokenSymbol} for spending`,
+        id: 'approve',
+        title: 'Approve Token',
+        description: `Approve ${tokenSymbol} for spending`,
       },
       {
-        key: 'supplying',
-        label: 'Confirm Supply',
-        detail: 'Confirm transaction in wallet to complete the supply',
+        id: 'supplying',
+        title: 'Confirm Supply',
+        description: 'Confirm transaction in wallet to complete the supply',
       },
     ];
   }, [useEth, usePermit2, tokenSymbol]);

@@ -1,14 +1,30 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import NavbarMobile from './NavbarMobile';
 
 function Menu() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <>
+        <div className="h-[48px] w-full md:hidden" />
+        <div className="container hidden h-[56px] md:block" />
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Mobile: compact height */}
       <div className="h-[48px] w-full md:hidden">
         <NavbarMobile />
       </div>
-      {/* Desktop: compact height, container width for content alignment */}
       <div className="container hidden h-[56px] md:block">
         <Navbar />
       </div>

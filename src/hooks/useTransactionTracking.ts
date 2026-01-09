@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { useTransactionProcessStore, type TransactionType, type TransactionStep } from '@/stores/useTransactionProcessStore';
+import { type SetStateAction, useCallback, useRef, useState } from 'react';
+import { useTransactionProcessStore, type TransactionStep } from '@/stores/useTransactionProcessStore';
 
 type TransactionMetadata = {
   tokenSymbol?: string;
@@ -12,7 +12,7 @@ type TransactionMetadata = {
  * Hook that simplifies transaction tracking with the global store.
  * Encapsulates all the boilerplate for starting, updating, completing transactions.
  */
-export function useTransactionTracking(type: TransactionType) {
+export function useTransactionTracking(type: string) {
   const { startTransaction, updateStep, completeTransaction, failTransaction, setModalVisible } = useTransactionProcessStore();
   const txIdRef = useRef<string | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -49,9 +49,12 @@ export function useTransactionTracking(type: TransactionType) {
   }, [failTransaction]);
 
   const setModalOpen = useCallback(
-    (show: boolean) => {
-      setShowModal(show);
-      if (txIdRef.current) setModalVisible(txIdRef.current, show);
+    (value: SetStateAction<boolean>) => {
+      setShowModal((prev) => {
+        const newValue = typeof value === 'function' ? value(prev) : value;
+        if (txIdRef.current) setModalVisible(txIdRef.current, newValue);
+        return newValue;
+      });
     },
     [setModalVisible],
   );

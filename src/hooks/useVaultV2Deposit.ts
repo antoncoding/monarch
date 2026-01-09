@@ -121,17 +121,17 @@ export function useVaultV2Deposit({
       if (isPermit2) {
         return [
           {
-            key: 'approve',
-            label: 'Authorize Permit2',
-            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+            id: 'approve',
+            title: 'Authorize Permit2',
+            description: "This one-time approval makes sure you don't need to send approval tx again in the future.",
           },
-          { key: 'signing', label: 'Sign message in wallet', detail: 'Sign a Permit2 signature to authorize the deposit' },
-          { key: 'depositing', label: 'Confirm Deposit', detail: 'Confirm transaction in wallet to complete the deposit' },
+          { id: 'signing', title: 'Sign message in wallet', description: 'Sign a Permit2 signature to authorize the deposit' },
+          { id: 'depositing', title: 'Confirm Deposit', description: 'Confirm transaction in wallet to complete the deposit' },
         ];
       }
       return [
-        { key: 'approve', label: 'Approve Token', detail: `Approve ${assetSymbol} for spending` },
-        { key: 'depositing', label: 'Confirm Deposit', detail: 'Confirm transaction in wallet to complete the deposit' },
+        { id: 'approve', title: 'Approve Token', description: `Approve ${assetSymbol} for spending` },
+        { id: 'depositing', title: 'Confirm Deposit', description: 'Confirm transaction in wallet to complete the deposit' },
       ];
     },
     [assetSymbol],
