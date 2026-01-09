@@ -22,7 +22,7 @@ export function MarketWarningBanner({ warnings }: MarketWarningBannerProps) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.2 }}
-      className={`mb-6 rounded-sm border p-3 text-sm ${colorClasses}`}
+      className={`mb-6 rounded-sm border p-3 text ${colorClasses}`}
     >
       <div className="flex items-start gap-3">
         <Icon
