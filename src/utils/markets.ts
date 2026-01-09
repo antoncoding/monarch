@@ -65,8 +65,8 @@ export const marketOverrideRules: MarketOverrideRule[] = [
       '0xdb2cf3ad3ef91c9bb673bf35744e7141bc2950b27a75c8d11b0ead9f6742d927',
       '0xe0ede98b4425285a9c93d51f8ba27d9a09bc0033874e4a883d3f29d41f9f2e4a',
       '0x2b62c4153d81d5b5a233d1d2b7ef899d3fca4076d458e215ff3a00176b415b0d',
-      '0x2b62c4153d81d5b5a233d1d2b7ef899d3fca4076d458e215ff3a00176b415b0d',
       '0x216bd19960f140177a4a3fb9cf258edcbadb1f5d54740fc944503bff4a00e65e',
+      '0xf474c9a0cbd8f2b65d9480d94b56880ca13f10fc3b3c717d47bdf3ac9c4417b7',
     ],
     forceUnwhitelisted: true,
     warnings: [
@@ -88,13 +88,7 @@ export const isForceUnwhitelisted = (marketId: string): boolean => {
 
 export const getMarketOverrideWarnings = (marketId: string): MarketOverrideWarning[] => {
   const normalizedId = marketId.toLowerCase();
-  const warnings: MarketOverrideWarning[] = [];
-
-  for (const rule of marketOverrideRules) {
-    if (rule.marketIds.includes(normalizedId) && rule.warnings) {
-      warnings.push(...rule.warnings);
-    }
-  }
-
-  return warnings;
+  return marketOverrideRules
+    .filter((rule) => rule.marketIds.includes(normalizedId) && rule.warnings)
+    .flatMap((rule) => rule.warnings ?? []);
 };

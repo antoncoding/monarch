@@ -155,10 +155,6 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
   for (const warning of market.warnings) {
     const foundWarning = allDetails.find((w) => w.code === warning.type);
 
-    if (whitelistedMarketData) {
-      console.log('whitelistedMarketData', whitelistedMarketData);
-    }
-
     // if this market is whitelisted, there might be warnings we want to "offset"
     const isOffset = whitelistedMarketData?.offsetWarnings.includes(warning.type);
 
@@ -230,12 +226,7 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
   // Inject custom market warnings from override rules
   const overrideWarnings = getMarketOverrideWarnings(market.uniqueKey);
   for (const warning of overrideWarnings) {
-    result.push({
-      code: warning.code,
-      level: warning.level,
-      description: warning.description,
-      category: warning.category as WarningCategory,
-    });
+    result.push({ ...warning, category: warning.category as WarningCategory });
   }
 
   return result;
