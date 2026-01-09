@@ -10,7 +10,7 @@ export const useMarketWarnings = (market: Market | null | undefined): WarningWit
   return useMemo(() => {
     if (!market) return [];
     return getMarketWarningsWithDetail(market, true);
-  }, [market?.warnings]);
+  }, [market]);
 };
 
 /**
