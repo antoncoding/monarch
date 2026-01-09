@@ -210,7 +210,7 @@ export function MarketStatusIndicator({
     return (
       <RiskIndicator
         level="green"
-        description="No warnings"
+        description="No market state warnings"
         mode={mode}
       />
     );
