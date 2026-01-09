@@ -192,7 +192,7 @@ export function MarketOracleIndicator({
   );
 }
 
-export function MarketDebtIndicator({
+export function MarketStatusIndicator({
   market,
   isBatched = false,
   mode = 'simple',
@@ -201,15 +201,42 @@ export function MarketDebtIndicator({
   isBatched?: boolean;
   mode?: 'simple' | 'complex';
 }) {
+  const warningsWithDetail = useMarketWarnings(market, true);
+
+  // Combine debt + general category warnings
+  const warnings = warningsWithDetail.filter((w) => w.category === WarningCategory.debt || w.category === WarningCategory.general);
+
+  if (warnings.length === 0) {
+    return (
+      <RiskIndicator
+        level="green"
+        description="No market state warnings"
+        mode={mode}
+      />
+    );
+  }
+
+  if (warnings.some((warning) => warning.level === 'alert')) {
+    const alertWarning = warnings.find((w) => w.level === 'alert');
+    return (
+      <RiskIndicator
+        level="red"
+        description={isBatched ? 'One or more markets have warnings' : 'Market has critical warning'}
+        mode={mode}
+        warningDetail={alertWarning}
+      />
+    );
+  }
+
   return (
-    <RiskIndicatorFromWarning
-      market={market}
-      category={WarningCategory.debt}
-      greenDescription="No bad debt"
-      yellowDescription="Bad debt has occurred"
-      redDescription="Bad debt higher than 1% of supply"
-      isBatched={isBatched}
+    <RiskIndicator
+      level="yellow"
+      description={isBatched ? 'One or more markets have warnings' : 'Market has warning'}
       mode={mode}
+      warningDetail={warnings[0]}
     />
   );
 }
+
+// Keep old name as alias for backward compatibility
+export const MarketDebtIndicator = MarketStatusIndicator;

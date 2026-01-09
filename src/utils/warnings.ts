@@ -1,5 +1,5 @@
 import type { Market, MarketWarning } from '@/utils/types';
-import { monarchWhitelistedMarkets } from './markets';
+import { monarchWhitelistedMarkets, getMarketOverrideWarnings } from './markets';
 import { getOracleType, OracleType, parsePriceFeedVendors, checkFeedsPath } from './oracle';
 import { WarningCategory, type WarningWithDetail } from './types';
 
@@ -155,10 +155,6 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
   for (const warning of market.warnings) {
     const foundWarning = allDetails.find((w) => w.code === warning.type);
 
-    if (whitelistedMarketData) {
-      console.log('whitelistedMarketData', whitelistedMarketData);
-    }
-
     // if this market is whitelisted, there might be warnings we want to "offset"
     const isOffset = whitelistedMarketData?.offsetWarnings.includes(warning.type);
 
@@ -225,6 +221,12 @@ export const getMarketWarningsWithDetail = (market: Market, considerWhitelist = 
         result.push(incompatibleFeedsWarning);
       }
     }
+  }
+
+  // Inject custom market warnings from override rules
+  const overrideWarnings = getMarketOverrideWarnings(market.uniqueKey);
+  for (const warning of overrideWarnings) {
+    result.push({ ...warning, category: warning.category as WarningCategory });
   }
 
   return result;

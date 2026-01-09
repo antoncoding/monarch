@@ -39,3 +39,56 @@ export const monarchWhitelistedMarkets: WhitelistMarketData[] = [
     offsetWarnings: ['unrecognized_collateral_asset'],
   },
 ];
+
+// Market override rules - group multiple markets under the same rule
+export type MarketOverrideWarning = {
+  code: string;
+  level: 'warning' | 'alert';
+  description: string;
+  category: 'asset' | 'oracle' | 'debt' | 'general';
+};
+
+export type MarketOverrideRule = {
+  // Markets this rule applies to (uniqueKey, lowercase)
+  marketIds: string[];
+
+  // Force these markets to appear as unwhitelisted
+  forceUnwhitelisted?: boolean;
+
+  // Custom warnings to attach
+  warnings?: MarketOverrideWarning[];
+};
+
+export const marketOverrideRules: MarketOverrideRule[] = [
+  {
+    marketIds: [
+      '0xdb2cf3ad3ef91c9bb673bf35744e7141bc2950b27a75c8d11b0ead9f6742d927',
+      '0xe0ede98b4425285a9c93d51f8ba27d9a09bc0033874e4a883d3f29d41f9f2e4a',
+      '0x2b62c4153d81d5b5a233d1d2b7ef899d3fca4076d458e215ff3a00176b415b0d',
+      '0x216bd19960f140177a4a3fb9cf258edcbadb1f5d54740fc944503bff4a00e65e',
+      '0xf474c9a0cbd8f2b65d9480d94b56880ca13f10fc3b3c717d47bdf3ac9c4417b7',
+    ],
+    forceUnwhitelisted: true,
+    warnings: [
+      {
+        code: 'deprecated',
+        level: 'alert',
+        description: 'The loan asset (rUSDC) of this market is deprecating.',
+        category: 'general',
+      },
+    ],
+  },
+];
+
+// Helper functions to query the override rules
+export const isForceUnwhitelisted = (marketId: string): boolean => {
+  const normalizedId = marketId.toLowerCase();
+  return marketOverrideRules.some((rule) => rule.forceUnwhitelisted && rule.marketIds.includes(normalizedId));
+};
+
+export const getMarketOverrideWarnings = (marketId: string): MarketOverrideWarning[] => {
+  const normalizedId = marketId.toLowerCase();
+  return marketOverrideRules
+    .filter((rule) => rule.marketIds.includes(normalizedId) && rule.warnings)
+    .flatMap((rule) => rule.warnings ?? []);
+};
