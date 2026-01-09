@@ -96,7 +96,11 @@ export function useRepayTransaction({
     (isPermit2: boolean) => {
       if (isPermit2) {
         return [
-          { key: 'approve', label: 'Authorize Permit2', detail: "This one-time approval makes sure you don't need to send approval tx again in the future." },
+          {
+            key: 'approve',
+            label: 'Authorize Permit2',
+            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
           { key: 'signing', label: 'Sign message in wallet', detail: 'Sign a Permit2 signature to authorize the repayment' },
           { key: 'repaying', label: 'Confirm Repay', detail: 'Confirm transaction in wallet to complete the repayment' },
         ];
@@ -281,7 +285,11 @@ export function useRepayTransaction({
 
     try {
       setCurrentStep('approve');
-      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey }, 'approve');
+      start(
+        getStepsForFlow(usePermit2Setting),
+        { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey },
+        'approve',
+      );
 
       if (usePermit2Setting) {
         // Permit2 flow
@@ -336,7 +344,21 @@ export function useRepayTransaction({
       console.error('Error in approveAndRepay:', error);
       fail();
     }
-  }, [account, authorizePermit2, executeRepayTransaction, usePermit2Setting, isApproved, approve, toast, start, getStepsForFlow, market, repayAssets, update, fail]);
+  }, [
+    account,
+    authorizePermit2,
+    executeRepayTransaction,
+    usePermit2Setting,
+    isApproved,
+    approve,
+    toast,
+    start,
+    getStepsForFlow,
+    market,
+    repayAssets,
+    update,
+    fail,
+  ]);
 
   // Function to handle signing and executing the repay transaction
   const signAndRepay = useCallback(async () => {
@@ -347,7 +369,11 @@ export function useRepayTransaction({
 
     try {
       setCurrentStep('signing');
-      start(getStepsForFlow(usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey }, 'signing');
+      start(
+        getStepsForFlow(usePermit2Setting),
+        { tokenSymbol: market.loanAsset.symbol, amount: repayAssets, marketId: market.uniqueKey },
+        'signing',
+      );
 
       await executeRepayTransaction();
     } catch (error: unknown) {

@@ -247,7 +247,20 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       toast.error('Supply Failed', 'Supply to market failed or cancelled');
       return false;
     }
-  }, [account, market, supplyAmount, sendTransactionAsync, useEth, signForBundlers, usePermit2Setting, toast, batchAddUserMarkets, update, complete, fail]);
+  }, [
+    account,
+    market,
+    supplyAmount,
+    sendTransactionAsync,
+    useEth,
+    signForBundlers,
+    usePermit2Setting,
+    toast,
+    batchAddUserMarkets,
+    update,
+    complete,
+    fail,
+  ]);
 
   // Approve and supply handler
   const approveAndSupply = useCallback(async () => {
@@ -259,7 +272,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
     try {
       setCurrentStep('approve');
       const initialStep = useEth ? 'supplying' : 'approve';
-      start(getStepsForFlow(useEth, usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey }, initialStep);
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey },
+        initialStep,
+      );
 
       if (useEth) {
         setCurrentStep('supplying');
@@ -326,7 +343,22 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
       console.error('Error in approveAndSupply:', error);
       fail();
     }
-  }, [account, authorizePermit2, executeSupplyTransaction, useEth, usePermit2Setting, isApproved, approve, toast, start, update, fail, getStepsForFlow, market, supplyAmount]);
+  }, [
+    account,
+    authorizePermit2,
+    executeSupplyTransaction,
+    useEth,
+    usePermit2Setting,
+    isApproved,
+    approve,
+    toast,
+    start,
+    update,
+    fail,
+    getStepsForFlow,
+    market,
+    supplyAmount,
+  ]);
 
   // Sign and supply handler
   const signAndSupply = useCallback(async () => {
@@ -337,7 +369,11 @@ export function useSupplyMarket(market: Market, onSuccess?: () => void): UseSupp
 
     try {
       setCurrentStep('signing');
-      start(getStepsForFlow(useEth, usePermit2Setting), { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey }, 'signing');
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        { tokenSymbol: market.loanAsset.symbol, amount: supplyAmount, marketId: market.uniqueKey },
+        'signing',
+      );
 
       await executeSupplyTransaction();
     } catch (error: unknown) {

@@ -211,7 +211,20 @@ export function useVaultV2Deposit({
       toast.error('Deposit Failed', 'Deposit to vault failed or cancelled');
       return false;
     }
-  }, [account, assetAddress, vaultAddress, depositAmount, sendTransactionAsync, signForBundlers, usePermit2Setting, toast, chainId, update, complete, fail]);
+  }, [
+    account,
+    assetAddress,
+    vaultAddress,
+    depositAmount,
+    sendTransactionAsync,
+    signForBundlers,
+    usePermit2Setting,
+    toast,
+    chainId,
+    update,
+    complete,
+    fail,
+  ]);
 
   // Approve and deposit handler
   const approveAndDeposit = useCallback(async () => {
@@ -286,7 +299,23 @@ export function useVaultV2Deposit({
       console.error('Error in approveAndDeposit:', error);
       fail();
     }
-  }, [account, authorizePermit2, executeDepositTransaction, usePermit2Setting, isApproved, approve, toast, permit2Authorized, start, update, fail, getStepsForFlow, assetSymbol, depositAmount, vaultName]);
+  }, [
+    account,
+    authorizePermit2,
+    executeDepositTransaction,
+    usePermit2Setting,
+    isApproved,
+    approve,
+    toast,
+    permit2Authorized,
+    start,
+    update,
+    fail,
+    getStepsForFlow,
+    assetSymbol,
+    depositAmount,
+    vaultName,
+  ]);
 
   // Sign and deposit handler (for when already authorized)
   const signAndDeposit = useCallback(async () => {

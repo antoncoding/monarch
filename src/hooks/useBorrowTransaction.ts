@@ -96,15 +96,31 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
       }
       if (isPermit2) {
         return [
-          { key: 'approve_permit2', label: 'Authorize Permit2', detail: "This one-time approval makes sure you don't need to send approval tx again in the future." },
-          { key: 'authorize_bundler_sig', label: 'Authorize Morpho Bundler (Signature)', detail: 'Sign a message to authorize the Morpho bundler if needed.' },
+          {
+            key: 'approve_permit2',
+            label: 'Authorize Permit2',
+            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          {
+            key: 'authorize_bundler_sig',
+            label: 'Authorize Morpho Bundler (Signature)',
+            detail: 'Sign a message to authorize the Morpho bundler if needed.',
+          },
           { key: 'sign_permit', label: 'Sign Token Permit', detail: 'Sign a Permit2 signature to authorize the collateral' },
           { key: 'execute', label: 'Confirm Borrow', detail: 'Confirm transaction in wallet to complete the borrow' },
         ];
       }
       return [
-        { key: 'authorize_bundler_tx', label: 'Authorize Morpho Bundler (Transaction)', detail: 'Submit a transaction to authorize the Morpho bundler if needed.' },
-        { key: 'approve_token', label: `Approve ${market.collateralAsset.symbol}`, detail: `Approve ${market.collateralAsset.symbol} for spending` },
+        {
+          key: 'authorize_bundler_tx',
+          label: 'Authorize Morpho Bundler (Transaction)',
+          detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+        },
+        {
+          key: 'approve_token',
+          label: `Approve ${market.collateralAsset.symbol}`,
+          detail: `Approve ${market.collateralAsset.symbol} for spending`,
+        },
         { key: 'execute', label: 'Confirm Borrow', detail: 'Confirm transaction in wallet to complete the borrow' },
       ];
     },
@@ -306,7 +322,11 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
 
     try {
       const initialStep = useEth ? 'execute' : usePermit2Setting ? 'approve_permit2' : 'authorize_bundler_tx';
-      start(getStepsForFlow(useEth, usePermit2Setting), { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey }, initialStep);
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
+        initialStep,
+      );
 
       await executeBorrowTransaction();
     } catch (error: unknown) {
@@ -332,7 +352,11 @@ export function useBorrowTransaction({ market, collateralAmount, borrowAmount, o
     }
 
     try {
-      start(getStepsForFlow(useEth, usePermit2Setting), { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey }, 'sign_permit');
+      start(
+        getStepsForFlow(useEth, usePermit2Setting),
+        { tokenSymbol: market.collateralAsset.symbol, amount: collateralAmount, marketId: market.uniqueKey },
+        'sign_permit',
+      );
 
       await executeBorrowTransaction();
     } catch (error: unknown) {

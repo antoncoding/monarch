@@ -109,15 +109,31 @@ export const useRebalance = (groupedPosition: GroupedPosition, onRebalance?: () 
     (isPermit2: boolean) => {
       if (isPermit2) {
         return [
-          { key: 'approve_permit2', label: 'Authorize Permit2', detail: "This one-time approval makes sure you don't need to send approval tx again in the future." },
-          { key: 'authorize_bundler_sig', label: 'Authorize Morpho Bundler (Signature)', detail: 'Sign a message to authorize the Morpho bundler if needed.' },
+          {
+            key: 'approve_permit2',
+            label: 'Authorize Permit2',
+            detail: "This one-time approval makes sure you don't need to send approval tx again in the future.",
+          },
+          {
+            key: 'authorize_bundler_sig',
+            label: 'Authorize Morpho Bundler (Signature)',
+            detail: 'Sign a message to authorize the Morpho bundler if needed.',
+          },
           { key: 'sign_permit', label: 'Sign Token Permit', detail: 'Sign a Permit2 signature to authorize the token transfer' },
           { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
         ];
       }
       return [
-        { key: 'authorize_bundler_tx', label: 'Authorize Morpho Bundler (Transaction)', detail: 'Submit a transaction to authorize the Morpho bundler if needed.' },
-        { key: 'approve_token', label: `Approve ${groupedPosition.loanAsset}`, detail: `Approve ${groupedPosition.loanAsset} for spending` },
+        {
+          key: 'authorize_bundler_tx',
+          label: 'Authorize Morpho Bundler (Transaction)',
+          detail: 'Submit a transaction to authorize the Morpho bundler if needed.',
+        },
+        {
+          key: 'approve_token',
+          label: `Approve ${groupedPosition.loanAsset}`,
+          detail: `Approve ${groupedPosition.loanAsset} for spending`,
+        },
         { key: 'execute', label: 'Confirm Rebalance', detail: 'Confirm transaction in wallet to complete the rebalance' },
       ];
     },
