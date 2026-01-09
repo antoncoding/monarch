@@ -11,29 +11,6 @@ import { SortColumn } from '@/features/markets/components/constants';
 import { getVaultKey } from '@/constants/vaults/known_vaults';
 import type { Market } from '@/utils/types';
 
-/**
- * Combines processed markets with all active filters and sorting preferences.
- *
- * Data Flow:
- * 1. Get processed markets (already blacklist filtered + oracle enriched)
- * 2. Apply whitelist setting (show all or whitelisted only)
- * 3. Apply user filters (network, assets, USD thresholds, search)
- * 4. Filter by trusted vaults if enabled
- * 5. Apply sorting (starred, property-based, etc.)
- *
- * Reactivity:
- * - Automatically recomputes when processed data changes (refetch, blacklist)
- * - Automatically recomputes when any filter/preference changes
- * - No manual synchronization needed!
- *
- * @returns Filtered and sorted markets ready for display
- *
- * @example
- * ```tsx
- * const filteredMarkets = useFilteredMarkets();
- * // Use in table - automatically updates when data or filters change
- * ```
- */
 export const useFilteredMarkets = (): Market[] => {
   const { allMarkets, whitelistedMarkets } = useProcessedMarkets();
   const filters = useMarketsFilters();
@@ -44,12 +21,9 @@ export const useFilteredMarkets = (): Market[] => {
   const trendingKeys = useTrendingMarketKeys();
 
   return useMemo(() => {
-    // 1. Start with allMarkets or whitelistedMarkets based on setting
     let markets = showUnwhitelistedMarkets ? allMarkets : whitelistedMarkets;
-
     if (markets.length === 0) return [];
 
-    // 2. Apply all filters (network, assets, USD thresholds, search, etc.)
     markets = filterMarkets(markets, {
       selectedNetwork: filters.selectedNetwork,
       showUnknownTokens: preferences.includeUnknownTokens,
@@ -75,7 +49,6 @@ export const useFilteredMarkets = (): Market[] => {
       searchQuery: filters.searchQuery,
     });
 
-    // 3. Filter by trusted vaults if enabled
     if (preferences.trustedVaultsOnly) {
       const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       markets = markets.filter((market) => {
@@ -88,7 +61,6 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    // 4. Filter by trending if enabled
     if (filters.trendingMode && trendingKeys.size > 0) {
       markets = markets.filter((market) => {
         const key = getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey);
@@ -96,13 +68,11 @@ export const useFilteredMarkets = (): Market[] => {
       });
     }
 
-    // 5. Apply sorting
     if (preferences.sortColumn === SortColumn.Starred) {
       return sortMarkets(markets, createStarredSort(preferences.starredMarkets), 1);
     }
 
     if (preferences.sortColumn === SortColumn.TrustedBy) {
-      // Custom sort for trusted vaults
       const trustedVaultKeys = new Set(trustedVaults.map((vault) => getVaultKey(vault.address, vault.chainId)));
       return sortMarkets(
         markets,
@@ -117,7 +87,6 @@ export const useFilteredMarkets = (): Market[] => {
       );
     }
 
-    // Property-based sorting
     const sortPropertyMap: Record<SortColumn, string> = {
       [SortColumn.Starred]: 'uniqueKey',
       [SortColumn.LoanAsset]: 'loanAsset.name',

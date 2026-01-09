@@ -90,8 +90,6 @@ const transformSubgraphMarketToMarket = (
   const totalBorrowShares = subgraphMarket.totalBorrowShares ?? '0';
   const fee = subgraphMarket.fee ?? '0';
 
-  // Define the estimation helper *inside* the transform function
-  // so it has access to majorPrices
   const getEstimateValue = (token: ERC20Token | UnknownERC20Token): number | undefined => {
     if (!('peg' in token) || token.peg === undefined) {
       return undefined;
@@ -100,7 +98,6 @@ const transformSubgraphMarketToMarket = (
     if (peg === TokenPeg.USD) {
       return 1;
     }
-    // Access majorPrices from the outer function's scope
     return majorPrices[peg];
   };
 
@@ -117,7 +114,6 @@ const transformSubgraphMarketToMarket = (
 
   const chainId = network;
 
-  // @todo: might update due to input token being used here
   const supplyAssets = subgraphMarket.totalSupply ?? subgraphMarket.inputTokenBalance ?? '0';
   const borrowAssets = subgraphMarket.totalBorrow ?? subgraphMarket.variableBorrowedTokenBalance ?? '0';
   const collateralAssets = subgraphMarket.totalCollateral ?? '0';
@@ -131,13 +127,10 @@ const transformSubgraphMarketToMarket = (
   const supplyApy = Number(subgraphMarket.rates?.find((r) => r.side === 'LENDER')?.rate ?? 0);
   const borrowApy = Number(subgraphMarket.rates?.find((r) => r.side === 'BORROWER')?.rate ?? 0);
 
-  const warnings: MarketWarning[] = []; // Initialize warnings
+  const warnings: MarketWarning[] = [];
 
-  // get the prices
   let loanAssetPrice = safeParseFloat(subgraphMarket.borrowedToken?.lastPriceUSD ?? '0');
   let collateralAssetPrice = safeParseFloat(subgraphMarket.inputToken?.lastPriceUSD ?? '0');
-
-  // @todo: might update due to input token being used here
   const hasUSDPrice = loanAssetPrice > 0 && collateralAssetPrice > 0;
 
   const knownLoadAsset = findToken(loanAsset.address, network);
@@ -172,55 +165,39 @@ const transformSubgraphMarketToMarket = (
   const marketDetail = {
     id: marketId,
     uniqueKey: marketId,
-    lltv: lltv,
+    lltv,
     irmAddress: irmAddress as Address,
-    whitelisted: true, // All subgraph markets are considered whitelisted
-    loanAsset: loanAsset,
-    collateralAsset: collateralAsset,
+    whitelisted: true,
+    loanAsset,
+    collateralAsset,
     state: {
-      // assets
-      borrowAssets: borrowAssets,
-      supplyAssets: supplyAssets,
-      liquidityAssets: liquidityAssets,
-      collateralAssets: collateralAssets,
-      // shares
+      borrowAssets,
+      supplyAssets,
+      liquidityAssets,
+      collateralAssets,
       borrowShares: totalBorrowShares,
       supplyShares: totalSupplyShares,
-      // usd
-      borrowAssetsUsd: borrowAssetsUsd,
-      supplyAssetsUsd: supplyAssetsUsd,
-      liquidityAssetsUsd: liquidityAssetsUsd,
-      collateralAssetsUsd: collateralAssetsUsd,
-
-      utilization: utilization,
-      supplyApy: supplyApy,
-      borrowApy: borrowApy,
-      fee: safeParseFloat(fee) / 10_000, // Subgraph fee is likely basis points (needs verification)
-      timestamp: timestamp,
-
-      // AdaptiveCurveIRM APY if utilization was at target
-      apyAtTarget: 0, // Not available from subgraph
-
-      // AdaptiveCurveIRM rate per second if utilization was at target
-      rateAtTarget: '0', // Not available from subgraph
+      borrowAssetsUsd,
+      supplyAssetsUsd,
+      liquidityAssetsUsd,
+      collateralAssetsUsd,
+      utilization,
+      supplyApy,
+      borrowApy,
+      fee: safeParseFloat(fee) / 10_000,
+      timestamp,
+      apyAtTarget: 0,
+      rateAtTarget: '0',
     },
-    oracleAddress: oracleAddress,
+    oracleAddress,
     morphoBlue: {
       id: subgraphMarket.protocol?.id ?? '0x',
       address: subgraphMarket.protocol?.id ?? '0x',
-      chain: {
-        id: chainId,
-      },
+      chain: { id: chainId },
     },
-    warnings: warnings, // Assign the potentially filtered warnings
-    hasUSDPrice: hasUSDPrice,
-
-    // todo: not able to parse bad debt now
-    realizedBadDebt: {
-      underlying: '0',
-    },
-
-    // todo: no way to parse supplying vaults now
+    warnings,
+    hasUSDPrice,
+    realizedBadDebt: { underlying: '0' },
     supplyingVaults: [],
   };
 
@@ -258,17 +235,14 @@ export const fetchSubgraphMarket = async (uniqueKey: string, network: SupportedN
   }
 };
 
-// Define type for GraphQL variables
 type SubgraphMarketsVariables = {
   first: number;
   where?: {
     inputToken_not_in?: string[];
-    // Add other potential filter fields here if needed
   };
-  network?: string; // Keep network optional if sometimes omitted
+  network?: string;
 };
 
-// Fetcher for multiple markets from Subgraph
 export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<Market[]> => {
   const subgraphApiUrl = getSubgraphUrl(network);
 
@@ -277,7 +251,6 @@ export const fetchSubgraphMarkets = async (network: SupportedNetworks): Promise<
     return [];
   }
 
-  // Construct variables for the query, adding blacklistTokens
   const variables: SubgraphMarketsVariables = {
     first: 1000, // Max limit
     where: {

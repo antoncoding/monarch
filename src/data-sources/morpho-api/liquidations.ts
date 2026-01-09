@@ -9,7 +9,6 @@
 import type { SupportedNetworks } from '@/utils/networks';
 import { URLS } from '@/utils/urls';
 
-// Re-use the query structure from the original hook
 const liquidationsQuery = `
   query getLiquidations($first: Int, $skip: Int, $chainId: Int!) {
     transactions(
@@ -84,7 +83,6 @@ export const fetchMorphoApiLiquidatedMarketKeys = async (network: SupportedNetwo
 
       const result = (await response.json()) as QueryResult;
 
-      // Check for GraphQL errors
       if (result.errors) {
         console.error('GraphQL errors:', result.errors);
         throw new Error(`GraphQL error fetching liquidations for network ${network}`);
@@ -92,32 +90,27 @@ export const fetchMorphoApiLiquidatedMarketKeys = async (network: SupportedNetwo
 
       if (!result.data?.transactions) {
         console.warn(`No transactions data found for network ${network} at skip ${skip}`);
-        break; // Exit loop if data structure is unexpected
+        break;
       }
 
-      const liquidations = result.data.transactions.items;
-      const pageInfo = result.data.transactions.pageInfo;
+      const { items, pageInfo } = result.data.transactions;
 
-      liquidations.forEach((tx) => {
+      for (const tx of items) {
         if (tx.data?.market?.uniqueKey) {
           liquidatedKeys.add(tx.data.market.uniqueKey);
         }
-      });
+      }
 
       totalCount = pageInfo.countTotal;
       skip += pageInfo.count;
 
-      // Safety break if pageInfo.count is 0 to prevent infinite loop
-      if (pageInfo.count === 0 && skip < totalCount) {
-        console.warn('Received 0 items in a page, but not yet at total count. Breaking loop.');
-        break;
-      }
+      if (pageInfo.count === 0 && skip < totalCount) break;
     } while (skip < totalCount);
   } catch (error) {
     console.error(`Error fetching liquidations via Morpho API for network ${network}:`, error);
-    throw error; // Re-throw the error to be handled by the calling hook
+    throw error;
   }
 
-  console.log(`Fetched ${liquidatedKeys.size} liquidated market keys via Morpho API for ${network}.`);
+  console.log(`[Morpho API] Fetched ${liquidatedKeys.size} liquidated market keys for ${network}`);
   return liquidatedKeys;
 };

@@ -116,7 +116,6 @@ type MarketPreferencesStore = MarketPreferencesState & MarketPreferencesActions;
 export const useMarketPreferences = create<MarketPreferencesStore>()(
   persist(
     (set, get) => ({
-      // Default state
       sortColumn: SortColumn.Supply,
       sortDirection: -1,
       entriesPerPage: 8,
@@ -134,7 +133,6 @@ export const useMarketPreferences = create<MarketPreferencesStore>()(
       minLiquidityEnabled: false,
       trendingConfig: DEFAULT_TRENDING_CONFIG,
 
-      // Actions
       setSortColumn: (column) => set({ sortColumn: column }),
       setSortDirection: (direction) => set({ sortDirection: direction }),
       setEntriesPerPage: (count) => set({ entriesPerPage: count }),

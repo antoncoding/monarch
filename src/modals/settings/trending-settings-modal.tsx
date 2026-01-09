@@ -1,5 +1,4 @@
 'use client';
-
 import { useMemo } from 'react';
 import { HiFire } from 'react-icons/hi2';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,6 @@ const TIME_WINDOWS: { value: FlowTimeWindow; label: string }[] = [
   { value: '30d', label: '30d' },
 ];
 
-// Generate human-readable summary of the filter
 function generateFilterSummary(config: { enabled: boolean; windows: Record<FlowTimeWindow, TrendingWindowConfig> }): string {
   if (!config.enabled) return 'Trending detection is disabled';
 
@@ -128,9 +126,7 @@ export default function TrendingSettingsModal({ isOpen, onOpenChange }: Trending
     return matches.sort((a, b) => (b.market.state?.supplyAssetsUsd ?? 0) - (a.market.state?.supplyAssetsUsd ?? 0));
   }, [isEnabled, metricsMap, trendingConfig, allMarkets]);
 
-  const totalMatches = useMemo(() => {
-    return matchingMarkets.length;
-  }, [isEnabled, metricsMap, trendingConfig]);
+  const totalMatches = matchingMarkets.length;
 
   const handleChange = (window: FlowTimeWindow, field: keyof TrendingWindowConfig, value: string) => {
     setTrendingWindowConfig(window, { [field]: value });

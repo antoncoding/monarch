@@ -1,6 +1,3 @@
-// Queries for Morpho Officail API
-// Reference: https://blue-api.morpho.org/graphql
-
 export const feedFieldsFragment = `
   fragment FeedFields on OracleFeed {
     address
@@ -14,7 +11,6 @@ export const feedFieldsFragment = `
   }
 `;
 
-// Query for fetching oracles (used for cache generation and runtime fetching)
 export const oraclesQuery = `
   query getOracles($first: Int, $skip: Int, $where: OraclesFilters) {
     oracles(first: $first, skip: $skip, where: $where) {
@@ -65,7 +61,6 @@ export const oraclesQuery = `
   ${feedFieldsFragment}
 `;
 
-// for both API type Market and MarketListItem
 const commonMarketFields = `
 lltv
 uniqueKey
@@ -134,21 +129,18 @@ supplyingVaults {
 }
 `;
 
-// Market Fragement is only used type when querying a single market
 export const marketFragment = `
   fragment MarketFields on Market {
     ${commonMarketFields}
   }
 `;
 
-// hotfix: remove MarketFields on MarketListItem
 export const marketsFragment = `
   fragment MarketFields on Market {
     ${commonMarketFields}
   }
 `;
 
-// hotfix: remove MarketFields on MarketListItem
 export const marketsQuery = `
   query getMarkets($first: Int, $skip: Int, $where: MarketFilters) {
     markets(first: $first, skip: $skip, where: $where) {
@@ -504,7 +496,6 @@ export const marketSuppliersQuery = `
   }
 `;
 
-// Query for fetching market borrowers from Morpho API
 export const marketBorrowersQuery = `
   query getMarketBorrowers($uniqueKey: String!, $chainId: Int!, $minShares: BigInt, $first: Int, $skip: Int) {
     marketPositions (where: {
@@ -536,7 +527,6 @@ export const marketBorrowersQuery = `
   }
 `;
 
-// Query for VaultV2 details from Morpho API
 export const vaultV2Query = `
   query VaultV2($address: String!, $chainId: Int!) {
     vaultV2ByAddress(address: $address, chainId: $chainId) {
@@ -575,7 +565,6 @@ export const vaultV2Query = `
   }
 `;
 
-// Query for fetching token prices from Morpho API
 export const assetPricesQuery = `
   query getAssetPrices($where: AssetsFilters) {
     assets(where: $where) {

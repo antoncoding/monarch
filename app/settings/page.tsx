@@ -14,11 +14,8 @@ import { useAppSettings } from '@/stores/useAppSettings';
 import { useMarketPreferences } from '@/stores/useMarketPreferences';
 
 export default function SettingsPage() {
-  // App settings from Zustand store
   const { usePermit2, setUsePermit2, showUnwhitelistedMarkets, setShowUnwhitelistedMarkets, isAprDisplay, setIsAprDisplay } =
     useAppSettings();
-
-  // Market preferences from Zustand store
   const { includeUnknownTokens, setIncludeUnknownTokens, showUnknownOracle, setShowUnknownOracle } = useMarketPreferences();
 
   const { vaults: userTrustedVaults } = useTrustedVaults();
@@ -50,7 +47,6 @@ export default function SettingsPage() {
         <h1 className="py-8 font-zen">Settings</h1>
 
         <div className="flex flex-col gap-6">
-          {/* Transaction Settings Section */}
           <div className="flex flex-col gap-4">
             <h2 className="text font-monospace text-secondary">Transaction Settings</h2>
 
@@ -78,7 +74,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Display Settings Section */}
           <div className="flex flex-col gap-4 pt-4">
             <h2 className="text font-monospace text-secondary">Display Settings</h2>
 
@@ -106,12 +101,10 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Filter Settings Section */}
           <div className="flex flex-col gap-4 pt-4">
             <h2 className="text font-monospace text-secondary">Filter Settings</h2>
 
             <div className="bg-surface flex flex-col gap-6 rounded p-6">
-              {/* Group related settings with a subtle separator */}
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <h3 className="text-lg font-medium text-primary">Show Unknown Tokens</h3>
@@ -171,7 +164,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Trending Markets (Beta) Section */}
           <div className="flex flex-col gap-4 pt-4">
             <div className="flex items-center gap-2">
               <h2 className="text font-monospace text-secondary">Trending Markets</h2>
@@ -198,7 +190,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Trusted Vaults Section */}
           <div className="flex flex-col gap-4 pt-4">
             <h2 className="text font-monospace text-secondary">Trusted Vaults</h2>
 
@@ -220,7 +211,6 @@ export default function SettingsPage() {
                 </Button>
               </div>
 
-              {/* Display trusted vault icons */}
               <div className="flex flex-col gap-2">
                 <div className="flex flex-wrap gap-2">
                   {mounted ? (
@@ -257,7 +247,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Blacklisted Markets Section */}
           <div className="flex flex-col gap-4 pt-4">
             <h2 className="text font-monospace text-secondary">Blacklisted Markets</h2>
 
@@ -280,7 +269,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Advanced Section */}
           <div className="flex flex-col gap-4 pt-4">
             <AdvancedRpcSettings />
           </div>

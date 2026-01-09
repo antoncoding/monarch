@@ -201,9 +201,7 @@ export const parseFlowAssets = (flowAssets: string, decimals: number): number =>
 export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: TrendingConfig): boolean => {
   if (!trendingConfig.enabled) return false;
 
-  // Check all windows - ALL non-empty thresholds must be met
   for (const [window, config] of Object.entries(trendingConfig.windows)) {
-    // Defensive access for potentially undefined config fields (old stored data)
     const supplyPct = config?.minSupplyFlowPct ?? '';
     const supplyUsd = config?.minSupplyFlowUsd ?? '';
     const borrowPct = config?.minBorrowFlowPct ?? '';
@@ -212,15 +210,11 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
     const hasSupplyThreshold = supplyPct || supplyUsd;
     const hasBorrowThreshold = borrowPct || borrowUsd;
 
-    // Skip windows with no thresholds
     if (!hasSupplyThreshold && !hasBorrowThreshold) continue;
 
     const flow = metrics.flows[window as FlowTimeWindow];
-
-    // If threshold is set but flow data is missing, market doesn't qualify
     if (!flow) return false;
 
-    // Supply flow checks - use API's supplyFlowPct directly for percentage
     if (supplyPct) {
       const actualPct = flow.supplyFlowPct ?? 0;
       if (actualPct < Number(supplyPct)) return false;
@@ -230,7 +224,6 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
       if (actualUsd < Number(supplyUsd)) return false;
     }
 
-    // Borrow flow checks - compute percentage since API doesn't provide it
     if (borrowPct) {
       const borrowBase = metrics.currentState.borrowUsd;
       const actualPct = borrowBase > 0 ? ((flow.borrowFlowUsd ?? 0) / borrowBase) * 100 : 0;
@@ -242,7 +235,6 @@ export const isMarketTrending = (metrics: MarketMetrics, trendingConfig: Trendin
     }
   }
 
-  // At least one threshold must be set for the market to be considered trending
   const hasAnyThreshold = Object.values(trendingConfig.windows).some((c) => {
     const supplyPct = c?.minSupplyFlowPct ?? '';
     const supplyUsd = c?.minSupplyFlowUsd ?? '';
@@ -275,7 +267,6 @@ export const useTrendingMarketKeys = () => {
   }, [metricsMap, trendingConfig]);
 };
 
-// Staleness threshold for liquidations data (2 hour 5 min)
 const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
 
 /**
@@ -287,29 +278,17 @@ const LIQUIDATIONS_STALE_THRESHOLD_MS = (2 * 60 + 5) * 60 * 1000;
  * once Monarch API stability is confirmed.
  */
 export const useEverLiquidated = (chainId: number, uniqueKey: string): boolean => {
-  // Primary: Monarch API liquidations endpoint
   const { liquidatedKeys, lastUpdatedAt, isLoading } = useMonarchLiquidatedKeys();
-
-  // Check if data is stale (>1 hour old)
   const isStale = lastUpdatedAt * 1000 < Date.now() - LIQUIDATIONS_STALE_THRESHOLD_MS;
-
-  // Only enable fallback AFTER Monarch query completes AND data is stale/missing
-  // This prevents triggering fallback on first render when data hasn't loaded yet
   const needsFallback = !isLoading && (isStale || liquidatedKeys.size === 0);
 
-  // @deprecated_fallback - Only fetch if Monarch data is stale/empty
   const { data: fallbackKeys } = useLiquidationsQuery({ enabled: needsFallback });
 
   return useMemo(() => {
     const key = `${chainId}-${uniqueKey.toLowerCase()}`;
-
-    // Use Monarch data if fresh and available
     if (!needsFallback) {
       return liquidatedKeys.has(key);
     }
-
-    // Fallback to old Morpho API
-    // @deprecated_fallback - Remove after Monarch API stability confirmed
     return fallbackKeys?.has(uniqueKey) ?? false;
   }, [liquidatedKeys, needsFallback, chainId, uniqueKey, fallbackKeys]);
 };

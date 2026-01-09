@@ -19,15 +19,10 @@ type MarketIndicatorsProps = {
 };
 
 export function MarketIndicators({ market, showRisk = false, isStared = false, hasUserPosition = false }: MarketIndicatorsProps) {
-  // Check liquidation protection status (uses Monarch Metrics API with fallback)
   const hasLiquidationProtection = useEverLiquidated(market.morphoBlue.chain.id, market.uniqueKey);
-
-  // Check trending status
   const { trendingConfig } = useMarketPreferences();
   const trendingKeys = useTrendingMarketKeys();
   const isTrending = trendingConfig.enabled && trendingKeys.has(getMetricsKey(market.morphoBlue.chain.id, market.uniqueKey));
-
-  // Compute risk warnings if needed
   const warnings = showRisk ? computeMarketWarnings(market, true) : [];
   const hasWarnings = warnings.length > 0;
   const alertWarning = warnings.find((w) => w.level === 'alert');
@@ -35,7 +30,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
 
   return (
     <div className="flex items-center justify-center gap-2">
-      {/* Personal Indicators */}
       {isStared && (
         <Tooltip
           content={
@@ -74,7 +68,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         </Tooltip>
       )}
 
-      {/* Universal Indicators */}
       {hasLiquidationProtection && (
         <Tooltip
           content={
@@ -98,20 +91,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         </Tooltip>
       )}
 
-      {/* {market.isMonarchWhitelisted && (
-        <Tooltip          content={
-            <TooltipContent
-              icon={<Image src={logo} alt="Monarch" width={ICON_SIZE} height={ICON_SIZE} />}
-              detail="This market is recognized by Monarch"
-            />
-          }
-        >
-          <div className="flex-shrink-0">
-            <Image src={logo} alt="Monarch" width={ICON_SIZE} height={ICON_SIZE} />
-          </div>
-        </Tooltip>
-      )} */}
-
       <RewardsIndicator
         size={ICON_SIZE}
         chainId={market.morphoBlue.chain.id}
@@ -120,7 +99,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         whitelisted={market.whitelisted}
       />
 
-      {/* Trending Indicator */}
       {isTrending && (
         <Tooltip
           content={
@@ -144,7 +122,6 @@ export function MarketIndicators({ market, showRisk = false, isStared = false, h
         </Tooltip>
       )}
 
-      {/* Risk Warnings */}
       {showRisk && hasWarnings && (
         <Tooltip
           content={

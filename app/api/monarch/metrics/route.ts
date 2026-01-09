@@ -10,8 +10,6 @@ export async function GET(req: NextRequest) {
   }
 
   const searchParams = req.nextUrl.searchParams;
-
-  // Pass through all query params
   const params = new URLSearchParams();
   const chainId = searchParams.get('chain_id');
   const sortBy = searchParams.get('sort_by');
@@ -29,10 +27,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await fetch(url, {
-      headers: {
-        'X-API-Key': MONARCH_API_KEY,
-      },
-      // Cache for 15 minutes on the edge
+      headers: { 'X-API-Key': MONARCH_API_KEY },
       next: { revalidate: 900 },
     });
 
